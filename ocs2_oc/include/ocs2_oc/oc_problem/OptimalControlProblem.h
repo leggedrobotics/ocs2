@@ -33,6 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/PreComputation.h>
 #include <ocs2_core/Types.h>
+//  #include <ocs2_core/augmented_lagrangian/StateAugmentedLagrangianCollection.h>
+//  #include <ocs2_core/augmented_lagrangian/StateInputAugmentedLagrangianCollection.h>
 #include <ocs2_core/constraint/StateConstraintCollection.h>
 #include <ocs2_core/constraint/StateInputConstraintCollection.h>
 #include <ocs2_core/cost/StateCostCollection.h>
@@ -68,13 +70,19 @@ struct OptimalControlProblem {
   /** Intermediate equality constraints, full row rank w.r.t. inputs */
   std::unique_ptr<StateInputConstraintCollection> equalityConstraintPtr;
   /** Intermediate state-only equality constraints */
-  std::unique_ptr<StateConstraintCollection> stateEqualityConstraintPtr;
+  std::unique_ptr<StateCostCollection> stateEqualityConstraintPtr;
   /** Intermediate inequality constraints */
-  std::unique_ptr<StateInputConstraintCollection> inequalityConstraintPtr;
-  /** pre-jump constraints */
-  std::unique_ptr<StateConstraintCollection> preJumpEqualityConstraintPtr;
-  /** final constraints */
-  std::unique_ptr<StateConstraintCollection> finalEqualityConstraintPtr;
+  std::unique_ptr<StateInputCostCollection> inequalityConstraintPtr;
+  /** Intermediate state-only inequality constraints */
+  std::unique_ptr<StateCostCollection> stateInequalityConstraintPtr;
+  /** pre-jump equality constraints */
+  std::unique_ptr<StateCostCollection> preJumpEqualityConstraintPtr;
+  /** pre-jump inequality constraints */
+  std::unique_ptr<StateCostCollection> preJumpInequalityConstraintPtr;
+  /** final equality constraints */
+  std::unique_ptr<StateCostCollection> finalEqualityConstraintPtr;
+  /** final inequality constraints */
+  std::unique_ptr<StateCostCollection> finalInequalityConstraintPtr;
 
   /* Dynamics */
   /** System dynamics pointer */

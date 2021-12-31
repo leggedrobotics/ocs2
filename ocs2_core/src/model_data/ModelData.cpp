@@ -67,8 +67,9 @@ void ModelData::checkSizes(int stateDim, int inputDim) const {
   assert(cost_.dfdux.cols() == stateDim);
 
   // state equality constraints
-  assert(stateEqConstr_.dfdx.rows() == stateEqConstr_.f.rows());
-  assert(stateEqConstr_.dfdx.cols() == stateDim);
+  assert(stateEqConstr_.dfdx.size() == stateDim);
+  assert(stateEqConstr_.dfdxx.rows() == stateDim);
+  assert(stateEqConstr_.dfdxx.cols() == stateDim);
 
   // state-input equality constraints
   assert(stateInputEqConstr_.dfdx.rows() == stateInputEqConstr_.f.rows());
@@ -76,22 +77,20 @@ void ModelData::checkSizes(int stateDim, int inputDim) const {
   assert(stateInputEqConstr_.dfdu.rows() == stateInputEqConstr_.f.rows());
   assert(stateInputEqConstr_.dfdu.cols() == inputDim);
 
-  // inequality constraints
-  assert(ineqConstr_.dfdx.rows() == ineqConstr_.f.rows());
-  assert(ineqConstr_.dfdx.cols() == stateDim);
-  assert(ineqConstr_.dfdu.rows() == ineqConstr_.f.rows());
-  assert(ineqConstr_.dfdu.cols() == inputDim);
-  assert(ineqConstr_.dfdxx.size() == ineqConstr_.f.rows());
-  assert(ineqConstr_.dfduu.size() == ineqConstr_.f.rows());
-  assert(ineqConstr_.dfdux.size() == ineqConstr_.f.rows());
-  for (int i = 0; i < ineqConstr_.f.rows(); i++) {
-    assert(ineqConstr_.dfdxx[i].rows() == stateDim);
-    assert(ineqConstr_.dfdxx[i].cols() == stateDim);
-    assert(ineqConstr_.dfduu[i].rows() == inputDim);
-    assert(ineqConstr_.dfduu[i].cols() == inputDim);
-    assert(ineqConstr_.dfdux[i].rows() == inputDim);
-    assert(ineqConstr_.dfdux[i].cols() == stateDim);
-  }  // end of i loop
+  // state inequality constraints
+  assert(stateIneqConstr_.dfdx.size() == stateDim);
+  assert(stateIneqConstr_.dfdxx.rows() == stateDim);
+  assert(stateIneqConstr_.dfdxx.cols() == stateDim);
+
+  // state-input inequality constraints
+  assert(stateInputIneqConstr_.dfdx.size() == stateDim);
+  assert(stateInputIneqConstr_.dfdxx.rows() == stateDim);
+  assert(stateInputIneqConstr_.dfdxx.cols() == stateDim);
+  assert(stateInputIneqConstr_.dfdu.size() == inputDim);
+  assert(stateInputIneqConstr_.dfduu.rows() == inputDim);
+  assert(stateInputIneqConstr_.dfduu.cols() == inputDim);
+  assert(stateInputIneqConstr_.dfdux.rows() == inputDim);
+  assert(stateInputIneqConstr_.dfdux.cols() == stateDim);
 }
 
 /******************************************************************************************************/
@@ -168,75 +167,76 @@ std::string ModelData::checkDynamicsDerivativsProperties() const {
 std::string ModelData::checkConstraintProperties() const {
   std::stringstream errorDescription;
 
-  if (stateInputEqConstr_.f.rows() > 0) {
-    if (!stateInputEqConstr_.f.allFinite()) {
-      errorDescription << "Input-state constraint is not finite.\n";
-    }
-    if (!stateInputEqConstr_.dfdx.allFinite()) {
-      errorDescription << "Input-state constraint derivative w.r.t. state is not finite.\n";
-    }
-    if (!stateInputEqConstr_.dfdu.allFinite()) {
-      errorDescription << "Input-state constraint derivative w.r.t. input is not finite.\n";
-    }
-    size_t DmRank = LinearAlgebra::rank(stateInputEqConstr_.dfdu);
-    if (DmRank != stateInputEqConstr_.f.rows()) {
-      errorDescription << "Input-state constraint derivative w.r.t. input is not full-row rank. It's rank is " + std::to_string(DmRank) +
-                              " while the expected rank is " + std::to_string(stateInputEqConstr_.f.rows()) + ".\n";
-    }
-  }
-
-  if (stateEqConstr_.f.rows() > 0) {
-    if (!stateEqConstr_.f.allFinite()) {
-      errorDescription << "State-only constraint is not finite.\n";
-    }
-    if (!stateEqConstr_.dfdx.allFinite()) {
-      errorDescription << "State-only constraint derivative w.r.t. state is not finite.\n";
-    }
-  }
-
-  if (ineqConstr_.f.rows() > 0) {
-    if (!ineqConstr_.f.allFinite()) {
-      errorDescription << "Inequality constraint is not finite.\n";
-    }
-    if (!ineqConstr_.dfdx.allFinite()) {
-      errorDescription << "Inequality constraint derivative w.r.t. state is not finite.\n";
-    }
-    if (!ineqConstr_.dfdu.allFinite()) {
-      errorDescription << "Inequality constraint derivative w.r.t. input is not finite.\n";
-    }
-    for (size_t i = 0; i < ineqConstr_.f.rows(); i++) {
-      if (!ineqConstr_.dfdxx[i].allFinite()) {
-        errorDescription << "Inequality constraint " + std::to_string(i) + " second derivative w.r.t. state is not finite.\n";
-      }
-      if (!ineqConstr_.dfdxx[i].isApprox(ineqConstr_.dfdxx[i].transpose())) {
-        errorDescription << "Inequality constraint " + std::to_string(i) + " second derivative w.r.t. state is not self-adjoint.\n";
-      }
-      if (LinearAlgebra::symmetricEigenvalues(ineqConstr_.dfdxx[i]).maxCoeff() > Eigen::NumTraits<scalar_t>::epsilon()) {
-        errorDescription
-            << "Inequality constraint " + std::to_string(i) +
-                   " second derivative w.r.t. state is not negative semi-definite. This will lead to a negative-definite penalty Hessian. "
-                   "It's largest eigenvalue is " +
-                   std::to_string(LinearAlgebra::symmetricEigenvalues(ineqConstr_.dfdxx[i]).maxCoeff()) + ".\n";
-        std::cerr << "dfdxx:\n" << ineqConstr_.dfdxx[i] << std::endl;
-      }
-      if (!ineqConstr_.dfduu[i].allFinite()) {
-        errorDescription << "Inequality constraint " + std::to_string(i) + " second derivative w.r.t. input is not finite.\n";
-      }
-      if (!ineqConstr_.dfduu[i].isApprox(ineqConstr_.dfduu[i].transpose())) {
-        errorDescription << "Inequality constraint " + std::to_string(i) + " second derivative w.r.t. input is not self-adjoint.\n";
-      }
-      if (LinearAlgebra::symmetricEigenvalues(ineqConstr_.dfduu[i]).maxCoeff() > Eigen::NumTraits<scalar_t>::epsilon()) {
-        errorDescription
-            << "Inequality constraint " + std::to_string(i) +
-                   " second derivative w.r.t. input is not negative semi-definite. This will lead to a negative-definite penalty Hessian. "
-                   "It's largest eigenvalue is " +
-                   std::to_string(LinearAlgebra::symmetricEigenvalues(ineqConstr_.dfduu[i]).maxCoeff()) + ".\n";
-      }
-      if (!ineqConstr_.dfdux[i].allFinite()) {
-        errorDescription << "Inequality constraint " + std::to_string(i) + " second derivative w.r.t. input-state is not finite.\n";
-      }
-    }
-  }
+  //  if (stateInputEqConstr_.f.rows() > 0) {
+  //    if (!stateInputEqConstr_.f.allFinite()) {
+  //      errorDescription << "Input-state constraint is not finite.\n";
+  //    }
+  //    if (!stateInputEqConstr_.dfdx.allFinite()) {
+  //      errorDescription << "Input-state constraint derivative w.r.t. state is not finite.\n";
+  //    }
+  //    if (!stateInputEqConstr_.dfdu.allFinite()) {
+  //      errorDescription << "Input-state constraint derivative w.r.t. input is not finite.\n";
+  //    }
+  //    size_t DmRank = LinearAlgebra::rank(stateInputEqConstr_.dfdu);
+  //    if (DmRank != stateInputEqConstr_.f.rows()) {
+  //      errorDescription << "Input-state constraint derivative w.r.t. input is not full-row rank. It's rank is " + std::to_string(DmRank)
+  //      +
+  //                              " while the expected rank is " + std::to_string(stateInputEqConstr_.f.rows()) + ".\n";
+  //    }
+  //  }
+  //
+  //  if (stateEqConstr_.f.rows() > 0) {
+  //    if (!stateEqConstr_.f.allFinite()) {
+  //      errorDescription << "State-only constraint is not finite.\n";
+  //    }
+  //    if (!stateEqConstr_.dfdx.allFinite()) {
+  //      errorDescription << "State-only constraint derivative w.r.t. state is not finite.\n";
+  //    }
+  //  }
+  //
+  //  if (ineqConstr_.f.rows() > 0) {
+  //    if (!ineqConstr_.f.allFinite()) {
+  //      errorDescription << "Inequality constraint is not finite.\n";
+  //    }
+  //    if (!ineqConstr_.dfdx.allFinite()) {
+  //      errorDescription << "Inequality constraint derivative w.r.t. state is not finite.\n";
+  //    }
+  //    if (!ineqConstr_.dfdu.allFinite()) {
+  //      errorDescription << "Inequality constraint derivative w.r.t. input is not finite.\n";
+  //    }
+  //    for (size_t i = 0; i < ineqConstr_.f.rows(); i++) {
+  //      if (!ineqConstr_.dfdxx[i].allFinite()) {
+  //        errorDescription << "Inequality constraint " + std::to_string(i) + " second derivative w.r.t. state is not finite.\n";
+  //      }
+  //      if (!ineqConstr_.dfdxx[i].isApprox(ineqConstr_.dfdxx[i].transpose())) {
+  //        errorDescription << "Inequality constraint " + std::to_string(i) + " second derivative w.r.t. state is not self-adjoint.\n";
+  //      }
+  //      if (LinearAlgebra::symmetricEigenvalues(ineqConstr_.dfdxx[i]).maxCoeff() > Eigen::NumTraits<scalar_t>::epsilon()) {
+  //        errorDescription
+  //            << "Inequality constraint " + std::to_string(i) +
+  //                   " second derivative w.r.t. state is not negative semi-definite. This will lead to a negative-definite penalty
+  //                   Hessian. " "It's largest eigenvalue is " +
+  //                   std::to_string(LinearAlgebra::symmetricEigenvalues(ineqConstr_.dfdxx[i]).maxCoeff()) + ".\n";
+  //        std::cerr << "dfdxx:\n" << ineqConstr_.dfdxx[i] << std::endl;
+  //      }
+  //      if (!ineqConstr_.dfduu[i].allFinite()) {
+  //        errorDescription << "Inequality constraint " + std::to_string(i) + " second derivative w.r.t. input is not finite.\n";
+  //      }
+  //      if (!ineqConstr_.dfduu[i].isApprox(ineqConstr_.dfduu[i].transpose())) {
+  //        errorDescription << "Inequality constraint " + std::to_string(i) + " second derivative w.r.t. input is not self-adjoint.\n";
+  //      }
+  //      if (LinearAlgebra::symmetricEigenvalues(ineqConstr_.dfduu[i]).maxCoeff() > Eigen::NumTraits<scalar_t>::epsilon()) {
+  //        errorDescription
+  //            << "Inequality constraint " + std::to_string(i) +
+  //                   " second derivative w.r.t. input is not negative semi-definite. This will lead to a negative-definite penalty
+  //                   Hessian. " "It's largest eigenvalue is " +
+  //                   std::to_string(LinearAlgebra::symmetricEigenvalues(ineqConstr_.dfduu[i]).maxCoeff()) + ".\n";
+  //      }
+  //      if (!ineqConstr_.dfdux[i].allFinite()) {
+  //        errorDescription << "Inequality constraint " + std::to_string(i) + " second derivative w.r.t. input-state is not finite.\n";
+  //      }
+  //    }
+  //  }
 
   return errorDescription.str();
 }

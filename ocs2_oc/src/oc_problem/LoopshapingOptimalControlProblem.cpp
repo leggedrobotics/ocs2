@@ -42,11 +42,19 @@ OptimalControlProblem create(const OptimalControlProblem& problem, std::shared_p
 
   // Constraints
   augmentedProblem.equalityConstraintPtr = LoopshapingConstraint::create(*problem.equalityConstraintPtr, loopshapingDefinition);
-  augmentedProblem.stateEqualityConstraintPtr = LoopshapingConstraint::create(*problem.stateEqualityConstraintPtr, loopshapingDefinition);
-  augmentedProblem.inequalityConstraintPtr = LoopshapingConstraint::create(*problem.inequalityConstraintPtr, loopshapingDefinition);
+  augmentedProblem.stateEqualityConstraintPtr =
+      LoopshapingSoftConstraint::create(*problem.stateEqualityConstraintPtr, loopshapingDefinition);
+  augmentedProblem.inequalityConstraintPtr = LoopshapingSoftConstraint::create(*problem.inequalityConstraintPtr, loopshapingDefinition);
+  augmentedProblem.stateInequalityConstraintPtr =
+      LoopshapingSoftConstraint::create(*problem.stateInequalityConstraintPtr, loopshapingDefinition);
   augmentedProblem.preJumpEqualityConstraintPtr =
-      LoopshapingConstraint::create(*problem.preJumpEqualityConstraintPtr, loopshapingDefinition);
-  augmentedProblem.finalEqualityConstraintPtr = LoopshapingConstraint::create(*problem.finalEqualityConstraintPtr, loopshapingDefinition);
+      LoopshapingSoftConstraint::create(*problem.preJumpEqualityConstraintPtr, loopshapingDefinition);
+  augmentedProblem.preJumpInequalityConstraintPtr =
+      LoopshapingSoftConstraint::create(*problem.preJumpInequalityConstraintPtr, loopshapingDefinition);
+  augmentedProblem.finalEqualityConstraintPtr =
+      LoopshapingSoftConstraint::create(*problem.finalEqualityConstraintPtr, loopshapingDefinition);
+  augmentedProblem.finalInequalityConstraintPtr =
+      LoopshapingSoftConstraint::create(*problem.finalInequalityConstraintPtr, loopshapingDefinition);
 
   // Soft constraints
   augmentedProblem.softConstraintPtr = LoopshapingSoftConstraint::create(*problem.softConstraintPtr, loopshapingDefinition);

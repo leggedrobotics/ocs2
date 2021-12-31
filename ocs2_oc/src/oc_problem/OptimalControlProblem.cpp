@@ -47,10 +47,13 @@ OptimalControlProblem::OptimalControlProblem()
       finalSoftConstraintPtr(new StateCostCollection),
       /* Constraints */
       equalityConstraintPtr(new StateInputConstraintCollection),
-      stateEqualityConstraintPtr(new StateConstraintCollection),
-      inequalityConstraintPtr(new StateInputConstraintCollection),
-      preJumpEqualityConstraintPtr(new StateConstraintCollection),
-      finalEqualityConstraintPtr(new StateConstraintCollection),
+      stateEqualityConstraintPtr(new StateCostCollection),
+      inequalityConstraintPtr(new StateInputCostCollection),
+      stateInequalityConstraintPtr(new StateCostCollection),
+      preJumpEqualityConstraintPtr(new StateCostCollection),
+      preJumpInequalityConstraintPtr(new StateCostCollection),
+      finalEqualityConstraintPtr(new StateCostCollection),
+      finalInequalityConstraintPtr(new StateCostCollection),
       /* Misc. */
       preComputationPtr(new PreComputation),
       targetTrajectoriesPtr(nullptr) {}
@@ -73,8 +76,11 @@ OptimalControlProblem::OptimalControlProblem(const OptimalControlProblem& other)
       equalityConstraintPtr(other.equalityConstraintPtr->clone()),
       stateEqualityConstraintPtr(other.stateEqualityConstraintPtr->clone()),
       inequalityConstraintPtr(other.inequalityConstraintPtr->clone()),
+      stateInequalityConstraintPtr(other.stateInequalityConstraintPtr->clone()),
       preJumpEqualityConstraintPtr(other.preJumpEqualityConstraintPtr->clone()),
+      preJumpInequalityConstraintPtr(other.preJumpInequalityConstraintPtr->clone()),
       finalEqualityConstraintPtr(other.finalEqualityConstraintPtr->clone()),
+      finalInequalityConstraintPtr(other.finalInequalityConstraintPtr->clone()),
       /* Misc. */
       preComputationPtr(other.preComputationPtr->clone()),
       targetTrajectoriesPtr(other.targetTrajectoriesPtr) {
@@ -112,8 +118,11 @@ void OptimalControlProblem::swap(OptimalControlProblem& other) noexcept {
   equalityConstraintPtr.swap(other.equalityConstraintPtr);
   stateEqualityConstraintPtr.swap(other.stateEqualityConstraintPtr);
   inequalityConstraintPtr.swap(other.inequalityConstraintPtr);
+  stateInequalityConstraintPtr.swap(other.stateInequalityConstraintPtr);
   preJumpEqualityConstraintPtr.swap(other.preJumpEqualityConstraintPtr);
+  preJumpInequalityConstraintPtr.swap(other.preJumpInequalityConstraintPtr);
   finalEqualityConstraintPtr.swap(other.finalEqualityConstraintPtr);
+  finalInequalityConstraintPtr.swap(other.finalInequalityConstraintPtr);
 
   /* Dynamics */
   dynamicsPtr.swap(other.dynamicsPtr);

@@ -103,10 +103,6 @@ struct Settings {
   /** The rate that the coefficient of the quadratic penalty function in augmented Lagrangian method grows. It should be greater than
    * one. */
   scalar_t constraintPenaltyIncreaseRate_ = 2.0;
-  /** Scaling factor, \f$\mu\f$,  for the inequality constraints barrier */
-  scalar_t inequalityConstraintMu_ = 0.0;
-  /** Threshold parameter, \f$\delta\f$, where the relaxed log barrier function changes from log to quadratic */
-  scalar_t inequalityConstraintDelta_ = 1e-6;
 
   /** If true, terms of the Riccati equation will be precomputed before interpolation in the flow-map */
   bool preComputeRiccatiTerms_ = true;

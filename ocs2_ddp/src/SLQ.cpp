@@ -76,9 +76,9 @@ SLQ::SLQ(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalCon
 void SLQ::approximateIntermediateLQ(PrimalDataContainer& primalData) {
   // create alias
   const auto& timeTrajectory = primalData.primalSolution.timeTrajectory_;
-  const auto& postEventIndices = primalData.postEventIndices;
   const auto& stateTrajectory = primalData.primalSolution.stateTrajectory_;
   const auto& inputTrajectory = primalData.primalSolution.inputTrajectory_;
+  const auto& postEventIndices = primalData.primalSolution.postEventIndices_;
   auto& modelDataTrajectory = primalData.modelDataTrajectory;
 
   nextTimeIndex_ = 0;
@@ -196,11 +196,12 @@ void SLQ::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& 
   // set data for Riccati equations
   riccatiEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
   riccatiEquationsPtrStock_[workerIndex]->setData(&(nominalPrimalData_.primalSolution.timeTrajectory_),
-                                                  &(dualData_.projectedModelDataTrajectory), &(nominalPrimalData_.postEventIndices),
+                                                  &(dualData_.projectedModelDataTrajectory),
+                                                  &(nominalPrimalData_.primalSolution.postEventIndices_),
                                                   &(nominalPrimalData_.modelDataEventTimes), &(dualData_.riccatiModificationTrajectory));
 
   const auto& nominalTimeTrajectory = nominalPrimalData_.primalSolution.timeTrajectory_;
-  const auto& nominalEventsPastTheEndIndices = nominalPrimalData_.postEventIndices;
+  const auto& nominalEventsPastTheEndIndices = nominalPrimalData_.primalSolution.postEventIndices_;
 
   auto& valueFunctionTrajectory = dualData_.valueFunctionTrajectory;
 

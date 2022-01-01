@@ -45,18 +45,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ddp/ILQR.h>
 #include <ocs2_ddp/SLQ.h>
 
-enum class Partitioning { SINGLE, MULTI };
+enum class NumThreads { SINGLE, MULTI };
 enum class Constraining { CONSTARINED, UNCONSTRAINED };
 
-class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Type, Constraining, Partitioning>> {
+class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Type, Constraining, NumThreads>> {
  protected:
   static constexpr size_t N = 50;
   static constexpr size_t STATE_DIM = 3;
   static constexpr size_t INPUT_DIM = 2;
-  static constexpr ocs2::scalar_t solutionPrecision = 2e-3;
+  static constexpr ocs2::scalar_t solutionPrecision = 5e-3;
   static constexpr size_t numStateInputConstraints = 2;
-  static constexpr size_t numStateOnlyConstraints = 0;
-  static constexpr size_t numFinalStateOnlyConstraints = 0;
 
   DDPCorrectness() {
     srand(0);
@@ -97,10 +95,6 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
   }
 
   bool createFeasibleRandomProblem() {
-    static_assert(numStateInputConstraints + numStateOnlyConstraints <= INPUT_DIM,
-                  "The number of constraints must be less or equal to INPUT_DIM");
-    static_assert(numFinalStateOnlyConstraints <= STATE_DIM, "The number of final constraints must be less or equal to STATE_DIM");
-
     // dynamics
     systemPtr = ocs2::getOcs2Dynamics(ocs2::getRandomDynamics(STATE_DIM, INPUT_DIM));
     problemPtr.reset(new ocs2::OptimalControlProblem);
@@ -115,10 +109,6 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
     if (std::get<1>(GetParam()) == Constraining::CONSTARINED) {
       problemPtr->equalityConstraintPtr->add(
           "equality", ocs2::getOcs2Constraints(ocs2::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateInputConstraints)));
-      problemPtr->stateEqualityConstraintPtr->add(
-          "stateEquality", ocs2::getOcs2StateOnlyConstraints(ocs2::getRandomConstraints(STATE_DIM, 0, numStateOnlyConstraints)));
-      problemPtr->finalEqualityConstraintPtr->add(
-          "finalEquality", ocs2::getOcs2StateOnlyConstraints(ocs2::getRandomConstraints(STATE_DIM, 0, numFinalStateOnlyConstraints)));
     }
 
     // system operating points
@@ -175,7 +165,7 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
 
   ocs2::scalar_array_t getPartitioningTimes() {
     const auto partitioning = std::get<2>(GetParam());
-    if (partitioning == Partitioning::SINGLE) {
+    if (partitioning == NumThreads::SINGLE) {
       return {startTime, finalTime};
     } else {
       return {startTime, (startTime + finalTime) / 2.0, finalTime};
@@ -253,14 +243,12 @@ constexpr size_t DDPCorrectness::N;
 constexpr size_t DDPCorrectness::STATE_DIM;
 constexpr size_t DDPCorrectness::INPUT_DIM;
 constexpr size_t DDPCorrectness::numStateInputConstraints;
-constexpr size_t DDPCorrectness::numStateOnlyConstraints;
-constexpr size_t DDPCorrectness::numFinalStateOnlyConstraints;
 constexpr ocs2::scalar_t DDPCorrectness::solutionPrecision;
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_P(DDPCorrectness, DISABLED_TestSLQ) {
+TEST_P(DDPCorrectness, TestSLQ) {
   // settings
   ocs2::scalar_array_t partitioningTimes = getPartitioningTimes();
   const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, partitioningTimes.size() - 1, getSearchStrategy());
@@ -304,7 +292,7 @@ std::string testName(const testing::TestParamInfo<DDPCorrectness::ParamType>& in
   name += ocs2::search_strategy::toString(std::get<0>(info.param)) + "__";
   name += std::get<1>(info.param) == Constraining::CONSTARINED ? "CONSTARINED" : "UNCONSTRAINED";
   name += "__";
-  name += std::get<2>(info.param) == Partitioning::SINGLE ? "SINGLE_PARTITION" : "MULTI_PARTITION";
+  name += std::get<2>(info.param) == NumThreads::SINGLE ? "SINGLE_THREAD" : "MULTI_THREAD";
   return name;
 }
 
@@ -312,5 +300,5 @@ INSTANTIATE_TEST_CASE_P(DDPCorrectnessTestCase, DDPCorrectness,
                         testing::Combine(testing::ValuesIn({ocs2::search_strategy::Type::LINE_SEARCH,
                                                             ocs2::search_strategy::Type::LEVENBERG_MARQUARDT}),
                                          testing::ValuesIn({Constraining::CONSTARINED, Constraining::UNCONSTRAINED}),
-                                         testing::ValuesIn({Partitioning::SINGLE, Partitioning::MULTI})),
+                                         testing::ValuesIn({NumThreads::SINGLE, NumThreads::MULTI})),
                         testName);

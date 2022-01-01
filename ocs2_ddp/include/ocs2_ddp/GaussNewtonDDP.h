@@ -39,10 +39,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/Numerics.h>
 #include <ocs2_core/model_data/ModelData.h>
 #include <ocs2_core/model_data/ModelDataLinearInterpolation.h>
-#include <ocs2_core/penalties/MultidimensionalPenalty.h>
 #include <ocs2_core/thread_support/ThreadPool.h>
 
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
+#include <ocs2_oc/oc_data/Metrics.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/oc_solver/SolverBase.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
@@ -426,7 +426,7 @@ class GaussNewtonDDP : public SolverBase {
    * @param [in] lqModelExpectedCost: The expected cost based on the LQ model optimization.
    * @param [out] dstPrimalData: Optimized primal data container if it is an final search. otherwise nominal data container
    */
-  void runSearchStrategy(scalar_t lqModelExpectedCost, PrimalDataContainer& dstPrimalData);
+  void runSearchStrategy(scalar_t lqModelExpectedCost, PrimalDataContainer& dstPrimalData, Metrics& metrics);
 
   /**
    * swap both primal and dual data cache
@@ -517,12 +517,13 @@ class GaussNewtonDDP : public SolverBase {
 
   std::vector<std::unique_ptr<RolloutBase>> dynamicsForwardRolloutPtrStock_;
   std::vector<std::unique_ptr<RolloutBase>> initializerRolloutPtrStock_;
-  std::unique_ptr<MultidimensionalPenalty> penaltyPtr_;
 
   // used for caching the nominal trajectories for which the LQ problem is
   // constructed and solved before terminating run()
   PrimalDataContainer cachedPrimalData_;
   DualDataContainer cachedDualData_;
+
+  Metrics metrics_;
 
   ScalarFunctionQuadraticApproximation heuristics_;
 

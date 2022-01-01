@@ -63,9 +63,9 @@ ILQR::ILQR(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalC
 void ILQR::approximateIntermediateLQ(PrimalDataContainer& primalData) {
   // create alias
   const auto& timeTrajectory = primalData.primalSolution.timeTrajectory_;
-  const auto& postEventIndices = primalData.postEventIndices;
   const auto& stateTrajectory = primalData.primalSolution.stateTrajectory_;
   const auto& inputTrajectory = primalData.primalSolution.inputTrajectory_;
+  const auto& postEventIndices = primalData.primalSolution.postEventIndices_;
   auto& modelDataTrajectory = primalData.modelDataTrajectory;
 
   nextTimeIndex_ = 0;
@@ -135,7 +135,8 @@ void ILQR::discreteLQWorker(size_t workerIndex, scalar_t timeStep, const ModelDa
   modelData.stateInputEqConstr_ = continuousTimeModelData.stateInputEqConstr_;
 
   // inequality constraints
-  modelData.ineqConstr_ = continuousTimeModelData.ineqConstr_;
+  modelData.stateIneqConstr_ = continuousTimeModelData.stateIneqConstr_;
+  modelData.stateInputIneqConstr_ = continuousTimeModelData.stateInputIneqConstr_;
 }
 
 /******************************************************************************************************/
@@ -209,7 +210,7 @@ matrix_t ILQR::computeHamiltonianHessian(const ModelData& modelData, const matri
 void ILQR::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& partitionInterval,
                                   const ScalarFunctionQuadraticApproximation& finalValueFunction) {
   // find all events belonging to the current partition
-  const auto& postEventIndices = nominalPrimalData_.postEventIndices;
+  const auto& postEventIndices = nominalPrimalData_.primalSolution.postEventIndices_;
   const auto firstEventItr = std::upper_bound(postEventIndices.begin(), postEventIndices.end(), partitionInterval.first);
   const auto lastEventItr = std::upper_bound(postEventIndices.begin(), postEventIndices.end(), partitionInterval.second);
 

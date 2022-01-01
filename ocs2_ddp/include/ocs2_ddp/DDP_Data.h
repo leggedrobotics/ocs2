@@ -49,22 +49,19 @@ namespace ocs2 {
  */
 struct PrimalDataContainer {
   PrimalSolution primalSolution;
-  size_array_t postEventIndices;
   // intermediate model data trajectory
   std::vector<ModelData> modelDataTrajectory;
   // event times model data
   std::vector<ModelData> modelDataEventTimes;
 
-  inline void swap(PrimalDataContainer& other) {
+  void swap(PrimalDataContainer& other) {
     primalSolution.swap(other.primalSolution);
-    postEventIndices.swap(other.postEventIndices);
     modelDataTrajectory.swap(other.modelDataTrajectory);
     modelDataEventTimes.swap(other.modelDataEventTimes);
   }
 
-  inline void clear() {
+  void clear() {
     primalSolution.clear();
-    postEventIndices.clear();
     modelDataTrajectory.clear();
     modelDataEventTimes.clear();
   }

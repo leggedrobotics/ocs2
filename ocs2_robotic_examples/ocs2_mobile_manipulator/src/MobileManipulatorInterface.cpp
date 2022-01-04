@@ -59,6 +59,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_mobile_manipulator/cost/QuadraticInputCost.h"
 #include "ocs2_mobile_manipulator/dynamics/DefaultManipulatorDynamics.h"
 #include "ocs2_mobile_manipulator/dynamics/FloatingArmManipulatorDynamics.h"
+#include "ocs2_mobile_manipulator/dynamics/FullyActuatedFloatingArmManipulatorDynamics.h"
 #include "ocs2_mobile_manipulator/dynamics/WheelBasedMobileManipulatorDynamics.h"
 
 // Boost
@@ -134,7 +135,21 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 
   // Default initial state
   initialState_ = vector_t::Zero(manipulatorModelInfo_.stateDim);
-  loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
+  int baseStateDim = manipulatorModelInfo_.stateDim - manipulatorModelInfo_.armDim;
+  int armStateDim = manipulatorModelInfo_.armDim;
+
+  // arm base DOFs initial state
+  if (baseStateDim > 0) {
+    vector_t initialBaseState_ = vector_t::Zero(baseStateDim);
+    loadData::loadEigenMatrix(taskFile, "initialState.base." + manipulatorModelInfo_.manipulatorModelTypeString, initialBaseState_);
+    initialState_.head(baseStateDim) = initialBaseState_;
+  }
+
+  // arm joints DOFs velocity limits
+  vector_t initialArmState_ = vector_t::Zero(armStateDim);
+  loadData::loadEigenMatrix(taskFile, "initialState.arm", initialArmState_);
+  initialState_.tail(armStateDim) = initialArmState_;
+
   std::cerr << "Initial State:   " << initialState_.transpose() << std::endl;
 
   // DDP-MPC settings
@@ -178,6 +193,11 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
           new FloatingArmManipulatorDynamics(manipulatorModelInfo_, "dynamics", libraryFolder, recompileLibraries, true));
       break;
     }
+    case ManipulatorModelType::FullyActuatedFloatingArmManipulator: {
+      problem_.dynamicsPtr.reset(
+          new FullyActuatedFloatingArmManipulatorDynamics(manipulatorModelInfo_, "dynamics", libraryFolder, recompileLibraries, true));
+      break;
+    }
     case ManipulatorModelType::WheelBasedMobileManipulator: {
       problem_.dynamicsPtr.reset(
           new WheelBasedMobileManipulatorDynamics(manipulatorModelInfo_, "dynamics", libraryFolder, recompileLibraries, true));
@@ -207,10 +227,24 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 /******************************************************************************************************/
 std::unique_ptr<StateInputCost> MobileManipulatorInterface::getQuadraticInputCost(const std::string& taskFile) {
   matrix_t R(manipulatorModelInfo_.inputDim, manipulatorModelInfo_.inputDim);
+  R.setZero();
+  int baseInputDim = manipulatorModelInfo_.inputDim - manipulatorModelInfo_.armDim;
+  int armStateDim = manipulatorModelInfo_.armDim;
+
+  // arm base DOFs input costs
+  if (baseInputDim > 0) {
+    matrix_t R_base(baseInputDim, baseInputDim);
+    loadData::loadEigenMatrix(taskFile, "inputCost.R.base." + manipulatorModelInfo_.manipulatorModelTypeString, R_base);
+    R.topLeftCorner(baseInputDim, baseInputDim) = R_base;
+  }
+
+  // arm joints DOFs input costs
+  matrix_t R_arm(armStateDim, armStateDim);
+  loadData::loadEigenMatrix(taskFile, "inputCost.R.arm", R_arm);
+  R.bottomRightCorner(armStateDim, armStateDim) = R_arm;
 
   std::cerr << "\n #### Input Cost Settings: ";
   std::cerr << "\n #### =============================================================================\n";
-  loadData::loadEigenMatrix(taskFile, "inputCost.R", R);
   std::cerr << "inputCost.R:  \n" << R << '\n';
   std::cerr << " #### =============================================================================\n";
 
@@ -309,19 +343,40 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstrain
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointVelocityLimitConstraint(const std::string& taskFile) {
+  int baseInputDim = manipulatorModelInfo_.inputDim - manipulatorModelInfo_.armDim;
+  int armInputDim = manipulatorModelInfo_.armDim;
   vector_t lowerBound(manipulatorModelInfo_.inputDim);
   vector_t upperBound(manipulatorModelInfo_.inputDim);
   scalar_t mu = 1e-2;
   scalar_t delta = 1e-3;
+
+  // arm base DOFs velocity limits
+  if (baseInputDim > 0) {
+    vector_t lowerBoundBase(baseInputDim);
+    vector_t upperBoundBase(baseInputDim);
+
+    loadData::loadEigenMatrix(taskFile, "jointVelocityLimits.lowerBound.base." + manipulatorModelInfo_.manipulatorModelTypeString,
+                              lowerBoundBase);
+    loadData::loadEigenMatrix(taskFile, "jointVelocityLimits.upperBound.base." + manipulatorModelInfo_.manipulatorModelTypeString,
+                              upperBoundBase);
+    lowerBound.head(baseInputDim) = lowerBoundBase;
+    upperBound.head(baseInputDim) = upperBoundBase;
+  }
+
+  // arm joint DOFs velocity limits
+  vector_t lowerBoundArm(armInputDim);
+  vector_t upperBoundArm(armInputDim);
+  loadData::loadEigenMatrix(taskFile, "jointVelocityLimits.lowerBound.arm", lowerBoundArm);
+  loadData::loadEigenMatrix(taskFile, "jointVelocityLimits.upperBound.arm", upperBoundArm);
+  lowerBound.tail(armInputDim) = lowerBoundArm;
+  upperBound.tail(armInputDim) = upperBoundArm;
 
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile, pt);
   const std::string prefix = "jointVelocityLimits.";
   std::cerr << "\n #### JointVelocityLimits Settings: ";
   std::cerr << "\n #### =============================================================================\n";
-  loadData::loadEigenMatrix(taskFile, "jointVelocityLimits.lowerBound", lowerBound);
   std::cerr << " #### 'lowerBound':  " << lowerBound.transpose() << std::endl;
-  loadData::loadEigenMatrix(taskFile, "jointVelocityLimits.upperBound", upperBound);
   std::cerr << " #### 'upperBound':  " << upperBound.transpose() << std::endl;
   loadData::loadPtreeValue(pt, mu, prefix + "mu", true);
   loadData::loadPtreeValue(pt, delta, prefix + "delta", true);

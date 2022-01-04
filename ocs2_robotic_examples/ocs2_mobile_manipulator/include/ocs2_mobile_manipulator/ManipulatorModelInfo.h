@@ -40,9 +40,10 @@ namespace mobile_manipulator {
  * @brief Defines various manipulator models.
  */
 enum class ManipulatorModelType {
-  DefaultManipulator = 0,           // default model from the parsed URDF directly
-  WheelBasedMobileManipulator = 1,  // adds dummy XY-Y joints to the model parsed from URDF
-  FloatingArmManipulator = 2,       // adds dummy XYZ-RPY joints to the model parsed from URDF
+  DefaultManipulator = 0,                   // default model from the parsed URDF directly
+  WheelBasedMobileManipulator = 1,          // adds dummy XY-Y joints to the model parsed from URDF
+  FloatingArmManipulator = 2,               // adds dummy XYZ-RPY joints to the model parsed from URDF
+  FullyActuatedFloatingArmManipulator = 3,  // adds actuatable XYZ-RPY joints to the model parsed from URDF
 };
 
 /**
@@ -51,7 +52,8 @@ enum class ManipulatorModelType {
  * The attributes are filled by resolving the URDF model parsed.
  */
 struct ManipulatorModelInfo {
-  ManipulatorModelType manipulatorModelType;  // type of manipulator: floating-base, wheel-base, default
+  ManipulatorModelType manipulatorModelType;  // type of manipulator: floating-base, fully-actuated floating-base, wheel-base, default
+  std::string manipulatorModelTypeString;     // string containing the name of the manipulator model for retrieving data from the task file
   size_t stateDim;                            // number of states needed to define the system flow map
   size_t inputDim;                            // number of inputs needed to define the system flow map
   size_t armDim;                              // number of DOFs in the robot arm

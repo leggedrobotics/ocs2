@@ -27,11 +27,10 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/integration/TrapezoidalIntegration.h>
+#include "ocs2_ddp/search_strategy/LineSearchStrategy.h"
 
-#include <ocs2_ddp/DDP_HelperFunctions.h>
-#include <ocs2_ddp/HessianCorrection.h>
-#include <ocs2_ddp/search_strategy/LineSearchStrategy.h>
+#include "ocs2_ddp/DDP_HelperFunctions.h"
+#include "ocs2_ddp/HessianCorrection.h"
 
 namespace ocs2 {
 

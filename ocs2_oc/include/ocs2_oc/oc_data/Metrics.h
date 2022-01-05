@@ -58,34 +58,33 @@ namespace ocs2 {
 //  };
 
 struct IntermediateMetrics {
+  //  using value_t = std::pair<vector_t, scalar_t>;
+
   // cost
   scalar_t cost;
   // state equality
-  //    scalar_array_t stateEqPenalty;
-  //    vector_array_t stateEqConstraint;
+  //  std::vector<value_t> stateEqConstraint;
   scalar_t stateEqPenalty;
   // state-input equality
   vector_t stateInputEqConstraint;
   // state inequality
-  //    scalar_array_t stateIneqPenalty;
-  //    vector_array_t stateIneqConstraint;
+  //    std::vector<value_t>  stateIneqConstraint;
   scalar_t stateIneqPenalty;
   // state-input inequality
-  //    scalar_array_t stateInputIneqPenalty;
-  //    vector_array_t stateInputIneqConstraint;
+  //    std::vector<value_t> stateInputIneqConstraint;
   scalar_t stateInputIneqPenalty;
 };
 
 struct EventMetrics {
+  //  using value_t = std::pair<vector_t, scalar_t>;
+
   // cost
   scalar_t cost;
   // state equality
-  //    scalar_array_t stateEqPenalty;
-  //    vector_array_t stateEqConstraint;
+  //    std::vector<value_t> stateEqConstraint;
   scalar_t stateEqPenalty;
   // state inequality
-  //    scalar_array_t stateIneqPenalty;
-  //    vector_array_t stateIneqConstraint;
+  //    std::vector<value_t> stateIneqConstraint;
   scalar_t stateIneqPenalty;
 };
 
@@ -97,10 +96,8 @@ struct Metrics {
 
 inline void swap(EventMetrics& lhs, EventMetrics& rhs) {
   std::swap(lhs.cost, rhs.cost);
-  //    lhs.stateEqPenalty.swap(rhs.stateEqPenalty);
   //    lhs.stateEqConstraint.swap(rhs.stateEqConstraint);
   std::swap(lhs.stateEqPenalty, rhs.stateEqPenalty);
-  //    lhs.stateIneqPenalty.swap(rhs.stateIneqPenalty);
   //    lhs.stateIneqConstraint.swap(rhs.stateIneqConstraint);
   std::swap(lhs.stateIneqPenalty, rhs.stateIneqPenalty);
 }

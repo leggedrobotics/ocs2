@@ -34,16 +34,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
-#include <ocs2_core/model_data/ModelData.h>
 #include <ocs2_core/thread_support/ThreadPool.h>
 
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
-#include <ocs2_oc/oc_solver/PerformanceIndex.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
 
-#include "ocs2_ddp/DDP_HelperFunctions.h"
 #include "ocs2_ddp/search_strategy/SearchStrategyBase.h"
 #include "ocs2_ddp/search_strategy/StrategySettings.h"
 
@@ -63,6 +59,7 @@ class LineSearchStrategy final : public SearchStrategyBase {
    * @param [in] threadPoolRef: A reference to the thread pool instance.
    * @param [in] rolloutRefStock: An array of references to the rollout.
    * @param [in] optimalControlProblemRef: An array of references to the optimal control problem.
+   * @param [in] meritFunc: the merit function which gets the PerformanceIndex and returns the merit function value.
    */
   LineSearchStrategy(search_strategy::Settings baseSettings, line_search::Settings settings, ThreadPool& threadPoolRef,
                      std::vector<std::reference_wrapper<RolloutBase>> rolloutRefStock,

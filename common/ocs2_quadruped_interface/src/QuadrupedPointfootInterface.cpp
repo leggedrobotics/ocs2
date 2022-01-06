@@ -63,8 +63,7 @@ QuadrupedPointfootInterface::QuadrupedPointfootInterface(const kinematic_model_t
   // Reset, the target trajectories pointed to are local
   problemPtr_->targetTrajectoriesPtr = nullptr;
 
-  initializerPtr_.reset(new ComKinoInitializer(getComModel(), *getSwitchedModelModeScheduleManagerPtr(),
-                                               *problemPtr_->equalityConstraintPtr, *problemPtr_->preComputationPtr));
+  initializerPtr_.reset(new ComKinoInitializer(getComModel(), *getSwitchedModelModeScheduleManagerPtr()));
   timeTriggeredRolloutPtr_.reset(new ocs2::TimeTriggeredRollout(*problemPtr_->dynamicsPtr, rolloutSettings()));
 }
 

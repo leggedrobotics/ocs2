@@ -72,6 +72,30 @@ TEST(TestGaitSchedule, setGaitScheduleAtTime) {
   ASSERT_EQ(modeSchedule.modeSequence.back(), 21);
 }
 
+TEST(TestGaitSchedule, setGaitScheduleAtTime_twice_current_gait) {
+  const double t0 = 1.0;
+  const double tGaitDuration = 1.0;
+  const double tInsert = t0 + 2.0 * tGaitDuration;
+
+  // Start with multi mode gait
+  GaitSchedule gaitSchedule(t0, Gait{tGaitDuration, {0.5}, {0, 1}});
+
+  // Set a new gait at twice the current gait
+  gaitSchedule.setGaitAtTime(Gait{1.5, {}, {21}}, tInsert);
+  auto modeSchedule = gaitSchedule.getModeSchedule((tInsert - t0) + 1.5);
+
+  // Check expected mode schedule
+  ASSERT_EQ(modeSchedule.modeSequence[0], 0);
+  ASSERT_DOUBLE_EQ(modeSchedule.eventTimes[0], t0 + 0.5);
+  ASSERT_EQ(modeSchedule.modeSequence[1], 1);
+  ASSERT_DOUBLE_EQ(modeSchedule.eventTimes[1], t0 + 1.0);
+  ASSERT_EQ(modeSchedule.modeSequence[2], 0);
+  ASSERT_DOUBLE_EQ(modeSchedule.eventTimes[2], t0 + 1.5);
+  ASSERT_EQ(modeSchedule.modeSequence[3], 1);
+  ASSERT_DOUBLE_EQ(modeSchedule.eventTimes[3], t0 + 2.0);
+  ASSERT_EQ(modeSchedule.modeSequence[4], 21);
+}
+
 TEST(TestGaitSchedule, setGaitScheduleAtTime_currentTime) {
   const double t0 = 1.0;
   const double tInsert = 1.0;
@@ -89,10 +113,10 @@ TEST(TestGaitSchedule, setGaitScheduleAtTime_currentTime) {
 }
 
 TEST(TestGaitSchedule, setGaitScheduleAtTime_shortenCurrentGait) {
-  const double T = 1.0; // Gait repeats at t = 0.0, 1.0, 2.0
-  const double Tinsert = 0.5; // period of inserted gait
+  const double T = 1.0;        // Gait repeats at t = 0.0, 1.0, 2.0
+  const double Tinsert = 0.5;  // period of inserted gait
   const double tcurr = 0.7;
-  const double tInsert = 0.9; // insert before the current gait ends
+  const double tInsert = 0.9;  // insert before the current gait ends
 
   // Start with multi mode gait
   GaitSchedule gaitSchedule(0.0, Gait{T, {0.5}, {0, 1}});
@@ -141,7 +165,7 @@ TEST(TestGaitSchedule, setGaitScheduleAfterTimeWithNonzeroPhase) {
   auto modeSchedule = gaitSchedule.getModeSchedule(2.0);
 
   ASSERT_DOUBLE_EQ(modeSchedule.eventTimes.size(), 1);
-  ASSERT_DOUBLE_EQ(modeSchedule.eventTimes.front(), 3.0); // First insert opportunity
+  ASSERT_DOUBLE_EQ(modeSchedule.eventTimes.front(), 3.0);  // First insert opportunity
   ASSERT_EQ(modeSchedule.modeSequence.front(), 0);
   ASSERT_EQ(modeSchedule.modeSequence.back(), 1);
 }

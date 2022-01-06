@@ -102,7 +102,7 @@ ocs2::ModeSchedule GaitSchedule::getModeSchedule(scalar_t timeHorizon) const {
 void GaitSchedule::rolloutGaitScheduleTillTime(scalar_t time) {
   scalar_t tGaitEnd = time_ + timeLeftInGait(getCurrentPhase(), getCurrentGait());
   auto gaitIt = gaitSchedule_.begin();
-  while (tGaitEnd < time) {
+  while (tGaitEnd <= time) {
     if (std::next(gaitIt) == gaitSchedule_.end()) {
       // End of the schedule reached: make the repetition of the last gait explicit
       gaitSchedule_.push_back(gaitSchedule_.back());

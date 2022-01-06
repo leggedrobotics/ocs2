@@ -46,9 +46,6 @@ QuadrupedWheeledInterface::QuadrupedWheeledInterface(const kinematic_model_t& ki
     problemPtr_->softConstraintPtr->add(footName + "_FrictionCone", createFrictionConeCost(i));
   }
 
-  initializerPtr_.reset(new ComKinoInitializer(getComModel(), *getSwitchedModelModeScheduleManagerPtr()));
-  timeTriggeredRolloutPtr_.reset(new ocs2::TimeTriggeredRollout(*problemPtr_->dynamicsPtr, rolloutSettings()));
-
   // Initialize cost to be able to query it
   ocs2::TargetTrajectories targetTrajectories({0.0}, {getInitialState()}, {uSystemForWeightCompensation});
   problemPtr_->targetTrajectoriesPtr = &targetTrajectories;
@@ -65,6 +62,10 @@ QuadrupedWheeledInterface::QuadrupedWheeledInterface(const kinematic_model_t& ki
 
   // Reset, the target trajectories pointed to are local
   problemPtr_->targetTrajectoriesPtr = nullptr;
+
+  initializerPtr_.reset(new ComKinoInitializer(getComModel(), *getSwitchedModelModeScheduleManagerPtr(),
+                                               *problemPtr_->equalityConstraintPtr, *problemPtr_->preComputationPtr));
+  timeTriggeredRolloutPtr_.reset(new ocs2::TimeTriggeredRollout(*problemPtr_->dynamicsPtr, rolloutSettings()));
 }
 
 }  // namespace switched_model

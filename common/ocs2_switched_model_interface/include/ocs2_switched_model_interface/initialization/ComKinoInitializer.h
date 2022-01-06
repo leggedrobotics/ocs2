@@ -1,5 +1,7 @@
 #pragma once
 
+#include <ocs2_core/PreComputation.h>
+#include <ocs2_core/constraint/StateInputConstraintCollection.h>
 #include <ocs2_core/initialization/Initializer.h>
 
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
@@ -12,7 +14,8 @@ class ComKinoInitializer : public ocs2::Initializer {
  public:
   using com_model_t = ComModelBase<scalar_t>;
 
-  ComKinoInitializer(const com_model_t& comModel, const SwitchedModelModeScheduleManager& modeScheduleManager);
+  ComKinoInitializer(const com_model_t& comModel, const SwitchedModelModeScheduleManager& modeScheduleManager,
+                     const ocs2::StateInputConstraintCollection& equalityConstraints, const ocs2::PreComputation& preComputation);
 
   ~ComKinoInitializer() override = default;
 
@@ -26,6 +29,8 @@ class ComKinoInitializer : public ocs2::Initializer {
  private:
   std::unique_ptr<com_model_t> comModelPtr_;
   const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
+  std::unique_ptr<ocs2::StateInputConstraintCollection> equalityConstraintPtr_;
+  std::unique_ptr<ocs2::PreComputation> preComputationPtr_;
 };
 
 }  // end of namespace switched_model

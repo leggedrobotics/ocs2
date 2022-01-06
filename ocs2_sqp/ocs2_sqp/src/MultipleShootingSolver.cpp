@@ -423,9 +423,6 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
         auto result =
             multiple_shooting::setupIntermediateNode(ocpDefinition, sensitivityDiscretizer_, projection, ti, dt, x[i], x[i + 1], u[i]);
 
-        std::cout << std::setprecision(9) << std::fixed << "t: " << ti << "\t state-input: " << result.performance.stateInputEqConstraintISE
-                  << "\t dynamics: " << result.performance.stateEqConstraintISE << "\n";
-
         workerPerformance += result.performance;
         dynamics_[i] = std::move(result.dynamics);
         cost_[i] = std::move(result.cost);
@@ -613,6 +610,11 @@ multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIn
       return stepInfo;
     } else {  // Try smaller step
       alpha *= alpha_decay;
+
+      // Detect too small step size during back-tracking to escape early. Prevents going all the way to alpha_min
+      if (alpha * deltaXnorm < settings_.deltaTol && alpha * deltaUnorm < settings_.deltaTol) {
+        break;
+      }
     }
   } while (alpha >= alpha_min);
 

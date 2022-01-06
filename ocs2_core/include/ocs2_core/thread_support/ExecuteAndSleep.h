@@ -44,11 +44,51 @@ namespace ocs2 {
  */
 template <typename Functor>
 void executeAndSleep(Functor f, double frequency) {
-  auto start = std::chrono::high_resolution_clock::now();
+  using clock = std::chrono::high_resolution_clock;
+  const auto start = clock::now();
+
+  // Execute wrapped function
   f();
-  auto end = std::chrono::high_resolution_clock::now();
-  const std::chrono::duration<double> dt(1. / frequency);
-  std::this_thread::sleep_for(dt - (end - start));
+
+  // Compute desired duration rounded to clock decimation
+  const std::chrono::duration<double> desiredDuration(1.0 / frequency);
+  const auto dt = std::chrono::duration_cast<clock::duration>(desiredDuration);
+
+  // Sleep
+  const auto sleepTill = start + dt;
+  std::this_thread::sleep_until(sleepTill);
+}
+
+/**
+ * Helper function to execute a given function at a given rate while a condition is true.
+ * Will not interrupt the function if it is too slow.
+ *
+ * @tparam Functor : function type
+ * @param f : callable object to execute.
+ * @param condition : condition checked every loop, will exit when this function returns false.
+ * @param frequency : the frequency the function should run at.
+ */
+template <typename Functor1, typename Functor2>
+void executeAtRate(Functor1 f, Functor2 condition, double frequency) {
+  using clock = std::chrono::high_resolution_clock;
+
+  // Compute desired duration rounded to clock decimation
+  const std::chrono::duration<double> desiredDuration(1.0 / frequency);
+  const auto dt = std::chrono::duration_cast<clock::duration>(desiredDuration);
+
+  // Initialize timing
+  const auto start = clock::now();
+  auto sleepTill = start + dt;
+
+  // Execution loop
+  while (condition()) {
+    // Execute wrapped function
+    f();
+
+    // Sleep
+    std::this_thread::sleep_until(sleepTill);
+    sleepTill += dt;
+  }
 }
 
 }  // namespace ocs2

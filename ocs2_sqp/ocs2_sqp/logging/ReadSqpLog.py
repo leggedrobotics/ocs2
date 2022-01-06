@@ -4,7 +4,7 @@ import itertools
 
 if __name__ == "__main__":
     # ===== Settings =======
-    fileName = "/tmp/ocs2/sqp_log/log_Tue_Jan__4_23:53:32_2022.txt"
+    fileName = "/tmp/ocs2/sqp_log/log_Thu_Jan__6_15:40:54_2022.txt"
 
     lineWidth = 1.0
     # ======================
@@ -95,6 +95,13 @@ if __name__ == "__main__":
     ax1.plot(data['global_iteration'], data['solveQpTime'], linewidth=lineWidth, label='QP solve')
     ax1.plot(data['global_iteration'], data['linesearchTime'], linewidth=lineWidth, label='Linesearch')
     plt.ylabel('CPU time [ms]')
+    plt.xlabel('Problem number')
+    ax1.legend()
+
+    # Problem init time
+    fig1, ax1 = plt.subplots()
+    ax1.plot(firstIterations['global_iteration'], firstIterations['time'], linewidth=lineWidth, marker='.', label='t0')
+    plt.ylabel('t0 [s]')
     plt.xlabel('Problem number')
     ax1.legend()
 

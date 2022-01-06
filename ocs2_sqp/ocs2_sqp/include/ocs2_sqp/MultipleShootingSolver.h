@@ -39,7 +39,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <hpipm_catkin/HpipmInterface.h>
 
+#include "ocs2_sqp/MultipleShootingLogging.h"
 #include "ocs2_sqp/MultipleShootingSettings.h"
+#include "ocs2_sqp/MultipleShootingSolverStatus.h"
 #include "ocs2_sqp/TimeDiscretization.h"
 
 namespace ocs2 {
@@ -130,10 +132,17 @@ class MultipleShootingSolver : public SolverBase {
   /** Compute 2-norm of the trajectory: sqrt(sum_i v[i]^2)  */
   static scalar_t trajectoryNorm(const vector_array_t& v);
 
+  /** Compute total constraint violation */
+  scalar_t totalConstraintViolation(const PerformanceIndex& performance) const;
+
   /** Decides on the step to take and overrides given trajectories {x(t), u(t)} <- {x(t) + a*dx(t), u(t) + a*du(t)} */
-  std::pair<bool, PerformanceIndex> takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization,
-                                             const vector_t& initState, const OcpSubproblemSolution& subproblemSolution, vector_array_t& x,
-                                             vector_array_t& u);
+  multiple_shooting::StepInfo takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization,
+                                       const vector_t& initState, const OcpSubproblemSolution& subproblemSolution, vector_array_t& x,
+                                       vector_array_t& u);
+
+  /** Determine convergence after a step */
+  multiple_shooting::Convergence checkConvergence(int iteration, const PerformanceIndex& baseline,
+                                                  const multiple_shooting::StepInfo& stepInfo) const;
 
   // Problem definition
   Settings settings_;
@@ -161,7 +170,9 @@ class MultipleShootingSolver : public SolverBase {
   std::vector<PerformanceIndex> performanceIndeces_;
 
   // Benchmarking
+  size_t numProblems_{0};
   size_t totalNumIterations_{0};
+  multiple_shooting::Logger<multiple_shooting::LogEntry> logger_;
   benchmark::RepeatedTimer initializationTimer_;
   benchmark::RepeatedTimer linearQuadraticApproximationTimer_;
   benchmark::RepeatedTimer solveQpTimer_;

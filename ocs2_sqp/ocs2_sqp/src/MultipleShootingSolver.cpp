@@ -29,8 +29,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_sqp/MultipleShootingSolver.h"
 
+#include <fstream>
 #include <iostream>
 #include <numeric>
+
+#include <boost/filesystem.hpp>
 
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/control/LinearController.h>
@@ -46,7 +49,8 @@ MultipleShootingSolver::MultipleShootingSolver(Settings settings, const OptimalC
     : SolverBase(),
       settings_(std::move(settings)),
       hpipmInterface_(hpipm_interface::OcpSize(), settings.hpipmSettings),
-      threadPool_(std::max(settings_.nThreads, size_t(1)) - 1, settings_.threadPriority) {
+      threadPool_(std::max(settings_.nThreads, size_t(1)) - 1, settings_.threadPriority),
+      logger_(settings_.logSize) {
   Eigen::setNbThreads(1);  // No multithreading within Eigen.
   Eigen::initParallel();
 
@@ -71,6 +75,27 @@ MultipleShootingSolver::~MultipleShootingSolver() {
   if (settings_.printSolverStatistics) {
     std::cerr << getBenchmarkingInformation() << std::endl;
   }
+
+  if (settings_.enableLogging) {
+    // Create the folder
+    boost::filesystem::create_directories(settings_.logFilePath);
+
+    // Get current time
+    const auto t = std::chrono::high_resolution_clock::to_time_t(std::chrono::high_resolution_clock::now());
+    std::string timeStamp = std::ctime(&t);
+    std::replace(timeStamp.begin(), timeStamp.end(), ' ', '_');
+    timeStamp.erase(std::remove(timeStamp.begin(), timeStamp.end(), '\n'), timeStamp.end());
+
+    // Write to file
+    const std::string logFileName = settings_.logFilePath + "log_" + timeStamp + ".txt";
+    if (std::ofstream logfile{logFileName}) {
+      logfile << multiple_shooting::logHeader();
+      logger_.write(logfile);
+      std::cerr << "[MultipleShootingSolver] Log written to '" << logFileName << "'\n";
+    } else {
+      std::cerr << "[MultipleShootingSolver] Unable to open '" << logFileName << "'\n";
+    }
+  }
 }
 
 void MultipleShootingSolver::reset() {
@@ -79,7 +104,9 @@ void MultipleShootingSolver::reset() {
   performanceIndeces_.clear();
 
   // reset timers
+  numProblems_ = 0;
   totalNumIterations_ = 0;
+  logger_ = multiple_shooting::Logger<multiple_shooting::LogEntry>(settings_.logSize);
   linearQuadraticApproximationTimer_.reset();
   solveQpTimer_.reset();
   linesearchTimer_.reset();
@@ -145,7 +172,9 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   // Bookkeeping
   performanceIndeces_.clear();
 
-  for (int iter = 0; iter < settings_.sqpIteration; iter++) {
+  int iter = 0;
+  multiple_shooting::Convergence convergence = multiple_shooting::Convergence::FALSE;
+  while (convergence == multiple_shooting::Convergence::FALSE) {
     if (settings_.printSolverStatus || settings_.printLinesearch) {
       std::cerr << "\nSQP iteration: " << iter << "\n";
     }
@@ -163,21 +192,41 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
     // Apply step
     linesearchTimer_.startTimer();
     const auto stepInfo = takeStep(baselinePerformance, timeDiscretization, initState, deltaSolution, x, u);
-    const bool converged = stepInfo.first;
-    performanceIndeces_.push_back(stepInfo.second);
+    performanceIndeces_.push_back(stepInfo.performanceAfterStep);
     linesearchTimer_.endTimer();
 
-    totalNumIterations_++;
-    if (converged) {
-      break;
+    // Check convergence
+    convergence = checkConvergence(iter, baselinePerformance, stepInfo);
+
+    // Logging
+    if (settings_.enableLogging) {
+      auto& logEntry = logger_.currentEntry();
+      logEntry.problemNumber = numProblems_;
+      logEntry.time = initTime;
+      logEntry.iteration = iter;
+      logEntry.linearQuadraticApproximationTime = linearQuadraticApproximationTimer_.getLastIntervalInMilliseconds();
+      logEntry.solveQpTime = solveQpTimer_.getLastIntervalInMilliseconds();
+      logEntry.linesearchTime = linesearchTimer_.getLastIntervalInMilliseconds();
+      logEntry.baselinePerformanceIndex = baselinePerformance;
+      logEntry.totalConstraintViolationBaseline = totalConstraintViolation(baselinePerformance);
+      logEntry.stepInfo = stepInfo;
+      logEntry.convergence = convergence;
+      logger_.advance();
     }
+
+    // Next iteration
+    ++iter;
+    ++totalNumIterations_;
   }
 
   computeControllerTimer_.startTimer();
   setPrimalSolution(timeDiscretization, std::move(x), std::move(u));
   computeControllerTimer_.endTimer();
 
+  ++numProblems_;
+
   if (settings_.printSolverStatus || settings_.printLinesearch) {
+    std::cerr << "\nConvergence : " << toString(convergence) << "\n";
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
     std::cerr << "\n+++++++++++++ SQP solver has terminated ++++++++++++++";
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
@@ -198,11 +247,16 @@ void MultipleShootingSolver::initializeStateInputTrajectories(const vector_t& in
   inputTrajectory.reserve(N);
 
   // Determine till when to use the previous solution
-  const scalar_t interpolateTill = (totalNumIterations_ > 0) ? primalSolution_.timeTrajectory_.back() : timeDiscretization.front().time;
+  scalar_t interpolateStateTill = timeDiscretization.front().time;
+  scalar_t interpolateInputTill = timeDiscretization.front().time;
+  if (primalSolution_.timeTrajectory_.size() >= 2) {
+    interpolateStateTill = primalSolution_.timeTrajectory_.back();
+    interpolateInputTill = primalSolution_.timeTrajectory_[primalSolution_.timeTrajectory_.size() - 2];
+  }
 
   // Initial state
   const scalar_t initTime = getIntervalStart(timeDiscretization[0]);
-  if (initTime < interpolateTill) {
+  if (initTime < interpolateStateTill) {
     stateTrajectory.push_back(
         LinearInterpolation::interpolate(initTime, primalSolution_.timeTrajectory_, primalSolution_.stateTrajectory_));
   } else {
@@ -219,11 +273,11 @@ void MultipleShootingSolver::initializeStateInputTrajectories(const vector_t& in
       const scalar_t time = getIntervalStart(timeDiscretization[i]);
       const scalar_t nextTime = getIntervalEnd(timeDiscretization[i + 1]);
       vector_t input, nextState;
-      if (time < interpolateTill) {
-        std::tie(input, nextState) = multiple_shooting::initializeIntermediateNode(primalSolution_, time, nextTime, stateTrajectory.back());
-      } else {  // Using initializer
+      if (time > interpolateInputTill || nextTime > interpolateStateTill) {  // Using initializer
         std::tie(input, nextState) =
             multiple_shooting::initializeIntermediateNode(*initializerPtr_, time, nextTime, stateTrajectory.back());
+      } else {  // interpolate previous solution
+        std::tie(input, nextState) = multiple_shooting::initializeIntermediateNode(primalSolution_, time, nextTime, stateTrajectory.back());
       }
       inputTrajectory.push_back(std::move(input));
       stateTrajectory.push_back(std::move(nextState));
@@ -368,6 +422,7 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
         const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
         auto result =
             multiple_shooting::setupIntermediateNode(ocpDefinition, sensitivityDiscretizer_, projection, ti, dt, x[i], x[i + 1], u[i]);
+
         workerPerformance += result.performance;
         dynamics_[i] = std::move(result.dynamics);
         cost_[i] = std::move(result.cost);
@@ -454,11 +509,14 @@ scalar_t MultipleShootingSolver::trajectoryNorm(const vector_array_t& v) {
   return std::sqrt(norm);
 }
 
-std::pair<bool, PerformanceIndex> MultipleShootingSolver::takeStep(const PerformanceIndex& baseline,
-                                                                   const std::vector<AnnotatedTime>& timeDiscretization,
-                                                                   const vector_t& initState,
-                                                                   const OcpSubproblemSolution& subproblemSolution, vector_array_t& x,
-                                                                   vector_array_t& u) {
+scalar_t MultipleShootingSolver::totalConstraintViolation(const PerformanceIndex& performance) const {
+  return std::sqrt(performance.stateEqConstraintISE + performance.stateInputEqConstraintISE + performance.inequalityConstraintISE);
+}
+
+multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIndex& baseline,
+                                                             const std::vector<AnnotatedTime>& timeDiscretization,
+                                                             const vector_t& initState, const OcpSubproblemSolution& subproblemSolution,
+                                                             vector_array_t& x, vector_array_t& u) {
   /*
    * Filter linesearch based on:
    * "On the implementation of an interior-point filter line-search algorithm for large-scale nonlinear programming"
@@ -474,27 +532,25 @@ std::pair<bool, PerformanceIndex> MultipleShootingSolver::takeStep(const Perform
   }
 
   // Some settings and shorthands
+  using StepType = multiple_shooting::StepInfo::StepType;
   const scalar_t alpha_decay = settings_.alpha_decay;
   const scalar_t alpha_min = settings_.alpha_min;
   const scalar_t gamma_c = settings_.gamma_c;
   const scalar_t g_max = settings_.g_max;
   const scalar_t g_min = settings_.g_min;
-  const scalar_t costTol = settings_.costTol;
   const scalar_t armijoFactor = settings_.armijoFactor;
   const auto& dx = subproblemSolution.deltaXSol;
   const auto& du = subproblemSolution.deltaUSol;
-  const auto& armijoDescentMetric = subproblemSolution.armijoDescentMetric;
+  const scalar_t armijoDescentMetric = subproblemSolution.armijoDescentMetric;
 
-  // Total Constraint violation function
-  auto constraintViolation = [](const PerformanceIndex& performance) -> scalar_t {
-    return std::sqrt(performance.stateEqConstraintISE + performance.stateInputEqConstraintISE + performance.inequalityConstraintISE);
-  };
-
-  const scalar_t baselineConstraintViolation = constraintViolation(baseline);
+  const scalar_t baselineConstraintViolation = totalConstraintViolation(baseline);
 
   // Update norm
   const scalar_t deltaUnorm = trajectoryNorm(du);
   const scalar_t deltaXnorm = trajectoryNorm(dx);
+
+  // Prepare step info
+  multiple_shooting::StepInfo stepInfo;
 
   scalar_t alpha = 1.0;
   vector_array_t xNew(x.size());
@@ -512,24 +568,29 @@ std::pair<bool, PerformanceIndex> MultipleShootingSolver::takeStep(const Perform
 
     // Compute cost and constraints
     const PerformanceIndex performanceNew = computePerformance(timeDiscretization, initState, xNew, uNew);
-    const scalar_t newConstraintViolation = constraintViolation(performanceNew);
+    const scalar_t newConstraintViolation = totalConstraintViolation(performanceNew);
 
+    // Step acceptance and record step type
     const bool stepAccepted = [&]() {
-      if (newConstraintViolation > std::max(g_max, baselineConstraintViolation)) {
-        // High constraint violation. Only accept decrease in constraints. Prevents new constraint violation higher than g_max
-        return false;
+      if (newConstraintViolation > g_max) {
+        // High constraint violation. Only accept decrease in constraints.
+        stepInfo.stepType = StepType::CONSTRAINT;
+        return newConstraintViolation < ((1.0 - gamma_c) * baselineConstraintViolation);
       } else if (newConstraintViolation < g_min && baselineConstraintViolation < g_min && armijoDescentMetric < 0.0) {
         // With low violation and having a descent direction, require the armijo condition.
-        return (performanceNew.merit < baseline.merit + armijoFactor * alpha * armijoDescentMetric);
+        stepInfo.stepType = StepType::COST;
+        return performanceNew.merit < (baseline.merit + armijoFactor * alpha * armijoDescentMetric);
       } else {
         // Medium violation: either merit or constraints decrease (with small gamma_c mixing of old constraints)
+        stepInfo.stepType = StepType::DUAL;
         return performanceNew.merit < (baseline.merit - gamma_c * baselineConstraintViolation) ||
                newConstraintViolation < ((1.0 - gamma_c) * baselineConstraintViolation);
       }
     }();
 
     if (settings_.printLinesearch) {
-      std::cerr << "Stepsize = " << alpha << (stepAccepted ? std::string{" (Accepted)"} : std::string{" (Rejected)"}) << "\n";
+      std::cerr << "Stepsize: " << alpha << " Type: " << toString(stepInfo.stepType)
+                << (stepAccepted ? std::string{" (Accepted)"} : std::string{" (Rejected)"}) << "\n";
       std::cerr << "|dx| = " << alpha * deltaXnorm << "\t|du| = " << alpha * deltaUnorm << "\n";
       std::cerr << "\tMerit: " << performanceNew.merit << "\t DynamicsISE: " << performanceNew.stateEqConstraintISE
                 << "\t StateInputISE: " << performanceNew.stateInputEqConstraintISE
@@ -537,25 +598,62 @@ std::pair<bool, PerformanceIndex> MultipleShootingSolver::takeStep(const Perform
                 << "\n";
     }
 
-    // Exit conditions
-    const bool stepSizeBelowTol = alpha * deltaUnorm < settings_.deltaTol && alpha * deltaXnorm < settings_.deltaTol;
-
     if (stepAccepted) {  // Return if step accepted
       x = std::move(xNew);
       u = std::move(uNew);
-      const bool improvementBelowTol = std::abs(baseline.merit - performanceNew.merit) < costTol && newConstraintViolation < g_min;
-      return {stepSizeBelowTol || improvementBelowTol, performanceNew};
-    } else if (stepSizeBelowTol) {  // Return if steps get too small without being accepted
-      if (settings_.printLinesearch) {
-        std::cerr << "Stepsize is smaller than provided deltaTol -> converged \n";
-      }
-      return {true, baseline};
+
+      stepInfo.stepSize = alpha;
+      stepInfo.dx_norm = alpha * deltaXnorm;
+      stepInfo.du_norm = alpha * deltaUnorm;
+      stepInfo.performanceAfterStep = performanceNew;
+      stepInfo.totalConstraintViolationAfterStep = newConstraintViolation;
+      return stepInfo;
     } else {  // Try smaller step
       alpha *= alpha_decay;
-    }
-  } while (alpha > alpha_min);
 
-  return {true, baseline};  // Alpha_min reached and no improvement found -> Converged
+      // Detect too small step size during back-tracking to escape early. Prevents going all the way to alpha_min
+      if (alpha * deltaXnorm < settings_.deltaTol && alpha * deltaUnorm < settings_.deltaTol) {
+        break;
+      }
+    }
+  } while (alpha >= alpha_min);
+
+  // Alpha_min reached -> Don't take a step
+  stepInfo.stepSize = 0.0;
+  stepInfo.stepType = StepType::ZERO;
+  stepInfo.dx_norm = 0.0;
+  stepInfo.du_norm = 0.0;
+  stepInfo.performanceAfterStep = baseline;
+  stepInfo.totalConstraintViolationAfterStep = baselineConstraintViolation;
+
+  if (settings_.printLinesearch) {
+    std::cerr << "Stepsize: " << alpha << " Type: " << toString(stepInfo.stepType) << " (Linesearch terminated)"
+              << "\n";
+  }
+
+  return stepInfo;
+}
+
+multiple_shooting::Convergence MultipleShootingSolver::checkConvergence(int iteration, const PerformanceIndex& baseline,
+                                                                        const multiple_shooting::StepInfo& stepInfo) const {
+  using Convergence = multiple_shooting::Convergence;
+  if ((iteration + 1) >= settings_.sqpIteration) {
+    // Converged because the next iteration would exceed the specified number of iterations
+    return Convergence::ITERATIONS;
+  } else if (stepInfo.stepSize < settings_.alpha_min) {
+    // Converged because step size is below the specified minimum
+    return Convergence::STEPSIZE;
+  } else if (std::abs(stepInfo.performanceAfterStep.merit - baseline.merit) < settings_.costTol &&
+             totalConstraintViolation(stepInfo.performanceAfterStep) < settings_.g_min) {
+    // Converged because the change in merit is below the specified tolerance while the constraint violation is below the minimum
+    return Convergence::COST;
+  } else if (stepInfo.dx_norm < settings_.deltaTol && stepInfo.du_norm < settings_.deltaTol) {
+    // Converged because the change in primal variables is below the specified tolerance
+    return Convergence::PRIMAL;
+  } else {
+    // None of the above convergence criteria were met -> not converged.
+    return Convergence::FALSE;
+  }
 }
 
 }  // namespace ocs2

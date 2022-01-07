@@ -101,7 +101,7 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
         return SwingPhase::SwingEvent{contactTimings.front().start, settings_.touchDownVelocity,
                                       &nominalFootholdsPerLeg_[leg].front().plane};
       } else {
-        return SwingPhase::SwingEvent{finalTime + settings_.touchdownAfterHorizon, 0.0, nullptr};
+        return SwingPhase::SwingEvent{finalTime + settings_.referenceExtensionAfterHorizon, 0.0, nullptr};
       }
     }();
 
@@ -130,28 +130,30 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
     }
     footPhases.emplace_back(new StancePhase(nominalFoothold, settings_.errorGain, settings_.terrainMargin));
 
-    // generate swing phase afterwards if the current contact is finite and ends before the horizon
-    if (hasEndTime(currentContactTiming) && currentContactTiming.end < finalTime) {
-      SwingPhase::SwingEvent liftOff{currentContactTiming.end, settings_.liftOffVelocity, &nominalFoothold.plane};
-      SwingPhase::SwingEvent touchDown = [&] {
-        const bool nextContactExists = (i + 1) < contactTimings.size();
-        if (nextContactExists) {
-          return SwingPhase::SwingEvent{contactTimings[i + 1].start, settings_.touchDownVelocity,
-                                        &nominalFootholdsPerLeg_[leg][i + 1].plane};
-        } else {
-          return SwingPhase::SwingEvent{finalTime + settings_.touchdownAfterHorizon, 0.0, nullptr};
-        }
-      }();
-
-      if (settings_.swingTrajectoryFromReference) {
-        swingProfile.nodes = extractSwingProfileFromReference(leg, liftOff, touchDown);
-      }
-
-      applySwingMotionScaling(liftOff, touchDown, swingProfile);
-
-      eventTimes.push_back(currentContactTiming.end);
-      footPhases.emplace_back(new SwingPhase(liftOff, touchDown, swingProfile, terrainModel_.get(), settings_.errorGain));
+    // If contact phase extends beyond the horizon, we can stop planning.
+    if (!hasEndTime(currentContactTiming) || currentContactTiming.end > finalTime) {
+      break;
     }
+
+    // generate swing phase afterwards
+    SwingPhase::SwingEvent liftOff{currentContactTiming.end, settings_.liftOffVelocity, &nominalFoothold.plane};
+    SwingPhase::SwingEvent touchDown = [&] {
+      const bool nextContactExists = (i + 1) < contactTimings.size();
+      if (nextContactExists) {
+        return SwingPhase::SwingEvent{contactTimings[i + 1].start, settings_.touchDownVelocity, &nominalFootholdsPerLeg_[leg][i + 1].plane};
+      } else {
+        return SwingPhase::SwingEvent{finalTime + settings_.referenceExtensionAfterHorizon, 0.0, nullptr};
+      }
+    }();
+
+    if (settings_.swingTrajectoryFromReference) {
+      swingProfile.nodes = extractSwingProfileFromReference(leg, liftOff, touchDown);
+    }
+
+    applySwingMotionScaling(liftOff, touchDown, swingProfile);
+
+    eventTimes.push_back(currentContactTiming.end);
+    footPhases.emplace_back(new SwingPhase(liftOff, touchDown, swingProfile, terrainModel_.get(), settings_.errorGain));
   }
 
   return std::make_pair(eventTimes, std::move(footPhases));
@@ -215,7 +217,8 @@ std::pair<std::vector<ConvexTerrain>, std::vector<vector3_t>> SwingTrajectoryPla
   int contactCount = 0;
   for (const auto& contactPhase : contactTimings) {
     if (hasStartTime(contactPhase)) {
-      const scalar_t contactEndTime = hasEndTime(contactPhase) ? contactPhase.end : std::max(finalTime, contactPhase.start);
+      const scalar_t contactEndTime =
+          hasEndTime(contactPhase) ? contactPhase.end : std::max(finalTime + settings_.referenceExtensionAfterHorizon, contactPhase.start);
       const scalar_t middleContactTime = 0.5 * (contactEndTime + contactPhase.start);
 
       // Compute foot position from cost desired trajectory
@@ -270,6 +273,11 @@ std::pair<std::vector<ConvexTerrain>, std::vector<vector3_t>> SwingTrajectoryPla
       }
 
       ++contactCount;
+
+      // Can stop for this leg if we have processed one contact phase after (or extending across) the horizon
+      if (contactEndTime > finalTime) {
+        break;
+      }
     }
   }
 
@@ -404,7 +412,6 @@ SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& fi
   ocs2::loadData::loadPtreeValue(pt, settings.liftOffVelocity, prefix + "liftOffVelocity", verbose);
   ocs2::loadData::loadPtreeValue(pt, settings.touchDownVelocity, prefix + "touchDownVelocity", verbose);
   ocs2::loadData::loadPtreeValue(pt, settings.swingHeight, prefix + "swingHeight", verbose);
-  ocs2::loadData::loadPtreeValue(pt, settings.touchdownAfterHorizon, prefix + "touchdownAfterHorizon", verbose);
   ocs2::loadData::loadPtreeValue(pt, settings.errorGain, prefix + "errorGain", verbose);
   ocs2::loadData::loadPtreeValue(pt, settings.swingTimeScale, prefix + "swingTimeScale", verbose);
   ocs2::loadData::loadPtreeValue(pt, settings.sdfMidswingMargin, prefix + "sdfMidswingMargin", verbose);
@@ -415,6 +422,7 @@ SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& fi
   ocs2::loadData::loadPtreeValue(pt, settings.invertedPendulumHeight, prefix + "invertedPendulumHeight", verbose);
   ocs2::loadData::loadPtreeValue(pt, settings.nominalLegExtension, prefix + "nominalLegExtension", verbose);
   ocs2::loadData::loadPtreeValue(pt, settings.legOverExtensionPenalty, prefix + "legOverExtensionPenalty", verbose);
+  ocs2::loadData::loadPtreeValue(pt, settings.referenceExtensionAfterHorizon, prefix + "referenceExtensionAfterHorizon", verbose);
   ocs2::loadData::loadPtreeValue(pt, settings.swingTrajectoryFromReference, prefix + "swingTrajectoryFromReference", verbose);
 
   if (verbose) {

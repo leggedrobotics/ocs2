@@ -88,18 +88,18 @@ model_settings
 
   swing_trajectory_settings
   {
-    liftOffVelocity               0.2
-    touchDownVelocity            -0.4
-    swingHeight                   0.08
-    touchdownAfterHorizon         0.2
-    errorGain                     20.0
-    swingTimeScale                0.15
-    sdfMidswingMargin             0.04
-    terrainMargin                 0.0
-    previousFootholdFactor        0.2
-    previousFootholdDeadzone      0.025
-    previousFootholdTimeDeadzone  0.20
-    swingTrajectoryFromReference  0
+    liftOffVelocity                   0.2
+    touchDownVelocity                -0.4
+    swingHeight                       0.08
+    errorGain                         20.0
+    swingTimeScale                    0.15
+    sdfMidswingMargin                 0.04
+    terrainMargin                     0.0
+    previousFootholdFactor            0.2
+    previousFootholdDeadzone          0.025
+    previousFootholdTimeDeadzone      0.20
+    referenceExtensionAfterHorizon    1.0
+    swingTrajectoryFromReference      0
   }
 }
 

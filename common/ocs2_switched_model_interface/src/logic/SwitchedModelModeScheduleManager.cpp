@@ -28,7 +28,7 @@ void SwitchedModelModeScheduleManager::modifyReferences(scalar_t initTime, scala
   {
     auto lockedGaitSchedulePtr = gaitSchedule_.lock();
     lockedGaitSchedulePtr->advanceToTime(initTime);
-    modeSchedule = lockedGaitSchedulePtr->getModeSchedule(1.5 * timeHorizon);
+    modeSchedule = lockedGaitSchedulePtr->getModeSchedule(timeHorizon + swingTrajectoryPtr_->settings().referenceExtensionAfterHorizon);
   }
 
   // Transfer terrain ownership if a new terrain is available

@@ -21,7 +21,7 @@ struct SwingTrajectoryPlannerSettings {
   scalar_t liftOffVelocity = 0.0;
   scalar_t touchDownVelocity = 0.0;
   scalar_t swingHeight = 0.1;
-  scalar_t touchdownAfterHorizon = 0.2;  // swing time added beyond the horizon if there is no touchdown in the current mode schedule
+
   scalar_t errorGain = 0.0;          // proportional gain for returning to the planned swing trajectory. 10-90%-rise_time ~= 2.2 / errorGain
                                      // alternatively can be measured as (velocity feedback) / (tracking error) ([m/s] / [m])
   scalar_t swingTimeScale = 0.15;    // swing phases shorter than this time will be scaled down in height and velocity
@@ -35,6 +35,8 @@ struct SwingTrajectoryPlannerSettings {
 
   scalar_t nominalLegExtension = 0.55;     // Leg extension beyond this length [m] will be penalized in terrain selection
   scalar_t legOverExtensionPenalty = 5.0;  // Weight of the leg overextension penalty
+
+  scalar_t referenceExtensionAfterHorizon = 1.0;  // base and foot references generated for this amount of seconds after the horizon ends.
 
   bool swingTrajectoryFromReference = false;  // Flag to take the swing trajectory from the reference trajectory
 };
@@ -64,6 +66,8 @@ class SwingTrajectoryPlanner {
   std::vector<vector3_t> getHeuristicFootholds(size_t leg) const { return heuristicFootholdsPerLeg_[leg]; }
 
   const SignedDistanceField* getSignedDistanceField() const;
+
+  const SwingTrajectoryPlannerSettings& settings() const { return settings_; }
 
  private:
   void updateLastContact(int leg, scalar_t expectedLiftOff, const vector3_t& currentFootPosition, const TerrainModel& terrainModel);

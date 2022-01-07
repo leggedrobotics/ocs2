@@ -51,6 +51,9 @@ class FootPhase {
   /** Nominal foothold location (upcoming for swinglegs) */
   virtual vector3_t nominalFootholdLocation() const = 0;
 
+  /** Convex terrain that constrains the foot placement. (null for swinglegs) */
+  virtual const ConvexTerrain* nominalFootholdConstraint() const { return nullptr; };
+
   /** Foot reference position in world frame */
   virtual vector3_t getPositionInWorld(scalar_t time) const = 0;
 
@@ -76,12 +79,13 @@ class FootPhase {
 class StancePhase final : public FootPhase {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  explicit StancePhase(const ConvexTerrain& stanceTerrain, scalar_t positionGain = 0.0, scalar_t terrainMargin = 0.0);
+  explicit StancePhase(ConvexTerrain stanceTerrain, scalar_t positionGain = 0.0, scalar_t terrainMargin = 0.0);
   ~StancePhase() override = default;
 
   bool contactFlag() const override { return true; };
   vector3_t normalDirectionInWorldFrame(scalar_t time) const override;
   vector3_t nominalFootholdLocation() const override;
+  const ConvexTerrain* nominalFootholdConstraint() const override;
   vector3_t getPositionInWorld(scalar_t time) const override;
   vector3_t getVelocityInWorld(scalar_t time) const override;
   vector3_t getAccelerationInWorld(scalar_t time) const override;
@@ -89,6 +93,7 @@ class StancePhase final : public FootPhase {
   const FootTangentialConstraintMatrix* getFootTangentialConstraintInWorldFrame() const override;
 
  private:
+  ConvexTerrain stanceTerrain_;
   const vector3_t nominalFootholdLocation_;
   const vector3_t surfaceNormalInWorldFrame_;
   const FootNormalConstraintMatrix footNormalConstraint_;

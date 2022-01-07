@@ -217,59 +217,70 @@ std::pair<std::vector<ConvexTerrain>, std::vector<vector3_t>> SwingTrajectoryPla
   int contactCount = 0;
   for (const auto& contactPhase : contactTimings) {
     if (hasStartTime(contactPhase)) {
+      const scalar_t timeTillContact = contactPhase.start - initTime;
       const scalar_t contactEndTime =
           hasEndTime(contactPhase) ? contactPhase.end : std::max(finalTime + settings_.referenceExtensionAfterHorizon, contactPhase.start);
       const scalar_t middleContactTime = 0.5 * (contactEndTime + contactPhase.start);
 
-      // Compute foot position from cost desired trajectory
-      const vector_t state = targetTrajectories.getDesiredState(middleContactTime);
-      const base_coordinate_t desiredBasePose = state.head<BASE_COORDINATE_SIZE>();
-      const joint_coordinate_t desiredJointPositions = state.segment<JOINT_COORDINATE_SIZE>(2 * BASE_COORDINATE_SIZE);
-      vector3_t referenceFootholdPositionInWorld = kinematicsModel_->footPositionInOriginFrame(leg, desiredBasePose, desiredJointPositions);
-
-      // Add ZMP offset to the first upcoming foothold.
-      if (contactCount == 0) {
-        referenceFootholdPositionInWorld += zmpReactiveOffset;
-      }
-
-      // Get previous terrain projected foothold if there was one at this time
-      vector3_t previousFootholdPositionInWorld = referenceFootholdPositionInWorld;
+      // Get previous foothold if there was one at this time
+      const FootPhase* previousIterationContact = nullptr;
       if (!feetNormalTrajectories_[leg].empty()) {
         const auto& footPhase = getFootPhase(leg, middleContactTime);
         if (footPhase.contactFlag()) {
-          previousFootholdPositionInWorld = footPhase.nominalFootholdLocation();
+          previousIterationContact = &footPhase;
         }
       }
 
-      // Fuse
-      const double timeTillContact = contactPhase.start - initTime;
-      if ((referenceFootholdPositionInWorld - previousFootholdPositionInWorld).norm() < settings_.previousFootholdDeadzone ||
-          timeTillContact < settings_.previousFootholdTimeDeadzone) {
-        referenceFootholdPositionInWorld = previousFootholdPositionInWorld;
-      }
+      if (timeTillContact < settings_.previousFootholdTimeDeadzone && previousIterationContact != nullptr) {
+        // Simply copy the information out of the previous iteration
+        nominalFootholdTerrain.push_back(*previousIterationContact->nominalFootholdConstraint());
+        heuristicFootholds.push_back(previousIterationContact->nominalFootholdLocation());
+      } else {
+        // Compute foot position from cost desired trajectory
+        const vector_t state = targetTrajectories.getDesiredState(middleContactTime);
+        const base_coordinate_t desiredBasePose = state.head<BASE_COORDINATE_SIZE>();
+        const joint_coordinate_t desiredJointPositions = state.segment<JOINT_COORDINATE_SIZE>(2 * BASE_COORDINATE_SIZE);
+        vector3_t referenceFootholdPositionInWorld =
+            kinematicsModel_->footPositionInOriginFrame(leg, desiredBasePose, desiredJointPositions);
 
-      const double lambda = settings_.previousFootholdFactor;
-      const vector3_t nominalFootholdPositionInWorld =
-          lambda * previousFootholdPositionInWorld + (1.0 - lambda) * referenceFootholdPositionInWorld;
+        // Add ZMP offset to the first upcoming foothold.
+        if (contactCount == 0) {
+          referenceFootholdPositionInWorld += zmpReactiveOffset;
+        }
 
-      // kinematic penalty = w * (overExtensionTouchdown^2 + overExtensionLiftoff^2)
-      const vector3_t hipInWorldTouchdown =
-          kinematicsModel_->legRootInOriginFrame(leg, targetTrajectories.getDesiredState(contactPhase.start).head<BASE_COORDINATE_SIZE>());
-      const vector3_t hipInWorldLiftoff =
-          kinematicsModel_->legRootInOriginFrame(leg, targetTrajectories.getDesiredState(contactEndTime).head<BASE_COORDINATE_SIZE>());
-      auto scoringFunction = [&](const vector3_t& footPositionInWorld) {
-        return this->kinematicPenalty(footPositionInWorld, hipInWorldTouchdown, hipInWorldLiftoff);
-      };
+        // Apply Position deadzone and low pass filter w.r.t. previous foothold
+        if (previousIterationContact != nullptr) {
+          vector3_t previousFootholdPositionInWorld = previousIterationContact->nominalFootholdLocation();
 
-      if (contactPhase.start < finalTime) {
-        ConvexTerrain convexTerrain = terrainModel.getConvexTerrainAtPositionInWorld(nominalFootholdPositionInWorld, scoringFunction);
-        nominalFootholdTerrain.push_back(convexTerrain);
-        heuristicFootholds.push_back(nominalFootholdPositionInWorld);
-      } else {  // After the horizon -> we are only interested in the position and orientation
-        ConvexTerrain convexTerrain;
-        convexTerrain.plane = terrainModel.getLocalTerrainAtPositionInWorldAlongGravity(nominalFootholdPositionInWorld, scoringFunction);
-        nominalFootholdTerrain.push_back(convexTerrain);
-        heuristicFootholds.push_back(nominalFootholdPositionInWorld);
+          if ((referenceFootholdPositionInWorld - previousFootholdPositionInWorld).norm() < settings_.previousFootholdDeadzone) {
+            referenceFootholdPositionInWorld = previousFootholdPositionInWorld;
+          } else {
+            // low pass filter
+            const scalar_t lambda = settings_.previousFootholdFactor;
+            referenceFootholdPositionInWorld = lambda * previousFootholdPositionInWorld + (1.0 - lambda) * referenceFootholdPositionInWorld;
+          }
+        }
+
+        // kinematic penalty = w * (overExtensionTouchdown^2 + overExtensionLiftoff^2)
+        const vector3_t hipInWorldTouchdown = kinematicsModel_->legRootInOriginFrame(
+            leg, targetTrajectories.getDesiredState(contactPhase.start).head<BASE_COORDINATE_SIZE>());
+        const vector3_t hipInWorldLiftoff =
+            kinematicsModel_->legRootInOriginFrame(leg, targetTrajectories.getDesiredState(contactEndTime).head<BASE_COORDINATE_SIZE>());
+        auto scoringFunction = [&](const vector3_t& footPositionInWorld) {
+          return this->kinematicPenalty(footPositionInWorld, hipInWorldTouchdown, hipInWorldLiftoff);
+        };
+
+        if (contactPhase.start < finalTime) {
+          ConvexTerrain convexTerrain = terrainModel.getConvexTerrainAtPositionInWorld(referenceFootholdPositionInWorld, scoringFunction);
+          nominalFootholdTerrain.push_back(convexTerrain);
+          heuristicFootholds.push_back(referenceFootholdPositionInWorld);
+        } else {  // After the horizon -> we are only interested in the position and orientation
+          ConvexTerrain convexTerrain;
+          convexTerrain.plane =
+              terrainModel.getLocalTerrainAtPositionInWorldAlongGravity(referenceFootholdPositionInWorld, scoringFunction);
+          nominalFootholdTerrain.push_back(convexTerrain);
+          heuristicFootholds.push_back(referenceFootholdPositionInWorld);
+        }
       }
 
       ++contactCount;

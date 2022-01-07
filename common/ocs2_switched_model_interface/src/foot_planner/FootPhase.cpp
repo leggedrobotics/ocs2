@@ -60,12 +60,13 @@ FootNormalConstraintMatrix computeFootNormalConstraint(const vector3_t& surfaceN
 }
 }  // namespace
 
-StancePhase::StancePhase(const ConvexTerrain& stanceTerrain, scalar_t positionGain, scalar_t terrainMargin)
-    : nominalFootholdLocation_(stanceTerrain.plane.positionInWorld),
-      surfaceNormalInWorldFrame_(surfaceNormalInWorld(stanceTerrain.plane)),
+StancePhase::StancePhase(ConvexTerrain stanceTerrain, scalar_t positionGain, scalar_t terrainMargin)
+    : stanceTerrain_(std::move(stanceTerrain)),
+      nominalFootholdLocation_(stanceTerrain_.plane.positionInWorld),
+      surfaceNormalInWorldFrame_(surfaceNormalInWorld(stanceTerrain_.plane)),
       footNormalConstraint_(
-          computeFootNormalConstraint(surfaceNormalInWorldFrame_, vector3_t::Zero(), stanceTerrain.plane.positionInWorld, positionGain)),
-      footTangentialConstraint_(tangentialConstraintsFromConvexTerrain(stanceTerrain, terrainMargin)) {}
+          computeFootNormalConstraint(surfaceNormalInWorldFrame_, vector3_t::Zero(), stanceTerrain_.plane.positionInWorld, positionGain)),
+      footTangentialConstraint_(tangentialConstraintsFromConvexTerrain(stanceTerrain_, terrainMargin)) {}
 
 vector3_t StancePhase::normalDirectionInWorldFrame(scalar_t time) const {
   return surfaceNormalInWorldFrame_;
@@ -74,6 +75,10 @@ vector3_t StancePhase::normalDirectionInWorldFrame(scalar_t time) const {
 vector3_t StancePhase::nominalFootholdLocation() const {
   return nominalFootholdLocation_;
 }
+
+const ConvexTerrain* StancePhase::nominalFootholdConstraint() const {
+  return &stanceTerrain_;
+};
 
 vector3_t StancePhase::getPositionInWorld(scalar_t time) const {
   return nominalFootholdLocation();

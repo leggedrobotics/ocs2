@@ -97,7 +97,7 @@ model_settings
     terrainMargin                     0.0
     previousFootholdFactor            0.2
     previousFootholdDeadzone          0.025
-    previousFootholdTimeDeadzone      0.20
+    previousFootholdTimeDeadzone      0.30
     referenceExtensionAfterHorizon    1.0
     swingTrajectoryFromReference      0
   }

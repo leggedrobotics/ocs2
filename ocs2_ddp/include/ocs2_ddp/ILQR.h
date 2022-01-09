@@ -83,7 +83,7 @@ class ILQR : public GaussNewtonDDP {
    * @param [in] continuousTimeModelData: continuous time model data.
    * @param [out] modelData: Discretized mode data.
    */
-  void discreteLQWorker(ocs2::SystemDynamicsBase& system, scalar_t time, const vector_t& state, const vector_t& input, scalar_t timeStep,
+  void discreteLQWorker(SystemDynamicsBase& system, scalar_t time, const vector_t& state, const vector_t& input, scalar_t timeStep,
                         const ModelData& continuousTimeModelData, ModelData& modelData);
 
   /****************

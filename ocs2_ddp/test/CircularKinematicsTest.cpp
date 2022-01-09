@@ -90,7 +90,7 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
     ddpSettings.relTolODE_ = 1e-7;
     ddpSettings.maxNumStepsPerSecond_ = 10000;
     ddpSettings.backwardPassIntegratorType_ = ocs2::IntegratorType::ODE45;
-    ddpSettings.maxNumIterations_ = 150;
+    ddpSettings.maxNumIterations_ = 200;
     ddpSettings.minRelCost_ = 1e-3;
     ddpSettings.constraintTolerance_ = 1e-5;
     ddpSettings.constraintPenaltyInitialValue_ = 2.0;

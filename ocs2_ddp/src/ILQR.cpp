@@ -109,8 +109,8 @@ void ILQR::approximateIntermediateLQ(PrimalDataContainer& primalData) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ILQR::discreteLQWorker(ocs2::SystemDynamicsBase& system, scalar_t time, const vector_t& state, const vector_t& input,
-                            scalar_t timeStep, const ModelData& continuousTimeModelData, ModelData& modelData) {
+void ILQR::discreteLQWorker(SystemDynamicsBase& system, scalar_t time, const vector_t& state, const vector_t& input, scalar_t timeStep,
+                            const ModelData& continuousTimeModelData, ModelData& modelData) {
   /*
    * linearize system dynamics
    */

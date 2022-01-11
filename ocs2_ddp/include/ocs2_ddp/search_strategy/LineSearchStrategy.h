@@ -78,7 +78,7 @@ class LineSearchStrategy final : public SearchStrategyBase {
 
   bool run(const scalar_t initTime, const vector_t& initState, const scalar_t finalTime, const scalar_t expectedCost,
            const ModeSchedule& modeSchedule, LinearController& controller, PerformanceIndex& performanceIndex,
-           PrimalSolution& dstPrimalSolution, Metrics& metrics, scalar_t& avgTimeStepFP) override;
+           PrimalSolution& dstPrimalSolution, MetricsCollection& metrics, scalar_t& avgTimeStepFP) override;
 
   std::pair<bool, std::string> checkConvergence(bool unreliableControllerIncrement, const PerformanceIndex& previousPerformanceIndex,
                                                 const PerformanceIndex& currentPerformanceIndex) const override;
@@ -111,7 +111,7 @@ class LineSearchStrategy final : public SearchStrategyBase {
     std::atomic<scalar_t> stepLengthStar{0.0};
     PerformanceIndex* performanceIndexStarPtr;
     PrimalSolution* primalSolutionStarPtr;
-    Metrics* metricsStarPtr;
+    MetricsCollection* metricsStarPtr;
     LinearController* controllerStarPtr;
   };
 
@@ -132,7 +132,7 @@ class LineSearchStrategy final : public SearchStrategyBase {
   struct TemporaryMemory {
     PerformanceIndex performanceIndex;
     PrimalSolution primalSolution;
-    Metrics metrics;
+    MetricsCollection metrics;
   };
 
   std::vector<TemporaryMemory> temporaryMemories_;

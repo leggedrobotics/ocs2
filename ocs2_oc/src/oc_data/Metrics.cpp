@@ -29,95 +29,70 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_oc/oc_data/Metrics.h"
 
-#include <algorithm>
-#include <iostream>
-
-#include <ocs2_core/PreComputation.h>
-#include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
-
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-IntermediateMetrics computeIntermediateMetrics(OptimalControlProblem& problem, scalar_t t, const vector_t& x, const vector_t& u) {
-  auto& preComputation = *problem.preComputationPtr;
-  const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
+void swap(Metrics& lhs, Metrics& rhs) {
+  // Cost
+  std::swap(lhs.cost, rhs.cost);
 
-  IntermediateMetrics metrics;
+  // Equality constraints
+  lhs.stateEqConstraint.swap(rhs.stateEqConstraint);
+  lhs.stateInputEqConstraint.swap(rhs.stateInputEqConstraint);
 
-  // cost
-  metrics.cost = computeCost(problem, t, x, u);
+  // Lagrangians
+  //  lhs.stateEqLagrangian.swap(rhs.stateEqLagrangian);
+  //  lhs.stateIneqLagrangian.swap(rhs.stateIneqLagrangian);
+  //  lhs.stateInputEqLagrangian.swap(rhs.stateInputEqLagrangian);
+  //  lhs.stateInputIneqLagrangian.swap(rhs.stateInputIneqLagrangian);
 
-  // state equality constraint
-  //    std::tie(metrics.stateEqConstraint, metrics.stateEqPenalty) =
-  //        problem.stateEqualityConstraintPtr->getValue(t, x, l.stateEq, preComputation);
-  metrics.stateEqPenalty = problem.stateEqualityConstraintPtr->getValue(t, x, targetTrajectories, preComputation);
-
-  // state-input equality constraint
-  metrics.stateInputEqConstraint = problem.equalityConstraintPtr->getValue(t, x, u, preComputation);
-
-  // state inequality constraint
-  //    std::tie(metrics.stateIneqConstraint, metrics.stateIneqPenalty) =
-  //        problem.stateInequalityConstraintPtr->getValue(t, x, l.stateIneq, preComputation);
-  metrics.stateIneqPenalty = problem.stateInequalityConstraintPtr->getValue(t, x, targetTrajectories, preComputation);
-
-  // state-input inequality constraints
-  //    std::tie(metrics.stateInputIneqConstraint, metrics.stateInputIneqPenalty) =
-  //        problem.inequalityConstraintPtr->getValue(t, x, u, l.stateInputIneq, preComputation);
-  metrics.stateInputIneqPenalty = problem.inequalityConstraintPtr->getValue(t, x, u, targetTrajectories, preComputation);
-
-  return metrics;
+  std::swap(lhs.stateEqLagrangian, rhs.stateEqLagrangian);
+  std::swap(lhs.stateIneqLagrangian, rhs.stateIneqLagrangian);
+  std::swap(lhs.stateInputEqLagrangian, rhs.stateInputEqLagrangian);
+  std::swap(lhs.stateInputIneqLagrangian, rhs.stateInputIneqLagrangian);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-EventMetrics computeEventMetrics(OptimalControlProblem& problem, scalar_t t, const vector_t& x) {
-  auto& preComputation = *problem.preComputationPtr;
-  const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
+void clear(Metrics& m) {
+  // Cost
+  m.cost = 0.0;
 
-  EventMetrics metrics;
+  // Equality constraints
+  m.stateEqConstraint = vector_t();
+  m.stateInputEqConstraint = vector_t();
 
-  // cost
-  metrics.cost = computeEventCost(problem, t, x);
+  // Lagrangians
+  //  m.stateEqLagrangian.clear();
+  //  m.stateIneqLagrangian.clear();
+  //  m.stateInputEqLagrangian.clear();
+  //  m.stateInputIneqLagrangian.clear();
 
-  // state equality constraint
-  //     std::tie(metrics.stateEqConstraint, metrics.stateEqPenalty) =
-  //         problem.preJumpEqualityConstraintPtr->getValue(t, x, l.stateEq, preComputation);
-  metrics.stateEqPenalty = problem.preJumpEqualityConstraintPtr->getValue(t, x, targetTrajectories, preComputation);
-
-  // state inequality constraint
-  //     std::tie(metrics.stateIneqConstraint, metrics.stateIneqPenalty) =
-  //         problem.preJumpInequalityConstraintPtr->getValue(t, x, l.stateIneq, preComputation);
-  metrics.stateIneqPenalty = problem.preJumpInequalityConstraintPtr->getValue(t, x, targetTrajectories, preComputation);
-
-  return metrics;
+  m.stateEqLagrangian = 0.0;
+  m.stateIneqLagrangian = 0.0;
+  m.stateInputEqLagrangian = 0.0;
+  m.stateInputIneqLagrangian = 0.0;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-EventMetrics computeFinalMetrics(OptimalControlProblem& problem, scalar_t t, const vector_t& x) {
-  auto& preComputation = *problem.preComputationPtr;
-  const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
+void swap(MetricsCollection& lhs, MetricsCollection& rhs) {
+  swap(lhs.final, rhs.final);
+  lhs.preJumps.swap(rhs.preJumps);
+  lhs.intermediates.swap(rhs.intermediates);
+}
 
-  EventMetrics metrics;
-
-  // cost
-  metrics.cost = computeFinalCost(problem, t, x);
-
-  // state equality constraint
-  //    std::tie(metrics.stateEqConstraint, metrics.stateEqPenalty) =
-  //        problem.finalEqualityConstraintPtr->getValue(t, x, targetTrajectories, preComputation);
-  metrics.stateEqPenalty = problem.finalEqualityConstraintPtr->getValue(t, x, targetTrajectories, preComputation);
-
-  // state inequality constraint
-  //    std::tie(metrics.stateIneqConstraint, metrics.stateIneqPenalty) =
-  //        problem.finalInequalityConstraintPtr->getValue(t, x, targetTrajectories, preComputation);
-  metrics.stateIneqPenalty = problem.finalInequalityConstraintPtr->getValue(t, x, targetTrajectories, preComputation);
-
-  return metrics;
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void clear(MetricsCollection& m) {
+  clear(m.final);
+  m.preJumps.clear();
+  m.intermediates.clear();
 }
 
 }  // namespace ocs2

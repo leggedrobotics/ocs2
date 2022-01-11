@@ -34,102 +34,43 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-//  struct IntermediateMultipliersRef {
-//    IntermediateMultipliersRef(const vector_array_t& stateEqArg, const vector_array_t& stateIneqArg, const vector_array_t&
-//    stateInputIneqArg)
-//        : stateEq(stateEqArg), stateIneq(stateIneqArg), stateInputIneq(stateInputIneqArg) {}
-//
-//    // state equality
-//    const vector_array_t& stateEq;
-//    // state inequality
-//    const vector_array_t& stateIneq;
-//    // state-input inequality
-//    const vector_array_t& stateInputIneq;
-//  };
-
-//  struct EventMultipliersRef {
-//    EventMultipliersRef(const vector_array_t& stateEqArg, const vector_array_t& stateIneqArg)
-//        : stateEq(stateEqArg), stateIneq(stateIneqArg) {}
-//
-//    // state equality
-//    const vector_array_t& stateEq;
-//    // state inequality
-//    const vector_array_t& stateIneq;
-//  };
-
-struct IntermediateMetrics {
-  //  using value_t = std::pair<vector_t, scalar_t>;
-
-  // cost
-  scalar_t cost;
-  // state equality
-  //  std::vector<value_t> stateEqConstraint;
-  scalar_t stateEqPenalty;
-  // state-input equality
-  vector_t stateInputEqConstraint;
-  // state inequality
-  //    std::vector<value_t>  stateIneqConstraint;
-  scalar_t stateIneqPenalty;
-  // state-input inequality
-  //    std::vector<value_t> stateInputIneqConstraint;
-  scalar_t stateInputIneqPenalty;
-};
-
-struct EventMetrics {
-  //  using value_t = std::pair<vector_t, scalar_t>;
-
-  // cost
-  scalar_t cost;
-  // state equality
-  //    std::vector<value_t> stateEqConstraint;
-  scalar_t stateEqPenalty;
-  // state inequality
-  //    std::vector<value_t> stateIneqConstraint;
-  scalar_t stateIneqPenalty;
-};
-
 struct Metrics {
-  EventMetrics final;
-  std::vector<EventMetrics> events;
-  std::vector<IntermediateMetrics> intermediates;
+  using value_t = std::pair<vector_t, scalar_t>;
+
+  // Cost
+  scalar_t cost;
+
+  // Equality constraints
+  vector_t stateEqConstraint;
+  vector_t stateInputEqConstraint;
+
+  // Lagrangians
+  //  std::vector<value_t> stateEqLagrangian;
+  //  std::vector<value_t> stateIneqLagrangian;
+  //  std::vector<value_t> stateInputEqLagrangian;
+  //  std::vector<value_t> stateInputIneqLagrangian;
+  scalar_t stateEqLagrangian;
+  scalar_t stateIneqLagrangian;
+  scalar_t stateInputEqLagrangian;
+  scalar_t stateInputIneqLagrangian;
 };
 
-inline void swap(EventMetrics& lhs, EventMetrics& rhs) {
-  std::swap(lhs.cost, rhs.cost);
-  //    lhs.stateEqConstraint.swap(rhs.stateEqConstraint);
-  std::swap(lhs.stateEqPenalty, rhs.stateEqPenalty);
-  //    lhs.stateIneqConstraint.swap(rhs.stateIneqConstraint);
-  std::swap(lhs.stateIneqPenalty, rhs.stateIneqPenalty);
-}
+struct MetricsCollection {
+  Metrics final;
+  std::vector<Metrics> preJumps;
+  std::vector<Metrics> intermediates;
+};
 
-inline void swap(Metrics& lhs, Metrics& rhs) {
-  swap(lhs.final, rhs.final);
-  lhs.events.swap(rhs.events);
-  lhs.intermediates.swap(rhs.intermediates);
-}
+/** Exchanges the given values of Metrics */
+void swap(Metrics& lhs, Metrics& rhs);
 
-/**
- * Compute the intermediate-time metrics (i.e. cost, softConstraints, and constraints).
- *
- * @note It is assumed that the precomputation request is already made.
- * problem.preComputationPtr->request(Request::Cost + Request::Constraint + Request::SoftConstraint, t, x, u)
- */
-IntermediateMetrics computeIntermediateMetrics(OptimalControlProblem& problem, scalar_t t, const vector_t& x, const vector_t& u);
+/** Clears the value of the given Metrics */
+void clear(Metrics& m);
 
-/**
- * Compute the event-time metrics (i.e. cost, softConstraints, and constraints).
- *
- * @note It is assumed that the precomputation request is already made.
- * problem.preComputationPtr->requestPreJump(Request::Cost + Request::Constraint + Request::SoftConstraint, t, x)
- */
-EventMetrics computeEventMetrics(OptimalControlProblem& problem, scalar_t t, const vector_t& x);
+/** Exchanges the given values of MetricsCollection */
+void swap(MetricsCollection& lhs, MetricsCollection& rhs);
 
-/**
- * Compute the final-time metrics (i.e. cost, softConstraints, and constraints).
- *
- * @note It is assumed that the precomputation request is already made.
- * problem.preComputationPtr->requestFinal(Request::Cost + Request::Constraint + Request::SoftConstraint, t, x)
- */
-EventMetrics computeFinalMetrics(OptimalControlProblem& problem, scalar_t t, const vector_t& x);
+/** Clears the value of the given MetricsCollection */
+void clear(MetricsCollection& m);
 
 }  // namespace ocs2

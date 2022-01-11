@@ -54,6 +54,23 @@ namespace ocs2 {
 GaussNewtonDDP::GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalControlProblem& optimalControlProblem,
                                const Initializer& initializer)
     : ddpSettings_(std::move(ddpSettings)), threadPool_(std::max(ddpSettings_.nThreads_, size_t(1)) - 1, ddpSettings_.threadPriority_) {
+  // check OCP
+  if (!optimalControlProblem.stateEqualityConstraintPtr->empty()) {
+    throw std::runtime_error(
+        "[GaussNewtonDDP] DDP does not support intermediate state-only equality constraints (a.k.a. stateEqualityConstraintPtr), instead "
+        "use the Lagrangian method!");
+  }
+  if (!optimalControlProblem.preJumpEqualityConstraintPtr->empty()) {
+    throw std::runtime_error(
+        "[GaussNewtonDDP] DDP does not support prejump equality constraints (a.k.a. preJumpEqualityConstraintPtr), instead use the "
+        "Lagrangian method!");
+  }
+  if (!optimalControlProblem.finalEqualityConstraintPtr->empty()) {
+    throw std::runtime_error(
+        "[GaussNewtonDDP] DDP does not support final equality constraints (a.k.a. finalEqualityConstraintPtr), instead use the Lagrangian "
+        "method!");
+  }
+
   // Dynamics, Constraints, derivatives, and cost
   dynamicsForwardRolloutPtrStock_.reserve(ddpSettings_.nThreads_);
   initializerRolloutPtrStock_.reserve(ddpSettings_.nThreads_);
@@ -306,47 +323,41 @@ ScalarFunctionQuadraticApproximation GaussNewtonDDP::getValueFunctionImpl(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ScalarFunctionQuadraticApproximation GaussNewtonDDP::getHamiltonian(scalar_t time, const vector_t& state, const vector_t& input) const {
-  ModelData modelData;
-
+ScalarFunctionQuadraticApproximation GaussNewtonDDP::getHamiltonian(scalar_t time, const vector_t& state, const vector_t& input) {
   // perform the LQ approximation of the OC problem
   // note that the cost already includes:
   // - state-input intermediate cost
   // - state-input soft constraint cost
   // - state-only intermediate cost
   // - state-only soft constraint cost
-  LinearQuadraticApproximator lqapprox(optimalControlProblemStock_[0], settings().checkNumericalStability_);
-  lqapprox.approximateLQProblem(time, state, input, modelData);
-  modelData.time_ = time;
-  modelData.stateDim_ = state.rows();
-  modelData.inputDim_ = input.rows();
-  modelData.dynamicsBias_.setZero(state.rows());
-  modelData.checkSizes(state.rows(), input.rows());
-
-  // augment the cost with state-only equality and state-input inequality constraint terms
-  augmentCostWorker(0, constraintPenaltyCoefficients_.stateEqConstrPenaltyCoeff, 0.0, modelData);
+  const ModelData modelData = [&]() {
+    ModelData md;
+    ocs2::approximateIntermediateLQ(optimalControlProblemStock_[0], time, state, input, md);
+    return md;
+  }();
+  checkSizes(modelData, state.rows(), input.rows());
 
   // initialize the Hamiltonian with the augmented cost
-  ScalarFunctionQuadraticApproximation hamiltonian(modelData.cost_);
+  ScalarFunctionQuadraticApproximation hamiltonian(modelData.cost);
 
   // add the state-input equality constraint cost nu(x) * g(x,u) to the Hamiltonian
   // note that nu has no approximation and is used as a constant
   const vector_t nu = getStateInputEqualityConstraintLagrangian(time, state);
-  hamiltonian.f += nu.dot(modelData.stateInputEqConstr_.f);
-  hamiltonian.dfdx.noalias() += modelData.stateInputEqConstr_.dfdx.transpose() * nu;
-  hamiltonian.dfdu.noalias() += modelData.stateInputEqConstr_.dfdu.transpose() * nu;
+  hamiltonian.f += nu.dot(modelData.stateInputEqConstraint.f);
+  hamiltonian.dfdx.noalias() += modelData.stateInputEqConstraint.dfdx.transpose() * nu;
+  hamiltonian.dfdu.noalias() += modelData.stateInputEqConstraint.dfdu.transpose() * nu;
   // dfdxx is zero for the state-input equality constraint cost
   // dfdux is zero for the state-input equality constraint cost
   // dfduu is zero for the state-input equality constraint cost
 
   // add the "future cost" dVdx(x) * f(x,u) to the Hamiltonian
   const ScalarFunctionQuadraticApproximation V = getValueFunction(time, state);
-  const matrix_t dVdxx_dfdx = V.dfdxx.transpose() * modelData.dynamics_.dfdx;
-  hamiltonian.f += V.dfdx.dot(modelData.dynamics_.f);
-  hamiltonian.dfdx.noalias() += V.dfdxx.transpose() * modelData.dynamics_.f + modelData.dynamics_.dfdx.transpose() * V.dfdx;
-  hamiltonian.dfdu.noalias() += modelData.dynamics_.dfdu.transpose() * V.dfdx;
+  const matrix_t dVdxx_dfdx = V.dfdxx.transpose() * modelData.dynamics.dfdx;
+  hamiltonian.f += V.dfdx.dot(modelData.dynamics.f);
+  hamiltonian.dfdx.noalias() += V.dfdxx.transpose() * modelData.dynamics.f + modelData.dynamics.dfdx.transpose() * V.dfdx;
+  hamiltonian.dfdu.noalias() += modelData.dynamics.dfdu.transpose() * V.dfdx;
   hamiltonian.dfdxx.noalias() += dVdxx_dfdx + dVdxx_dfdx.transpose();
-  hamiltonian.dfdux.noalias() += modelData.dynamics_.dfdu.transpose() * V.dfdxx;
+  hamiltonian.dfdux.noalias() += modelData.dynamics.dfdu.transpose() * V.dfdxx;
   // dfduu is zero for the "future cost"
 
   return hamiltonian;
@@ -366,9 +377,9 @@ vector_t GaussNewtonDDP::getStateInputEqualityConstraintLagrangianImpl(scalar_t 
   const vector_t Rv = LinearInterpolation::interpolate(indexAlpha, primalData.modelDataTrajectory, model_data::cost_dfdu);
 
   const vector_t EvProjected =
-      LinearInterpolation::interpolate(indexAlpha, dualData.projectedModelDataTrajectory, model_data::stateInputEqConstr_f);
+      LinearInterpolation::interpolate(indexAlpha, dualData.projectedModelDataTrajectory, model_data::stateInputEqConstraint_f);
   const matrix_t CmProjected =
-      LinearInterpolation::interpolate(indexAlpha, dualData.projectedModelDataTrajectory, model_data::stateInputEqConstr_dfdx);
+      LinearInterpolation::interpolate(indexAlpha, dualData.projectedModelDataTrajectory, model_data::stateInputEqConstraint_dfdx);
   const matrix_t Hm =
       LinearInterpolation::interpolate(indexAlpha, dualData.riccatiModificationTrajectory, riccati_modification::hamiltonianHessian);
   const matrix_t DmDagger =
@@ -542,9 +553,6 @@ scalar_t GaussNewtonDDP::rolloutInitialTrajectory(PrimalDataContainer& primalDat
     inputTrajectory.insert(inputTrajectory.end(), inputTrajectoryTail.begin(), inputTrajectoryTail.end());
   }
 
-  // update model data trajectory and model data at event times
-  initializeModelData(primalData.primalSolution, primalData.modelDataTrajectory, primalData.modelDataEventTimes);
-
   if (!xCurrent.allFinite()) {
     throw std::runtime_error("System became unstable during the rollout.");
   }
@@ -573,20 +581,14 @@ void GaussNewtonDDP::printRolloutInfo() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t GaussNewtonDDP::calculateRolloutMerit(const PerformanceIndex& performanceIndex) const {
-  // total cost
+  // cost
   scalar_t merit = performanceIndex.totalCost;
-
-  // intermediate state-only equality constraints
-  merit += constraintPenaltyCoefficients_.stateEqConstrPenaltyCoeff * performanceIndex.stateEqConstraintISE;
-
-  // final state-only equality constraints
-  merit += constraintPenaltyCoefficients_.stateFinalEqConstrPenaltyCoeff * performanceIndex.stateEqFinalConstraintSSE;
-
-  // intermediate state-input equality constraints
-  merit += constraintPenaltyCoefficients_.stateInputEqConstrPenaltyCoeff * std::sqrt(performanceIndex.stateInputEqConstraintISE);
-
-  // intermediate inequality constraints
-  merit += performanceIndex.inequalityConstraintPenalty;
+  // state/state-input equality constraints
+  merit += constraintPenaltyCoefficients_.penaltyCoeff * std::sqrt(performanceIndex.equalityConstraintsSSE);
+  // state/state-input equality Lagrangians
+  merit += performanceIndex.equalityLagrangiansPenalty;
+  // state/state-input inequality Lagrangians
+  merit += performanceIndex.inequalityLagrangiansPenalty;
 
   return merit;
 }
@@ -758,51 +760,44 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
   // perform the LQ approximation for intermediate times
   approximateIntermediateLQ(nominalPrimalData_);
 
-  // augment the intermediate cost by performing augmentCostWorker
-  nextTimeIndex_ = 0;
-  nextTaskId_ = 0;
-
-  const size_t N = nominalPrimalData_.primalSolution.timeTrajectory_.size();
-  auto task = [this, N]() {
-    size_t timeIndex;
-    size_t taskId = nextTaskId_++;  // assign task ID (atomic)
-
-    // get next time index is atomic
-    while ((timeIndex = nextTimeIndex_++) < N) {
-      // augment cost
-      augmentCostWorker(taskId, constraintPenaltyCoefficients_.stateEqConstrPenaltyCoeff, 0.0,
-                        nominalPrimalData_.modelDataTrajectory[timeIndex]);
-    }
-  };
-  runParallel(task, ddpSettings_.nThreads_);
-
   /*
    * compute and augment the LQ approximation of the event times.
    * also call shiftHessian on the event time's cost 2nd order derivative.
    */
   const size_t NE = nominalPrimalData_.primalSolution.postEventIndices_.size();
+  nominalPrimalData_.modelDataEventTimes.clear();
+  nominalPrimalData_.modelDataEventTimes.resize(NE);
   if (NE > 0) {
     nextTimeIndex_ = 0;
     nextTaskId_ = 0;
     auto task = [this, NE]() {
-      int timeIndex;
       const size_t taskId = nextTaskId_++;  // assign task ID (atomic)
 
-      LinearQuadraticApproximator lqapprox(optimalControlProblemStock_[taskId], ddpSettings_.checkNumericalStability_);
-
-      // nextTimeIndex_ is atomic
+      // timeIndex is atomic
+      int timeIndex;
       while ((timeIndex = nextTimeIndex_++) < NE) {
         ModelData& modelData = nominalPrimalData_.modelDataEventTimes[timeIndex];
-
-        // execute approximateLQ for the pre-event node
         const size_t preEventIndex = nominalPrimalData_.primalSolution.postEventIndices_[timeIndex] - 1;
-        lqapprox.approximateLQProblemAtEventTime(nominalPrimalData_.primalSolution.timeTrajectory_[preEventIndex],
-                                                 nominalPrimalData_.primalSolution.stateTrajectory_[preEventIndex], modelData);
-        // augment cost
-        augmentCostWorker(taskId, constraintPenaltyCoefficients_.stateFinalEqConstrPenaltyCoeff, 0.0, modelData);
+        const auto& time = nominalPrimalData_.primalSolution.timeTrajectory_[preEventIndex];
+        const auto& state = nominalPrimalData_.primalSolution.stateTrajectory_[preEventIndex];
+
+        // approximate LQ for the pre-event node
+        ocs2::approximatePreJumpLQ(optimalControlProblemStock_[taskId], time, state, modelData);
+
+        // checking the numerical properties
+        if (ddpSettings_.checkNumericalStability_) {
+          checkSizes(modelData, state.rows(), 0);
+          const std::string err =
+              checkDynamicsProperties(modelData) + checkCostProperties(modelData) + checkConstraintProperties(modelData);
+          if (!err.empty()) {
+            throw std::runtime_error(
+                "[GaussNewtonDDP::approximateOptimalControlProblem] Ill-posed problem at event time: " + std::to_string(time) + "\n" + err);
+          }
+        }
+
         // shift Hessian
         if (ddpSettings_.strategy_ == search_strategy::Type::LINE_SEARCH) {
-          hessian_correction::shiftHessian(ddpSettings_.lineSearch_.hessianCorrectionStrategy_, modelData.cost_.dfdxx,
+          hessian_correction::shiftHessian(ddpSettings_.lineSearch_.hessianCorrectionStrategy_, modelData.cost.dfdxx,
                                            ddpSettings_.lineSearch_.hessianCorrectionMultiple_);
         }
       }
@@ -813,16 +808,27 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
   /*
    * compute the Heuristics function at the final time. Also call shiftHessian on the Heuristics 2nd order derivative.
    */
-  ModelData heuristicsModelData;
-  LinearQuadraticApproximator lqapprox(optimalControlProblemStock_[0], ddpSettings_.checkNumericalStability_);
-  lqapprox.approximateLQProblemAtFinalTime(nominalPrimalData_.primalSolution.timeTrajectory_.back(),
-                                           nominalPrimalData_.primalSolution.stateTrajectory_.back(), heuristicsModelData);
-  heuristics_ = std::move(heuristicsModelData.cost_);
+  if (!nominalPrimalData_.primalSolution.timeTrajectory_.empty()) {
+    ModelData modelData;
+    const auto& time = nominalPrimalData_.primalSolution.timeTrajectory_.back();
+    const auto& state = nominalPrimalData_.primalSolution.stateTrajectory_.back();
+    ocs2::approximateFinalLQ(optimalControlProblemStock_[0], time, state, modelData);
 
-  // shift Hessian for final time
-  if (ddpSettings_.strategy_ == search_strategy::Type::LINE_SEARCH) {
-    hessian_correction::shiftHessian(ddpSettings_.lineSearch_.hessianCorrectionStrategy_, heuristics_.dfdxx,
-                                     ddpSettings_.lineSearch_.hessianCorrectionMultiple_);
+    // checking the numerical properties
+    if (ddpSettings_.checkNumericalStability_) {
+      const std::string err = checkCostProperties(modelData) + checkConstraintProperties(modelData);
+      if (!err.empty()) {
+        throw std::runtime_error("Ill-posed problem at final time: " + std::to_string(time) + "\n" + err);
+      }
+    }
+
+    heuristics_ = std::move(modelData.cost);
+
+    // shift Hessian for final time
+    if (ddpSettings_.strategy_ == search_strategy::Type::LINE_SEARCH) {
+      hessian_correction::shiftHessian(ddpSettings_.lineSearch_.hessianCorrectionStrategy_, heuristics_.dfdxx,
+                                       ddpSettings_.lineSearch_.hessianCorrectionMultiple_);
+    }
   }
 }
 
@@ -832,11 +838,11 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
 void GaussNewtonDDP::computeProjectionAndRiccatiModification(const ModelData& modelData, const matrix_t& Sm, ModelData& projectedModelData,
                                                              riccati_modification::Data& riccatiModification) const {
   // compute the Hamiltonian's Hessian
-  riccatiModification.time_ = modelData.time_;
+  riccatiModification.time_ = modelData.time;
   riccatiModification.hamiltonianHessian_ = computeHamiltonianHessian(modelData, Sm);
 
   // compute projectors
-  computeProjections(riccatiModification.hamiltonianHessian_, modelData.stateInputEqConstr_.dfdu,
+  computeProjections(riccatiModification.hamiltonianHessian_, modelData.stateInputEqConstraint.dfdu,
                      riccatiModification.constraintRangeProjector_, riccatiModification.constraintNullProjector_);
 
   // project LQ
@@ -892,34 +898,33 @@ void GaussNewtonDDP::computeProjections(const matrix_t& Hm, const matrix_t& Dm, 
 void GaussNewtonDDP::projectLQ(const ModelData& modelData, const matrix_t& constraintRangeProjector,
                                const matrix_t& constraintNullProjector, ModelData& projectedModelData) const {
   // dimensions and time
-  projectedModelData.time_ = modelData.time_;
-  projectedModelData.stateDim_ = modelData.stateDim_;
-  projectedModelData.inputDim_ = modelData.inputDim_ - modelData.stateInputEqConstr_.f.rows();
+  projectedModelData.time = modelData.time;
+  projectedModelData.stateDim = modelData.stateDim;
+  projectedModelData.inputDim = modelData.inputDim - modelData.stateInputEqConstraint.f.rows();
 
   // unhandled constraints
-  projectedModelData.stateEqConstr_.f = 0.0;
-  projectedModelData.stateIneqConstr_.f = 0.0;
-  projectedModelData.stateInputIneqConstr_.f = 0.0;
+  projectedModelData.stateEqConstraint.f = vector_t();
 
-  if (modelData.stateInputEqConstr_.f.rows() == 0) {
+  if (modelData.stateInputEqConstraint.f.rows() == 0) {
     // Change of variables u = Pu * tilde{u}
     // Pu = constraintNullProjector;
 
     // projected state-input equality constraints
-    projectedModelData.stateInputEqConstr_.f.setZero(projectedModelData.inputDim_);
-    projectedModelData.stateInputEqConstr_.dfdx.setZero(projectedModelData.inputDim_, projectedModelData.stateDim_);
-    projectedModelData.stateInputEqConstr_.dfdu.setZero(modelData.inputDim_, modelData.inputDim_);
+    projectedModelData.stateInputEqConstraint.f.setZero(projectedModelData.inputDim);
+    projectedModelData.stateInputEqConstraint.dfdx.setZero(projectedModelData.inputDim, projectedModelData.stateDim);
+    projectedModelData.stateInputEqConstraint.dfdu.setZero(modelData.inputDim, modelData.inputDim);
 
     // dynamics
-    projectedModelData.dynamics_ = modelData.dynamics_;
-    changeOfInputVariables(projectedModelData.dynamics_, constraintNullProjector);
+    projectedModelData.dynamics = modelData.dynamics;
+    changeOfInputVariables(projectedModelData.dynamics, constraintNullProjector);
 
     // dynamics bias
-    projectedModelData.dynamicsBias_ = modelData.dynamicsBias_;
+    projectedModelData.dynamicsBias = modelData.dynamicsBias;
 
     // cost
-    projectedModelData.cost_ = modelData.cost_;
-    changeOfInputVariables(projectedModelData.cost_, constraintNullProjector);
+    projectedModelData.cost = modelData.cost;
+    changeOfInputVariables(projectedModelData.cost, constraintNullProjector);
+
   } else {
     // Change of variables u = Pu * tilde{u} + Px * x + u0
     // Pu = constraintNullProjector;
@@ -927,78 +932,26 @@ void GaussNewtonDDP::projectLQ(const ModelData& modelData, const matrix_t& const
     // u0 (= -EvProjected) = -constraintRangeProjector * e
 
     /* projected state-input equality constraints */
-    projectedModelData.stateInputEqConstr_.f.noalias() = constraintRangeProjector * modelData.stateInputEqConstr_.f;
-    projectedModelData.stateInputEqConstr_.dfdx.noalias() = constraintRangeProjector * modelData.stateInputEqConstr_.dfdx;
-    projectedModelData.stateInputEqConstr_.dfdu.noalias() = constraintRangeProjector * modelData.stateInputEqConstr_.dfdu;
+    projectedModelData.stateInputEqConstraint.f.noalias() = constraintRangeProjector * modelData.stateInputEqConstraint.f;
+    projectedModelData.stateInputEqConstraint.dfdx.noalias() = constraintRangeProjector * modelData.stateInputEqConstraint.dfdx;
+    projectedModelData.stateInputEqConstraint.dfdu.noalias() = constraintRangeProjector * modelData.stateInputEqConstraint.dfdu;
 
     // Change of variable matrices
     const auto& Pu = constraintNullProjector;
-    const matrix_t Px = -projectedModelData.stateInputEqConstr_.dfdx;
-    const matrix_t u0 = -projectedModelData.stateInputEqConstr_.f;
+    const matrix_t Px = -projectedModelData.stateInputEqConstraint.dfdx;
+    const matrix_t u0 = -projectedModelData.stateInputEqConstraint.f;
 
     // dynamics
-    projectedModelData.dynamics_ = modelData.dynamics_;
-    changeOfInputVariables(projectedModelData.dynamics_, Pu, Px, u0);
+    projectedModelData.dynamics = modelData.dynamics;
+    changeOfInputVariables(projectedModelData.dynamics, Pu, Px, u0);
 
     // dynamics bias
-    projectedModelData.dynamicsBias_ = modelData.dynamicsBias_;
-    projectedModelData.dynamicsBias_.noalias() += modelData.dynamics_.dfdu * u0;
+    projectedModelData.dynamicsBias = modelData.dynamicsBias;
+    projectedModelData.dynamicsBias.noalias() += modelData.dynamics.dfdu * u0;
 
     // cost
-    projectedModelData.cost_ = modelData.cost_;
-    changeOfInputVariables(projectedModelData.cost_, Pu, Px, u0);
-  }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void GaussNewtonDDP::augmentCostWorker(size_t workerIndex, scalar_t stateEqConstrPenaltyCoeff, scalar_t stateInputEqConstrPenaltyCoeff,
-                                       ModelData& modelData) const {
-  bool recheckCost = false;
-
-  // state equality constraint
-  if (modelData.stateEqConstr_.f > 0.0) {
-    recheckCost = true;
-    modelData.cost_.f += stateEqConstrPenaltyCoeff * modelData.stateEqConstr_.f;
-    modelData.cost_.dfdx += stateEqConstrPenaltyCoeff * modelData.stateEqConstr_.dfdx;
-    modelData.cost_.dfdxx += stateEqConstrPenaltyCoeff * modelData.stateEqConstr_.dfdxx;
-  }
-
-  // state-input equality constraint
-  if (modelData.stateInputEqConstr_.f.rows() > 0 && !numerics::almost_eq(stateInputEqConstrPenaltyCoeff, 0.0)) {
-    recheckCost = true;
-    const vector_t& Ev = modelData.stateInputEqConstr_.f;
-    const matrix_t& Cm = modelData.stateInputEqConstr_.dfdx;
-    const matrix_t& Dm = modelData.stateInputEqConstr_.dfdu;
-    modelData.cost_.f += 0.5 * stateInputEqConstrPenaltyCoeff * Ev.squaredNorm();
-    modelData.cost_.dfdx.noalias() += stateInputEqConstrPenaltyCoeff * Cm.transpose() * Ev;
-    modelData.cost_.dfdu.noalias() += stateInputEqConstrPenaltyCoeff * Dm.transpose() * Ev;
-    modelData.cost_.dfdxx.noalias() += stateInputEqConstrPenaltyCoeff * Cm.transpose() * Cm;
-    modelData.cost_.dfduu.noalias() += stateInputEqConstrPenaltyCoeff * Dm.transpose() * Dm;
-    modelData.cost_.dfdux.noalias() += stateInputEqConstrPenaltyCoeff * Dm.transpose() * Cm;
-  }
-
-  // state inequality constraints
-  if (modelData.stateIneqConstr_.f > 0.0) {
-    recheckCost = true;
-    modelData.cost_.f += modelData.stateIneqConstr_.f;
-    modelData.cost_.dfdx += modelData.stateIneqConstr_.dfdx;
-    modelData.cost_.dfdxx += modelData.stateIneqConstr_.dfdxx;
-  }
-
-  // state-input inequality constraints
-  if (modelData.stateInputIneqConstr_.f > 0.0) {
-    recheckCost = true;
-    modelData.cost_ += modelData.stateInputIneqConstr_;
-  }
-
-  // checking the numerical stability again
-  if (ddpSettings_.checkNumericalStability_ && recheckCost) {
-    auto errorDescription = modelData.checkCostProperties();
-    if (!errorDescription.empty()) {
-      throw std::runtime_error(errorDescription);
-    }
+    projectedModelData.cost = modelData.cost;
+    changeOfInputVariables(projectedModelData.cost, Pu, Px, u0);
   }
 }
 
@@ -1009,24 +962,14 @@ void GaussNewtonDDP::initializeConstraintPenalties() {
   assert(ddpSettings_.constraintPenaltyInitialValue_ > 1.0);
   assert(ddpSettings_.constraintPenaltyIncreaseRate_ > 1.0);
 
-  // state-only equality
-  constraintPenaltyCoefficients_.stateEqConstrPenaltyCoeff = ddpSettings_.constraintPenaltyInitialValue_;
-  constraintPenaltyCoefficients_.stateEqConstrPenaltyTol = ddpSettings_.constraintTolerance_;
-
-  // final state-only equality
-  constraintPenaltyCoefficients_.stateFinalEqConstrPenaltyCoeff = ddpSettings_.constraintPenaltyInitialValue_;
-  constraintPenaltyCoefficients_.stateFinalEqConstrPenaltyTol = ddpSettings_.constraintTolerance_;
-
-  // state-input equality
-  constraintPenaltyCoefficients_.stateInputEqConstrPenaltyCoeff = ddpSettings_.constraintPenaltyInitialValue_;
-  constraintPenaltyCoefficients_.stateInputEqConstrPenaltyTol =
-      1.0 / std::pow(constraintPenaltyCoefficients_.stateInputEqConstrPenaltyCoeff, 0.1);
+  constraintPenaltyCoefficients_.penaltyCoeff = ddpSettings_.constraintPenaltyInitialValue_;
+  constraintPenaltyCoefficients_.penaltyTol = 1.0 / std::pow(constraintPenaltyCoefficients_.penaltyCoeff, 0.1);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::runSearchStrategy(scalar_t lqModelExpectedCost, PrimalDataContainer& dstPrimalData, Metrics& metrics) {
+void GaussNewtonDDP::runSearchStrategy(scalar_t lqModelExpectedCost, PrimalDataContainer& dstPrimalData, MetricsCollection& metrics) {
   // create output performance index
   auto performanceIndex = performanceIndex_;
 
@@ -1034,8 +977,6 @@ void GaussNewtonDDP::runSearchStrategy(scalar_t lqModelExpectedCost, PrimalDataC
 
   bool success = searchStrategyPtr_->run(initTime_, initState_, finalTime_, lqModelExpectedCost, modeSchedule, unoptimizedController_,
                                          performanceIndex, dstPrimalData.primalSolution, metrics, avgTimeStepFP_);
-
-  initializeModelData(dstPrimalData.primalSolution, dstPrimalData.modelDataTrajectory, dstPrimalData.modelDataEventTimes);
 
   // accept or reject the search
   if (success) {
@@ -1053,49 +994,24 @@ void GaussNewtonDDP::runSearchStrategy(scalar_t lqModelExpectedCost, PrimalDataC
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::updateConstraintPenalties(scalar_t stateEqConstraintISE, scalar_t stateEqFinalConstraintSSE,
-                                               scalar_t stateInputEqConstraintISE) {
-  // state-only equality penalty
-  if (stateEqConstraintISE > ddpSettings_.constraintTolerance_) {
-    constraintPenaltyCoefficients_.stateEqConstrPenaltyCoeff *= ddpSettings_.constraintPenaltyIncreaseRate_;
-    constraintPenaltyCoefficients_.stateEqConstrPenaltyTol = ddpSettings_.constraintTolerance_;
-  }
-
-  // final state-only equality
-  if (stateEqFinalConstraintSSE > ddpSettings_.constraintTolerance_) {
-    constraintPenaltyCoefficients_.stateFinalEqConstrPenaltyCoeff *= ddpSettings_.constraintPenaltyIncreaseRate_;
-    constraintPenaltyCoefficients_.stateFinalEqConstrPenaltyTol = ddpSettings_.constraintTolerance_;
-  }
-
+void GaussNewtonDDP::updateConstraintPenalties(scalar_t equalityConstraintsSSE) {
   // state-input equality penalty
-  if (stateInputEqConstraintISE < constraintPenaltyCoefficients_.stateInputEqConstrPenaltyTol) {
+  if (equalityConstraintsSSE < constraintPenaltyCoefficients_.penaltyTol) {
     // tighten tolerance
-    constraintPenaltyCoefficients_.stateInputEqConstrPenaltyTol /=
-        std::pow(constraintPenaltyCoefficients_.stateInputEqConstrPenaltyCoeff, 0.9);
+    constraintPenaltyCoefficients_.penaltyTol /= std::pow(constraintPenaltyCoefficients_.penaltyCoeff, 0.9);
   } else {
     // tighten tolerance & increase penalty
-    constraintPenaltyCoefficients_.stateInputEqConstrPenaltyCoeff *= ddpSettings_.constraintPenaltyIncreaseRate_;
-    constraintPenaltyCoefficients_.stateInputEqConstrPenaltyTol /=
-        std::pow(constraintPenaltyCoefficients_.stateInputEqConstrPenaltyCoeff, 0.1);
+    constraintPenaltyCoefficients_.penaltyCoeff *= ddpSettings_.constraintPenaltyIncreaseRate_;
+    constraintPenaltyCoefficients_.penaltyTol /= std::pow(constraintPenaltyCoefficients_.penaltyCoeff, 0.1);
   }
-  constraintPenaltyCoefficients_.stateInputEqConstrPenaltyTol =
-      std::max(constraintPenaltyCoefficients_.stateInputEqConstrPenaltyTol, ddpSettings_.constraintTolerance_);
+  constraintPenaltyCoefficients_.penaltyTol = std::max(constraintPenaltyCoefficients_.penaltyTol, ddpSettings_.constraintTolerance_);
 
   // display
   if (ddpSettings_.displayInfo_) {
-    std::string displayText = "Augmented Lagrangian Penalty Parameters:\n";
+    std::string displayText = "Equality Constraints Penalty Parameters:\n";
+    displayText += "    Penalty Tolerance: " + std::to_string(constraintPenaltyCoefficients_.penaltyTol);
+    displayText += "    Penalty Coefficient: " + std::to_string(constraintPenaltyCoefficients_.penaltyCoeff) + ".\n";
 
-    displayText += "    State Equality:      ";
-    displayText += "    Penalty Tolerance: " + std::to_string(constraintPenaltyCoefficients_.stateEqConstrPenaltyTol);
-    displayText += "    Penalty Coefficient: " + std::to_string(constraintPenaltyCoefficients_.stateEqConstrPenaltyCoeff) + '\n';
-
-    displayText += "    Final State Equality:";
-    displayText += "    Penalty Tolerance: " + std::to_string(constraintPenaltyCoefficients_.stateFinalEqConstrPenaltyTol);
-    displayText += "    Penalty Coefficient: " + std::to_string(constraintPenaltyCoefficients_.stateFinalEqConstrPenaltyCoeff) + '\n';
-
-    displayText += "    State-Input Equality:";
-    displayText += "    Penalty Tolerance: " + std::to_string(constraintPenaltyCoefficients_.stateInputEqConstrPenaltyTol);
-    displayText += "    Penalty Coefficient: " + std::to_string(constraintPenaltyCoefficients_.stateInputEqConstrPenaltyCoeff) + ".\n";
     this->printString(displayText);
   }
 }
@@ -1164,7 +1080,7 @@ void GaussNewtonDDP::runInit() {
   initializationTimer_.endTimer();
 
   // update the constraint penalty coefficients
-  updateConstraintPenalties(0.0, 0.0, 0.0);
+  updateConstraintPenalties(0.0);
 
   // linearizing the dynamics and quadratizing the cost function along nominal trajectories
   linearQuadraticApproximationTimer_.startTimer();
@@ -1206,8 +1122,7 @@ void GaussNewtonDDP::runIteration(scalar_t lqModelExpectedCost) {
   searchStrategyTimer_.endTimer();
 
   // update the constraint penalty coefficients
-  updateConstraintPenalties(performanceIndex_.stateEqConstraintISE, performanceIndex_.stateEqFinalConstraintSSE,
-                            performanceIndex_.stateInputEqConstraintISE);
+  updateConstraintPenalties(performanceIndex_.equalityConstraintsSSE);
 
   // linearizing the dynamics and quadratizing the cost function along nominal trajectories
   linearQuadraticApproximationTimer_.startTimer();

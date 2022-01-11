@@ -58,7 +58,7 @@ void LevenbergMarquardtStrategy::reset() {
 /******************************************************************************************************/
 bool LevenbergMarquardtStrategy::run(const scalar_t initTime, const vector_t& initState, const scalar_t finalTime,
                                      const scalar_t expectedCost, const ModeSchedule& modeSchedule, LinearController& controller,
-                                     PerformanceIndex& performanceIndex, PrimalSolution& dstPrimalSolution, Metrics& metrics,
+                                     PerformanceIndex& performanceIndex, PrimalSolution& dstPrimalSolution, MetricsCollection& metrics,
                                      scalar_t& avgTimeStepFP) {
   constexpr size_t taskId = 0;
 
@@ -204,12 +204,15 @@ std::pair<bool, std::string> LevenbergMarquardtStrategy::checkConvergence(bool u
                                                                           const PerformanceIndex& currentPerformanceIndex) const {
   // loop break variables
   bool isCostFunctionConverged = false;
-  const scalar_t relCost = std::abs(currentPerformanceIndex.totalCost + currentPerformanceIndex.inequalityConstraintPenalty -
-                                    previousPerformanceIndex.totalCost - previousPerformanceIndex.inequalityConstraintPenalty);
+  const scalar_t currentTotalCost = currentPerformanceIndex.totalCost + currentPerformanceIndex.equalityLagrangiansPenalty +
+                                    currentPerformanceIndex.inequalityLagrangiansPenalty;
+  const scalar_t previousTotalCost = previousPerformanceIndex.totalCost + previousPerformanceIndex.equalityLagrangiansPenalty +
+                                     previousPerformanceIndex.inequalityLagrangiansPenalty;
+  const scalar_t relCost = std::abs(currentTotalCost - previousTotalCost);
   if (levenbergMarquardtModule_.numSuccessiveRejections == 0 && !unreliableControllerIncrement) {
     isCostFunctionConverged = relCost <= baseSettings_.minRelCost;
   }
-  const bool isConstraintsSatisfied = currentPerformanceIndex.stateInputEqConstraintISE <= baseSettings_.constraintTolerance;
+  const bool isConstraintsSatisfied = currentPerformanceIndex.equalityConstraintsSSE <= baseSettings_.constraintTolerance;
   const bool isOptimizationConverged = (isCostFunctionConverged) && isConstraintsSatisfied;
 
   // convergence info
@@ -222,7 +225,7 @@ std::pair<bool, std::string> LevenbergMarquardtStrategy::checkConvergence(bool u
                  << baseSettings_.minRelCost << ").\n";
     }
 
-    infoStream << "    * The ISE of state-input equality constraint (i.e., " << currentPerformanceIndex.stateInputEqConstraintISE
+    infoStream << "    * The SSE of equality constraints (i.e., " << currentPerformanceIndex.equalityConstraintsSSE
                << ") has reached to its minimum value (" << baseSettings_.constraintTolerance << ").";
   }
 
@@ -234,12 +237,12 @@ std::pair<bool, std::string> LevenbergMarquardtStrategy::checkConvergence(bool u
 /******************************************************************************************************/
 void LevenbergMarquardtStrategy::computeRiccatiModification(const ModelData& projectedModelData, matrix_t& deltaQm, vector_t& deltaGv,
                                                             matrix_t& deltaGm) const {
-  const auto& HvProjected = projectedModelData.dynamicsBias_;
-  const auto& AmProjected = projectedModelData.dynamics_.dfdx;
-  const auto& BmProjected = projectedModelData.dynamics_.dfdu;
+  const auto& HvProjected = projectedModelData.dynamicsBias;
+  const auto& AmProjected = projectedModelData.dynamics.dfdx;
+  const auto& BmProjected = projectedModelData.dynamics.dfdu;
 
   // deltaQm, deltaRm, deltaPm
-  deltaQm.setZero(projectedModelData.stateDim_, projectedModelData.stateDim_);
+  deltaQm.setZero(projectedModelData.stateDim, projectedModelData.stateDim);
   deltaGv.noalias() = levenbergMarquardtModule_.riccatiMultiple * BmProjected.transpose() * HvProjected;
   deltaGm.noalias() = levenbergMarquardtModule_.riccatiMultiple * BmProjected.transpose() * AmProjected;
 }
@@ -249,7 +252,7 @@ void LevenbergMarquardtStrategy::computeRiccatiModification(const ModelData& pro
 /******************************************************************************************************/
 matrix_t LevenbergMarquardtStrategy::augmentHamiltonianHessian(const ModelData& modelData, const matrix_t& Hm) const {
   matrix_t HmAug = Hm;
-  HmAug.noalias() += levenbergMarquardtModule_.riccatiMultiple * modelData.dynamics_.dfdu.transpose() * modelData.dynamics_.dfdu;
+  HmAug.noalias() += levenbergMarquardtModule_.riccatiMultiple * modelData.dynamics.dfdu.transpose() * modelData.dynamics.dfdu;
   return HmAug;
 }
 

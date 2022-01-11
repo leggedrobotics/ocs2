@@ -109,7 +109,7 @@ TEST(HybridSlqTest, state_rollout_slq) {
   // constraints
   std::unique_ptr<StateInputConstraint> systemConstraints(new HybridSysBounds);
   std::unique_ptr<PenaltyBase> penalty(new RelaxedBarrierPenalty({0.2, 1e-4}));
-  std::unique_ptr<StateInputCost> softSystemConstraints(new StateInputSoftConstraint(std::move(systemConstraints), std::move(penalty)));
+  std::unique_ptr<StateInputCost> softSystemLagrangian(new StateInputSoftConstraint(std::move(systemConstraints), std::move(penalty)));
 
   // cost function
   matrix_t Q(stateDim, stateDim);
@@ -124,7 +124,7 @@ TEST(HybridSlqTest, state_rollout_slq) {
 
   ocs2::OptimalControlProblem problem;
   problem.dynamicsPtr.reset(systemDynamics.clone());
-  problem.inequalityConstraintPtr->add("bounds", std::move(softSystemConstraints));
+  problem.inequalityLagrangiantPtr->add("bounds", std::move(softSystemLagrangian));
   problem.costPtr->add("cost", std::move(cost));
   problem.preJumpCostPtr->add("preJumpCost", std::move(preJumpCost));
   problem.finalCostPtr->add("finalCost", std::move(finalCost));

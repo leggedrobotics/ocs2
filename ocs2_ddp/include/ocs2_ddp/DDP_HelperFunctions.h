@@ -48,7 +48,7 @@ namespace ocs2 {
  * @param [in] primalSolution: The primal solution.
  * @param [out] metrics: The cost, soft constraints and constraints values of the primalSolution rollout.
  */
-void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution& primalSolution, Metrics& metrics);
+void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution& primalSolution, MetricsCollection& metrics);
 
 /**
  * Calculates the PerformanceIndex associated to the input Metrics.
@@ -58,7 +58,7 @@ void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution&
  *
  * @return The PerformanceIndex of the trajectory.
  */
-PerformanceIndex computeRolloutPerformanceIndex(const scalar_array_t& timeTrajectory, const Metrics& metrics);
+PerformanceIndex computeRolloutPerformanceIndex(const scalar_array_t& timeTrajectory, const MetricsCollection& metrics);
 
 /**
  * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
@@ -76,17 +76,6 @@ PerformanceIndex computeRolloutPerformanceIndex(const scalar_array_t& timeTrajec
  */
 scalar_t rolloutTrajectory(RolloutBase& rollout, const scalar_t initTime, const vector_t& initState, const scalar_t finalTime,
                            const ModeSchedule& modeSchedule, LinearController& controller, PrimalSolution& primalSolution);
-
-/**
- * Initializes the size of the ModelData for the intermediate and event times. Moreover, it extracts the time stamp,
- * and state-input dimnesions.
- *
- * @param [in] primalSolution: The resulting primal solution.
- * @param [out] modelDataTrajectory: Initialized array of ModelData for intermediate times.
- * @param [out] modelDataEventTimes: Initialized array of ModelData for event times.
- */
-void initializeModelData(const PrimalSolution& primalSolution, std::vector<ModelData>& modelDataTrajectory,
-                         std::vector<ModelData>& modelDataEventTimes);
 
 /**
  * Computes the integral of the squared (IS) norm of the controller update.

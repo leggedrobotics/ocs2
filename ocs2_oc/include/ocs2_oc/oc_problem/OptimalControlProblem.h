@@ -70,19 +70,29 @@ struct OptimalControlProblem {
   /** Intermediate equality constraints, full row rank w.r.t. inputs */
   std::unique_ptr<StateInputConstraintCollection> equalityConstraintPtr;
   /** Intermediate state-only equality constraints */
-  std::unique_ptr<StateCostCollection> stateEqualityConstraintPtr;
-  /** Intermediate inequality constraints */
-  std::unique_ptr<StateInputCostCollection> inequalityConstraintPtr;
-  /** Intermediate state-only inequality constraints */
-  std::unique_ptr<StateCostCollection> stateInequalityConstraintPtr;
-  /** pre-jump equality constraints */
-  std::unique_ptr<StateCostCollection> preJumpEqualityConstraintPtr;
-  /** pre-jump inequality constraints */
-  std::unique_ptr<StateCostCollection> preJumpInequalityConstraintPtr;
-  /** final equality constraints */
-  std::unique_ptr<StateCostCollection> finalEqualityConstraintPtr;
-  /** final inequality constraints */
-  std::unique_ptr<StateCostCollection> finalInequalityConstraintPtr;
+  std::unique_ptr<StateConstraintCollection> stateEqualityConstraintPtr;
+  /** Pre-jump equality constraints */
+  std::unique_ptr<StateConstraintCollection> preJumpEqualityConstraintPtr;
+  /** Final equality constraints */
+  std::unique_ptr<StateConstraintCollection> finalEqualityConstraintPtr;
+
+  /* Lagrangians */
+  /** Lagrangian for intermediate equality constraints */
+  std::unique_ptr<StateInputCostCollection> equalityLagrangiantPtr;
+  /** Lagrangian for intermediate state-only equality constraints */
+  std::unique_ptr<StateCostCollection> stateEqualityLagrangiantPtr;
+  /** Lagrangian for intermediate inequality constraints */
+  std::unique_ptr<StateInputCostCollection> inequalityLagrangiantPtr;
+  /** Lagrangian for intermediate state-only inequality constraints */
+  std::unique_ptr<StateCostCollection> stateInequalityLagrangiantPtr;
+  /** Lagrangian for pre-jump equality constraints */
+  std::unique_ptr<StateCostCollection> preJumpEqualityLagrangiantPtr;
+  /** Lagrangian for pre-jump inequality constraints */
+  std::unique_ptr<StateCostCollection> preJumpInequalityLagrangiantPtr;
+  /** Lagrangian for final equality constraints */
+  std::unique_ptr<StateCostCollection> finalEqualityLagrangiantPtr;
+  /** Lagrangian for final inequality constraints */
+  std::unique_ptr<StateCostCollection> finalInequalityLagrangiantPtr;
 
   /* Dynamics */
   /** System dynamics pointer */

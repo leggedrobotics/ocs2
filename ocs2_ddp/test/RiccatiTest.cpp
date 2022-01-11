@@ -51,22 +51,20 @@ class RiccatiInitializer {
     timeStamp = ocs2::scalar_array_t{0.0, 1.0};
 
     ocs2::ModelData projectedModelData;
-    projectedModelData.stateDim_ = stateDim;
-    projectedModelData.inputDim_ = inputDim;
-    projectedModelData.dynamicsBias_ = ocs2::vector_t::Random(stateDim);
-    projectedModelData.dynamics_.dfdx = ocs2::matrix_t::Random(stateDim, stateDim);
-    projectedModelData.dynamics_.dfdu = ocs2::matrix_t::Random(stateDim, inputDim);
-    projectedModelData.cost_.f = ocs2::vector_t::Random(1)(0);
-    projectedModelData.cost_.dfdx = ocs2::vector_t::Random(stateDim);
-    projectedModelData.cost_.dfdxx = ocs2::LinearAlgebra::generateSPDmatrix<ocs2::matrix_t>(stateDim);
-    projectedModelData.cost_.dfdu = ocs2::vector_t::Random(inputDim);
-    projectedModelData.cost_.dfduu.setIdentity(inputDim,
+    projectedModelData.stateDim = stateDim;
+    projectedModelData.inputDim = inputDim;
+    projectedModelData.dynamicsBias = ocs2::vector_t::Random(stateDim);
+    projectedModelData.dynamics.dfdx = ocs2::matrix_t::Random(stateDim, stateDim);
+    projectedModelData.dynamics.dfdu = ocs2::matrix_t::Random(stateDim, inputDim);
+    projectedModelData.cost.f = ocs2::vector_t::Random(1)(0);
+    projectedModelData.cost.dfdx = ocs2::vector_t::Random(stateDim);
+    projectedModelData.cost.dfdxx = ocs2::LinearAlgebra::generateSPDmatrix<ocs2::matrix_t>(stateDim);
+    projectedModelData.cost.dfdu = ocs2::vector_t::Random(inputDim);
+    projectedModelData.cost.dfduu.setIdentity(inputDim,
                                                inputDim);  // Important: It is identity since it is a projected projectedModelData!
-    projectedModelData.cost_.dfdux = ocs2::matrix_t::Random(inputDim, stateDim);
-    projectedModelData.stateIneqConstr_.setZero(stateDim, 0);
-    projectedModelData.stateInputIneqConstr_.setZero(stateDim, inputDim);
-    projectedModelData.stateEqConstr_.setZero(stateDim, 0);
-    projectedModelData.stateInputEqConstr_.setZero(inputDim, stateDim, inputDim);
+    projectedModelData.cost.dfdux = ocs2::matrix_t::Random(inputDim, stateDim);
+    projectedModelData.stateEqConstraint.setZero(0, stateDim, 0);
+    projectedModelData.stateInputEqConstraint.setZero(inputDim, stateDim, inputDim);
 
     projectedModelDataTrajectory = std::vector<ocs2::ModelData>{projectedModelData, projectedModelData};
 
@@ -75,7 +73,7 @@ class RiccatiInitializer {
     riccatiModification.deltaGv_ = ocs2::vector_t::Zero(inputDim);
     riccatiModification.deltaGm_ = ocs2::matrix_t::Zero(inputDim, stateDim);
     riccatiModification.constraintRangeProjector_.setZero(inputDim, 0);
-    ocs2::LinearAlgebra::computeInverseMatrixUUT(projectedModelData.cost_.dfduu, riccatiModification.constraintNullProjector_);
+    ocs2::LinearAlgebra::computeInverseMatrixUUT(projectedModelData.cost.dfduu, riccatiModification.constraintNullProjector_);
 
     riccatiModificationTrajectory = std::vector<ocs2::riccati_modification::Data>{riccatiModification, riccatiModification};
   }

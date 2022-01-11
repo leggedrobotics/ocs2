@@ -83,7 +83,7 @@ class SearchStrategyBase {
    */
   virtual bool run(const scalar_t initTime, const vector_t& initState, const scalar_t finalTime, const scalar_t expectedCost,
                    const ModeSchedule& modeSchedule, LinearController& controller, PerformanceIndex& performanceIndex,
-                   PrimalSolution& dstPrimalSolution, Metrics& metrics, scalar_t& avgTimeStepFP) = 0;
+                   PrimalSolution& dstPrimalSolution, MetricsCollection& metrics, scalar_t& avgTimeStepFP) = 0;
 
   /**
    * Checks convergence of the main loop of DDP.

@@ -46,7 +46,6 @@ class Exp0 : public testing::Test {
   static constexpr size_t INPUT_DIM = 1;
   static constexpr ocs2::scalar_t expectedCost = 9.766;
   static constexpr ocs2::scalar_t expectedStateInputEqConstraintISE = 0.0;
-  static constexpr ocs2::scalar_t expectedStateEqConstraintISE = 0.0;
 
   Exp0() {
     // event times
@@ -116,10 +115,8 @@ class Exp0 : public testing::Test {
     const auto testName = getTestName(ddpSettings);
     EXPECT_LT(fabs(performanceIndex.totalCost - expectedCost), 10 * ddpSettings.minRelCost_)
         << "MESSAGE: " << testName << ": failed in the total cost test!";
-    EXPECT_LT(fabs(performanceIndex.stateInputEqConstraintISE - expectedStateInputEqConstraintISE), 10 * ddpSettings.constraintTolerance_)
+    EXPECT_LT(fabs(performanceIndex.equalityConstraintsSSE - expectedStateInputEqConstraintISE), 10 * ddpSettings.constraintTolerance_)
         << "MESSAGE: " << testName << ": failed in state-input equality constraint ISE test!";
-    EXPECT_LT(fabs(performanceIndex.stateEqConstraintISE - expectedStateEqConstraintISE), 10 * ddpSettings.constraintTolerance_)
-        << "MESSAGE: " << testName << ": failed in state-only equality constraint ISE test!";
   }
 
   const ocs2::scalar_t startTime = 0.0;
@@ -137,7 +134,6 @@ constexpr size_t Exp0::STATE_DIM;
 constexpr size_t Exp0::INPUT_DIM;
 constexpr ocs2::scalar_t Exp0::expectedCost;
 constexpr ocs2::scalar_t Exp0::expectedStateInputEqConstraintISE;
-constexpr ocs2::scalar_t Exp0::expectedStateEqConstraintISE;
 
 /******************************************************************************************************/
 /******************************************************************************************************/

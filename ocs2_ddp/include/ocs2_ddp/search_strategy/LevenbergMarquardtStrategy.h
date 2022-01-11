@@ -76,7 +76,7 @@ class LevenbergMarquardtStrategy final : public SearchStrategyBase {
 
   bool run(const scalar_t initTime, const vector_t& initState, const scalar_t finalTime, const scalar_t expectedCost,
            const ModeSchedule& modeSchedule, LinearController& controller, PerformanceIndex& performanceIndex,
-           PrimalSolution& dstPrimalSolution, Metrics& metrics, scalar_t& avgTimeStepFP) override;
+           PrimalSolution& dstPrimalSolution, MetricsCollection& metrics, scalar_t& avgTimeStepFP) override;
 
   std::pair<bool, std::string> checkConvergence(bool unreliableControllerIncrement, const PerformanceIndex& previousPerformanceIndex,
                                                 const PerformanceIndex& currentPerformanceIndex) const override;

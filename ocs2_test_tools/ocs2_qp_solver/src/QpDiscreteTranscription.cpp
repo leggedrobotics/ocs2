@@ -27,10 +27,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-//
-// Created by rgrandia on 26.02.20.
-//
-
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
 
 #include "ocs2_qp_solver/QpDiscreteTranscription.h"
@@ -57,22 +53,36 @@ std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(OptimalControl
   }
 
   ModelData modelData;
-  LinearQuadraticApproximator lqapprox(optimalControProblem);
-  lqapprox.approximateLQProblemAtFinalTime(t[N], x[N], modelData);
-  lqp.emplace_back(std::move(modelData.cost_), VectorFunctionLinearApproximation(), std::move(modelData.stateEqConstr_));
+  approximateFinalLQ(optimalControProblem, t[N], x[N], modelData);
+
+  // checking the numerical properties
+  checkSizes(modelData, x[N].rows(), 0);
+  const std::string err = checkCostProperties(modelData) + checkConstraintProperties(modelData);
+  if (!err.empty()) {
+    throw std::runtime_error("[qp_solver::getLinearQuadraticApproximation] Ill-posed problem at final time: " + std::to_string(t[N]) +
+                             "\n" + err);
+  }
+
+  lqp.emplace_back(std::move(modelData.cost), VectorFunctionLinearApproximation(), std::move(modelData.stateEqConstraint));
 
   return lqp;
 }
 
 LinearQuadraticStage approximateStage(OptimalControlProblem& optimalControProblem, TrajectoryRef start, StateTrajectoryRef end,
                                       bool isInitialTime) {
-  LinearQuadraticStage lqStage;
-  auto dt = end.t - start.t;
-
-  LinearQuadraticApproximator lqapprox(optimalControProblem);
-
   ModelData modelData;
-  lqapprox.approximateLQProblem(start.t, start.x, start.u, modelData);
+  approximateIntermediateLQ(optimalControProblem, start.t, start.x, start.u, modelData);
+
+  // checking the numerical properties
+  checkSizes(modelData, start.x.rows(), start.u.rows());
+  const std::string err = checkDynamicsProperties(modelData) + checkCostProperties(modelData) + checkConstraintProperties(modelData);
+  if (!err.empty()) {
+    throw std::runtime_error("[qp_solver::approximateStage] Ill-posed problem at intermediate time: " + std::to_string(start.t) + "\n" +
+                             err);
+  }
+
+  LinearQuadraticStage lqStage;
+  const auto dt = end.t - start.t;
 
   lqStage.cost = approximateCost(modelData, dt);
 
@@ -90,7 +100,7 @@ LinearQuadraticStage approximateStage(OptimalControlProblem& optimalControProble
 ScalarFunctionQuadraticApproximation approximateCost(const ModelData& modelData, scalar_t dt) {
   // Approximates the cost accumulation of the dt interval.
   // Use Euler integration
-  const auto continuousCosts = modelData.cost_;
+  const auto continuousCosts = modelData.cost;
   ScalarFunctionQuadraticApproximation discreteCosts;
   discreteCosts.dfdxx = continuousCosts.dfdxx * dt;
   discreteCosts.dfdux = continuousCosts.dfdux * dt;
@@ -107,7 +117,7 @@ VectorFunctionLinearApproximation approximateDynamics(const ModelData& modelData
   // x[k+1] = (x0[k] + dx[k]) + dt * dxdt[k]
   // x[k+1] = (x0[k] + dx[k]) + dt * (A_c dx[k] + B_c du[k] + b_c)
   // x[k+1] = (I + A_c * dt) dx[k] + (B_c * dt) du[k] + (b_c * dt + x0[k])
-  const auto& continuousDynamics = modelData.dynamics_;
+  const auto& continuousDynamics = modelData.dynamics;
   VectorFunctionLinearApproximation discreteDynamics;
   discreteDynamics.dfdx = continuousDynamics.dfdx * dt;
   discreteDynamics.dfdx.diagonal().array() += 1.0;
@@ -120,11 +130,11 @@ VectorFunctionLinearApproximation approximateConstraints(const ModelData& modelD
   VectorFunctionLinearApproximation constraintsApproximation;
   if (isInitialTime) {
     // only use stat-input constraints for initial time
-    constraintsApproximation = std::move(modelData.stateInputEqConstr_);
+    constraintsApproximation = std::move(modelData.stateInputEqConstraint);
   } else {
     // concatenate stat-input and state-only constraints
-    const auto& stateInputConstraint = modelData.stateInputEqConstr_;
-    const auto& stateConstraint = modelData.stateEqConstr_;
+    const auto& stateInputConstraint = modelData.stateInputEqConstraint;
+    const auto& stateConstraint = modelData.stateEqConstraint;
     const auto numStateInputConstraints = stateInputConstraint.f.size();
     const auto numStateConstraints = stateConstraint.f.size();
     const auto numStates = stateInputConstraint.dfdx.cols();

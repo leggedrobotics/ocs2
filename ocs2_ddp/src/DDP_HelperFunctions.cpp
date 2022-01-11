@@ -42,15 +42,15 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution& primalSolution, Metrics& metrics) {
+void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution& primalSolution, MetricsCollection& metrics) {
   const auto& tTrajectory = primalSolution.timeTrajectory_;
   const auto& xTrajectory = primalSolution.stateTrajectory_;
   const auto& uTrajectory = primalSolution.inputTrajectory_;
   const auto& postEventIndices = primalSolution.postEventIndices_;
 
-  metrics.events.clear();
-  metrics.events.reserve(postEventIndices.size());
-  metrics.intermediates.clear();
+  clear(metrics);
+
+  metrics.preJumps.reserve(postEventIndices.size());
   metrics.intermediates.reserve(tTrajectory.size());
   auto nextPostEventIndexItr = postEventIndices.begin();
   const auto request = Request::Cost + Request::Constraint + Request::SoftConstraint;
@@ -62,51 +62,83 @@ void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution&
     // event time cost and constraints
     if (nextPostEventIndexItr != postEventIndices.end() && k + 1 == *nextPostEventIndexItr) {
       problem.preComputationPtr->requestPreJump(request, tTrajectory[k], xTrajectory[k]);
-      metrics.events.push_back(computeEventMetrics(problem, tTrajectory[k], xTrajectory[k]));
+      metrics.preJumps.push_back(computePreJumpMetrics(problem, tTrajectory[k], xTrajectory[k]));
       nextPostEventIndexItr++;
     }
   }
 
   // final time cost and constraints
-  problem.preComputationPtr->requestFinal(request, tTrajectory.back(), xTrajectory.back());
-  metrics.final = computeFinalMetrics(problem, tTrajectory.back(), xTrajectory.back());
+  if (!tTrajectory.empty()) {
+    problem.preComputationPtr->requestFinal(request, tTrajectory.back(), xTrajectory.back());
+    metrics.final = computeFinalMetrics(problem, tTrajectory.back(), xTrajectory.back());
+  }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PerformanceIndex computeRolloutPerformanceIndex(const scalar_array_t& timeTrajectory, const Metrics& metrics) {
+PerformanceIndex computeRolloutPerformanceIndex(const scalar_array_t& timeTrajectory, const MetricsCollection& metrics) {
   assert(timeTrajectory.size() == metrics.intermediates.size());
 
   PerformanceIndex performanceIndex;
 
-  // total cost
+  // Total cost:
+  // - Final: state cost, state soft-constraints
+  // - PreJumps: state cost, state soft-constraints
+  // - Intermediates: state/state-input cost, state/state-input soft-constraints
+  performanceIndex.totalCost = metrics.final.cost;
+
+  std::for_each(metrics.preJumps.begin(), metrics.preJumps.end(), [&](const Metrics& m) { return performanceIndex.totalCost + m.cost; });
+
   scalar_array_t costTrajectory(timeTrajectory.size());
   std::transform(metrics.intermediates.begin(), metrics.intermediates.end(), costTrajectory.begin(),
-                 [](const IntermediateMetrics& m) { return m.cost; });
-  performanceIndex.totalCost = trapezoidalIntegration(timeTrajectory, costTrajectory);
+                 [](const Metrics& m) { return m.cost; });
+  performanceIndex.totalCost += trapezoidalIntegration(timeTrajectory, costTrajectory);
 
-  std::for_each(metrics.events.begin(), metrics.events.end(), [&](const EventMetrics& m) { return performanceIndex.totalCost + m.cost; });
+  // Dynamics violation:
+  performanceIndex.dynamicsViolationSSE = 0.0;
 
-  performanceIndex.totalCost += metrics.final.cost;
+  // Equality constraints' SSE:
+  // - Final: state equality constraints
+  // - PreJumps: state equality constraints
+  // - Intermediates: state/state-input equality constraints
+  performanceIndex.equalityConstraintsSSE = metrics.final.stateEqConstraint.squaredNorm();
 
-  // state equality constraint's ISE
-  performanceIndex.stateEqConstraintISE = 0.0;
+  std::for_each(metrics.preJumps.begin(), metrics.preJumps.end(),
+                [&](const Metrics& m) { return performanceIndex.equalityConstraintsSSE + m.stateEqConstraint.squaredNorm(); });
 
-  // state-input equality constraint's ISE
-  scalar_array_t stateInputEqualityNorm2Trajectory(timeTrajectory.size());
-  std::transform(metrics.intermediates.begin(), metrics.intermediates.end(), stateInputEqualityNorm2Trajectory.begin(),
-                 [](const IntermediateMetrics& m) { return m.stateInputEqConstraint.squaredNorm(); });
-  performanceIndex.stateInputEqConstraintISE = trapezoidalIntegration(timeTrajectory, stateInputEqualityNorm2Trajectory);
+  scalar_array_t equalityNorm2Trajectory(timeTrajectory.size());
+  std::transform(metrics.intermediates.begin(), metrics.intermediates.end(), equalityNorm2Trajectory.begin(),
+                 [](const Metrics& m) { return m.stateEqConstraint.squaredNorm() + m.stateInputEqConstraint.squaredNorm(); });
+  performanceIndex.equalityConstraintsSSE += trapezoidalIntegration(timeTrajectory, equalityNorm2Trajectory);
 
-  // inequality constraints violation ISE
-  performanceIndex.inequalityConstraintISE = 0.0;
+  // Equality Lagrangians penalty
+  // - Final: state equality Lagrangians
+  // - PreJumps: state equality Lagrangians
+  // - Intermediates: state/state-input equality Lagrangians
+  performanceIndex.equalityLagrangiansPenalty = metrics.final.stateEqLagrangian;
 
-  // inequality constraints penalty
+  std::for_each(metrics.preJumps.begin(), metrics.preJumps.end(),
+                [&](const Metrics& m) { return performanceIndex.equalityLagrangiansPenalty + m.stateEqLagrangian; });
+
+  scalar_array_t equalityPenaltyTrajectory(timeTrajectory.size());
+  std::transform(metrics.intermediates.begin(), metrics.intermediates.end(), equalityPenaltyTrajectory.begin(),
+                 [&](const Metrics& m) { return m.stateEqLagrangian + m.stateInputEqLagrangian; });
+  performanceIndex.equalityLagrangiansPenalty += trapezoidalIntegration(timeTrajectory, equalityPenaltyTrajectory);
+
+  // Inequality Lagrangians penalty
+  // - Final: state inequality Lagrangians
+  // - PreJumps: state inequality Lagrangians
+  // - Intermediates: state/state-input inequality Lagrangians
+  performanceIndex.inequalityLagrangiansPenalty = metrics.final.stateIneqLagrangian;
+
+  std::for_each(metrics.preJumps.begin(), metrics.preJumps.end(),
+                [&](const Metrics& m) { return performanceIndex.inequalityLagrangiansPenalty + m.stateIneqLagrangian; });
+
   scalar_array_t inequalityPenaltyTrajectory(timeTrajectory.size());
   std::transform(metrics.intermediates.begin(), metrics.intermediates.end(), inequalityPenaltyTrajectory.begin(),
-                 [&](const IntermediateMetrics& m) { return m.stateIneqPenalty + m.stateInputIneqPenalty; });
-  performanceIndex.inequalityConstraintPenalty = trapezoidalIntegration(timeTrajectory, inequalityPenaltyTrajectory);
+                 [&](const Metrics& m) { return m.stateIneqLagrangian + m.stateInputIneqLagrangian; });
+  performanceIndex.inequalityLagrangiansPenalty += trapezoidalIntegration(timeTrajectory, inequalityPenaltyTrajectory);
 
   return performanceIndex;
 }
@@ -132,33 +164,6 @@ scalar_t rolloutTrajectory(RolloutBase& rollout, const scalar_t initTime, const 
 
   // average time step
   return (finalTime - initTime) / static_cast<scalar_t>(primalSolution.timeTrajectory_.size());
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void initializeModelData(const PrimalSolution& primalSolution, std::vector<ModelData>& modelDataTrajectory,
-                         std::vector<ModelData>& modelDataEventTimes) {
-  // update model data trajectory
-  modelDataTrajectory.clear();
-  modelDataTrajectory.resize(primalSolution.timeTrajectory_.size());
-  for (size_t k = 0; k < modelDataTrajectory.size(); k++) {
-    modelDataTrajectory[k].time_ = primalSolution.timeTrajectory_[k];
-    modelDataTrajectory[k].stateDim_ = primalSolution.stateTrajectory_[k].size();
-    modelDataTrajectory[k].inputDim_ = primalSolution.inputTrajectory_[k].size();
-    modelDataTrajectory[k].dynamicsBias_.setZero(primalSolution.stateTrajectory_[k].size());
-  }
-
-  // update model data at event times
-  modelDataEventTimes.clear();
-  modelDataEventTimes.resize(primalSolution.postEventIndices_.size());
-  for (size_t ke = 0; ke < modelDataEventTimes.size(); ke++) {
-    const auto index = primalSolution.postEventIndices_[ke] - 1;
-    modelDataEventTimes[ke].time_ = primalSolution.timeTrajectory_[index];
-    modelDataEventTimes[ke].stateDim_ = primalSolution.stateTrajectory_[index].size();
-    modelDataEventTimes[ke].inputDim_ = primalSolution.inputTrajectory_[index].size();
-    modelDataEventTimes[ke].dynamicsBias_.setZero(primalSolution.stateTrajectory_[index].size());
-  }
 }
 
 /******************************************************************************************************/

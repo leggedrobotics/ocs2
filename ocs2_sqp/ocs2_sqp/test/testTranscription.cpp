@@ -37,9 +37,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace {
 /** Helper to compare if two performance indices are identical */
 bool areIdentical(const ocs2::PerformanceIndex& lhs, const ocs2::PerformanceIndex& rhs) {
-  return lhs.merit == rhs.merit && lhs.totalCost == rhs.totalCost && lhs.stateEqConstraintISE == rhs.stateEqConstraintISE &&
-         lhs.stateEqFinalConstraintSSE == rhs.stateEqFinalConstraintSSE && lhs.stateInputEqConstraintISE == rhs.stateInputEqConstraintISE &&
-         lhs.inequalityConstraintISE == rhs.inequalityConstraintISE && lhs.inequalityConstraintPenalty == rhs.inequalityConstraintPenalty;
+  return lhs.merit == rhs.merit && lhs.totalCost == rhs.totalCost && lhs.dynamicsViolationSSE == rhs.dynamicsViolationSSE &&
+         lhs.equalityConstraintsSSE == rhs.equalityConstraintsSSE && lhs.equalityLagrangiansPenalty == rhs.equalityLagrangiansPenalty &&
+         lhs.inequalityLagrangiansPenalty == rhs.inequalityLagrangiansPenalty;
 }
 }  // namespace
 

@@ -104,8 +104,11 @@ struct ScalarFunctionQuadraticApproximation {
   /** Construct and resize the members to given size. */
   ScalarFunctionQuadraticApproximation(size_t nx, size_t nu);
 
-  /** Compound additinon assignment opeartor */
+  /** Compound addition assignment operator */
   ScalarFunctionQuadraticApproximation& operator+=(const ScalarFunctionQuadraticApproximation& rhs);
+
+  /** Compound scalar multiplication and assignment operator */
+  ScalarFunctionQuadraticApproximation& operator*=(scalar_t scalar);
 
   /**
    * Resize the members to the given size
@@ -131,6 +134,21 @@ struct ScalarFunctionQuadraticApproximation {
 };
 
 std::ostream& operator<<(std::ostream& out, const ScalarFunctionQuadraticApproximation& f);
+
+/**
+ * Checks that the given Quadratic approximation is valid, self-adjoint, and positive semi-definite (PSD).
+ * @param[in] data: Given Quadratic approximation
+ * @param[in] dataName: The name of the data which appears in the output error message.
+ * @return The description of the error. If there was no error it would be empty;
+ */
+std::string checkBeingPSD(const ScalarFunctionQuadraticApproximation& data, const std::string& dataName);
+
+inline ScalarFunctionQuadraticApproximation operator*(ScalarFunctionQuadraticApproximation lhs, scalar_t scalar) {
+  return lhs *= scalar;
+}
+inline ScalarFunctionQuadraticApproximation operator*(scalar_t scalar, ScalarFunctionQuadraticApproximation rhs) {
+  return rhs *= scalar;
+}
 
 /**
  * Defines the linear model of a vector-valued function

@@ -64,7 +64,7 @@ LineSearchStrategy::LineSearchStrategy(search_strategy::Settings baseSettings, l
 /******************************************************************************************************/
 bool LineSearchStrategy::run(const scalar_t initTime, const vector_t& initState, const scalar_t finalTime, const scalar_t expectedCost,
                              const ModeSchedule& modeSchedule, LinearController& controller, PerformanceIndex& performanceIndex,
-                             PrimalSolution& dstPrimalSolution, Metrics& metrics, scalar_t& avgTimeStepFP) {
+                             PrimalSolution& dstPrimalSolution, MetricsCollection& metrics, scalar_t& avgTimeStepFP) {
   // number of line search iterations (the if statements order is important)
   size_t maxNumOfLineSearches = 0;
   if (numerics::almost_eq(settings_.minStepLength_, settings_.maxStepLength_)) {
@@ -286,11 +286,14 @@ std::pair<bool, std::string> LineSearchStrategy::checkConvergence(bool unreliabl
   // loop break variables
   bool isStepLengthStarZero = false;
   bool isCostFunctionConverged = false;
-  const scalar_t relCost = std::abs(currentPerformanceIndex.totalCost + currentPerformanceIndex.inequalityConstraintPenalty -
-                                    previousPerformanceIndex.totalCost - previousPerformanceIndex.inequalityConstraintPenalty);
+  const scalar_t currentTotalCost = currentPerformanceIndex.totalCost + currentPerformanceIndex.equalityLagrangiansPenalty +
+                                    currentPerformanceIndex.inequalityLagrangiansPenalty;
+  const scalar_t previousTotalCost = previousPerformanceIndex.totalCost + previousPerformanceIndex.equalityLagrangiansPenalty +
+                                     previousPerformanceIndex.inequalityLagrangiansPenalty;
+  const scalar_t relCost = std::abs(currentTotalCost - previousTotalCost);
   isStepLengthStarZero = numerics::almost_eq(lineSearchModule_.stepLengthStar.load(), 0.0) && !unreliableControllerIncrement;
   isCostFunctionConverged = relCost <= baseSettings_.minRelCost;
-  const bool isConstraintsSatisfied = currentPerformanceIndex.stateInputEqConstraintISE <= baseSettings_.constraintTolerance;
+  const bool isConstraintsSatisfied = currentPerformanceIndex.equalityConstraintsSSE <= baseSettings_.constraintTolerance;
   const bool isOptimizationConverged = (isCostFunctionConverged || isStepLengthStarZero) && isConstraintsSatisfied;
 
   // convergence info
@@ -307,7 +310,7 @@ std::pair<bool, std::string> LineSearchStrategy::checkConvergence(bool unreliabl
                  << baseSettings_.minRelCost << ").\n";
     }
 
-    infoStream << "    * The ISE of state-input equality constraint (i.e., " << currentPerformanceIndex.stateInputEqConstraintISE
+    infoStream << "    * The SSE of equality constraints (i.e., " << currentPerformanceIndex.equalityConstraintsSSE
                << ") has reached to its minimum value (" << baseSettings_.constraintTolerance << ").";
   }
 
@@ -319,8 +322,8 @@ std::pair<bool, std::string> LineSearchStrategy::checkConvergence(bool unreliabl
 /******************************************************************************************************/
 void LineSearchStrategy::computeRiccatiModification(const ModelData& projectedModelData, matrix_t& deltaQm, vector_t& deltaGv,
                                                     matrix_t& deltaGm) const {
-  const auto& QmProjected = projectedModelData.cost_.dfdxx;
-  const auto& PmProjected = projectedModelData.cost_.dfdux;
+  const auto& QmProjected = projectedModelData.cost.dfdxx;
+  const auto& PmProjected = projectedModelData.cost.dfdux;
 
   // Q_minus_PTRinvP
   matrix_t Q_minus_PTRinvP = QmProjected;
@@ -332,9 +335,9 @@ void LineSearchStrategy::computeRiccatiModification(const ModelData& projectedMo
   deltaQm -= Q_minus_PTRinvP;
 
   // deltaGv, deltaGm
-  const auto projectedInputDim = projectedModelData.dynamics_.dfdu.cols();
+  const auto projectedInputDim = projectedModelData.dynamics.dfdu.cols();
   deltaGv.setZero(projectedInputDim, 1);
-  deltaGm.setZero(projectedInputDim, projectedModelData.stateDim_);
+  deltaGm.setZero(projectedInputDim, projectedModelData.stateDim);
 }
 
 /******************************************************************************************************/

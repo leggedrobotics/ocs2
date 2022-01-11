@@ -53,7 +53,6 @@ namespace ocs2 {
  * parses the specified collision links from the robot description and updates the positions of the collision spheres using the pinocchio
  * library.
  */
-
 class PinocchioSphereInterface final {
  public:
   using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;

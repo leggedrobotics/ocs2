@@ -122,16 +122,15 @@ ModeSchedule readModeScheduleMsg(const ocs2_msgs::mode_schedule& modeScheduleMsg
 /******************************************************************************************************/
 ocs2_msgs::mpc_performance_indices createPerformanceIndicesMsg(scalar_t initTime, const PerformanceIndex& performanceIndices) {
   ocs2_msgs::mpc_performance_indices performanceIndicesMsg;
+
   performanceIndicesMsg.initTime = initTime;
   performanceIndicesMsg.merit = performanceIndices.merit;
   performanceIndicesMsg.totalCost = performanceIndices.totalCost;
-  performanceIndicesMsg.stateEqConstraintISE = performanceIndices.stateEqConstraintISE;
-  performanceIndicesMsg.stateEqConstraintPenalty = 0.0;
-  performanceIndicesMsg.stateEqFinalConstraintSSE = performanceIndices.stateEqFinalConstraintSSE;
-  performanceIndicesMsg.stateEqFinalConstraintPenalty = 0.0;
-  performanceIndicesMsg.stateInputEqConstraintISE = performanceIndices.stateInputEqConstraintISE;
-  performanceIndicesMsg.inequalityConstraintISE = performanceIndices.inequalityConstraintISE;
-  performanceIndicesMsg.inequalityConstraintPenalty = performanceIndices.inequalityConstraintPenalty;
+  performanceIndicesMsg.dynamicsViolationSSE = performanceIndices.dynamicsViolationSSE;
+  performanceIndicesMsg.equalityConstraintsSSE = performanceIndices.equalityConstraintsSSE;
+  performanceIndicesMsg.equalityLagrangiansPenalty = performanceIndices.equalityLagrangiansPenalty;
+  performanceIndicesMsg.inequalityLagrangiansPenalty = performanceIndices.inequalityLagrangiansPenalty;
+
   return performanceIndicesMsg;
 }
 
@@ -143,13 +142,10 @@ PerformanceIndex readPerformanceIndicesMsg(const ocs2_msgs::mpc_performance_indi
 
   performanceIndices.merit = performanceIndicesMsg.merit;
   performanceIndices.totalCost = performanceIndicesMsg.totalCost;
-  performanceIndices.stateEqConstraintISE = performanceIndicesMsg.stateEqConstraintISE;
-  //  performanceIndices.stateEqConstraintPenalty = performanceIndicesMsg.stateEqConstraintPenalty;
-  performanceIndices.stateEqFinalConstraintSSE = performanceIndicesMsg.stateEqFinalConstraintSSE;
-  //  performanceIndices.stateEqFinalConstraintPenalty = performanceIndicesMsg.stateEqFinalConstraintPenalty;
-  performanceIndices.stateInputEqConstraintISE = performanceIndicesMsg.stateInputEqConstraintISE;
-  performanceIndices.inequalityConstraintISE = performanceIndicesMsg.inequalityConstraintISE;
-  performanceIndices.inequalityConstraintPenalty = performanceIndicesMsg.inequalityConstraintPenalty;
+  performanceIndices.dynamicsViolationSSE = performanceIndicesMsg.dynamicsViolationSSE;
+  performanceIndices.equalityConstraintsSSE = performanceIndicesMsg.equalityConstraintsSSE;
+  performanceIndices.equalityLagrangiansPenalty = performanceIndicesMsg.equalityLagrangiansPenalty;
+  performanceIndices.inequalityLagrangiansPenalty = performanceIndicesMsg.inequalityLagrangiansPenalty;
 
   return performanceIndices;
 }

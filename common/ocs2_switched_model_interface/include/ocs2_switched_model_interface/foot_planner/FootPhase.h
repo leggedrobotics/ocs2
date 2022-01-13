@@ -102,7 +102,7 @@ class StancePhase final : public FootPhase {
 
 /**
  * Encodes a swing trajectory between two terrain planes.
- * A cubic spline is designed in both liftoff and target plane. The constraint then smoothly interpolates between the two splines.
+ * A spline based swing motion is designed in both liftoff and target plane.
  */
 class SwingPhase final : public FootPhase {
  public:

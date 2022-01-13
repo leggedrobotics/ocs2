@@ -32,8 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ctime>
 #include <iostream>
 
-#include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_core/control/FeedforwardController.h>
+#include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_oc/test/EXP0.h>
 
@@ -53,9 +53,6 @@ class Exp0 : public testing::Test {
     const ocs2::scalar_array_t eventTimes{0.1897};
     const std::vector<size_t> modeSequence{0, 1};
     referenceManagerPtr = ocs2::getExp0ReferenceManager(eventTimes, modeSequence);
-
-    // partitioning times
-    partitioningTimes = ocs2::scalar_array_t{startTime, eventTimes[0], finalTime};
 
     // rollout settings
     const auto rolloutSettings = []() {
@@ -96,7 +93,6 @@ class Exp0 : public testing::Test {
     ddpSettings.maxNumIterations_ = 30;
     ddpSettings.minRelCost_ = 1e-3;
     ddpSettings.checkNumericalStability_ = true;
-    ddpSettings.useNominalTimeForBackwardPass_ = false;
     ddpSettings.useFeedbackPolicy_ = true;
     ddpSettings.debugPrintRollout_ = false;
     ddpSettings.strategy_ = strategy;
@@ -126,7 +122,6 @@ class Exp0 : public testing::Test {
   const ocs2::scalar_t startTime = 0.0;
   const ocs2::scalar_t finalTime = 2.0;
   const ocs2::vector_t initState = (ocs2::vector_t(STATE_DIM) << 0.0, 2.0).finished();
-  ocs2::scalar_array_t partitioningTimes;
   std::shared_ptr<ocs2::ReferenceManager> referenceManagerPtr;
 
   std::unique_ptr<ocs2::TimeTriggeredRollout> rolloutPtr;
@@ -153,7 +148,7 @@ TEST_F(Exp0, ddp_feedback_policy) {
   ddp.setReferenceManager(referenceManagerPtr);
 
   // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  ddp.run(startTime, initState, finalTime);
   // get solution
   const auto solution = ddp.primalSolution(finalTime);
   const auto* ctrlPtr = dynamic_cast<ocs2::LinearController*>(solution.controllerPtr_.get());
@@ -176,7 +171,7 @@ TEST_F(Exp0, ddp_feedforward_policy) {
   ddp.setReferenceManager(referenceManagerPtr);
 
   // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  ddp.run(startTime, initState, finalTime);
   // get solution
   const auto solution = ddp.primalSolution(finalTime);
   const auto* ctrlPtr = dynamic_cast<ocs2::FeedforwardController*>(solution.controllerPtr_.get());
@@ -206,27 +201,27 @@ TEST_F(Exp0, ddp_caching) {
   // run single core SLQ (no active event)
   ocs2::scalar_t startTime = 0.2;
   ocs2::scalar_t finalTime = 0.7;
-  EXPECT_NO_THROW(ddp.run(startTime, initState, finalTime, partitioningTimes));
+  EXPECT_NO_THROW(ddp.run(startTime, initState, finalTime));
 
   // run similar to the MPC setup (a new partition)
   startTime = 0.4;
   finalTime = 0.9;
-  EXPECT_NO_THROW(ddp.run(startTime, initState, finalTime, partitioningTimes, std::vector<ocs2::ControllerBase*>()));
+  EXPECT_NO_THROW(ddp.run(startTime, initState, finalTime));
 
   // run similar to the MPC setup (one active event)
   startTime = 0.6;
   finalTime = 1.2;
-  EXPECT_NO_THROW(ddp.run(startTime, initState, finalTime, partitioningTimes, std::vector<ocs2::ControllerBase*>()));
+  EXPECT_NO_THROW(ddp.run(startTime, initState, finalTime));
 
   // run similar to the MPC setup (no active event + a new partition)
   startTime = 1.1;
   finalTime = 1.5;
-  EXPECT_NO_THROW(ddp.run(startTime, initState, finalTime, partitioningTimes, std::vector<ocs2::ControllerBase*>()));
+  EXPECT_NO_THROW(ddp.run(startTime, initState, finalTime));
 
   // run similar to the MPC setup (no overlap)
   startTime = 1.6;
   finalTime = 2.0;
-  EXPECT_NO_THROW(ddp.run(startTime, initState, finalTime, partitioningTimes, std::vector<ocs2::ControllerBase*>()));
+  EXPECT_NO_THROW(ddp.run(startTime, initState, finalTime));
 }
 
 /******************************************************************************************************/
@@ -242,7 +237,7 @@ TEST_F(Exp0, ddp_hamiltonian) {
   ddp.setReferenceManager(referenceManagerPtr);
 
   // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  ddp.run(startTime, initState, finalTime);
   // get solution
   const auto solution = ddp.primalSolution(finalTime);
 
@@ -259,7 +254,8 @@ TEST_F(Exp0, ddp_hamiltonian) {
   EXPECT_TRUE(dHdu1a.isZero(precision)) << "MESSAGE for test 1a: Derivative of Hamiltonian w.r.t. to u is not zero: " << dHdu1a.transpose();
 
   // evaluate Hamiltonian at different state (but using feedback policy)
-  // expected outcome: true, because for a linear system the LQ approximation of H is exact and the linear feedback policy is globally optimal
+  // expected outcome: true, because for a linear system the LQ approximation of H is exact and the linear feedback policy is globally
+  // optimal
   ocs2::scalar_t querryTime = solution.timeTrajectory_.front();
   ocs2::vector_t querryState = ocs2::vector_t::Random(solution.stateTrajectory_.front().size());
   ocs2::vector_t querryInput = solution.controllerPtr_->computeInput(querryTime, querryState);
@@ -320,7 +316,7 @@ TEST_P(Exp0Param, SLQ) {
   }
 
   // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  ddp.run(startTime, initState, finalTime);
   // get performance index
   const auto performanceIndex = ddp.getPerformanceIndeces();
 
@@ -344,7 +340,7 @@ TEST_P(Exp0Param, ILQR) {
   }
 
   // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  ddp.run(startTime, initState, finalTime);
   // get performance index
   const auto performanceIndex = ddp.getPerformanceIndeces();
 

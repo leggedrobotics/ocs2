@@ -32,8 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ctime>
 #include <iostream>
 
-#include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_core/control/FeedforwardController.h>
+#include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_oc/test/EXP1.h>
 
@@ -53,9 +53,6 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
     const ocs2::scalar_array_t eventTimes{0.2262, 1.0176};
     const std::vector<size_t> modeSequence{0, 1, 2};
     referenceManagerPtr = ocs2::getExp1ReferenceManager(eventTimes, modeSequence);
-
-    // partitioning times
-    partitioningTimes = ocs2::scalar_array_t{startTime, eventTimes[0], eventTimes[1], finalTime};
 
     // rollout settings
     const auto rolloutSettings = []() {
@@ -99,7 +96,6 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
     ddpSettings.absTolODE_ = 1e-10;
     ddpSettings.relTolODE_ = 1e-7;
     ddpSettings.maxNumStepsPerSecond_ = 10000;
-    ddpSettings.useNominalTimeForBackwardPass_ = true;
     ddpSettings.useFeedbackPolicy_ = false;
     ddpSettings.debugPrintRollout_ = false;
     ddpSettings.strategy_ = strategy;
@@ -129,7 +125,6 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
   const ocs2::scalar_t startTime = 0.0;
   const ocs2::scalar_t finalTime = 3.0;
   const ocs2::vector_t initState = (ocs2::vector_t(STATE_DIM) << 2.0, 3.0).finished();
-  ocs2::scalar_array_t partitioningTimes;
   std::shared_ptr<ocs2::ReferenceManager> referenceManagerPtr;
 
   std::unique_ptr<ocs2::SystemDynamicsBase> systemPtr;
@@ -157,7 +152,7 @@ TEST_F(Exp1, ddp_hamiltonian) {
   ddp.setReferenceManager(referenceManagerPtr);
 
   // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  ddp.run(startTime, initState, finalTime);
   // get solution
   const auto solution = ddp.primalSolution(finalTime);
 
@@ -223,12 +218,12 @@ TEST_P(Exp1, SLQ) {
   ocs2::SLQ ddp(ddpSettings, *rolloutPtr, *problemPtr, *initializerPtr);
   ddp.setReferenceManager(referenceManagerPtr);
 
-  if(ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
+  if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
     std::cerr << "\n" << getTestName(ddpSettings) << "\n";
   }
 
   // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  ddp.run(startTime, initState, finalTime);
   // get performance index
   const auto performanceIndex = ddp.getPerformanceIndeces();
 
@@ -252,7 +247,7 @@ TEST_P(Exp1, ILQR) {
   }
 
   // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  ddp.run(startTime, initState, finalTime);
   // get performance index
   const auto performanceIndex = ddp.getPerformanceIndeces();
 

@@ -6,7 +6,7 @@
 #include <ocs2_core/cost/QuadraticStateInputCost.h>
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
 #include <ocs2_core/initialization/DefaultInitializer.h>
-#include <ocs2_mpc/MPC_DDP.h>
+#include <ocs2_ddp/GaussNewtonDDP_MPC.h>"
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ocs2_python_interface/PythonInterface.h>
@@ -37,11 +37,11 @@ class DummyInterface final : public RobotInterface {
   }
   ~DummyInterface() override = default;
 
-  std::unique_ptr<ocs2::MPC_DDP> getMpc() {
+  std::unique_ptr<ocs2::GaussNewtonDDP_MPC> getMpc() {
     mpc::Settings mpcSettings;
     ddp::Settings ddpSettings;
     ddpSettings.algorithm_ = ddp::Algorithm::SLQ;
-    return std::unique_ptr<MPC_DDP>(new MPC_DDP(mpcSettings, ddpSettings, *rolloutPtr_, problem_, *initializerPtr_));
+    return std::unique_ptr<GaussNewtonDDP_MPC>(new GaussNewtonDDP_MPC(mpcSettings, ddpSettings, *rolloutPtr_, problem_, *initializerPtr_));
   }
 
   const OptimalControlProblem& getOptimalControlProblem() const override { return problem_; }

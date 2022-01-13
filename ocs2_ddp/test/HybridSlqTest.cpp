@@ -81,7 +81,6 @@ TEST(HybridSlqTest, state_rollout_slq) {
   ddpSettings.absTolODE_ = 1e-10;
   ddpSettings.relTolODE_ = 1e-7;
   ddpSettings.maxNumStepsPerSecond_ = 10000;
-  ddpSettings.useNominalTimeForBackwardPass_ = true;
   ddpSettings.useFeedbackPolicy_ = true;
   ddpSettings.debugPrintRollout_ = false;
   ddpSettings.strategy_ = search_strategy::Type::LINE_SEARCH;
@@ -94,10 +93,6 @@ TEST(HybridSlqTest, state_rollout_slq) {
 
   scalar_t startTime = 0.0;
   scalar_t finalTime = 5.0;
-
-  std::vector<scalar_t> partitioningTimes;
-  partitioningTimes.push_back(startTime);
-  partitioningTimes.push_back(finalTime);
 
   vector_t initState(stateDim);
   initState << 0, 1, 1;
@@ -142,7 +137,7 @@ TEST(HybridSlqTest, state_rollout_slq) {
   // SLQ
   SLQ slq(ddpSettings, stateTriggeredRollout, problem, operatingTrajectories);
   slq.setReferenceManager(referenceManager);
-  slq.run(startTime, initState, finalTime, partitioningTimes);
+  slq.run(startTime, initState, finalTime);
   auto solution = slq.primalSolution(finalTime);
   std::cout << "SLQ Procedure Done" << std::endl;
 

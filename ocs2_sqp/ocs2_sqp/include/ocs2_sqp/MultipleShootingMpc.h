@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_sqp/MultipleShootingSolver.h>
 
 namespace ocs2 {
-class MultipleShootingMpc : public MPC_BASE {
+class MultipleShootingMpc final : public MPC_BASE {
  public:
   /**
    * Constructor
@@ -56,13 +56,14 @@ class MultipleShootingMpc : public MPC_BASE {
   MultipleShootingSolver* getSolverPtr() override { return solverPtr_.get(); }
   const MultipleShootingSolver* getSolverPtr() const override { return solverPtr_.get(); }
 
- protected:
+ private:
   void calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override {
-    const scalar_array_t partitioningTimes = {0.0};
-    solverPtr_->run(initTime, initState, finalTime, partitioningTimes);
+    if (settings().coldStart_) {
+      solverPtr_->reset();
+    }
+    solverPtr_->run(initTime, initState, finalTime);
   }
 
- private:
   std::unique_ptr<MultipleShootingSolver> solverPtr_;
 };
 }  // namespace ocs2

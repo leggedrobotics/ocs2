@@ -39,6 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/model_data/ModelData.h>
 #include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
 #include <ocs2_core/thread_support/ThreadPool.h>
+
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
@@ -80,11 +81,9 @@ class LineSearchStrategy final : public SearchStrategyBase {
 
   void reset() override {}
 
-  bool run(scalar_t expectedCost, const ModeSchedule& modeSchedule, std::vector<LinearController>& controllersStock,
-           PerformanceIndex& performanceIndex, scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
-           vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
-           std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock, std::vector<std::vector<ModelData>>& modelDataEventTimesStock,
-           scalar_t& avgTimeStepFP) override;
+  bool run(const scalar_t initTime, const vector_t& initState, const scalar_t finalTime, const scalar_t expectedCost,
+           const ModeSchedule& modeSchedule, LinearController& controller, PerformanceIndex& performanceIndex,
+           PrimalDataContainer& dstPrimalData, scalar_t& avgTimeStepFP) override;
 
   std::pair<bool, std::string> checkConvergence(bool unreliableControllerIncrement, const PerformanceIndex& previousPerformanceIndex,
                                                 const PerformanceIndex& currentPerformanceIndex) const override;
@@ -108,24 +107,19 @@ class LineSearchStrategy final : public SearchStrategyBase {
     scalar_t baselineMerit = 0.0;           // the merit of the rollout for zero learning rate
     scalar_t initControllerUpdateIS = 0.0;  // integral of the squared (IS) norm of the controller update.
     const ModeSchedule* modeSchedulePtr;
-    std::vector<LinearController> initControllersStock;
+    LinearController initController;
 
     std::atomic_size_t alphaExpNext{0};
     std::vector<bool> alphaProcessed;
     std::mutex lineSearchResultMutex;
 
     std::atomic<scalar_t> stepLengthStar{0.0};
-    PerformanceIndex* performanceIndexPtrStar;
-    std::vector<LinearController>* controllersStockPtrStar;
-    scalar_array2_t* timeTrajectoriesStockPtrStar;
-    size_array2_t* postEventIndicesStockPtrStar;
-    vector_array2_t* stateTrajectoriesStockPtrStar;
-    vector_array2_t* inputTrajectoriesStockPtrStar;
-    std::vector<std::vector<ModelData>>* modelDataTrajectoriesStockPtrStar;
-    std::vector<std::vector<ModelData>>* modelDataEventTimesStockPtrStar;
+    PerformanceIndex* performanceIndexStarPtr;
+    PrimalDataContainer* primalDataStarPtr;
+    LinearController* controllerStarPtr;
   };
 
-  line_search::Settings settings_;
+  const line_search::Settings settings_;
   LineSearchModule lineSearchModule_;
 
   ThreadPool& threadPoolRef_;
@@ -138,6 +132,9 @@ class LineSearchStrategy final : public SearchStrategyBase {
   std::function<scalar_t(PerformanceIndex)> meritFunc_;
 
   std::atomic<scalar_t> avgTimeStepFP_{0.0};
+
+  // temperory primal data buffer for all threads. The intermediate rollout result of different step length will be stored here.
+  std::vector<PrimalDataContainer> primalDataStock_;
 };
 
 }  // namespace ocs2

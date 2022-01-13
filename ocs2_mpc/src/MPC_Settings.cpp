@@ -49,20 +49,10 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   }
 
   loadData::loadPtreeValue(pt, settings.timeHorizon_, fieldName + ".timeHorizon", verbose);
-  loadData::loadPtreeValue(pt, settings.numPartitions_, fieldName + ".numPartitions", verbose);
   loadData::loadPtreeValue(pt, settings.solutionTimeWindow_, fieldName + ".solutionTimeWindow", verbose);
-
-  loadData::loadPtreeValue(pt, settings.debugPrint_, fieldName + ".debugPrint", verbose);
-
   loadData::loadPtreeValue(pt, settings.coldStart_, fieldName + ".coldStart", verbose);
 
-  loadData::loadPtreeValue(pt, settings.initMaxNumIterations_, fieldName + ".initMaxNumIterations", verbose);
-  loadData::loadPtreeValue(pt, settings.initMinStepLength_, fieldName + ".initMinStepLength", verbose);
-  loadData::loadPtreeValue(pt, settings.initMaxStepLength_, fieldName + ".initMaxStepLength", verbose);
-
-  loadData::loadPtreeValue(pt, settings.runtimeMaxNumIterations_, fieldName + ".runtimeMaxNumIterations", verbose);
-  loadData::loadPtreeValue(pt, settings.runtimeMinStepLength_, fieldName + ".runtimeMinStepLength", verbose);
-  loadData::loadPtreeValue(pt, settings.runtimeMaxStepLength_, fieldName + ".runtimeMaxStepLength", verbose);
+  loadData::loadPtreeValue(pt, settings.debugPrint_, fieldName + ".debugPrint", verbose);
 
   loadData::loadPtreeValue(pt, settings.mpcDesiredFrequency_, fieldName + ".mpcDesiredFrequency", verbose);
   loadData::loadPtreeValue(pt, settings.mrtDesiredFrequency_, fieldName + ".mrtDesiredFrequency", verbose);

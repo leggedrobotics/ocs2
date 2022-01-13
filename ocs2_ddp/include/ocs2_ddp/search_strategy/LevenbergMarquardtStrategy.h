@@ -79,11 +79,9 @@ class LevenbergMarquardtStrategy final : public SearchStrategyBase {
 
   void reset() override;
 
-  bool run(scalar_t expectedCost, const ModeSchedule& modeSchedule, std::vector<LinearController>& controllersStock,
-           PerformanceIndex& performanceIndex, scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
-           vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
-           std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock, std::vector<std::vector<ModelData>>& modelDataEventTimesStock,
-           scalar_t& avgTimeStepFP) override;
+  bool run(const scalar_t initTime, const vector_t& initState, const scalar_t finalTime, const scalar_t expectedCost,
+           const ModeSchedule& modeSchedule, LinearController& controller, PerformanceIndex& performanceIndex,
+           PrimalDataContainer& dstPrimalData, scalar_t& avgTimeStepFP) override;
 
   std::pair<bool, std::string> checkConvergence(bool unreliableControllerIncrement, const PerformanceIndex& previousPerformanceIndex,
                                                 const PerformanceIndex& currentPerformanceIndex) const override;
@@ -102,7 +100,7 @@ class LevenbergMarquardtStrategy final : public SearchStrategyBase {
     size_t numSuccessiveRejections = 0;           // the number of successive rejections of solution.
   };
 
-  levenberg_marquardt::Settings settings_;
+  const levenberg_marquardt::Settings settings_;
   LevenbergMarquardtModule levenbergMarquardtModule_;
 
   RolloutBase& rolloutRef_;

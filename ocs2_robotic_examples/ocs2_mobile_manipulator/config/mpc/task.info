@@ -25,7 +25,7 @@ ddp
 
   nThreads                      3
 
-  maxNumIterations              10
+  maxNumIterations              1
   minRelCost                    0.1
   constraintTolerance           1e-3
 
@@ -43,7 +43,6 @@ ddp
   inequalityConstraintDelta     1.1
 
   preComputeRiccatiTerms        true
-  useNominalTimeForBackwardPass false
 
   useFeedbackPolicy             false
 
@@ -70,21 +69,11 @@ rollout
 ; MPC settings
 mpc
 {
-  timeHorizon                    1.0
-  numPartitions                  4
-
-  runtimeMaxNumIterations        1
-  initMaxNumIterations           10
-
-  runtimeMaxStepLength           1.0
-  runtimeMinStepLength           1e-2
-  initMaxStepLength              1.0
-  initMinStepLength              1e-2
-
-  debugPrint                     false
+  timeHorizon                    1.0   ; [s]
+  solutionTimeWindow             0.2   ; [s]
   coldStart                      false
 
-  solutionTimeWindow             0.2   ; [s]
+  debugPrint                     false
 
   mpcDesiredFrequency            100   ; [Hz]
   mrtDesiredFrequency            400   ; [Hz]

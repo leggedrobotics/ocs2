@@ -84,7 +84,6 @@ TEST(BouncingMassTest, DISABLED_state_rollout_slq) {
   ddpSettings.absTolODE_ = 1e-10;
   ddpSettings.relTolODE_ = 1e-7;
   ddpSettings.maxNumStepsPerSecond_ = 10000;
-  ddpSettings.useNominalTimeForBackwardPass_ = true;
   ddpSettings.useFeedbackPolicy_ = true;
   ddpSettings.debugPrintRollout_ = false;
 
@@ -142,11 +141,6 @@ TEST(BouncingMassTest, DISABLED_state_rollout_slq) {
   // Rollout Class
   ocs2::StateTriggeredRollout stateTriggeredRollout(systemDynamics, rolloutSettings);
 
-  // Operating points and PartitioningTimes
-  scalar_array_t partitioningTimes;
-  partitioningTimes.push_back(startTime);
-  partitioningTimes.push_back(finalTime);
-
   // Initial Controller
   matrix_t controllerGain(INPUT_DIM, STATE_DIM);
   controllerGain << 25, 10, 0;
@@ -183,13 +177,12 @@ TEST(BouncingMassTest, DISABLED_state_rollout_slq) {
     }
   }
 
-  ocs2::LinearController Control(timeStampArray, controllerBiasArray, controllerGainArray);
-  std::vector<ocs2::ControllerBase*> controllerPtrArray = {&Control};
+  ocs2::LinearController initController(timeStampArray, controllerBiasArray, controllerGainArray);
 
   ocs2::OperatingPoints operatingTrajectories(x0, u0);
   // SLQ
   ocs2::SLQ slq(ddpSettings, stateTriggeredRollout, problem, operatingTrajectories);
-  slq.run(startTime, x0, finalTime, partitioningTimes, controllerPtrArray);
+  slq.run(startTime, x0, finalTime, &initController);
   auto solutionST = slq.primalSolution(finalTime);
 
   for (int i = 0; i < solutionST.stateTrajectory_.size(); i++) {

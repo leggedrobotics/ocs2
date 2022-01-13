@@ -96,7 +96,6 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
     ddpSettings.constraintPenaltyInitialValue_ = 2.0;
     ddpSettings.constraintPenaltyIncreaseRate_ = 1.5;
     ddpSettings.preComputeRiccatiTerms_ = false;
-    ddpSettings.useNominalTimeForBackwardPass_ = true;
     ddpSettings.strategy_ = strategy;
     ddpSettings.lineSearch_.minStepLength_ = 0.01;
     ddpSettings.lineSearch_.hessianCorrectionStrategy_ = ocs2::hessian_correction::Strategy::CHOLESKY_MODIFICATION;
@@ -123,7 +122,6 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
   const ocs2::scalar_t startTime = 0.0;
   const ocs2::scalar_t finalTime = 10.0;
   const ocs2::vector_t initState = (ocs2::vector_t(STATE_DIM) << 1.0, 0.0).finished();  // radius 1.0
-  const ocs2::scalar_array_t partitioningTimes{startTime, (startTime + finalTime) / 2.0, finalTime};
 
   std::unique_ptr<ocs2::TimeTriggeredRollout> rolloutPtr;
   ocs2::OptimalControlProblem problem;
@@ -150,7 +148,7 @@ TEST_P(CircularKinematicsTest, SLQ) {
   }
 
   // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  ddp.run(startTime, initState, finalTime);
   // get performance index
   const auto performanceIndex = ddp.getPerformanceIndeces();
 
@@ -173,7 +171,7 @@ TEST_P(CircularKinematicsTest, ILQR) {
   }
 
   // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  ddp.run(startTime, initState, finalTime);
   // get performance index
   const auto performanceIndex = ddp.getPerformanceIndeces();
 

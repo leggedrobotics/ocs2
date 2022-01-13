@@ -110,8 +110,6 @@ struct Settings {
 
   /** If true, terms of the Riccati equation will be precomputed before interpolation in the flow-map */
   bool preComputeRiccatiTerms_ = true;
-  /** If true, SLQ solves the backward path over the nominal time trajectory. */
-  bool useNominalTimeForBackwardPass_ = false;
 
   /** Use either the optimized control policy (true) or the optimized state-input trajectory (false). */
   bool useFeedbackPolicy_ = false;

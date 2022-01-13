@@ -139,14 +139,13 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithEventTime(scal
   const ocs2::scalar_t startTime = 0.0;
   const ocs2::scalar_t finalTime = 1.0;
   const ocs2::vector_t initState = ocs2::vector_t::Random(n);
-  const ocs2::scalar_array_t partitioningTimes{0.0};
 
   // Set up solver
   ocs2::MultipleShootingSolver solver(settings, problem, zeroInitializer);
   solver.setReferenceManager(referenceManagerPtr);
 
   // Solve
-  solver.run(startTime, initState, finalTime, partitioningTimes);
+  solver.run(startTime, initState, finalTime);
   return {solver.primalSolution(finalTime), solver.getIterationsLog()};
 }
 

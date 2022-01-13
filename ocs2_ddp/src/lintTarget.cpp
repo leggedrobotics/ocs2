@@ -1,3 +1,4 @@
+#include <ocs2_ddp/DDP_Data.h>
 #include <ocs2_ddp/DDP_Settings.h>
 #include <ocs2_ddp/GaussNewtonDDP.h>
 

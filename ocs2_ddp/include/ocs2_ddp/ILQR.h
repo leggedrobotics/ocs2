@@ -59,22 +59,17 @@ class ILQR : public GaussNewtonDDP {
   ~ILQR() override = default;
 
  protected:
-  void setupOptimizer(size_t numPartitions) override;
+  scalar_t solveSequentialRiccatiEquations(const ScalarFunctionQuadraticApproximation& finalValueFunction) override;
 
-  scalar_t solveSequentialRiccatiEquations(const matrix_t& SmFinal, const vector_t& SvFinal, const scalar_t& sFinal) override;
+  void riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& partitionInterval,
+                              const ScalarFunctionQuadraticApproximation& finalValueFunction) override;
 
-  void riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const matrix_t& SmFinal, const vector_t& SvFinal,
-                              const scalar_t& sFinal) override;
-
-  void calculateController() override;
-
-  void calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) override;
+  void calculateControllerWorker(size_t timeIndex, const PrimalDataContainer& primalData, const DualDataContainer& dualData,
+                                 LinearController& dstController) override;
 
   matrix_t computeHamiltonianHessian(const ModelData& modelData, const matrix_t& Sm) const override;
 
-  void approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
-                                 const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
-                                 std::vector<ModelData>& modelDataTrajectory) override;
+  void approximateIntermediateLQ(PrimalDataContainer& primalData) override;
 
   /**
    * Calculates the discrete-time LQ approximation from the continuous-time LQ approximation.
@@ -88,8 +83,8 @@ class ILQR : public GaussNewtonDDP {
   /****************
    *** Variables **
    ****************/
-  matrix_array2_t projectedKmTrajectoryStock_;  // projected feedback
-  vector_array2_t projectedLvTrajectoryStock_;  // projected feedforward
+  matrix_array_t projectedKmTrajectoryStock_;  // projected feedback
+  vector_array_t projectedLvTrajectoryStock_;  // projected feedforward
 
   std::vector<std::unique_ptr<DiscreteTimeRiccatiEquations>> riccatiEquationsPtrStock_;
 };

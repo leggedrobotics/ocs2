@@ -197,11 +197,16 @@ void MultipleShootingSolver::initializeStateInputTrajectories(const vector_t& in
   inputTrajectory.reserve(N);
 
   // Determine till when to use the previous solution
-  const scalar_t interpolateTill = (totalNumIterations_ > 0) ? primalSolution_.timeTrajectory_.back() : timeDiscretization.front().time;
+  scalar_t interpolateStateTill = timeDiscretization.front().time;
+  scalar_t interpolateInputTill = timeDiscretization.front().time;
+  if (primalSolution_.timeTrajectory_.size() >= 2) {
+    interpolateStateTill = primalSolution_.timeTrajectory_.back();
+    interpolateInputTill = primalSolution_.timeTrajectory_[primalSolution_.timeTrajectory_.size() - 2];
+  }
 
   // Initial state
   const scalar_t initTime = getIntervalStart(timeDiscretization[0]);
-  if (initTime < interpolateTill) {
+  if (initTime < interpolateStateTill) {
     stateTrajectory.push_back(
         LinearInterpolation::interpolate(initTime, primalSolution_.timeTrajectory_, primalSolution_.stateTrajectory_));
   } else {
@@ -218,11 +223,11 @@ void MultipleShootingSolver::initializeStateInputTrajectories(const vector_t& in
       const scalar_t time = getIntervalStart(timeDiscretization[i]);
       const scalar_t nextTime = getIntervalEnd(timeDiscretization[i + 1]);
       vector_t input, nextState;
-      if (time < interpolateTill) {
-        std::tie(input, nextState) = multiple_shooting::initializeIntermediateNode(primalSolution_, time, nextTime, stateTrajectory.back());
-      } else {  // Using initializer
+      if (time > interpolateInputTill || nextTime > interpolateStateTill) {  // Using initializer
         std::tie(input, nextState) =
             multiple_shooting::initializeIntermediateNode(*initializerPtr_, time, nextTime, stateTrajectory.back());
+      } else {  // interpolate previous solution
+        std::tie(input, nextState) = multiple_shooting::initializeIntermediateNode(primalSolution_, time, nextTime, stateTrajectory.back());
       }
       inputTrajectory.push_back(std::move(input));
       stateTrajectory.push_back(std::move(nextState));

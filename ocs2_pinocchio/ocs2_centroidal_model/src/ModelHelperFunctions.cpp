@@ -45,8 +45,13 @@ namespace ocs2 {
 template <typename SCALAR_T>
 void updateCentroidalDynamics(PinocchioInterfaceTpl<SCALAR_T>& interface, const CentroidalModelInfoTpl<SCALAR_T>& info,
                               const Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& q) {
+  using vector3_t = Eigen::Matrix<SCALAR_T, 3, 1>;
+  using matrix3_t = Eigen::Matrix<SCALAR_T, 3, 3>;
+  using matrix6_t = Eigen::Matrix<SCALAR_T, 6, 6>;
+
   const auto& model = interface.getModel();
   auto& data = interface.getData();
+
   switch (info.centroidalModelType) {
     case CentroidalModelType::FullCentroidalDynamics: {
       pinocchio::computeCentroidalMap(model, data, q);
@@ -54,20 +59,19 @@ void updateCentroidalDynamics(PinocchioInterfaceTpl<SCALAR_T>& interface, const 
       break;
     }
     case CentroidalModelType::SingleRigidBodyDynamics: {
-      const Eigen::Matrix<SCALAR_T, 3, 1> eulerAnglesZyx = q.template segment<3>(3);
-      const auto mappingZyx = getMappingFromEulerAnglesZyxDerivativeToGlobalAngularVelocity(eulerAnglesZyx);
-      const auto rotationBaseToWorld = getRotationMatrixFromZyxEulerAngles(eulerAnglesZyx);
-      const Eigen::Matrix<SCALAR_T, 3, 1> comToBasePositionInWorld = rotationBaseToWorld * info.comToBasePositionNominal;
-      const auto skewSymmetricMap = skewSymmetricMatrix(comToBasePositionInWorld);
-      const auto mat1 = rotationBaseToWorld * info.centroidalInertiaNominal;
-      const auto mat2 = rotationBaseToWorld.transpose() * mappingZyx;
-      Eigen::Matrix<SCALAR_T, 6, 6> Ab = Eigen::Matrix<SCALAR_T, 6, 6>::Zero();
+      const vector3_t eulerAnglesZyx = q.template segment<3>(3);
+      const matrix3_t mappingZyx = getMappingFromEulerAnglesZyxDerivativeToGlobalAngularVelocity(eulerAnglesZyx);
+      const matrix3_t rotationBaseToWorld = getRotationMatrixFromZyxEulerAngles(eulerAnglesZyx);
+      const vector3_t comToBasePositionInWorld = rotationBaseToWorld * info.comToBasePositionNominal;
+      const matrix3_t skewSymmetricMap = skewSymmetricMatrix(comToBasePositionInWorld);
+      const matrix3_t mat1 = rotationBaseToWorld * info.centroidalInertiaNominal;
+      const matrix3_t mat2 = rotationBaseToWorld.transpose() * mappingZyx;
+      matrix6_t Ab = matrix6_t::Zero();
       Ab.template topLeftCorner<3, 3>().diagonal().array() = info.robotMass;
-      Ab.template topRightCorner<3, 3>() = info.robotMass * skewSymmetricMap * mappingZyx;
-      Ab.template bottomRightCorner<3, 3>() = mat1 * mat2;
-      Eigen::Matrix<SCALAR_T, -1, -1> A = Eigen::Matrix<SCALAR_T, -1, -1>::Zero(6, info.generalizedCoordinatesNum);
-      A.template leftCols<6>() = Ab;
-      data.Ag = A;
+      Ab.template topRightCorner<3, 3>().noalias() = info.robotMass * skewSymmetricMap * mappingZyx;
+      Ab.template bottomRightCorner<3, 3>().noalias() = mat1 * mat2;
+      data.Ag = Eigen::Matrix<SCALAR_T, -1, -1>::Zero(6, info.generalizedCoordinatesNum);
+      data.Ag.template leftCols<6>() = Ab;
       data.com[0] = q.template head<3>() - comToBasePositionInWorld;
       pinocchio::forwardKinematics(model, data, q);
       pinocchio::updateFramePlacements(model, data);

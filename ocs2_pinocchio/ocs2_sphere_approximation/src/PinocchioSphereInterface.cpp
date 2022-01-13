@@ -54,6 +54,7 @@ PinocchioSphereInterface::PinocchioSphereInterface(const PinocchioInterface& pin
       const std::string parentFrameName = pinocchioInterface.getModel().frames[object.parentFrame].name;
       if (parentFrameName == link) {
         sphereApproximations_.emplace_back(*object.geometry, j, maxExcesses[i], shrinkRatio);
+        collisionLinkOfEachPrimitiveShape_.emplace_back(link);
       }
     }
   }
@@ -84,6 +85,7 @@ PinocchioSphereInterface::~PinocchioSphereInterface() = default;
 PinocchioSphereInterface::PinocchioSphereInterface(const PinocchioSphereInterface& rhs)
     : geometryModelPtr_(new pinocchio::GeometryModel(*rhs.geometryModelPtr_)),
       collisionLinks_(rhs.collisionLinks_),
+      collisionLinkOfEachPrimitiveShape_(rhs.collisionLinkOfEachPrimitiveShape_),
       sphereApproximations_(rhs.sphereApproximations_),
       numPrimitiveShapes_(rhs.numPrimitiveShapes_),
       numSpheresInTotal_(rhs.numSpheresInTotal_),

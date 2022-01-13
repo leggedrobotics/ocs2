@@ -83,6 +83,9 @@ class PinocchioSphereInterface final {
   /** Get the array of the collision links approximated with spheres */
   const std::vector<std::string>& getCollisionLinks() const { return collisionLinks_; };
 
+  /** Get the array of the names of the collision links where each primitive shape is from */
+  const std::vector<std::string>& getCollisionLinkOfEachPrimitveShape() const { return collisionLinkOfEachPrimitiveShape_; };
+
   /** Get the array of the SphereApproximation objects */
   const std::vector<SphereApproximation>& getSphereApproximations() const { return sphereApproximations_; }
 
@@ -121,6 +124,7 @@ class PinocchioSphereInterface final {
 
   // Sphere approximation for environment collision
   const std::vector<std::string> collisionLinks_;
+  std::vector<std::string> collisionLinkOfEachPrimitiveShape_;
   std::vector<SphereApproximation> sphereApproximations_;
   size_t numPrimitiveShapes_ = 0;
   size_t numSpheresInTotal_ = 0;

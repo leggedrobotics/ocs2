@@ -49,11 +49,11 @@ PinocchioSphereKinematics::PinocchioSphereKinematics(PinocchioSphereInterface pi
                                                      const PinocchioStateInputMapping<scalar_t>& mapping)
     : pinocchioInterfacePtr_(nullptr), pinocchioSphereInterface_(std::move(pinocchioSphereInterface)), mappingPtr_(mapping.clone()) {
   linkIds_.resize(pinocchioSphereInterface_.getNumSpheresInTotal());
-  const auto& collisionLinks = pinocchioSphereInterface_.getCollisionLinks();
+  const std::vector<std::string>& collisionLinkOfEachPrimitiveShape = pinocchioSphereInterface_.getCollisionLinkOfEachPrimitveShape();
   const auto numSpheres = pinocchioSphereInterface_.getNumSpheres();
   size_t count = 0;
   for (size_t i = 0; i < pinocchioSphereInterface.getNumPrimitiveShapes(); i++) {
-    std::fill(linkIds_.begin() + count, linkIds_.begin() + count + numSpheres[i], collisionLinks[i]);
+    std::fill(linkIds_.begin() + count, linkIds_.begin() + count + numSpheres[i], collisionLinkOfEachPrimitiveShape[i]);
     count += numSpheres[i];
   }
 }

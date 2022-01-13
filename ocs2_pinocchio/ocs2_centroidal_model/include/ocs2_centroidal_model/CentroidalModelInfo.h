@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <ostream>
+#include <string>
 #include <type_traits>
 
 #include <ocs2_core/Types.h>
@@ -43,6 +45,9 @@ using CentroidalModelInfo = CentroidalModelInfoTpl<scalar_t>;
 using CentroidalModelInfoCppAd = CentroidalModelInfoTpl<ad_scalar_t>;
 
 enum class CentroidalModelType { FullCentroidalDynamics, SingleRigidBodyDynamics };
+
+std::string toString(CentroidalModelType type);
+std::ostream& operator<<(std::ostream& os, CentroidalModelType type);
 
 template <typename SCALAR>
 struct CentroidalModelInfoTpl {

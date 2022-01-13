@@ -351,15 +351,12 @@ class GaussNewtonDDP : public SolverBase {
    */
 
   /**
-   * Calculates max feedforward update norm and max type-1 error update norm.
+   * Calculates max feedforward update norm of the controller.
    *
    * @param [in] controller: Control policy
-   * @param [in] primalData: Primal data using to generate the controller.
-   * @param [out] maxDeltaUffNorm: max feedforward update norm.
-   * @param [out] maxDeltaUeeNorm: max type-1 error update norm.
+   * @return max feedforward update norm.
    */
-  void calculateControllerUpdateMaxNorm(const LinearController& controller, const PrimalDataContainer& primalData,
-                                        scalar_t& maxDeltaUffNorm, scalar_t& maxDeltaUeeNorm) const;
+  scalar_t maxControllerUpdateNorm(const LinearController& controller) const;
 
   /**
    * Approximates the nonlinear problem as a linear-quadratic problem around the

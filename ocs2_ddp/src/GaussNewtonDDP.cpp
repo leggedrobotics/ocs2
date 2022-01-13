@@ -741,21 +741,12 @@ void GaussNewtonDDP::calculateController() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::calculateControllerUpdateMaxNorm(const LinearController& controller, const PrimalDataContainer& primalData,
-                                                      scalar_t& maxDeltaUffNorm, scalar_t& maxDeltaUeeNorm) const {
-  maxDeltaUffNorm = 0.0;
-  maxDeltaUeeNorm = 0.0;
-
-  for (size_t k = 0; k < controller.timeStamp_.size(); k++) {
-    maxDeltaUffNorm = std::max(maxDeltaUffNorm, controller.deltaBiasArray_[k].norm());
-
-    const auto time = controller.timeStamp_[k];
-    const auto indexAlpha = LinearInterpolation::timeSegment(time, primalData.primalSolution.timeTrajectory_);
-    const vector_t nominalState = LinearInterpolation::interpolate(indexAlpha, primalData.primalSolution.stateTrajectory_);
-    const vector_t nominalInput = LinearInterpolation::interpolate(indexAlpha, primalData.primalSolution.inputTrajectory_);
-    const vector_t deltaUee = nominalInput - controller.gainArray_[k] * nominalState - controller.biasArray_[k];
-    maxDeltaUeeNorm = std::max(maxDeltaUeeNorm, deltaUee.norm());
-  }  // end of k loop
+scalar_t GaussNewtonDDP::maxControllerUpdateNorm(const LinearController& controller) const {
+  scalar_t maxDeltaUffNorm = 0.0;
+  for (const auto& deltaBias : controller.deltaBiasArray_) {
+    maxDeltaUffNorm = std::max(maxDeltaUffNorm, deltaBias.norm());
+  }
+  return maxDeltaUffNorm;
 }
 
 /******************************************************************************************************/
@@ -1327,10 +1318,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
       std::cerr << "\n###################";
       std::cerr << "\n#### Iteration " << (totalNumIterations_ - initIteration);
       std::cerr << "\n###################\n";
-
-      scalar_t maxDeltaUffNorm, maxDeltaUeeNorm;
-      calculateControllerUpdateMaxNorm(unoptimizedController_, nominalPrimalData_, maxDeltaUffNorm, maxDeltaUeeNorm);
-      std::cerr << "max feedforward norm: " << maxDeltaUffNorm << "\n";
+      std::cerr << "max feedforward norm: " << maxControllerUpdateNorm(unoptimizedController_) << "\n";
     }
 
     performanceIndexHistory_.push_back(performanceIndex_);
@@ -1359,10 +1347,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
     std::cerr << "\n###################";
     std::cerr << "\n#### Final Rollout";
     std::cerr << "\n###################\n";
-
-    scalar_t maxDeltaUffNorm, maxDeltaUeeNorm;
-    calculateControllerUpdateMaxNorm(unoptimizedController_, nominalPrimalData_, maxDeltaUffNorm, maxDeltaUeeNorm);
-    std::cerr << "max feedforward norm: " << maxDeltaUffNorm << "\n";
+    std::cerr << "max feedforward norm: " << maxControllerUpdateNorm(unoptimizedController_) << "\n";
   }
 
   performanceIndexHistory_.push_back(performanceIndex_);

@@ -80,7 +80,6 @@ class TestSphereKinematics : public ::testing::Test {
         "pinocchio_sphere_kinematics", "/tmp/ocs2", true, true));
 
     x.resize(pinocchioInterfacePtr->getModel().njoints);
-    // taken form config/mpc/task.info
     x(0) = 0.7;  // SH_ROT
     x(1) = 0.7;  // SH_FLE
     x(2) = 0.3;  // EL_FLE

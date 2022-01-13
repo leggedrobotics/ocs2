@@ -4,37 +4,18 @@
   <version>0.0.0</version>
   <description>Model Predictive Control for SLQ</description>
 
-  <!-- One maintainer tag required, multiple allowed, one person per tag -->
-  <!-- Example:  -->
-  <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
   <maintainer email="farbod.farshidian@gmail.com">Farbod Farshidian</maintainer>
   <maintainer email="jcarius@ethz.ch">Jan Carius</maintainer>
   <maintainer email="rgrandia@ethz.ch">Ruben Grandia</maintainer>
 
-
-  <!-- One license tag required, multiple allowed, one license per tag -->
-  <license>TODO</license>
-
-
-  <!-- Url tags are optional, but mutiple are allowed, one per tag -->
-  <!-- <url type="website">http://wiki.ros.org/ocs2_anymal_interface</url> -->
-
-
-  <!-- Author tags are optional, mutiple are allowed, one per tag -->
-  <!-- <author email="jane.doe@example.com">Jane Doe</author> -->
+  <license>BSD3</license>
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>cmake_modules</build_depend>
   <build_depend>cmake_clang_tools</build_depend>
-
   <depend>ocs2_core</depend>
-  <depend>ocs2_ddp</depend>
+  <depend>ocs2_oc</depend>
 
-  <!-- The export tag contains other, unspecified, tags -->
-  <export>
-    <!-- Other tools can request additional information be placed here -->
-
-  </export>
 </package>
 
 

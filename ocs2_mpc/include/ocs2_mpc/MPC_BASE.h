@@ -76,9 +76,6 @@ class MPC_BASE {
   /** Returns the time horizon for which the optimizer is called. */
   scalar_t getTimeHorizon() const { return mpcSettings_.timeHorizon_; }
 
-  /** Sets the new time horizon, which will be updated at the next MPC rewind. */
-  void setTimeHorizon(scalar_t timeHorizon) { nextTimeHorizon_ = timeHorizon; }
-
   /** Gets the MPC settings. */
   const mpc::Settings& settings() const { return mpcSettings_; }
 
@@ -92,28 +89,12 @@ class MPC_BASE {
    */
   virtual void calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) = 0;
 
+  /** Whether this is the first iteration of MPC or not. */
+  bool isFirstMpcRun() const { return initRun_; }
+
  private:
-  /** Rewinds MPC */
-  void rewind();
-
-  static scalar_array_t initializePartitionTimes(scalar_t timeHorizon, size_t numPartitions);
-
-  /**
-   * Adjust time horizon.
-   *
-   * @param [in] partitionTimes: Partitioning times after rewind.
-   * @param [in, out] initTime: Adjustments initial time.
-   * @param [in, out] finalTime: Adjustments final time.
-   */
-  static void adjustTimeHorizon(const scalar_array_t& partitionTimes, scalar_t& initTime, scalar_t& finalTime);
-
- protected:
   bool initRun_ = true;
-  scalar_array_t partitionTimes_{};
-
- private:
-  mpc::Settings mpcSettings_;
-  scalar_t nextTimeHorizon_;
+  const mpc::Settings mpcSettings_;
 
   benchmark::RepeatedTimer mpcTimer_;
 };

@@ -131,21 +131,18 @@ void ILQR::approximateIntermediateLQ(PrimalDataContainer& primalData) {
 /******************************************************************************************************/
 void ILQR::discreteLQWorker(SystemDynamicsBase& system, scalar_t time, const vector_t& state, const vector_t& input, scalar_t timeStep,
                             const ModelData& continuousTimeModelData, ModelData& modelData) {
-  /*
-   * linearize system dynamics
-   */
-  modelData.dynamicsBias.setZero(modelData.stateDim);
-  modelData.dynamics_ = sensitivityDiscretizer_(system, time, state, input, timeStep);
-  modelData.dynamics_.f.setZero(continuousTimeModelData.stateDim_);
+  modelData.time = continuousTimeModelData.time;
+  modelData.stateDim = continuousTimeModelData.stateDim;
+  modelData.inputDim = continuousTimeModelData.inputDim;
 
-  /*
-   * quadratic approximation to the cost function
-   */
+  // linearize system dynamics
+  modelData.dynamicsBias.setZero(modelData.stateDim);
+  modelData.dynamics = sensitivityDiscretizer_(system, time, state, input, timeStep);
+  modelData.dynamics.f.setZero(modelData.stateDim);
+
+  // quadratic approximation to the cost function
   modelData.cost = continuousTimeModelData.cost * timeStep;
 
-  /*
-   * linearize constraints
-   */
   // state equality constraints
   modelData.stateEqConstraint = continuousTimeModelData.stateEqConstraint;
 

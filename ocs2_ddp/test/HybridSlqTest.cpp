@@ -180,5 +180,5 @@ TEST(HybridSlqTest, state_rollout_slq) {
 
   // Test 3: Check of cost function
   auto performanceIndecesST = slq.getPerformanceIndeces();
-  EXPECT_LT(std::fabs(performanceIndecesST.totalCost - 12.92), 10.0 * ddpSettings.minRelCost_);
+  EXPECT_LT(performanceIndecesST.totalCost - 13.0, 10.0 * ddpSettings.minRelCost_);
 }

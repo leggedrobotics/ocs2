@@ -36,14 +36,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ddp/DDP_DataCollector.h>
 #include <ocs2_ocs2/FrankWolfeGDDP.h>
 
-#include "MPC_SLQ.h"
+#include "ocs2_ddp/GaussNewtonDDP_MPC.h"
 
 namespace ocs2 {
 
 /**
  * This an MPC implementation with OCS2 optimal control solver.
  */
-class MPC_OCS2 : public MPC_SLQ {
+class MPC_OCS2 : public GaussNewtonDDP_MPC {
  public:
   /**
    * Constructor

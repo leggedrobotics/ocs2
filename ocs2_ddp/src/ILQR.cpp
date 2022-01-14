@@ -39,17 +39,33 @@ ILQR::ILQR(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalC
            const Initializer& initializer)
     : BASE(std::move(ddpSettings), rollout, optimalControlProblem, initializer) {
   if (settings().algorithm_ != ddp::Algorithm::ILQR) {
-    throw std::runtime_error("In DDP setting the algorithm name is set \"" + ddp::toAlgorithmName(settings().algorithm_) +
+    throw std::runtime_error("[ILQR] In DDP setting the algorithm name is set \"" + ddp::toAlgorithmName(settings().algorithm_) +
                              "\" while ILQR is instantiated!");
   }
 
-  // Riccati Solver
+  // dynamics discretizer
+  sensitivityDiscretizer_ = [&]() {
+    switch (settings().backwardPassIntegratorType_) {
+      case IntegratorType::EULER:
+        return selectDynamicsSensitivityDiscretization(SensitivityIntegratorType::EULER);
+      case IntegratorType::RK4:
+        return selectDynamicsSensitivityDiscretization(SensitivityIntegratorType::RK4);
+      case IntegratorType::ODE45:
+        return selectDynamicsSensitivityDiscretization(SensitivityIntegratorType::RK4);
+      case IntegratorType::ODE45_OCS2:
+        return selectDynamicsSensitivityDiscretization(SensitivityIntegratorType::RK4);
+      default:
+        throw std::runtime_error("[ILQR] Integrator of type " + integrator_type::toString(settings().backwardPassIntegratorType_) +
+                                 " is not supported for sensitivity discretization! Modify ddp::Settings::backwardPassIntegratorType_.");
+    }
+  }();
+
+  // Riccati solver
   riccatiEquationsPtrStock_.clear();
   riccatiEquationsPtrStock_.reserve(settings().nThreads_);
-
   for (size_t i = 0; i < settings().nThreads_; i++) {
-    bool preComputeRiccatiTerms = settings().preComputeRiccatiTerms_ && (settings().strategy_ == search_strategy::Type::LINE_SEARCH);
-    bool isRiskSensitive = !numerics::almost_eq(settings().riskSensitiveCoeff_, 0.0);
+    const bool isRiskSensitive = !numerics::almost_eq(settings().riskSensitiveCoeff_, 0.0);
+    const bool preComputeRiccatiTerms = settings().preComputeRiccatiTerms_ && (settings().strategy_ == search_strategy::Type::LINE_SEARCH);
     riccatiEquationsPtrStock_.emplace_back(new DiscreteTimeRiccatiEquations(preComputeRiccatiTerms, isRiskSensitive));
     riccatiEquationsPtrStock_.back()->setRiskSensitiveCoefficient(settings().riskSensitiveCoeff_);
   }  // end of i loop
@@ -99,7 +115,8 @@ void ILQR::approximateIntermediateLQ(PrimalDataContainer& primalData) {
       // discretize LQ problem
       const scalar_t timeStep = (timeIndex + 1 < timeTrajectory.size()) ? (timeTrajectory[timeIndex + 1] - timeTrajectory[timeIndex]) : 0.0;
       if (!numerics::almost_eq(timeStep, 0.0)) {
-        discreteLQWorker(taskId, timeStep, continuousTimeModelData, modelDataTrajectory[timeIndex]);
+        discreteLQWorker(*optimalControlProblemStock_[taskId].dynamicsPtr, timeTrajectory[timeIndex], stateTrajectory[timeIndex],
+                         inputTrajectory[timeIndex], timeStep, continuousTimeModelData, modelDataTrajectory[timeIndex]);
       } else {
         modelDataTrajectory[timeIndex] = continuousTimeModelData;
       }
@@ -112,19 +129,14 @@ void ILQR::approximateIntermediateLQ(PrimalDataContainer& primalData) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ILQR::discreteLQWorker(size_t workerIndex, scalar_t timeStep, const ModelData& continuousTimeModelData, ModelData& modelData) {
-  modelData.time = continuousTimeModelData.time;
-  modelData.stateDim = continuousTimeModelData.stateDim;
-  modelData.inputDim = continuousTimeModelData.inputDim;
-
+void ILQR::discreteLQWorker(SystemDynamicsBase& system, scalar_t time, const vector_t& state, const vector_t& input, scalar_t timeStep,
+                            const ModelData& continuousTimeModelData, ModelData& modelData) {
   /*
    * linearize system dynamics
    */
   modelData.dynamicsBias.setZero(modelData.stateDim);
-  modelData.dynamics.dfdx = matrix_t::Identity(continuousTimeModelData.stateDim, continuousTimeModelData.stateDim) +
-                            continuousTimeModelData.dynamics.dfdx * timeStep;
-  modelData.dynamics.dfdu = continuousTimeModelData.dynamics.dfdu * timeStep;
-  modelData.dynamics.f.setZero(continuousTimeModelData.stateDim);
+  modelData.dynamics_ = sensitivityDiscretizer_(system, time, state, input, timeStep);
+  modelData.dynamics_.f.setZero(continuousTimeModelData.stateDim_);
 
   /*
    * quadratic approximation to the cost function

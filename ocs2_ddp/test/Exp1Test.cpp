@@ -44,6 +44,7 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
  protected:
   static constexpr size_t STATE_DIM = 2;
   static constexpr size_t INPUT_DIM = 1;
+  static constexpr ocs2::scalar_t timeStep = 1e-2;
   static constexpr ocs2::scalar_t expectedCost = 5.4399;
   static constexpr ocs2::scalar_t expectedStateInputEqConstraintISE = 0.0;
 
@@ -53,29 +54,7 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
     const std::vector<size_t> modeSequence{0, 1, 2};
     referenceManagerPtr = ocs2::getExp1ReferenceManager(eventTimes, modeSequence);
 
-    // partitioning times
-    partitioningTimes = ocs2::scalar_array_t{startTime, eventTimes[0], eventTimes[1], finalTime};
-
-    // rollout settings
-    const auto rolloutSettings = []() {
-      ocs2::rollout::Settings rolloutSettings;
-      rolloutSettings.absTolODE = 1e-10;
-      rolloutSettings.relTolODE = 1e-7;
-      rolloutSettings.maxNumStepsPerSecond = 10000;
-      return rolloutSettings;
-    }();
-
-    // dynamics and rollout
-    ocs2::EXP1_System system(referenceManagerPtr);
-    rolloutPtr.reset(new ocs2::TimeTriggeredRollout(system, rolloutSettings));
-
-    // optimal control problem
-    problemPtr.reset(new ocs2::OptimalControlProblem);
-    problemPtr->dynamicsPtr.reset(system.clone());
-
-    // cost function
-    problemPtr->costPtr->add("cost", std::unique_ptr<ocs2::StateInputCost>(new ocs2::EXP1_Cost()));
-    problemPtr->finalCostPtr->add("finalCost", std::unique_ptr<ocs2::StateCost>(new ocs2::EXP1_FinalCost()));
+    problem = ocs2::createExp1Problem(referenceManagerPtr);
 
     // operatingTrajectories
     initializerPtr.reset(new ocs2::DefaultInitializer(INPUT_DIM));
@@ -84,6 +63,17 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
   ocs2::search_strategy::Type getSearchStrategy() { return std::get<0>(GetParam()); }
 
   size_t getNumThreads() { return std::get<1>(GetParam()); }
+
+  // rollout settings
+  ocs2::rollout::Settings rolloutSettings() const {
+    ocs2::rollout::Settings rolloutSettings;
+    rolloutSettings.absTolODE = 1e-10;
+    rolloutSettings.relTolODE = 1e-7;
+    rolloutSettings.timeStep = timeStep;
+    rolloutSettings.integratorType = ocs2::IntegratorType::ODE45;
+    rolloutSettings.maxNumStepsPerSecond = 10000;
+    return rolloutSettings;
+  };
 
   ocs2::ddp::Settings getSettings(ocs2::ddp::Algorithm algorithmType, size_t numThreads, ocs2::search_strategy::Type strategy,
                                   bool display = false) const {
@@ -97,6 +87,8 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
     ddpSettings.checkNumericalStability_ = true;
     ddpSettings.absTolODE_ = 1e-10;
     ddpSettings.relTolODE_ = 1e-7;
+    ddpSettings.timeStep_ = timeStep;
+    ddpSettings.backwardPassIntegratorType_ = ocs2::IntegratorType::ODE45;
     ddpSettings.maxNumStepsPerSecond_ = 10000;
     ddpSettings.useFeedbackPolicy_ = false;
     ddpSettings.debugPrintRollout_ = false;
@@ -125,17 +117,15 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
   const ocs2::scalar_t startTime = 0.0;
   const ocs2::scalar_t finalTime = 3.0;
   const ocs2::vector_t initState = (ocs2::vector_t(STATE_DIM) << 2.0, 3.0).finished();
-  ocs2::scalar_array_t partitioningTimes;
   std::shared_ptr<ocs2::ReferenceManager> referenceManagerPtr;
 
-  std::unique_ptr<ocs2::SystemDynamicsBase> systemPtr;
-  std::unique_ptr<ocs2::TimeTriggeredRollout> rolloutPtr;
-  std::unique_ptr<ocs2::OptimalControlProblem> problemPtr;
+  ocs2::OptimalControlProblem problem;
   std::unique_ptr<ocs2::Initializer> initializerPtr;
 };
 
 constexpr size_t Exp1::STATE_DIM;
 constexpr size_t Exp1::INPUT_DIM;
+constexpr ocs2::scalar_t Exp1::timeStep;
 constexpr ocs2::scalar_t Exp1::expectedCost;
 constexpr ocs2::scalar_t Exp1::expectedStateInputEqConstraintISE;
 
@@ -147,12 +137,16 @@ TEST_F(Exp1, ddp_hamiltonian) {
   auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, 2, ocs2::search_strategy::Type::LINE_SEARCH);
   ddpSettings.useFeedbackPolicy_ = true;
 
+  // dynamics and rollout
+  ocs2::EXP1_System systemDynamics(referenceManagerPtr);
+  ocs2::TimeTriggeredRollout rollout(systemDynamics, rolloutSettings());
+
   // instantiate
-  ocs2::SLQ ddp(ddpSettings, *rolloutPtr, *problemPtr, *initializerPtr);
+  ocs2::SLQ ddp(ddpSettings, rollout, problem, *initializerPtr);
   ddp.setReferenceManager(referenceManagerPtr);
 
   // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  ddp.run(startTime, initState, finalTime);
   // get solution
   const auto solution = ddp.primalSolution(finalTime);
 
@@ -214,8 +208,12 @@ TEST_P(Exp1, SLQ) {
   // ddp settings
   const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, getNumThreads(), getSearchStrategy());
 
+  // dynamics and rollout
+  ocs2::EXP1_System systemDynamics(referenceManagerPtr);
+  ocs2::TimeTriggeredRollout rollout(systemDynamics, rolloutSettings());
+
   // instantiate
-  ocs2::SLQ ddp(ddpSettings, *rolloutPtr, *problemPtr, *initializerPtr);
+  ocs2::SLQ ddp(ddpSettings, rollout, problem, *initializerPtr);
   ddp.setReferenceManager(referenceManagerPtr);
 
   if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
@@ -223,7 +221,7 @@ TEST_P(Exp1, SLQ) {
   }
 
   // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  ddp.run(startTime, initState, finalTime);
   // get performance index
   const auto performanceIndex = ddp.getPerformanceIndeces();
 
@@ -238,8 +236,12 @@ TEST_P(Exp1, ILQR) {
   // ddp settings
   const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, getNumThreads(), getSearchStrategy());
 
+  // dynamics and rollout
+  ocs2::EXP1_System systemDynamics(referenceManagerPtr);
+  ocs2::TimeTriggeredRollout rollout(systemDynamics, rolloutSettings());
+
   // instantiate
-  ocs2::ILQR ddp(ddpSettings, *rolloutPtr, *problemPtr, *initializerPtr);
+  ocs2::ILQR ddp(ddpSettings, rollout, problem, *initializerPtr);
   ddp.setReferenceManager(referenceManagerPtr);
 
   if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
@@ -247,7 +249,7 @@ TEST_P(Exp1, ILQR) {
   }
 
   // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  ddp.run(startTime, initState, finalTime);
   // get performance index
   const auto performanceIndex = ddp.getPerformanceIndeces();
 

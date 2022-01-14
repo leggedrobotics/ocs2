@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/cost/QuadraticStateInputCost.h>
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/synchronized_module/ReferenceManager.h>
 
 namespace ocs2 {
@@ -153,6 +154,21 @@ inline std::shared_ptr<ReferenceManager> getExp0ReferenceManager(const scalar_ar
   ModeSchedule modeSchedule(eventTimes, modeSequence);
 
   return std::make_shared<ReferenceManager>(std::move(targetTrajectories), std::move(modeSchedule));
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+inline OptimalControlProblem createExp0Problem(const std::shared_ptr<ocs2::ReferenceManager>& referenceManagerPtr) {
+  // optimal control problem
+  OptimalControlProblem problem;
+  problem.dynamicsPtr.reset(new EXP0_System(referenceManagerPtr));
+
+  // cost function
+  problem.costPtr->add("cost", std::unique_ptr<ocs2::StateInputCost>(new ocs2::EXP0_Cost()));
+  problem.finalCostPtr->add("finalCost", std::unique_ptr<ocs2::StateCost>(new ocs2::EXP0_FinalCost()));
+
+  return problem;
 }
 
 }  // namespace ocs2

@@ -16,5 +16,6 @@
   <depend>ocs2_qp_solver</depend>
   <depend>ocs2_core</depend>
   <depend>ocs2_oc</depend>
+  <depend>ocs2_mpc</depend>
 
 </package>

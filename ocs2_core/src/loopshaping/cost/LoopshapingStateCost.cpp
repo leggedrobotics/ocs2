@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2020, Ruben Grandia. All rights reserved.
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -53,18 +53,20 @@ ScalarFunctionQuadraticApproximation LoopshapingStateCost::getQuadraticApproxima
 
   const LoopshapingPreComputation& preCompLS = cast<LoopshapingPreComputation>(preComp);
   const auto& x_system = preCompLS.getSystemState();
+  const auto stateDim = x.rows();
+  const auto sysStateDim = x_system.rows();
+  const auto filtStateDim = x.rows() - sysStateDim;
 
   const auto Phi_system =
       StateCostCollection::getQuadraticApproximation(t, x_system, targetTrajectories, preCompLS.getSystemPreComputation());
-  const size_t nx_filter = loopshapingDefinition_->getInputFilter().getNumStates();
 
   ScalarFunctionQuadraticApproximation Phi;
   Phi.f = Phi_system.f;
-  Phi.dfdx.resize(x.rows());
-  Phi.dfdx.head(x_system.rows()) = Phi_system.dfdx;
-  Phi.dfdx.tail(nx_filter).setZero();
-  Phi.dfdxx.setZero(x.rows(), x.rows());
-  Phi.dfdxx.topLeftCorner(x_system.rows(), x_system.rows()) = Phi_system.dfdxx;
+  Phi.dfdx.resize(stateDim);
+  Phi.dfdx.head(sysStateDim) = Phi_system.dfdx;
+  Phi.dfdx.tail(filtStateDim).setZero();
+  Phi.dfdxx.setZero(stateDim, stateDim);
+  Phi.dfdxx.topLeftCorner(sysStateDim, sysStateDim) = Phi_system.dfdxx;
   return Phi;
 }
 

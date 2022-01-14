@@ -39,19 +39,33 @@ ILQR::ILQR(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalC
            const Initializer& initializer)
     : BASE(std::move(ddpSettings), rollout, optimalControlProblem, initializer) {
   if (settings().algorithm_ != ddp::Algorithm::ILQR) {
-    throw std::runtime_error("In DDP setting the algorithm name is set \"" + ddp::toAlgorithmName(settings().algorithm_) +
+    throw std::runtime_error("[ILQR] In DDP setting the algorithm name is set \"" + ddp::toAlgorithmName(settings().algorithm_) +
                              "\" while ILQR is instantiated!");
   }
 
-  // Riccati Solver
+  // dynamics discretizer
+  sensitivityDiscretizer_ = [&]() {
+    switch (settings().backwardPassIntegratorType_) {
+      case IntegratorType::EULER:
+        return selectDynamicsSensitivityDiscretization(SensitivityIntegratorType::EULER);
+      case IntegratorType::RK4:
+        return selectDynamicsSensitivityDiscretization(SensitivityIntegratorType::RK4);
+      case IntegratorType::ODE45:
+        return selectDynamicsSensitivityDiscretization(SensitivityIntegratorType::RK4);
+      case IntegratorType::ODE45_OCS2:
+        return selectDynamicsSensitivityDiscretization(SensitivityIntegratorType::RK4);
+      default:
+        throw std::runtime_error("[ILQR] Integrator of type " + integrator_type::toString(settings().backwardPassIntegratorType_) +
+                                 " is not supported for sensitivity discretization! Modify ddp::Settings::backwardPassIntegratorType_.");
+    }
+  }();
+
+  // Riccati solver
   riccatiEquationsPtrStock_.clear();
   riccatiEquationsPtrStock_.reserve(settings().nThreads_);
-
-  sensitivityDiscretizer_ = selectDynamicsSensitivityDiscretization(SensitivityIntegratorType::RK4);
-
   for (size_t i = 0; i < settings().nThreads_; i++) {
-    bool preComputeRiccatiTerms = settings().preComputeRiccatiTerms_ && (settings().strategy_ == search_strategy::Type::LINE_SEARCH);
-    bool isRiskSensitive = !numerics::almost_eq(settings().riskSensitiveCoeff_, 0.0);
+    const bool isRiskSensitive = !numerics::almost_eq(settings().riskSensitiveCoeff_, 0.0);
+    const bool preComputeRiccatiTerms = settings().preComputeRiccatiTerms_ && (settings().strategy_ == search_strategy::Type::LINE_SEARCH);
     riccatiEquationsPtrStock_.emplace_back(new DiscreteTimeRiccatiEquations(preComputeRiccatiTerms, isRiskSensitive));
     riccatiEquationsPtrStock_.back()->setRiskSensitiveCoefficient(settings().riskSensitiveCoeff_);
   }  // end of i loop

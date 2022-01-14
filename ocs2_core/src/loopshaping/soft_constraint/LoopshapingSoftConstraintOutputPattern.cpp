@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2020, Ruben Grandia. All rights reserved.
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -42,18 +42,33 @@ ScalarFunctionQuadraticApproximation LoopshapingSoftConstraintOutputPattern::get
   const auto& r_filter = loopshapingDefinition_->getInputFilter();
   const auto& preCompLS = cast<LoopshapingPreComputation>(preComp);
   const auto& x_system = preCompLS.getSystemState();
+  const auto& x_filter = preCompLS.getFilterState();
   const auto& u_system = preCompLS.getSystemInput();
+  const auto stateDim = x.rows();
+  const auto inputDim = u.rows();
+  const auto sysStateDim = x_system.rows();
+  const auto filtStateDim = x_filter.rows();
 
-  const auto L_system =
+  // Not const, so we can move
+  auto L_system =
       StateInputCostCollection::getQuadraticApproximation(t, x_system, u_system, targetTrajectories, preCompLS.getSystemPreComputation());
 
-  ScalarFunctionQuadraticApproximation L = ScalarFunctionQuadraticApproximation::Zero(x.rows(), u.rows());
+  ScalarFunctionQuadraticApproximation L;
   L.f = L_system.f;
-  L.dfdx.head(x_system.rows()) = L_system.dfdx;
-  L.dfdxx.topLeftCorner(x_system.rows(), x_system.rows()) = L_system.dfdxx;
-  L.dfdu = L_system.dfdu;
-  L.dfduu = L_system.dfduu;
-  L.dfdux.leftCols(x_system.rows()) = L_system.dfdux;
+
+  L.dfdx.resize(stateDim);
+  L.dfdx.head(sysStateDim) = L_system.dfdx;
+  L.dfdx.tail(filtStateDim).setZero();
+
+  L.dfdxx.setZero(stateDim, stateDim);
+  L.dfdxx.topLeftCorner(sysStateDim, sysStateDim) = L_system.dfdxx;
+
+  L.dfdu = std::move(L_system.dfdu);
+  L.dfduu = std::move(L_system.dfduu);
+
+  L.dfdux.resize(inputDim, stateDim);
+  L.dfdux.leftCols(sysStateDim) = L_system.dfdux;
+  L.dfdux.rightCols(filtStateDim).setZero();
 
   return L;
 }

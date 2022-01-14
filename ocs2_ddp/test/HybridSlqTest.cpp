@@ -95,10 +95,6 @@ TEST(HybridSlqTest, state_rollout_slq) {
   scalar_t startTime = 0.0;
   scalar_t finalTime = 5.0;
 
-  std::vector<scalar_t> partitioningTimes;
-  partitioningTimes.push_back(startTime);
-  partitioningTimes.push_back(finalTime);
-
   vector_t initState(stateDim);
   initState << 0, 1, 1;
 
@@ -144,7 +140,7 @@ TEST(HybridSlqTest, state_rollout_slq) {
   // SLQ
   SLQ slq(ddpSettings, stateTriggeredRollout, problem, operatingTrajectories);
   slq.setReferenceManager(referenceManager);
-  slq.run(startTime, initState, finalTime, partitioningTimes);
+  slq.run(startTime, initState, finalTime);
   auto solution = slq.primalSolution(finalTime);
   std::cout << "SLQ Procedure Done" << std::endl;
 
@@ -184,5 +180,5 @@ TEST(HybridSlqTest, state_rollout_slq) {
 
   // Test 3: Check of cost function
   auto performanceIndecesST = slq.getPerformanceIndeces();
-  EXPECT_LT(std::fabs(performanceIndecesST.totalCost - 12.92), 10.0 * ddpSettings.minRelCost_);
+  EXPECT_LT(performanceIndecesST.totalCost - 13.0, 10.0 * ddpSettings.minRelCost_);
 }

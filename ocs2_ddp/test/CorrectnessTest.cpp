@@ -163,16 +163,16 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
 
   ocs2::search_strategy::Type getSearchStrategy() { return std::get<0>(GetParam()); }
 
-  ocs2::scalar_array_t getPartitioningTimes() {
-    const auto partitioning = std::get<2>(GetParam());
-    if (partitioning == NumThreads::SINGLE) {
-      return {startTime, finalTime};
+  size_t getNumThreads() const {
+    const auto n = std::get<2>(GetParam());
+    if (n == NumThreads::SINGLE) {
+      return 1;
     } else {
-      return {startTime, (startTime + finalTime) / 2.0, finalTime};
+      return 2;
     }
   }
 
-  ocs2::ddp::Settings getSettings(ocs2::ddp::Algorithm algorithmType, size_t numPartitions, ocs2::search_strategy::Type strategy,
+  ocs2::ddp::Settings getSettings(ocs2::ddp::Algorithm algorithmType, size_t numThreads, ocs2::search_strategy::Type strategy,
                                   bool display = false) const {
     ocs2::ddp::Settings ddpSettings;
     ddpSettings.algorithm_ = algorithmType;
@@ -182,8 +182,8 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
     ddpSettings.relTolODE_ = 1e-7;
     ddpSettings.maxNumStepsPerSecond_ = 10000;
     ddpSettings.minRelCost_ = 1e-3;
-    ddpSettings.nThreads_ = numPartitions;
-    ddpSettings.maxNumIterations_ = 2 + (numPartitions - 1);  // need an extra iteration for each added time partition
+    ddpSettings.nThreads_ = numThreads;
+    ddpSettings.maxNumIterations_ = 2 + (numThreads - 1);  // need an extra iteration for each added time partition
     ddpSettings.strategy_ = strategy;
     ddpSettings.lineSearch_.minStepLength_ = 1e-4;
     return ddpSettings;
@@ -250,14 +250,13 @@ constexpr ocs2::scalar_t DDPCorrectness::solutionPrecision;
 /******************************************************************************************************/
 TEST_P(DDPCorrectness, TestSLQ) {
   // settings
-  ocs2::scalar_array_t partitioningTimes = getPartitioningTimes();
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, partitioningTimes.size() - 1, getSearchStrategy());
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, getNumThreads(), getSearchStrategy());
 
   // ddp
   ocs2::SLQ ddp(ddpSettings, *rolloutPtr, *problemPtr, *operatingPointsPtr);
 
   ddp.getReferenceManager().setTargetTrajectories(targetTrajectories);
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  ddp.run(startTime, initState, finalTime);
   const auto performanceIndex = ddp.getPerformanceIndeces();
   const auto solution = ddp.primalSolution(finalTime);
 
@@ -269,14 +268,13 @@ TEST_P(DDPCorrectness, TestSLQ) {
 /******************************************************************************************************/
 TEST_P(DDPCorrectness, TestILQR) {
   // settings
-  ocs2::scalar_array_t partitioningTimes = getPartitioningTimes();
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, partitioningTimes.size() - 1, getSearchStrategy());
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, getNumThreads(), getSearchStrategy());
 
   // ddp
   ocs2::ILQR ddp(ddpSettings, *rolloutPtr, *problemPtr, *operatingPointsPtr);
 
   ddp.getReferenceManager().setTargetTrajectories(targetTrajectories);
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  ddp.run(startTime, initState, finalTime);
   const auto performanceIndex = ddp.getPerformanceIndeces();
   const auto solution = ddp.primalSolution(finalTime);
 
@@ -296,6 +294,9 @@ std::string testName(const testing::TestParamInfo<DDPCorrectness::ParamType>& in
   return name;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 INSTANTIATE_TEST_CASE_P(DDPCorrectnessTestCase, DDPCorrectness,
                         testing::Combine(testing::ValuesIn({ocs2::search_strategy::Type::LINE_SEARCH,
                                                             ocs2::search_strategy::Type::LEVENBERG_MARQUARDT}),

@@ -93,7 +93,7 @@ struct PrimalSolution {
     inputTrajectory_.clear();
     postEventIndices_.clear();
     modeSchedule_.clear();
-    if (controllerPtr_) {
+    if (controllerPtr_ != nullptr) {
       controllerPtr_->clear();
     }
   }

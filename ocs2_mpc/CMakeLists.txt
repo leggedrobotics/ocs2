@@ -4,8 +4,7 @@ project(ocs2_mpc)
 find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   ocs2_core
-  ocs2_ddp
-#  ocs2_ocs2
+  ocs2_oc
 )
 find_package(Boost REQUIRED COMPONENTS
   system
@@ -29,8 +28,7 @@ catkin_package(
     ${PROJECT_NAME}
   CATKIN_DEPENDS
     ocs2_core
-    ocs2_ddp
-#    ocs2_ocs2
+    ocs2_oc
   DEPENDS
     Boost
 )
@@ -49,7 +47,6 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/LoopshapingSystemObservation.cpp
   src/MPC_BASE.cpp
-  src/MPC_DDP.cpp
   src/MPC_Settings.cpp
   src/SystemObservation.cpp
   src/MRT_BASE.cpp

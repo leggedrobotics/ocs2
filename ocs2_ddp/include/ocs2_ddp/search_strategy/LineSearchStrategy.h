@@ -119,7 +119,7 @@ class LineSearchStrategy final : public SearchStrategyBase {
     LinearController* controllerStarPtr;
   };
 
-  line_search::Settings settings_;
+  const line_search::Settings settings_;
   LineSearchModule lineSearchModule_;
 
   ThreadPool& threadPoolRef_;

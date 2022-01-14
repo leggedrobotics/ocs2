@@ -35,11 +35,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <gtest/gtest.h>
 
 #include <ocs2_core/thread_support/ExecuteAndSleep.h>
-#include <ocs2_mpc/MPC_DDP.h>
+#include <ocs2_ddp/GaussNewtonDDP_MPC.h>
 #include <ocs2_mpc/MPC_MRT_Interface.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
 #include <ocs2_robotic_assets/package_path.h>
-
 #include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
 #include "ocs2_mobile_manipulator/MobileManipulatorInterface.h"
 #include "ocs2_mobile_manipulator/MobileManipulatorPinocchioMapping.h"
@@ -74,10 +73,10 @@ class MobileManipulatorIntegrationTest : public testing::Test {
                                                                   modelInfo.stateDim, modelInfo.inputDim, modelName));
   }
 
-  std::unique_ptr<MPC_DDP> getMpc() {
+  std::unique_ptr<GaussNewtonDDP_MPC> getMpc() {
     auto& interface = *mobileManipulatorInterfacePtr;
-    std::unique_ptr<MPC_DDP> mpcPtr(new MPC_DDP(interface.mpcSettings(), interface.ddpSettings(), interface.getRollout(),
-                                                interface.getOptimalControlProblem(), interface.getInitializer()));
+    std::unique_ptr<GaussNewtonDDP_MPC> mpcPtr(new GaussNewtonDDP_MPC(interface.mpcSettings(), interface.ddpSettings(), interface.getRollout(),
+                                                                      interface.getOptimalControlProblem(), interface.getInitializer()));
     mpcPtr->getSolverPtr()->setReferenceManager(mobileManipulatorInterfacePtr->getReferenceManagerPtr());
     return mpcPtr;
   }

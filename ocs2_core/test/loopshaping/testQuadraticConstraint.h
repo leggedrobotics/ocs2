@@ -63,8 +63,8 @@ class TestQuadraticStateInputConstraint : public StateInputConstraint {
                                                            const PreComputation& preComp) const final {
     VectorFunctionLinearApproximation c;
     c.f = getValue(t, x, u, preComp);
-    c.dfdx = x.transpose() * Q_;
-    c.dfdu = u.transpose() * R_;
+    c.dfdx = x.transpose() * Q_ + u.transpose() * P_;
+    c.dfdu = u.transpose() * R_ + x.transpose() * P_.transpose();
     return c;
   }
 
@@ -72,8 +72,8 @@ class TestQuadraticStateInputConstraint : public StateInputConstraint {
                                                                  const PreComputation& preComp) const final {
     VectorFunctionQuadraticApproximation c;
     c.f = getValue(t, x, u, preComp);
-    c.dfdx = x.transpose() * Q_;
-    c.dfdu = u.transpose() * R_;
+    c.dfdx = x.transpose() * Q_ + u.transpose() * P_;
+    c.dfdu = u.transpose() * R_ + x.transpose() * P_.transpose();
     c.dfdxx.push_back(Q_);
     c.dfduu.push_back(R_);
     c.dfdux.push_back(P_);

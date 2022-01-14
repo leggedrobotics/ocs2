@@ -169,7 +169,7 @@ class SearchStrategyBase {
    */
   scalar_t calculateControllerUpdateIS(const LinearController& controller) const;
 
-  search_strategy::Settings baseSettings_;
+  const search_strategy::Settings baseSettings_;
   scalar_t initTime_;
   scalar_t finalTime_;
   vector_t initState_;

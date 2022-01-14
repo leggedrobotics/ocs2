@@ -1,48 +1,46 @@
+/******************************************************************************
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
 
 #include "testLoopshapingCost.h"
 
 using namespace ocs2;
 
-TYPED_TEST_CASE(TestFixtureLoopShapingCost, FilterConfigurations);
-
-TYPED_TEST(TestFixtureLoopShapingCost, testStateInputCostApproximation) {
-  // Extract Quadratic approximation
-  this->preComputation->request(Request::Cost + Request::Approximation, this->t, this->x, this->u);
-  const auto L =
-      this->loopshapingCost->getQuadraticApproximation(this->t, this->x, this->u, this->targetTrajectories, *this->preComputation);
-
-  // Reevaluate at disturbed state
-  this->preComputation->request(Request::Cost, this->t, this->x + this->x_disturbance, this->u + this->u_disturbance);
-  scalar_t L_disturbance = this->loopshapingCost->getValue(this->t, this->x + this->x_disturbance, this->u + this->u_disturbance,
-                                                           this->targetTrajectories, *this->preComputation);
-
-  // Evaluate approximation
-  scalar_t L_quad_approximation = L.f + L.dfdx.transpose() * this->x_disturbance + L.dfdu.transpose() * this->u_disturbance +
-                                  0.5 * this->x_disturbance.transpose() * L.dfdxx * this->x_disturbance +
-                                  0.5 * this->u_disturbance.transpose() * L.dfduu * this->u_disturbance +
-                                  this->u_disturbance.transpose() * L.dfdux * this->x_disturbance;
-
-  // Difference between new evaluation and approximation should be less than tol
-  ASSERT_LE(std::abs(L_disturbance - L_quad_approximation), this->tol);
+TEST(TestFixtureLoopShapingCost, testStateInputCostApproximation) {
+  for (const auto config : configNames) {
+    TestFixtureLoopShapingCost test(config);
+    test.testStateInputCostApproximation();
+  }
 };
 
-TYPED_TEST(TestFixtureLoopShapingCost, testStateCostApproximation) {
-  this->preComputation->requestFinal(Request::Cost + Request::Approximation, this->t, this->x);
-
-  // Extract Quadratic approximation
-  const auto L =
-      this->loopshapingStateCost->getQuadraticApproximation(this->t, this->x, this->targetTrajectories, *this->preComputation);
-
-  // Reevaluate at disturbed state
-  this->preComputation->requestFinal(Request::Cost, this->t, this->x + this->x_disturbance);
-  scalar_t L_disturbance =
-      this->loopshapingStateCost->getValue(this->t, this->x + this->x_disturbance, this->targetTrajectories, *this->preComputation);
-
-  // Evaluate approximation
-  scalar_t L_quad_approximation =
-      L.f + L.dfdx.transpose() * this->x_disturbance + 0.5 * this->x_disturbance.transpose() * L.dfdxx * this->x_disturbance;
-
-  // Difference between new evaluation and approximation should be less than tol
-  ASSERT_LE(std::abs(L_disturbance - L_quad_approximation), this->tol);
+TEST(TestFixtureLoopShapingCost, testStateCostApproximation) {
+  for (const auto config : configNames) {
+    TestFixtureLoopShapingCost test(config);
+    test.testStateCostApproximation();
+  }
 }

@@ -100,7 +100,7 @@ struct PrimalSolution {
     stateTrajectory_.clear();
     inputTrajectory_.clear();
     modeSchedule_.clear();
-    if (controllerPtr_) {
+    if (controllerPtr_ != nullptr) {
       controllerPtr_->clear();
     }
   }

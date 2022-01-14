@@ -104,6 +104,7 @@ add_library(${PROJECT_NAME}
   src/integration/SystemEventHandler.cpp
   src/reference/ModeSchedule.cpp
   src/reference/TargetTrajectories.cpp
+  src/loopshaping/LoopshapingDefinition.cpp
   src/loopshaping/LoopshapingPropertyTree.cpp
   src/loopshaping/LoopshapingFilter.cpp
   src/loopshaping/LoopshapingPreComputation.cpp
@@ -111,23 +112,18 @@ add_library(${PROJECT_NAME}
   src/loopshaping/cost/LoopshapingStateCost.cpp
   src/loopshaping/cost/LoopshapingStateInputCost.cpp
   src/loopshaping/cost/LoopshapingCostEliminatePattern.cpp
-  src/loopshaping/cost/LoopshapingCostInputPattern.cpp
   src/loopshaping/cost/LoopshapingCostOutputPattern.cpp
   src/loopshaping/soft_constraint/LoopshapingSoftConstraint.cpp
   src/loopshaping/soft_constraint/LoopshapingStateInputSoftConstraint.cpp
   src/loopshaping/soft_constraint/LoopshapingSoftConstraintEliminatePattern.cpp
-  src/loopshaping/soft_constraint/LoopshapingSoftConstraintInputPattern.cpp
   src/loopshaping/soft_constraint/LoopshapingSoftConstraintOutputPattern.cpp
   src/loopshaping/constraint/LoopshapingConstraint.cpp
-  src/loopshaping/constraint/LoopshapingFilterConstraint.cpp
   src/loopshaping/constraint/LoopshapingStateConstraint.cpp
   src/loopshaping/constraint/LoopshapingStateInputConstraint.cpp
   src/loopshaping/constraint/LoopshapingConstraintEliminatePattern.cpp
-  src/loopshaping/constraint/LoopshapingConstraintInputPattern.cpp
   src/loopshaping/constraint/LoopshapingConstraintOutputPattern.cpp
   src/loopshaping/dynamics/LoopshapingDynamics.cpp
   src/loopshaping/dynamics/LoopshapingDynamicsEliminatePattern.cpp
-  src/loopshaping/dynamics/LoopshapingDynamicsInputPattern.cpp
   src/loopshaping/dynamics/LoopshapingDynamicsOutputPattern.cpp
   src/loopshaping/dynamics/LoopshapingFilterDynamics.cpp
   src/loopshaping/initialization/LoopshapingInitializer.cpp

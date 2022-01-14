@@ -94,7 +94,7 @@ struct Settings {
   /** This value determines the maximum number of integration points per a second for ode solvers. */
   size_t maxNumStepsPerSecond_ = 10000;
   /** The integration time step for Riccati equation which is used for fixed timestep integration scheme. */
-  scalar_t timeStep_ = 1e-3;
+  scalar_t timeStep_ = 1e-2;
   /** The backward pass integrator type: SLQ uses it for solving Riccati equation and ILQR uses it for discretizing LQ approximation. */
   IntegratorType backwardPassIntegratorType_ = IntegratorType::ODE45;
 

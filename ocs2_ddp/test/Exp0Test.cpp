@@ -44,6 +44,7 @@ class Exp0 : public testing::Test {
  protected:
   static constexpr size_t STATE_DIM = 2;
   static constexpr size_t INPUT_DIM = 1;
+  static constexpr ocs2::scalar_t timeStep = 1e-2;
   static constexpr ocs2::scalar_t expectedCost = 9.766;
   static constexpr ocs2::scalar_t expectedStateInputEqConstraintISE = 0.0;
   static constexpr ocs2::scalar_t expectedStateEqConstraintISE = 0.0;
@@ -54,30 +55,23 @@ class Exp0 : public testing::Test {
     const std::vector<size_t> modeSequence{0, 1};
     referenceManagerPtr = ocs2::getExp0ReferenceManager(eventTimes, modeSequence);
 
-    // rollout settings
-    const auto rolloutSettings = []() {
-      ocs2::rollout::Settings rolloutSettings;
-      rolloutSettings.absTolODE = 1e-10;
-      rolloutSettings.relTolODE = 1e-7;
-      rolloutSettings.maxNumStepsPerSecond = 10000;
-      return rolloutSettings;
-    }();
-
-    // dynamics and rollout
-    ocs2::EXP0_System system(referenceManagerPtr);
-    rolloutPtr.reset(new ocs2::TimeTriggeredRollout(system, rolloutSettings));
-
     // optimal control problem
-    problemPtr.reset(new ocs2::OptimalControlProblem);
-    problemPtr->dynamicsPtr.reset(system.clone());
-
-    // cost function
-    problemPtr->costPtr->add("cost", std::unique_ptr<ocs2::StateInputCost>(new ocs2::EXP0_Cost()));
-    problemPtr->finalCostPtr->add("finalCost", std::unique_ptr<ocs2::StateCost>(new ocs2::EXP0_FinalCost()));
+    problem = ocs2::createExp0Problem(referenceManagerPtr);
 
     // operatingTrajectories
     initializerPtr.reset(new ocs2::DefaultInitializer(INPUT_DIM));
   }
+
+  // rollout settings
+  ocs2::rollout::Settings rolloutSettings() const {
+    ocs2::rollout::Settings rolloutSettings;
+    rolloutSettings.absTolODE = 1e-10;
+    rolloutSettings.relTolODE = 1e-7;
+    rolloutSettings.timeStep = timeStep;
+    rolloutSettings.integratorType = ocs2::IntegratorType::ODE45;
+    rolloutSettings.maxNumStepsPerSecond = 10000;
+    return rolloutSettings;
+  };
 
   ocs2::ddp::Settings getSettings(ocs2::ddp::Algorithm algorithmType, size_t numThreads, ocs2::search_strategy::Type strategy,
                                   bool display = false) const {
@@ -89,6 +83,8 @@ class Exp0 : public testing::Test {
     ddpSettings.displayShortSummary_ = display;
     ddpSettings.absTolODE_ = 1e-10;
     ddpSettings.relTolODE_ = 1e-7;
+    ddpSettings.timeStep_ = timeStep;
+    ddpSettings.backwardPassIntegratorType_ = ocs2::IntegratorType::ODE45;
     ddpSettings.maxNumStepsPerSecond_ = 10000;
     ddpSettings.maxNumIterations_ = 30;
     ddpSettings.minRelCost_ = 1e-3;
@@ -124,13 +120,13 @@ class Exp0 : public testing::Test {
   const ocs2::vector_t initState = (ocs2::vector_t(STATE_DIM) << 0.0, 2.0).finished();
   std::shared_ptr<ocs2::ReferenceManager> referenceManagerPtr;
 
-  std::unique_ptr<ocs2::TimeTriggeredRollout> rolloutPtr;
-  std::unique_ptr<ocs2::OptimalControlProblem> problemPtr;
+  ocs2::OptimalControlProblem problem;
   std::unique_ptr<ocs2::Initializer> initializerPtr;
 };
 
 constexpr size_t Exp0::STATE_DIM;
 constexpr size_t Exp0::INPUT_DIM;
+constexpr ocs2::scalar_t Exp0::timeStep;
 constexpr ocs2::scalar_t Exp0::expectedCost;
 constexpr ocs2::scalar_t Exp0::expectedStateInputEqConstraintISE;
 constexpr ocs2::scalar_t Exp0::expectedStateEqConstraintISE;
@@ -143,8 +139,12 @@ TEST_F(Exp0, ddp_feedback_policy) {
   auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, 2, ocs2::search_strategy::Type::LINE_SEARCH);
   ddpSettings.useFeedbackPolicy_ = true;
 
+  // dynamics and rollout
+  ocs2::EXP0_System systemDynamics(referenceManagerPtr);
+  ocs2::TimeTriggeredRollout rollout(systemDynamics, rolloutSettings());
+
   // instantiate
-  ocs2::SLQ ddp(ddpSettings, *rolloutPtr, *problemPtr, *initializerPtr);
+  ocs2::SLQ ddp(ddpSettings, rollout, problem, *initializerPtr);
   ddp.setReferenceManager(referenceManagerPtr);
 
   // run ddp
@@ -166,8 +166,12 @@ TEST_F(Exp0, ddp_feedforward_policy) {
   auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, 2, ocs2::search_strategy::Type::LINE_SEARCH);
   ddpSettings.useFeedbackPolicy_ = false;
 
+  // dynamics and rollout
+  ocs2::EXP0_System systemDynamics(referenceManagerPtr);
+  ocs2::TimeTriggeredRollout rollout(systemDynamics, rolloutSettings());
+
   // instantiate
-  ocs2::SLQ ddp(ddpSettings, *rolloutPtr, *problemPtr, *initializerPtr);
+  ocs2::SLQ ddp(ddpSettings, rollout, problem, *initializerPtr);
   ddp.setReferenceManager(referenceManagerPtr);
 
   // run ddp
@@ -194,8 +198,12 @@ TEST_F(Exp0, ddp_caching) {
   const std::vector<size_t> modeSequence{0, 1};
   referenceManagerPtr = ocs2::getExp0ReferenceManager(eventTimes, modeSequence);
 
+  // dynamics and rollout
+  ocs2::EXP0_System systemDynamics(referenceManagerPtr);
+  ocs2::TimeTriggeredRollout rollout(systemDynamics, rolloutSettings());
+
   // instantiate
-  ocs2::SLQ ddp(ddpSettings, *rolloutPtr, *problemPtr, *initializerPtr);
+  ocs2::SLQ ddp(ddpSettings, rollout, problem, *initializerPtr);
   ddp.setReferenceManager(referenceManagerPtr);
 
   // run single core SLQ (no active event)
@@ -232,8 +240,12 @@ TEST_F(Exp0, ddp_hamiltonian) {
   auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, 2, ocs2::search_strategy::Type::LINE_SEARCH);
   ddpSettings.useFeedbackPolicy_ = true;
 
+  // dynamics and rollout
+  ocs2::EXP0_System systemDynamics(referenceManagerPtr);
+  ocs2::TimeTriggeredRollout rollout(systemDynamics, rolloutSettings());
+
   // instantiate
-  ocs2::SLQ ddp(ddpSettings, *rolloutPtr, *problemPtr, *initializerPtr);
+  ocs2::SLQ ddp(ddpSettings, rollout, problem, *initializerPtr);
   ddp.setReferenceManager(referenceManagerPtr);
 
   // run ddp
@@ -307,8 +319,12 @@ TEST_P(Exp0Param, SLQ) {
   // ddp settings
   const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, getNumThreads(), getSearchStrategy());
 
+  // dynamics and rollout
+  ocs2::EXP0_System systemDynamics(referenceManagerPtr);
+  ocs2::TimeTriggeredRollout rollout(systemDynamics, rolloutSettings());
+
   // instantiate
-  ocs2::SLQ ddp(ddpSettings, *rolloutPtr, *problemPtr, *initializerPtr);
+  ocs2::SLQ ddp(ddpSettings, rollout, problem, *initializerPtr);
   ddp.setReferenceManager(referenceManagerPtr);
 
   if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
@@ -331,8 +347,12 @@ TEST_P(Exp0Param, ILQR) {
   // ddp settings
   const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, getNumThreads(), getSearchStrategy());
 
+  // dynamics and rollout
+  ocs2::EXP0_System systemDynamics(referenceManagerPtr);
+  ocs2::TimeTriggeredRollout rollout(systemDynamics, rolloutSettings());
+
   // instantiate
-  ocs2::ILQR ddp(ddpSettings, *rolloutPtr, *problemPtr, *initializerPtr);
+  ocs2::ILQR ddp(ddpSettings, rollout, problem, *initializerPtr);
   ddp.setReferenceManager(referenceManagerPtr);
 
   if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
@@ -348,6 +368,10 @@ TEST_P(Exp0Param, ILQR) {
   performanceIndexTest(ddpSettings, performanceIndex);
 }
 
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 INSTANTIATE_TEST_CASE_P(Exp0ParamCase, Exp0Param,
                         testing::Combine(testing::ValuesIn({ocs2::search_strategy::Type::LINE_SEARCH,
                                                             ocs2::search_strategy::Type::LEVENBERG_MARQUARDT}),

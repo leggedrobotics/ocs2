@@ -53,7 +53,7 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
   static constexpr size_t N = 50;
   static constexpr size_t STATE_DIM = 3;
   static constexpr size_t INPUT_DIM = 2;
-  static constexpr ocs2::scalar_t solutionPrecision = 2e-3;
+  static constexpr ocs2::scalar_t solutionPrecision = 5e-3;
   static constexpr size_t numStateInputConstraints = 2;
   static constexpr size_t numStateOnlyConstraints = 0;
   static constexpr size_t numFinalStateOnlyConstraints = 0;
@@ -260,7 +260,7 @@ constexpr ocs2::scalar_t DDPCorrectness::solutionPrecision;
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_P(DDPCorrectness, DISABLED_TestSLQ) {
+TEST_P(DDPCorrectness, TestSLQ) {
   // settings
   const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, getNumThreads(), getSearchStrategy());
 

@@ -83,19 +83,15 @@ class MultipleShootingSolver : public SolverBase {
     throw std::runtime_error("[MultipleShootingSolver] getStateInputEqualityConstraintLagrangian() not available yet.");
   }
 
-  // Irrelevant baseclass stuff
-  void rewindOptimizer(size_t firstIndex) override{};
-  const unsigned long long int& getRewindCounter() const override {
-    throw std::runtime_error("[MultipleShootingSolver] no rewind counter");
-  };
-  const scalar_array_t& getPartitioningTimes() const { return partitionTime_; };
-
  private:
-  void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) override;
+  void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override;
 
-  void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
-               const std::vector<ControllerBase*>& controllersPtrStock) override {
-    runImpl(initTime, initState, finalTime, partitioningTimes);
+  void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const ControllerBase* externalControllerPtr) override {
+    if (externalControllerPtr == nullptr) {
+      runImpl(initTime, initState, finalTime);
+    } else {
+      throw std::runtime_error("[MultipleShootingSolver::run] This solver does not support external controller!");
+    }
   }
 
   /** Run a task in parallel with settings.nThreads */
@@ -167,8 +163,6 @@ class MultipleShootingSolver : public SolverBase {
   benchmark::RepeatedTimer solveQpTimer_;
   benchmark::RepeatedTimer linesearchTimer_;
   benchmark::RepeatedTimer computeControllerTimer_;
-
-  scalar_array_t partitionTime_ = {};
 };
 
 }  // namespace ocs2

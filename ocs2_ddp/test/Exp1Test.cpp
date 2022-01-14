@@ -55,10 +55,6 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
     const std::vector<size_t> modeSequence{0, 1, 2};
     referenceManagerPtr = ocs2::getExp1ReferenceManager(eventTimes, modeSequence);
 
-    // partitioning times
-    partitioningTimes = ocs2::scalar_array_t{startTime, eventTimes[0], eventTimes[1], finalTime};
-
-    // optimal control problem
     problem = ocs2::createExp1Problem(referenceManagerPtr);
 
     // operatingTrajectories
@@ -124,7 +120,6 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
   const ocs2::scalar_t startTime = 0.0;
   const ocs2::scalar_t finalTime = 3.0;
   const ocs2::vector_t initState = (ocs2::vector_t(STATE_DIM) << 2.0, 3.0).finished();
-  ocs2::scalar_array_t partitioningTimes;
   std::shared_ptr<ocs2::ReferenceManager> referenceManagerPtr;
 
   ocs2::OptimalControlProblem problem;
@@ -155,7 +150,7 @@ TEST_F(Exp1, ddp_hamiltonian) {
   ddp.setReferenceManager(referenceManagerPtr);
 
   // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  ddp.run(startTime, initState, finalTime);
   // get solution
   const auto solution = ddp.primalSolution(finalTime);
 
@@ -230,7 +225,7 @@ TEST_P(Exp1, SLQ) {
   }
 
   // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  ddp.run(startTime, initState, finalTime);
   // get performance index
   const auto performanceIndex = ddp.getPerformanceIndeces();
 
@@ -258,7 +253,7 @@ TEST_P(Exp1, ILQR) {
   }
 
   // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  ddp.run(startTime, initState, finalTime);
   // get performance index
   const auto performanceIndex = ddp.getPerformanceIndeces();
 

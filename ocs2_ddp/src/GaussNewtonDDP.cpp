@@ -161,61 +161,31 @@ std::string GaussNewtonDDP::getBenchmarkingInfo() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void GaussNewtonDDP::reset() {
-  rewindCounter_ = 0;
-  totalNumIterations_ = 0;
-
-  performanceIndexHistory_.clear();
-
-  avgTimeStepFP_ = 0.0;
-  avgTimeStepBP_ = 0.0;
-
-  // reset search strategy
+  // search strategy
   searchStrategyPtr_->reset();
+
+  // very important, these are variables that are carried in between iterations
+  nominalPrimalData_.clear();
+  optimizedPrimalData_.clear();
+  cachedPrimalData_.clear();
+  dualData_.clear();
+  cachedDualData_.clear();
 
   // initialize Augmented Lagrangian parameters
   initializeConstraintPenalties();
 
-  // very important, these are variables that are carried in between iterations
-  nominalPrimalData_.clear();
-  dualData_.clear();
+  // performance measures
+  avgTimeStepFP_ = 0.0;
+  avgTimeStepBP_ = 0.0;
+  totalNumIterations_ = 0;
+  performanceIndexHistory_.clear();
 
-  cachedPrimalData_.clear();
-  cachedDualData_.clear();
-
-  // reset timers
+  // benchmarking timers
   initializationTimer_.reset();
   linearQuadraticApproximationTimer_.reset();
   backwardPassTimer_.reset();
   computeControllerTimer_.reset();
   searchStrategyTimer_.reset();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-size_t GaussNewtonDDP::getNumIterations() const {
-  return totalNumIterations_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-scalar_t GaussNewtonDDP::getFinalTime() const {
-  return finalTime_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-const PerformanceIndex& GaussNewtonDDP::getPerformanceIndeces() const {
-  return performanceIndex_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-const std::vector<PerformanceIndex>& GaussNewtonDDP::getIterationsLog() const {
-  return performanceIndexHistory_;
 }
 
 /******************************************************************************************************/
@@ -741,21 +711,12 @@ void GaussNewtonDDP::calculateController() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::calculateControllerUpdateMaxNorm(const LinearController& controller, const PrimalDataContainer& primalData,
-                                                      scalar_t& maxDeltaUffNorm, scalar_t& maxDeltaUeeNorm) const {
-  maxDeltaUffNorm = 0.0;
-  maxDeltaUeeNorm = 0.0;
-
-  for (size_t k = 0; k < controller.timeStamp_.size(); k++) {
-    maxDeltaUffNorm = std::max(maxDeltaUffNorm, controller.deltaBiasArray_[k].norm());
-
-    const auto time = controller.timeStamp_[k];
-    const auto indexAlpha = LinearInterpolation::timeSegment(time, primalData.primalSolution.timeTrajectory_);
-    const vector_t nominalState = LinearInterpolation::interpolate(indexAlpha, primalData.primalSolution.stateTrajectory_);
-    const vector_t nominalInput = LinearInterpolation::interpolate(indexAlpha, primalData.primalSolution.inputTrajectory_);
-    const vector_t deltaUee = nominalInput - controller.gainArray_[k] * nominalState - controller.biasArray_[k];
-    maxDeltaUeeNorm = std::max(maxDeltaUeeNorm, deltaUee.norm());
-  }  // end of k loop
+scalar_t GaussNewtonDDP::maxControllerUpdateNorm(const LinearController& controller) const {
+  scalar_t maxDeltaUffNorm = 0.0;
+  for (const auto& deltaBias : controller.deltaBiasArray_) {
+    maxDeltaUffNorm = std::max(maxDeltaUffNorm, deltaBias.norm());
+  }
+  return maxDeltaUffNorm;
 }
 
 /******************************************************************************************************/
@@ -1236,53 +1197,26 @@ void GaussNewtonDDP::runIteration(scalar_t lqModelExpectedCost) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) {
-  LinearController noInitialController;
-  std::vector<ControllerBase*> noInitialControllerPtrArray{&noInitialController};
-
-  // call the "run" method which uses the internal controllers stock (i.e. nominalControllersStock_)
-  runImpl(initTime, initState, finalTime, partitioningTimes, noInitialControllerPtrArray);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
-                             const std::vector<ControllerBase*>& externalNominalController) {
+void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime,
+                             const ControllerBase* externalControllerPtr) {
   if (ddpSettings_.displayInfo_) {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
     std::cerr << "\n+++++++++++++ " + ddp::toAlgorithmName(ddpSettings_.algorithm_) + " solver is initialized ++++++++++++++";
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+    std::cerr << "\nSolver starts from initial time " << initTime << " to final time " << finalTime << ".\n";
+    std::cerr << this->getReferenceManager().getModeSchedule() << "\n";
   }
 
-  // infeasible learning rate adjustment scheme
-  if (!numerics::almost_ge(ddpSettings_.lineSearch_.maxStepLength_, ddpSettings_.lineSearch_.minStepLength_)) {
-    throw std::runtime_error("The maximum learning rate is smaller than the minimum learning rate.");
-  }
-
-  if (!initState.allFinite()) {
-    throw std::runtime_error("DDP: Initial state is not finite (time: " + std::to_string(initTime) + " [sec]).");
-  }
-  // Use the input controller if it is not empty otherwise use the internal controller (nominalControllersStock_).
-  // In the later case 2 scenarios are possible: either the internal controller is already set (such as the MPC case
-  // where the warm starting option is set true) or the internal controller is empty in which instead of performing
-  // a rollout the operating trajectories will be used.
-  if (!externalNominalController.empty() && !externalNominalController.front()->empty()) {
-    optimizedPrimalData_.primalSolution.controllerPtr_->clear();
-
+  // Use the input controller if it is not empty otherwise use the internal controller. In the later case two scenarios are
+  // possible: either the internal controller is already set (such as the MPC case where the warm starting option is set true)
+  // or the internal controller is empty in which instead of performing a rollout the operating trajectories will be used.
+  if (externalControllerPtr != nullptr) {
     // ensure initial controllers are of the right type, then assign
-    const LinearController* linearControllerPtr = dynamic_cast<const LinearController*>(externalNominalController.front());
+    const LinearController* linearControllerPtr = dynamic_cast<const LinearController*>(externalControllerPtr);
     if (linearControllerPtr == nullptr) {
-      throw std::runtime_error("GaussNewtonDDP::run -- controller must be a LinearController.");
+      throw std::runtime_error("[GaussNewtonDDP::run] controller must be a LinearController type!");
     }
     *optimizedPrimalData_.primalSolution.controllerPtr_ = *linearControllerPtr;
-  }
-  // display
-  if (ddpSettings_.displayInfo_) {
-    std::cerr << "\nRewind Counter: " << rewindCounter_ << "\n";
-    std::cerr << ddp::toAlgorithmName(ddpSettings_.algorithm_) + " solver starts from initial time " << initTime << " to final time "
-              << finalTime << ".\n";
-    std::cerr << this->getReferenceManager().getModeSchedule() << "\n";
   }
 
   initState_ = initState;
@@ -1327,10 +1261,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
       std::cerr << "\n###################";
       std::cerr << "\n#### Iteration " << (totalNumIterations_ - initIteration);
       std::cerr << "\n###################\n";
-
-      scalar_t maxDeltaUffNorm, maxDeltaUeeNorm;
-      calculateControllerUpdateMaxNorm(unoptimizedController_, nominalPrimalData_, maxDeltaUffNorm, maxDeltaUeeNorm);
-      std::cerr << "max feedforward norm: " << maxDeltaUffNorm << "\n";
+      std::cerr << "max feedforward norm: " << maxControllerUpdateNorm(unoptimizedController_) << "\n";
     }
 
     performanceIndexHistory_.push_back(performanceIndex_);
@@ -1359,10 +1290,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
     std::cerr << "\n###################";
     std::cerr << "\n#### Final Rollout";
     std::cerr << "\n###################\n";
-
-    scalar_t maxDeltaUffNorm, maxDeltaUeeNorm;
-    calculateControllerUpdateMaxNorm(unoptimizedController_, nominalPrimalData_, maxDeltaUffNorm, maxDeltaUeeNorm);
-    std::cerr << "max feedforward norm: " << maxDeltaUffNorm << "\n";
+    std::cerr << "max feedforward norm: " << maxControllerUpdateNorm(unoptimizedController_) << "\n";
   }
 
   performanceIndexHistory_.push_back(performanceIndex_);

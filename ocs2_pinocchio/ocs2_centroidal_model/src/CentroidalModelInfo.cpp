@@ -31,6 +31,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+std::string toString(CentroidalModelType type) {
+  switch (type) {
+    case CentroidalModelType::FullCentroidalDynamics:
+      return "FullCentroidalDynamics";
+    case CentroidalModelType::SingleRigidBodyDynamics:
+      return "SingleRigidBodyDynamics";
+    default:
+      return "Undefined CentroidalModelType!";
+  }
+}
+
+std::ostream& operator<<(std::ostream& os, CentroidalModelType type) {
+  os << toString(type);
+  return os;
+}
+
 template <>
 template <>
 CentroidalModelInfoCppAd CentroidalModelInfo::toCppAd() const {

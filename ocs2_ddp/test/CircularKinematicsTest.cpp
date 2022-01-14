@@ -141,7 +141,6 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
   const ocs2::scalar_t startTime = 0.0;
   const ocs2::scalar_t finalTime = 10.0;
   const ocs2::vector_t initState = (ocs2::vector_t(STATE_DIM) << 1.0, 0.0).finished();  // radius 1.0
-  const ocs2::scalar_array_t partitioningTimes{startTime, (startTime + finalTime) / 2.0, finalTime};
 
   ocs2::OptimalControlProblem problem;
   std::unique_ptr<ocs2::Initializer> initializerPtr;
@@ -174,7 +173,7 @@ TEST_P(CircularKinematicsTest, SLQ) {
   }
 
   // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  ddp.run(startTime, initState, finalTime);
   // get performance index
   const auto performanceIndex = ddp.getPerformanceIndeces();
 
@@ -203,7 +202,7 @@ TEST_P(CircularKinematicsTest, ILQR) {
   }
 
   // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  ddp.run(startTime, initState, finalTime);
   // get performance index
   const auto performanceIndex = ddp.getPerformanceIndeces();
 

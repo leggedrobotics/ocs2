@@ -89,13 +89,13 @@ class GaussNewtonDDP : public SolverBase {
 
   void reset() override;
 
-  size_t getNumIterations() const override;
+  size_t getNumIterations() const override { return totalNumIterations_; }
 
-  scalar_t getFinalTime() const override;
+  scalar_t getFinalTime() const override { return finalTime_; }
 
-  const PerformanceIndex& getPerformanceIndeces() const override;
+  const PerformanceIndex& getPerformanceIndeces() const override { return performanceIndex_; }
 
-  const std::vector<PerformanceIndex>& getIterationsLog() const override;
+  const std::vector<PerformanceIndex>& getIterationsLog() const override { return performanceIndexHistory_; }
 
   void getPrimalSolution(scalar_t finalTime, PrimalSolution* primalSolutionPtr) const final;
 
@@ -109,16 +109,7 @@ class GaussNewtonDDP : public SolverBase {
     return getStateInputEqualityConstraintLagrangianImpl(time, state, nominalPrimalData_, dualData_);
   }
 
-  void rewindOptimizer(size_t firstIndex) override{};
-
   std::string getBenchmarkingInfo() const override;
-
-  const unsigned long long int& getRewindCounter() const override { return rewindCounter_; }
-
-  /**
-   * Write access to ddp settings
-   */
-  ddp::Settings& settings() { return ddpSettings_; }
 
   /**
    * Const access to ddp settings
@@ -351,15 +342,12 @@ class GaussNewtonDDP : public SolverBase {
    */
 
   /**
-   * Calculates max feedforward update norm and max type-1 error update norm.
+   * Calculates max feedforward update norm of the controller.
    *
    * @param [in] controller: Control policy
-   * @param [in] primalData: Primal data using to generate the controller.
-   * @param [out] maxDeltaUffNorm: max feedforward update norm.
-   * @param [out] maxDeltaUeeNorm: max type-1 error update norm.
+   * @return max feedforward update norm.
    */
-  void calculateControllerUpdateMaxNorm(const LinearController& controller, const PrimalDataContainer& primalData,
-                                        scalar_t& maxDeltaUffNorm, scalar_t& maxDeltaUeeNorm) const;
+  scalar_t maxControllerUpdateNorm(const LinearController& controller) const;
 
   /**
    * Approximates the nonlinear problem as a linear-quadratic problem around the
@@ -477,10 +465,11 @@ class GaussNewtonDDP : public SolverBase {
   std::pair<bool, std::string> checkConvergence(bool isInitalControllerEmpty, const PerformanceIndex& previousPerformanceIndex,
                                                 const PerformanceIndex& currentPerformanceIndex) const;
 
-  void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) override;
+  void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override {
+    runImpl(initTime, initState, finalTime, nullptr);
+  }
 
-  void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
-               const std::vector<ControllerBase*>& controllersPtrStock) override;
+  void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const ControllerBase* externalControllerPtr) override;
 
  protected:
   PrimalDataContainer nominalPrimalData_, optimizedPrimalData_;
@@ -501,11 +490,10 @@ class GaussNewtonDDP : public SolverBase {
   DualDataContainer dualData_;
 
  private:
-  ddp::Settings ddpSettings_;
+  const ddp::Settings ddpSettings_;
 
   ThreadPool threadPool_;
 
-  unsigned long long int rewindCounter_{0};
   unsigned long long int totalNumIterations_{0};
 
   // trajectory spreading

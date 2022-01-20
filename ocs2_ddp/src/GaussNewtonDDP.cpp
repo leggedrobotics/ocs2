@@ -935,8 +935,11 @@ void GaussNewtonDDP::runSearchStrategy(scalar_t lqModelExpectedCost, const Linea
   const auto& modeSchedule = this->getReferenceManager().getModeSchedule();
 
   // Primal solution controller is now optimized.
-  const bool success = searchStrategyPtr_->run(initTime_, initState_, finalTime_, lqModelExpectedCost, unoptimizedController, modeSchedule,
-                                               primalData.primalSolution, performanceIndex, metrics, avgTimeStepFP_);
+  scalar_t avgTimeStep;
+  search_strategy::SolutionRef solution(primalData.primalSolution, performanceIndex, metrics, avgTimeStep);
+  const bool success =
+      searchStrategyPtr_->run({initTime_, finalTime_}, initState_, lqModelExpectedCost, unoptimizedController, modeSchedule, solution);
+  avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStep;
 
   // If fail, copy the entire cache back. To keep the consistency of cached data, all cache should be left untouched.
   if (!success) {

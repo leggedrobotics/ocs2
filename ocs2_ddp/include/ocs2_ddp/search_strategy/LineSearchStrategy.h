@@ -76,9 +76,8 @@ class LineSearchStrategy final : public SearchStrategyBase {
 
   void reset() override {}
 
-  bool run(const scalar_t initTime, const vector_t& initState, const scalar_t finalTime, const scalar_t expectedCost,
-           const LinearController& unoptimizedController, const ModeSchedule& modeSchedule, PrimalSolution& primalSolution,
-           PerformanceIndex& performanceIndex, MetricsCollection& metrics, scalar_t& avgTimeStepFP) override;
+  bool run(const std::pair<scalar_t, scalar_t>& timePeriod, const vector_t& initState, const scalar_t expectedCost,
+           const LinearController& unoptimizedController, const ModeSchedule& modeSchedule, search_strategy::SolutionRef solution) override;
 
   std::pair<bool, std::string> checkConvergence(bool unreliableControllerIncrement, const PerformanceIndex& previousPerformanceIndex,
                                                 const PerformanceIndex& currentPerformanceIndex) const override;
@@ -89,52 +88,51 @@ class LineSearchStrategy final : public SearchStrategyBase {
   matrix_t augmentHamiltonianHessian(const ModelData& /*modelData*/, const matrix_t& Hm) const override { return Hm; }
 
  private:
+  struct LineSearchInputRef {
+    const std::pair<scalar_t, scalar_t>* timePeriodPtr;
+    const vector_t* initStatePtr;
+    const LinearController* unoptimizedControllerPtr;
+    const ModeSchedule* modeSchedulePtr;
+  };
+
+  /** number of line search iterations (the if statements order is important) */
+  size_t maxNumOfSearches() const;
+
+  /** Computes the solution on a thread and a given stepLength  */
+  void computeSolution(size_t taskId, scalar_t stepLength, search_strategy::Solution& solution);
+
   /**
    * Defines line search task on a thread with various learning rates and choose the largest acceptable step-size.
    * The class computes the nominal controller and the nominal trajectories as well the corresponding performance indices.
    */
-  void lineSearchTask(const scalar_t initTime, const vector_t& initState, const scalar_t finalTime);
+  void lineSearchTask(const size_t taskId);
 
   /** Prints to output. */
   void printString(const std::string& text) const;
 
-  struct LineSearchModule {
-    scalar_t baselineMerit = 0.0;           // the merit of the rollout for zero learning rate
-    scalar_t initControllerUpdateIS = 0.0;  // integral of the squared (IS) norm of the controller update.
-    const ModeSchedule* modeSchedulePtr;
-    const LinearController* unoptimizedControllerPtr;
-
-    std::atomic_size_t alphaExpNext{0};
-    std::vector<bool> alphaProcessed;
-    std::mutex lineSearchResultMutex;
-
-    std::atomic<scalar_t> stepLengthStar{0.0};
-    PerformanceIndex* performanceIndexStarPtr;
-    PrimalSolution* primalSolutionStarPtr;
-    MetricsCollection* metricsStarPtr;
-  };
-
   const line_search::Settings settings_;
-  LineSearchModule lineSearchModule_;
-
   ThreadPool& threadPoolRef_;
-  std::atomic_size_t nextTaskId_{0};
-  mutable std::mutex outputDisplayGuardMutex_;
-
+  std::vector<search_strategy::Solution> workersSolution_;
   std::vector<std::reference_wrapper<RolloutBase>> rolloutRefStock_;
   std::vector<std::reference_wrapper<OptimalControlProblem>> optimalControlProblemRefStock_;
   std::function<scalar_t(PerformanceIndex)> meritFunc_;
 
-  std::atomic<scalar_t> avgTimeStepFP_{0.0};
+  // input
+  LineSearchInputRef lineSearchInputRef_;
+  // output
+  std::atomic<scalar_t> bestStepSize_{0.0};
+  search_strategy::SolutionRef* bestSolutionRef_;
 
-  // temporary primal data buffer for all threads. The intermediate rollout result of different step length will be stored here.
-  struct TemporaryMemory {
-    PerformanceIndex performanceIndex;
-    PrimalSolution primalSolution;
-    MetricsCollection metrics;
-  };
+  // convergence check
+  scalar_t baselineMerit_ = 0.0;                  // the merit of the rollout for zero learning rate
+  scalar_t unoptimizedControllerUpdateIS_ = 0.0;  // integral of the squared (IS) norm of the controller update.
 
-  std::vector<TemporaryMemory> temporaryMemories_;
+  // threading
+  std::atomic_size_t nextTaskId_{0};
+  std::atomic_size_t alphaExpNext_{0};
+  std::vector<bool> alphaProcessed_;
+  std::mutex lineSearchResultMutex_;
+  mutable std::mutex outputDisplayGuardMutex_;
 };
 
 }  // namespace ocs2

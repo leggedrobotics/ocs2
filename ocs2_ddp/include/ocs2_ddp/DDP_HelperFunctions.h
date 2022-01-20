@@ -65,16 +65,15 @@ PerformanceIndex computeRolloutPerformanceIndex(const scalar_array_t& timeTrajec
  * to integrate the system dynamics in time period [initTime, finalTime].
  *
  * @param [in] rollout: A reference to the rollout class.
- * @param [in] initTime: Initial time
+ * @param [in] timePeriod: Initial and final times period
  * @param [in] initState: Initial state
- * @param [in] finalTime: Final time
  * @param [in] modeSchedule: The mode schedule
  * @param [in] controller: Control policies.
  * @param [out] primalSolution: The resulting primal solution.
  *
  * @return average time step.
  */
-scalar_t rolloutTrajectory(RolloutBase& rollout, const scalar_t initTime, const vector_t& initState, const scalar_t finalTime,
+scalar_t rolloutTrajectory(RolloutBase& rollout, const std::pair<scalar_t, scalar_t>& timePeriod, const vector_t& initState,
                            const ModeSchedule& modeSchedule, PrimalSolution& primalSolution);
 
 /**

@@ -46,6 +46,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+// forward declaration
+namespace search_strategy {
+struct Solution;
+struct SolutionRef;
+}  // namespace search_strategy
+
 /**
  * This class is an interface class for search strategies such as line-search, trust-region.
  */
@@ -69,20 +75,17 @@ class SearchStrategyBase {
   /**
    * Finds the optimal trajectories, controller, and performance index based on the given controller and its increment.
    *
-   * @param [in] initTime: Initial time
+   * @param [in] timePeriod: Initial and final times pair.
    * @param [in] initState: Initial state
-   * @param [in] finalTime: Final time
    * @param [in] expectedCost: The expected cost based on the LQ model optimization.
    * @param [in] unoptimizedController: The unoptimized controller which search will be performed.
    * @param [in] ModeSchedule The current mode schedule.
-   * @param [out] primalSolution: Contains the optimized controller and resulting time, state, input trajectories.
-   * @param [out] performanceIndex: The current performanceIndex which will be updated to the optimal one.
-   * @param [out] avgTimeStepFP: The average time-step used during forward rollout.
+   * @param [out] solution: Output of search (primalSolution, performanceIndex, metrics, avgTimeStep)
    * @return whether the search was successful or failed.
    */
-  virtual bool run(const scalar_t initTime, const vector_t& initState, const scalar_t finalTime, const scalar_t expectedCost,
-                   const LinearController& unoptimizedController, const ModeSchedule& modeSchedule, PrimalSolution& primalSolution,
-                   PerformanceIndex& performanceIndex, MetricsCollection& metrics, scalar_t& avgTimeStepFP) = 0;
+  virtual bool run(const std::pair<scalar_t, scalar_t>& timePeriod, const vector_t& initState, const scalar_t expectedCost,
+                   const LinearController& unoptimizedController, const ModeSchedule& modeSchedule,
+                   search_strategy::SolutionRef solution) = 0;
 
   /**
    * Checks convergence of the main loop of DDP.
@@ -121,4 +124,40 @@ class SearchStrategyBase {
   const search_strategy::Settings baseSettings_;
 };
 
+}  // namespace ocs2
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+namespace ocs2 {
+namespace search_strategy {
+
+struct Solution {
+  PrimalSolution primalSolution;
+  PerformanceIndex performanceIndex;
+  MetricsCollection metrics;
+  scalar_t avgTimeStep;
+};
+
+struct SolutionRef {
+  SolutionRef(Solution& s)
+      : primalSolution(s.primalSolution), performanceIndex(s.performanceIndex), metrics(s.metrics), avgTimeStep(s.avgTimeStep) {}
+  SolutionRef(PrimalSolution& primalSolutionArg, PerformanceIndex& performanceIndexArg, MetricsCollection& metricsArg,
+              scalar_t& avgTimeStepArg)
+      : primalSolution(primalSolutionArg), performanceIndex(performanceIndexArg), metrics(metricsArg), avgTimeStep(avgTimeStepArg) {}
+
+  PrimalSolution& primalSolution;
+  PerformanceIndex& performanceIndex;
+  MetricsCollection& metrics;
+  scalar_t& avgTimeStep;
+};
+
+inline void swap(SolutionRef lhs, SolutionRef rhs) {
+  lhs.primalSolution.swap(rhs.primalSolution);
+  swap(lhs.performanceIndex, rhs.performanceIndex);
+  swap(lhs.metrics, rhs.metrics);
+  std::swap(lhs.avgTimeStep, rhs.avgTimeStep);
+}
+
+}  // namespace search_strategy
 }  // namespace ocs2

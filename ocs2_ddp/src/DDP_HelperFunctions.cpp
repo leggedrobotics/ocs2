@@ -146,22 +146,22 @@ PerformanceIndex computeRolloutPerformanceIndex(const scalar_array_t& timeTrajec
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t rolloutTrajectory(RolloutBase& rollout, const scalar_t initTime, const vector_t& initState, const scalar_t finalTime,
+scalar_t rolloutTrajectory(RolloutBase& rollout, const std::pair<scalar_t, scalar_t>& timePeriod, const vector_t& initState,
                            const ModeSchedule& modeSchedule, PrimalSolution& primalSolution) {
   // fill mode schedule
   primalSolution.modeSchedule_ = modeSchedule;
 
   // rollout with controller
-  const auto xCurrent = rollout.run(initTime, initState, finalTime, primalSolution.controllerPtr_.get(), modeSchedule.eventTimes,
-                                    primalSolution.timeTrajectory_, primalSolution.postEventIndices_, primalSolution.stateTrajectory_,
-                                    primalSolution.inputTrajectory_);
+  const auto xCurrent = rollout.run(timePeriod.first, initState, timePeriod.second, primalSolution.controllerPtr_.get(),
+                                    modeSchedule.eventTimes, primalSolution.timeTrajectory_, primalSolution.postEventIndices_,
+                                    primalSolution.stateTrajectory_, primalSolution.inputTrajectory_);
 
   if (!xCurrent.allFinite()) {
     throw std::runtime_error("System became unstable during the rollout.");
   }
 
   // average time step
-  return (finalTime - initTime) / static_cast<scalar_t>(primalSolution.timeTrajectory_.size());
+  return (timePeriod.second - timePeriod.first) / static_cast<scalar_t>(primalSolution.timeTrajectory_.size());
 }
 
 /******************************************************************************************************/

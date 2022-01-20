@@ -56,38 +56,35 @@ void LevenbergMarquardtStrategy::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-bool LevenbergMarquardtStrategy::run(const scalar_t initTime, const vector_t& initState, const scalar_t finalTime,
+bool LevenbergMarquardtStrategy::run(const std::pair<scalar_t, scalar_t>& timePeriod, const vector_t& initState,
                                      const scalar_t expectedCost, const LinearController& unoptimizedController,
-                                     const ModeSchedule& modeSchedule, PrimalSolution& primalSolution, PerformanceIndex& performanceIndex,
-                                     MetricsCollection& metrics, scalar_t& avgTimeStepFP) {
+                                     const ModeSchedule& modeSchedule, search_strategy::SolutionRef solution) {
   constexpr size_t taskId = 0;
 
   // previous merit and the expected reduction
-  const auto prevMerit = performanceIndex.merit;
-  const auto expectedReduction = performanceIndex.merit - expectedCost;
+  const auto prevMerit = solution.performanceIndex.merit;
+  const auto expectedReduction = solution.performanceIndex.merit - expectedCost;
 
   // stepsize
   const scalar_t stepLength = numerics::almost_eq(expectedReduction, 0.0) ? 0.0 : 1.0;
 
   try {
-    // perform a rollout
-    incrementController(stepLength, unoptimizedController, getLinearController(primalSolution));
-    const auto avgTimeStep = rolloutTrajectory(rolloutRef_, initTime, initState, finalTime, modeSchedule, primalSolution);
-    // compute average time step of forward rollout
-    avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStep;
+    // compute primal solution
+    incrementController(stepLength, unoptimizedController, getLinearController(solution.primalSolution));
+    solution.avgTimeStep = rolloutTrajectory(rolloutRef_, timePeriod, initState, modeSchedule, solution.primalSolution);
 
-    computeRolloutMetrics(optimalControlProblemRef_, primalSolution, metrics);
+    // compute metrics
+    computeRolloutMetrics(optimalControlProblemRef_, solution.primalSolution, solution.metrics);
 
-    performanceIndex = computeRolloutPerformanceIndex(primalSolution.timeTrajectory_, metrics);
-
-    // calculates rollout merit
-    performanceIndex.merit = meritFunc_(performanceIndex);
+    // compute performanceIndex
+    solution.performanceIndex = computeRolloutPerformanceIndex(solution.primalSolution.timeTrajectory_, solution.metrics);
+    solution.performanceIndex.merit = meritFunc_(solution.performanceIndex);
 
     // display
     if (baseSettings_.displayInfo) {
       std::stringstream infoDisplay;
       infoDisplay << "    [Thread " << taskId << "] - step length " << stepLength << '\n';
-      infoDisplay << std::setw(4) << performanceIndex << "\n\n";
+      infoDisplay << std::setw(4) << solution.performanceIndex << "\n\n";
       std::cerr << infoDisplay.str();
     }
 
@@ -95,12 +92,12 @@ bool LevenbergMarquardtStrategy::run(const scalar_t initTime, const vector_t& in
     if (baseSettings_.displayInfo) {
       std::cerr << "    [Thread " << taskId << "] rollout with step length " << stepLength << " is terminated: " << error.what() << "\n";
     }
-    performanceIndex.merit = std::numeric_limits<scalar_t>::max();
-    performanceIndex.totalCost = std::numeric_limits<scalar_t>::max();
+    solution.performanceIndex.merit = std::numeric_limits<scalar_t>::max();
+    solution.performanceIndex.totalCost = std::numeric_limits<scalar_t>::max();
   }
 
   // compute pho (the ratio between actual reduction and predicted reduction)
-  const auto actualReduction = prevMerit - performanceIndex.merit;
+  const auto actualReduction = prevMerit - solution.performanceIndex.merit;
 
   if (std::abs(actualReduction) < baseSettings_.minRelCost || expectedReduction <= baseSettings_.minRelCost) {
     levenbergMarquardtModule_.pho = 1.0;

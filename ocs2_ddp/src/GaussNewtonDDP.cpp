@@ -249,7 +249,7 @@ void GaussNewtonDDP::getPrimalSolution(scalar_t finalTime, PrimalSolution* prima
   if (ddpSettings_.useFeedbackPolicy_) {
     primalSolutionPtr->controllerPtr_.reset(new LinearController);
     // length of the copy
-    const int length = getRequestedDataLength(optimizedPrimalData_.getLinearController().timeStamp_, finalTime);
+    const int length = getRequestedDataLength(getLinearController(optimizedPrimalData_.primalSolution).timeStamp_, finalTime);
     primalSolutionPtr->controllerPtr_->concatenate(optimizedPrimalData_.primalSolution.controllerPtr_.get(), 0, length);
 
   } else {
@@ -1005,7 +1005,7 @@ void GaussNewtonDDP::runInit() {
     // copied to optimized data container manually at the beginning of runImpl
     const auto avgTimeStep = rolloutInitialTrajectory(nominalPrimalData_, optimizedPrimalData_.primalSolution.controllerPtr_.get(), taskId);
     // swap controller used to rollout the nominal trajectories back to nominal data container.
-    swap(nominalPrimalData_.getLinearController(), optimizedPrimalData_.getLinearController());
+    nominalPrimalData_.primalSolution.controllerPtr_.swap(optimizedPrimalData_.primalSolution.controllerPtr_);
 
     computeRolloutMetrics(optimalControlProblemStock_[taskId], nominalPrimalData_.primalSolution, metrics_);
 

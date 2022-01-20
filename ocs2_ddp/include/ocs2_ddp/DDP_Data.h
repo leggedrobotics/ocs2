@@ -65,11 +65,6 @@ struct PrimalDataContainer {
     modelDataTrajectory.clear();
     modelDataEventTimes.clear();
   }
-
-  LinearController& getLinearController() const {
-    assert(dynamic_cast<LinearController*>(primalSolution.controllerPtr_.get()) != nullptr);
-    return static_cast<LinearController&>(*primalSolution.controllerPtr_);
-  }
 };
 
 /**

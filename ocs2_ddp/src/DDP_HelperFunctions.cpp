@@ -146,24 +146,22 @@ PerformanceIndex computeRolloutPerformanceIndex(const scalar_array_t& timeTrajec
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t rolloutTrajectory(RolloutBase& rollout, const scalar_t initTime, const vector_t& initState, const scalar_t finalTime,
-                           const ModeSchedule& modeSchedule, LinearController& controller, PrimalSolution& primalSolution) {
-  assert(primalSolution.controllerPtr_.get() != &controller);
-  primalSolution.clear();
-
+scalar_t rolloutTrajectory(RolloutBase& rollout, const std::pair<scalar_t, scalar_t>& timePeriod, const vector_t& initState,
+                           const ModeSchedule& modeSchedule, PrimalSolution& primalSolution) {
   // fill mode schedule
   primalSolution.modeSchedule_ = modeSchedule;
 
   // rollout with controller
-  const auto xCurrent = rollout.run(initTime, initState, finalTime, &controller, modeSchedule.eventTimes, primalSolution.timeTrajectory_,
-                                    primalSolution.postEventIndices_, primalSolution.stateTrajectory_, primalSolution.inputTrajectory_);
+  const auto xCurrent = rollout.run(timePeriod.first, initState, timePeriod.second, primalSolution.controllerPtr_.get(),
+                                    modeSchedule.eventTimes, primalSolution.timeTrajectory_, primalSolution.postEventIndices_,
+                                    primalSolution.stateTrajectory_, primalSolution.inputTrajectory_);
 
   if (!xCurrent.allFinite()) {
     throw std::runtime_error("System became unstable during the rollout.");
   }
 
   // average time step
-  return (finalTime - initTime) / static_cast<scalar_t>(primalSolution.timeTrajectory_.size());
+  return (timePeriod.second - timePeriod.first) / static_cast<scalar_t>(primalSolution.timeTrajectory_.size());
 }
 
 /******************************************************************************************************/
@@ -175,6 +173,19 @@ scalar_t computeControllerUpdateIS(const LinearController& controller) {
                  [](const vector_t& b) { return b.squaredNorm(); });
   // integrates using the trapezoidal approximation method
   return trapezoidalIntegration(controller.timeStamp_, biasArraySquaredNorm);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void incrementController(scalar_t stepLength, const LinearController& unoptimizedController, LinearController& controller) {
+  controller.clear();
+  controller.timeStamp_ = unoptimizedController.timeStamp_;
+  controller.gainArray_ = unoptimizedController.gainArray_;
+  controller.biasArray_.resize(unoptimizedController.size());
+  for (size_t k = 0; k < unoptimizedController.size(); k++) {
+    controller.biasArray_[k] = unoptimizedController.biasArray_[k] + stepLength * unoptimizedController.deltaBiasArray_[k];
+  }
 }
 
 }  // namespace ocs2

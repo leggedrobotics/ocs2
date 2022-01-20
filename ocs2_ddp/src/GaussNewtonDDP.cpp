@@ -249,7 +249,7 @@ void GaussNewtonDDP::getPrimalSolution(scalar_t finalTime, PrimalSolution* prima
   if (ddpSettings_.useFeedbackPolicy_) {
     primalSolutionPtr->controllerPtr_.reset(new LinearController);
     // length of the copy
-    const int length = getRequestedDataLength(optimizedPrimalData_.getLinearController().timeStamp_, finalTime);
+    const int length = getRequestedDataLength(getLinearController(optimizedPrimalData_.primalSolution).timeStamp_, finalTime);
     primalSolutionPtr->controllerPtr_->concatenate(optimizedPrimalData_.primalSolution.controllerPtr_.get(), 0, length);
 
   } else {
@@ -930,25 +930,21 @@ void GaussNewtonDDP::initializeConstraintPenalties() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::runSearchStrategy(scalar_t lqModelExpectedCost, PrimalDataContainer& dstPrimalData, MetricsCollection& metrics) {
-  // create output performance index
-  auto performanceIndex = performanceIndex_;
-
+void GaussNewtonDDP::runSearchStrategy(scalar_t lqModelExpectedCost, const LinearController& unoptimizedController,
+                                       PrimalDataContainer& primalData, PerformanceIndex& performanceIndex, MetricsCollection& metrics) {
   const auto& modeSchedule = this->getReferenceManager().getModeSchedule();
 
-  bool success = searchStrategyPtr_->run(initTime_, initState_, finalTime_, lqModelExpectedCost, modeSchedule, unoptimizedController_,
-                                         performanceIndex, dstPrimalData.primalSolution, metrics, avgTimeStepFP_);
+  // Primal solution controller is now optimized.
+  scalar_t avgTimeStep;
+  search_strategy::SolutionRef solution(primalData.primalSolution, performanceIndex, metrics, avgTimeStep);
+  const bool success =
+      searchStrategyPtr_->run({initTime_, finalTime_}, initState_, lqModelExpectedCost, unoptimizedController, modeSchedule, solution);
+  avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStep;
 
-  // accept or reject the search
-  if (success) {
-    // update nominal trajectories
-    performanceIndex_ = performanceIndex;
-    // unoptimizedController_ is now optimized. Regarding the controller, search is an in-place operation
-    unoptimizedController_.deltaBiasArray_.clear();
-    swap(dstPrimalData.getLinearController(), unoptimizedController_);
-  } else {
-    // If fail, copy the entire cache back. To keep the consistence of cached data, all cache should be left untouched.
-    dstPrimalData = cachedPrimalData_;
+  // If fail, copy the entire cache back. To keep the consistency of cached data, all cache should be left untouched.
+  if (!success) {
+    primalData = cachedPrimalData_;
+    performanceIndex = performanceIndexHistory_.back();
   }
 }
 
@@ -1012,7 +1008,7 @@ void GaussNewtonDDP::runInit() {
     // copied to optimized data container manually at the beginning of runImpl
     const auto avgTimeStep = rolloutInitialTrajectory(nominalPrimalData_, optimizedPrimalData_.primalSolution.controllerPtr_.get(), taskId);
     // swap controller used to rollout the nominal trajectories back to nominal data container.
-    swap(nominalPrimalData_.getLinearController(), optimizedPrimalData_.getLinearController());
+    nominalPrimalData_.primalSolution.controllerPtr_.swap(optimizedPrimalData_.primalSolution.controllerPtr_);
 
     computeRolloutMetrics(optimalControlProblemStock_[taskId], nominalPrimalData_.primalSolution, metrics_);
 
@@ -1079,7 +1075,7 @@ void GaussNewtonDDP::runIteration(scalar_t lqModelExpectedCost) {
 
   // finding the optimal stepLength
   searchStrategyTimer_.startTimer();
-  runSearchStrategy(lqModelExpectedCost, nominalPrimalData_, metrics_);
+  runSearchStrategy(lqModelExpectedCost, unoptimizedController_, nominalPrimalData_, performanceIndex_, metrics_);
   searchStrategyTimer_.endTimer();
 
   // update the constraint penalty coefficients
@@ -1216,7 +1212,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   // finding the final optimal stepLength and getting the optimal trajectories and controller
   searchStrategyTimer_.startTimer();
   const scalar_t lqModelExpectedCost = dualData_.valueFunctionTrajectory.front().f;
-  runSearchStrategy(lqModelExpectedCost, optimizedPrimalData_, metrics_);
+  runSearchStrategy(lqModelExpectedCost, unoptimizedController_, optimizedPrimalData_, performanceIndex_, metrics_);
   searchStrategyTimer_.endTimer();
 
   performanceIndexHistory_.push_back(performanceIndex_);

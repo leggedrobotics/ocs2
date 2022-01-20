@@ -388,9 +388,13 @@ class GaussNewtonDDP : public SolverBase {
    * If fail, the cached primal data will be written to dstPrimalData.
    *
    * @param [in] lqModelExpectedCost: The expected cost based on the LQ model optimization.
-   * @param [out] dstPrimalData: Optimized primal data container if it is an final search. otherwise nominal data container
+   * @param [in] unoptimizedController: The unoptimized controller which search will be performed.
+   * @param [out] primalData: Optimized primal data container if it is an final search. otherwise nominal data container
+   * @param [out] performanceIndex: The optimal performanceIndex which will be updated to the optimal one.
+   * @param [out] metrics: The optimal trajectories metrics.
    */
-  void runSearchStrategy(scalar_t lqModelExpectedCost, PrimalDataContainer& dstPrimalData, MetricsCollection& metrics);
+  void runSearchStrategy(scalar_t lqModelExpectedCost, const LinearController& unoptimizedController, PrimalDataContainer& primalData,
+                         PerformanceIndex& performanceIndex, MetricsCollection& metrics);
 
   /**
    * swap both primal and dual data cache

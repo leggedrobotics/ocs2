@@ -65,17 +65,16 @@ PerformanceIndex computeRolloutPerformanceIndex(const scalar_array_t& timeTrajec
  * to integrate the system dynamics in time period [initTime, finalTime].
  *
  * @param [in] rollout: A reference to the rollout class.
- * @param [in] initTime: Initial time
+ * @param [in] timePeriod: Initial and final times period
  * @param [in] initState: Initial state
- * @param [in] finalTime: Final time
  * @param [in] modeSchedule: The mode schedule
  * @param [in] controller: Control policies.
  * @param [out] primalSolution: The resulting primal solution.
  *
  * @return average time step.
  */
-scalar_t rolloutTrajectory(RolloutBase& rollout, const scalar_t initTime, const vector_t& initState, const scalar_t finalTime,
-                           const ModeSchedule& modeSchedule, LinearController& controller, PrimalSolution& primalSolution);
+scalar_t rolloutTrajectory(RolloutBase& rollout, const std::pair<scalar_t, scalar_t>& timePeriod, const vector_t& initState,
+                           const ModeSchedule& modeSchedule, PrimalSolution& primalSolution);
 
 /**
  * Computes the integral of the squared (IS) norm of the controller update.
@@ -84,5 +83,27 @@ scalar_t rolloutTrajectory(RolloutBase& rollout, const scalar_t initTime, const 
  * @return The integral of the squared (IS) norm of the controller update.
  */
 scalar_t computeControllerUpdateIS(const LinearController& controller);
+
+/**
+ * Gets a reference to the linear controller from the given primal solution.
+ */
+inline LinearController& getLinearController(PrimalSolution& primalSolution) {
+  assert(dynamic_cast<LinearController*>(primalSolution.controllerPtr_.get()) != nullptr);
+  return static_cast<LinearController&>(*primalSolution.controllerPtr_);
+}
+
+/**
+ * Gets a const reference to the linear controller from the given primal solution.
+ */
+inline const LinearController& getLinearController(const PrimalSolution& primalSolution) {
+  assert(dynamic_cast<const LinearController*>(primalSolution.controllerPtr_.get()) != nullptr);
+  return static_cast<const LinearController&>(*primalSolution.controllerPtr_);
+}
+
+/**
+ * Outputs a controller with same same time stamp and gains as unoptimizedController. However, bias is incremented based on:
+ * biasArray = unoptimizedController.biasArray + stepLength * unoptimizedController.deltaBiasArray
+ */
+void incrementController(scalar_t stepLength, const LinearController& unoptimizedController, LinearController& controller);
 
 }  // namespace ocs2

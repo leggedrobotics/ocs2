@@ -57,37 +57,28 @@ void LevenbergMarquardtStrategy::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 bool LevenbergMarquardtStrategy::run(const scalar_t initTime, const vector_t& initState, const scalar_t finalTime,
-                                     const scalar_t expectedCost, const ModeSchedule& modeSchedule, LinearController& controller,
-                                     PerformanceIndex& performanceIndex, PrimalSolution& dstPrimalSolution, MetricsCollection& metrics,
-                                     scalar_t& avgTimeStepFP) {
+                                     const scalar_t expectedCost, const LinearController& unoptimizedController,
+                                     const ModeSchedule& modeSchedule, PrimalSolution& primalSolution, PerformanceIndex& performanceIndex,
+                                     MetricsCollection& metrics, scalar_t& avgTimeStepFP) {
   constexpr size_t taskId = 0;
 
   // previous merit and the expected reduction
   const auto prevMerit = performanceIndex.merit;
   const auto expectedReduction = performanceIndex.merit - expectedCost;
 
-  // do a full step rollout
+  // stepsize
   const scalar_t stepLength = numerics::almost_eq(expectedReduction, 0.0) ? 0.0 : 1.0;
-  for (size_t k = 0; k < controller.size(); k++) {
-    controller.biasArray_[k] += stepLength * controller.deltaBiasArray_[k];
-  }
 
   try {
     // perform a rollout
-    const auto avgTimeStep = rolloutTrajectory(rolloutRef_, initTime, initState, finalTime, modeSchedule, controller, dstPrimalSolution);
+    incrementController(stepLength, unoptimizedController, getLinearController(primalSolution));
+    const auto avgTimeStep = rolloutTrajectory(rolloutRef_, initTime, initState, finalTime, modeSchedule, primalSolution);
     // compute average time step of forward rollout
     avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStep;
-    // debug print
-    if (baseSettings_.debugPrintRollout) {
-      std::cerr << "\n++++++++++++++++++++++++++++++\n";
-      std::cerr << "\n++++++++++++++++++++++++++++++\n";
-      RolloutBase::display(dstPrimalSolution.timeTrajectory_, dstPrimalSolution.postEventIndices_, dstPrimalSolution.stateTrajectory_,
-                           &dstPrimalSolution.inputTrajectory_);
-    }
 
-    computeRolloutMetrics(optimalControlProblemRef_, dstPrimalSolution, metrics);
+    computeRolloutMetrics(optimalControlProblemRef_, primalSolution, metrics);
 
-    performanceIndex = computeRolloutPerformanceIndex(dstPrimalSolution.timeTrajectory_, metrics);
+    performanceIndex = computeRolloutPerformanceIndex(primalSolution.timeTrajectory_, metrics);
 
     // calculates rollout merit
     performanceIndex.merit = meritFunc_(performanceIndex);

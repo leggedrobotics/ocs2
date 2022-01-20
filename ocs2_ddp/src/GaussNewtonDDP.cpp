@@ -930,25 +930,18 @@ void GaussNewtonDDP::initializeConstraintPenalties() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::runSearchStrategy(scalar_t lqModelExpectedCost, PrimalDataContainer& dstPrimalData, MetricsCollection& metrics) {
-  // create output performance index
-  auto performanceIndex = performanceIndex_;
-
+void GaussNewtonDDP::runSearchStrategy(scalar_t lqModelExpectedCost, const LinearController& unoptimizedController,
+                                       PrimalDataContainer& primalData, PerformanceIndex& performanceIndex, MetricsCollection& metrics) {
   const auto& modeSchedule = this->getReferenceManager().getModeSchedule();
 
-  bool success = searchStrategyPtr_->run(initTime_, initState_, finalTime_, lqModelExpectedCost, modeSchedule, unoptimizedController_,
-                                         performanceIndex, dstPrimalData.primalSolution, metrics, avgTimeStepFP_);
+  // Primal solution controller is now optimized.
+  const bool success = searchStrategyPtr_->run(initTime_, initState_, finalTime_, lqModelExpectedCost, unoptimizedController, modeSchedule,
+                                               primalData.primalSolution, performanceIndex, metrics, avgTimeStepFP_);
 
-  // accept or reject the search
-  if (success) {
-    // update nominal trajectories
-    performanceIndex_ = performanceIndex;
-    // unoptimizedController_ is now optimized. Regarding the controller, search is an in-place operation
-    unoptimizedController_.deltaBiasArray_.clear();
-    swap(dstPrimalData.getLinearController(), unoptimizedController_);
-  } else {
-    // If fail, copy the entire cache back. To keep the consistence of cached data, all cache should be left untouched.
-    dstPrimalData = cachedPrimalData_;
+  // If fail, copy the entire cache back. To keep the consistency of cached data, all cache should be left untouched.
+  if (!success) {
+    primalData = cachedPrimalData_;
+    performanceIndex = performanceIndexHistory_.back();
   }
 }
 
@@ -1079,7 +1072,7 @@ void GaussNewtonDDP::runIteration(scalar_t lqModelExpectedCost) {
 
   // finding the optimal stepLength
   searchStrategyTimer_.startTimer();
-  runSearchStrategy(lqModelExpectedCost, nominalPrimalData_, metrics_);
+  runSearchStrategy(lqModelExpectedCost, unoptimizedController_, nominalPrimalData_, performanceIndex_, metrics_);
   searchStrategyTimer_.endTimer();
 
   // update the constraint penalty coefficients
@@ -1216,7 +1209,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   // finding the final optimal stepLength and getting the optimal trajectories and controller
   searchStrategyTimer_.startTimer();
   const scalar_t lqModelExpectedCost = dualData_.valueFunctionTrajectory.front().f;
-  runSearchStrategy(lqModelExpectedCost, optimizedPrimalData_, metrics_);
+  runSearchStrategy(lqModelExpectedCost, unoptimizedController_, optimizedPrimalData_, performanceIndex_, metrics_);
   searchStrategyTimer_.endTimer();
 
   performanceIndexHistory_.push_back(performanceIndex_);

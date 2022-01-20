@@ -77,8 +77,8 @@ class LineSearchStrategy final : public SearchStrategyBase {
   void reset() override {}
 
   bool run(const scalar_t initTime, const vector_t& initState, const scalar_t finalTime, const scalar_t expectedCost,
-           const ModeSchedule& modeSchedule, LinearController& controller, PerformanceIndex& performanceIndex,
-           PrimalSolution& dstPrimalSolution, MetricsCollection& metrics, scalar_t& avgTimeStepFP) override;
+           const LinearController& unoptimizedController, const ModeSchedule& modeSchedule, PrimalSolution& primalSolution,
+           PerformanceIndex& performanceIndex, MetricsCollection& metrics, scalar_t& avgTimeStepFP) override;
 
   std::pair<bool, std::string> checkConvergence(bool unreliableControllerIncrement, const PerformanceIndex& previousPerformanceIndex,
                                                 const PerformanceIndex& currentPerformanceIndex) const override;
@@ -102,7 +102,7 @@ class LineSearchStrategy final : public SearchStrategyBase {
     scalar_t baselineMerit = 0.0;           // the merit of the rollout for zero learning rate
     scalar_t initControllerUpdateIS = 0.0;  // integral of the squared (IS) norm of the controller update.
     const ModeSchedule* modeSchedulePtr;
-    LinearController initController;
+    const LinearController* unoptimizedControllerPtr;
 
     std::atomic_size_t alphaExpNext{0};
     std::vector<bool> alphaProcessed;
@@ -112,7 +112,6 @@ class LineSearchStrategy final : public SearchStrategyBase {
     PerformanceIndex* performanceIndexStarPtr;
     PrimalSolution* primalSolutionStarPtr;
     MetricsCollection* metricsStarPtr;
-    LinearController* controllerStarPtr;
   };
 
   const line_search::Settings settings_;

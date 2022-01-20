@@ -73,17 +73,16 @@ class SearchStrategyBase {
    * @param [in] initState: Initial state
    * @param [in] finalTime: Final time
    * @param [in] expectedCost: The expected cost based on the LQ model optimization.
+   * @param [in] unoptimizedController: The unoptimized controller which search will be performed.
    * @param [in] ModeSchedule The current mode schedule.
-   * @param [in, out] controller: Control policies.
+   * @param [out] primalSolution: Contains the optimized controller and resulting time, state, input trajectories.
    * @param [out] performanceIndex: The current performanceIndex which will be updated to the optimal one.
-   * @param [out] dstPrimalData: Resulting time, state, input... trajectories. Attention: Controller inside PrimalDataContainer is NOT
-   * optimized. Instead, controller parameter holds the optimized controller.
    * @param [out] avgTimeStepFP: The average time-step used during forward rollout.
    * @return whether the search was successful or failed.
    */
   virtual bool run(const scalar_t initTime, const vector_t& initState, const scalar_t finalTime, const scalar_t expectedCost,
-                   const ModeSchedule& modeSchedule, LinearController& controller, PerformanceIndex& performanceIndex,
-                   PrimalSolution& dstPrimalSolution, MetricsCollection& metrics, scalar_t& avgTimeStepFP) = 0;
+                   const LinearController& unoptimizedController, const ModeSchedule& modeSchedule, PrimalSolution& primalSolution,
+                   PerformanceIndex& performanceIndex, MetricsCollection& metrics, scalar_t& avgTimeStepFP) = 0;
 
   /**
    * Checks convergence of the main loop of DDP.

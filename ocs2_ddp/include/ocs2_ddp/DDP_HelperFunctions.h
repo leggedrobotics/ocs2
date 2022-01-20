@@ -94,6 +94,14 @@ inline LinearController& getLinearController(PrimalSolution& primalSolution) {
 }
 
 /**
+ * Gets a const reference to the linear controller from the given primal solution.
+ */
+inline const LinearController& getLinearController(const PrimalSolution& primalSolution) {
+  assert(dynamic_cast<const LinearController*>(primalSolution.controllerPtr_.get()) != nullptr);
+  return static_cast<const LinearController&>(*primalSolution.controllerPtr_);
+}
+
+/**
  * Outputs a controller with same same time stamp and gains as unoptimizedController. However, bias is incremented based on:
  * biasArray = unoptimizedController.biasArray + stepLength * unoptimizedController.deltaBiasArray
  */

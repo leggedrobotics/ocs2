@@ -147,16 +147,14 @@ PerformanceIndex computeRolloutPerformanceIndex(const scalar_array_t& timeTrajec
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t rolloutTrajectory(RolloutBase& rollout, const scalar_t initTime, const vector_t& initState, const scalar_t finalTime,
-                           const ModeSchedule& modeSchedule, LinearController& controller, PrimalSolution& primalSolution) {
-  assert(primalSolution.controllerPtr_.get() != &controller);
-  primalSolution.clear();
-
+                           const ModeSchedule& modeSchedule, PrimalSolution& primalSolution) {
   // fill mode schedule
   primalSolution.modeSchedule_ = modeSchedule;
 
   // rollout with controller
-  const auto xCurrent = rollout.run(initTime, initState, finalTime, &controller, modeSchedule.eventTimes, primalSolution.timeTrajectory_,
-                                    primalSolution.postEventIndices_, primalSolution.stateTrajectory_, primalSolution.inputTrajectory_);
+  const auto xCurrent = rollout.run(initTime, initState, finalTime, primalSolution.controllerPtr_.get(), modeSchedule.eventTimes,
+                                    primalSolution.timeTrajectory_, primalSolution.postEventIndices_, primalSolution.stateTrajectory_,
+                                    primalSolution.inputTrajectory_);
 
   if (!xCurrent.allFinite()) {
     throw std::runtime_error("System became unstable during the rollout.");

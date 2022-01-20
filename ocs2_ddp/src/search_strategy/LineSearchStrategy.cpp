@@ -63,8 +63,9 @@ LineSearchStrategy::LineSearchStrategy(search_strategy::Settings baseSettings, l
 /******************************************************************************************************/
 /******************************************************************************************************/
 bool LineSearchStrategy::run(const scalar_t initTime, const vector_t& initState, const scalar_t finalTime, const scalar_t expectedCost,
-                             const ModeSchedule& modeSchedule, LinearController& controller, PerformanceIndex& performanceIndex,
-                             PrimalSolution& dstPrimalSolution, MetricsCollection& metrics, scalar_t& avgTimeStepFP) {
+                             const LinearController& unoptimizedController, const ModeSchedule& modeSchedule,
+                             PrimalSolution& primalSolution, PerformanceIndex& performanceIndex, MetricsCollection& metrics,
+                             scalar_t& avgTimeStepFP) {
   // number of line search iterations (the if statements order is important)
   size_t maxNumOfLineSearches = 0;
   if (numerics::almost_eq(settings_.minStepLength_, settings_.maxStepLength_)) {
@@ -82,22 +83,15 @@ bool LineSearchStrategy::run(const scalar_t initTime, const vector_t& initState,
   constexpr scalar_t stepLength = 0.0;
   try {
     // perform a rollout
-    const auto avgTimeStep =
-        rolloutTrajectory(rolloutRefStock_[taskId], initTime, initState, finalTime, modeSchedule, controller, dstPrimalSolution);
+    incrementController(stepLength, unoptimizedController, getLinearController(primalSolution));
+    const auto avgTimeStep = rolloutTrajectory(rolloutRefStock_[taskId], initTime, initState, finalTime, modeSchedule, primalSolution);
     // compute average time step of forward rollout
     avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStep;
-    // debug print
-    if (baseSettings_.debugPrintRollout) {
-      std::cerr << "\n++++++++++++++++++++++++++++++\n";
-      std::cerr << "\n++++++++++++++++++++++++++++++\n";
-      RolloutBase::display(dstPrimalSolution.timeTrajectory_, dstPrimalSolution.postEventIndices_, dstPrimalSolution.stateTrajectory_,
-                           &dstPrimalSolution.inputTrajectory_);
-    }
 
     // rollout cost and constraints
-    computeRolloutMetrics(optimalControlProblemRefStock_[taskId], dstPrimalSolution, metrics);
+    computeRolloutMetrics(optimalControlProblemRefStock_[taskId], primalSolution, metrics);
 
-    performanceIndex = computeRolloutPerformanceIndex(dstPrimalSolution.timeTrajectory_, metrics);
+    performanceIndex = computeRolloutPerformanceIndex(primalSolution.timeTrajectory_, metrics);
 
     // calculates rollout merit
     performanceIndex.merit = meritFunc_(performanceIndex);
@@ -120,17 +114,17 @@ bool LineSearchStrategy::run(const scalar_t initTime, const vector_t& initState,
 
   // initialize lineSearchModule
   lineSearchModule_.baselineMerit = performanceIndex.merit;
-  lineSearchModule_.initControllerUpdateIS = computeControllerUpdateIS(controller);
+  lineSearchModule_.initControllerUpdateIS = computeControllerUpdateIS(unoptimizedController);
   lineSearchModule_.modeSchedulePtr = &modeSchedule;
-  lineSearchModule_.initController = controller;  // this will serve to initialize the workers
+  lineSearchModule_.unoptimizedControllerPtr = &unoptimizedController;
+
   lineSearchModule_.alphaExpNext = 0;
   lineSearchModule_.alphaProcessed = std::vector<bool>(maxNumOfLineSearches, false);
 
   lineSearchModule_.stepLengthStar = 0.0;
   lineSearchModule_.performanceIndexStarPtr = &performanceIndex;
-  lineSearchModule_.primalSolutionStarPtr = &dstPrimalSolution;
+  lineSearchModule_.primalSolutionStarPtr = &primalSolution;
   lineSearchModule_.metricsStarPtr = &metrics;
-  lineSearchModule_.controllerStarPtr = &controller;
 
   nextTaskId_ = 0;
   auto task = [&](int) { lineSearchTask(initTime, initState, finalTime); };
@@ -189,16 +183,11 @@ void LineSearchStrategy::lineSearchTask(const scalar_t initTime, const vector_t&
       break;
     }
 
-    // modifying uff by local increments
-    LinearController controller = lineSearchModule_.initController;
-    for (size_t k = 0; k < controller.size(); k++) {
-      controller.biasArray_[k] += stepLength * controller.deltaBiasArray_[k];
-    }
-
     try {
       // perform a rollout
-      const auto avgTimeStep = rolloutTrajectory(rolloutRefStock_[taskId], initTime, initState, finalTime,
-                                                 *lineSearchModule_.modeSchedulePtr, controller, primalSolution);
+      incrementController(stepLength, *lineSearchModule_.unoptimizedControllerPtr, getLinearController(primalSolution));
+      const auto avgTimeStep =
+          rolloutTrajectory(rolloutRefStock_[taskId], initTime, initState, finalTime, *lineSearchModule_.modeSchedulePtr, primalSolution);
       // compute average time step of forward rollout
       avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStep;
 
@@ -246,7 +235,6 @@ void LineSearchStrategy::lineSearchTask(const scalar_t initTime, const vector_t&
         *lineSearchModule_.performanceIndexStarPtr = performanceIndex;
         lineSearchModule_.primalSolutionStarPtr->swap(primalSolution);
         swap(*lineSearchModule_.metricsStarPtr, metrics);
-        swap(*lineSearchModule_.controllerStarPtr, controller);
 
         // whether to stop all other thread.
         terminateLinesearchTasks = true;

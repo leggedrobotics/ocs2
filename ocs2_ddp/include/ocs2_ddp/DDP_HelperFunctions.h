@@ -75,7 +75,7 @@ PerformanceIndex computeRolloutPerformanceIndex(const scalar_array_t& timeTrajec
  * @return average time step.
  */
 scalar_t rolloutTrajectory(RolloutBase& rollout, const scalar_t initTime, const vector_t& initState, const scalar_t finalTime,
-                           const ModeSchedule& modeSchedule, LinearController& controller, PrimalSolution& primalSolution);
+                           const ModeSchedule& modeSchedule, PrimalSolution& primalSolution);
 
 /**
  * Computes the integral of the squared (IS) norm of the controller update.
@@ -84,5 +84,19 @@ scalar_t rolloutTrajectory(RolloutBase& rollout, const scalar_t initTime, const 
  * @return The integral of the squared (IS) norm of the controller update.
  */
 scalar_t computeControllerUpdateIS(const LinearController& controller);
+
+/**
+ * Gets a reference to the linear controller from the given primal solution.
+ */
+inline LinearController& getLinearController(PrimalSolution& primalSolution) {
+  assert(dynamic_cast<LinearController*>(primalSolution.controllerPtr_.get()) != nullptr);
+  return static_cast<LinearController&>(*primalSolution.controllerPtr_);
+}
+
+/**
+ * Outputs a controller with same same time stamp and gains as unoptimizedController. However, bias is incremented based on:
+ * biasArray = unoptimizedController.biasArray + stepLength * unoptimizedController.deltaBiasArray
+ */
+void incrementController(scalar_t stepLength, const LinearController& unoptimizedController, LinearController& controller);
 
 }  // namespace ocs2

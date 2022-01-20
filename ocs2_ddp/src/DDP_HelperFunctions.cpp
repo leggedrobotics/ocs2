@@ -177,4 +177,17 @@ scalar_t computeControllerUpdateIS(const LinearController& controller) {
   return trapezoidalIntegration(controller.timeStamp_, biasArraySquaredNorm);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void incrementController(scalar_t stepLength, const LinearController& unoptimizedController, LinearController& controller) {
+  controller.clear();
+  controller.timeStamp_ = unoptimizedController.timeStamp_;
+  controller.gainArray_ = unoptimizedController.gainArray_;
+  controller.biasArray_.resize(unoptimizedController.size());
+  for (size_t k = 0; k < unoptimizedController.size(); k++) {
+    controller.biasArray_[k] = unoptimizedController.biasArray_[k] + stepLength * unoptimizedController.deltaBiasArray_[k];
+  }
+}
+
 }  // namespace ocs2

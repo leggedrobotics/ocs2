@@ -43,15 +43,10 @@ void swap(Metrics& lhs, Metrics& rhs) {
   lhs.stateInputEqConstraint.swap(rhs.stateInputEqConstraint);
 
   // Lagrangians
-  //  lhs.stateEqLagrangian.swap(rhs.stateEqLagrangian);
-  //  lhs.stateIneqLagrangian.swap(rhs.stateIneqLagrangian);
-  //  lhs.stateInputEqLagrangian.swap(rhs.stateInputEqLagrangian);
-  //  lhs.stateInputIneqLagrangian.swap(rhs.stateInputIneqLagrangian);
-
-  std::swap(lhs.stateEqLagrangian, rhs.stateEqLagrangian);
-  std::swap(lhs.stateIneqLagrangian, rhs.stateIneqLagrangian);
-  std::swap(lhs.stateInputEqLagrangian, rhs.stateInputEqLagrangian);
-  std::swap(lhs.stateInputIneqLagrangian, rhs.stateInputIneqLagrangian);
+  lhs.stateEqLagrangian.swap(rhs.stateEqLagrangian);
+  lhs.stateIneqLagrangian.swap(rhs.stateIneqLagrangian);
+  lhs.stateInputEqLagrangian.swap(rhs.stateInputEqLagrangian);
+  lhs.stateInputIneqLagrangian.swap(rhs.stateInputIneqLagrangian);
 }
 
 /******************************************************************************************************/
@@ -66,15 +61,19 @@ void clear(Metrics& m) {
   m.stateInputEqConstraint = vector_t();
 
   // Lagrangians
-  //  m.stateEqLagrangian.clear();
-  //  m.stateIneqLagrangian.clear();
-  //  m.stateInputEqLagrangian.clear();
-  //  m.stateInputIneqLagrangian.clear();
+  m.stateEqLagrangian.clear();
+  m.stateIneqLagrangian.clear();
+  m.stateInputEqLagrangian.clear();
+  m.stateInputIneqLagrangian.clear();
+}
 
-  m.stateEqLagrangian = 0.0;
-  m.stateIneqLagrangian = 0.0;
-  m.stateInputEqLagrangian = 0.0;
-  m.stateInputIneqLagrangian = 0.0;
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t sum(const std::vector<Metrics::value_t>& termsValue) {
+  scalar_t s = 0.0;
+  std::for_each(termsValue.begin(), termsValue.end(), [&](const Metrics::value_t& v) { return s + v.second; });
+  return s;
 }
 
 /******************************************************************************************************/

@@ -38,8 +38,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void approximateIntermediateLQ(OptimalControlProblem& problem, const scalar_t time, const vector_t& state, const vector_t& input,
-                               ModelData& modelData) {
-  const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
+                               const MultiplierCollection& multipliers, ModelData& modelData) {
   auto& preComputation = *problem.preComputationPtr;
   constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Constraint + Request::Dynamics + Request::Approximation;
   preComputation.request(request, time, state, input);
@@ -62,30 +61,32 @@ void approximateIntermediateLQ(OptimalControlProblem& problem, const scalar_t ti
 
   // Lagrangians
   if (!problem.stateEqualityLagrangiantPtr->empty()) {
-    auto approx = problem.stateEqualityLagrangiantPtr->getQuadraticApproximation(time, state, targetTrajectories, preComputation);
+    auto approx = problem.stateEqualityLagrangiantPtr->getQuadraticApproximation(time, state, multipliers.stateEq, preComputation);
     modelData.cost.f += approx.f;
     modelData.cost.dfdx += approx.dfdx;
     modelData.cost.dfdxx += approx.dfdxx;
   }
   if (!problem.stateInequalityLagrangiantPtr->empty()) {
-    auto approx = problem.stateInequalityLagrangiantPtr->getQuadraticApproximation(time, state, targetTrajectories, preComputation);
+    auto approx = problem.stateInequalityLagrangiantPtr->getQuadraticApproximation(time, state, multipliers.stateIneq, preComputation);
     modelData.cost.f += approx.f;
     modelData.cost.dfdx += approx.dfdx;
     modelData.cost.dfdxx += approx.dfdxx;
   }
   if (!problem.equalityLagrangiantPtr->empty()) {
-    modelData.cost += problem.equalityLagrangiantPtr->getQuadraticApproximation(time, state, input, targetTrajectories, preComputation);
+    modelData.cost +=
+        problem.equalityLagrangiantPtr->getQuadraticApproximation(time, state, input, multipliers.stateInputEq, preComputation);
   }
   if (!problem.inequalityLagrangiantPtr->empty()) {
-    modelData.cost += problem.inequalityLagrangiantPtr->getQuadraticApproximation(time, state, input, targetTrajectories, preComputation);
+    modelData.cost +=
+        problem.inequalityLagrangiantPtr->getQuadraticApproximation(time, state, input, multipliers.stateInputIneq, preComputation);
   }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void approximatePreJumpLQ(OptimalControlProblem& problem, const scalar_t& time, const vector_t& state, ModelData& modelData) {
-  const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
+void approximatePreJumpLQ(OptimalControlProblem& problem, const scalar_t& time, const vector_t& state,
+                          const MultiplierCollection& multipliers, ModelData& modelData) {
   auto& preComputation = *problem.preComputationPtr;
   constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Constraint + Request::Dynamics + Request::Approximation;
   preComputation.requestPreJump(request, time, state);
@@ -106,13 +107,13 @@ void approximatePreJumpLQ(OptimalControlProblem& problem, const scalar_t& time, 
 
   // Lagrangians
   if (!problem.preJumpEqualityLagrangiantPtr->empty()) {
-    auto approx = problem.preJumpEqualityLagrangiantPtr->getQuadraticApproximation(time, state, targetTrajectories, preComputation);
+    auto approx = problem.preJumpEqualityLagrangiantPtr->getQuadraticApproximation(time, state, multipliers.stateEq, preComputation);
     modelData.cost.f += approx.f;
     modelData.cost.dfdx += approx.dfdx;
     modelData.cost.dfdxx += approx.dfdxx;
   }
   if (!problem.preJumpInequalityLagrangiantPtr->empty()) {
-    auto approx = problem.preJumpInequalityLagrangiantPtr->getQuadraticApproximation(time, state, targetTrajectories, preComputation);
+    auto approx = problem.preJumpInequalityLagrangiantPtr->getQuadraticApproximation(time, state, multipliers.stateIneq, preComputation);
     modelData.cost.f += approx.f;
     modelData.cost.dfdx += approx.dfdx;
     modelData.cost.dfdxx += approx.dfdxx;
@@ -122,8 +123,8 @@ void approximatePreJumpLQ(OptimalControlProblem& problem, const scalar_t& time, 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void approximateFinalLQ(OptimalControlProblem& problem, const scalar_t& time, const vector_t& state, ModelData& modelData) {
-  const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
+void approximateFinalLQ(OptimalControlProblem& problem, const scalar_t& time, const vector_t& state,
+                        const MultiplierCollection& multipliers, ModelData& modelData) {
   auto& preComputation = *problem.preComputationPtr;
   constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Constraint + Request::Approximation;
   preComputation.requestFinal(request, time, state);
@@ -144,13 +145,13 @@ void approximateFinalLQ(OptimalControlProblem& problem, const scalar_t& time, co
 
   // Lagrangians
   if (!problem.finalEqualityLagrangiantPtr->empty()) {
-    auto approx = problem.finalEqualityLagrangiantPtr->getQuadraticApproximation(time, state, targetTrajectories, preComputation);
+    auto approx = problem.finalEqualityLagrangiantPtr->getQuadraticApproximation(time, state, multipliers.stateEq, preComputation);
     modelData.cost.f += approx.f;
     modelData.cost.dfdx += approx.dfdx;
     modelData.cost.dfdxx += approx.dfdxx;
   }
   if (!problem.finalInequalityLagrangiantPtr->empty()) {
-    auto approx = problem.finalInequalityLagrangiantPtr->getQuadraticApproximation(time, state, targetTrajectories, preComputation);
+    auto approx = problem.finalInequalityLagrangiantPtr->getQuadraticApproximation(time, state, multipliers.stateIneq, preComputation);
     modelData.cost.f += approx.f;
     modelData.cost.dfdx += approx.dfdx;
     modelData.cost.dfdxx += approx.dfdxx;
@@ -267,9 +268,9 @@ ScalarFunctionQuadraticApproximation approximateFinalCost(const OptimalControlPr
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-Metrics computeIntermediateMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state, const vector_t& input) {
+Metrics computeIntermediateMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state, const vector_t& input,
+                                   const MultiplierCollection& multipliers) {
   auto& preComputation = *problem.preComputationPtr;
-  const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
 
   Metrics metrics;
 
@@ -281,10 +282,11 @@ Metrics computeIntermediateMetrics(OptimalControlProblem& problem, const scalar_
   metrics.stateInputEqConstraint = problem.equalityConstraintPtr->getValue(time, state, input, preComputation);
 
   // Lagrangians
-  metrics.stateEqLagrangian = problem.stateEqualityLagrangiantPtr->getValue(time, state, targetTrajectories, preComputation);
-  metrics.stateIneqLagrangian = problem.stateInequalityLagrangiantPtr->getValue(time, state, targetTrajectories, preComputation);
-  metrics.stateInputEqLagrangian = problem.equalityLagrangiantPtr->getValue(time, state, input, targetTrajectories, preComputation);
-  metrics.stateInputIneqLagrangian = problem.inequalityLagrangiantPtr->getValue(time, state, input, targetTrajectories, preComputation);
+  metrics.stateEqLagrangian = problem.stateEqualityLagrangiantPtr->getValue(time, state, multipliers.stateEq, preComputation);
+  metrics.stateIneqLagrangian = problem.stateInequalityLagrangiantPtr->getValue(time, state, multipliers.stateIneq, preComputation);
+  metrics.stateInputEqLagrangian = problem.equalityLagrangiantPtr->getValue(time, state, input, multipliers.stateInputEq, preComputation);
+  metrics.stateInputIneqLagrangian =
+      problem.inequalityLagrangiantPtr->getValue(time, state, input, multipliers.stateInputIneq, preComputation);
 
   return metrics;
 }
@@ -292,9 +294,9 @@ Metrics computeIntermediateMetrics(OptimalControlProblem& problem, const scalar_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-Metrics computePreJumpMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state) {
+Metrics computePreJumpMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
+                              const MultiplierCollection& multipliers) {
   auto& preComputation = *problem.preComputationPtr;
-  const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
 
   Metrics metrics;
 
@@ -305,8 +307,8 @@ Metrics computePreJumpMetrics(OptimalControlProblem& problem, const scalar_t tim
   metrics.stateEqConstraint = problem.preJumpEqualityConstraintPtr->getValue(time, state, preComputation);
 
   // Lagrangians
-  metrics.stateEqLagrangian = problem.preJumpEqualityLagrangiantPtr->getValue(time, state, targetTrajectories, preComputation);
-  metrics.stateIneqLagrangian = problem.preJumpInequalityLagrangiantPtr->getValue(time, state, targetTrajectories, preComputation);
+  metrics.stateEqLagrangian = problem.preJumpEqualityLagrangiantPtr->getValue(time, state, multipliers.stateEq, preComputation);
+  metrics.stateIneqLagrangian = problem.preJumpInequalityLagrangiantPtr->getValue(time, state, multipliers.stateIneq, preComputation);
 
   return metrics;
 }
@@ -314,9 +316,9 @@ Metrics computePreJumpMetrics(OptimalControlProblem& problem, const scalar_t tim
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-Metrics computeFinalMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state) {
+Metrics computeFinalMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
+                            const MultiplierCollection& multipliers) {
   auto& preComputation = *problem.preComputationPtr;
-  const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
 
   Metrics metrics;
 
@@ -327,8 +329,8 @@ Metrics computeFinalMetrics(OptimalControlProblem& problem, const scalar_t time,
   metrics.stateEqConstraint = problem.finalEqualityConstraintPtr->getValue(time, state, preComputation);
 
   // Lagrangians
-  metrics.stateEqLagrangian = problem.finalEqualityLagrangiantPtr->getValue(time, state, targetTrajectories, preComputation);
-  metrics.stateIneqLagrangian = problem.finalInequalityLagrangiantPtr->getValue(time, state, targetTrajectories, preComputation);
+  metrics.stateEqLagrangian = problem.finalEqualityLagrangiantPtr->getValue(time, state, multipliers.stateEq, preComputation);
+  metrics.stateIneqLagrangian = problem.finalInequalityLagrangiantPtr->getValue(time, state, multipliers.stateIneq, preComputation);
 
   return metrics;
 }

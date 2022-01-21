@@ -45,14 +45,10 @@ struct Metrics {
   vector_t stateInputEqConstraint;
 
   // Lagrangians
-  //  std::vector<value_t> stateEqLagrangian;
-  //  std::vector<value_t> stateIneqLagrangian;
-  //  std::vector<value_t> stateInputEqLagrangian;
-  //  std::vector<value_t> stateInputIneqLagrangian;
-  scalar_t stateEqLagrangian;
-  scalar_t stateIneqLagrangian;
-  scalar_t stateInputEqLagrangian;
-  scalar_t stateInputIneqLagrangian;
+  std::vector<value_t> stateEqLagrangian;
+  std::vector<value_t> stateIneqLagrangian;
+  std::vector<value_t> stateInputEqLagrangian;
+  std::vector<value_t> stateInputIneqLagrangian;
 };
 
 struct MetricsCollection {
@@ -66,6 +62,9 @@ void swap(Metrics& lhs, Metrics& rhs);
 
 /** Clears the value of the given Metrics */
 void clear(Metrics& m);
+
+/** Sums the penalty part of Metrics::value_t */
+scalar_t sum(const std::vector<Metrics::value_t>& termsValue);
 
 /** Exchanges the given values of MetricsCollection */
 void swap(MetricsCollection& lhs, MetricsCollection& rhs);

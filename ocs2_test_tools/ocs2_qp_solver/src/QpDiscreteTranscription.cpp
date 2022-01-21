@@ -36,6 +36,19 @@ namespace qp_solver {
 
 std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(OptimalControlProblem& optimalControProblem,
                                                                   const ContinuousTrajectory& nominalTrajectory) {
+  // OCP check
+  if (!optimalControProblem.equalityLagrangiantPtr->empty() || !optimalControProblem.stateEqualityLagrangiantPtr->empty()) {
+    throw std::runtime_error("[getLinearQuadraticApproximation] equalityLagrangiantPtr and stateEqualityLagrangiantPtr should be empty!");
+  }
+  if (!optimalControProblem.inequalityLagrangiantPtr->empty() || !optimalControProblem.stateInequalityLagrangiantPtr->empty()) {
+    throw std::runtime_error(
+        "[getLinearQuadraticApproximation] inequalityLagrangiantPtr and stateInequalityLagrangiantPtr should be empty!");
+  }
+  if (!optimalControProblem.finalEqualityLagrangiantPtr->empty() || !optimalControProblem.finalInequalityLagrangiantPtr->empty()) {
+    throw std::runtime_error(
+        "[getLinearQuadraticApproximation] finalEqualityLagrangiantPtr and finalInequalityLagrangiantPtr should be empty!");
+  }
+
   if (nominalTrajectory.timeTrajectory.empty()) {
     return {};
   }
@@ -53,7 +66,7 @@ std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(OptimalControl
   }
 
   ModelData modelData;
-  approximateFinalLQ(optimalControProblem, t[N], x[N], modelData);
+  approximateFinalLQ(optimalControProblem, t[N], x[N], MultiplierCollection(), modelData);
 
   // checking the numerical properties
   checkSizes(modelData, x[N].rows(), 0);
@@ -71,7 +84,7 @@ std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(OptimalControl
 LinearQuadraticStage approximateStage(OptimalControlProblem& optimalControProblem, TrajectoryRef start, StateTrajectoryRef end,
                                       bool isInitialTime) {
   ModelData modelData;
-  approximateIntermediateLQ(optimalControProblem, start.t, start.x, start.u, modelData);
+  approximateIntermediateLQ(optimalControProblem, start.t, start.x, start.u, MultiplierCollection(), modelData);
 
   // checking the numerical properties
   checkSizes(modelData, start.x.rows(), start.u.rows());

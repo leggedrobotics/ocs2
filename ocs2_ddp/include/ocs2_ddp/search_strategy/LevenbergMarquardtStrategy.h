@@ -75,7 +75,8 @@ class LevenbergMarquardtStrategy final : public SearchStrategyBase {
   void reset() override;
 
   bool run(const std::pair<scalar_t, scalar_t>& timePeriod, const vector_t& initState, const scalar_t expectedCost,
-           const LinearController& unoptimizedController, const ModeSchedule& modeSchedule, search_strategy::SolutionRef solution) override;
+           const LinearController& unoptimizedController, const DualSolution& dualSolution, const ModeSchedule& modeSchedule,
+           search_strategy::SolutionRef solution) override;
 
   std::pair<bool, std::string> checkConvergence(bool unreliableControllerIncrement, const PerformanceIndex& previousPerformanceIndex,
                                                 const PerformanceIndex& currentPerformanceIndex) const override;
@@ -100,8 +101,6 @@ class LevenbergMarquardtStrategy final : public SearchStrategyBase {
   RolloutBase& rolloutRef_;
   OptimalControlProblem& optimalControlProblemRef_;
   std::function<scalar_t(PerformanceIndex)> meritFunc_;
-
-  scalar_t avgTimeStepFP_ = 0.0;
 };
 
 }  // namespace ocs2

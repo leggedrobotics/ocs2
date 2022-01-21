@@ -58,7 +58,8 @@ void LevenbergMarquardtStrategy::reset() {
 /******************************************************************************************************/
 bool LevenbergMarquardtStrategy::run(const std::pair<scalar_t, scalar_t>& timePeriod, const vector_t& initState,
                                      const scalar_t expectedCost, const LinearController& unoptimizedController,
-                                     const ModeSchedule& modeSchedule, search_strategy::SolutionRef solution) {
+                                     const DualSolution& dualSolution, const ModeSchedule& modeSchedule,
+                                     search_strategy::SolutionRef solution) {
   constexpr size_t taskId = 0;
 
   // previous merit and the expected reduction
@@ -73,8 +74,12 @@ bool LevenbergMarquardtStrategy::run(const std::pair<scalar_t, scalar_t>& timePe
     incrementController(stepLength, unoptimizedController, getLinearController(solution.primalSolution));
     solution.avgTimeStep = rolloutTrajectory(rolloutRef_, timePeriod, initState, modeSchedule, solution.primalSolution);
 
+    // re-sample dual solution
+    sampleIntermediateDualSolution(dualSolution, solution.primalSolution.timeTrajectory_, solution.intermediateDualSolution);
+
     // compute metrics
-    computeRolloutMetrics(optimalControlProblemRef_, solution.primalSolution, solution.metrics);
+    DualSolutionConstRef dualSolutionRef(dualSolution.final, dualSolution.preJumps, solution.intermediateDualSolution);
+    computeRolloutMetrics(optimalControlProblemRef_, solution.primalSolution, dualSolutionRef, solution.metrics);
 
     // compute performanceIndex
     solution.performanceIndex = computeRolloutPerformanceIndex(solution.primalSolution.timeTrajectory_, solution.metrics);

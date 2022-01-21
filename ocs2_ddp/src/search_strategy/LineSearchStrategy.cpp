@@ -88,8 +88,14 @@ void LineSearchStrategy::computeSolution(size_t taskId, scalar_t stepLength, sea
   solution.avgTimeStep = rolloutTrajectory(rollout, *lineSearchInputRef_.timePeriodPtr, *lineSearchInputRef_.initStatePtr,
                                            *lineSearchInputRef_.modeSchedulePtr, solution.primalSolution);
 
+  // re-sample dual solution
+  sampleIntermediateDualSolution(*lineSearchInputRef_.dualSolutionPtr, solution.primalSolution.timeTrajectory_,
+                                 solution.intermediateDualSolution);
+
   // compute metrics
-  computeRolloutMetrics(problem, solution.primalSolution, solution.metrics);
+  DualSolutionConstRef dualSolutionRef(lineSearchInputRef_.dualSolutionPtr->final, lineSearchInputRef_.dualSolutionPtr->preJumps,
+                                       solution.intermediateDualSolution);
+  computeRolloutMetrics(problem, solution.primalSolution, dualSolutionRef, solution.metrics);
 
   // compute performanceIndex
   solution.performanceIndex = computeRolloutPerformanceIndex(solution.primalSolution.timeTrajectory_, solution.metrics);
@@ -108,12 +114,13 @@ void LineSearchStrategy::computeSolution(size_t taskId, scalar_t stepLength, sea
 /******************************************************************************************************/
 /******************************************************************************************************/
 bool LineSearchStrategy::run(const std::pair<scalar_t, scalar_t>& timePeriod, const vector_t& initState, const scalar_t expectedCost,
-                             const LinearController& unoptimizedController, const ModeSchedule& modeSchedule,
-                             search_strategy::SolutionRef solutionRef) {
+                             const LinearController& unoptimizedController, const DualSolution& dualSolution,
+                             const ModeSchedule& modeSchedule, search_strategy::SolutionRef solutionRef) {
   // initialize lineSearchModule inputs
   lineSearchInputRef_.timePeriodPtr = &timePeriod;
   lineSearchInputRef_.initStatePtr = &initState;
   lineSearchInputRef_.unoptimizedControllerPtr = &unoptimizedController;
+  lineSearchInputRef_.dualSolutionPtr = &dualSolution;
   lineSearchInputRef_.modeSchedulePtr = &modeSchedule;
   bestSolutionRef_ = &solutionRef;
 

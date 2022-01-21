@@ -39,13 +39,22 @@ namespace continuous_time_lqr {
 /******************************************************************************************************/
 /******************************************************************************************************/
 solution solve(OptimalControlProblem& problem, scalar_t time, const vector_t& state, const vector_t& input, const Settings& settings) {
+  // OCP check
+  if (!problem.equalityLagrangiantPtr->empty() || !problem.stateEqualityLagrangiantPtr->empty()) {
+    throw std::runtime_error("[getLinearQuadraticApproximation] equalityLagrangiantPtr and stateEqualityLagrangiantPtr should be empty!");
+  }
+  if (!problem.inequalityLagrangiantPtr->empty() || !problem.stateInequalityLagrangiantPtr->empty()) {
+    throw std::runtime_error(
+        "[getLinearQuadraticApproximation] inequalityLagrangiantPtr and stateInequalityLagrangiantPtr should be empty!");
+  }
+
   const size_t stateDim = state.size();
 
   // --- Form the Linear quadratic approximation ---
   // Obtain model data at the provided reference
   const ModelData modelData = [&]() {
     ModelData md;
-    approximateIntermediateLQ(problem, time, state, input, md);
+    approximateIntermediateLQ(problem, time, state, input, MultiplierCollection(), md);
     return md;
   }();
 

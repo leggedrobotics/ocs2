@@ -76,12 +76,13 @@ ILQR::ILQR(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalC
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ILQR::approximateIntermediateLQ(PrimalDataContainer& primalData) {
+void ILQR::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalDataContainer& primalData) {
   // create alias
   const auto& timeTrajectory = primalData.primalSolution.timeTrajectory_;
   const auto& stateTrajectory = primalData.primalSolution.stateTrajectory_;
   const auto& inputTrajectory = primalData.primalSolution.inputTrajectory_;
   const auto& postEventIndices = primalData.primalSolution.postEventIndices_;
+  const auto& multiplierTrajectory = dualSolution.intermediates;
   auto& modelDataTrajectory = primalData.modelDataTrajectory;
 
   modelDataTrajectory.clear();
@@ -99,7 +100,7 @@ void ILQR::approximateIntermediateLQ(PrimalDataContainer& primalData) {
     while ((timeIndex = nextTimeIndex_++) < timeTrajectory.size()) {
       // approximate continuous LQ for the given time index
       ocs2::approximateIntermediateLQ(optimalControlProblemStock_[taskId], timeTrajectory[timeIndex], stateTrajectory[timeIndex],
-                                      inputTrajectory[timeIndex], continuousTimeModelData);
+                                      inputTrajectory[timeIndex], multiplierTrajectory[timeIndex], continuousTimeModelData);
 
       // checking the numerical properties
       if (settings().checkNumericalStability_) {

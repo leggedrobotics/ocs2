@@ -73,12 +73,13 @@ SLQ::SLQ(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalCon
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SLQ::approximateIntermediateLQ(PrimalDataContainer& primalData) {
+void SLQ::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalDataContainer& primalData) {
   // create alias
   const auto& timeTrajectory = primalData.primalSolution.timeTrajectory_;
   const auto& stateTrajectory = primalData.primalSolution.stateTrajectory_;
   const auto& inputTrajectory = primalData.primalSolution.inputTrajectory_;
   const auto& postEventIndices = primalData.primalSolution.postEventIndices_;
+  const auto& multiplierTrajectory = dualSolution.intermediates;
   auto& modelDataTrajectory = primalData.modelDataTrajectory;
 
   modelDataTrajectory.clear();
@@ -94,7 +95,7 @@ void SLQ::approximateIntermediateLQ(PrimalDataContainer& primalData) {
     while ((timeIndex = nextTimeIndex_++) < timeTrajectory.size()) {
       // approximate LQ for the given time index
       ocs2::approximateIntermediateLQ(optimalControlProblemStock_[taskId], timeTrajectory[timeIndex], stateTrajectory[timeIndex],
-                                      inputTrajectory[timeIndex], modelDataTrajectory[timeIndex]);
+                                      inputTrajectory[timeIndex], multiplierTrajectory[timeIndex], modelDataTrajectory[timeIndex]);
 
       // checking the numerical properties
       if (settings().checkNumericalStability_) {

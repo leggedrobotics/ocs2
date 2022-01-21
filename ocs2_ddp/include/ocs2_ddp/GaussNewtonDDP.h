@@ -182,9 +182,10 @@ class GaussNewtonDDP : public SolverBase {
   /**
    * Calculates an LQ approximate of the optimal control problem for the nodes.
    *
+   * @param [in] dualSolution: The dual solution
    * @param [in,out] primalData: The primal Data
    */
-  virtual void approximateIntermediateLQ(PrimalDataContainer& primalData) = 0;
+  virtual void approximateIntermediateLQ(const DualSolution& dualSolution, PrimalDataContainer& primalData) = 0;
 
   /**
    * Calculates the controller. This method uses the following variables:
@@ -249,7 +250,7 @@ class GaussNewtonDDP : public SolverBase {
                                                          const DualDataContainer& dualData) const;
 
   /**
-   * Get the Value Function at time(time) from valueFunctionTrajectory. The the gradient od the value function will be corrected by using
+   * Get the Value Function at time(time) from valueFunctionTrajectory. The the gradient of the value function will be corrected by using
    * the hessian together with the difference between the current state and the corresponding state stored in the primalData.
    *
    * @param [in] time: Query time
@@ -272,6 +273,14 @@ class GaussNewtonDDP : public SolverBase {
   ScalarFunctionQuadraticApproximation getValueFunctionFromCache(scalar_t time, const vector_t& state) const {
     return getValueFunctionImpl(time, state, cachedPrimalData_, cachedDualData_.valueFunctionTrajectory);
   }
+
+  /**
+   * Get the dual solution at time(time) from dualSolution.
+   *
+   * @param [in] time: Query time
+   * @return MultiplierCollection
+   */
+  MultiplierCollection getDualSolutionImpl(scalar_t time, const DualSolution& dualSolution) const;
 
   /**
    * Get the Partition Intervals From Time Trajectory. Intervals are defined as [start, end).
@@ -389,12 +398,13 @@ class GaussNewtonDDP : public SolverBase {
    *
    * @param [in] lqModelExpectedCost: The expected cost based on the LQ model optimization.
    * @param [in] unoptimizedController: The unoptimized controller which search will be performed.
+   * @param [in, out] dualSolution: The dual solution. If the search was successful, the intermediate dual solution would be re-sampled
    * @param [out] primalData: Optimized primal data container if it is an final search. otherwise nominal data container
    * @param [out] performanceIndex: The optimal performanceIndex which will be updated to the optimal one.
    * @param [out] metrics: The optimal trajectories metrics.
    */
-  void runSearchStrategy(scalar_t lqModelExpectedCost, const LinearController& unoptimizedController, PrimalDataContainer& primalData,
-                         PerformanceIndex& performanceIndex, MetricsCollection& metrics);
+  void runSearchStrategy(scalar_t lqModelExpectedCost, const LinearController& unoptimizedController, DualSolution& dualSolution,
+                         PrimalDataContainer& primalData, PerformanceIndex& performanceIndex, MetricsCollection& metrics);
 
   /**
    * swap both primal and dual data cache
@@ -451,10 +461,16 @@ class GaussNewtonDDP : public SolverBase {
 
   void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const ControllerBase* externalControllerPtr) override;
 
+  void initializeDualSolution(const DualSolution& cachedDualSolution, const PrimalSolution& primalSolution, DualSolution& dualSolution);
+
+  void updateDualSolution(const PrimalSolution& primalSolution, MetricsCollection& metricsCollection, DualSolutionRef dualSolution);
+
  protected:
   PrimalDataContainer nominalPrimalData_, optimizedPrimalData_;
   // controller that is calculated directly from dual solution. It is unoptimized because it haven't gone through searching.
   LinearController unoptimizedController_;
+
+  DualSolution nominalDualSolution_, optimizedDualSolution_;
 
   // multi-threading helper variables
   std::atomic_size_t nextTaskId_{0};

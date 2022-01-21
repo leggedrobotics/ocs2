@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/penalties/MultidimensionalPenalty.h>
+#include <ocs2_oc/oc_data/DualSolution.h>
 #include <ocs2_oc/oc_data/Metrics.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
@@ -46,9 +47,11 @@ namespace ocs2 {
  *
  * @param [in] problem: A reference to the optimal control problem.
  * @param [in] primalSolution: The primal solution.
+ * @param [in] dualSolution: Const reference view to the dual solution
  * @param [out] metrics: The cost, soft constraints and constraints values of the primalSolution rollout.
  */
-void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution& primalSolution, MetricsCollection& metrics);
+void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution& primalSolution, DualSolutionConstRef dualSolution,
+                           MetricsCollection& metrics);
 
 /**
  * Calculates the PerformanceIndex associated to the input Metrics.

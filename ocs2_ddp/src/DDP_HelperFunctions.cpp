@@ -42,27 +42,30 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution& primalSolution, MetricsCollection& metrics) {
+void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution& primalSolution, DualSolutionConstRef dualSolution,
+                           MetricsCollection& metrics) {
   const auto& tTrajectory = primalSolution.timeTrajectory_;
   const auto& xTrajectory = primalSolution.stateTrajectory_;
   const auto& uTrajectory = primalSolution.inputTrajectory_;
   const auto& postEventIndices = primalSolution.postEventIndices_;
 
   clear(metrics);
-
   metrics.preJumps.reserve(postEventIndices.size());
   metrics.intermediates.reserve(tTrajectory.size());
+
   auto nextPostEventIndexItr = postEventIndices.begin();
   const auto request = Request::Cost + Request::Constraint + Request::SoftConstraint;
   for (size_t k = 0; k < tTrajectory.size(); k++) {
     // intermediate time cost and constraints
     problem.preComputationPtr->request(request, tTrajectory[k], xTrajectory[k], uTrajectory[k]);
-    metrics.intermediates.push_back(computeIntermediateMetrics(problem, tTrajectory[k], xTrajectory[k], uTrajectory[k]));
+    metrics.intermediates.push_back(
+        computeIntermediateMetrics(problem, tTrajectory[k], xTrajectory[k], uTrajectory[k], dualSolution.intermediates[k]));
 
     // event time cost and constraints
     if (nextPostEventIndexItr != postEventIndices.end() && k + 1 == *nextPostEventIndexItr) {
+      const auto m = dualSolution.preJumps[std::distance(postEventIndices.begin(), nextPostEventIndexItr)];
       problem.preComputationPtr->requestPreJump(request, tTrajectory[k], xTrajectory[k]);
-      metrics.preJumps.push_back(computePreJumpMetrics(problem, tTrajectory[k], xTrajectory[k]));
+      metrics.preJumps.push_back(computePreJumpMetrics(problem, tTrajectory[k], xTrajectory[k], m));
       nextPostEventIndexItr++;
     }
   }
@@ -70,7 +73,7 @@ void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution&
   // final time cost and constraints
   if (!tTrajectory.empty()) {
     problem.preComputationPtr->requestFinal(request, tTrajectory.back(), xTrajectory.back());
-    metrics.final = computeFinalMetrics(problem, tTrajectory.back(), xTrajectory.back());
+    metrics.final = computeFinalMetrics(problem, tTrajectory.back(), xTrajectory.back(), dualSolution.final);
   }
 }
 
@@ -116,28 +119,28 @@ PerformanceIndex computeRolloutPerformanceIndex(const scalar_array_t& timeTrajec
   // - Final: state equality Lagrangians
   // - PreJumps: state equality Lagrangians
   // - Intermediates: state/state-input equality Lagrangians
-  performanceIndex.equalityLagrangiansPenalty = metrics.final.stateEqLagrangian;
+  performanceIndex.equalityLagrangiansPenalty = sum(metrics.final.stateEqLagrangian);
 
   std::for_each(metrics.preJumps.begin(), metrics.preJumps.end(),
-                [&](const Metrics& m) { return performanceIndex.equalityLagrangiansPenalty + m.stateEqLagrangian; });
+                [&](const Metrics& m) { return performanceIndex.equalityLagrangiansPenalty + sum(m.stateEqLagrangian); });
 
   scalar_array_t equalityPenaltyTrajectory(timeTrajectory.size());
   std::transform(metrics.intermediates.begin(), metrics.intermediates.end(), equalityPenaltyTrajectory.begin(),
-                 [&](const Metrics& m) { return m.stateEqLagrangian + m.stateInputEqLagrangian; });
+                 [&](const Metrics& m) { return sum(m.stateEqLagrangian) + sum(m.stateInputEqLagrangian); });
   performanceIndex.equalityLagrangiansPenalty += trapezoidalIntegration(timeTrajectory, equalityPenaltyTrajectory);
 
   // Inequality Lagrangians penalty
   // - Final: state inequality Lagrangians
   // - PreJumps: state inequality Lagrangians
   // - Intermediates: state/state-input inequality Lagrangians
-  performanceIndex.inequalityLagrangiansPenalty = metrics.final.stateIneqLagrangian;
+  performanceIndex.inequalityLagrangiansPenalty = sum(metrics.final.stateIneqLagrangian);
 
   std::for_each(metrics.preJumps.begin(), metrics.preJumps.end(),
-                [&](const Metrics& m) { return performanceIndex.inequalityLagrangiansPenalty + m.stateIneqLagrangian; });
+                [&](const Metrics& m) { return performanceIndex.inequalityLagrangiansPenalty + sum(m.stateIneqLagrangian); });
 
   scalar_array_t inequalityPenaltyTrajectory(timeTrajectory.size());
   std::transform(metrics.intermediates.begin(), metrics.intermediates.end(), inequalityPenaltyTrajectory.begin(),
-                 [&](const Metrics& m) { return m.stateIneqLagrangian + m.stateInputIneqLagrangian; });
+                 [&](const Metrics& m) { return sum(m.stateIneqLagrangian) + sum(m.stateInputIneqLagrangian); });
   performanceIndex.inequalityLagrangiansPenalty += trapezoidalIntegration(timeTrajectory, inequalityPenaltyTrajectory);
 
   return performanceIndex;

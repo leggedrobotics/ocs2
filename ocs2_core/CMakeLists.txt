@@ -67,6 +67,11 @@ include_directories(
 # Declare a C++ library
 add_library(${PROJECT_NAME}
   src/Types.cpp
+  src/augmented_lagrangian/Multiplier.cpp
+  src/augmented_lagrangian/StateAugmentedLagrangian.cpp
+  src/augmented_lagrangian/StateInputAugmentedLagrangian.cpp
+  src/augmented_lagrangian/StateAugmentedLagrangianCollection.cpp
+  src/augmented_lagrangian/StateInputAugmentedLagrangianCollection.cpp
   src/automatic_differentation/CppAdInterface.cpp
   src/automatic_differentation/CppAdSparsity.cpp
   src/automatic_differentation/FiniteDifferenceMethods.cpp
@@ -196,6 +201,15 @@ install(DIRECTORY test/include/${PROJECT_NAME}/
 ## $ catkin run_tests --no-deps --this
 ## to see the summary of unit test results run
 ## $ catkin_test_results ../../../build/ocs2_core
+
+catkin_add_gtest(test_multiplier
+  test/augmented_lagrangian/testMultiplier.cpp
+)
+target_link_libraries(test_multiplier
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
 
 catkin_add_gtest(test_control
   test/control/testLinearController.cpp

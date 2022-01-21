@@ -33,8 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/PreComputation.h>
 #include <ocs2_core/Types.h>
-//  #include <ocs2_core/augmented_lagrangian/StateAugmentedLagrangianCollection.h>
-//  #include <ocs2_core/augmented_lagrangian/StateInputAugmentedLagrangianCollection.h>
+#include <ocs2_core/augmented_lagrangian/StateAugmentedLagrangianCollection.h>
+#include <ocs2_core/augmented_lagrangian/StateInputAugmentedLagrangianCollection.h>
 #include <ocs2_core/constraint/StateConstraintCollection.h>
 #include <ocs2_core/constraint/StateInputConstraintCollection.h>
 #include <ocs2_core/cost/StateCostCollection.h>
@@ -78,21 +78,21 @@ struct OptimalControlProblem {
 
   /* Lagrangians */
   /** Lagrangian for intermediate equality constraints */
-  std::unique_ptr<StateInputCostCollection> equalityLagrangiantPtr;
+  std::unique_ptr<StateInputAugmentedLagrangianCollection> equalityLagrangiantPtr;
   /** Lagrangian for intermediate state-only equality constraints */
-  std::unique_ptr<StateCostCollection> stateEqualityLagrangiantPtr;
+  std::unique_ptr<StateAugmentedLagrangianCollection> stateEqualityLagrangiantPtr;
   /** Lagrangian for intermediate inequality constraints */
-  std::unique_ptr<StateInputCostCollection> inequalityLagrangiantPtr;
+  std::unique_ptr<StateInputAugmentedLagrangianCollection> inequalityLagrangiantPtr;
   /** Lagrangian for intermediate state-only inequality constraints */
-  std::unique_ptr<StateCostCollection> stateInequalityLagrangiantPtr;
+  std::unique_ptr<StateAugmentedLagrangianCollection> stateInequalityLagrangiantPtr;
   /** Lagrangian for pre-jump equality constraints */
-  std::unique_ptr<StateCostCollection> preJumpEqualityLagrangiantPtr;
+  std::unique_ptr<StateAugmentedLagrangianCollection> preJumpEqualityLagrangiantPtr;
   /** Lagrangian for pre-jump inequality constraints */
-  std::unique_ptr<StateCostCollection> preJumpInequalityLagrangiantPtr;
+  std::unique_ptr<StateAugmentedLagrangianCollection> preJumpInequalityLagrangiantPtr;
   /** Lagrangian for final equality constraints */
-  std::unique_ptr<StateCostCollection> finalEqualityLagrangiantPtr;
+  std::unique_ptr<StateAugmentedLagrangianCollection> finalEqualityLagrangiantPtr;
   /** Lagrangian for final inequality constraints */
-  std::unique_ptr<StateCostCollection> finalInequalityLagrangiantPtr;
+  std::unique_ptr<StateAugmentedLagrangianCollection> finalInequalityLagrangiantPtr;
 
   /* Dynamics */
   /** System dynamics pointer */

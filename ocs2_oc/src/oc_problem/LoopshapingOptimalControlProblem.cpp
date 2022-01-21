@@ -48,20 +48,18 @@ OptimalControlProblem create(const OptimalControlProblem& problem, std::shared_p
   augmentedProblem.finalEqualityConstraintPtr = LoopshapingConstraint::create(*problem.finalEqualityConstraintPtr, loopshapingDefinition);
 
   // Lagrangians
-  augmentedProblem.equalityLagrangiantPtr = LoopshapingSoftConstraint::create(*problem.equalityLagrangiantPtr, loopshapingDefinition);
-  augmentedProblem.stateEqualityLagrangiantPtr =
-      LoopshapingSoftConstraint::create(*problem.stateEqualityLagrangiantPtr, loopshapingDefinition);
-  augmentedProblem.inequalityLagrangiantPtr = LoopshapingSoftConstraint::create(*problem.inequalityLagrangiantPtr, loopshapingDefinition);
-  augmentedProblem.stateInequalityLagrangiantPtr =
-      LoopshapingSoftConstraint::create(*problem.stateInequalityLagrangiantPtr, loopshapingDefinition);
-  augmentedProblem.preJumpEqualityLagrangiantPtr =
-      LoopshapingSoftConstraint::create(*problem.preJumpEqualityLagrangiantPtr, loopshapingDefinition);
-  augmentedProblem.preJumpInequalityLagrangiantPtr =
-      LoopshapingSoftConstraint::create(*problem.preJumpInequalityLagrangiantPtr, loopshapingDefinition);
-  augmentedProblem.finalEqualityLagrangiantPtr =
-      LoopshapingSoftConstraint::create(*problem.finalEqualityLagrangiantPtr, loopshapingDefinition);
-  augmentedProblem.finalInequalityLagrangiantPtr =
-      LoopshapingSoftConstraint::create(*problem.finalInequalityLagrangiantPtr, loopshapingDefinition);
+  //  augmentedProblem.equalityLagrangiantPtr = LoopshapingSoftConstraint::create(*problem.equalityLagrangiantPtr, loopshapingDefinition);
+  //  augmentedProblem.stateEqualityLagrangiantPtr = LoopshapingSoftConstraint::create(*problem.stateEqualityLagrangiantPtr,
+  //  loopshapingDefinition); augmentedProblem.inequalityLagrangiantPtr =
+  //  LoopshapingSoftConstraint::create(*problem.inequalityLagrangiantPtr, loopshapingDefinition);
+  //  augmentedProblem.stateInequalityLagrangiantPtr = LoopshapingSoftConstraint::create(*problem.stateInequalityLagrangiantPtr,
+  //  loopshapingDefinition); augmentedProblem.preJumpEqualityLagrangiantPtr =
+  //  LoopshapingSoftConstraint::create(*problem.preJumpEqualityLagrangiantPtr, loopshapingDefinition);
+  //  augmentedProblem.preJumpInequalityLagrangiantPtr = LoopshapingSoftConstraint::create(*problem.preJumpInequalityLagrangiantPtr,
+  //  loopshapingDefinition); augmentedProblem.finalEqualityLagrangiantPtr =
+  //  LoopshapingSoftConstraint::create(*problem.finalEqualityLagrangiantPtr, loopshapingDefinition);
+  //  augmentedProblem.finalInequalityLagrangiantPtr = LoopshapingSoftConstraint::create(*problem.finalInequalityLagrangiantPtr,
+  //  loopshapingDefinition);
 
   // Soft constraints
   augmentedProblem.softConstraintPtr = LoopshapingSoftConstraint::create(*problem.softConstraintPtr, loopshapingDefinition);

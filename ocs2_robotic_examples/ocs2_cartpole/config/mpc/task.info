@@ -1,9 +1,10 @@
 ; cartpole parameters
-CartPoleParameters
+cartpole_parameters
 {
   cartMass     2.0
   poleMass     0.2
   poleLength   1.0
+  maxInput     6.0
   gravity      9.81
 }
 

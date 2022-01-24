@@ -83,6 +83,13 @@ void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution&
 PerformanceIndex computeRolloutPerformanceIndex(const scalar_array_t& timeTrajectory, const MetricsCollection& metrics) {
   assert(timeTrajectory.size() == metrics.intermediates.size());
 
+  // sums the penalty part of Metrics::value_t
+  const auto sum = [](const std::vector<Metrics::value_t>& termsValue) -> scalar_t {
+    scalar_t s = 0.0;
+    std::for_each(termsValue.begin(), termsValue.end(), [&s](const Metrics::value_t& v) { s += v.second; });
+    return s;
+  };
+
   PerformanceIndex performanceIndex;
 
   // Total cost:

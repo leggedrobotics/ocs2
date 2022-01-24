@@ -63,9 +63,6 @@ void swap(Metrics& lhs, Metrics& rhs);
 /** Clears the value of the given Metrics */
 void clear(Metrics& m);
 
-/** Sums the penalty part of Metrics::value_t */
-scalar_t sum(const std::vector<Metrics::value_t>& termsValue);
-
 /** Exchanges the given values of MetricsCollection */
 void swap(MetricsCollection& lhs, MetricsCollection& rhs);
 

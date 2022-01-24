@@ -41,7 +41,7 @@ namespace mobile_manipulator {
  */
 enum class ManipulatorModelType {
   DefaultManipulator = 0,                   // default model from the parsed URDF directly
-  WheelBasedMobileManipulator = 1,          // adds dummy XY-Y joints to the model parsed from URDF
+  WheelBasedMobileManipulator = 1,          // adds actuatable XY-Yaw joints to the model parsed from URDF
   FloatingArmManipulator = 2,               // adds dummy XYZ-RPY joints to the model parsed from URDF
   FullyActuatedFloatingArmManipulator = 3,  // adds actuatable XYZ-RPY joints to the model parsed from URDF
 };

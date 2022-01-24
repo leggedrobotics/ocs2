@@ -45,7 +45,7 @@ class StateInputAugmentedLagrangian final : public StateInputAugmentedLagrangian
    * @param [in] penaltyPtrArray: An array of pointers to the penalty function on the constraint.
    */
   StateInputAugmentedLagrangian(std::unique_ptr<StateInputConstraint> constraintPtr,
-                                std::vector<std::unique_ptr<AugmentedPenaltyBase>> penaltyPtrArray);
+                                std::vector<std::unique_ptr<augmented::AugmentedPenaltyBase>> penaltyPtrArray);
 
   /**
    * Constructor.
@@ -53,7 +53,8 @@ class StateInputAugmentedLagrangian final : public StateInputAugmentedLagrangian
    * @param [in] constraintPtr: A pointer to the constraint which will be enforced as soft constraints.
    * @param [in] penaltyPtr: A pointer to the penalty function on the constraint.
    */
-  StateInputAugmentedLagrangian(std::unique_ptr<StateInputConstraint> constraintPtr, std::unique_ptr<AugmentedPenaltyBase> penaltyPtr);
+  StateInputAugmentedLagrangian(std::unique_ptr<StateInputConstraint> constraintPtr,
+                                std::unique_ptr<augmented::AugmentedPenaltyBase> penaltyPtr);
 
   StateInputAugmentedLagrangian* clone() const override;
   bool isActive(scalar_t time) const override;

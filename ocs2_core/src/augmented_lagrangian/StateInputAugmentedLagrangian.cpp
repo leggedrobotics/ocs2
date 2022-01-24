@@ -35,14 +35,14 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 StateInputAugmentedLagrangian::StateInputAugmentedLagrangian(std::unique_ptr<StateInputConstraint> constraintPtr,
-                                                             std::vector<std::unique_ptr<AugmentedPenaltyBase>> penaltyPtrArray)
+                                                             std::vector<std::unique_ptr<augmented::AugmentedPenaltyBase>> penaltyPtrArray)
     : constraintPtr_(std::move(constraintPtr)), penalty_(std::move(penaltyPtrArray)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 StateInputAugmentedLagrangian::StateInputAugmentedLagrangian(std::unique_ptr<StateInputConstraint> constraintPtr,
-                                                             std::unique_ptr<AugmentedPenaltyBase> penaltyPtr)
+                                                             std::unique_ptr<augmented::AugmentedPenaltyBase> penaltyPtr)
     : constraintPtr_(std::move(constraintPtr)), penalty_(std::move(penaltyPtr)) {}
 
 /******************************************************************************************************/
@@ -107,9 +107,9 @@ ScalarFunctionQuadraticApproximation StateInputAugmentedLagrangian::getQuadratic
 std::pair<Multiplier, scalar_t> StateInputAugmentedLagrangian::updateLagrangian(scalar_t time, const vector_t& /*state*/,
                                                                                 const vector_t& /*input*/, const vector_t& constraint,
                                                                                 const Multiplier& multiplier) const {
-  const Multiplier updatedLagrangian{multiplier.penalty, penalty_.updateMultipliers(time, constraint, multiplier.lagrangian)};
-  const auto penalty = updatedLagrangian.penalty * penalty_.getValue(time, constraint, &updatedLagrangian.lagrangian);
-  return {updatedLagrangian, penalty};
+  const Multiplier updatedMultiplier{multiplier.penalty, penalty_.updateMultipliers(time, constraint, multiplier.lagrangian)};
+  const auto penalty = updatedMultiplier.penalty * penalty_.getValue(time, constraint, &updatedMultiplier.lagrangian);
+  return {updatedMultiplier, penalty};
 }
 
 /******************************************************************************************************/

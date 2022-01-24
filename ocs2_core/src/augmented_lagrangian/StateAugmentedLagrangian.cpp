@@ -35,14 +35,14 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 StateAugmentedLagrangian::StateAugmentedLagrangian(std::unique_ptr<StateConstraint> constraintPtr,
-                                                   std::vector<std::unique_ptr<AugmentedPenaltyBase>> penaltyPtrArray)
+                                                   std::vector<std::unique_ptr<augmented::AugmentedPenaltyBase>> penaltyPtrArray)
     : constraintPtr_(std::move(constraintPtr)), penalty_(std::move(penaltyPtrArray)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 StateAugmentedLagrangian::StateAugmentedLagrangian(std::unique_ptr<StateConstraint> constraintPtr,
-                                                   std::unique_ptr<AugmentedPenaltyBase> penaltyPtr)
+                                                   std::unique_ptr<augmented::AugmentedPenaltyBase> penaltyPtr)
     : constraintPtr_(std::move(constraintPtr)), penalty_(std::move(penaltyPtr)) {}
 
 /******************************************************************************************************/
@@ -103,11 +103,11 @@ ScalarFunctionQuadraticApproximation StateAugmentedLagrangian::getQuadraticAppro
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::pair<Multiplier, scalar_t> StateAugmentedLagrangian::updateLagrangian(scalar_t time, const vector_t& state, const vector_t& constraint,
-                                                                           const Multiplier& multiplier) const {
-  const Multiplier updatedLagrangian{multiplier.penalty, penalty_.updateMultipliers(time, constraint, multiplier.lagrangian)};
-  const auto penalty = updatedLagrangian.penalty * penalty_.getValue(time, constraint, &updatedLagrangian.lagrangian);
-  return {updatedLagrangian, penalty};
+std::pair<Multiplier, scalar_t> StateAugmentedLagrangian::updateLagrangian(scalar_t time, const vector_t& /*state*/,
+                                                                           const vector_t& constraint, const Multiplier& multiplier) const {
+  const Multiplier updatedMultiplier{multiplier.penalty, penalty_.updateMultipliers(time, constraint, multiplier.lagrangian)};
+  const auto penalty = updatedMultiplier.penalty * penalty_.getValue(time, constraint, &updatedMultiplier.lagrangian);
+  return {updatedMultiplier, penalty};
 }
 
 /******************************************************************************************************/

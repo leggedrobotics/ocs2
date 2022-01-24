@@ -49,6 +49,8 @@ std::vector<std::pair<vector_t, scalar_t>> StateAugmentedLagrangianCollection::g
   for (size_t i = 0; i < terms_.size(); i++) {
     if (terms_[i]->isActive(time)) {
       termsConstraintPenalty.emplace_back(terms_[i]->getValue(time, state, termsMultiplier[i], preComp));
+    } else {
+      termsConstraintPenalty.emplace_back(vector_t(), 0.0);
     }
   }
   return termsConstraintPenalty;
@@ -109,6 +111,8 @@ void StateAugmentedLagrangianCollection::initializeLagrangian(scalar_t time, std
   for (const auto& term : terms_) {
     if (term->isActive(time)) {
       termsMultiplier.emplace_back(term->initializeLagrangian(time));
+    } else {
+      termsMultiplier.emplace_back(0.0, vector_t());
     }
   }
 }

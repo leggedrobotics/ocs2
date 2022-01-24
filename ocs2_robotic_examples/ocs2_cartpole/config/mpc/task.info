@@ -59,7 +59,7 @@ rollout
 ; MPC settings
 mpc
 {
-  timeHorizon                 2.0   ; [s]
+  timeHorizon                 3.0   ; [s]
   solutionTimeWindow          -1    ; maximum [s]
   coldStart                   false
 
@@ -69,6 +69,11 @@ mpc
   mrtDesiredFrequency         400   ; [Hz]
 }
 
+bounds_penalty_config
+{
+  scale                       2e+2
+  stepSize                    0.5
+}
 
 ; initial state
 initialState

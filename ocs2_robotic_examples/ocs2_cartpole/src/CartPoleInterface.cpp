@@ -33,10 +33,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_cartpole/CartPoleInterface.h"
 #include "ocs2_cartpole/dynamics/CartPoleSystemDynamics.h"
 
+#include <ocs2_core/augmented_lagrangian/StateInputAugmentedLagrangian.h>
+#include <ocs2_core/constraint/LinearStateInputConstraint.h>
 #include <ocs2_core/cost/QuadraticStateCost.h>
 #include <ocs2_core/cost/QuadraticStateInputCost.h>
 #include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_core/misc/LoadData.h>
+#include <ocs2_core/penalties/Penalties.h>
 
 // Boost
 #include <boost/filesystem/operations.hpp>
@@ -90,12 +93,28 @@ CartPoleInterface::CartPoleInterface(const std::string& taskFile, const std::str
 
   // Dynamics
   CartPoleParameters cartPoleParameters;
-  cartPoleParameters.loadSettings(taskFile);
+  cartPoleParameters.loadSettings(taskFile, "cartpole_parameters");
   problem_.dynamicsPtr.reset(new CartPoleSytemDynamics(cartPoleParameters, libraryFolder));
 
   // Rollout
   auto rolloutSettings = rollout::loadSettings(taskFile, "rollout");
   rolloutPtr_.reset(new TimeTriggeredRollout(*problem_.dynamicsPtr, rolloutSettings));
+
+  // Constraints
+  auto getPenalty = [&]() {
+    augmented::SlacknessSquaredHingePenalty::Config boundsConfig;
+    loadData::loadPenaltyConfig(taskFile, "bounds_penalty_config", boundsConfig);
+    return std::unique_ptr<augmented::AugmentedPenaltyBase>(new augmented::SlacknessSquaredHingePenalty(boundsConfig));
+  };
+  auto getConstraint = [&]() {
+    constexpr size_t numIneqConstraint = 2;
+    const vector_t e = (vector_t(numIneqConstraint) << cartPoleParameters.maxInput_, cartPoleParameters.maxInput_).finished();
+    const vector_t D = (vector_t(numIneqConstraint) << 1.0, -1.0).finished();
+    const matrix_t C = matrix_t::Zero(numIneqConstraint, STATE_DIM);
+    return std::unique_ptr<StateInputConstraint>(new LinearStateInputConstraint(e, C, D));
+  };
+  std::unique_ptr<StateInputAugmentedLagrangian> boundsLagrangian(new StateInputAugmentedLagrangian(getConstraint(), getPenalty()));
+  problem_.inequalityLagrangiantPtr->add("stateInputBounds", std::move(boundsLagrangian));
 
   // Initialization
   cartPoleInitializerPtr_.reset(new DefaultInitializer(INPUT_DIM));

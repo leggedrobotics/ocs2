@@ -60,7 +60,7 @@ struct CartPoleParameters {
     boost::property_tree::read_info(filename, pt);
     if (verbose) {
       std::cerr << "\n #### Cart-pole Parameters:";
-      std::cerr << "\n #### =========================================\n";
+      std::cerr << "\n #### =============================================================================\n";
     }
     loadData::loadPtreeValue(pt, cartMass_, fieldName + ".cartMass", verbose);
     loadData::loadPtreeValue(pt, poleMass_, fieldName + ".poleMass", verbose);
@@ -68,6 +68,9 @@ struct CartPoleParameters {
     loadData::loadPtreeValue(pt, maxInput_, fieldName + ".maxInput", verbose);
     loadData::loadPtreeValue(pt, gravity_, fieldName + ".gravity", verbose);
     computeInertiaTerms();
+    if (verbose) {
+      std::cerr << " #### =============================================================================\n" << std::endl;
+    }
   }
 
   scalar_t cartMass_ = 1.0;       // [kg]

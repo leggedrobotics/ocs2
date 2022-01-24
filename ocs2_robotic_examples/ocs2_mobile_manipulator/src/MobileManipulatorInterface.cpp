@@ -140,15 +140,15 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 
   // arm base DOFs initial state
   if (baseStateDim > 0) {
-    vector_t initialBaseState_ = vector_t::Zero(baseStateDim);
-    loadData::loadEigenMatrix(taskFile, "initialState.base." + manipulatorModelInfo_.manipulatorModelTypeString, initialBaseState_);
-    initialState_.head(baseStateDim) = initialBaseState_;
+    vector_t initialBaseState = vector_t::Zero(baseStateDim);
+    loadData::loadEigenMatrix(taskFile, "initialState.base." + modelTypeEnumToString(modelType), initialBaseState);
+    initialState_.head(baseStateDim) = initialBaseState;
   }
 
   // arm joints DOFs velocity limits
-  vector_t initialArmState_ = vector_t::Zero(armStateDim);
-  loadData::loadEigenMatrix(taskFile, "initialState.arm", initialArmState_);
-  initialState_.tail(armStateDim) = initialArmState_;
+  vector_t initialArmState = vector_t::Zero(armStateDim);
+  loadData::loadEigenMatrix(taskFile, "initialState.arm", initialArmState);
+  initialState_.tail(armStateDim) = initialArmState;
 
   std::cerr << "Initial State:   " << initialState_.transpose() << std::endl;
 
@@ -234,7 +234,7 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getQuadraticInputCos
   // arm base DOFs input costs
   if (baseInputDim > 0) {
     matrix_t R_base(baseInputDim, baseInputDim);
-    loadData::loadEigenMatrix(taskFile, "inputCost.R.base." + manipulatorModelInfo_.manipulatorModelTypeString, R_base);
+    loadData::loadEigenMatrix(taskFile, "inputCost.R.base." + modelTypeEnumToString(manipulatorModelInfo_.manipulatorModelType), R_base);
     R.topLeftCorner(baseInputDim, baseInputDim) = R_base;
   }
 
@@ -355,9 +355,11 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointVelocityLimi
     vector_t lowerBoundBase(baseInputDim);
     vector_t upperBoundBase(baseInputDim);
 
-    loadData::loadEigenMatrix(taskFile, "jointVelocityLimits.lowerBound.base." + manipulatorModelInfo_.manipulatorModelTypeString,
+    loadData::loadEigenMatrix(taskFile,
+                              "jointVelocityLimits.lowerBound.base." + modelTypeEnumToString(manipulatorModelInfo_.manipulatorModelType),
                               lowerBoundBase);
-    loadData::loadEigenMatrix(taskFile, "jointVelocityLimits.upperBound.base." + manipulatorModelInfo_.manipulatorModelTypeString,
+    loadData::loadEigenMatrix(taskFile,
+                              "jointVelocityLimits.upperBound.base." + modelTypeEnumToString(manipulatorModelInfo_.manipulatorModelType),
                               upperBoundBase);
     lowerBound.head(baseInputDim) = lowerBoundBase;
     upperBound.head(baseInputDim) = upperBoundBase;

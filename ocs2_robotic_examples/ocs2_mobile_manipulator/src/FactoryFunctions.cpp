@@ -144,28 +144,24 @@ ManipulatorModelInfo createManipulatorModelInfo(const PinocchioInterface& interf
   switch (type) {
     case ManipulatorModelType::DefaultManipulator: {
       // for default arm, the state dimension and input dimensions are same.
-      info.manipulatorModelTypeString = "defaultManipulator";
       info.inputDim = info.stateDim;
       info.armDim = info.inputDim;
       break;
     }
     case ManipulatorModelType::FloatingArmManipulator: {
       // remove the static 6-DOF base joints that are unactuated.
-      info.manipulatorModelTypeString = "floatingArmManipulator";
       info.inputDim = info.stateDim - 6;
       info.armDim = info.inputDim;
       break;
     }
     case ManipulatorModelType::FullyActuatedFloatingArmManipulator: {
       // all states are actuatable
-      info.manipulatorModelTypeString = "fullyActuatedFloatingArmManipulator";
       info.inputDim = info.stateDim;
       info.armDim = info.inputDim - 6;
       break;
     }
     case ManipulatorModelType::WheelBasedMobileManipulator: {
       // for wheel-based, the input dimension is (v, omega, dq_j) while state dimension is (x, y, psi, q_j).
-      info.manipulatorModelTypeString = "wheelBasedMobileManipulator";
       info.inputDim = info.stateDim - 1;
       info.armDim = info.inputDim - 2;
       break;

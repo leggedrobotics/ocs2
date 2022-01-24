@@ -53,7 +53,6 @@ enum class ManipulatorModelType {
  */
 struct ManipulatorModelInfo {
   ManipulatorModelType manipulatorModelType;  // type of manipulator: floating-base, fully-actuated floating-base, wheel-base, default
-  std::string manipulatorModelTypeString;     // string containing the name of the manipulator model for retrieving data from the task file
   size_t stateDim;                            // number of states needed to define the system flow map
   size_t inputDim;                            // number of inputs needed to define the system flow map
   size_t armDim;                              // number of DOFs in the robot arm
@@ -61,6 +60,37 @@ struct ManipulatorModelInfo {
   std::string eeFrame;                        // name of the end-effector frame of the robot
   std::vector<std::string> dofNames;          // name of the actuated DOFs in the robot
 };
+
+/**
+ * @brief Returns a string for a ManipulatorModelType for retrieving data from a .info file
+ */
+static std::string modelTypeEnumToString(ManipulatorModelType manipulatorModelType) {
+  std::string manipulatorModelTypeString;
+
+  switch (manipulatorModelType) {
+    case ManipulatorModelType::DefaultManipulator: {
+      manipulatorModelTypeString = "defaultManipulator";
+      break;
+    }
+    case ManipulatorModelType::FloatingArmManipulator: {
+      manipulatorModelTypeString = "floatingArmManipulator";
+      break;
+    }
+    case ManipulatorModelType::FullyActuatedFloatingArmManipulator: {
+      manipulatorModelTypeString = "fullyActuatedFloatingArmManipulator";
+      break;
+    }
+    case ManipulatorModelType::WheelBasedMobileManipulator: {
+      manipulatorModelTypeString = "wheelBasedMobileManipulator";
+      break;
+    }
+    default:
+      throw std::invalid_argument("Invalid manipulator model type provided.");
+      break;
+  }
+
+  return manipulatorModelTypeString;
+}
 
 }  // namespace mobile_manipulator
 }  // namespace ocs2

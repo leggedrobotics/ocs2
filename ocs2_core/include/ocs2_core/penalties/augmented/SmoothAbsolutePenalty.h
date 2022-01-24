@@ -81,11 +81,18 @@ class SmoothAbsolutePenalty final : public AugmentedPenaltyBase {
   SmoothAbsolutePenalty* clone() const override { return new SmoothAbsolutePenalty(*this); }
   std::string name() const override { return "SmoothAbsolutePenalty"; }
 
-  scalar_t getValue(scalar_t t, scalar_t l, scalar_t h) const override;
-  scalar_t getDerivative(scalar_t t, scalar_t l, scalar_t h) const override;
-  scalar_t getSecondDerivative(scalar_t t, scalar_t l, scalar_t h) const override;
+  scalar_t getValue(scalar_t t, scalar_t l, scalar_t h) const override {
+    return -l * h + config_.scale * sqrt(h * h + config_.relaxation * config_.relaxation);
+  }
+  scalar_t getDerivative(scalar_t t, scalar_t l, scalar_t h) const override {
+    return -l + config_.scale * h / sqrt(h * h + config_.relaxation * config_.relaxation);
+  }
+  scalar_t getSecondDerivative(scalar_t t, scalar_t l, scalar_t h) const override {
+    const scalar_t deltaSquare = config_.relaxation * config_.relaxation;
+    return config_.scale * deltaSquare / pow(h * h + deltaSquare, 1.5);
+  }
 
-  scalar_t updateMultiplier(scalar_t t, scalar_t l, scalar_t h) const override;
+  scalar_t updateMultiplier(scalar_t t, scalar_t l, scalar_t h) const override { return l - config_.stepSize * h; }
   scalar_t initializeMultiplier() const override { return 0.0; }
 
  private:

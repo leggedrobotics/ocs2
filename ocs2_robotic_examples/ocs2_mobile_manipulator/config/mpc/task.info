@@ -244,7 +244,7 @@ jointVelocityLimits
 
   lowerBound
   {
-    ; input costs for the different types of arm base DOFs
+    ; velocity limits for the different types of arm base DOFs
         base
         {
           defaultManipulator
@@ -272,7 +272,7 @@ jointVelocityLimits
             }
         }
 
-        ; input costs for the arm DOFs
+        ; velocity limits for the arm DOFs
         arm
         {
            (0,0)  -0.45  ; SH_ROT velocity
@@ -286,7 +286,7 @@ jointVelocityLimits
 
   upperBound
   {
-      ; input costs for the different types of arm base DOFs
+      ; velocity limits for the different types of arm base DOFs
           base
           {
             defaultManipulator
@@ -314,7 +314,7 @@ jointVelocityLimits
               }
           }
 
-          ; input costs for the arm DOFs
+          ; velocity limits for the arm DOFs
           arm
           {
              (0,0)  0.45  ; SH_ROT velocity

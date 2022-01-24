@@ -1160,9 +1160,8 @@ void GaussNewtonDDP::runInit() {
     // + The very first call of the algorithm where there is no previous nominal trajectories.
     correctInitcachedNominalTrajectories();
 
-    performanceIndex_ = computeRolloutPerformanceIndex(nominalPrimalData_.primalSolution.timeTrajectory_, metrics_);
-
     // calculates rollout merit
+    performanceIndex_ = computeRolloutPerformanceIndex(nominalPrimalData_.primalSolution.timeTrajectory_, metrics_);
     performanceIndex_.merit = calculateRolloutMerit(performanceIndex_);
 
     // display
@@ -1224,6 +1223,7 @@ void GaussNewtonDDP::runIteration(scalar_t lqModelExpectedCost) {
   // update dual
   updateDualSolution(nominalPrimalData_.primalSolution, metrics_, nominalDualSolution_);
   performanceIndex_ = computeRolloutPerformanceIndex(nominalPrimalData_.primalSolution.timeTrajectory_, metrics_);
+  performanceIndex_.merit = calculateRolloutMerit(performanceIndex_);
 
   // update the constraint penalty coefficients
   updateConstraintPenalties(performanceIndex_.equalityConstraintsSSE);
@@ -1368,6 +1368,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   // update dual
   updateDualSolution(optimizedPrimalData_.primalSolution, metrics_, optimizedDualSolution_);
   performanceIndex_ = computeRolloutPerformanceIndex(optimizedPrimalData_.primalSolution.timeTrajectory_, metrics_);
+  performanceIndex_.merit = calculateRolloutMerit(performanceIndex_);
 
   performanceIndexHistory_.push_back(performanceIndex_);
 

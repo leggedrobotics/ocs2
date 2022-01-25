@@ -85,7 +85,7 @@ class SlacknessSquaredHingePenalty final : public AugmentedPenaltyBase {
   scalar_t getSecondDerivative(scalar_t t, scalar_t l, scalar_t h) const override { return (h < l / config_.scale) ? config_.scale : 0.0; }
 
   scalar_t updateMultiplier(scalar_t t, scalar_t l, scalar_t h) const override {
-    return std::max(l - config_.stepSize * h, (1.0 - config_.stepSize / config_.scale) * l);
+    return std::max(0.0, std::max(l - config_.stepSize * h, (1.0 - config_.stepSize / config_.scale) * l));
   }
   scalar_t initializeMultiplier() const override { return 0.0; }
 

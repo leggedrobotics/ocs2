@@ -39,15 +39,15 @@ namespace augmented {
  *
  *  This leads to the following augmented-Lagrangian penalty function (referred to as the smooth-PHR penalty in the corresponding paper):
  *  \f[
- *      p(h, \lambda) = \lambda^2 \mu \cdot \psi\left(\frac{h}{\lambda \mu}\right).
+ *      p(h, \lambda) = \frac{\lambda^2}{\rho} \psi\left(\frac{\rho h}{\lambda}\right).
  *  \f]
  *
- *  where \f$ \psi(.) \f$ is defined as a shifted quadratically-relaxed log barrier function.
+ *  where \f$ \pho \f$ is the scale. \f$ \psi(.) \f$ is defined as a shifted quadratically-relaxed log barrier function.
  *
  *  This is then minimized by the solver, while the maximization of the approximate dual function is done by updating the Lagrange
  *  multipliers with the following update rule:
  *  \f[
- *      \lambda^*_{k+1} = -\alpha \lambda^*_k \cdot \psi'\left(\frac{h^*_{k+1}}{\lambda^*_k \mu}\right).
+ *      \lambda^*_{k+1} = -\alpha \lambda^*_k \psi'\left(\frac{\pho h^*_{k+1}}{\lambda^*_k}\right).
  *  \f]
  *
  * where \f$ \psi'(.) \f$ is the total derivative of \f$ \psi(.) \f$.
@@ -61,7 +61,8 @@ class ModifiedRelaxedBarrierPenalty final : public AugmentedPenaltyBase {
    * stepLenght: step-length parameter, see class description
    */
   struct Config {
-    Config(scalar_t scaleParam = 100.0, scalar_t relaxationParam = 1e-2, scalar_t stepSizeParam = 0.0)
+    Config() : Config(10.0, 0.0, 1.0) {}
+    Config(scalar_t scaleParam, scalar_t relaxationParam, scalar_t stepSizeParam)
         : scale(scaleParam), relaxation(relaxationParam), stepSize(stepSizeParam) {}
     scalar_t scale;
     scalar_t relaxation;
@@ -81,29 +82,29 @@ class ModifiedRelaxedBarrierPenalty final : public AugmentedPenaltyBase {
   scalar_t getValue(scalar_t t, scalar_t l, scalar_t h) const override {
     const scalar_t v = vFunc(l, h);
     if (v > config_.relaxation) {
-      return -v * log(1.0 + wFunc(l));
+      return -wFunc(l) * log(1.0 + v);
     } else {
-      const scalar_t vTemp = v - config_.relaxation;
-      return wFunc(l) * (0.5 * a_ * vTemp * vTemp + b_ * vTemp + c_);
+      const scalar_t vDelta = v - config_.relaxation;
+      return wFunc(l) * (0.5 * a_ * vDelta * vDelta + b_ * vDelta + c_);
     }
   }
 
   scalar_t getDerivative(scalar_t t, scalar_t l, scalar_t h) const override {
     const scalar_t v = vFunc(l, h);
     if (v > config_.relaxation) {
-      return -wFunc(l) / (1.0 + v) * dldhFunc(l);
+      return -wFunc(l) / (1.0 + v) * dvdhFunc(l);
     } else {
-      return wFunc(l) * (a_ * (v - config_.relaxation) + b_) * dldhFunc(l);
+      return wFunc(l) * (a_ * (v - config_.relaxation) + b_) * dvdhFunc(l);
     }
   }
 
   scalar_t getSecondDerivative(scalar_t t, scalar_t l, scalar_t h) const override {
     const scalar_t v = vFunc(l, h);
-    const scalar_t dldh = dldhFunc(l);
+    const scalar_t dvdh = dvdhFunc(l);
     if (v > config_.relaxation) {
-      return wFunc(l) / ((1.0 + v) * (1.0 + v)) * dldh * dldh;
+      return wFunc(l) / ((1.0 + v) * (1.0 + v)) * dvdh * dvdh;
     } else {
-      return wFunc(l) * a_ * dldh * dldh;
+      return wFunc(l) * a_ * dvdh * dvdh;
     }
   }
 
@@ -111,9 +112,9 @@ class ModifiedRelaxedBarrierPenalty final : public AugmentedPenaltyBase {
     const scalar_t v = vFunc(l, h);
     constexpr scalar_t lambdaMin = 1e-4;
     if (v > config_.relaxation) {
-      return std::max(wFunc(l) * (1.0 / (1 + v)) * dldhFunc(l), lambdaMin);
+      return std::max(lambdaMin, config_.stepSize * wFunc(l) / (1 + v));
     } else {
-      return std::max(config_.stepSize * wFunc(l) * (-a_ * (v - config_.relaxation) - b_) * dldhFunc(l), lambdaMin);
+      return std::max(lambdaMin, config_.stepSize * wFunc(l) * (-a_ * (v - config_.relaxation) - b_));
     }
   }
 
@@ -122,9 +123,9 @@ class ModifiedRelaxedBarrierPenalty final : public AugmentedPenaltyBase {
  private:
   ModifiedRelaxedBarrierPenalty(const ModifiedRelaxedBarrierPenalty& other) = default;
 
-  scalar_t dldhFunc(scalar_t l) const { return 1.0 / (config_.scale * l); }
-  scalar_t wFunc(scalar_t l) const { return config_.scale * l * l; }
-  scalar_t vFunc(scalar_t l, scalar_t h) const { return h / (config_.scale * l); }
+  scalar_t wFunc(scalar_t l) const { return l * l / config_.scale; }
+  scalar_t dvdhFunc(scalar_t l) const { return config_.scale / l; }
+  scalar_t vFunc(scalar_t l, scalar_t h) const { return config_.scale * h / l; }
 
   scalar_t a_ = 1.0;
   scalar_t b_ = -1.0;

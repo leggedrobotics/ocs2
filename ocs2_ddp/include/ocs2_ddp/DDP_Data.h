@@ -31,10 +31,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/model_data/ModelData.h>
+#include <ocs2_oc/oc_data/Metrics.h>
 #include <ocs2_oc/oc_data/PrimalSolution.h>
-#include "ocs2_ddp/riccati_equations/RiccatiModification.h"
 
-#include <ocs2_core/control/LinearController.h>
+#include "ocs2_ddp/riccati_equations/RiccatiModification.h"
 
 namespace ocs2 {
 
@@ -49,6 +49,8 @@ namespace ocs2 {
  */
 struct PrimalDataContainer {
   PrimalSolution primalSolution;
+  // cost, soft constraints and constraints values of the rollout
+  ProblemMetrics problemMetrics;
   // intermediate model data trajectory
   std::vector<ModelData> modelDataTrajectory;
   // event times model data
@@ -56,12 +58,14 @@ struct PrimalDataContainer {
 
   void swap(PrimalDataContainer& other) {
     primalSolution.swap(other.primalSolution);
+    ocs2::swap(problemMetrics, other.problemMetrics);
     modelDataTrajectory.swap(other.modelDataTrajectory);
     modelDataEventTimes.swap(other.modelDataEventTimes);
   }
 
   void clear() {
     primalSolution.clear();
+    ocs2::clear(problemMetrics);
     modelDataTrajectory.clear();
     modelDataEventTimes.clear();
   }

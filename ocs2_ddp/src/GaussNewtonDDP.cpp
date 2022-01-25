@@ -938,14 +938,14 @@ void GaussNewtonDDP::initializeConstraintPenalties() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void GaussNewtonDDP::runSearchStrategy(scalar_t lqModelExpectedCost, const LinearController& unoptimizedController,
-                                       DualSolution& dualSolution, PrimalDataContainer& primalData, PerformanceIndex& performanceIndex,
-                                       ProblemMetrics& problemMetrics) {
+                                       DualSolution& dualSolution, PrimalDataContainer& primalData, PerformanceIndex& performanceIndex) {
   const auto& modeSchedule = this->getReferenceManager().getModeSchedule();
 
   // Primal solution controller is now optimized.
   scalar_t avgTimeStep;
   std::vector<MultiplierCollection> intermediateDualSolution;
-  search_strategy::SolutionRef solution(primalData.primalSolution, performanceIndex, problemMetrics, intermediateDualSolution, avgTimeStep);
+  search_strategy::SolutionRef solution(primalData.primalSolution, performanceIndex, primalData.problemMetrics, intermediateDualSolution,
+                                        avgTimeStep);
   const bool success = searchStrategyPtr_->run({initTime_, finalTime_}, initState_, lqModelExpectedCost, unoptimizedController,
                                                dualSolution, modeSchedule, solution);
 
@@ -1153,7 +1153,8 @@ void GaussNewtonDDP::runInit() {
     // initialize dual solution
     initializeDualSolution(optimizedDualSolution_, nominalPrimalData_.primalSolution, nominalDualSolution_);
 
-    computeRolloutMetrics(optimalControlProblemStock_[taskId], nominalPrimalData_.primalSolution, nominalDualSolution_, problemMetrics_);
+    computeRolloutMetrics(optimalControlProblemStock_[taskId], nominalPrimalData_.primalSolution, nominalDualSolution_,
+                          nominalPrimalData_.problemMetrics);
 
     // update dual
     //  updateDualSolution(nominalPrimalData_.primalSolution, problemMetrics_, nominalDualSolution_);
@@ -1164,7 +1165,8 @@ void GaussNewtonDDP::runInit() {
     correctInitcachedNominalTrajectories();
 
     // calculates rollout merit
-    performanceIndex_ = computeRolloutPerformanceIndex(nominalPrimalData_.primalSolution.timeTrajectory_, problemMetrics_);
+    performanceIndex_ =
+        computeRolloutPerformanceIndex(nominalPrimalData_.primalSolution.timeTrajectory_, nominalPrimalData_.problemMetrics);
     performanceIndex_.merit = calculateRolloutMerit(performanceIndex_);
 
     // display
@@ -1220,13 +1222,12 @@ void GaussNewtonDDP::runIteration(scalar_t lqModelExpectedCost) {
 
   // finding the optimal stepLength
   searchStrategyTimer_.startTimer();
-  runSearchStrategy(lqModelExpectedCost, unoptimizedController_, nominalDualSolution_, nominalPrimalData_, performanceIndex_,
-                    problemMetrics_);
+  runSearchStrategy(lqModelExpectedCost, unoptimizedController_, nominalDualSolution_, nominalPrimalData_, performanceIndex_);
   searchStrategyTimer_.endTimer();
 
   // update dual
-  updateDualSolution(nominalPrimalData_.primalSolution, problemMetrics_, nominalDualSolution_);
-  performanceIndex_ = computeRolloutPerformanceIndex(nominalPrimalData_.primalSolution.timeTrajectory_, problemMetrics_);
+  updateDualSolution(nominalPrimalData_.primalSolution, nominalPrimalData_.problemMetrics, nominalDualSolution_);
+  performanceIndex_ = computeRolloutPerformanceIndex(nominalPrimalData_.primalSolution.timeTrajectory_, nominalPrimalData_.problemMetrics);
   performanceIndex_.merit = calculateRolloutMerit(performanceIndex_);
 
   // update the constraint penalty coefficients
@@ -1366,13 +1367,13 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   // finding the final optimal stepLength and getting the optimal trajectories and controller
   searchStrategyTimer_.startTimer();
   const scalar_t lqModelExpectedCost = dualData_.valueFunctionTrajectory.front().f;
-  runSearchStrategy(lqModelExpectedCost, unoptimizedController_, optimizedDualSolution_, optimizedPrimalData_, performanceIndex_,
-                    problemMetrics_);
+  runSearchStrategy(lqModelExpectedCost, unoptimizedController_, optimizedDualSolution_, optimizedPrimalData_, performanceIndex_);
   searchStrategyTimer_.endTimer();
 
   // update dual
-  updateDualSolution(optimizedPrimalData_.primalSolution, problemMetrics_, optimizedDualSolution_);
-  performanceIndex_ = computeRolloutPerformanceIndex(optimizedPrimalData_.primalSolution.timeTrajectory_, problemMetrics_);
+  updateDualSolution(optimizedPrimalData_.primalSolution, optimizedPrimalData_.problemMetrics, optimizedDualSolution_);
+  performanceIndex_ =
+      computeRolloutPerformanceIndex(optimizedPrimalData_.primalSolution.timeTrajectory_, optimizedPrimalData_.problemMetrics);
   performanceIndex_.merit = calculateRolloutMerit(performanceIndex_);
 
   performanceIndexHistory_.push_back(performanceIndex_);

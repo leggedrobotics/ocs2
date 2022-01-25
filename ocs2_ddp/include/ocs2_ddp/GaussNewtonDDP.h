@@ -401,10 +401,9 @@ class GaussNewtonDDP : public SolverBase {
    * @param [in, out] dualSolution: The dual solution. If the search was successful, the intermediate dual solution would be re-sampled
    * @param [out] primalData: Optimized primal data container if it is an final search. otherwise nominal data container
    * @param [out] performanceIndex: The optimal performanceIndex which will be updated to the optimal one.
-   * @param [out] problemMetrics: The cost, soft constraints and constraints values of the optimal rollout.
    */
   void runSearchStrategy(scalar_t lqModelExpectedCost, const LinearController& unoptimizedController, DualSolution& dualSolution,
-                         PrimalDataContainer& primalData, PerformanceIndex& performanceIndex, ProblemMetrics& problemMetrics);
+                         PrimalDataContainer& primalData, PerformanceIndex& performanceIndex);
 
   /**
    * swap both primal and dual data cache
@@ -506,8 +505,6 @@ class GaussNewtonDDP : public SolverBase {
   // constructed and solved before terminating run()
   PrimalDataContainer cachedPrimalData_;
   DualDataContainer cachedDualData_;
-
-  ProblemMetrics problemMetrics_;
 
   ScalarFunctionQuadraticApproximation heuristics_;
 

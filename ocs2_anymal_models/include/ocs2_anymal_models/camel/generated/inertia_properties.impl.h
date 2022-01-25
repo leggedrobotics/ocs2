@@ -1,17 +1,17 @@
 template <typename TRAIT>
 iit::camel::dyn::tpl::InertiaProperties<TRAIT>::InertiaProperties()
 {
-    com_base = iit::rbd::Vector3d(-0.020007625,-1.4759417E-4,0.013283086).cast<Scalar>();
+    com_base = iit::rbd::Vector3d(-0.013955938,-1.8214522E-4,0.008853551).cast<Scalar>();
     tensor_base.fill(
-        Scalar(26.730757),
+        Scalar(26.499758),
         com_base,
         rbd::Utils::buildInertiaTensor(
-                Scalar(0.25596976),
-                Scalar(1.886719),
-                Scalar(1.8996716),
-                Scalar(-0.008267207),
-                Scalar(-0.08153148),
-                Scalar(0.0011897786)) );
+                Scalar(0.22784324),
+                Scalar(1.7974265),
+                Scalar(1.8366772),
+                Scalar(-0.008108853),
+                Scalar(-0.041152608),
+                Scalar(0.0011102436)) );
 
     com_LF_HIP = iit::rbd::Vector3d(4.608417E-4,0.017393887,0.056660626).cast<Scalar>();
     tensor_LF_HIP.fill(

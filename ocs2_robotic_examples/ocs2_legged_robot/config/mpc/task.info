@@ -1,4 +1,4 @@
-centroidalModelType             0      // 0: FullCentroidalDynamics, 1: Single Rigid Body Dynamics
+centroidalModelType             1      // 0: FullCentroidalDynamics, 1: Single Rigid Body Dynamics
   
 legged_robot_interface
 {
@@ -121,8 +121,6 @@ mpc
 
   debugPrint                      false
   coldStart                       false
-
-  useParallelRiccatiSolver        true ; use disjoint riccati solver in multi-thread case
 
   solutionTimeWindow              -1  ; [s]
 

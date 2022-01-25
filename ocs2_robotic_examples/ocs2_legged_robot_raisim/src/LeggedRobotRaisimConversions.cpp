@@ -65,11 +65,25 @@ Eigen::VectorXd LeggedRobotRaisimConversions::inputToRaisimGeneralizedForce(doub
   // get RBD torque
   const vector_t desiredJointAccelerations = vector_t::Zero(12);  // TODO(areske): retrieve this from controller?
   const vector_t measuredRbdState = raisimGenCoordGenVelToRbdState(q, dq);
-  const vector_t rbdTorque = centroidalModelRbdConversions_.computeRbdTorqueFromCentroidalModelPD(state, input, desiredJointAccelerations,
-                                                                                                  measuredRbdState, pGains_, dGains_);
+  const vector_t rbdTorque =
+      centroidalModelRbdConversions_.computeRbdTorqueFromCentroidalModelPD(state, input, desiredJointAccelerations, measuredRbdState);
 
   // convert to generalized force
   return rbdTorqueToRaisimGeneralizedForce(rbdTorque);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::pair<Eigen::VectorXd, Eigen::VectorXd> LeggedRobotRaisimConversions::inputToRaisimPdTargets(double time, const vector_t& input,
+                                                                                                 const vector_t& state,
+                                                                                                 const Eigen::VectorXd& q,
+                                                                                                 const Eigen::VectorXd& dq) {
+  Eigen::VectorXd positionSetpoint = q;
+  positionSetpoint.tail<12>() = ocs2JointOrderToRaisimJointOrder(state.tail<12>());
+  Eigen::VectorXd velocitySetpoint = dq;
+  velocitySetpoint.tail<12>() = ocs2JointOrderToRaisimJointOrder(input.tail<12>());
+  return {positionSetpoint, velocitySetpoint};
 }
 
 /******************************************************************************************************/

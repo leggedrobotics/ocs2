@@ -27,7 +27,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include <chrono>
 #include <cmath>
 #include <iostream>
 #include <string>
@@ -35,13 +34,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
+#include <ocs2_core/thread_support/ExecuteAndSleep.h>
 #include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_mpc/MPC_MRT_Interface.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
 #include <ocs2_robotic_assets/package_path.h>
 
-#include "ocs2_mobile_manipulator/MobileManipulatorInterface.h"
 #include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
+#include "ocs2_mobile_manipulator/MobileManipulatorInterface.h"
 #include "ocs2_mobile_manipulator/MobileManipulatorPinocchioMapping.h"
 #include "ocs2_mobile_manipulator/package_path.h"
 
@@ -98,7 +98,6 @@ class MobileManipulatorIntegrationTest : public testing::Test {
 
   static constexpr scalar_t tolerance = 1e-2;
   static constexpr scalar_t f_mpc = 10.0;
-  static constexpr scalar_t mpcIncrement = 1.0 / f_mpc;
   static constexpr scalar_t initTime = 1234.5;  // start from a random time
   static constexpr scalar_t finalTime = initTime + 5.0;
 
@@ -112,7 +111,6 @@ class MobileManipulatorIntegrationTest : public testing::Test {
 
 constexpr scalar_t MobileManipulatorIntegrationTest::tolerance;
 constexpr scalar_t MobileManipulatorIntegrationTest::f_mpc;
-constexpr scalar_t MobileManipulatorIntegrationTest::mpcIncrement;
 constexpr scalar_t MobileManipulatorIntegrationTest::initTime;
 constexpr scalar_t MobileManipulatorIntegrationTest::finalTime;
 
@@ -128,8 +126,7 @@ TEST_F(MobileManipulatorIntegrationTest, synchronousTracking) {
 
   // run MPC for N iterations
   auto time = initTime;
-  const auto N = static_cast<size_t>(f_mpc * (finalTime - initTime));
-  for (size_t i = 0; i < N; i++) {
+  while (time < finalTime) {
     // run MPC
     mpcInterface.advanceMpc();
     time += 1.0 / f_mpc;
@@ -156,54 +153,55 @@ TEST_F(MobileManipulatorIntegrationTest, asynchronousTracking) {
   auto mpcPtr = getMpc();
   MPC_MRT_Interface mpcInterface(*mpcPtr);
 
-  constexpr int f_mrt = 10;                                            // Hz
-  const std::chrono::duration<double, std::ratio<1, f_mrt>> mrtHz(1);  // f_mrt Hz clock using fractional ticks
+  const scalar_t f_mrt = 100.0;  // Hz
 
-  scalar_t time = initTime;
-  vector_t optimalState = mobileManipulatorInterfacePtr->getInitialState();
-  vector_t optimalInput;
+  // Set initial observation
+  SystemObservation observation;
+  observation.time = initTime;
+  observation.state = mobileManipulatorInterfacePtr->getInitialState();
+  observation.input.setZero(modelInfo.inputDim);
 
-  // run MRT in a thread
-  std::mutex timeStateMutex;
-  std::atomic_bool trackerRunning{true};
-  auto tracker = [&]() {
-    while (trackerRunning) {
-      {
-        std::lock_guard<std::mutex> lock(timeStateMutex);
-        time += 1.0 / f_mrt;
-        if (mpcInterface.initialPolicyReceived()) {
-          size_t mode;
-          mpcInterface.updatePolicy();
-          mpcInterface.evaluatePolicy(time, vector_t::Zero(modelInfo.stateDim), optimalState, optimalInput, mode);
-        }
-        if (std::abs(time - finalTime) < 0.005) {
-          verifyTrackingQuality(optimalState);
-        }
-      }
-      std::this_thread::sleep_for(mrtHz);
-    }
-  };
-  std::thread trackerThread(tracker);
-
-  try {
-    // run MPC for N iterations
-    SystemObservation observation;
-    const auto N = static_cast<size_t>(f_mpc * (finalTime - initTime));
-    for (size_t i = 0; i < N; i++) {
-      {
-        std::lock_guard<std::mutex> lock(timeStateMutex);
-        // use optimal state for the next observation:
-        observation.time = time;
-        observation.state = optimalState;
-        observation.input.setZero(modelInfo.inputDim);
-      }
-      mpcInterface.setCurrentObservation(observation);
-      mpcInterface.advanceMpc();
-    }
-  } catch (const std::exception& e) {
-    std::cerr << "EXCEPTION " << e.what() << std::endl;
-    EXPECT_TRUE(false);
+  // Wait for the first policy
+  mpcInterface.setCurrentObservation(observation);
+  while (!mpcInterface.initialPolicyReceived()) {
+    mpcInterface.advanceMpc();
   }
-  trackerRunning = false;
-  trackerThread.join();
+
+  // Run MPC in a thread
+  std::atomic_bool mpcRunning{true};
+  auto mpcThread = std::thread([&]() {
+    while (mpcRunning) {
+      try {
+        ocs2::executeAndSleep([&]() { mpcInterface.advanceMpc(); }, f_mpc);
+      } catch (const std::exception& e) {
+        mpcRunning = false;
+        std::cerr << "EXCEPTION " << e.what() << std::endl;
+        EXPECT_TRUE(false);
+      }
+    }
+  });
+
+  // run MRT
+  while (observation.time < finalTime) {
+    ocs2::executeAndSleep(
+        [&]() {
+          observation.time += 1.0 / f_mrt;
+
+          // Evaluate the policy
+          mpcInterface.updatePolicy();
+          mpcInterface.evaluatePolicy(observation.time, vector_t::Zero(modelInfo.stateDim), observation.state, observation.input,
+                                      observation.mode);
+
+          // use optimal state for the next observation:
+          mpcInterface.setCurrentObservation(observation);
+        },
+        f_mrt);
+  }
+
+  mpcRunning = false;
+  if (mpcThread.joinable()) {
+    mpcThread.join();
+  }
+
+  verifyTrackingQuality(observation.state);
 }

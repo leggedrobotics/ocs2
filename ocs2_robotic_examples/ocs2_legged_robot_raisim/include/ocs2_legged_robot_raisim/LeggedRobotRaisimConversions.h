@@ -38,64 +38,75 @@ namespace ocs2 {
 namespace legged_robot {
 
 /**
- * Conversions between RaiSim variables and ocs2 variables for the legged robot.
+ * Conversions between RaiSim variables and OCS2 variables for the legged robot.
  */
-class LeggedRobotRaisimConversions {
+class LeggedRobotRaisimConversions final {
  public:
   /**
    * Constructor.
    * @param [in] pinocchioInterface : The predefined pinocchio interface for the robot.
    * @param [in] centroidalModelInfo : The centroidal model information.
+   * @param [in] initialState : The initial switched model state.
    * @param [in] check : Whether to check if the variables coming from or going to RaiSim respect the actuator limits (by default false).
    */
-  LeggedRobotRaisimConversions(PinocchioInterface& pinocchioInterface, CentroidalModelInfo centroidalModelInfo, bool check = false)
-      : check_(check), centroidalModelRbdConversions_(pinocchioInterface, centroidalModelInfo) {}
+  LeggedRobotRaisimConversions(PinocchioInterface pinocchioInterface, const CentroidalModelInfo& centroidalModelInfo,
+                               const vector_t& initialState, bool check = false)
+      : check_(check),
+        continuousOrientation_(initialState.segment<3>(9)),
+        centroidalModelRbdConversions_(std::move(pinocchioInterface), centroidalModelInfo) {}
 
   /**
-   * Default destructor.
-   */
-  ~LeggedRobotRaisimConversions() = default;
-
-  /**
-   * @brief Convert ocs2 state to generalized coordinate and generalized velocity used by RaiSim.
-   * @param [in] state : The state to be converted.
-   * @param [in] input : The current input (includes state-information due to the kinematic leg model).
-   * @return The {q, dq} pair that represents the simulator state.
+   * @brief Convert OCS2 switched model state to generalized coordinate and generalized velocity used by RaiSim.
+   * @param [in] state : The switched model state to be converted.
+   * @param [in] input : The switched model input (includes state information due to the kinematic leg model).
+   * @return The corresponding {q, dq} pair that represents the simulator state.
    */
   std::pair<Eigen::VectorXd, Eigen::VectorXd> stateToRaisimGenCoordGenVel(const vector_t& state, const vector_t& input);
 
   /**
-   * @brief Convert RaiSim generalized coordinates and velocities to ocs2 state.
+   * @brief Convert RaiSim generalized coordinates and velocities to OCS2 switched model state.
    * @param [in] q : The generalized coordinate.
    * @param [in] dq : The generalized velocity.
-   * @return The corresponding ocs2 state.
+   * @return The corresponding switched model state.
    */
   vector_t raisimGenCoordGenVelToState(const Eigen::VectorXd& q, const Eigen::VectorXd& dq);
 
   /**
-   * @brief Convert ocs2 control input to RaiSim generalized force.
+   * @brief Convert OCS2 switched model input to RaiSim generalized force.
    * @param [in] time : The current time.
-   * @param [in] input : The control computed by the ocs2 controller.
-   * @param [in] state : The current state.
-   * @param [in] q : The current raisim generalized coordinate.
-   * @param [in] dq : The current raisim generalized velocity.
-   * @return The generalized forces to be applied to the system.
+   * @param [in] input : The switched model input to be converted.
+   * @param [in] state : The switched model state (includes reference information for PD control on acceleration level).
+   * @param [in] q : The RaiSim generalized coordinate.
+   * @param [in] dq : The RaiSim generalized velocity.
+   * @return The corresponding generalized forces to be applied to the system.
    */
   Eigen::VectorXd inputToRaisimGeneralizedForce(double time, const vector_t& input, const vector_t& state, const Eigen::VectorXd& q,
                                                 const Eigen::VectorXd& dq);
 
   /**
-   * @brief Convert RaiSim joint variables to ocs2 joint variables.
+   * @brief Convert OCS2 switched model input to RaiSim PD setpoints.
+   * @param [in] time : The current time.
+   * @param [in] input : The switched model input to be converted.
+   * @param [in] state : The switched model state (includes reference information for the PD control on torque level).
+   * @param [in] q : The RaiSim generalized coordinate.
+   * @param [in] dq : The RaiSim generalized velocity.
+   * @return The generalized position and velocities to be used as PD control setpoints by RaiSim.
+   */
+  std::pair<Eigen::VectorXd, Eigen::VectorXd> inputToRaisimPdTargets(double time, const vector_t& input, const vector_t& state,
+                                                                     const Eigen::VectorXd& q, const Eigen::VectorXd& dq);
+
+  /**
+   * @brief Convert RaiSim joint variables to OCS2 joint variables.
    * @note This can be removed if changing the RaiSim joint order works eventually.
    * @param [in] raisimJoint : The joint variables in RaiSim order.
-   * @return The joint variables in ocs2 order.
+   * @return The joint variables in OCS2 order.
    */
   vector_t raisimJointOrderToOcs2JointOrder(const Eigen::VectorXd& raisimJoint);
 
   /**
-   * @brief Convert ocs2 joint variables to RaiSim joint variables.
+   * @brief Convert OCS2 joint variables to RaiSim joint variables.
    * @note This can be removed if changing the RaiSim joint order works eventually.
-   * @param [in] ocs2Joint : The joint variables in ocs2 order.
+   * @param [in] ocs2Joint : The joint variables in OCS2 order.
    * @return The joint variables in RaiSim order.
    */
   Eigen::VectorXd ocs2JointOrderToRaisimJointOrder(const vector_t& ocs2Joint);
@@ -107,25 +118,25 @@ class LeggedRobotRaisimConversions {
   void setTerrain(const raisim::HeightMap& terrain) { terrainPtr_ = &terrain; }
 
   /**
-   * @brief Set the PD gains.
-   * @param [in] pGains : The proportional gains.
-   * @param [in] dGains : The derivative gains.
+   * @brief Load settings from a configuration file.
+   * @param [in] fileName : File name which contains the configuration data.
+   * @param [in] fieldName : Field name which contains the configuration data.
+   * @param [in] verbose : Flag to determine whether to print out the loaded settings or not.
    */
-  void setGains(const vector_t& pGains, const vector_t& dGains) {
-    pGains_ = pGains;
-    dGains_ = dGains;
+  void loadSettings(const std::string& fileName, const std::string& fieldName, bool verbose = true) {
+    centroidalModelRbdConversions_.loadSettings(fileName, fieldName, verbose);
   }
 
  protected:
   /**
-   * @brief Convert ocs2 RBD state to generalized coordinate and generalized velocity used by RaiSim.
-   * @param [in] rbdState : The ocs2 RBD state to be converted.
-   * @return The {q, dq} pair that represents the simulator state.
+   * @brief Convert OCS2 RBD state to generalized coordinate and generalized velocity used by RaiSim.
+   * @param [in] rbdState : The RBD state to be converted.
+   * @return The corresponding {q, dq} pair that represents the simulator state.
    */
   std::pair<Eigen::VectorXd, Eigen::VectorXd> rbdStateToRaisimGenCoordGenVel(const vector_t& rbdState);
 
   /**
-   * @brief Convert RaiSim generalized coordinates and velocities to ocs2 RBD state.
+   * @brief Convert RaiSim generalized coordinates and velocities to OCS2 RBD state.
    * @param [in] q : The generalized coordinate.
    * @param [in] dq : The generalized velocity.
    * @return The corresponding RBD state.
@@ -133,9 +144,9 @@ class LeggedRobotRaisimConversions {
   vector_t raisimGenCoordGenVelToRbdState(const Eigen::VectorXd& q, const Eigen::VectorXd& dq);
 
   /**
-   * @brief Convert ocs2 RBD torque to RaiSim generalized force.
-   * @param [in] rbdTorque : The ocs2 RBD torque to be converted.
-   * @return The generalized forces to be applied to the system.
+   * @brief Convert OCS2 RBD torque to RaiSim generalized force.
+   * @param [in] rbdTorque : The RBD torque to be converted.
+   * @return The corresponding generalized forces to be applied to the system.
    */
   Eigen::VectorXd rbdTorqueToRaisimGeneralizedForce(const vector_t& rbdTorque);
 
@@ -150,11 +161,9 @@ class LeggedRobotRaisimConversions {
 
  private:
   const bool check_;
-  CentroidalModelRbdConversions centroidalModelRbdConversions_;
   Eigen::Vector3d continuousOrientation_;
+  CentroidalModelRbdConversions centroidalModelRbdConversions_;
   const raisim::HeightMap* terrainPtr_ = nullptr;
-  vector_t pGains_;
-  vector_t dGains_;
 };
 
 }  // namespace legged_robot

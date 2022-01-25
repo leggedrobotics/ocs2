@@ -47,7 +47,8 @@ TEST(LeggedRobotRaisim, Conversions) {
   ocs2::legged_robot::LeggedRobotInterface interface(taskFileFolderName, targetCommandFile, urdf::parseURDFFile(urdfFile));
   // raisim conversions
   ocs2::RaisimRolloutSettings raisimRolloutSettings(ros::package::getPath("ocs2_legged_robot_raisim") + "/config/raisim.info", "rollout");
-  ocs2::legged_robot::LeggedRobotRaisimConversions conversions(interface.getPinocchioInterface(), interface.getCentroidalModelInfo(), false);
+  ocs2::legged_robot::LeggedRobotRaisimConversions conversions(interface.getPinocchioInterface(), interface.getCentroidalModelInfo(),
+                                                               interface.getInitialState());
   // consistency test ocs2 -> raisim -> ocs2
   for (size_t i = 0; i < 100; i++) {
     ocs2::vector_t stateIn(24);
@@ -60,8 +61,7 @@ TEST(LeggedRobotRaisim, Conversions) {
 
     ocs2::vector_t stateOut = conversions.raisimGenCoordGenVelToState(q, dq);
 
-    bool test = stateIn.isApprox(stateOut);
-    EXPECT_TRUE(test);
+    EXPECT_TRUE(stateIn.isApprox(stateOut));
   }
   // consistency test raisim -> ocs2 -> raisim
   for (size_t i = 0; i < 100; i++) {
@@ -84,9 +84,7 @@ TEST(LeggedRobotRaisim, Conversions) {
       qOut.segment<4>(3) *= -1.0;
     }
 
-    bool test = qIn.isApprox(qOut);
-    EXPECT_TRUE(test);
-    test = dqIn.isApprox(dqOut);
-    EXPECT_TRUE(test);
+    EXPECT_TRUE(qIn.isApprox(qOut));
+    EXPECT_TRUE(dqIn.isApprox(dqOut));
   }
 }

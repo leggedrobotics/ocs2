@@ -63,10 +63,11 @@ int main(int argc, char** argv) {
   std::unique_ptr<RaisimHeightmapRosConverter> heightmapPub;
   std::unique_ptr<LeggedRobotRaisimConversions> conversions;
   if (raisim) {
-    conversions.reset(
-        new LeggedRobotRaisimConversions(leggedRobotInterface.getPinocchioInterface(), leggedRobotInterface.getCentroidalModelInfo()));
+    conversions.reset(new LeggedRobotRaisimConversions(leggedRobotInterface.getPinocchioInterface(),
+                                                       leggedRobotInterface.getCentroidalModelInfo(),
+                                                       leggedRobotInterface.getInitialState()));
     RaisimRolloutSettings raisimRolloutSettings(ros::package::getPath("ocs2_legged_robot_raisim") + "/config/raisim.info", "rollout", true);
-    conversions->setGains(raisimRolloutSettings.pGains_, raisimRolloutSettings.dGains_);
+    conversions->loadSettings(ros::package::getPath("ocs2_legged_robot_raisim") + "/config/raisim.info", "rollout", true);
     rolloutPtr.reset(new RaisimRollout(
         ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/urdf/anymal.urdf",
         ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/meshes",

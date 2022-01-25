@@ -58,7 +58,7 @@ class StateTriggeredRollout : public RolloutBase {
         systemDynamicsPtr_(systemDynamics.clone()),
         systemEventHandlersPtr_(new StateTriggeredEventHandler(this->settings().timeStep)) {
     // construct dynamicsIntegratorsPtr
-    dynamicsIntegratorPtr_ = std::move(newIntegrator(this->settings().integratorType, systemEventHandlersPtr_));
+    dynamicsIntegratorPtr_ = newIntegrator(this->settings().integratorType, systemEventHandlersPtr_);
   }
 
   /**

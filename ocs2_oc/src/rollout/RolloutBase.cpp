@@ -72,8 +72,7 @@ vector_t RolloutBase::run(scalar_t initTime, const vector_t& initState, scalar_t
     }
   }  // end of for loop
 
-  return runImpl(std::move(timeIntervalArray), initState, controller, timeTrajectory, postEventIndicesStock, stateTrajectory,
-                 inputTrajectory);
+  return runImpl(timeIntervalArray, initState, controller, timeTrajectory, postEventIndicesStock, stateTrajectory, inputTrajectory);
 }
 
 /******************************************************************************************************/

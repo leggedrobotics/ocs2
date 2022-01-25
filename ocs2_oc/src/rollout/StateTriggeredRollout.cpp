@@ -41,7 +41,7 @@ vector_t StateTriggeredRollout::runImpl(const time_interval_array_t& timeInterva
                                         ControllerBase* controller, scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces,
                                         vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) {
   if (controller == nullptr) {
-    throw std::runtime_error("The input controller is not set.");
+    throw std::runtime_error("[StateTriggeredRollout::runImpl] The input controller is not set.");
   }
 
   // max number of steps for integration

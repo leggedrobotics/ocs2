@@ -83,7 +83,7 @@ class SearchStrategyBase {
    * @param [in] dualSolution: The dual solution.
    * @param [in] ModeSchedule The current mode schedule.
    * @param [in/out]
-   * @param [out] solution: Output of search (primalSolution, performanceIndex, metrics, avgTimeStep)
+   * @param [out] solution: Output of search (primalSolution, performanceIndex, problemMetrics, avgTimeStep)
    * @return whether the search was successful or failed.
    */
   virtual bool run(const std::pair<scalar_t, scalar_t>& timePeriod, const vector_t& initState, const scalar_t expectedCost,
@@ -138,7 +138,7 @@ namespace search_strategy {
 struct Solution {
   PrimalSolution primalSolution;
   PerformanceIndex performanceIndex;
-  MetricsCollection metrics;
+  ProblemMetrics problemMetrics;
   std::vector<MultiplierCollection> intermediateDualSolution;
   scalar_t avgTimeStep;
 };
@@ -147,20 +147,20 @@ struct SolutionRef {
   SolutionRef(Solution& s)
       : primalSolution(s.primalSolution),
         performanceIndex(s.performanceIndex),
-        metrics(s.metrics),
+        problemMetrics(s.problemMetrics),
         intermediateDualSolution(s.intermediateDualSolution),
         avgTimeStep(s.avgTimeStep) {}
-  SolutionRef(PrimalSolution& primalSolutionArg, PerformanceIndex& performanceIndexArg, MetricsCollection& metricsArg,
+  SolutionRef(PrimalSolution& primalSolutionArg, PerformanceIndex& performanceIndexArg, ProblemMetrics& problemMetricsArg,
               std::vector<MultiplierCollection>& intermediateDualSolutionArg, scalar_t& avgTimeStepArg)
       : primalSolution(primalSolutionArg),
         performanceIndex(performanceIndexArg),
-        metrics(metricsArg),
+        problemMetrics(problemMetricsArg),
         intermediateDualSolution(intermediateDualSolutionArg),
         avgTimeStep(avgTimeStepArg) {}
 
   PrimalSolution& primalSolution;
   PerformanceIndex& performanceIndex;
-  MetricsCollection& metrics;
+  ProblemMetrics& problemMetrics;
   std::vector<MultiplierCollection>& intermediateDualSolution;
   scalar_t& avgTimeStep;
 };
@@ -168,7 +168,7 @@ struct SolutionRef {
 inline void swap(SolutionRef lhs, SolutionRef rhs) {
   lhs.primalSolution.swap(rhs.primalSolution);
   swap(lhs.performanceIndex, rhs.performanceIndex);
-  swap(lhs.metrics, rhs.metrics);
+  swap(lhs.problemMetrics, rhs.problemMetrics);
   swap(lhs.intermediateDualSolution, rhs.intermediateDualSolution);
   std::swap(lhs.avgTimeStep, rhs.avgTimeStep);
 }

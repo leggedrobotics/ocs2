@@ -70,7 +70,7 @@ void clear(Metrics& m) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void swap(MetricsCollection& lhs, MetricsCollection& rhs) {
+void swap(ProblemMetrics& lhs, ProblemMetrics& rhs) {
   swap(lhs.final, rhs.final);
   lhs.preJumps.swap(rhs.preJumps);
   lhs.intermediates.swap(rhs.intermediates);
@@ -79,7 +79,7 @@ void swap(MetricsCollection& lhs, MetricsCollection& rhs) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void clear(MetricsCollection& m) {
+void clear(ProblemMetrics& m) {
   clear(m.final);
   m.preJumps.clear();
   m.intermediates.clear();

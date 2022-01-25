@@ -77,12 +77,12 @@ bool LevenbergMarquardtStrategy::run(const std::pair<scalar_t, scalar_t>& timePe
     // re-sample dual solution
     sampleIntermediateDualSolution(dualSolution, solution.primalSolution.timeTrajectory_, solution.intermediateDualSolution);
 
-    // compute metrics
+    // compute problem metrics
     DualSolutionConstRef dualSolutionRef(dualSolution.final, dualSolution.preJumps, solution.intermediateDualSolution);
-    computeRolloutMetrics(optimalControlProblemRef_, solution.primalSolution, dualSolutionRef, solution.metrics);
+    computeRolloutMetrics(optimalControlProblemRef_, solution.primalSolution, dualSolutionRef, solution.problemMetrics);
 
     // compute performanceIndex
-    solution.performanceIndex = computeRolloutPerformanceIndex(solution.primalSolution.timeTrajectory_, solution.metrics);
+    solution.performanceIndex = computeRolloutPerformanceIndex(solution.primalSolution.timeTrajectory_, solution.problemMetrics);
     solution.performanceIndex.merit = meritFunc_(solution.performanceIndex);
 
     // display

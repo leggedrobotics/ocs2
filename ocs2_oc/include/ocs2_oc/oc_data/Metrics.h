@@ -51,7 +51,7 @@ struct Metrics {
   std::vector<value_t> stateInputIneqLagrangian;
 };
 
-struct MetricsCollection {
+struct ProblemMetrics {
   Metrics final;
   std::vector<Metrics> preJumps;
   std::vector<Metrics> intermediates;
@@ -63,10 +63,10 @@ void swap(Metrics& lhs, Metrics& rhs);
 /** Clears the value of the given Metrics */
 void clear(Metrics& m);
 
-/** Exchanges the given values of MetricsCollection */
-void swap(MetricsCollection& lhs, MetricsCollection& rhs);
+/** Exchanges the given values of ProblemMetrics */
+void swap(ProblemMetrics& lhs, ProblemMetrics& rhs);
 
-/** Clears the value of the given MetricsCollection */
-void clear(MetricsCollection& m);
+/** Clears the value of the given ProblemMetrics */
+void clear(ProblemMetrics& m);
 
 }  // namespace ocs2

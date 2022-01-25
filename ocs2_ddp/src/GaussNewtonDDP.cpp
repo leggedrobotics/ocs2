@@ -939,13 +939,13 @@ void GaussNewtonDDP::initializeConstraintPenalties() {
 /******************************************************************************************************/
 void GaussNewtonDDP::runSearchStrategy(scalar_t lqModelExpectedCost, const LinearController& unoptimizedController,
                                        DualSolution& dualSolution, PrimalDataContainer& primalData, PerformanceIndex& performanceIndex,
-                                       MetricsCollection& metrics) {
+                                       ProblemMetrics& problemMetrics) {
   const auto& modeSchedule = this->getReferenceManager().getModeSchedule();
 
   // Primal solution controller is now optimized.
   scalar_t avgTimeStep;
   std::vector<MultiplierCollection> intermediateDualSolution;
-  search_strategy::SolutionRef solution(primalData.primalSolution, performanceIndex, metrics, intermediateDualSolution, avgTimeStep);
+  search_strategy::SolutionRef solution(primalData.primalSolution, performanceIndex, problemMetrics, intermediateDualSolution, avgTimeStep);
   const bool success = searchStrategyPtr_->run({initTime_, finalTime_}, initState_, lqModelExpectedCost, unoptimizedController,
                                                dualSolution, modeSchedule, solution);
 
@@ -1067,7 +1067,7 @@ void GaussNewtonDDP::initializeDualSolution(const DualSolution& cachedDualSoluti
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::updateDualSolution(const PrimalSolution& primalSolution, MetricsCollection& metricsCollection,
+void GaussNewtonDDP::updateDualSolution(const PrimalSolution& primalSolution, ProblemMetrics& problemMetrics,
                                         DualSolutionRef dualSolution) {
   // intermediates
   nextTaskId_ = 0;
@@ -1082,14 +1082,16 @@ void GaussNewtonDDP::updateDualSolution(const PrimalSolution& primalSolution, Me
       const auto& time = primalSolution.timeTrajectory_[timeIndex];
       const auto& state = primalSolution.stateTrajectory_[timeIndex];
       const auto& input = primalSolution.inputTrajectory_[timeIndex];
-      auto& metrics = metricsCollection.intermediates[timeIndex];
+      auto& metricsCollection = problemMetrics.intermediates[timeIndex];
       auto& multiplier = dualSolution.intermediates[timeIndex];
 
-      optimalControlProblem.stateEqualityLagrangiantPtr->updateLagrangian(time, state, metrics.stateEqLagrangian, multiplier.stateEq);
-      optimalControlProblem.stateInequalityLagrangiantPtr->updateLagrangian(time, state, metrics.stateIneqLagrangian, multiplier.stateIneq);
-      optimalControlProblem.equalityLagrangiantPtr->updateLagrangian(time, state, input, metrics.stateInputEqLagrangian,
+      optimalControlProblem.stateEqualityLagrangiantPtr->updateLagrangian(time, state, metricsCollection.stateEqLagrangian,
+                                                                          multiplier.stateEq);
+      optimalControlProblem.stateInequalityLagrangiantPtr->updateLagrangian(time, state, metricsCollection.stateIneqLagrangian,
+                                                                            multiplier.stateIneq);
+      optimalControlProblem.equalityLagrangiantPtr->updateLagrangian(time, state, input, metricsCollection.stateInputEqLagrangian,
                                                                      multiplier.stateInputEq);
-      optimalControlProblem.inequalityLagrangiantPtr->updateLagrangian(time, state, input, metrics.stateInputIneqLagrangian,
+      optimalControlProblem.inequalityLagrangiantPtr->updateLagrangian(time, state, input, metricsCollection.stateInputIneqLagrangian,
                                                                        multiplier.stateInputIneq);
     }
   };
@@ -1108,12 +1110,12 @@ void GaussNewtonDDP::updateDualSolution(const PrimalSolution& primalSolution, Me
   //      const auto timeIndex = primalSolution.postEventIndices_[eventIndex] - 1;
   //      const auto& time = primalSolution.timeTrajectory_[timeIndex];
   //      const auto& state = primalSolution.stateTrajectory_[timeIndex];
-  //      auto& metrics = metricsCollection.preJumps[eventIndex];
+  //      auto& metricsCollection = problemMetrics.preJumps[eventIndex];
   //      auto& multiplier = dualSolution.preJumps[eventIndex];
   //
-  //      optimalControlProblem.preJumpEqualityLagrangiantPtr->updateLagrangian(time, state, metrics.stateEqLagrangian, multiplier.stateEq);
-  //      optimalControlProblem.preJumpInequalityLagrangiantPtr->updateLagrangian(time, state, metrics.stateIneqLagrangian,
-  //      multiplier.stateIneq);
+  //      optimalControlProblem.preJumpEqualityLagrangiantPtr->updateLagrangian(time, state, metricsCollection.stateEqLagrangian,
+  //      multiplier.stateEq); optimalControlProblem.preJumpInequalityLagrangiantPtr->updateLagrangian(time, state,
+  //      metricsCollection.stateIneqLagrangian, multiplier.stateIneq);
   //    }
   //  };
   //  runParallel(preJumpTask, ddpSettings_.nThreads_);
@@ -1121,10 +1123,11 @@ void GaussNewtonDDP::updateDualSolution(const PrimalSolution& primalSolution, Me
   // final
   const auto& time = primalSolution.timeTrajectory_.back();
   const auto& state = primalSolution.stateTrajectory_.back();
-  auto& metrics = metricsCollection.final;
+  auto& metricsCollection = problemMetrics.final;
   auto& multiplier = dualSolution.final;
-  optimalControlProblemStock_[0].finalEqualityLagrangiantPtr->updateLagrangian(time, state, metrics.stateEqLagrangian, multiplier.stateEq);
-  optimalControlProblemStock_[0].finalInequalityLagrangiantPtr->updateLagrangian(time, state, metrics.stateIneqLagrangian,
+  optimalControlProblemStock_[0].finalEqualityLagrangiantPtr->updateLagrangian(time, state, metricsCollection.stateEqLagrangian,
+                                                                               multiplier.stateEq);
+  optimalControlProblemStock_[0].finalInequalityLagrangiantPtr->updateLagrangian(time, state, metricsCollection.stateIneqLagrangian,
                                                                                  multiplier.stateIneq);
 }
 
@@ -1150,10 +1153,10 @@ void GaussNewtonDDP::runInit() {
     // initialize dual solution
     initializeDualSolution(optimizedDualSolution_, nominalPrimalData_.primalSolution, nominalDualSolution_);
 
-    computeRolloutMetrics(optimalControlProblemStock_[taskId], nominalPrimalData_.primalSolution, nominalDualSolution_, metrics_);
+    computeRolloutMetrics(optimalControlProblemStock_[taskId], nominalPrimalData_.primalSolution, nominalDualSolution_, problemMetrics_);
 
     // update dual
-    //  updateDualSolution(nominalPrimalData_.primalSolution, metrics_, nominalDualSolution_);
+    //  updateDualSolution(nominalPrimalData_.primalSolution, problemMetrics_, nominalDualSolution_);
 
     // This is necessary for:
     // + The moving horizon (MPC) application
@@ -1161,7 +1164,7 @@ void GaussNewtonDDP::runInit() {
     correctInitcachedNominalTrajectories();
 
     // calculates rollout merit
-    performanceIndex_ = computeRolloutPerformanceIndex(nominalPrimalData_.primalSolution.timeTrajectory_, metrics_);
+    performanceIndex_ = computeRolloutPerformanceIndex(nominalPrimalData_.primalSolution.timeTrajectory_, problemMetrics_);
     performanceIndex_.merit = calculateRolloutMerit(performanceIndex_);
 
     // display
@@ -1217,12 +1220,13 @@ void GaussNewtonDDP::runIteration(scalar_t lqModelExpectedCost) {
 
   // finding the optimal stepLength
   searchStrategyTimer_.startTimer();
-  runSearchStrategy(lqModelExpectedCost, unoptimizedController_, nominalDualSolution_, nominalPrimalData_, performanceIndex_, metrics_);
+  runSearchStrategy(lqModelExpectedCost, unoptimizedController_, nominalDualSolution_, nominalPrimalData_, performanceIndex_,
+                    problemMetrics_);
   searchStrategyTimer_.endTimer();
 
   // update dual
-  updateDualSolution(nominalPrimalData_.primalSolution, metrics_, nominalDualSolution_);
-  performanceIndex_ = computeRolloutPerformanceIndex(nominalPrimalData_.primalSolution.timeTrajectory_, metrics_);
+  updateDualSolution(nominalPrimalData_.primalSolution, problemMetrics_, nominalDualSolution_);
+  performanceIndex_ = computeRolloutPerformanceIndex(nominalPrimalData_.primalSolution.timeTrajectory_, problemMetrics_);
   performanceIndex_.merit = calculateRolloutMerit(performanceIndex_);
 
   // update the constraint penalty coefficients
@@ -1362,12 +1366,13 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   // finding the final optimal stepLength and getting the optimal trajectories and controller
   searchStrategyTimer_.startTimer();
   const scalar_t lqModelExpectedCost = dualData_.valueFunctionTrajectory.front().f;
-  runSearchStrategy(lqModelExpectedCost, unoptimizedController_, optimizedDualSolution_, optimizedPrimalData_, performanceIndex_, metrics_);
+  runSearchStrategy(lqModelExpectedCost, unoptimizedController_, optimizedDualSolution_, optimizedPrimalData_, performanceIndex_,
+                    problemMetrics_);
   searchStrategyTimer_.endTimer();
 
   // update dual
-  updateDualSolution(optimizedPrimalData_.primalSolution, metrics_, optimizedDualSolution_);
-  performanceIndex_ = computeRolloutPerformanceIndex(optimizedPrimalData_.primalSolution.timeTrajectory_, metrics_);
+  updateDualSolution(optimizedPrimalData_.primalSolution, problemMetrics_, optimizedDualSolution_);
+  performanceIndex_ = computeRolloutPerformanceIndex(optimizedPrimalData_.primalSolution.timeTrajectory_, problemMetrics_);
   performanceIndex_.merit = calculateRolloutMerit(performanceIndex_);
 
   performanceIndexHistory_.push_back(performanceIndex_);

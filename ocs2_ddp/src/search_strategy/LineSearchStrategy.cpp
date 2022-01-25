@@ -92,13 +92,13 @@ void LineSearchStrategy::computeSolution(size_t taskId, scalar_t stepLength, sea
   sampleIntermediateDualSolution(*lineSearchInputRef_.dualSolutionPtr, solution.primalSolution.timeTrajectory_,
                                  solution.intermediateDualSolution);
 
-  // compute metrics
+  // compute problem metrics
   DualSolutionConstRef dualSolutionRef(lineSearchInputRef_.dualSolutionPtr->final, lineSearchInputRef_.dualSolutionPtr->preJumps,
                                        solution.intermediateDualSolution);
-  computeRolloutMetrics(problem, solution.primalSolution, dualSolutionRef, solution.metrics);
+  computeRolloutMetrics(problem, solution.primalSolution, dualSolutionRef, solution.problemMetrics);
 
   // compute performanceIndex
-  solution.performanceIndex = computeRolloutPerformanceIndex(solution.primalSolution.timeTrajectory_, solution.metrics);
+  solution.performanceIndex = computeRolloutPerformanceIndex(solution.primalSolution.timeTrajectory_, solution.problemMetrics);
   solution.performanceIndex.merit = meritFunc_(solution.performanceIndex);
 
   // display

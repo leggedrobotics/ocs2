@@ -10,7 +10,7 @@
 
 namespace anymal {
 
-enum class AnymalModel { Bear, Cerberus, Chimera, Chip, Wheels, WheelsChimera };
+enum class AnymalModel { Bear, Cerberus, Chimera, Camel, Wheels, WheelsChimera };
 
 std::string toString(AnymalModel model);
 

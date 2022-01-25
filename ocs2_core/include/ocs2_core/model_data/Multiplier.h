@@ -34,10 +34,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <unordered_map>
 #include <vector>
 
-#include <ocs2_core/Types.h>
-#include <ocs2_core/constraint/StateConstraintCollection.h>
-#include <ocs2_core/constraint/StateInputConstraintCollection.h>
-#include <ocs2_core/misc/LinearInterpolation.h>
+#include "ocs2_core/Types.h"
+#include "ocs2_core/constraint/StateConstraintCollection.h"
+#include "ocs2_core/constraint/StateInputConstraintCollection.h"
+#include "ocs2_core/misc/LinearInterpolation.h"
 
 namespace ocs2 {
 

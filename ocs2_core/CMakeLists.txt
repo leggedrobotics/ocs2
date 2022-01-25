@@ -67,7 +67,6 @@ include_directories(
 # Declare a C++ library
 add_library(${PROJECT_NAME}
   src/Types.cpp
-  src/augmented_lagrangian/Multiplier.cpp
   src/augmented_lagrangian/StateAugmentedLagrangian.cpp
   src/augmented_lagrangian/StateInputAugmentedLagrangian.cpp
   src/augmented_lagrangian/StateAugmentedLagrangianCollection.cpp
@@ -133,6 +132,8 @@ add_library(${PROJECT_NAME}
   src/loopshaping/dynamics/LoopshapingFilterDynamics.cpp
   src/loopshaping/initialization/LoopshapingInitializer.cpp
   src/model_data/ModelData.cpp
+  src/model_data/Metrics.cpp
+  src/model_data/Multiplier.cpp
   src/misc/LinearAlgebra.cpp
   src/misc/Log.cpp
   src/soft_constraint/StateSoftConstraint.cpp

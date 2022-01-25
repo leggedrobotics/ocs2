@@ -50,7 +50,6 @@ add_library(${PROJECT_NAME}
   src/approximate_model/ChangeOfInputVariables.cpp
   src/approximate_model/LinearQuadraticApproximator.cpp
   src/oc_data/LoopshapingPrimalSolution.cpp
-  src/oc_data/Metrics.cpp
   src/oc_problem/OptimalControlProblem.cpp
   src/oc_problem/LoopshapingOptimalControlProblem.cpp
   src/oc_solver/SolverBase.cpp

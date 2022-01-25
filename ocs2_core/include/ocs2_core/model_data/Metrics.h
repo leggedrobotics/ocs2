@@ -30,13 +30,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
-#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 
 namespace ocs2 {
 
 struct Metrics {
-  using value_t = std::pair<vector_t, scalar_t>;
+  Metrics() : Metrics(0.0, vector_t()) {}
+  Metrics(scalar_t penaltyArg, vector_t constraintArg) : penalty(penaltyArg), constraint(std::move(constraintArg)) {}
 
+  scalar_t penalty;
+  vector_t constraint;
+};
+
+struct MetricsCollection {
   // Cost
   scalar_t cost;
 
@@ -45,23 +50,23 @@ struct Metrics {
   vector_t stateInputEqConstraint;
 
   // Lagrangians
-  std::vector<value_t> stateEqLagrangian;
-  std::vector<value_t> stateIneqLagrangian;
-  std::vector<value_t> stateInputEqLagrangian;
-  std::vector<value_t> stateInputIneqLagrangian;
+  std::vector<Metrics> stateEqLagrangian;
+  std::vector<Metrics> stateIneqLagrangian;
+  std::vector<Metrics> stateInputEqLagrangian;
+  std::vector<Metrics> stateInputIneqLagrangian;
 };
 
 struct ProblemMetrics {
-  Metrics final;
-  std::vector<Metrics> preJumps;
-  std::vector<Metrics> intermediates;
+  MetricsCollection final;
+  std::vector<MetricsCollection> preJumps;
+  std::vector<MetricsCollection> intermediates;
 };
 
-/** Exchanges the given values of Metrics */
-void swap(Metrics& lhs, Metrics& rhs);
+/** Exchanges the given values of MetricsCollection */
+void swap(MetricsCollection& lhs, MetricsCollection& rhs);
 
-/** Clears the value of the given Metrics */
-void clear(Metrics& m);
+/** Clears the value of the given MetricsCollection */
+void clear(MetricsCollection& m);
 
 /** Exchanges the given values of ProblemMetrics */
 void swap(ProblemMetrics& lhs, ProblemMetrics& rhs);

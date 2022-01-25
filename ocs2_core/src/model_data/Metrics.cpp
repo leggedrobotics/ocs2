@@ -27,14 +27,14 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_oc/oc_data/Metrics.h"
+#include "ocs2_core/model_data/Metrics.h"
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void swap(Metrics& lhs, Metrics& rhs) {
+void swap(MetricsCollection& lhs, MetricsCollection& rhs) {
   // Cost
   std::swap(lhs.cost, rhs.cost);
 
@@ -52,7 +52,7 @@ void swap(Metrics& lhs, Metrics& rhs) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void clear(Metrics& m) {
+void clear(MetricsCollection& m) {
   // Cost
   m.cost = 0.0;
 

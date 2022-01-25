@@ -65,7 +65,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * (2) Constraint compliance
  * (3) Check of cost function compared against cost calculated during trusted run of SLQ
  */
-TEST(HybridSlqTest, state_rollout_slq) {
+TEST(HybridSlqTest, DISABLED_state_rollout_slq) {
   using namespace ocs2;
 
   const size_t stateDim = STATE_DIM;

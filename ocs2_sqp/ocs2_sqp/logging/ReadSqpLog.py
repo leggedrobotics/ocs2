@@ -1,13 +1,23 @@
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import rc
 import itertools
 
 if __name__ == "__main__":
     # ===== Settings =======
-    fileName = "/tmp/ocs2/sqp_log/log_Thu_Jan__6_15:40:54_2022.txt"
+    fileName = "/tmp/ocs2/sqp_log/log_Wed_Jan_19_10:02:29_2022.txt"
 
     lineWidth = 1.0
     # ======================
+    rc('text', usetex=True)
+    plt.rcParams['text.latex.preamble'].join([
+        r'\usepackage{tgheros}',  # helvetica font
+        r'\usepackage{sansmath}',  # math-font matching  helvetica
+        r'\sansmath'  # actually tell tex to use it!
+        r'\usepackage{siunitx}',  # micro symbols
+        r'\sisetup{detect-all}',  # force siunitx to use the fonts
+    ])
 
     # Read the log
     data = pd.read_csv(fileName, sep=r'\s*,\s*',)
@@ -94,6 +104,7 @@ if __name__ == "__main__":
     ax1.plot(data['global_iteration'], data['linearQuadraticApproximationTime'], linewidth=lineWidth, label='LQ approximation')
     ax1.plot(data['global_iteration'], data['solveQpTime'], linewidth=lineWidth, label='QP solve')
     ax1.plot(data['global_iteration'], data['linesearchTime'], linewidth=lineWidth, label='Linesearch')
+    ax1.plot(data['global_iteration'], data['linearQuadraticApproximationTime'] + data['solveQpTime'] + data['linesearchTime'], linewidth=lineWidth, label='Total')
     plt.ylabel('CPU time [ms]')
     plt.xlabel('Problem number')
     ax1.legend()
@@ -104,6 +115,33 @@ if __name__ == "__main__":
     plt.ylabel('t0 [s]')
     plt.xlabel('Problem number')
     ax1.legend()
+
+    # Cost - constraints - stepsize when using realtime iteration
+    if not multiIterationPlots:
+        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True)
+
+        ax1.plot(lastIterations['time'], lastIterations['performanceAfterStep/merit'], linewidth=lineWidth)
+        ax1.set_ylabel('Cost')
+        ax1.grid(linestyle=':')
+
+        ax2.semilogy(lastIterations['time'], lastIterations['totalConstraintViolationAfterStep'], linewidth=lineWidth)
+        ax2.set_ylabel('Constraint violation')
+        ax2.set_yticks(np.logspace(-6, 0, num=4))
+        ax2.grid(linestyle=':')
+
+        marker = itertools.cycle(('v', '^', 'x', '*'))
+        offset = itertools.cycle((0.05, -0.05, 0.0, 0.0))
+        # ax1.plot(data['global_iteration'], data['stepSize'], linewidth=lineWidth, label='step size')
+        for name, group in data.groupby('stepType'):
+            ax3.scatter(group['time'], group['stepSize'] + next(offset), marker=next(marker), label=name, alpha=0.7)
+        ax3.set_ylim(0.0, 1.15)
+        ax3.set_ylabel('Step size')
+        ax3.set_xlabel('time [s]')
+        ax3.set_yticks([0.0, 0.25, 0.5, 1.0])
+        ax3.legend()
+        ax3.grid(linestyle=':')
+
+        fig.align_ylabels()
 
     plt.show()
 

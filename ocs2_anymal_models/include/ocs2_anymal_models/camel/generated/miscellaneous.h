@@ -1,5 +1,5 @@
-#ifndef IIT_ROBCOGEN__CROC_MISCELLANEOUS_H_
-#define IIT_ROBCOGEN__CROC_MISCELLANEOUS_H_
+#ifndef IIT_ROBCOGEN__CAMEL_MISCELLANEOUS_H_
+#define IIT_ROBCOGEN__CAMEL_MISCELLANEOUS_H_
 
 #include "inertia_properties.h"
 #include "transforms.h"

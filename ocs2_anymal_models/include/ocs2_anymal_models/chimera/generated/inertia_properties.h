@@ -265,7 +265,7 @@ inline const typename InertiaProperties<TRAIT>::Vec3d& InertiaProperties<TRAIT>:
 
 template <typename TRAIT>
 inline typename InertiaProperties<TRAIT>::Scalar InertiaProperties<TRAIT>::getTotalMass() const {
-    return Scalar(27.547037 + 2.781 + 3.071 + 0.58842 + 2.781 + 3.071 + 0.58842 + 2.781 + 3.071 + 0.58842 + 2.781 + 3.071 + 0.58842);
+    return Scalar(27.316038 + 2.781 + 3.071 + 0.58842 + 2.781 + 3.071 + 0.58842 + 2.781 + 3.071 + 0.58842 + 2.781 + 3.071 + 0.58842);
 }
 
 }

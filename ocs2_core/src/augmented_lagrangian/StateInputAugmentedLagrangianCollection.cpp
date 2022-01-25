@@ -41,17 +41,16 @@ StateInputAugmentedLagrangianCollection* StateInputAugmentedLagrangianCollection
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::vector<std::pair<vector_t, scalar_t>> StateInputAugmentedLagrangianCollection::getValue(scalar_t time, const vector_t& state,
-                                                                                             const vector_t& input,
-                                                                                             const std::vector<Multiplier>& termsMultiplier,
-                                                                                             const PreComputation& preComp) const {
-  std::vector<std::pair<vector_t, scalar_t>> termsConstraintPenalty;
+std::vector<Metrics> StateInputAugmentedLagrangianCollection::getValue(scalar_t time, const vector_t& state, const vector_t& input,
+                                                                       const std::vector<Multiplier>& termsMultiplier,
+                                                                       const PreComputation& preComp) const {
+  std::vector<Metrics> termsConstraintPenalty;
   termsConstraintPenalty.reserve(terms_.size());
   for (size_t i = 0; i < terms_.size(); i++) {
     if (terms_[i]->isActive(time)) {
       termsConstraintPenalty.emplace_back(terms_[i]->getValue(time, state, input, termsMultiplier[i], preComp));
     } else {
-      termsConstraintPenalty.emplace_back(vector_t(), 0.0);
+      termsConstraintPenalty.emplace_back(0.0, vector_t());
     }
   }
   return termsConstraintPenalty;
@@ -90,15 +89,15 @@ ScalarFunctionQuadraticApproximation StateInputAugmentedLagrangianCollection::ge
 /******************************************************************************************************/
 /******************************************************************************************************/
 void StateInputAugmentedLagrangianCollection::updateLagrangian(const scalar_t& time, const vector_t& state, const vector_t& input,
-                                                               std::vector<std::pair<vector_t, scalar_t>>& termsConstraintPenalty,
+                                                               std::vector<Metrics>& termsMetrics,
                                                                std::vector<Multiplier>& termsMultiplier) const {
-  assert(termsConstraintPenalty.size() == termsMultiplier.size());
+  assert(termsMetrics.size() == termsMultiplier.size());
 
   for (size_t i = 0; i < terms_.size(); i++) {
     if (terms_[i]->isActive(time)) {
       Multiplier updatedLagrangian;
-      std::tie(updatedLagrangian, termsConstraintPenalty[i].second) =
-          terms_[i]->updateLagrangian(time, state, input, termsConstraintPenalty[i].first, termsMultiplier[i]);
+      std::tie(updatedLagrangian, termsMetrics[i].penalty) =
+          terms_[i]->updateLagrangian(time, state, input, termsMetrics[i].constraint, termsMultiplier[i]);
       termsMultiplier[i] = std::move(updatedLagrangian);
     }
   }

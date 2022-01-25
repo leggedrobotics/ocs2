@@ -29,8 +29,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <iostream>
 
+#include "ocs2_oc/approximate_model/LinearQuadraticApproximator.h"
+
 #include <ocs2_core/misc/LinearAlgebra.h>
-#include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
 
 namespace ocs2 {
 
@@ -268,11 +269,11 @@ ScalarFunctionQuadraticApproximation approximateFinalCost(const OptimalControlPr
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-Metrics computeIntermediateMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state, const vector_t& input,
-                                   const MultiplierCollection& multipliers) {
+MetricsCollection computeIntermediateMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
+                                             const vector_t& input, const MultiplierCollection& multipliers) {
   auto& preComputation = *problem.preComputationPtr;
 
-  Metrics metrics;
+  MetricsCollection metrics;
 
   // Cost
   metrics.cost = computeCost(problem, time, state, input);
@@ -294,11 +295,11 @@ Metrics computeIntermediateMetrics(OptimalControlProblem& problem, const scalar_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-Metrics computePreJumpMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
-                              const MultiplierCollection& multipliers) {
+MetricsCollection computePreJumpMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
+                                        const MultiplierCollection& multipliers) {
   auto& preComputation = *problem.preComputationPtr;
 
-  Metrics metrics;
+  MetricsCollection metrics;
 
   // Cost
   metrics.cost = computeEventCost(problem, time, state);
@@ -316,11 +317,11 @@ Metrics computePreJumpMetrics(OptimalControlProblem& problem, const scalar_t tim
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-Metrics computeFinalMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
-                            const MultiplierCollection& multipliers) {
+MetricsCollection computeFinalMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
+                                      const MultiplierCollection& multipliers) {
   auto& preComputation = *problem.preComputationPtr;
 
-  Metrics metrics;
+  MetricsCollection metrics;
 
   // Cost
   metrics.cost = computeFinalCost(problem, time, state);

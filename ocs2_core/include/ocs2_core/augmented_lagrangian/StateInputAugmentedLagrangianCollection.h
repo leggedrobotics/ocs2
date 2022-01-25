@@ -34,7 +34,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/misc/Collection.h>
 
-#include "ocs2_core/augmented_lagrangian/Multiplier.h"
 #include "ocs2_core/augmented_lagrangian/StateInputAugmentedLagrangianInterface.h"
 
 namespace ocs2 {
@@ -52,8 +51,8 @@ class StateInputAugmentedLagrangianCollection final : public Collection<StateInp
   StateInputAugmentedLagrangianCollection* clone() const override;
 
   /** Get state constraints and their penalties for each active term */
-  std::vector<std::pair<vector_t, scalar_t>> getValue(scalar_t time, const vector_t& state, const vector_t& input,
-                                                      const std::vector<Multiplier>& termsMultiplier, const PreComputation& preComp) const;
+  std::vector<Metrics> getValue(scalar_t time, const vector_t& state, const vector_t& input, const std::vector<Multiplier>& termsMultiplier,
+                                const PreComputation& preComp) const;
 
   /** Get the sum of state-input Lagrangian penalties quadratic approximation */
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
@@ -61,8 +60,8 @@ class StateInputAugmentedLagrangianCollection final : public Collection<StateInp
                                                                  const PreComputation& preComp) const;
 
   /** Update Lagrange/penalty multipliers and the penalty value for each active term. */
-  void updateLagrangian(const scalar_t& time, const vector_t& state, const vector_t& input,
-                        std::vector<std::pair<vector_t, scalar_t>>& termsConstraintPenalty, std::vector<Multiplier>& termsMultiplier) const;
+  void updateLagrangian(const scalar_t& time, const vector_t& state, const vector_t& input, std::vector<Metrics>& termsMetrics,
+                        std::vector<Multiplier>& termsMultiplier) const;
 
   /** Initialize Lagrange/penalty multipliers for each active term. */
   void initializeLagrangian(scalar_t time, std::vector<Multiplier>& termsMultiplier) const;

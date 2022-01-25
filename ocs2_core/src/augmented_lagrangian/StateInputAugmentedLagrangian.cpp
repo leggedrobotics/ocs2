@@ -75,11 +75,11 @@ size_t StateInputAugmentedLagrangian::getNumConstraints(scalar_t time) const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::pair<vector_t, scalar_t> StateInputAugmentedLagrangian::getValue(scalar_t time, const vector_t& state, const vector_t& input,
-                                                                      const Multiplier& multiplier, const PreComputation& preComp) const {
+Metrics StateInputAugmentedLagrangian::getValue(scalar_t time, const vector_t& state, const vector_t& input, const Multiplier& multiplier,
+                                                const PreComputation& preComp) const {
   const auto h = constraintPtr_->getValue(time, state, input, preComp);
   const auto p = multiplier.penalty * penalty_.getValue(time, h, &multiplier.lagrangian);
-  return {h, p};
+  return {p, h};
 }
 
 /******************************************************************************************************/

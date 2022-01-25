@@ -31,9 +31,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/control/LinearController.h>
+#include <ocs2_core/model_data/Metrics.h>
 #include <ocs2_core/penalties/MultidimensionalPenalty.h>
 #include <ocs2_oc/oc_data/DualSolution.h>
-#include <ocs2_oc/oc_data/Metrics.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
 #include <ocs2_oc/rollout/RolloutBase.h>

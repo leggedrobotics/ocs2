@@ -30,10 +30,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/augmented_lagrangian/Multiplier.h>
+#include <ocs2_core/model_data/Metrics.h>
 #include <ocs2_core/model_data/ModelData.h>
+#include <ocs2_core/model_data/Multiplier.h>
 
-#include <ocs2_oc/oc_data/Metrics.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 
 namespace ocs2 {
@@ -122,10 +122,10 @@ ScalarFunctionQuadraticApproximation approximateFinalCost(const OptimalControlPr
  * @param [in] state: The current state.
  * @param [in] input: The current input.
  * @param [in] multipliers: The current multipliers associated to the equality and inequality Lagrangians.
- * @return The output Metrics.
+ * @return The output MetricsCollection.
  */
-Metrics computeIntermediateMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state, const vector_t& input,
-                                   const MultiplierCollection& multipliers);
+MetricsCollection computeIntermediateMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
+                                             const vector_t& input, const MultiplierCollection& multipliers);
 
 /**
  * Compute the event-time metrics based on pre-jump state value (i.e. cost, softConstraints, and constraints).
@@ -137,10 +137,10 @@ Metrics computeIntermediateMetrics(OptimalControlProblem& problem, const scalar_
  * @param [in] time: The current time.
  * @param [in] state: The current state.
  * @param [in] multipliers: The current multipliers associated to the equality and inequality Lagrangians.
- * @return The output Metrics.
+ * @return The output MetricsCollection.
  */
-Metrics computePreJumpMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
-                              const MultiplierCollection& multipliers);
+MetricsCollection computePreJumpMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
+                                        const MultiplierCollection& multipliers);
 
 /**
  * Compute the final-time metrics (i.e. cost, softConstraints, and constraints).
@@ -152,9 +152,9 @@ Metrics computePreJumpMetrics(OptimalControlProblem& problem, const scalar_t tim
  * @param [in] time: The current time.
  * @param [in] state: The current state.
  * @param [in] multipliers: The current multipliers associated to the equality and inequality Lagrangians.
- * @return The output Metrics.
+ * @return The output MetricsCollection.
  */
-Metrics computeFinalMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
-                            const MultiplierCollection& multipliers);
+MetricsCollection computeFinalMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
+                                      const MultiplierCollection& multipliers);
 
 }  // namespace ocs2

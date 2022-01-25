@@ -31,8 +31,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/PreComputation.h>
 #include <ocs2_core/Types.h>
-#include <ocs2_core/augmented_lagrangian/Multiplier.h>
 #include <ocs2_core/constraint/StateConstraint.h>
+#include <ocs2_core/model_data/Metrics.h>
+#include <ocs2_core/model_data/Multiplier.h>
 
 namespace ocs2 {
 
@@ -50,8 +51,7 @@ class StateAugmentedLagrangianInterface {
   virtual size_t getNumConstraints(scalar_t time) const = 0;
 
   /** Get the constraint and its penalty value */
-  virtual std::pair<vector_t, scalar_t> getValue(scalar_t time, const vector_t& state, const Multiplier& multiplier,
-                                                 const PreComputation& preComp) const = 0;
+  virtual Metrics getValue(scalar_t time, const vector_t& state, const Multiplier& multiplier, const PreComputation& preComp) const = 0;
 
   /** Get the constraint's penalty quadratic approximation */
   virtual ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const Multiplier& multiplier,

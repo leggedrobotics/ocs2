@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/augmented_lagrangian/Multiplier.h>
+#include <ocs2_core/model_data/Multiplier.h>
 
 namespace ocs2 {
 

@@ -5,4 +5,6 @@ motionList
     [2] walking_2_3_speed
     [3] walking_inplace
     [4] mocap_20211126
+    [5] motion_v5
+    [6] motion_v6
 }

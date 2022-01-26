@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_ddp/trajectory_adjustment/TrajectorySpreading.h"
+#include "ocs2_core/trajectory_adjustment/TrajectorySpreading.h"
 
 #include <algorithm>
 #include <cassert>

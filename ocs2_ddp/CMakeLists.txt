@@ -58,7 +58,6 @@ add_library(${PROJECT_NAME}
   src/search_strategy/LineSearchStrategy.cpp
   src/search_strategy/SearchStrategyBase.cpp
   src/search_strategy/StrategySettings.cpp
-  src/trajectory_adjustment/TrajectorySpreading.cpp
   src/ContinuousTimeLqr.cpp
   src/GaussNewtonDDP.cpp
   src/HessianCorrection.cpp
@@ -190,15 +189,5 @@ target_link_libraries(testContinuousTimeLqr
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
   ${PROJECT_NAME}
-  gtest_main
-)
-
-catkin_add_gtest(trajectory_spreading_test
-  test/trajectory_adjustment/TrajectorySpreadingTest.cpp
-)
-target_link_libraries(trajectory_spreading_test
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
   gtest_main
 )

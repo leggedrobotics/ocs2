@@ -26,18 +26,7 @@ class anymal_mpc_python_tests(unittest.TestCase):
         desiredInputTraj = vector_array()
         desiredInputTraj.push_back(np.zeros(self.INPUT_DIM))
 
-        desiredStateTraj = vector_array()
-        desiredStateTraj.push_back(np.zeros(self.STATE_DIM))
-
-        targetTrajectories = TargetTrajectories(
-            desiredTimeTraj, desiredStateTraj, desiredInputTraj
-        )
-        self.mpc.reset(targetTrajectories)
-
-        time = 0.0
         x = np.zeros(self.STATE_DIM)
-        x[3] = 0.1  # base x
-        x[4] = 0.1  # base y
         x[5] = 0.5163  # base z
         x[12] = -0.25  # LF_HAA
         x[13] = 0.6
@@ -51,6 +40,17 @@ class anymal_mpc_python_tests(unittest.TestCase):
         x[21] = 0.25
         x[22] = -0.6
         x[23] = 0.85  # RH_KFE
+        desiredStateTraj = vector_array()
+        desiredStateTraj.push_back(x)
+
+        targetTrajectories = TargetTrajectories(
+            desiredTimeTraj, desiredStateTraj, desiredInputTraj
+        )
+        self.mpc.reset(targetTrajectories)
+
+        time = 0.0
+        x[3] += 0.1  # base x
+        x[4] += 0.1  # base y
         self.mpc.setObservation(time, x, np.zeros(self.INPUT_DIM))
 
         self.mpc.advanceMpc()

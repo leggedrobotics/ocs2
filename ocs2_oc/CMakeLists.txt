@@ -64,6 +64,7 @@ add_library(${PROJECT_NAME}
   src/synchronized_module/ReferenceManager.cpp
   src/synchronized_module/LoopshapingReferenceManager.cpp
   src/synchronized_module/LoopshapingSynchronizedModule.cpp
+  src/trajectory_adjustment/TrajectorySpreading.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
@@ -142,6 +143,16 @@ catkin_add_gtest(test_change_of_variables
   test/testChangeOfInputVariables.cpp
 )
 target_link_libraries(test_change_of_variables
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  gtest_main
+)
+
+catkin_add_gtest(test_trajectory_spreading
+  test/trajectory_adjustment/TrajectorySpreadingTest.cpp
+)
+target_link_libraries(test_trajectory_spreading
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}

@@ -139,7 +139,6 @@ add_library(${PROJECT_NAME}
   src/soft_constraint/penalties/RelaxedBarrierPenalty.cpp
   src/soft_constraint/penalties/SquaredHingePenalty.cpp
   src/thread_support/ThreadPool.cpp
-  src/trajectory_adjustment/TrajectorySpreading.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
@@ -378,15 +377,5 @@ target_link_libraries(${PROJECT_NAME}_test_precomputation
   ${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
-  gtest_main
-)
-
-catkin_add_gtest(trajectory_spreading_test
-  test/trajectory_adjustment/TrajectorySpreadingTest.cpp
-)
-target_link_libraries(trajectory_spreading_test
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
   gtest_main
 )

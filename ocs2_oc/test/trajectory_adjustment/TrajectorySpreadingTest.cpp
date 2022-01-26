@@ -39,8 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
 #include <ocs2_core/misc/Lookup.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
-
-#include <ocs2_core/trajectory_adjustment/TrajectorySpreading.h>
+#include <ocs2_oc/trajectory_adjustment/TrajectorySpreading.h>
 
 struct Result {
   ocs2::scalar_array_t timeTrajectory;

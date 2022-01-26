@@ -119,32 +119,31 @@ install(DIRECTORY test/include/${PROJECT_NAME}/
 ## $ catkin_test_results ../../../build/ocs2_oc
 
 catkin_add_gtest(test_time_triggered_rollout
-   test/time_rollout_test.cpp
+   test/rollout/testTimeTriggeredRollout.cpp
 )
 target_link_libraries(test_time_triggered_rollout
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES}
   ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  gtest_main
+)
+
+catkin_add_gtest(test_state_triggered_rollout
+  test/rollout/testStateTriggeredRollout.cpp
+)
+target_link_libraries(test_state_triggered_rollout
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
   gtest_main
 )
 
 catkin_add_gtest(test_change_of_variables
   test/testChangeOfInputVariables.cpp
-  )
+)
 target_link_libraries(test_change_of_variables
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES}
   ${PROJECT_NAME}
-  gtest_main
-  )
-
-catkin_add_gtest(state_triggered_rollout_test
-  test/state_triggered_rollout_test.cpp
-)
-target_link_libraries(state_triggered_rollout_test
-  ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
-  ${PROJECT_NAME}
+  ${Boost_LIBRARIES}
   gtest_main
 )
-target_compile_options(state_triggered_rollout_test PRIVATE ${OCS2_CXX_FLAGS})

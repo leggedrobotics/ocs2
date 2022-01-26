@@ -34,16 +34,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-class TrajectorySpreading {
+class TrajectorySpreading final {
  public:
   /**
    * Constructor
    * @param [in] debugCaching: To activate the debug print.
    */
   explicit TrajectorySpreading(bool debugCaching = false) : debugCaching_(debugCaching) {}
-
-  /** Destructor */
-  ~TrajectorySpreading() = default;
 
   /**
    * Initialize trajectory spreading strategy. Run it before invoking other member functions
@@ -81,6 +78,16 @@ class TrajectorySpreading {
   void adjustTimings(scalar_array_t& timeTrajectory, size_array_t& postEventIndices) const;
 
  private:
+  /**
+   * Computing spreading strategy based on the correspondence between the old event time and the new event time.
+   *
+   * @param oldTimeTrajectory: The old time trajectories that is associated with the old mode schedule.
+   * @param oldMatchedEventTimes: The old event time that need adjustment potentially.
+   * @param newMatchedEventTimes: The corresponding new event time.
+   */
+  void computeSpreadingStrategy(const scalar_array_t& oldTimeTrajectory, const scalar_array_t& oldMatchedEventTimes,
+                                const scalar_array_t& newMatchedEventTimes);
+
   // helper function: get index of the iterator returned by upper_bound function
   int upperBoundIndex(const scalar_array_t& timeTrajectory, scalar_t queryTime) const {
     return std::distance(timeTrajectory.begin(), std::upper_bound(timeTrajectory.begin(), timeTrajectory.end(), queryTime));
@@ -92,28 +99,23 @@ class TrajectorySpreading {
   }
 
   /**
-   * Computing spreading strategy based on the correspondence between the old event time and the new event time.
-   *
-   * @param oldTimeTrajectory: The old time trajectories that is associated with the old mode schedule.
-   * @param oldMatchedEventTimes: The old event time that need adjustment potentially.
-   * @param newMatchedEventTimes: The corresponding new event time.
-   */
-  void computeSpreadingStrategy(const scalar_array_t& oldTimeTrajectory, const scalar_array_t& oldMatchedEventTimes,
-                                const scalar_array_t& newMatchedEventTimes);
-
-  /**
-   * Finding post event indices of an array of event time for the given time trajectory.
+   * Finds post event indices of an array of event time for the given time trajectory.
    *
    * @param eventTimes: An array of event time.
    * @param timeTrajectory: Time trajectory.
    * @return An array containing post event indices of the given event time.
    */
-  size_array_t findPostEventIndices(const scalar_array_t& eventTimes, const scalar_array_t& timeTrajectory) const;
+  size_array_t findPostEventIndices(const scalar_array_t& eventTimes, const scalar_array_t& timeTrajectory) const {
+    size_array_t postEventIndices(eventTimes.size());
+    std::transform(eventTimes.cbegin(), eventTimes.cend(), postEventIndices.begin(),
+                   [this, &timeTrajectory](scalar_t time) -> int { return upperBoundIndex(timeTrajectory, time); });
+    return postEventIndices;
+  }
 
   /***********
    * Variables
    ***********/
-  bool debugCaching_ = false;
+  const bool debugCaching_ = false;
 
   size_t eraseFromIndex_;                             /**< The first index to erase **/
   std::pair<size_t, size_t> keepEventDataInInterval_; /**< Keep event data within [first, second) **/

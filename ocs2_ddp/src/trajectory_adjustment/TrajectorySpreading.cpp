@@ -45,6 +45,11 @@ std::ostream& operator<<(std::ostream& os, const std::pair<int, int>& ind) {
   return os;
 }
 
+std::stringstream& operator<<(std::stringstream& out, const std::pair<int, int>& ind) {
+  out << "(" << ind.first << ", " << ind.second << ")";
+  return out;
+}
+
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -54,8 +59,8 @@ void TrajectorySpreading::set(const ModeSchedule& oldModeSchedule, const ModeSch
   const scalar_t oldInitTime = oldTimeTrajectory.front();
   const scalar_t oldFinalTime = oldTimeTrajectory.back();
 
+  // noe: sizeof(eventTimes) + 1 == sizeof(modeSequence)
   const int oldFirstActiveModeIndex = upperBoundIndex(oldModeSchedule.eventTimes, oldInitTime);
-  // sizeof(eventTimes) + 1 == sizeof(modeSequence)
   const int oldLastActiveModeIndex = upperBoundIndex(oldModeSchedule.eventTimes, oldFinalTime);
 
   // step 2: What modes do the new mode schedule need?
@@ -342,16 +347,6 @@ void TrajectorySpreading::computeSpreadingStrategy(const scalar_array_t& oldTime
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-size_array_t TrajectorySpreading::findPostEventIndices(const scalar_array_t& eventTimes, const scalar_array_t& timeTrajectory) const {
-  size_array_t postEventIndices(eventTimes.size());
-  std::transform(eventTimes.cbegin(), eventTimes.cend(), postEventIndices.begin(),
-                 [this, &timeTrajectory](scalar_t time) -> int { return upperBoundIndex(timeTrajectory, time); });
-  return postEventIndices;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 void TrajectorySpreading::adjustTimings(scalar_array_t& timeTrajectory, size_array_t& postEventIndices) const {
   timeTrajectory.erase(timeTrajectory.begin() + eraseFromIndex_, timeTrajectory.end());
   postEventIndices = updatedPostEventIndices_;
@@ -362,14 +357,6 @@ void TrajectorySpreading::adjustTimings(scalar_array_t& timeTrajectory, size_arr
     timeTrajectory[updatedPostEventIndices_[i] - 1] = updatedMatchedventTimes_[i];
     timeTrajectory[updatedPostEventIndices_[i]] = std::min(updatedMatchedventTimes_[i] + eps, timeTrajectory.back());
   }  // end of i loop
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-std::stringstream& operator<<(std::stringstream& out, const std::pair<int, int>& ind) {
-  out << "(" << ind.first << ", " << ind.second << ")";
-  return out;
 }
 
 }  // namespace ocs2

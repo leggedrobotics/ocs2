@@ -59,7 +59,7 @@ void TrajectorySpreading::set(const ModeSchedule& oldModeSchedule, const ModeSch
   const scalar_t oldInitTime = oldTimeTrajectory.front();
   const scalar_t oldFinalTime = oldTimeTrajectory.back();
 
-  // noe: sizeof(eventTimes) + 1 == sizeof(modeSequence)
+  // note: sizeof(eventTimes) + 1 == sizeof(modeSequence)
   const int oldFirstActiveModeIndex = upperBoundIndex(oldModeSchedule.eventTimes, oldInitTime);
   const int oldLastActiveModeIndex = upperBoundIndex(oldModeSchedule.eventTimes, oldFinalTime);
 
@@ -72,23 +72,23 @@ void TrajectorySpreading::set(const ModeSchedule& oldModeSchedule, const ModeSch
   // the starting mode of the matched sequence must cover the newInitTime
   const auto newStartIndexOfMatchedSequence = newFirstActiveModeIndex;
 
-  // step 3: What is the longest matched mode sequence?
+  // step 3: What is the longest window of matched mode sequence?
   // the size of the window where the active modes are identical.
   // this means: mode[firstMatchingModeIndex + w] != updatedMode[updatedFirstMatchingModeIndex + w]
   size_t w = 0;
-  while (oldStartIndexOfMatchedSequence <= oldModeSchedule.modeSequence.size() - 1) {
-    // +1 to include the last mode
+  while (oldStartIndexOfMatchedSequence < oldModeSchedule.modeSequence.size()) {
     // TODO: change to mismatch(first1, last1, first2, last2). It is supported since c++ 201103
+    // +1 to include the last mode
     auto mismatchedIndex = std::mismatch(oldModeSchedule.modeSequence.begin() + oldStartIndexOfMatchedSequence,
                                          oldModeSchedule.modeSequence.begin() + oldLastActiveModeIndex + 1,
                                          newModeSchedule.modeSequence.begin() + newStartIndexOfMatchedSequence);
 
-    while (mismatchedIndex.second - newModeSchedule.modeSequence.begin() - newLastActiveModeIndex - 1 > 0) {
+    while (std::distance(newModeSchedule.modeSequence.begin() + newLastActiveModeIndex, mismatchedIndex.second) > 1) {
       mismatchedIndex.first -= 1;
       mismatchedIndex.second -= 1;
     }
     // end TODO
-    w = std::distance(oldModeSchedule.modeSequence.begin(), mismatchedIndex.first) - oldStartIndexOfMatchedSequence;
+    w = std::distance(oldModeSchedule.modeSequence.begin() + oldStartIndexOfMatchedSequence, mismatchedIndex.first);
 
     if (w > 0) {
       break;
@@ -118,7 +118,7 @@ void TrajectorySpreading::set(const ModeSchedule& oldModeSchedule, const ModeSch
   }
   // Phase 2: Add triggering event time if the first matched mode is NOT the leading mode of the old mode schedule.
   // As the first matched mode must be the leading mode of the new mode schedule, in the case that the first matched mode is NOT the
-  // leading mode of the old mode schedulethe, the triggering event time need to be shftied back to the begining of trajectories
+  // leading mode of the old mode schedule, the triggering event time need to be shifted back to the beginning of trajectories
   // In summary, Triggering event time can be either ignored(leading mode of both old and new schedule are matched) or shifted backward.
   if (oldStartIndexOfMatchedSequence > oldFirstActiveModeIndex) {
     const auto oldLastTriggeredEvent = oldModeSchedule.eventTimes[oldStartIndexOfMatchedSequence - 1];
@@ -131,11 +131,11 @@ void TrajectorySpreading::set(const ModeSchedule& oldModeSchedule, const ModeSch
   // Phase 3: Add ending event time if that of the old mode schedule is less than that of the new mode schedule.
   // The situation is similar to phase 2 where ending event time is added if it has to be spread till the end of truncated trajectories.
   // If the last active mode of the old mode schedule is matched, the ending event time can be either left untouched or moved backward(no
-  // space for spreading forward). But in both cases, we don't have to add the ending event time as everying after the new ending event time
-  // will be erased.
+  // space for spreading forward). But in both cases, we don't have to add the ending event time as everything after the new ending event
+  // time will be erased.
   // If the last active mode of the old mode schedule is NOT matched but the last active mode of the new mode schedule is matched, that
   // indicates the old ending event time need to be spread till the end of trajectories.
-  // If neither new last active mode and old last active mode is matched, we have to comapre the corresponding ending event time.
+  // If neither new last active mode and old last active mode is matched, we have to compare the corresponding ending event time.
   bool isLastActiveModeOfOldModeSequenceMatched = oldStartIndexOfMatchedSequence + w - 1 == oldLastActiveModeIndex;
   bool isLastActiveModeOfNewModeSequenceMatched = newStartIndexOfMatchedSequence + w - 1 == newLastActiveModeIndex;
   if (!isLastActiveModeOfOldModeSequenceMatched &&
@@ -292,6 +292,8 @@ void TrajectorySpreading::computeSpreadingStrategy(const scalar_array_t& oldTime
   beginIndices_.clear();
   endIndices_.clear();
   spreadingValueIndices_.clear();
+  updatedPostEventIndices_.clear();
+  updatedMatchedventTimes_.clear();
 
   for (size_t j = 0; j < oldPostEventIndices.size(); j++) {
     const size_t oldPreEventIndex = oldPostEventIndices[j] - 1;
@@ -312,7 +314,6 @@ void TrajectorySpreading::computeSpreadingStrategy(const scalar_array_t& oldTime
       beginIndices_.push_back(newPostEventIndices[j]);
       endIndices_.push_back(endIndex);
       spreadingValueIndices_.push_back(oldPostEventIndices[j]);
-
     }
 
     /**

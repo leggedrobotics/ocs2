@@ -215,8 +215,7 @@ void GaussNewtonDDP::getPrimalSolution(scalar_t finalTime, PrimalSolution* prima
   };
 
   auto getRequestedEventDataLength = [](const size_array_t& postEventIndices, int endIndex) {
-    return std::distance(postEventIndices.cbegin(), std::find_if(postEventIndices.cbegin(), postEventIndices.cend(),
-                                                                 [endIndex](size_t ind) { return ind > endIndex; }));
+    return std::distance(postEventIndices.cbegin(), std::upper_bound(postEventIndices.cbegin(), postEventIndices.cend(), endIndex));
   };
 
   // length of trajectories

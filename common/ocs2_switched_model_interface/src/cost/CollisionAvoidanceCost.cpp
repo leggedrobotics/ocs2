@@ -25,18 +25,22 @@ scalar_t CollisionAvoidanceCost::getValue(scalar_t time, const vector_t& state, 
 
   scalar_t cost(0.0);
   if (sdfPtr != nullptr) {
+    const auto& collisionSpheresActive = switchedModelPreComp.collisionSpheresActive();
     const auto& collisionSpheres = switchedModelPreComp.collisionSpheresInOriginFrame();
 
-    for (const auto& collisionSphere : collisionSpheres) {
-      const auto sdfDistance = sdfPtr->value(collisionSphere.position);
-      const auto h_sdf = sdfDistance - collisionSphere.radius;
+    for (size_t i = 0; i < collisionSpheres.size(); ++i) {
+      if (collisionSpheresActive[i]) {
+        const auto& collisionSphere = collisionSpheres[i];
+        const auto sdfDistance = sdfPtr->value(collisionSphere.position);
+        const auto h_sdf = sdfDistance - collisionSphere.radius;
 
-      SingleLinearStateInequalitySoftConstraint linearStateInequalitySoftConstraint;
-      linearStateInequalitySoftConstraint.penalty = penalty_.get();
-      // linearStateInequalitySoftConstraint.A = Leave empty
-      linearStateInequalitySoftConstraint.h = h_sdf;
+        SingleLinearStateInequalitySoftConstraint linearStateInequalitySoftConstraint;
+        linearStateInequalitySoftConstraint.penalty = penalty_.get();
+        // linearStateInequalitySoftConstraint.A = Leave empty
+        linearStateInequalitySoftConstraint.h = h_sdf;
 
-      cost += switched_model::getValue(linearStateInequalitySoftConstraint, collisionSphere.position);
+        cost += switched_model::getValue(linearStateInequalitySoftConstraint, collisionSphere.position);
+      }
     }
   }
 
@@ -53,27 +57,30 @@ ScalarFunctionQuadraticApproximation CollisionAvoidanceCost::getQuadraticApproxi
   cost.dfdx = vector_t::Zero(STATE_DIM);
   cost.dfdxx = matrix_t::Zero(STATE_DIM, STATE_DIM);
 
-  const auto& collisionSpheres = switchedModelPreComp.collisionSpheresInOriginFrame();
-  const auto& collisionSphereDerivatives = switchedModelPreComp.collisionSpheresInOriginFrameStateDerivative();
   const auto* sdfPtr = switchedModelPreComp.getSignedDistanceField();
 
   if (sdfPtr != nullptr) {
+    const auto& collisionSpheresActive = switchedModelPreComp.collisionSpheresActive();
+    const auto& collisionSpheres = switchedModelPreComp.collisionSpheresInOriginFrame();
+    const auto& collisionSphereDerivatives = switchedModelPreComp.collisionSpheresInOriginFrameStateDerivative();
     for (size_t i = 0; i < collisionSpheres.size(); ++i) {
-      const auto& collisionSphere = collisionSpheres[i];
-      const auto& collisionSphereDerivative = collisionSphereDerivatives[i];
-      const auto sdfFirstOrder = sdfPtr->valueAndDerivative(collisionSphere.position);
-      const auto h_sdf = sdfFirstOrder.first - collisionSphere.radius;
+      if (collisionSpheresActive[i]) {
+        const auto& collisionSphere = collisionSpheres[i];
+        const auto& collisionSphereDerivative = collisionSphereDerivatives[i];
+        const auto sdfFirstOrder = sdfPtr->valueAndDerivative(collisionSphere.position);
+        const auto h_sdf = sdfFirstOrder.first - collisionSphere.radius;
 
-      SingleLinearStateInequalitySoftConstraint linearStateInequalitySoftConstraint;
-      linearStateInequalitySoftConstraint.penalty = penalty_.get();
-      linearStateInequalitySoftConstraint.A = sdfFirstOrder.second.transpose();
-      linearStateInequalitySoftConstraint.h = h_sdf;
+        SingleLinearStateInequalitySoftConstraint linearStateInequalitySoftConstraint;
+        linearStateInequalitySoftConstraint.penalty = penalty_.get();
+        linearStateInequalitySoftConstraint.A = sdfFirstOrder.second.transpose();
+        linearStateInequalitySoftConstraint.h = h_sdf;
 
-      const auto targetcost = switched_model::getQuadraticApproximation(linearStateInequalitySoftConstraint, collisionSphere.position,
-                                                                        collisionSphereDerivative);
-      cost.f += targetcost.f;
-      cost.dfdx += targetcost.dfdx;
-      cost.dfdxx += targetcost.dfdxx;
+        const auto targetcost = switched_model::getQuadraticApproximation(linearStateInequalitySoftConstraint, collisionSphere.position,
+                                                                          collisionSphereDerivative);
+        cost.f += targetcost.f;
+        cost.dfdx += targetcost.dfdx;
+        cost.dfdxx += targetcost.dfdxx;
+      }
     }
   }
 

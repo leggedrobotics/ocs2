@@ -28,6 +28,12 @@ SwitchedModelPreComputation::SwitchedModelPreComputation(const SwingTrajectoryPl
     collisionRadii_.push_back(collision.radius);
   }
 
+  // Resize collision containers
+  const size_t maxNumCollisions = NUM_CONTACT_POINTS + collisionRadii_.size();
+  collisionSpheresActive_.resize(maxNumCollisions);
+  collisionSpheresInOriginFrame_.resize(maxNumCollisions);
+  collisionSpheresDerivative_.resize(maxNumCollisions);
+
   // Generate the model
   const bool verbose = true;
   const auto order = ocs2::CppAdInterface::ApproximationOrder::First;
@@ -42,7 +48,10 @@ SwitchedModelPreComputation::SwitchedModelPreComputation(const SwitchedModelPreC
     : ocs2::PreComputation(other),
       swingTrajectoryPlannerPtr_(other.swingTrajectoryPlannerPtr_),
       intermediateLinearOutputAdInterface_(new ocs2::CppAdInterface(*other.intermediateLinearOutputAdInterface_)),
-      collisionRadii_(other.collisionRadii_) {}
+      collisionRadii_(other.collisionRadii_),
+      collisionSpheresActive_(other.collisionSpheresActive_),
+      collisionSpheresInOriginFrame_(other.collisionSpheresInOriginFrame_),
+      collisionSpheresDerivative_(other.collisionSpheresDerivative_) {}
 
 void SwitchedModelPreComputation::request(ocs2::RequestSet request, scalar_t t, const vector_t& x, const vector_t& u) {
   updateFeetPhases(t);
@@ -107,9 +116,6 @@ void SwitchedModelPreComputation::intermediateLinearOutputs(const ad_com_model_t
 }
 
 void SwitchedModelPreComputation::updateIntermediateLinearOutputs(scalar_t t, const vector_t& tapedStateInput) {
-  // Clear old precomputation
-  collisionSpheresInOriginFrame_.clear();
-
   // Evaluate autodiff
   const auto intermediateLinearOutputs = intermediateLinearOutputAdInterface_->getFunctionValue(tapedStateInput);
 
@@ -118,8 +124,10 @@ void SwitchedModelPreComputation::updateIntermediateLinearOutputs(scalar_t t, co
     const int indexInOutputs = 3 * leg;
     feetPositionInOriginFrame_[leg] = intermediateLinearOutputs.segment<3>(indexInOutputs);
     const auto& footPhase = getFootPhase(leg);
-    if (!footPhase.contactFlag()) {
-      collisionSpheresInOriginFrame_.push_back({feetPositionInOriginFrame_[leg], footPhase.getMinimumFootClearance(t)});
+    collisionSpheresActive_[leg] = !footPhase.contactFlag();
+    if (collisionSpheresActive_[leg]) {
+      collisionSpheresInOriginFrame_[leg].position = feetPositionInOriginFrame_[leg];
+      collisionSpheresInOriginFrame_[leg].radius = footPhase.getMinimumFootClearance(t);
     }
   }
 
@@ -135,14 +143,14 @@ void SwitchedModelPreComputation::updateIntermediateLinearOutputs(scalar_t t, co
   // Read collision bodies (excluding the feet)
   for (int collisionIndex = 0; collisionIndex < collisionRadii_.size(); ++collisionIndex) {
     const int indexInOutputs = JOINT_COORDINATE_SIZE + 3 * (NUM_CONTACT_POINTS + NUM_CONTACT_POINTS + collisionIndex);
-    collisionSpheresInOriginFrame_.push_back({intermediateLinearOutputs.segment<3>(indexInOutputs), collisionRadii_[collisionIndex]});
+    const auto collisionGlobalId = NUM_CONTACT_POINTS + collisionIndex;
+    collisionSpheresActive_[collisionGlobalId] = true;
+    collisionSpheresInOriginFrame_[collisionGlobalId].position = intermediateLinearOutputs.segment<3>(indexInOutputs);
+    collisionSpheresInOriginFrame_[collisionGlobalId].radius = collisionRadii_[collisionIndex];
   }
 }
 
 void SwitchedModelPreComputation::updateIntermediateLinearOutputDerivatives(scalar_t t, const vector_t& tapedStateInput) {
-  // Clear old precomputation
-  collisionSpheresDerivative_.clear();
-
   // Evaluate autodiff
   const auto intermediateLinearOutputDerivatives = intermediateLinearOutputAdInterface_->getJacobian(tapedStateInput);
 
@@ -150,8 +158,9 @@ void SwitchedModelPreComputation::updateIntermediateLinearOutputDerivatives(scal
     const int indexInOutputs = 3 * leg;
     feetPositionInOriginFrameStateDerivative_[leg] = intermediateLinearOutputDerivatives.block<3, STATE_DIM>(indexInOutputs, 0);
     const auto& footPhase = getFootPhase(leg);
-    if (!footPhase.contactFlag()) {
-      collisionSpheresDerivative_.push_back(feetPositionInOriginFrameStateDerivative_[leg]);
+    collisionSpheresActive_[leg] = !footPhase.contactFlag();
+    if (collisionSpheresActive_[leg]) {
+      collisionSpheresDerivative_[leg] = feetPositionInOriginFrameStateDerivative_[leg];
     }
   }
 
@@ -173,7 +182,9 @@ void SwitchedModelPreComputation::updateIntermediateLinearOutputDerivatives(scal
   // Read collision bodies (excluding the feet)
   for (int collisionIndex = 0; collisionIndex < collisionRadii_.size(); ++collisionIndex) {
     const int indexInOutputs = JOINT_COORDINATE_SIZE + 3 * (NUM_CONTACT_POINTS + NUM_CONTACT_POINTS + collisionIndex);
-    collisionSpheresDerivative_.push_back(intermediateLinearOutputDerivatives.block<3, STATE_DIM>(indexInOutputs, 0));
+    const auto collisionGlobalId = NUM_CONTACT_POINTS + collisionIndex;
+    collisionSpheresActive_[collisionGlobalId] = true;
+    collisionSpheresDerivative_[collisionGlobalId] = intermediateLinearOutputDerivatives.block<3, STATE_DIM>(indexInOutputs, 0);
   }
 }
 

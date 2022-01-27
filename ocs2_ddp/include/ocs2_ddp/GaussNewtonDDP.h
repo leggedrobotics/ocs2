@@ -31,7 +31,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/control/LinearController.h>
-#include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/initialization/Initializer.h>
 #include <ocs2_core/misc/Benchmark.h>
@@ -496,9 +495,6 @@ class GaussNewtonDDP : public SolverBase {
   ThreadPool threadPool_;
 
   unsigned long long int totalNumIterations_{0};
-
-  // trajectory spreading
-  TrajectorySpreadingControllerAdjustment trajectorySpreadingController_;
 
   PerformanceIndex performanceIndex_;
 

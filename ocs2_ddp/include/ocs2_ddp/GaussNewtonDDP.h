@@ -31,7 +31,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/control/LinearController.h>
-#include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/initialization/Initializer.h>
 #include <ocs2_core/misc/Benchmark.h>
@@ -133,12 +132,13 @@ class GaussNewtonDDP : public SolverBase {
                                            size_array_t& normalizedPostEventIndices);
 
   /**
-   * Adjust the nominal controller based on the last changes in the logic rules.
+   * Adjust the controller based on the last changes in model schedule.
    *
-   * @param [in] newEventTimes: The new event times.
-   * @param [in] controllerEventTimes: The control policy stock's event times.
+   * @param [in] oldModeSchedule: The old mode schedule associated to the trajectories which should be adjusted.
+   * @param [in] newModeSchedule: The new mode schedule that should be adapted to.
+   * @param [in, out] oldController: The control policy that is associated with the old mode schedule.
    */
-  void adjustController(const scalar_array_t& newEventTimes, const scalar_array_t& controllerEventTimes);
+  void adjustController(const ModeSchedule& oldModeSchedule, const ModeSchedule& newModeSchedule, LinearController& oldController) const;
 
  protected:
   /**
@@ -475,9 +475,6 @@ class GaussNewtonDDP : public SolverBase {
   ThreadPool threadPool_;
 
   unsigned long long int totalNumIterations_{0};
-
-  // trajectory spreading
-  TrajectorySpreadingControllerAdjustment trajectorySpreadingController_;
 
   PerformanceIndex performanceIndex_;
 

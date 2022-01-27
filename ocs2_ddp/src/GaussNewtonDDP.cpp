@@ -40,6 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_oc/approximate_model/ChangeOfInputVariables.h>
 #include <ocs2_oc/rollout/InitializerRollout.h>
+#include <ocs2_oc/trajectory_adjustment/TrajectorySpreading.h>
 
 #include <ocs2_ddp/HessianCorrection.h>
 #include <ocs2_ddp/riccati_equations/RiccatiModificationInterpolation.h>
@@ -376,12 +377,17 @@ void GaussNewtonDDP::retrieveActiveNormalizedTime(const std::pair<int, int>& par
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::adjustController(const scalar_array_t& newEventTimes, const scalar_array_t& controllerEventTimes) {
-  // TODO:
-  // adjust the nominal controllerStock using trajectory spreading
-  // if (!nominalControllersStock_.empty()) {
-  //   trajectorySpreadingController_.adjustController(newEventTimes, controllerEventTimes, nominalControllersStock_);
-  // }
+void GaussNewtonDDP::adjustController(const ModeSchedule& oldModeSchedule, const ModeSchedule& newModeSchedule,
+                                      LinearController& oldController) const {
+  // trajectory spreading
+  constexpr bool debugPrint = false;
+  TrajectorySpreading trajectorySpreading(debugPrint);
+  trajectorySpreading.set(oldModeSchedule, newModeSchedule, oldController.timeStamp_);
+
+  // adjust bias, gain, and time
+  trajectorySpreading.adjustTrajectory(oldController.biasArray_);
+  trajectorySpreading.adjustTrajectory(oldController.gainArray_);
+  trajectorySpreading.adjustTimeTrajectory(oldController.timeStamp_);
 }
 
 /******************************************************************************************************/
@@ -1221,9 +1227,14 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   initState_ = initState;
   initTime_ = initTime;
   finalTime_ = finalTime;
+  performanceIndexHistory_.clear();
   const auto initIteration = totalNumIterations_;
 
-  performanceIndexHistory_.clear();
+  // adjust controller
+  if (!optimizedPrimalData_.primalSolution.controllerPtr_->empty()) {
+    adjustController(optimizedPrimalData_.primalSolution.modeSchedule_, getReferenceManager().getModeSchedule(),
+                     optimizedPrimalData_.getLinearController());
+  }
 
   // check if after the truncation the internal controller is empty
   bool unreliableControllerIncrement = optimizedPrimalData_.primalSolution.controllerPtr_->empty();

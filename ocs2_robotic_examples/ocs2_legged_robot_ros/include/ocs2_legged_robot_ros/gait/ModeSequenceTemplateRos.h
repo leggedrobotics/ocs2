@@ -29,40 +29,29 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <mutex>
+#include <vector>
 
-#include <ros/ros.h>
-
-#include <ocs2_core/Types.h>
 #include <ocs2_msgs/mode_schedule.h>
-#include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 
-#include <ocs2_legged_robot/gait/GaitSchedule.h>
 #include <ocs2_legged_robot/gait/ModeSequenceTemplate.h>
-#include <ocs2_legged_robot/gait/MotionPhaseDefinition.h>
 
 namespace ocs2 {
 namespace legged_robot {
-class GaitReceiver : public SolverSynchronizedModule {
- public:
-  GaitReceiver(ros::NodeHandle nodeHandle, std::shared_ptr<GaitSchedule> gaitSchedulePtr, const std::string& robotName);
 
-  void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                    const ReferenceManagerInterface& referenceManager) override;
+/** Convert mode sequence template to ROS message */
+inline ocs2_msgs::mode_schedule createModeSequenceTemplateMsg(const ModeSequenceTemplate& modeSequenceTemplate) {
+  ocs2_msgs::mode_schedule modeScheduleMsg;
+  modeScheduleMsg.eventTimes.assign(modeSequenceTemplate.switchingTimes.begin(), modeSequenceTemplate.switchingTimes.end());
+  modeScheduleMsg.modeSequence.assign(modeSequenceTemplate.modeSequence.begin(), modeSequenceTemplate.modeSequence.end());
+  return modeScheduleMsg;
+}
 
-  void postSolverRun(const PrimalSolution& primalSolution) override{};
-
- private:
-  void mpcModeSequenceCallback(const ocs2_msgs::mode_schedule::ConstPtr& msg);
-
-  std::shared_ptr<GaitSchedule> gaitSchedulePtr_;
-
-  ros::Subscriber mpcModeSequenceSubscriber_;
-
-  std::mutex receivedGaitMutex_;
-  std::atomic_bool gaitUpdated_;
-  ModeSequenceTemplate receivedGait_;
-};
+/** Convert ROS message to mode sequence template */
+inline ModeSequenceTemplate readModeSequenceTemplateMsg(const ocs2_msgs::mode_schedule& modeScheduleMsg) {
+  std::vector<scalar_t> switchingTimes(modeScheduleMsg.eventTimes.begin(), modeScheduleMsg.eventTimes.end());
+  std::vector<size_t> modeSequence(modeScheduleMsg.modeSequence.begin(), modeScheduleMsg.modeSequence.end());
+  return {switchingTimes, modeSequence};
+}
 
 }  // namespace legged_robot
 }  // namespace ocs2

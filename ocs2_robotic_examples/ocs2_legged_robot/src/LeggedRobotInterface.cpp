@@ -117,8 +117,8 @@ void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile
   // CentroidalModelInfo
   centroidalModelInfo_ = centroidal_model::createCentroidalModelInfo(
       *pinocchioInterfacePtr_, centroidal_model::loadCentroidalType(taskFile),
-      centroidal_model::loadDefaultJointState(pinocchioInterfacePtr_->getModel().nq - 6, referenceFile),
-      modelSettings_.contactNames3DoF, modelSettings_.contactNames6DoF);
+      centroidal_model::loadDefaultJointState(pinocchioInterfacePtr_->getModel().nq - 6, referenceFile), modelSettings_.contactNames3DoF,
+      modelSettings_.contactNames6DoF);
 
   // Swing trajectory planner
   std::unique_ptr<SwingTrajectoryPlanner> swingTrajectoryPlanner(
@@ -270,10 +270,7 @@ std::unique_ptr<StateInputCost> LeggedRobotInterface::getBaseTrackingCost(const 
                                                                           bool verbose) {
   matrix_t Q(info.stateDim, info.stateDim);
   loadData::loadEigenMatrix(taskFile, "Q", Q);
-  matrix_t R(info.inputDim, info.inputDim);
-  loadData::loadEigenMatrix(taskFile, "R", R);
-
-  initializeInputCostWeight(taskFile, info, R);
+  matrix_t R = initializeInputCostWeight(taskFile, info);
 
   if (verbose) {
     std::cerr << "\n #### Base Tracking Cost Coefficients: ";

@@ -20,7 +20,6 @@
   <depend>ocs2_robotic_tools</depend>
   <depend>ocs2_pinocchio_interface</depend>
   <depend>ocs2_centroidal_model</depend>
-  <depend>ocs2_robotic_assets</depend>
   <depend>pinocchio</depend>
 
 </package>

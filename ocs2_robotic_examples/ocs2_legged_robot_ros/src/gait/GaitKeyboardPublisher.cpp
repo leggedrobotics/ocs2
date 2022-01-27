@@ -27,13 +27,15 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include "ocs2_legged_robot_ros/gait/GaitKeyboardPublisher.h"
+
 #include <algorithm>
 
 #include <ocs2_core/misc/CommandLine.h>
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_msgs/mode_schedule.h>
 
-#include "ocs2_legged_robot_ros/gait/GaitKeyboardPublisher.h"
+#include "ocs2_legged_robot_ros/gait/ModeSequenceTemplateRos.h"
 
 namespace ocs2 {
 namespace legged_robot {

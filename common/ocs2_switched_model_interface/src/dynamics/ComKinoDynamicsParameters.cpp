@@ -13,9 +13,10 @@ ComKinoSystemDynamicsParameters<SCALAR_T>::ComKinoSystemDynamicsParameters(
 
 template <typename SCALAR_T>
 Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1> ComKinoSystemDynamicsParameters<SCALAR_T>::asVector() const {
-  return (Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>(ComKinoSystemDynamicsParameters::getNumParameters()) << externalForceInOrigin,
-          externalTorqueInBase)
-      .finished();
+  Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1> parameters(ComKinoSystemDynamicsParameters::getNumParameters());
+  parameters.template head<3>() = externalForceInOrigin;
+  parameters.template tail<3>() = externalTorqueInBase;
+  return parameters;
 }
 
 template class ComKinoSystemDynamicsParameters<scalar_t>;

@@ -26,9 +26,10 @@ vector_t FootNormalConstraint::getValue(scalar_t time, const vector_t& state, co
   const auto& o_footPosition = switchedModelPreComp.footPositionInOriginFrame(legNumber_);
   const auto& o_footVelocity = switchedModelPreComp.footVelocityInOriginFrame(legNumber_);
 
-  return (vector_t(1) << normalConstraint.positionMatrix.dot(o_footPosition) + normalConstraint.velocityMatrix.dot(o_footVelocity) +
-                             normalConstraint.constant)
-      .finished();
+  vector_t h(1);
+  h[0] =
+      normalConstraint.positionMatrix.dot(o_footPosition) + normalConstraint.velocityMatrix.dot(o_footVelocity) + normalConstraint.constant;
+  return h;
 }
 
 VectorFunctionLinearApproximation FootNormalConstraint::getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input,
@@ -44,9 +45,10 @@ VectorFunctionLinearApproximation FootNormalConstraint::getLinearApproximation(s
 
   VectorFunctionLinearApproximation constraint;
   // Constant
-  constraint.f = (vector_t(1) << normalConstraint.positionMatrix.dot(o_footPosition) + normalConstraint.velocityMatrix.dot(o_footVelocity) +
-                                     normalConstraint.constant)
-                     .finished();
+  constraint.f.resize(1);
+  constraint.f[0] =
+      normalConstraint.positionMatrix.dot(o_footPosition) + normalConstraint.velocityMatrix.dot(o_footVelocity) + normalConstraint.constant;
+
   // State derivative
   constraint.dfdx.noalias() = normalConstraint.positionMatrix * o_footPositionDerivative;
   constraint.dfdx.noalias() += normalConstraint.velocityMatrix * o_footVelocityDerivative.dfdx;

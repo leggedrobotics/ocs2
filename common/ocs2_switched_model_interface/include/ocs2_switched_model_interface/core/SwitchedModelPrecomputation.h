@@ -71,8 +71,8 @@ class SwitchedModelPreComputation : public ocs2::PreComputation {
 
   static void intermediateLinearOutputs(const ad_com_model_t& adComModel, const ad_kinematic_model_t& adKinematicsModel,
                                         const ad_vector_t& state, const ad_vector_t& input, ad_vector_t& outputs);
-  void updateIntermediateLinearOutputs(scalar_t t, const vector_t& x, const vector_t& u);
-  void updateIntermediateLinearOutputDerivatives(scalar_t t, const vector_t& x, const vector_t& u);
+  void updateIntermediateLinearOutputs(scalar_t t, const vector_t& tapedStateInput);
+  void updateIntermediateLinearOutputDerivatives(scalar_t t, const vector_t& tapedStateInput);
 
   const SwingTrajectoryPlanner* swingTrajectoryPlannerPtr_;
   std::unique_ptr<ocs2::CppAdInterface> intermediateLinearOutputAdInterface_;

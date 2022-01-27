@@ -48,9 +48,12 @@ void SwitchedModelPreComputation::request(ocs2::RequestSet request, scalar_t t, 
   updateFeetPhases(t);
 
   if (request.containsAny(ocs2::Request::Cost + ocs2::Request::Constraint + ocs2::Request::SoftConstraint)) {
-    updateIntermediateLinearOutputs(t, x, u);
+    vector_t tapedStateInput(x.rows() + u.rows());
+    tapedStateInput << x, u;
+
+    updateIntermediateLinearOutputs(t, tapedStateInput);
     if (request.contains(ocs2::Request::Approximation)) {
-      updateIntermediateLinearOutputDerivatives(t, x, u);
+      updateIntermediateLinearOutputDerivatives(t, tapedStateInput);
     }
   }
 }
@@ -103,13 +106,12 @@ void SwitchedModelPreComputation::intermediateLinearOutputs(const ad_com_model_t
   }
 }
 
-void SwitchedModelPreComputation::updateIntermediateLinearOutputs(scalar_t t, const vector_t& x, const vector_t& u) {
+void SwitchedModelPreComputation::updateIntermediateLinearOutputs(scalar_t t, const vector_t& tapedStateInput) {
   // Clear old precomputation
   collisionSpheresInOriginFrame_.clear();
 
   // Evaluate autodiff
-  const vector_t tapedInput = (vector_t(x.rows() + u.rows()) << x, u).finished();
-  const auto intermediateLinearOutputs = intermediateLinearOutputAdInterface_->getFunctionValue(tapedInput);
+  const auto intermediateLinearOutputs = intermediateLinearOutputAdInterface_->getFunctionValue(tapedStateInput);
 
   // Read feet positions, add swing feet as collision bodies
   for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
@@ -137,13 +139,12 @@ void SwitchedModelPreComputation::updateIntermediateLinearOutputs(scalar_t t, co
   }
 }
 
-void SwitchedModelPreComputation::updateIntermediateLinearOutputDerivatives(scalar_t t, const vector_t& x, const vector_t& u) {
+void SwitchedModelPreComputation::updateIntermediateLinearOutputDerivatives(scalar_t t, const vector_t& tapedStateInput) {
   // Clear old precomputation
   collisionSpheresDerivative_.clear();
 
   // Evaluate autodiff
-  const vector_t tapedInput = (vector_t(x.rows() + u.rows()) << x, u).finished();
-  const auto intermediateLinearOutputDerivatives = intermediateLinearOutputAdInterface_->getJacobian(tapedInput);
+  const auto intermediateLinearOutputDerivatives = intermediateLinearOutputAdInterface_->getJacobian(tapedStateInput);
 
   for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
     const int indexInOutputs = 3 * leg;

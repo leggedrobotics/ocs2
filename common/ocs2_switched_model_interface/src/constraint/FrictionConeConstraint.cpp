@@ -125,8 +125,10 @@ FrictionConeConstraint::ConeLocalDerivatives FrictionConeConstraint::computeCone
 vector_t FrictionConeConstraint::coneConstraint(const vector3_t& localForces) const {
   const auto F_tangent_square = localForces.x() * localForces.x() + localForces.y() * localForces.y() + config_.regularization;
   const auto F_tangent_norm = sqrt(F_tangent_square);
-  const scalar_t coneConstraint = config_.frictionCoefficient * (localForces.z() + config_.gripperForce) - F_tangent_norm;
-  return (ocs2::vector_t(1) << coneConstraint).finished();
+
+  ocs2::vector_t h(1);
+  h[0] = config_.frictionCoefficient * (localForces.z() + config_.gripperForce) - F_tangent_norm;
+  return h;
 }
 
 FrictionConeConstraint::ConeDerivatives FrictionConeConstraint::computeConeConstraintDerivatives(

@@ -23,6 +23,9 @@ class GaitAdaptation {
   void advance(GaitSchedule& gaitSchedule, const contact_flag_t& measuredContactFlags, scalar_t dt);
 
  private:
+  /// Update measured liftoff information
+  void advanceLiftoffTracking(const contact_flag_t& desiredContactFlags, const contact_flag_t& measuredContactFlags);
+
   /// Update next touchdown and liftoff information
   void advanceSwingEvents(const GaitSchedule& gaitSchedule);
 
@@ -47,6 +50,8 @@ class GaitAdaptation {
   /// Planned event timing relative to the current time (before applying the gait adaptation).
   feet_array_t<scalar_t> timeUntilNextTouchDownPerLeg_;
   feet_array_t<scalar_t> timeUntilNextLiftOffPerLeg_;
+
+  feet_array_t<bool> hasLiftedSinceLastContact_;
 
   GaitAdaptationSettings settings_;
 };

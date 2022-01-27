@@ -16,17 +16,35 @@ namespace switched_model {
 GaitAdaptation::GaitAdaptation(const GaitAdaptationSettings& settings, const contact_flag_t& measuredContactFlags)
     : timeUntilNextTouchDownPerLeg_(constantFeetArray<scalar_t>(0.0)),
       timeUntilNextLiftOffPerLeg_(constantFeetArray<scalar_t>(0.0)),
+      hasLiftedSinceLastContact_(constantFeetArray<bool>(true)),  // initialize at true to enable immediate early touchdown
       settings_(settings) {}
 
 void GaitAdaptation::advance(GaitSchedule& gaitSchedule, const contact_flag_t& measuredContactFlags, scalar_t dt) {
+  const auto desiredContactFlags = modeNumber2StanceLeg(gaitSchedule.getCurrentMode());
+
+  // Update tracking if lift off happened
+  advanceLiftoffTracking(desiredContactFlags, measuredContactFlags);
+
   // Update internal knowledge of next touchdown / liftoff
   advanceSwingEvents(gaitSchedule);
 
   // Decide on a strategy per leg and schedule adaptation
-  const auto& scheduledAdaptation = advanceLegStrategies(modeNumber2StanceLeg(gaitSchedule.getCurrentMode()), measuredContactFlags);
+  const auto& scheduledAdaptation = advanceLegStrategies(desiredContactFlags, measuredContactFlags);
 
   // Apply all scheduled
   applyAdaptation(gaitSchedule, scheduledAdaptation);
+}
+
+void GaitAdaptation::advanceLiftoffTracking(const contact_flag_t& desiredContactFlags, const contact_flag_t& measuredContactFlags) {
+  // Lift off tracking resets to false whenever there is a planned + measured contact. The flag changes to true any time there is a measured
+  // swing phase since then.
+  for (size_t leg = 0; leg < switched_model::NUM_CONTACT_POINTS; ++leg) {
+    if (desiredContactFlags[leg] && measuredContactFlags[leg]) {
+      hasLiftedSinceLastContact_[leg] = false;
+    } else if (!measuredContactFlags[leg]) {
+      hasLiftedSinceLastContact_[leg] = true;
+    }
+  }
 }
 
 void GaitAdaptation::advanceSwingEvents(const GaitSchedule& gaitSchedule) {
@@ -83,7 +101,8 @@ auto GaitAdaptation::desiredContactMeasuredMotion(size_t leg) -> ScheduledAdapta
 }
 
 auto GaitAdaptation::desiredMotionMeasuredContact(size_t leg) -> ScheduledAdaptation {
-  if (!std::isnan(timeUntilNextTouchDownPerLeg_[leg]) && timeUntilNextTouchDownPerLeg_[leg] < settings_.earlyTouchDownTimeWindow) {
+  if (hasLiftedSinceLastContact_[leg] && !std::isnan(timeUntilNextTouchDownPerLeg_[leg]) &&
+      timeUntilNextTouchDownPerLeg_[leg] < settings_.earlyTouchDownTimeWindow) {
     // Touchdown was planned to be soon -> Take the contact early
     return ScheduledAdaptation::EarlyContact;
   } else {

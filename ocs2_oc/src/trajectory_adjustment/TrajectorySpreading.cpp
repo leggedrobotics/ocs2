@@ -168,7 +168,7 @@ void TrajectorySpreading::set(const ModeSchedule& oldModeSchedule, const ModeSch
   computeSpreadingStrategy(oldTimeTrajectory, oldMatchedEventTimes, newMatchedEventTimes);
 
   // debug print
-  if (debugCaching_) {
+  if (debugPrint_) {
     const auto oldFirstMatchedModeItr = oldModeSchedule.modeSequence.begin() + oldStartIndexOfMatchedSequence;
     const auto newFirstMatchedModeItr = newModeSchedule.modeSequence.begin() + newStartIndexOfMatchedSequence;
 

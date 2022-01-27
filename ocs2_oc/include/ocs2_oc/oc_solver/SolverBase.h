@@ -212,7 +212,9 @@ class SolverBase {
 
   void postRun();
 
- private:
+  /***********
+   * Variables
+   ***********/
   mutable std::mutex outputDisplayGuardMutex_;
   std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr_;  // this pointer cannot be nullptr
   std::vector<std::shared_ptr<SolverSynchronizedModule>> synchronizedModules_;

@@ -40,13 +40,13 @@ class TrajectorySpreading final {
    * Constructor
    * @param [in] debugCaching: To activate the debug print.
    */
-  explicit TrajectorySpreading(bool debugCaching = false) : debugCaching_(debugCaching) {}
+  explicit TrajectorySpreading(bool debugPrint = false) : debugPrint_(debugPrint) {}
 
   /**
    * Initialize trajectory spreading strategy. Run it before invoking other member functions
    *
    * @param [in] oldModeSchedule: The old mode schedule associated to the trajectories which should be adjusted.
-   * @param [in] newModeSchedule: The new mode schedule that should be adpted to.
+   * @param [in] newModeSchedule: The new mode schedule that should be adapted to.
    * @param [in] oldTimeTrajectory: The old time trajectories that is associated with the old mode schedule.
    */
   void set(const ModeSchedule& oldModeSchedule, const ModeSchedule& newModeSchedule, const scalar_array_t& oldTimeTrajectory);
@@ -122,7 +122,7 @@ class TrajectorySpreading final {
   /***********
    * Variables
    ***********/
-  const bool debugCaching_ = false;
+  const bool debugPrint_;
 
   size_t eraseFromIndex_;                             /**< The first index to erase **/
   std::pair<size_t, size_t> keepEventDataInInterval_; /**< Keep event data within [first, second) **/

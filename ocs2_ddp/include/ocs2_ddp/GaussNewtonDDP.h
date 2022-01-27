@@ -144,12 +144,13 @@ class GaussNewtonDDP : public SolverBase {
                                            size_array_t& normalizedPostEventIndices);
 
   /**
-   * Adjust the nominal controller based on the last changes in the logic rules.
+   * Adjust the controller based on the last changes in model schedule.
    *
-   * @param [in] newEventTimes: The new event times.
-   * @param [in] controllerEventTimes: The control policy stock's event times.
+   * @param [in] oldModeSchedule: The old mode schedule associated to the trajectories which should be adjusted.
+   * @param [in] newModeSchedule: The new mode schedule that should be adapted to.
+   * @param [in, out] oldController: The control policy that is associated with the old mode schedule.
    */
-  void adjustController(const scalar_array_t& newEventTimes, const scalar_array_t& controllerEventTimes);
+  void adjustController(const ModeSchedule& oldModeSchedule, const ModeSchedule& newModeSchedule, LinearController& oldController) const;
 
  protected:
   /**

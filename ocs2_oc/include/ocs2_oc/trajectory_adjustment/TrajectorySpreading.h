@@ -40,14 +40,14 @@ class TrajectorySpreading final {
    * Constructor
    * @param [in] debugCaching: To activate the debug print.
    */
-  explicit TrajectorySpreading(bool debugCaching = false) : debugCaching_(debugCaching) {}
+  explicit TrajectorySpreading(bool debugPrint = false) : debugPrint_(debugPrint) {}
 
   /**
    * Initialize trajectory spreading strategy. Run it before invoking other member functions
    *
-   * @param oldModeSchedule: The old mode schedule associated to the trajectories which should be adjusted.
-   * @param newModeSchedule: The new mode schedule that should be adpted to.
-   * @param oldTimeTrajectory: The old time trajectories that is associated with the old mode schedule.
+   * @param [in] oldModeSchedule: The old mode schedule associated to the trajectories which should be adjusted.
+   * @param [in] newModeSchedule: The new mode schedule that should be adapted to.
+   * @param [in] oldTimeTrajectory: The old time trajectories that is associated with the old mode schedule.
    */
   void set(const ModeSchedule& oldModeSchedule, const ModeSchedule& newModeSchedule, const scalar_array_t& oldTimeTrajectory);
 
@@ -55,27 +55,34 @@ class TrajectorySpreading final {
    * Adjust continuous-time trajectory.
    *
    * @tparam data type.
-   * @param trajectory: trajectory for rectification.
+   * @param [in, out] trajectory: trajectory for rectification.
    */
   template <typename T>
   void adjustTrajectory(std::vector<T>& trajectory) const;
 
   /**
-   * Adjust event-time data.
+   * Extracts event-time data.
    *
    * @tparam data type.
-   * @param trajectory: trajectory for rectification.
+   * @param [in] array: The input array for rectification.
+   * @return: The output rectified array.
    */
   template <typename T>
-  void adjustEventsArray(std::vector<T>& trajectory) const;
+  std::vector<T> extractEventsArray(const std::vector<T>& array) const;
 
   /**
    * Adjust time stamp of the trajectories and post event indices of the trajectories.
    *
-   * @param [out] timeTrajectory: The time stamp of the trajectories.
-   * @param [out] postEventIndices: The post event indices of the trajectories.
+   * @param [in, out] timeTrajectory: The time stamp of the trajectories.
    */
-  void adjustTimings(scalar_array_t& timeTrajectory, size_array_t& postEventIndices) const;
+  void adjustTimeTrajectory(scalar_array_t& timeTrajectory) const;
+
+  /**
+   * Get adjusted post event index array.
+   *
+   * @return The post event indices of the trajectories.
+   */
+  const size_array_t& getPostEventIndices() const { return updatedPostEventIndices_; }
 
  private:
   /**
@@ -115,7 +122,7 @@ class TrajectorySpreading final {
   /***********
    * Variables
    ***********/
-  const bool debugCaching_ = false;
+  const bool debugPrint_;
 
   size_t eraseFromIndex_;                             /**< The first index to erase **/
   std::pair<size_t, size_t> keepEventDataInInterval_; /**< Keep event data within [first, second) **/
@@ -125,17 +132,18 @@ class TrajectorySpreading final {
   size_array_t spreadingValueIndices_;
 
   size_array_t updatedPostEventIndices_;
-  scalar_array_t updatedMatchedventTimes_;
+  scalar_array_t updatedMatchedEventTimes_;
 };
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename T>
-void TrajectorySpreading::adjustEventsArray(std::vector<T>& trajectory) const {
-  // erase tail first to avoid extra copy
-  trajectory.erase(trajectory.begin() + keepEventDataInInterval_.second, trajectory.end());
-  trajectory.erase(trajectory.begin(), trajectory.begin() + keepEventDataInInterval_.first);
+std::vector<T> TrajectorySpreading::extractEventsArray(const std::vector<T>& array) const {
+  const auto firstItr = array.begin() + keepEventDataInInterval_.first;
+  const auto lastItr = array.begin() + keepEventDataInInterval_.second;
+  std::vector<T> out(firstItr, lastItr);
+  return out;
 }
 
 /******************************************************************************************************/

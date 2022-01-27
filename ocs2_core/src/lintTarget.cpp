@@ -21,7 +21,6 @@
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/control/StateBasedLinearController.h>
-#include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
 
 // Cost
 #include <ocs2_core/cost/QuadraticStateCost.h>

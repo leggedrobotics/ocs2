@@ -15,6 +15,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_oc
   ocs2_ddp
   ocs2_mpc
+  ocs2_sqp
   ocs2_robotic_tools
   ocs2_pinocchio_interface
   ocs2_centroidal_model
@@ -121,6 +122,19 @@ target_link_libraries(legged_robot_gait_command
   ${catkin_LIBRARIES}
 )
 target_compile_options(legged_robot_gait_command PRIVATE ${OCS2_CXX_FLAGS})
+
+## SQP node for legged robot
+add_executable(legged_robot_sqp_mpc
+  src/gait/GaitReceiver.cpp
+  src/MultipleShootingLeggedRobotMpcNode.cpp
+)
+add_dependencies(legged_robot_sqp_mpc
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(legged_robot_sqp_mpc
+  ${catkin_LIBRARIES}
+)
+target_compile_options(legged_robot_sqp_mpc  PRIVATE ${OCS2_CXX_FLAGS})
 
 #########################
 ###   CLANG TOOLING   ###

@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+
+<launch>
+    <arg name="robot_name"         default="legged_robot"/>
+    <arg name="task_file"          default="$(find ocs2_legged_robot)/config/mpc/task.info"/>
+    <arg name="reference_file"     default="$(find ocs2_legged_robot)/config/command/reference.info"/>
+    <arg name="gait_command"       default="$(find ocs2_legged_robot)/config/command/gait.info"/>
+    <arg name="urdf_file"          default="$(find ocs2_robotic_assets)/resources/anymal_c/urdf/anymal.urdf"/>
+    <arg name="description_name"   default="legged_robot_description"/>
+    <arg name="rviz"               default="true" />
+    <arg name="multiplot"          default="false"/>
+    
+    <group if="$(arg rviz)">
+      <param name="$(arg description_name)" textfile="$(arg urdf_file)"/>
+      <include file="$(find ocs2_legged_robot_ros)/launch/visualize.launch"/>
+    </group>
+      
+    <group if="$(arg multiplot)">
+      <include file="$(find ocs2_legged_robot_ros)/launch/multiplot.launch"/>
+    </group>
+
+    <node pkg="ocs2_legged_robot_ros" type="legged_robot_sqp_mpc" name="legged_robot_sqp_mpc"
+          output="screen" args="$(arg robot_name) $(arg task_file) $(arg urdf_file) $(arg reference_file)" launch-prefix=""/>
+
+    <node pkg="ocs2_legged_robot_ros" type="legged_robot_dummy" name="legged_robot_dummy"
+          output="screen" args="$(arg robot_name) $(arg task_file) $(arg urdf_file) $(arg reference_file)" launch-prefix="gnome-terminal --"/>
+
+    <node pkg="ocs2_legged_robot_ros" type="legged_robot_target" name="legged_robot_target"
+          output="screen" args="$(arg robot_name) $(arg reference_file)" launch-prefix="gnome-terminal --"/>
+
+    <node pkg="ocs2_legged_robot_ros" type="legged_robot_gait_command" name="legged_robot_gait_command"
+          output="screen" args="$(arg robot_name) $(arg gait_command)" launch-prefix="gnome-terminal --"/>
+</launch>

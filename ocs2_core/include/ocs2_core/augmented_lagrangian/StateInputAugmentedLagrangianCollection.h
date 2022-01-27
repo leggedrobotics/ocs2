@@ -60,7 +60,7 @@ class StateInputAugmentedLagrangianCollection final : public Collection<StateInp
                                                                  const PreComputation& preComp) const;
 
   /** Update Lagrange/penalty multipliers and the penalty value for each active term. */
-  void updateLagrangian(const scalar_t& time, const vector_t& state, const vector_t& input, std::vector<Metrics>& termsMetrics,
+  void updateLagrangian(scalar_t time, const vector_t& state, const vector_t& input, std::vector<Metrics>& termsMetrics,
                         std::vector<Multiplier>& termsMultiplier) const;
 
   /** Initialize Lagrange/penalty multipliers for each active term. */

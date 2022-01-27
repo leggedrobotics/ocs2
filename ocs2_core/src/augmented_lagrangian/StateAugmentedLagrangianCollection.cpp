@@ -87,7 +87,7 @@ ScalarFunctionQuadraticApproximation StateAugmentedLagrangianCollection::getQuad
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void StateAugmentedLagrangianCollection::updateLagrangian(const scalar_t& time, const vector_t& state, std::vector<Metrics>& termsMetrics,
+void StateAugmentedLagrangianCollection::updateLagrangian(scalar_t time, const vector_t& state, std::vector<Metrics>& termsMetrics,
                                                           std::vector<Multiplier>& termsMultiplier) const {
   assert(termsMetrics.size() == termsMultiplier.size());
 

@@ -81,14 +81,18 @@ inline void clear(DualSolution& d) {
   d.timeTrajectory.clear();
 }
 
+inline MultiplierCollection getIntermediateDualSolutionAtTime(const DualSolution& dualSolution, scalar_t time) {
+  const auto indexAlpha = LinearInterpolation::timeSegment(time, dualSolution.timeTrajectory);
+  return LinearInterpolation::interpolate(indexAlpha, dualSolution.intermediates);
+}
+
 inline void sampleIntermediateDualSolution(const DualSolution& dualSolution, const scalar_array_t& timeTrajectory,
                                            std::vector<MultiplierCollection>& intermediateDualSolution) {
   // re-sample dual solution
   intermediateDualSolution.clear();
   intermediateDualSolution.reserve(timeTrajectory.size());
   for (const auto& t : timeTrajectory) {
-    const auto indexAlpha = LinearInterpolation::timeSegment(t, dualSolution.timeTrajectory);
-    intermediateDualSolution.push_back(LinearInterpolation::interpolate(indexAlpha, dualSolution.intermediates));
+    intermediateDualSolution.push_back(getIntermediateDualSolutionAtTime(dualSolution, t));
   }
 }
 

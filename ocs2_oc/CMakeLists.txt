@@ -52,6 +52,7 @@ add_library(${PROJECT_NAME}
   src/oc_data/LoopshapingPrimalSolution.cpp
   src/oc_problem/OptimalControlProblem.cpp
   src/oc_problem/LoopshapingOptimalControlProblem.cpp
+  src/oc_problem/OptimalControlProblemHelperFunction.cpp
   src/oc_solver/SolverBase.cpp
   src/oc_problem/OptimalControlProblem.cpp
   src/rollout/PerformanceIndicesRollout.cpp

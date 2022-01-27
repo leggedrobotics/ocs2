@@ -266,14 +266,6 @@ class GaussNewtonDDP : public SolverBase {
   }
 
   /**
-   * Get the dual solution at time(time) from dualSolution.
-   *
-   * @param [in] time: Query time
-   * @return MultiplierCollection
-   */
-  MultiplierCollection getDualSolutionImpl(scalar_t time, const DualSolution& dualSolution) const;
-
-  /**
    * Get the Partition Intervals From Time Trajectory. Intervals are defined as [start, end).
    *
    * Pay attention, the rightmost index of the end partition is (..., timeArray.size() - 1) , as the last value function is filled manually.

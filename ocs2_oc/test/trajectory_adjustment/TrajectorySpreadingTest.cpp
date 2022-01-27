@@ -118,10 +118,8 @@ class TrajectorySpreadingTest : public testing::Test {
     trajectorySpreadingPtr->adjustTrajectory<ocs2::vector_t>(out.stateTrajectory);
     trajectorySpreadingPtr->adjustTrajectory<ocs2::vector_t>(out.inputTrajectory);
     trajectorySpreadingPtr->adjustTrajectory(out.modeTrajectory);
-    auto eventDataArray = trajectorySpreadingPtr->extractEventsArray(out.eventDataArray);
-    eventDataArray.swap(out.eventDataArray);
-    auto preEventModeTrajectory = trajectorySpreadingPtr->extractEventsArray(out.preEventModeTrajectory);
-    preEventModeTrajectory.swap(out.preEventModeTrajectory);
+    out.eventDataArray = trajectorySpreadingPtr->extractEventsArray(out.eventDataArray);
+    out.preEventModeTrajectory = trajectorySpreadingPtr->extractEventsArray(out.preEventModeTrajectory);
 
     return out;
   }

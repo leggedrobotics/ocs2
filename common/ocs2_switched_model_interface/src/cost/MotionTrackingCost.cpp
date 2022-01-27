@@ -73,7 +73,7 @@ Eigen::Matrix<SCALAR_T, -1, 1> computeMotionTargets(const comkino_state_s_t<SCAL
   return costElementsToVector(motionTarget);
 }
 
-vector_t computeMotionReferences(scalar_t time, const comkino_state_t& x, const comkino_input_t& u,
+vector_t computeMotionReferences(scalar_t time, const vector_t& x, const vector_t& u,
                                  const SwingTrajectoryPlanner& swingTrajectoryPlanner) {
   // Extract elements from reference
   const auto basePose = getBasePose(x);
@@ -130,8 +130,8 @@ MotionTrackingCost::MotionTrackingCost(const Weights& settings, const SwitchedMo
 
 ocs2::vector_t MotionTrackingCost::getParameters(ocs2::scalar_t time, const ocs2::TargetTrajectories& targetTrajectories) const {
   // Interpolate reference
-  const comkino_state_t xRef = targetTrajectories.getDesiredState(time);
-  comkino_input_t uRef = targetTrajectories.getDesiredInput(time);
+  const vector_t xRef = targetTrajectories.getDesiredState(time);
+  vector_t uRef = targetTrajectories.getDesiredInput(time);
 
   // If the input has zero values, overwrite it.
   if (uRef.head<3 * NUM_CONTACT_POINTS>().isZero()) {

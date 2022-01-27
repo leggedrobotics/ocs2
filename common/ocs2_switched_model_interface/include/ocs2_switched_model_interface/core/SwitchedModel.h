@@ -141,6 +141,11 @@ using rbd_state_t = rbd_state_s_t<scalar_t>;
 using rbd_state_ad_t = rbd_state_s_t<ocs2::CppAdInterface::ad_scalar_t>;
 
 template <typename SCALAR_T>
+base_coordinate_s_t<SCALAR_T> getBasePose(const Eigen::Matrix<SCALAR_T, -1, 1>& comkinoState) {
+  return comkinoState.template head<BASE_COORDINATE_SIZE>();
+}
+
+template <typename SCALAR_T>
 base_coordinate_s_t<SCALAR_T> getBasePose(const comkino_state_s_t<SCALAR_T>& comkinoState) {
   return comkinoState.template head<BASE_COORDINATE_SIZE>();
 }
@@ -171,6 +176,11 @@ base_coordinate_s_t<SCALAR_T> getBaseLocalVelocity(const rbd_state_s_t<SCALAR_T>
 }
 
 template <typename SCALAR_T>
+base_coordinate_s_t<SCALAR_T> getBaseLocalVelocities(const Eigen::Matrix<SCALAR_T, -1, 1>& comkinoState) {
+  return comkinoState.template segment<BASE_COORDINATE_SIZE>(BASE_COORDINATE_SIZE);
+}
+
+template <typename SCALAR_T>
 base_coordinate_s_t<SCALAR_T> getBaseLocalVelocities(const comkino_state_s_t<SCALAR_T>& comkinoState) {
   return comkinoState.template segment<BASE_COORDINATE_SIZE>(BASE_COORDINATE_SIZE);
 }
@@ -196,6 +206,11 @@ vector3_s_t<SCALAR_T> getLinearAcceleration(const base_coordinate_s_t<SCALAR_T>&
 }
 
 template <typename SCALAR_T>
+joint_coordinate_s_t<SCALAR_T> getJointPositions(const Eigen::Matrix<SCALAR_T, -1, 1>& comkinoState) {
+  return comkinoState.template segment<JOINT_COORDINATE_SIZE>(2 * BASE_COORDINATE_SIZE);
+}
+
+template <typename SCALAR_T>
 joint_coordinate_s_t<SCALAR_T> getJointPositions(const comkino_state_s_t<SCALAR_T>& comkinoState) {
   return comkinoState.template segment<JOINT_COORDINATE_SIZE>(2 * BASE_COORDINATE_SIZE);
 }
@@ -208,6 +223,11 @@ joint_coordinate_s_t<SCALAR_T> getJointPositions(const generalized_coordinate_s_
 template <typename SCALAR_T>
 joint_coordinate_s_t<SCALAR_T> getJointPositions(const rbd_state_s_t<SCALAR_T>& rbdState) {
   return rbdState.template segment<JOINT_COORDINATE_SIZE>(BASE_COORDINATE_SIZE);
+}
+
+template <typename SCALAR_T>
+joint_coordinate_s_t<SCALAR_T> getJointVelocities(const Eigen::Matrix<SCALAR_T, -1, 1>& comkinoInput) {
+  return comkinoInput.template segment<JOINT_COORDINATE_SIZE>(NUM_CONTACT_POINTS * 3);
 }
 
 template <typename SCALAR_T>

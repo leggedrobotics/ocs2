@@ -77,13 +77,11 @@ const FootPhase& SwingTrajectoryPlanner::getFootPhase(size_t leg, scalar_t time)
 }
 
 joint_coordinate_t SwingTrajectoryPlanner::getJointPositionsReference(scalar_t time) const {
-  const comkino_state_t xRef = targetTrajectories_.getDesiredState(time);
-  return getJointPositions(xRef);
+  return getJointPositions(targetTrajectories_.getDesiredState(time));
 }
 
 joint_coordinate_t SwingTrajectoryPlanner::getJointVelocitiesReference(scalar_t time) const {
-  comkino_input_t uRef = targetTrajectories_.getDesiredInput(time);
-  return getJointVelocities(uRef);
+  return getJointVelocities(targetTrajectories_.getDesiredInput(time));
 }
 
 auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vector<ContactTiming>& contactTimings, scalar_t finalTime) const

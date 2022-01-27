@@ -218,8 +218,7 @@ void GaussNewtonDDP::getPrimalSolution(scalar_t finalTime, PrimalSolution* prima
   };
 
   auto getRequestedEventDataLength = [](const size_array_t& postEventIndices, int endIndex) {
-    return std::distance(postEventIndices.cbegin(), std::find_if(postEventIndices.cbegin(), postEventIndices.cend(),
-                                                                 [endIndex](size_t ind) { return ind > endIndex; }));
+    return std::distance(postEventIndices.cbegin(), std::upper_bound(postEventIndices.cbegin(), postEventIndices.cend(), endIndex));
   };
 
   // length of trajectories
@@ -396,17 +395,6 @@ void GaussNewtonDDP::retrieveActiveNormalizedTime(const std::pair<int, int>& par
   normalizedPostEventIndices.resize(NE);
   std::transform(firstEventItr, lastEventItr, normalizedPostEventIndices.rbegin(),
                  [N, &partitionInterval](size_t i) -> size_t { return N - i + partitionInterval.first; });
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void GaussNewtonDDP::adjustController(const scalar_array_t& newEventTimes, const scalar_array_t& controllerEventTimes) {
-  // TODO:
-  // adjust the nominal controllerStock using trajectory spreading
-  // if (!nominalControllersStock_.empty()) {
-  //   trajectorySpreadingController_.adjustController(newEventTimes, controllerEventTimes, nominalControllersStock_);
-  // }
 }
 
 /******************************************************************************************************/
@@ -1288,9 +1276,14 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   initState_ = initState;
   initTime_ = initTime;
   finalTime_ = finalTime;
+  performanceIndexHistory_.clear();
   const auto initIteration = totalNumIterations_;
 
-  performanceIndexHistory_.clear();
+  // adjust controller
+  if (!optimizedPrimalData_.primalSolution.controllerPtr_->empty()) {
+    adjustController(optimizedPrimalData_.primalSolution.modeSchedule_, getReferenceManager().getModeSchedule(),
+                     getLinearController(optimizedPrimalData_.primalSolution));
+  }
 
   // check if after the truncation the internal controller is empty
   bool unreliableControllerIncrement = optimizedPrimalData_.primalSolution.controllerPtr_->empty();

@@ -83,7 +83,6 @@ add_library(${PROJECT_NAME}
   src/control/FeedforwardController.cpp
   src/control/LinearController.cpp
   src/control/StateBasedLinearController.cpp
-  src/control/TrajectorySpreadingControllerAdjustment.cpp
   src/cost/QuadraticStateCost.cpp
   src/cost/QuadraticStateInputCost.cpp
   src/cost/StateCostCollection.cpp

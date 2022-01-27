@@ -31,7 +31,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/control/LinearController.h>
-#include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/initialization/Initializer.h>
 #include <ocs2_core/misc/Benchmark.h>
@@ -131,14 +130,6 @@ class GaussNewtonDDP : public SolverBase {
   static void retrieveActiveNormalizedTime(const std::pair<int, int>& partitionInterval, const scalar_array_t& timeTrajectory,
                                            const size_array_t& postEventIndices, scalar_array_t& normalizedTimeTrajectory,
                                            size_array_t& normalizedPostEventIndices);
-
-  /**
-   * Adjust the nominal controller based on the last changes in the logic rules.
-   *
-   * @param [in] newEventTimes: The new event times.
-   * @param [in] controllerEventTimes: The control policy stock's event times.
-   */
-  void adjustController(const scalar_array_t& newEventTimes, const scalar_array_t& controllerEventTimes);
 
  protected:
   /**
@@ -490,9 +481,6 @@ class GaussNewtonDDP : public SolverBase {
   ThreadPool threadPool_;
 
   unsigned long long int totalNumIterations_{0};
-
-  // trajectory spreading
-  TrajectorySpreadingControllerAdjustment trajectorySpreadingController_;
 
   PerformanceIndex performanceIndex_;
 

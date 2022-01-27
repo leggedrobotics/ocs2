@@ -23,6 +23,9 @@
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
+// trajectory_adjustment
+#include <ocs2_oc/trajectory_adjustment/TrajectorySpreading.h>
+
 // dummy target for clang toolchain
 int main() {
   return 0;

@@ -198,11 +198,16 @@ void MultipleShootingSolver::initializeStateInputTrajectories(const vector_t& in
   inputTrajectory.reserve(N);
 
   // Determine till when to use the previous solution
-  const scalar_t interpolateTill = (totalNumIterations_ > 0) ? primalSolution_.timeTrajectory_.back() : timeDiscretization.front().time;
+  scalar_t interpolateStateTill = timeDiscretization.front().time;
+  scalar_t interpolateInputTill = timeDiscretization.front().time;
+  if (primalSolution_.timeTrajectory_.size() >= 2) {
+    interpolateStateTill = primalSolution_.timeTrajectory_.back();
+    interpolateInputTill = primalSolution_.timeTrajectory_[primalSolution_.timeTrajectory_.size() - 2];
+  }
 
   // Initial state
   const scalar_t initTime = getIntervalStart(timeDiscretization[0]);
-  if (initTime < interpolateTill) {
+  if (initTime < interpolateStateTill) {
     stateTrajectory.push_back(
         LinearInterpolation::interpolate(initTime, primalSolution_.timeTrajectory_, primalSolution_.stateTrajectory_));
   } else {
@@ -219,11 +224,11 @@ void MultipleShootingSolver::initializeStateInputTrajectories(const vector_t& in
       const scalar_t time = getIntervalStart(timeDiscretization[i]);
       const scalar_t nextTime = getIntervalEnd(timeDiscretization[i + 1]);
       vector_t input, nextState;
-      if (time < interpolateTill) {
-        std::tie(input, nextState) = multiple_shooting::initializeIntermediateNode(primalSolution_, time, nextTime, stateTrajectory.back());
-      } else {  // Using initializer
+      if (time > interpolateInputTill || nextTime > interpolateStateTill) {  // Using initializer
         std::tie(input, nextState) =
             multiple_shooting::initializeIntermediateNode(*initializerPtr_, time, nextTime, stateTrajectory.back());
+      } else {  // interpolate previous solution
+        std::tie(input, nextState) = multiple_shooting::initializeIntermediateNode(primalSolution_, time, nextTime, stateTrajectory.back());
       }
       inputTrajectory.push_back(std::move(input));
       stateTrajectory.push_back(std::move(nextState));
@@ -515,7 +520,8 @@ std::pair<bool, PerformanceIndex> MultipleShootingSolver::takeStep(const Perform
     const scalar_t newConstraintViolation = constraintViolation(performanceNew);
 
     const bool stepAccepted = [&]() {
-      if (newConstraintViolation > g_max) {
+      if (newConstraintViolation > std::max(g_max, baselineConstraintViolation)) {
+        // High constraint violation. Only accept decrease in constraints. Prevents new constraint violation higher than g_max
         return false;
       } else if (newConstraintViolation < g_min && baselineConstraintViolation < g_min && armijoDescentMetric < 0.0) {
         // With low violation and having a descent direction, require the armijo condition.

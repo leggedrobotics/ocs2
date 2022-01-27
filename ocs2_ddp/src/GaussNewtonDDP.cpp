@@ -247,8 +247,13 @@ void GaussNewtonDDP::getPrimalSolution(scalar_t finalTime, PrimalSolution* prima
   }
 
   auto upperBound = [](const scalar_array_t& array, scalar_t value) {
-    auto firstLargerValueIterator = std::upper_bound(array.begin(), array.end(), value);
-    return static_cast<int>(firstLargerValueIterator - array.begin());
+    const auto firstLargerValueIterator = std::upper_bound(array.cbegin(), array.cend(), value);
+    const auto diff = static_cast<int>(firstLargerValueIterator - array.begin());
+    if (firstLargerValueIterator != array.end()) {
+      return diff + 1;
+    } else {
+      return diff;
+    }
   };
 
   // fill trajectories
@@ -265,7 +270,6 @@ void GaussNewtonDDP::getPrimalSolution(scalar_t finalTime, PrimalSolution* prima
     }
     // length of the copy
     const int length = upperBound(nominalTimeTrajectoriesStock_[i], finalTime);
-
     primalSolutionPtr->timeTrajectory_.insert(primalSolutionPtr->timeTrajectory_.end(), nominalTimeTrajectoriesStock_[i].begin(),
                                               nominalTimeTrajectoriesStock_[i].begin() + length);
     primalSolutionPtr->stateTrajectory_.insert(primalSolutionPtr->stateTrajectory_.end(), nominalStateTrajectoriesStock_[i].begin(),
@@ -320,6 +324,55 @@ ScalarFunctionQuadraticApproximation GaussNewtonDDP::getValueFunction(scalar_t t
   valueFunction.dfdx += SmDeltaX;  // Adapt dfdx after f!
 
   return valueFunction;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ScalarFunctionQuadraticApproximation GaussNewtonDDP::getHamiltonian(scalar_t time, const vector_t& state, const vector_t& input) const {
+  ModelData modelData;
+
+  // perform the LQ approximation of the OC problem
+  // note that the cost already includes:
+  // - state-input intermediate cost
+  // - state-input soft constraint cost
+  // - state-only intermediate cost
+  // - state-only soft constraint cost
+  LinearQuadraticApproximator lqapprox(optimalControlProblemStock_[0], settings().checkNumericalStability_);
+  lqapprox.approximateLQProblem(time, state, input, modelData);
+  modelData.time_ = time;
+  modelData.stateDim_ = state.rows();
+  modelData.inputDim_ = input.rows();
+  modelData.dynamicsBias_.setZero(state.rows());
+  modelData.checkSizes(state.rows(), input.rows());
+
+  // augment the cost with state-only equality and state-input inequality constraint terms
+  augmentCostWorker(0, constraintPenaltyCoefficients_.stateEqConstrPenaltyCoeff, 0.0, modelData);
+
+  // initialize the Hamiltonian with the augmented cost
+  ScalarFunctionQuadraticApproximation hamiltonian(modelData.cost_);
+
+  // add the state-input equality constraint cost nu(x) * g(x,u) to the Hamiltonian
+  // note that nu has no approximation and is used as a constant
+  const vector_t nu = getStateInputEqualityConstraintLagrangian(time, state);
+  hamiltonian.f += nu.dot(modelData.stateInputEqConstr_.f);
+  hamiltonian.dfdx.noalias() += modelData.stateInputEqConstr_.dfdx.transpose() * nu;
+  hamiltonian.dfdu.noalias() += modelData.stateInputEqConstr_.dfdu.transpose() * nu;
+  // dfdxx is zero for the state-input equality constraint cost
+  // dfdux is zero for the state-input equality constraint cost
+  // dfduu is zero for the state-input equality constraint cost
+
+  // add the "future cost" dVdx(x) * f(x,u) to the Hamiltonian
+  const ScalarFunctionQuadraticApproximation V = getValueFunction(time, state);
+  const matrix_t dVdxx_dfdx = V.dfdxx.transpose() * modelData.dynamics_.dfdx;
+  hamiltonian.f += V.dfdx.dot(modelData.dynamics_.f);
+  hamiltonian.dfdx.noalias() += V.dfdxx.transpose() * modelData.dynamics_.f + modelData.dynamics_.dfdx.transpose() * V.dfdx;
+  hamiltonian.dfdu.noalias() += modelData.dynamics_.dfdu.transpose() * V.dfdx;
+  hamiltonian.dfdxx.noalias() += dVdxx_dfdx + dVdxx_dfdx.transpose();
+  hamiltonian.dfdux.noalias() += modelData.dynamics_.dfdu.transpose() * V.dfdxx;
+  // dfduu is zero for the "future cost"
+
+  return hamiltonian;
 }
 
 /******************************************************************************************************/

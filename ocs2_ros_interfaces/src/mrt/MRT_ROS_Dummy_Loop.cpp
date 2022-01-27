@@ -34,12 +34,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MRT_ROS_Dummy_Loop::MRT_ROS_Dummy_Loop(MRT_ROS_Interface& mrt, scalar_t mrtDesiredFrequency, scalar_t mpcDesiredFrequency /*= -1*/)
-    : mrt_(mrt),
-      mrtDesiredFrequency_(mrtDesiredFrequency),
-      mpcDesiredFrequency_(mpcDesiredFrequency),
-      realtimeLoop_(mpcDesiredFrequency <= 0)  // true if mpcDesiredFrequency is not set or it is negative
-{
+MRT_ROS_Dummy_Loop::MRT_ROS_Dummy_Loop(MRT_ROS_Interface& mrt, scalar_t mrtDesiredFrequency, scalar_t mpcDesiredFrequency)
+    : mrt_(mrt), mrtDesiredFrequency_(mrtDesiredFrequency), mpcDesiredFrequency_(mpcDesiredFrequency) {
   if (mrtDesiredFrequency_ < 0) {
     throw std::runtime_error("MRT loop frequency should be a positive number.");
   }
@@ -53,94 +49,139 @@ MRT_ROS_Dummy_Loop::MRT_ROS_Dummy_Loop(MRT_ROS_Interface& mrt, scalar_t mrtDesir
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MRT_ROS_Dummy_Loop::run(const SystemObservation& initObservation, const TargetTrajectories& initTargetTrajectories) {
-  ros::WallRate rosRate(mrtDesiredFrequency_);  // in Hz
+  ROS_INFO_STREAM("Waiting for the initial policy ...");
 
-  // time step
-  const scalar_t timeStep = (1.0 / mrtDesiredFrequency_);
-
-  // set the frequency ratio between MRT loop and MPC loop in the case of non realtime test
-  size_t frequencyRatio = 1;
-  if (!realtimeLoop_) {
-    frequencyRatio = static_cast<size_t>(mrtDesiredFrequency_ / mpcDesiredFrequency_);
-  }
-
-  size_t loopCounter = 0;
-  scalar_t time = initObservation.time;
-
-  // reset MPC node
+  // Reset MPC node
   mrt_.resetMpcNode(initTargetTrajectories);
 
-  // wait for the initial MPC plan
-  ROS_INFO_STREAM("Waiting for the initial policy ...");
-  while (::ros::ok() && ::ros::master::check()) {
+  // Wait for the initial policy
+  while (!mrt_.initialPolicyReceived() && ros::ok() && ros::master::check()) {
     mrt_.spinMRT();
-    // for initial plan
     mrt_.setCurrentObservation(initObservation);
-    if (mrt_.initialPolicyReceived()) {
-      break;
-    } else {
-      ::ros::WallDuration(timeStep).sleep();
-    }
+    ros::WallRate(mrtDesiredFrequency_).sleep();
   }
   ROS_INFO_STREAM("Initial policy has been received.");
 
-  observation_ = initObservation;
+  // Pick simulation loop mode
+  if (mpcDesiredFrequency_ > 0.0) {
+    synchronizedDummyLoop(initObservation, initTargetTrajectories);
+  } else {
+    realtimeDummyLoop(initObservation, initTargetTrajectories);
+  }
+}
 
-  while (::ros::ok() && ::ros::master::check()) {
-    // this should be called before updatePolicy()
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void MRT_ROS_Dummy_Loop::synchronizedDummyLoop(const SystemObservation& initObservation, const TargetTrajectories& initTargetTrajectories) {
+  // Determine the ratio between MPC updates and simulation steps.
+  const auto mpcUpdateRatio = std::max(static_cast<size_t>(mrtDesiredFrequency_ / mpcDesiredFrequency_), size_t(1));
+
+  // Loop variables
+  size_t loopCounter = 0;
+  SystemObservation currentObservation = initObservation;
+
+  // Helper function to check if policy is updated and starts at the given time.
+  // Due to ROS message conversion delay and very fast MPC loop, we might get an old policy instead of the latest one.
+  const auto policyUpdatedForTime = [this](scalar_t time) {
+    constexpr scalar_t tol = 0.1;  // policy must start within this fraction of dt
+    return mrt_.updatePolicy() && std::abs(mrt_.getPolicy().timeTrajectory_.front() - time) < (tol / mpcDesiredFrequency_);
+  };
+
+  ros::WallRate simRate(mrtDesiredFrequency_);
+  while (ros::ok() && ros::master::check()) {
+    std::cout << "### Current time " << currentObservation.time << "\n";
+
+    // Trigger MRT callbacks
     mrt_.spinMRT();
 
-    // Checks for new policy and updates the policy
-    bool policyUpdated = false;
-    if (realtimeLoop_) {
-      policyUpdated = mrt_.updatePolicy();
-
-    } else if (loopCounter % frequencyRatio == 0) {
-      while (::ros::ok() && ::ros::master::check()) {
-        policyUpdated = mrt_.updatePolicy();
-        if (policyUpdated) {
-          break;
-        } else {
-          mrt_.spinMRT();
-        }
+    // Update the MPC policy if it is time to do so
+    if (loopCounter % mpcUpdateRatio == 0) {
+      // Wait for the policy to be updated
+      while (!policyUpdatedForTime(currentObservation.time) && ros::ok() && ros::master::check()) {
+        mrt_.spinMRT();
       }
-      std::cout << "<<< Message received at " << time << "\n";
+      std::cout << "<<< New MPC policy starting at " << mrt_.getPolicy().timeTrajectory_.front() << "\n";
     }
 
-    std::cout << "### Current time " << time << "\n";
+    // Forward simulation
+    currentObservation = forwardSimulation(currentObservation);
 
-    // integrate nominal dynamics if available, otherwise fake simulation
-    vector_t stateTemp = observation_.state;
-    if (mrt_.isRolloutSet()) {
-      mrt_.rolloutPolicy(time, stateTemp, timeStep, observation_.state, observation_.input, observation_.mode);
-    } else {
-      mrt_.evaluatePolicy(time + timeStep, stateTemp, observation_.state, observation_.input, observation_.mode);
-    }
+    // User-defined modifications before publishing
+    modifyObservation(currentObservation);
 
-    // time and loop counter increment
-    loopCounter++;
-    time += timeStep;
-    observation_.time = time;
-
-    // user-defined modifications before publishing
-    modifyObservation(observation_);
-
-    // publish observation
-    if (realtimeLoop_) {
-      mrt_.setCurrentObservation(observation_);
-    } else if (loopCounter % frequencyRatio == 0) {
-      mrt_.setCurrentObservation(observation_);
-      std::cout << ">>> Observation is published at " << time << "\n";
+    // Publish observation if at the next step we want a new policy
+    if ((loopCounter + 1) % mpcUpdateRatio == 0) {
+      mrt_.setCurrentObservation(currentObservation);
+      std::cout << ">>> Observation is published at " << currentObservation.time << "\n";
     }
 
     // Update observers
     for (auto& observer : observers_) {
-      observer->update(observation_, mrt_.getPolicy(), mrt_.getCommand());
+      observer->update(currentObservation, mrt_.getPolicy(), mrt_.getCommand());
+    }
+
+    ++loopCounter;
+    ros::spinOnce();
+    simRate.sleep();
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void MRT_ROS_Dummy_Loop::realtimeDummyLoop(const SystemObservation& initObservation, const TargetTrajectories& initTargetTrajectories) {
+  // Loop variables
+  SystemObservation currentObservation = initObservation;
+
+  ros::WallRate simRate(mrtDesiredFrequency_);
+  while (ros::ok() && ros::master::check()) {
+    std::cout << "### Current time " << currentObservation.time << "\n";
+
+    // Trigger MRT callbacks
+    mrt_.spinMRT();
+
+    // Update the policy if a new on was received
+    if (mrt_.updatePolicy()) {
+      std::cout << "<<< New MPC policy starting at " << mrt_.getPolicy().timeTrajectory_.front() << "\n";
+    }
+
+    // Forward simulation
+    currentObservation = forwardSimulation(currentObservation);
+
+    // User-defined modifications before publishing
+    modifyObservation(currentObservation);
+
+    // Publish observation
+    mrt_.setCurrentObservation(currentObservation);
+
+    // Update observers
+    for (auto& observer : observers_) {
+      observer->update(currentObservation, mrt_.getPolicy(), mrt_.getCommand());
     }
 
     ros::spinOnce();
-    rosRate.sleep();
-  }  // end of while loop
+    simRate.sleep();
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+SystemObservation MRT_ROS_Dummy_Loop::forwardSimulation(const SystemObservation& currentObservation) {
+  const scalar_t dt = 1.0 / mrtDesiredFrequency_;
+
+  SystemObservation nextObservation;
+  nextObservation.time = currentObservation.time + dt;
+  if (mrt_.isRolloutSet()) {  // If available, use the provided rollout as to integrate the dynamics.
+    mrt_.rolloutPolicy(currentObservation.time, currentObservation.state, dt, nextObservation.state, nextObservation.input,
+                       nextObservation.mode);
+  } else {  // Otherwise, we fake integration by interpolating the current MPC policy at t+dt
+    mrt_.evaluatePolicy(currentObservation.time + dt, currentObservation.state, nextObservation.state, nextObservation.input,
+                        nextObservation.mode);
+  }
+
+  return nextObservation;
 }
 
 }  // namespace ocs2

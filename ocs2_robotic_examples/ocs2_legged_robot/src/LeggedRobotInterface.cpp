@@ -116,7 +116,8 @@ void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile
 
   // CentroidalModelInfo
   centroidalModelInfo_ = centroidal_model::createCentroidalModelInfo(
-      *pinocchioInterfacePtr_, centroidal_model::loadCentroidalType(taskFile), centroidal_model::loadDefaultJointState(12, referenceFile),
+      *pinocchioInterfacePtr_, centroidal_model::loadCentroidalType(taskFile),
+      centroidal_model::loadDefaultJointState(pinocchioInterfacePtr_->getModel().nq - 6, referenceFile),
       modelSettings_.contactNames3DoF, modelSettings_.contactNames6DoF);
 
   // Swing trajectory planner
@@ -228,7 +229,9 @@ std::shared_ptr<GaitSchedule> LeggedRobotInterface::loadGaitSchedule(const std::
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LeggedRobotInterface::initializeInputCostWeight(const std::string& taskFile, const CentroidalModelInfo& info, matrix_t& R) {
+matrix_t LeggedRobotInterface::initializeInputCostWeight(const std::string& taskFile, const CentroidalModelInfo& info) {
+  const size_t totalContactDim = 3 * info.numThreeDofContacts;
+
   vector_t initialState(centroidalModelInfo_.stateDim);
   loadData::loadEigenMatrix(taskFile, "initialState", initialState);
 
@@ -238,18 +241,26 @@ void LeggedRobotInterface::initializeInputCostWeight(const std::string& taskFile
   pinocchio::computeJointJacobians(model, data, q);
   pinocchio::updateFramePlacements(model, data);
 
-  matrix_t baseToFeetJacobians(3 * info.numThreeDofContacts, 12);
+  matrix_t baseToFeetJacobians(totalContactDim, info.actuatedDofNum);
   for (size_t i = 0; i < info.numThreeDofContacts; i++) {
     matrix_t jacobianWorldToContactPointInWorldFrame = matrix_t::Zero(6, info.generalizedCoordinatesNum);
     pinocchio::getFrameJacobian(model, data, model.getBodyId(modelSettings_.contactNames3DoF[i]), pinocchio::LOCAL_WORLD_ALIGNED,
                                 jacobianWorldToContactPointInWorldFrame);
 
-    baseToFeetJacobians.block(3 * i, 0, 3, 12) = (jacobianWorldToContactPointInWorldFrame.topRows<3>()).block(0, 6, 3, 12);
+    baseToFeetJacobians.block(3 * i, 0, 3, info.actuatedDofNum) =
+        jacobianWorldToContactPointInWorldFrame.block(0, 6, 3, info.actuatedDofNum);
   }
 
-  const size_t totalContactDim = 3 * info.numThreeDofContacts;
-  R.block(totalContactDim, totalContactDim, 12, 12) =
-      (baseToFeetJacobians.transpose() * R.block(totalContactDim, totalContactDim, 12, 12) * baseToFeetJacobians).eval();
+  matrix_t R_taskspace(totalContactDim + totalContactDim, totalContactDim + totalContactDim);
+  loadData::loadEigenMatrix(taskFile, "R", R_taskspace);
+
+  matrix_t R = matrix_t::Zero(info.inputDim, info.inputDim);
+  // Contact Forces
+  R.topLeftCorner(totalContactDim, totalContactDim) = R_taskspace.topLeftCorner(totalContactDim, totalContactDim);
+  // Joint velocities
+  R.bottomRightCorner(info.actuatedDofNum, info.actuatedDofNum) =
+      baseToFeetJacobians.transpose() * R_taskspace.bottomRightCorner(totalContactDim, totalContactDim) * baseToFeetJacobians;
+  return R;
 }
 
 /******************************************************************************************************/

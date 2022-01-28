@@ -57,7 +57,7 @@ void updateFinalMultiplierCollection(const OptimalControlProblem& ocp, scalar_t 
  * Updates pre-jump MultiplierCollection for equality and inequality Lagrangians.
  * Moreover it also updates the penalties of MetricsCollection based on the update multipliers.
  */
-void updatePreJumpMultiplierCollection(const OptimalControlProblem& ocp, scalar_t time, const vector_t& state, const vector_t& input,
+void updatePreJumpMultiplierCollection(const OptimalControlProblem& ocp, scalar_t time, const vector_t& state,
                                        MetricsCollection& metricsCollection, MultiplierCollection& multiplierCollection);
 
 /**

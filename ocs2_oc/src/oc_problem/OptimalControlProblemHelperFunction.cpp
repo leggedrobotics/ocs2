@@ -70,7 +70,7 @@ void updateFinalMultiplierCollection(const OptimalControlProblem& ocp, scalar_t 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void updatePreJumpMultiplierCollection(const OptimalControlProblem& ocp, scalar_t time, const vector_t& state, const vector_t& input,
+void updatePreJumpMultiplierCollection(const OptimalControlProblem& ocp, scalar_t time, const vector_t& state,
                                        MetricsCollection& metricsCollection, MultiplierCollection& multiplierCollection) {
   ocp.preJumpEqualityLagrangiantPtr->updateLagrangian(time, state, metricsCollection.stateEqLagrangian, multiplierCollection.stateEq);
   ocp.preJumpInequalityLagrangiantPtr->updateLagrangian(time, state, metricsCollection.stateIneqLagrangian, multiplierCollection.stateIneq);

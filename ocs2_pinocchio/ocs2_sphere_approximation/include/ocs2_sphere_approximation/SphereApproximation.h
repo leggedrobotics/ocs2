@@ -38,10 +38,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * Sphere approximation implmentation.
+ * Sphere approximation of geometrical shapes.
  *
- * This class approximates the collision primitive geometry: box, cylinder, and sphere, with spheres. This class is to be used with
+ * This class approximates the collision primitive geometry with spheres based on [1]. The class is to be used with
  * pinocchio::GeometryModel.
+ * 
+ * Currently the following primitive geometries are supported: box, cylinder, and sphere.
  *
  * Reference:
  * [1] A. Voelz and K. Graichen, "Computation of Collision Distance and Gradient using an Automatic Sphere Approximation of the Robot Model
@@ -52,7 +54,7 @@ class SphereApproximation {
   using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
 
   /** Constructor
-   * @param [in] geomObjectId : index of the geometry object in GeoemtryModel
+   * @param [in] geomObjectId : index of the geometry object in GeometryModel
    * @param [in] geometry : geometry stored in GeometryModel
    * @param [in] maxExcess : maximum allowed excess from the object surface to the sphere surface
    * @param [in] shrinkRatio: ratio of shrinking maxExcess when recursive approximation of the cylinder base is necessary

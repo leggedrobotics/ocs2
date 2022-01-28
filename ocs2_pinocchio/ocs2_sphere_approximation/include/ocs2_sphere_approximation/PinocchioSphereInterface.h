@@ -39,19 +39,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <hpp/fcl/collision_data.h>
 
-/* Forward declaration of pinocchio geometry types */
-// namespace pinocchio {
-// struct GeometryModel;
-//}  // namespace pinocchio
 
 namespace ocs2 {
 
 /**
  * Interface for approximating collision primitives with collision spheres.
  *
- * This class approximates the collision primitives: box, cylinder, and sphere, with collision spheres through SphereApproximation. It
- * parses the specified collision links from the robot description and updates the positions of the collision spheres using the pinocchio
- * library.
+ * This class approximates the collision primitive geometry with spheres based on [1]. It parses the specified collision links from the 
+ * robot description and updates the positions of the collision spheres using the pinocchio library.
+ * 
+ * Currently the following primitive geometries are supported: box, cylinder, and sphere.
+ *
+ * Reference:
+ * [1] A. Voelz and K. Graichen, "Computation of Collision Distance and Gradient using an Automatic Sphere Approximation of the Robot Model
+ * with Bounded Error," ISR 2018; 50th International Symposium on Robotics, 2018, pp. 1-8.
  */
 class PinocchioSphereInterface final {
  public:

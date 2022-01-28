@@ -72,18 +72,31 @@ link_directories(
   ${pinocchio_LIBRARY_DIRS}
 )
 
-# Mpc node
-add_executable(legged_robot_mpc
+# DDP-MPC node for legged robot
+add_executable(legged_robot_ddp_mpc
   src/gait/GaitReceiver.cpp
-  src/LeggedRobotMpcNode.cpp
+  src/LeggedRobotDdpMpcNode.cpp
 )
-add_dependencies(legged_robot_mpc
+add_dependencies(legged_robot_ddp_mpc
   ${catkin_EXPORTED_TARGETS}
 )
-target_link_libraries(legged_robot_mpc
+target_link_libraries(legged_robot_ddp_mpc
   ${catkin_LIBRARIES}
 )
-target_compile_options(legged_robot_mpc PRIVATE ${OCS2_CXX_FLAGS})
+target_compile_options(legged_robot_ddp_mpc PRIVATE ${OCS2_CXX_FLAGS})
+
+## SQP-MPC node for legged robot
+add_executable(legged_robot_sqp_mpc
+  src/gait/GaitReceiver.cpp
+  src/LeggedRobotSqpMpcNode.cpp
+)
+add_dependencies(legged_robot_sqp_mpc
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(legged_robot_sqp_mpc
+  ${catkin_LIBRARIES}
+)
+target_compile_options(legged_robot_sqp_mpc  PRIVATE ${OCS2_CXX_FLAGS})
 
 # Dummy node
 add_executable(legged_robot_dummy
@@ -123,19 +136,6 @@ target_link_libraries(legged_robot_gait_command
 )
 target_compile_options(legged_robot_gait_command PRIVATE ${OCS2_CXX_FLAGS})
 
-## SQP node for legged robot
-add_executable(legged_robot_sqp_mpc
-  src/gait/GaitReceiver.cpp
-  src/MultipleShootingLeggedRobotMpcNode.cpp
-)
-add_dependencies(legged_robot_sqp_mpc
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(legged_robot_sqp_mpc
-  ${catkin_LIBRARIES}
-)
-target_compile_options(legged_robot_sqp_mpc  PRIVATE ${OCS2_CXX_FLAGS})
-
 #########################
 ###   CLANG TOOLING   ###
 #########################
@@ -144,7 +144,8 @@ if(cmake_clang_tools_FOUND)
    message(STATUS "Run clang tooling for target ocs2_legged_robot_ros")
    add_clang_tooling(
      TARGETS
-       legged_robot_mpc
+       legged_robot_ddp_mpc
+       legged_robot_sqp_mpc
        legged_robot_dummy
        legged_robot_target
        legged_robot_gait_command
@@ -157,13 +158,13 @@ endif(cmake_clang_tools_FOUND)
 #############
 ## Install ##
 #############
-
-	install(DIRECTORY include/${PROJECT_NAME}/
+install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
 install(
   TARGETS
-    legged_robot_mpc
+    legged_robot_ddp_mpc
+    legged_robot_sqp_mpc
     legged_robot_dummy
     legged_robot_target
     legged_robot_gait_command

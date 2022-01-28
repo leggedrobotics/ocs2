@@ -87,10 +87,8 @@ LeggedRobotInterface::LeggedRobotInterface(const std::string& taskFile, const st
     throw std::invalid_argument("[LeggedRobotInterface] targetCommand file not found: " + referenceFilePath.string());
   }
 
-  boost::property_tree::ptree pt;
-  boost::property_tree::read_info(taskFile, pt);
   bool verbose;
-  loadData::loadPtreeValue(pt, verbose, "legged_robot_interface.verbose", false);
+  loadData::loadCppDataType(taskFile, "legged_robot_interface.verbose", verbose);
 
   // load setting from loading file
   modelSettings_ = loadModelSettings(taskFile, "model_settings", verbose);

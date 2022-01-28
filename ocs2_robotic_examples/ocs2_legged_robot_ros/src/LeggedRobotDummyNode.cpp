@@ -27,6 +27,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <ros/init.h>
+#include <ros/package.h>
+
 #include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
 #include <ocs2_legged_robot/LeggedRobotInterface.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
@@ -39,21 +42,19 @@ using namespace ocs2;
 using namespace legged_robot;
 
 int main(int argc, char** argv) {
-  std::vector<std::string> programArgs{};
-  ::ros::removeROSArgs(argc, argv, programArgs);
-  if (programArgs.size() < 5) {
-    throw std::runtime_error("No robot name, config folder, target command file, or description name specified. Aborting.");
-  }
-  const std::string robotName(programArgs[1]);
-  const std::string taskFile(programArgs[2]);
-  const std::string urdfFile(programArgs[3]);
-  const std::string targetCommandFile(programArgs[4]);
+  const std::string robotName = "legged_robot";
 
   // Initialize ros node
   ros::init(argc, argv, robotName + "_mrt");
   ros::NodeHandle nodeHandle;
+  // Get node parameters
+  std::string taskFile, urdfFile, referenceFile;
+  nodeHandle.getParam("/taskFile", taskFile);
+  nodeHandle.getParam("/urdfFile", urdfFile);
+  nodeHandle.getParam("/referenceFile", referenceFile);
 
-  LeggedRobotInterface interface(taskFile, urdfFile, targetCommandFile);
+  // Robot interface
+  LeggedRobotInterface interface(taskFile, urdfFile, referenceFile);
 
   // MRT
   MRT_ROS_Interface mrt(robotName);

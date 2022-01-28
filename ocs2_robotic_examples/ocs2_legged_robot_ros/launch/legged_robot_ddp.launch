@@ -33,7 +33,7 @@
     <param name="urdfFile"          value="$(arg urdfFile)" />
     <param name="gaitCommandFile"   value="$(arg gaitCommandFile)"/>
 
-    <node pkg="ocs2_legged_robot_ros" type="legged_robot_sqp_mpc" name="legged_robot_sqp_mpc"
+    <node pkg="ocs2_legged_robot_ros" type="legged_robot_ddp_mpc" name="legged_robot_ddp_mpc"
           output="screen" launch-prefix=""/>
 
     <node pkg="ocs2_legged_robot_ros" type="legged_robot_dummy" name="legged_robot_dummy"

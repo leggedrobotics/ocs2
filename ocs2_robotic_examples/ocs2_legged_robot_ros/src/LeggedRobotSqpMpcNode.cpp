@@ -28,6 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
 #include <ros/init.h>
+#include <ros/package.h>
 
 #include <ocs2_legged_robot/LeggedRobotInterface.h>
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
@@ -40,19 +41,16 @@ using namespace ocs2;
 using namespace legged_robot;
 
 int main(int argc, char** argv) {
-  std::vector<std::string> programArgs{};
-  ::ros::removeROSArgs(argc, argv, programArgs);
-  if (programArgs.size() < 5) {
-    throw std::runtime_error("No robot name, config folder, target command file, or description name specified. Aborting.");
-  }
-  const std::string robotName(programArgs[1]);
-  const std::string taskFile(programArgs[2]);
-  const std::string urdfFile(programArgs[3]);
-  const std::string referenceFile(programArgs[4]);
+  const std::string robotName = "legged_robot";
 
   // Initialize ros node
   ros::init(argc, argv, robotName + "_mpc");
   ros::NodeHandle nodeHandle;
+  // Get node parameters
+  std::string taskFile, urdfFile, referenceFile;
+  nodeHandle.getParam("/taskFile", taskFile);
+  nodeHandle.getParam("/urdfFile", urdfFile);
+  nodeHandle.getParam("/referenceFile", referenceFile);
 
   // Robot interface
   LeggedRobotInterface interface(taskFile, urdfFile, referenceFile);

@@ -36,6 +36,11 @@ namespace ocs2 {
 
 class TrajectorySpreading final {
  public:
+  struct Status {
+    bool willTruncate = false;
+    bool willPerformTrajectorySpreading = false;
+  };
+
   /**
    * Constructor
    * @param [in] debugCaching: To activate the debug print.
@@ -48,8 +53,9 @@ class TrajectorySpreading final {
    * @param [in] oldModeSchedule: The old mode schedule associated to the trajectories which should be adjusted.
    * @param [in] newModeSchedule: The new mode schedule that should be adapted to.
    * @param [in] oldTimeTrajectory: The old time trajectories that is associated with the old mode schedule.
+   * @returns the status of the devised trajectory spreading strategy.
    */
-  void set(const ModeSchedule& oldModeSchedule, const ModeSchedule& newModeSchedule, const scalar_array_t& oldTimeTrajectory);
+  Status set(const ModeSchedule& oldModeSchedule, const ModeSchedule& newModeSchedule, const scalar_array_t& oldTimeTrajectory);
 
   /**
    * Adjust continuous-time trajectory.

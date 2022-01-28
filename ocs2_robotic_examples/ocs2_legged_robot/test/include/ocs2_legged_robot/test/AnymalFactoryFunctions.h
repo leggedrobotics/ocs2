@@ -32,8 +32,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 
 #include <ocs2_centroidal_model/CentroidalModelInfo.h>
-#include <ocs2_legged_robot/synchronized_module/SwitchedModelReferenceManager.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
+
+#include "ocs2_legged_robot/reference_manager/SwitchedModelReferenceManager.h"
 
 namespace ocs2 {
 namespace legged_robot {

@@ -43,7 +43,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_legged_robot/common/ModelSettings.h"
 #include "ocs2_legged_robot/initialization/LeggedRobotInitializer.h"
-#include "ocs2_legged_robot/synchronized_module/SwitchedModelReferenceManager.h"
+#include "ocs2_legged_robot/reference_manager/SwitchedModelReferenceManager.h"
 
 /**
  * LeggedRobotInterface class

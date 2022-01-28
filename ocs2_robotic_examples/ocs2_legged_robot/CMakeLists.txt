@@ -89,7 +89,7 @@ add_library(${PROJECT_NAME}
   src/constraint/ZeroVelocityConstraintCppAd.cpp
   src/cost/LeggedRobotStateInputQuadraticCost.cpp
   src/initialization/LeggedRobotInitializer.cpp
-  src/synchronized_module/SwitchedModelReferenceManager.cpp
+  src/reference_manager/SwitchedModelReferenceManager.cpp
   src/foot_planner/CubicSpline.cpp
   src/foot_planner/SplineCpg.cpp
   src/foot_planner/SwingTrajectoryPlanner.cpp

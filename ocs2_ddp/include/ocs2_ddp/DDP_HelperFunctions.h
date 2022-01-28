@@ -109,4 +109,14 @@ inline const LinearController& getLinearController(const PrimalSolution& primalS
  */
 void incrementController(scalar_t stepLength, const LinearController& unoptimizedController, LinearController& controller);
 
+/**
+ * Gets the number of events that have preceded the given event time.
+ */
+inline size_t getEventCounter(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices, scalar_t eventTime) {
+  const auto eventIndexItr = std::find_if(postEventIndices.cbegin(), postEventIndices.cend(), [&](size_t postEventInd) {
+    return numerics::almost_eq(eventTime, timeTrajectory[postEventInd - 1]);
+  });
+  return std::distance(postEventIndices.cbegin(), eventIndexItr);
+}
+
 }  // namespace ocs2

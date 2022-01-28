@@ -40,6 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/approximate_model/ChangeOfInputVariables.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblemHelperFunction.h>
 #include <ocs2_oc/rollout/InitializerRollout.h>
+#include <ocs2_oc/trajectory_adjustment/TrajectorySpreadingHelperFunctions.h>
 
 #include <ocs2_ddp/DDP_HelperFunctions.h>
 #include <ocs2_ddp/HessianCorrection.h>
@@ -132,7 +133,7 @@ GaussNewtonDDP::GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rol
 /******************************************************************************************************/
 /******************************************************************************************************/
 GaussNewtonDDP::~GaussNewtonDDP() {
-  if (ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_) {
+  if (true || ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_) {
     std::cerr << getBenchmarkingInfo() << std::endl;
   }
 }
@@ -146,6 +147,7 @@ std::string GaussNewtonDDP::getBenchmarkingInfo() const {
   const auto backwardPassTotal = backwardPassTimer_.getTotalInMilliseconds();
   const auto computeControllerTotal = computeControllerTimer_.getTotalInMilliseconds();
   const auto searchStrategyTotal = searchStrategyTimer_.getTotalInMilliseconds();
+  const auto totalMultiplierTotal = totalMultiplierTimer_.getTotalInMilliseconds();
 
   const auto benchmarkTotal =
       initializationTotal + linearQuadraticApproximationTotal + backwardPassTotal + computeControllerTotal + searchStrategyTotal;
@@ -164,7 +166,16 @@ std::string GaussNewtonDDP::getBenchmarkingInfo() const {
     infoStream << "\tCompute Controller :\t" << computeControllerTimer_.getAverageInMilliseconds() << " [ms] \t\t("
                << computeControllerTotal / benchmarkTotal * 100 << "%)\n";
     infoStream << "\tSearch Strategy    :\t" << searchStrategyTimer_.getAverageInMilliseconds() << " [ms] \t\t("
-               << searchStrategyTotal / benchmarkTotal * 100 << "%)";
+               << searchStrategyTotal / benchmarkTotal * 100 << "%)\n";
+    infoStream << "\tLagrangian         :\t" << totalMultiplierTimer_.getAverageInMilliseconds() << " [ms] \t\t("
+               << totalMultiplierTotal / benchmarkTotal * 100 << "%)\n\n";
+
+    infoStream << "\tFinal Lagrangian        :\t" << finalMultiplierTimer_.getAverageInMilliseconds() << " [ms] \t\t("
+               << finalMultiplierTimer_.getTotalInMilliseconds() / totalMultiplierTotal * 100 << "%)\n";
+    infoStream << "\tPreJump Lagrangian      :\t" << preJumpMultiplierTimer_.getAverageInMilliseconds() << " [ms] \t\t("
+               << preJumpMultiplierTimer_.getTotalInMilliseconds() / totalMultiplierTotal * 100 << "%)\n";
+    infoStream << "\tIntermediate Lagrangian :\t" << intermediateMultiplierTimer_.getAverageInMilliseconds() << " [ms] \t\t("
+               << intermediateMultiplierTimer_.getTotalInMilliseconds() / totalMultiplierTotal * 100 << "%)\n";
   }
   return infoStream.str();
 }
@@ -202,6 +213,11 @@ void GaussNewtonDDP::reset() {
   backwardPassTimer_.reset();
   computeControllerTimer_.reset();
   searchStrategyTimer_.reset();
+
+  finalMultiplierTimer_.reset();
+  preJumpMultiplierTimer_.reset();
+  intermediateMultiplierTimer_.reset();
+  totalMultiplierTimer_.reset();
 }
 
 /******************************************************************************************************/
@@ -999,25 +1015,26 @@ void GaussNewtonDDP::correctInitcachedNominalTrajectories() {
 /******************************************************************************************************/
 void GaussNewtonDDP::initializeDualSolution(const DualSolution& cachedDualSolution, const PrimalSolution& primalSolution,
                                             DualSolution& dualSolution) {
+  // find the time that until then we can interpolate the cached dual solution
+  const auto interpolateTillTime = [&]() -> scalar_t {
+    const auto& timeTrajectory = primalSolution.timeTrajectory_;
+    const auto& cachedTimeTrajectory = cachedDualSolution.timeTrajectory;
+    const auto& eventTimes = primalSolution.modeSchedule_.eventTimes;
+
+    if (cachedTimeTrajectory.empty()) {
+      return timeTrajectory.front() - 1e-4;  // no interpolation: a bit before initial time
+    } else {
+      const auto nextEventItr = std::lower_bound(eventTimes.cbegin(), eventTimes.cend(), cachedTimeTrajectory.back());
+      return (nextEventItr != eventTimes.end()) ? std::min(*nextEventItr, timeTrajectory.back()) : timeTrajectory.back();
+    }
+  }();
+
   // resize
   clear(dualSolution);
   dualSolution.preJumps.resize(primalSolution.postEventIndices_.size());
   dualSolution.intermediates.resize(primalSolution.timeTrajectory_.size());
 
-  // find the time that until then we can interpolate the cached dual solution
-  //  const auto interpolateTillTime = [&]() -> scalar_t {
-  //    const auto& timeTrajectory = primalSolution.timeTrajectory_;
-  //    const auto& cachedTimeTrajectory = cachedDualSolution.timeTrajectory;
-  //    const auto& eventTimes = primalSolution.modeSchedule_.eventTimes;
-  //
-  //    if (cachedTimeTrajectory.empty()) {
-  //      return timeTrajectory.front();
-  //    } else {
-  //      const auto nextEventItr = std::lower_bound(eventTimes.cbegin(), eventTimes.cend(), cachedTimeTrajectory.back());
-  //      return (nextEventItr != eventTimes.end()) ? std::min(*nextEventItr, timeTrajectory.back()) : timeTrajectory.back();
-  //    }
-  //  }();
-
+  intermediateMultiplierTimer_.startTimer();
   // intermediates
   nextTaskId_ = 0;
   nextTimeIndex_ = 0;
@@ -1028,24 +1045,57 @@ void GaussNewtonDDP::initializeDualSolution(const DualSolution& cachedDualSoluti
     while ((timeIndex = nextTimeIndex_++) < primalSolution.timeTrajectory_.size()) {
       const auto& time = primalSolution.timeTrajectory_[timeIndex];
       auto& multiplierCollection = dualSolution.intermediates[timeIndex];
-      if (!cachedDualSolution.timeTrajectory.empty()) {
+      if (time <= interpolateTillTime) {
         multiplierCollection = getIntermediateDualSolutionAtTime(cachedDualSolution, time);
       } else {
         initializeIntermediateMultiplierCollection(optimalControlProblemStock_[taskId], time, multiplierCollection);
       }
     }
   };
-  runParallel(intermediateTask, ddpSettings_.nThreads_);
+  runParallel(intermediateTask, 1);
+  intermediateMultiplierTimer_.endTimer();
 
-  // TODO prejumps
+  preJumpMultiplierTimer_.startTimer();
+  // pre-jumps
+  if (!primalSolution.postEventIndices_.empty()) {
+    const auto firstEventTime = primalSolution.timeTrajectory_[primalSolution.postEventIndices_[0] - 1];
+    const auto cacheEventIndexBias =
+        getEventCounter(cachedDualSolution.timeTrajectory, cachedDualSolution.postEventIndices, firstEventTime);
 
-  // TODO final
-  if (cachedDualSolution.timeTrajectory.empty()) {
+    nextTaskId_ = 0;
+    nextTimeIndex_ = 0;
+    auto preJumpTask = [&]() {
+      const size_t taskId = nextTaskId_++;  // assign task ID (atomic)
+
+      int timeIndex;  // timeIndex is assigned atomically
+      while ((timeIndex = nextTimeIndex_++) < primalSolution.postEventIndices_.size()) {
+        const auto cachedTimeIndex = cacheEventIndexBias + timeIndex;
+        const auto& time = primalSolution.timeTrajectory_[timeIndex];
+        auto& multiplierCollection = dualSolution.preJumps[timeIndex];
+        if (cachedTimeIndex < cachedDualSolution.preJumps.size()) {
+          multiplierCollection = cachedDualSolution.preJumps[cachedTimeIndex];
+        } else {
+          initializePreJumpMultiplierCollection(optimalControlProblemStock_[taskId], time, multiplierCollection);
+        }
+      }
+    };
+    runParallel(preJumpTask, 1);
+  }
+  preJumpMultiplierTimer_.endTimer();
+
+  finalMultiplierTimer_.startTimer();
+  // final
+  const bool interpolateTillFinalTime = numerics::almost_eq(interpolateTillTime, primalSolution.timeTrajectory_.back());
+  if (interpolateTillFinalTime && !ocs2::empty(cachedDualSolution.final)) {
+    dualSolution.final = cachedDualSolution.final;
+  } else {
     initializeFinalMultiplierCollection(optimalControlProblemStock_[0], primalSolution.timeTrajectory_.back(), dualSolution.final);
   }
 
   // time
   dualSolution.timeTrajectory = primalSolution.timeTrajectory_;
+  dualSolution.postEventIndices = primalSolution.postEventIndices_;
+  finalMultiplierTimer_.endTimer();
 }
 
 /******************************************************************************************************/
@@ -1074,25 +1124,25 @@ void GaussNewtonDDP::updateDualSolution(const PrimalSolution& primalSolution, Pr
   runParallel(intermediateTask, ddpSettings_.nThreads_);
 
   // preJump
-  //  nextTaskId_ = 0;
-  //  nextTimeIndex_ = 0;
-  //  auto preJumpTask = [&]() {
-  //    const size_t taskId = nextTaskId_++;  // assign task ID (atomic)
-  //    const auto& optimalControlProblem = optimalControlProblemStock_[taskId];
-  //
-  //    // timeIndex is atomic
-  //    int eventIndex;
-  //    while ((eventIndex = nextTimeIndex_++) < primalSolution.postEventIndices_.size()) {
-  //      const auto timeIndex = primalSolution.postEventIndices_[eventIndex] - 1;
-  //      const auto& time = primalSolution.timeTrajectory_[timeIndex];
-  //      const auto& state = primalSolution.stateTrajectory_[timeIndex];
-  //      auto& metricsCollection = problemMetrics.preJumps[eventIndex];
-  //      auto& multiplierCollection = dualSolution.preJumps[eventIndex];
-  //
-  //      updatePreJumpMultiplierCollection(optimalControlProblem, time, state, metricsCollection, multiplierCollection);
-  //    }
-  //  };
-  //  runParallel(preJumpTask, ddpSettings_.nThreads_);
+  nextTaskId_ = 0;
+  nextTimeIndex_ = 0;
+  auto preJumpTask = [&]() {
+    const size_t taskId = nextTaskId_++;  // assign task ID (atomic)
+    const auto& optimalControlProblem = optimalControlProblemStock_[taskId];
+
+    // timeIndex is atomic
+    int eventIndex;
+    while ((eventIndex = nextTimeIndex_++) < primalSolution.postEventIndices_.size()) {
+      const auto timeIndex = primalSolution.postEventIndices_[eventIndex] - 1;
+      const auto& time = primalSolution.timeTrajectory_[timeIndex];
+      const auto& state = primalSolution.stateTrajectory_[timeIndex];
+      auto& metricsCollection = problemMetrics.preJumps[eventIndex];
+      auto& multiplierCollection = dualSolution.preJumps[eventIndex];
+
+      updatePreJumpMultiplierCollection(optimalControlProblem, time, state, metricsCollection, multiplierCollection);
+    }
+  };
+  runParallel(preJumpTask, ddpSettings_.nThreads_);
 
   // final
   const auto& time = primalSolution.timeTrajectory_.back();
@@ -1121,8 +1171,16 @@ void GaussNewtonDDP::runInit() {
     // swap controller used to rollout the nominal trajectories back to nominal data container.
     nominalPrimalData_.primalSolution.controllerPtr_.swap(optimizedPrimalData_.primalSolution.controllerPtr_);
 
+    totalMultiplierTimer_.startTimer();
+    // adjust dual solution
+    if (!optimizedDualSolution_.timeTrajectory.empty()) {
+      const auto status = trajectorySpread(optimizedPrimalData_.primalSolution.modeSchedule_,
+                                           nominalPrimalData_.primalSolution.modeSchedule_, optimizedDualSolution_);
+    }
+
     // initialize dual solution
     initializeDualSolution(optimizedDualSolution_, nominalPrimalData_.primalSolution, nominalDualSolution_);
+    totalMultiplierTimer_.endTimer();
 
     computeRolloutMetrics(optimalControlProblemStock_[taskId], nominalPrimalData_.primalSolution, nominalDualSolution_,
                           nominalPrimalData_.problemMetrics);

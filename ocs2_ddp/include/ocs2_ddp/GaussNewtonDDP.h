@@ -504,6 +504,11 @@ class GaussNewtonDDP : public SolverBase {
   benchmark::RepeatedTimer backwardPassTimer_;
   benchmark::RepeatedTimer computeControllerTimer_;
   benchmark::RepeatedTimer searchStrategyTimer_;
+
+  benchmark::RepeatedTimer finalMultiplierTimer_;
+  benchmark::RepeatedTimer preJumpMultiplierTimer_;
+  benchmark::RepeatedTimer intermediateMultiplierTimer_;
+  benchmark::RepeatedTimer totalMultiplierTimer_;
 };
 
 /******************************************************************************************************/

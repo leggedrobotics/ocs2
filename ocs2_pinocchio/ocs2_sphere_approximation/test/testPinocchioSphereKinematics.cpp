@@ -36,12 +36,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_sphere_approximation/PinocchioSphereKinematics.h>
 #include <ocs2_sphere_approximation/PinocchioSphereKinematicsCppAd.h>
 
+#include <ocs2_robotic_assets/package_path.h>
 #include <ocs2_robotic_tools/common/SkewSymmetricMatrix.h>
 
 #include <ocs2_pinocchio_interface/urdf.h>
 
 #include <gtest/gtest.h>
-#include <ros/package.h>
 
 using vector3_t = Eigen::Matrix<ocs2::scalar_t, 3, 1>;
 
@@ -70,19 +70,23 @@ class TestSphereKinematics : public ::testing::Test {
   using quaternion_t = Eigen::Quaternion<ocs2::scalar_t>;
 
   TestSphereKinematics() {
-    const std::string urdfFile = ros::package::getPath("ocs2_sphere_approximation") + "/urdf/dummy.urdf";
+    const std::string urdfFile = ocs2::robotic_assets::getPath() + "/resources/mobile_manipulator/urdf/mobile_manipulator.urdf";
     pinocchioInterfacePtr.reset(new ocs2::PinocchioInterface(ocs2::getPinocchioInterfaceFromUrdfFile(urdfFile)));
-    pinocchioSphereInterfacePtr.reset(new ocs2::PinocchioSphereInterface(
-        *pinocchioInterfacePtr, {"base", "shoulder", "upperarm", "forearm"}, {0.20, 0.10, 0.05, 0.05}, 0.7));
+    pinocchioSphereInterfacePtr.reset(new ocs2::PinocchioSphereInterface(*pinocchioInterfacePtr, {"ARM", "SHOULDER", "FOREARM", "WRIST_1"},
+                                                                         {0.20, 0.10, 0.05, 0.05}, 0.7));
     sphereKinematicsPtr.reset(new ocs2::PinocchioSphereKinematics(*pinocchioSphereInterfacePtr, pinocchioMapping));
     sphereKinematicsCppAdPtr.reset(new ocs2::PinocchioSphereKinematicsCppAd(
         *pinocchioInterfacePtr, *pinocchioSphereInterfacePtr, pinocchioMappingCppAd, pinocchioInterfacePtr->getModel().njoints, 0,
         "pinocchio_sphere_kinematics", "/tmp/ocs2", true, true));
 
     x.resize(pinocchioInterfacePtr->getModel().njoints);
-    x(0) = 0.7;  // SH_ROT
-    x(1) = 0.7;  // SH_FLE
-    x(2) = 0.3;  // EL_FLE
+    // taken form config/mpc/task.info
+    x(0) = 2.5;   // SH_ROT
+    x(1) = -1.0;  // SH_FLE
+    x(2) = 1.5;   // EL_FLE
+    x(3) = 0.0;   // EL_ROT
+    x(4) = 1.0;   // WR_FLE
+    x(5) = 0.0;   // WR_ROT
 
     q = pinocchioMapping.getPinocchioJointPosition(x);
   }

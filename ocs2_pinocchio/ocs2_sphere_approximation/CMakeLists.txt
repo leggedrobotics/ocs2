@@ -8,6 +8,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
   ocs2_robotic_tools
   ocs2_pinocchio_interface
+  ocs2_robotic_assets
 )
 
 find_package(catkin REQUIRED COMPONENTS
@@ -113,13 +114,12 @@ install(DIRECTORY include/${PROJECT_NAME}/
 ############
 # Testing ##
 ############
-catkin_add_gtest(${PACKAGE_NAME}_test
+catkin_add_gtest(PinocchioSphereKinematicsTest
   test/testPinocchioSphereKinematics.cpp
 )
 
-target_link_libraries(${PACKAGE_NAME}_test
+target_link_libraries(PinocchioSphereKinematicsTest
   gtest_main
-  roslib
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}

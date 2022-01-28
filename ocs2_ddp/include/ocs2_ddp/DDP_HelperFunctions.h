@@ -88,15 +88,6 @@ scalar_t rolloutTrajectory(RolloutBase& rollout, const std::pair<scalar_t, scala
 scalar_t computeControllerUpdateIS(const LinearController& controller);
 
 /**
- * Adjusts the controller based on the last changes in model schedule.
- *
- * @param [in] oldModeSchedule: The old mode schedule associated to the trajectories which should be adjusted.
- * @param [in] newModeSchedule: The new mode schedule that should be adapted to.
- * @param [in, out] oldController: The control policy that is associated with the old mode schedule.
- */
-void adjustController(const ModeSchedule& oldModeSchedule, const ModeSchedule& newModeSchedule, LinearController& oldController);
-
-/**
  * Gets a reference to the linear controller from the given primal solution.
  */
 inline LinearController& getLinearController(PrimalSolution& primalSolution) {

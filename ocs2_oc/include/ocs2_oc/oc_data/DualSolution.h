@@ -36,6 +36,7 @@ namespace ocs2 {
 
 struct DualSolution {
   scalar_array_t timeTrajectory;
+  size_array_t postEventIndices;
 
   MultiplierCollection final;
   std::vector<MultiplierCollection> preJumps;
@@ -68,17 +69,19 @@ struct DualSolutionConstRef {
 };
 
 inline void swap(DualSolution& lhs, DualSolution& rhs) {
+  lhs.timeTrajectory.swap(rhs.timeTrajectory);
+  lhs.postEventIndices.swap(rhs.postEventIndices);
   swap(lhs.final, rhs.final);
   lhs.preJumps.swap(rhs.preJumps);
   lhs.intermediates.swap(rhs.intermediates);
-  lhs.timeTrajectory.swap(rhs.timeTrajectory);
 }
 
 inline void clear(DualSolution& d) {
+  d.timeTrajectory.clear();
+  d.postEventIndices.clear();
   clear(d.final);
   d.preJumps.clear();
   d.intermediates.clear();
-  d.timeTrajectory.clear();
 }
 
 inline MultiplierCollection getIntermediateDualSolutionAtTime(const DualSolution& dualSolution, scalar_t time) {

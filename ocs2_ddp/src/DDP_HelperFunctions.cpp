@@ -35,7 +35,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/PreComputation.h>
 #include <ocs2_core/integration/TrapezoidalIntegration.h>
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
-#include <ocs2_oc/trajectory_adjustment/TrajectorySpreading.h>
 
 namespace ocs2 {
 
@@ -184,21 +183,6 @@ scalar_t computeControllerUpdateIS(const LinearController& controller) {
                  [](const vector_t& b) { return b.squaredNorm(); });
   // integrates using the trapezoidal approximation method
   return trapezoidalIntegration(controller.timeStamp_, biasArraySquaredNorm);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void adjustController(const ModeSchedule& oldModeSchedule, const ModeSchedule& newModeSchedule, LinearController& oldController) {
-  // trajectory spreading
-  constexpr bool debugPrint = false;
-  TrajectorySpreading trajectorySpreading(debugPrint);
-  trajectorySpreading.set(oldModeSchedule, newModeSchedule, oldController.timeStamp_);
-
-  // adjust bias, gain, and time
-  trajectorySpreading.adjustTrajectory(oldController.biasArray_);
-  trajectorySpreading.adjustTrajectory(oldController.gainArray_);
-  trajectorySpreading.adjustTimeTrajectory(oldController.timeStamp_);
 }
 
 /******************************************************************************************************/

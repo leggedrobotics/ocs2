@@ -941,6 +941,7 @@ void GaussNewtonDDP::runSearchStrategy(scalar_t lqModelExpectedCost, const Linea
   if (success) {
     dualSolution.intermediates.swap(intermediateDualSolution);
     dualSolution.timeTrajectory = primalData.primalSolution.timeTrajectory_;
+    dualSolution.postEventIndices = primalData.primalSolution.postEventIndices_;
 
     avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStep;
 
@@ -1263,7 +1264,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 
   // adjust controller
   if (!optimizedPrimalData_.primalSolution.controllerPtr_->empty()) {
-    adjustController(optimizedPrimalData_.primalSolution.modeSchedule_, getReferenceManager().getModeSchedule(),
+    trajectorySpread(optimizedPrimalData_.primalSolution.modeSchedule_, getReferenceManager().getModeSchedule(),
                      getLinearController(optimizedPrimalData_.primalSolution));
   }
 

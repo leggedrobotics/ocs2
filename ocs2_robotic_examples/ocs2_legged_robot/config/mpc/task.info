@@ -29,6 +29,7 @@ swing_trajectory_config
 ; multiple_shooting settings
 multiple_shooting
 {
+  nThreads                              3
   dt                                    0.015
   sqpIteration                          1
   deltaTol                              1e-4
@@ -66,7 +67,7 @@ ddp
   AbsTolODE                       1e-5
   RelTolODE                       1e-3
   maxNumStepsPerSecond            10000
-  timeStep                        1e-2
+  timeStep                        0.015
   backwardPassIntegratorType      ODE45
 
   constraintPenaltyInitialValue   20.0
@@ -94,7 +95,7 @@ rollout
 {
   AbsTolODE                       1e-5
   RelTolODE                       1e-3
-  timeStep                        1e-2
+  timeStep                        0.015
   maxNumStepsPerSecond            10000
   checkNumericalStability         false
 }

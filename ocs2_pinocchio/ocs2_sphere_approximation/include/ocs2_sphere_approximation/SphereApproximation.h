@@ -42,7 +42,7 @@ namespace ocs2 {
  *
  * This class approximates the collision primitive geometry with spheres based on [1]. The class is to be used with
  * pinocchio::GeometryModel.
- * 
+ *
  * Currently the following primitive geometries are supported: box, cylinder, and sphere.
  *
  * Reference:

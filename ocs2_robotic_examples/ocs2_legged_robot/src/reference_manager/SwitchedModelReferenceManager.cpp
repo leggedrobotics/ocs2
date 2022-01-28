@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "../../include/ocs2_legged_robot/reference_manager/SwitchedModelReferenceManager.h"
+#include "ocs2_legged_robot/reference_manager/SwitchedModelReferenceManager.h"
 
 namespace ocs2 {
 namespace legged_robot {

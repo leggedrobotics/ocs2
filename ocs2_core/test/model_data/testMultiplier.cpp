@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
-#include <ocs2_core/augmented_lagrangian/Multiplier.h>
+#include <ocs2_core/model_data/Multiplier.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 
 namespace ocs2 {

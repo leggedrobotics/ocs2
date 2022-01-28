@@ -203,15 +203,6 @@ install(DIRECTORY test/include/${PROJECT_NAME}/
 ## to see the summary of unit test results run
 ## $ catkin_test_results ../../../build/ocs2_core
 
-catkin_add_gtest(test_multiplier
-  test/augmented_lagrangian/testMultiplier.cpp
-)
-target_link_libraries(test_multiplier
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  gtest_main
-)
-
 catkin_add_gtest(test_control
   test/control/testLinearController.cpp
   test/control/testFeedforwardController.cpp
@@ -336,6 +327,15 @@ catkin_add_gtest(test_constraint
 target_link_libraries(test_constraint
   ${PROJECT_NAME}
   ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
+
+catkin_add_gtest(test_multiplier
+  test/model_data/testMultiplier.cpp
+)
+target_link_libraries(test_multiplier
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   gtest_main
 )

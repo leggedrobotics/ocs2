@@ -25,38 +25,20 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-******************************************************************************/
+ ******************************************************************************/
 
 #pragma once
 
-#include <ros/ros.h>
-#include <std_msgs/Bool.h>
+#include <cstddef>
 #include <string>
-#include <vector>
-
-#include "ocs2_legged_robot/gait/ModeSequenceTemplate.h"
 
 namespace ocs2 {
 namespace legged_robot {
 
-/** This class implements ModeSequence communication using ROS. */
-class LeggedRobotModeSequenceKeyboard {
- public:
-  LeggedRobotModeSequenceKeyboard(ros::NodeHandle nodeHandle, const std::string& gaitFile, const std::string& robotName,
-                                  bool verbose = false);
-
-  /** Prints the command line interface and responds to user input. Function returns after one user input. */
-  void getKeyboardCommand();
-
- private:
-  /** Prints the list of available gaits. */
-  void printGaitList(const std::vector<std::string>& gaitList) const;
-
-  std::vector<std::string> gaitList_;
-  std::map<std::string, ModeSequenceTemplate> gaitMap_;
-
-  ros::Publisher modeSequenceTemplatePublisher_;
-};
+/** Gets the path to the package source directory. */
+inline std::string getPath() {
+  return "@PROJECT_SOURCE_DIR@";
+}
 
 }  // namespace legged_robot
-}  // end of namespace ocs2
+}  // namespace ocs2

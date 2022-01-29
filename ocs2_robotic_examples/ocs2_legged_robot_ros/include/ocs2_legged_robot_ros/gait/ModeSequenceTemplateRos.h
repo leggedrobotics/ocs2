@@ -29,37 +29,29 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_centroidal_model/CentroidalModelInfo.h>
-#include <ocs2_core/initialization/Initializer.h>
+#include <vector>
 
-#include "ocs2_legged_robot/reference_manager/SwitchedModelReferenceManager.h"
+#include <ocs2_msgs/mode_schedule.h>
+
+#include <ocs2_legged_robot/gait/ModeSequenceTemplate.h>
 
 namespace ocs2 {
 namespace legged_robot {
 
-class LeggedRobotInitializer final : public Initializer {
- public:
-  /*
-   * Constructor
-   * @param [in] info : The centroidal model information.
-   * @param [in] referenceManager : Switched system reference manager.
-   * @param [in] extendNormalizedMomentum: If true, it extrapolates the normalized momenta; otherwise sets them to zero.
-   */
-  LeggedRobotInitializer(CentroidalModelInfo info, const SwitchedModelReferenceManager& referenceManager,
-                         bool extendNormalizedMomentum = false);
+/** Convert mode sequence template to ROS message */
+inline ocs2_msgs::mode_schedule createModeSequenceTemplateMsg(const ModeSequenceTemplate& modeSequenceTemplate) {
+  ocs2_msgs::mode_schedule modeScheduleMsg;
+  modeScheduleMsg.eventTimes.assign(modeSequenceTemplate.switchingTimes.begin(), modeSequenceTemplate.switchingTimes.end());
+  modeScheduleMsg.modeSequence.assign(modeSequenceTemplate.modeSequence.begin(), modeSequenceTemplate.modeSequence.end());
+  return modeScheduleMsg;
+}
 
-  ~LeggedRobotInitializer() override = default;
-  LeggedRobotInitializer* clone() const override;
-
-  void compute(scalar_t time, const vector_t& state, scalar_t nextTime, vector_t& input, vector_t& nextState) override;
-
- private:
-  LeggedRobotInitializer(const LeggedRobotInitializer& other) = default;
-
-  const CentroidalModelInfo info_;
-  const SwitchedModelReferenceManager* referenceManagerPtr_;
-  const bool extendNormalizedMomentum_;
-};
+/** Convert ROS message to mode sequence template */
+inline ModeSequenceTemplate readModeSequenceTemplateMsg(const ocs2_msgs::mode_schedule& modeScheduleMsg) {
+  std::vector<scalar_t> switchingTimes(modeScheduleMsg.eventTimes.begin(), modeScheduleMsg.eventTimes.end());
+  std::vector<size_t> modeSequence(modeScheduleMsg.modeSequence.begin(), modeScheduleMsg.modeSequence.end());
+  return {switchingTimes, modeSequence};
+}
 
 }  // namespace legged_robot
 }  // namespace ocs2

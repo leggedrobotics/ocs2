@@ -27,28 +27,29 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_legged_robot/command/LeggedRobotModeSequenceKeyboard.h>
+#include <ros/init.h>
+#include <ros/package.h>
+
+#include "ocs2_legged_robot_ros/gait/GaitKeyboardPublisher.h"
 
 using namespace ocs2;
 using namespace legged_robot;
 
 int main(int argc, char* argv[]) {
-  std::vector<std::string> programArgs{};
-  ::ros::removeROSArgs(argc, argv, programArgs);
-  if (programArgs.size() < 3) {
-    throw std::runtime_error("No robot name or target command file specified. Aborting.");
-  }
-  const std::string robotName(programArgs[1]);
-  const std::string gaitFile(programArgs[2]);
-  std::cerr << "Loading gait file: " << gaitFile << std::endl;
+  const std::string robotName = "legged_robot";
 
+  // Initialize ros node
   ros::init(argc, argv, robotName + "_mpc_mode_schedule");
   ros::NodeHandle nodeHandle;
+  // Get node parameters
+  std::string gaitCommandFile;
+  nodeHandle.getParam("/gaitCommandFile", gaitCommandFile);
+  std::cerr << "Loading gait file: " << gaitCommandFile << std::endl;
 
-  LeggedRobotModeSequenceKeyboard modeSequenceCommand(nodeHandle, gaitFile, robotName, true);
+  GaitKeyboardPublisher gaitCommand(nodeHandle, gaitCommandFile, robotName, true);
 
   while (ros::ok() && ros::master::check()) {
-    modeSequenceCommand.getKeyboardCommand();
+    gaitCommand.getKeyboardCommand();
   }
 
   // Successful exit

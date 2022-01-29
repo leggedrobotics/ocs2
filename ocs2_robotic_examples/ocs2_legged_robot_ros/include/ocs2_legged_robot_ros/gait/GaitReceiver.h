@@ -29,36 +29,39 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_centroidal_model/CentroidalModelInfo.h>
-#include <ocs2_core/initialization/Initializer.h>
+#include <mutex>
 
-#include "ocs2_legged_robot/reference_manager/SwitchedModelReferenceManager.h"
+#include <ros/ros.h>
+
+#include <ocs2_core/Types.h>
+#include <ocs2_msgs/mode_schedule.h>
+#include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
+
+#include <ocs2_legged_robot/gait/GaitSchedule.h>
+#include <ocs2_legged_robot/gait/ModeSequenceTemplate.h>
+#include <ocs2_legged_robot/gait/MotionPhaseDefinition.h>
 
 namespace ocs2 {
 namespace legged_robot {
-
-class LeggedRobotInitializer final : public Initializer {
+class GaitReceiver : public SolverSynchronizedModule {
  public:
-  /*
-   * Constructor
-   * @param [in] info : The centroidal model information.
-   * @param [in] referenceManager : Switched system reference manager.
-   * @param [in] extendNormalizedMomentum: If true, it extrapolates the normalized momenta; otherwise sets them to zero.
-   */
-  LeggedRobotInitializer(CentroidalModelInfo info, const SwitchedModelReferenceManager& referenceManager,
-                         bool extendNormalizedMomentum = false);
+  GaitReceiver(ros::NodeHandle nodeHandle, std::shared_ptr<GaitSchedule> gaitSchedulePtr, const std::string& robotName);
 
-  ~LeggedRobotInitializer() override = default;
-  LeggedRobotInitializer* clone() const override;
+  void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
+                    const ReferenceManagerInterface& referenceManager) override;
 
-  void compute(scalar_t time, const vector_t& state, scalar_t nextTime, vector_t& input, vector_t& nextState) override;
+  void postSolverRun(const PrimalSolution& primalSolution) override{};
 
  private:
-  LeggedRobotInitializer(const LeggedRobotInitializer& other) = default;
+  void mpcModeSequenceCallback(const ocs2_msgs::mode_schedule::ConstPtr& msg);
 
-  const CentroidalModelInfo info_;
-  const SwitchedModelReferenceManager* referenceManagerPtr_;
-  const bool extendNormalizedMomentum_;
+  std::shared_ptr<GaitSchedule> gaitSchedulePtr_;
+
+  ros::Subscriber mpcModeSequenceSubscriber_;
+
+  std::mutex receivedGaitMutex_;
+  std::atomic_bool gaitUpdated_;
+  ModeSequenceTemplate receivedGait_;
 };
 
 }  // namespace legged_robot

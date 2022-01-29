@@ -29,9 +29,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <string>
 
+#include <ros/init.h>
+#include <ros/package.h>
+
 #include <ocs2_core/Types.h>
 #include <ocs2_core/misc/LoadData.h>
-
 #include <ocs2_ros_interfaces/command/TargetTrajectoriesKeyboardPublisher.h>
 
 using namespace ocs2;
@@ -93,24 +95,19 @@ TargetTrajectories commandLineToTargetTrajectories(const vector_t& commadLineTar
 }
 
 int main(int argc, char* argv[]) {
-  std::vector<std::string> programArgs{};
-  ::ros::removeROSArgs(argc, argv, programArgs);
-  if (programArgs.size() < 3) {
-    throw std::runtime_error("No robot name or target command file specified. Aborting.");
-  }
-  const std::string robotName(programArgs[1]);
-  const std::string targetCommandFile(programArgs[2]);
+  const std::string robotName = "legged_robot";
 
-  boost::property_tree::ptree pt;
-  boost::property_tree::read_info(targetCommandFile, pt);
-  targetDisplacementVelocity = pt.get<scalar_t>("targetDisplacementVelocity");
-  targetRotationVelocity = pt.get<scalar_t>("targetRotationVelocity");
-  comHeight = pt.get<scalar_t>("comHeight");
-  ocs2::loadData::loadEigenMatrix(targetCommandFile, "defaultJointState", defaultJointState);
-
-  // ros node handle
+  // Initialize ros node
   ::ros::init(argc, argv, robotName + "_target");
   ::ros::NodeHandle nodeHandle;
+  // Get node parameters
+  std::string referenceFile;
+  nodeHandle.getParam("/referenceFile", referenceFile);
+
+  loadData::loadCppDataType(referenceFile, "comHeight", comHeight);
+  loadData::loadEigenMatrix(referenceFile, "defaultJointState", defaultJointState);
+  loadData::loadCppDataType(referenceFile, "targetRotationVelocity", targetRotationVelocity);
+  loadData::loadCppDataType(referenceFile, "targetDisplacementVelocity", targetDisplacementVelocity);
 
   // goalPose: [deltaX, deltaY, deltaZ, deltaYaw]
   const scalar_array_t relativeBaseLimit{10.0, 10.0, 0.2, 360.0};

@@ -96,6 +96,7 @@ rollout
   AbsTolODE                       1e-5
   RelTolODE                       1e-3
   timeStep                        0.015
+  integratorType                  ODE45
   maxNumStepsPerSecond            10000
   checkNumericalStability         false
 }

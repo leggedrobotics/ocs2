@@ -121,9 +121,7 @@ MultidimensionalPenalty::MultidimensionalPenalty(const MultidimensionalPenalty& 
 /******************************************************************************************************/
 scalar_t MultidimensionalPenalty::getValue(scalar_t t, const vector_t& h, const vector_t* l) const {
   const auto numConstraints = h.rows();
-  if (penaltyPtrArray_.size() != 1) {
-    assert(penaltyPtrArray_.size() == numConstraints);
-  }
+  assert(penaltyPtrArray_.size() == 1 || penaltyPtrArray_.size() == numConstraints);
 
   scalar_t penalty = 0;
   for (size_t i = 0; i < numConstraints; i++) {
@@ -207,9 +205,7 @@ ScalarFunctionQuadraticApproximation MultidimensionalPenalty::getQuadraticApprox
 std::tuple<scalar_t, vector_t, vector_t> MultidimensionalPenalty::getPenaltyValue1stDev2ndDev(scalar_t t, const vector_t& h,
                                                                                               const vector_t* l) const {
   const auto numConstraints = h.rows();
-  if (penaltyPtrArray_.size() != 1) {
-    assert(penaltyPtrArray_.size() == numConstraints);
-  }
+  assert(penaltyPtrArray_.size() == 1 || penaltyPtrArray_.size() == numConstraints);
 
   scalar_t penaltyValue = 0.0;
   vector_t penaltyDerivative(numConstraints);
@@ -230,9 +226,7 @@ std::tuple<scalar_t, vector_t, vector_t> MultidimensionalPenalty::getPenaltyValu
 vector_t MultidimensionalPenalty::updateMultipliers(scalar_t t, const vector_t& h, const vector_t& l) const {
   const size_t numConstraints = h.size();
   assert(l.size() == numConstraints);
-  if (penaltyPtrArray_.size() != 1) {
-    assert(penaltyPtrArray_.size() == numConstraints);
-  }
+  assert(penaltyPtrArray_.size() == 1 || penaltyPtrArray_.size() == numConstraints);
 
   vector_t updted_l(numConstraints);
   for (size_t i = 0; i < numConstraints; i++) {
@@ -247,9 +241,7 @@ vector_t MultidimensionalPenalty::updateMultipliers(scalar_t t, const vector_t& 
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t MultidimensionalPenalty::initializeMultipliers(size_t numConstraints) const {
-  if (penaltyPtrArray_.size() != 1) {
-    assert(penaltyPtrArray_.size() == numConstraints);
-  }
+  assert(penaltyPtrArray_.size() == 1 || penaltyPtrArray_.size() == numConstraints);
 
   vector_t l(numConstraints);
   for (size_t i = 0; i < numConstraints; i++) {

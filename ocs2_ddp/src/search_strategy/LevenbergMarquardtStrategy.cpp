@@ -39,7 +39,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 LevenbergMarquardtStrategy::LevenbergMarquardtStrategy(search_strategy::Settings baseSettings, levenberg_marquardt::Settings settings,
                                                        RolloutBase& rolloutRef, OptimalControlProblem& optimalControlProblemRef,
-                                                       SoftConstraintPenalty& ineqConstrPenaltyRef,
+                                                       MultidimensionalPenalty& ineqConstrPenaltyRef,
                                                        std::function<scalar_t(const PerformanceIndex&)> meritFunc)
     : SearchStrategyBase(std::move(baseSettings)),
       settings_(std::move(settings)),

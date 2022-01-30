@@ -152,7 +152,7 @@ void SearchStrategyBase::rolloutCostAndConstraints(OptimalControlProblem& proble
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PerformanceIndex SearchStrategyBase::calculateRolloutPerformanceIndex(const SoftConstraintPenalty& ineqConstrPenalty,
+PerformanceIndex SearchStrategyBase::calculateRolloutPerformanceIndex(const MultidimensionalPenalty& ineqConstrPenalty,
                                                                       const PrimalDataContainer& primalData,
                                                                       scalar_t heuristicsValue) const {
   // create alias

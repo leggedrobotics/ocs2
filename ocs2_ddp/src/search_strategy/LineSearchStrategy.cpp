@@ -40,7 +40,7 @@ namespace ocs2 {
 LineSearchStrategy::LineSearchStrategy(search_strategy::Settings baseSettings, line_search::Settings settings, ThreadPool& threadPoolRef,
                                        std::vector<std::reference_wrapper<RolloutBase>> rolloutRefStock,
                                        std::vector<std::reference_wrapper<OptimalControlProblem>> optimalControlProblemRefStock,
-                                       SoftConstraintPenalty& ineqConstrPenaltyRef,
+                                       MultidimensionalPenalty& ineqConstrPenaltyRef,
                                        std::function<scalar_t(const PerformanceIndex&)> meritFunc)
     : SearchStrategyBase(std::move(baseSettings)),
       settings_(std::move(settings)),

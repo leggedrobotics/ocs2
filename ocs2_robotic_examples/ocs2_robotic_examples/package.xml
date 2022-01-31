@@ -23,6 +23,7 @@
   <run_depend>ocs2_mobile_manipulator</run_depend>
   <run_depend>ocs2_mobile_manipulator_ros</run_depend>
   <run_depend>ocs2_legged_robot</run_depend>
+  <run_depend>ocs2_legged_robot_ros</run_depend>
   <run_depend>xacro</run_depend>
 
   <export>

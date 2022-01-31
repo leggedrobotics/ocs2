@@ -72,14 +72,14 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>10</subscriber_queue_size>
-                            <title>Total Rollout Cost</title>
+                            <title>Rollout Cost</title>
                         </curve_0>
                     </curves>
                     <legend>
                         <visible>false</visible>
                     </legend>
                     <plot_rate>30</plot_rate>
-                    <title>Total Rollout Merit</title>
+                    <title>Rollout Merit</title>
                 </column_0>
                 <column_1>
                     <axes>
@@ -113,7 +113,7 @@
                                     <type>ocs2_msgs/mpc_performance_indices</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>totalCost</field>
+                                    <field>cost</field>
                                     <field_type>0</field_type>
                                     <scale>
                                         <absolute_maximum>1000</absolute_maximum>
@@ -146,14 +146,14 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>10</subscriber_queue_size>
-                            <title>Total Rollout Cost</title>
+                            <title>Rollout Cost</title>
                         </curve_0>
                     </curves>
                     <legend>
                         <visible>false</visible>
                     </legend>
                     <plot_rate>30</plot_rate>
-                    <title>Total Rollout Cost</title>
+                    <title>Rollout Cost</title>
                 </column_1>
             </row_0>
             <row_1>
@@ -339,7 +339,7 @@
                                     <type>ocs2_msgs/mpc_performance_indices</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>equalityLagrangiansPenalty</field>
+                                    <field>equalityLagrangian</field>
                                     <field_type>0</field_type>
                                     <scale>
                                         <absolute_maximum>1000</absolute_maximum>
@@ -372,14 +372,14 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>10</subscriber_queue_size>
-                            <title>Equality Lagrangians Penalty</title>
+                            <title>Equality Lagrangian</title>
                         </curve_0>
                     </curves>
                     <legend>
                         <visible>false</visible>
                     </legend>
                     <plot_rate>30</plot_rate>
-                    <title>Equality Lagrangians Penalty</title>
+                    <title>Equality Lagrangian</title>
                 </column_0>
                 <column_1>
                     <axes>
@@ -413,7 +413,7 @@
                                     <type>ocs2_msgs/mpc_performance_indices</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>inequalityLagrangiansPenalty</field>
+                                    <field>inequalityLagrangian</field>
                                     <field_type>0</field_type>
                                     <scale>
                                         <absolute_maximum>1000</absolute_maximum>
@@ -446,14 +446,14 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>10</subscriber_queue_size>
-                            <title>Inequality Lagrangians Penalty</title>
+                            <title>Inequality Lagrangian</title>
                         </curve_0>
                     </curves>
                     <legend>
                         <visible>false</visible>
                     </legend>
                     <plot_rate>30</plot_rate>
-                    <title>Inequality Lagrangians Penalty</title>
+                    <title>Inequality Lagrangian</title>
                 </column_1>
             </row_2>
         </plots>

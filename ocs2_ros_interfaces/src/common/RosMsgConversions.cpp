@@ -125,11 +125,11 @@ ocs2_msgs::mpc_performance_indices createPerformanceIndicesMsg(scalar_t initTime
 
   performanceIndicesMsg.initTime = initTime;
   performanceIndicesMsg.merit = performanceIndices.merit;
-  performanceIndicesMsg.totalCost = performanceIndices.totalCost;
+  performanceIndicesMsg.cost = performanceIndices.cost;
   performanceIndicesMsg.dynamicsViolationSSE = performanceIndices.dynamicsViolationSSE;
   performanceIndicesMsg.equalityConstraintsSSE = performanceIndices.equalityConstraintsSSE;
-  performanceIndicesMsg.equalityLagrangiansPenalty = performanceIndices.equalityLagrangiansPenalty;
-  performanceIndicesMsg.inequalityLagrangiansPenalty = performanceIndices.inequalityLagrangiansPenalty;
+  performanceIndicesMsg.equalityLagrangian = performanceIndices.equalityLagrangian;
+  performanceIndicesMsg.inequalityLagrangian = performanceIndices.inequalityLagrangian;
 
   return performanceIndicesMsg;
 }
@@ -141,11 +141,11 @@ PerformanceIndex readPerformanceIndicesMsg(const ocs2_msgs::mpc_performance_indi
   PerformanceIndex performanceIndices;
 
   performanceIndices.merit = performanceIndicesMsg.merit;
-  performanceIndices.totalCost = performanceIndicesMsg.totalCost;
+  performanceIndices.cost = performanceIndicesMsg.cost;
   performanceIndices.dynamicsViolationSSE = performanceIndicesMsg.dynamicsViolationSSE;
   performanceIndices.equalityConstraintsSSE = performanceIndicesMsg.equalityConstraintsSSE;
-  performanceIndices.equalityLagrangiansPenalty = performanceIndicesMsg.equalityLagrangiansPenalty;
-  performanceIndices.inequalityLagrangiansPenalty = performanceIndicesMsg.inequalityLagrangiansPenalty;
+  performanceIndices.equalityLagrangian = performanceIndicesMsg.equalityLagrangian;
+  performanceIndices.inequalityLagrangian = performanceIndicesMsg.inequalityLagrangian;
 
   return performanceIndices;
 }

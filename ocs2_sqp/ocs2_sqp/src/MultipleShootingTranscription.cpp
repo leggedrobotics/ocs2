@@ -59,8 +59,9 @@ Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlP
   optimalControlProblem.preComputationPtr->request(request, t, x, u);
 
   // Costs: Approximate the integral with forward euler
-  cost = approximateCost(optimalControlProblem, t, x, u) * dt;
-  performance.totalCost = cost.f;
+  cost = approximateCost(optimalControlProblem, t, x, u);
+  cost *= dt;
+  performance.cost = cost.f;
 
   // Constraints
   if (!optimalControlProblem.equalityConstraintPtr->empty()) {
@@ -96,7 +97,7 @@ PerformanceIndex computeIntermediatePerformance(const OptimalControlProblem& opt
   optimalControlProblem.preComputationPtr->request(request, t, x, u);
 
   // Costs
-  performance.totalCost = dt * computeCost(optimalControlProblem, t, x, u);
+  performance.cost = dt * computeCost(optimalControlProblem, t, x, u);
 
   // Constraints
   if (!optimalControlProblem.equalityConstraintPtr->empty()) {
@@ -120,7 +121,7 @@ TerminalTranscription setupTerminalNode(const OptimalControlProblem& optimalCont
   optimalControlProblem.preComputationPtr->requestFinal(request, t, x);
 
   cost = approximateFinalCost(optimalControlProblem, t, x);
-  performance.totalCost = cost.f;
+  performance.cost = cost.f;
 
   constraints = VectorFunctionLinearApproximation::Zero(0, x.size(), 0);
 
@@ -133,7 +134,7 @@ PerformanceIndex computeTerminalPerformance(const OptimalControlProblem& optimal
   constexpr auto request = Request::Cost + Request::SoftConstraint;
   optimalControlProblem.preComputationPtr->requestFinal(request, t, x);
 
-  performance.totalCost = computeFinalCost(optimalControlProblem, t, x);
+  performance.cost = computeFinalCost(optimalControlProblem, t, x);
 
   return performance;
 }
@@ -158,7 +159,7 @@ EventTranscription setupEventNode(const OptimalControlProblem& optimalControlPro
   performance.dynamicsViolationSSE = dynamics.f.squaredNorm();
 
   cost = approximateEventCost(optimalControlProblem, t, x);
-  performance.totalCost = cost.f;
+  performance.cost = cost.f;
 
   constraints = VectorFunctionLinearApproximation::Zero(0, x.size(), 0);
   return transcription;
@@ -175,7 +176,7 @@ PerformanceIndex computeEventPerformance(const OptimalControlProblem& optimalCon
   const vector_t dynamicsGap = optimalControlProblem.dynamicsPtr->computeJumpMap(t, x) - x_next;
   performance.dynamicsViolationSSE = dynamicsGap.squaredNorm();
 
-  performance.totalCost = computeEventCost(optimalControlProblem, t, x);
+  performance.cost = computeEventCost(optimalControlProblem, t, x);
 
   return performance;
 }

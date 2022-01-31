@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ocs2_legged_robot_ros</name>
+  <version>0.0.1</version>
+  <description>The ocs2_legged_robot_ros package</description>
+
+  <maintainer email="farbod.farshidian@gmail.com">Farbod Farshidian</maintainer>
+  <maintainer email="rgrandia@ethz.ch">Ruben Grandia</maintainer>
+  <maintainer email="jeanpierre.sleiman@mavt.ethz.ch">Jean-Pierre Sleiman</maintainer>
+
+  <license>BSD-3</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>roslib</depend>
+  <depend>tf</depend>
+  <depend>urdf</depend>
+  <depend>kdl_parser</depend>
+  <depend>robot_state_publisher</depend>
+  <depend>cmake_modules</depend>
+
+  <depend>ocs2_core</depend>
+  <depend>ocs2_oc</depend>
+  <depend>ocs2_ddp</depend>
+  <depend>ocs2_mpc</depend>
+  <depend>ocs2_sqp</depend>
+  <depend>ocs2_robotic_tools</depend>
+  <depend>ocs2_pinocchio_interface</depend>
+  <depend>ocs2_centroidal_model</depend>
+  <depend>ocs2_robotic_assets</depend>
+  <depend>ocs2_msgs</depend>
+  <depend>ocs2_legged_robot</depend>
+  <depend>ocs2_ros_interfaces</depend>
+
+  <depend>pinocchio</depend>
+
+</package>

@@ -41,6 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+namespace {
 std::ostream& operator<<(std::ostream& os, const std::pair<int, int>& ind) {
   os << "(" << ind.first << ", " << ind.second << ")";
   return os;
@@ -50,6 +51,7 @@ std::stringstream& operator<<(std::stringstream& out, const std::pair<int, int>&
   out << "(" << ind.first << ", " << ind.second << ")";
   return out;
 }
+}  // anonymous namespace
 
 /******************************************************************************************************/
 /******************************************************************************************************/

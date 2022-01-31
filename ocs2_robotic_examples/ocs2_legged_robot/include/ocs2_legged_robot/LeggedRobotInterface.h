@@ -39,10 +39,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 #include <ocs2_robotic_tools/end_effector/EndEffectorKinematics.h>
+#include <ocs2_sqp/MultipleShootingSettings.h>
 
 #include "ocs2_legged_robot/common/ModelSettings.h"
 #include "ocs2_legged_robot/initialization/LeggedRobotInitializer.h"
-#include "ocs2_legged_robot/synchronized_module/SwitchedModelReferenceManager.h"
+#include "ocs2_legged_robot/reference_manager/SwitchedModelReferenceManager.h"
 
 /**
  * LeggedRobotInterface class
@@ -55,12 +56,14 @@ class LeggedRobotInterface final : public RobotInterface {
  public:
   /**
    * Constructor
-   * @param [in] taskFileFolderName: The name of the folder containing task file
-   * @param [in] targetCommandFile: The path of the target command file
-   * @param [in] urdfTree: Pointer to a URDF model tree
+   *
+   * @throw Invalid argument error if input task file or urdf file does not exist.
+   *
+   * @param [in] taskFile: The absolute path to the configuration file for the MPC.
+   * @param [in] urdfFile: The absolute path to the URDF file for the robot.
+   * @param [in] referenceFile: The absolute path to the reference configuration file.
    */
-  LeggedRobotInterface(const std::string& taskFileFolderName, const std::string& targetCommandFile,
-                       const ::urdf::ModelInterfaceSharedPtr& urdfTree);
+  LeggedRobotInterface(const std::string& taskFile, const std::string& urdfFile, const std::string& referenceFile);
 
   ~LeggedRobotInterface() override = default;
 
@@ -70,6 +73,7 @@ class LeggedRobotInterface final : public RobotInterface {
   const ddp::Settings& ddpSettings() const { return ddpSettings_; }
   const mpc::Settings& mpcSettings() const { return mpcSettings_; }
   const rollout::Settings& rolloutSettings() const { return rolloutSettings_; }
+  const multiple_shooting::Settings& sqpSettings() { return sqpSettings_; }
 
   const vector_t& getInitialState() const { return initialState_; }
   const RolloutBase& getRollout() const { return *rolloutPtr_; }
@@ -81,14 +85,14 @@ class LeggedRobotInterface final : public RobotInterface {
   std::shared_ptr<ReferenceManagerInterface> getReferenceManagerPtr() const override { return referenceManagerPtr_; }
 
  private:
-  std::shared_ptr<GaitSchedule> loadGaitSchedule(const std::string& taskFile);
-  void setupOptimalConrolProblem(const std::string& taskFile, const std::string& targetCommandFile,
-                                 const ::urdf::ModelInterfaceSharedPtr& urdfTree);
+  void setupOptimalConrolProblem(const std::string& taskFile, const std::string& urdfFile, const std::string& referenceFile, bool verbose);
 
-  std::unique_ptr<StateInputCost> getBaseTrackingCost(const std::string& taskFile, const CentroidalModelInfo& info);
+  std::shared_ptr<GaitSchedule> loadGaitSchedule(const std::string& file, bool verbose) const;
+
+  std::unique_ptr<StateInputCost> getBaseTrackingCost(const std::string& taskFile, const CentroidalModelInfo& info, bool verbose);
   matrix_t initializeInputCostWeight(const std::string& taskFile, const CentroidalModelInfo& info);
 
-  std::pair<scalar_t, RelaxedBarrierPenalty::Config> loadFrictionConeSettings(const std::string& taskFile) const;
+  std::pair<scalar_t, RelaxedBarrierPenalty::Config> loadFrictionConeSettings(const std::string& taskFile, bool verbose) const;
   std::unique_ptr<StateInputCost> getFrictionConeConstraint(size_t contactPointIndex, scalar_t frictionCoefficient,
                                                             const RelaxedBarrierPenalty::Config& barrierPenaltyConfig);
   std::unique_ptr<StateInputConstraint> getZeroForceConstraint(size_t contactPointIndex);
@@ -97,10 +101,10 @@ class LeggedRobotInterface final : public RobotInterface {
   std::unique_ptr<StateInputConstraint> getNormalVelocityConstraint(const EndEffectorKinematics<scalar_t>& eeKinematics,
                                                                     size_t contactPointIndex, bool useAnalyticalGradients);
 
-  bool display_;
   ModelSettings modelSettings_;
   ddp::Settings ddpSettings_;
   mpc::Settings mpcSettings_;
+  multiple_shooting::Settings sqpSettings_;
 
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
   CentroidalModelInfo centroidalModelInfo_;

@@ -201,7 +201,7 @@ void LineSearchStrategy::lineSearchTask(const size_t taskId) {
                     " is terminated: " + error.what() + '\n');
       }
       workersSolution_[taskId].performanceIndex.merit = std::numeric_limits<scalar_t>::max();
-      workersSolution_[taskId].performanceIndex.totalCost = std::numeric_limits<scalar_t>::max();
+      workersSolution_[taskId].performanceIndex.cost = std::numeric_limits<scalar_t>::max();
     }
 
     // whether to accept the step or reject it
@@ -260,10 +260,10 @@ std::pair<bool, std::string> LineSearchStrategy::checkConvergence(bool unreliabl
   // loop break variables
   bool isStepLengthStarZero = false;
   bool isCostFunctionConverged = false;
-  const scalar_t currentTotalCost = currentPerformanceIndex.totalCost + currentPerformanceIndex.equalityLagrangiansPenalty +
-                                    currentPerformanceIndex.inequalityLagrangiansPenalty;
-  const scalar_t previousTotalCost = previousPerformanceIndex.totalCost + previousPerformanceIndex.equalityLagrangiansPenalty +
-                                     previousPerformanceIndex.inequalityLagrangiansPenalty;
+  const scalar_t currentTotalCost =
+      currentPerformanceIndex.cost + currentPerformanceIndex.equalityLagrangian + currentPerformanceIndex.inequalityLagrangian;
+  const scalar_t previousTotalCost =
+      previousPerformanceIndex.cost + previousPerformanceIndex.equalityLagrangian + previousPerformanceIndex.inequalityLagrangian;
   const scalar_t relCost = std::abs(currentTotalCost - previousTotalCost);
   isStepLengthStarZero = numerics::almost_eq(bestStepSize_.load(), 0.0) && !unreliableControllerIncrement;
   isCostFunctionConverged = relCost <= baseSettings_.minRelCost;

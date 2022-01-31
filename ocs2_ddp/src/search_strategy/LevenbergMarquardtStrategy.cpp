@@ -98,7 +98,7 @@ bool LevenbergMarquardtStrategy::run(const std::pair<scalar_t, scalar_t>& timePe
       std::cerr << "    [Thread " << taskId << "] rollout with step length " << stepLength << " is terminated: " << error.what() << "\n";
     }
     solution.performanceIndex.merit = std::numeric_limits<scalar_t>::max();
-    solution.performanceIndex.totalCost = std::numeric_limits<scalar_t>::max();
+    solution.performanceIndex.cost = std::numeric_limits<scalar_t>::max();
   }
 
   // compute pho (the ratio between actual reduction and predicted reduction)
@@ -197,10 +197,10 @@ std::pair<bool, std::string> LevenbergMarquardtStrategy::checkConvergence(bool u
                                                                           const PerformanceIndex& currentPerformanceIndex) const {
   // loop break variables
   bool isCostFunctionConverged = false;
-  const scalar_t currentTotalCost = currentPerformanceIndex.totalCost + currentPerformanceIndex.equalityLagrangiansPenalty +
-                                    currentPerformanceIndex.inequalityLagrangiansPenalty;
-  const scalar_t previousTotalCost = previousPerformanceIndex.totalCost + previousPerformanceIndex.equalityLagrangiansPenalty +
-                                     previousPerformanceIndex.inequalityLagrangiansPenalty;
+  const scalar_t currentTotalCost =
+      currentPerformanceIndex.cost + currentPerformanceIndex.equalityLagrangian + currentPerformanceIndex.inequalityLagrangian;
+  const scalar_t previousTotalCost =
+      previousPerformanceIndex.cost + previousPerformanceIndex.equalityLagrangian + previousPerformanceIndex.inequalityLagrangian;
   const scalar_t relCost = std::abs(currentTotalCost - previousTotalCost);
   if (levenbergMarquardtModule_.numSuccessiveRejections == 0 && !unreliableControllerIncrement) {
     isCostFunctionConverged = relCost <= baseSettings_.minRelCost;

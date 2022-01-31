@@ -136,12 +136,23 @@ struct ScalarFunctionQuadraticApproximation {
 std::ostream& operator<<(std::ostream& out, const ScalarFunctionQuadraticApproximation& f);
 
 /**
- * Checks that the given Quadratic approximation is valid, self-adjoint, and positive semi-definite (PSD).
- * @param[in] data: Given Quadratic approximation
+ * Checks that the given quadratic approximation is valid, self-adjoint, and positive semi-definite (PSD).
+ * @param[in] data: Given quadratic approximation.
  * @param[in] dataName: The name of the data which appears in the output error message.
  * @return The description of the error. If there was no error it would be empty;
  */
 std::string checkBeingPSD(const ScalarFunctionQuadraticApproximation& data, const std::string& dataName);
+
+/**
+ * Checks the size of the given quadratic approximation.
+ *
+ * @param[in] stateDim: Number of states.
+ * @param[in] inputDim: Number of inputs.
+ * @param[in] data: Given quadratic approximation.
+ * @param[in] dataName: The name of the data which appears in the output error message.
+ * @return The description of the error. If there was no error it would be empty;
+ */
+std::string checkSize(int stateDim, int inputDim, const ScalarFunctionQuadraticApproximation& data, const std::string& dataName);
 
 inline ScalarFunctionQuadraticApproximation operator*(ScalarFunctionQuadraticApproximation lhs, scalar_t scalar) {
   return lhs *= scalar;
@@ -195,6 +206,19 @@ struct VectorFunctionLinearApproximation {
 };
 
 std::ostream& operator<<(std::ostream& out, const VectorFunctionLinearApproximation& f);
+
+/**
+ * Checks the size of the given vector-function linear approximation.
+ *
+ * @param[in] vectorDim: The vector function dimension.
+ * @param[in] stateDim: Number of states.
+ * @param[in] inputDim: Number of inputs.
+ * @param[in] data: Given linear approximation.
+ * @param[in] dataName: The name of the data which appears in the output error message.
+ * @return The description of the error. If there was no error it would be empty;
+ */
+std::string checkSize(int vectorDim, int stateDim, int inputDim, const VectorFunctionLinearApproximation& data,
+                      const std::string& dataName);
 
 /**
  * Defines quadratic approximation of a vector-valued function

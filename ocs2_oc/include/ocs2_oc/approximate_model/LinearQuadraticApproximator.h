@@ -41,7 +41,7 @@ namespace ocs2 {
 /**
  * Calculates an LQ approximate of the constrained optimal control problem at a given time, state, and input.
  *
- * @param [in] problem: The optimal control probelm
+ * @param [in] problem: The optimal control problem
  * @param [in] time: The current time.
  * @param [in] state: The current state.
  * @param [in] input: The current input.
@@ -52,9 +52,25 @@ void approximateIntermediateLQ(OptimalControlProblem& problem, const scalar_t ti
                                const MultiplierCollection& multipliers, ModelData& modelData);
 
 /**
+ * Calculates an LQ approximate of the constrained optimal control problem at a given time, state, and input.
+ *
+ * @param [in] problem: The optimal control problem
+ * @param [in] time: The current time.
+ * @param [in] state: The current state.
+ * @param [in] input: The current input.
+ * @return The output data model.
+ */
+inline ModelData approximateIntermediateLQ(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
+                                           const vector_t& input) {
+  ModelData md;
+  approximateIntermediateLQ(problem, time, state, input, md);
+  return md;
+}
+
+/**
  * Calculates an LQ approximate of the constrained optimal control problem at a jump event time.
  *
- * @param [in] problem: The optimal control probelm
+ * @param [in] problem: The optimal control problem
  * @param [in] time: The current time.
  * @param [in] state: The current state.
  * @param [in] multipliers: The current multipliers associated to the equality and inequality Lagrangians.
@@ -64,9 +80,23 @@ void approximatePreJumpLQ(OptimalControlProblem& problem, const scalar_t& time, 
                           const MultiplierCollection& multipliers, ModelData& modelData);
 
 /**
+ * Calculates an LQ approximate of the constrained optimal control problem at a jump event time.
+ *
+ * @param [in] problem: The optimal control problem
+ * @param [in] time: The current time.
+ * @param [in] state: The current state.
+ * @return The output data model.
+ */
+inline ModelData approximatePreJumpLQ(OptimalControlProblem& problem, const scalar_t& time, const vector_t& state) {
+  ModelData md;
+  approximatePreJumpLQ(problem, time, state, md);
+  return md;
+}
+
+/**
  * Calculates an LQ approximate of the constrained optimal control problem at final time.
  *
- * @param [in] problem: The optimal control probelm
+ * @param [in] problem: The optimal control problem
  * @param [in] time: The current time.
  * @param [in] state: The current state.
  * @param [in] multipliers: The current multipliers associated to the equality and inequality Lagrangians.
@@ -74,6 +104,20 @@ void approximatePreJumpLQ(OptimalControlProblem& problem, const scalar_t& time, 
  */
 void approximateFinalLQ(OptimalControlProblem& problem, const scalar_t& time, const vector_t& state,
                         const MultiplierCollection& multipliers, ModelData& modelData);
+
+/**
+ * Calculates an LQ approximate of the constrained optimal control problem at final time.
+ *
+ * @param [in] problem: The optimal control problem
+ * @param [in] time: The current time.
+ * @param [in] state: The current state.
+ * @return The output data model.
+ */
+inline ModelData approximateFinalLQ(OptimalControlProblem& problem, const scalar_t& time, const vector_t& state) {
+  ModelData md;
+  approximateFinalLQ(problem, time, state, md);
+  return md;
+}
 
 /**
  * Compute the total intermediate cost (i.e. cost + softConstraints). It is assumed that the precomputation request is already made.

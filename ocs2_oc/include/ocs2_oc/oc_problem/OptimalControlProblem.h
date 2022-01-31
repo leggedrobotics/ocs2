@@ -78,21 +78,21 @@ struct OptimalControlProblem {
 
   /* Lagrangians */
   /** Lagrangian for intermediate equality constraints */
-  std::unique_ptr<StateInputAugmentedLagrangianCollection> equalityLagrangiantPtr;
+  std::unique_ptr<StateInputAugmentedLagrangianCollection> equalityLagrangianPtr;
   /** Lagrangian for intermediate state-only equality constraints */
-  std::unique_ptr<StateAugmentedLagrangianCollection> stateEqualityLagrangiantPtr;
+  std::unique_ptr<StateAugmentedLagrangianCollection> stateEqualityLagrangianPtr;
   /** Lagrangian for intermediate inequality constraints */
-  std::unique_ptr<StateInputAugmentedLagrangianCollection> inequalityLagrangiantPtr;
+  std::unique_ptr<StateInputAugmentedLagrangianCollection> inequalityLagrangianPtr;
   /** Lagrangian for intermediate state-only inequality constraints */
-  std::unique_ptr<StateAugmentedLagrangianCollection> stateInequalityLagrangiantPtr;
+  std::unique_ptr<StateAugmentedLagrangianCollection> stateInequalityLagrangianPtr;
   /** Lagrangian for pre-jump equality constraints */
-  std::unique_ptr<StateAugmentedLagrangianCollection> preJumpEqualityLagrangiantPtr;
+  std::unique_ptr<StateAugmentedLagrangianCollection> preJumpEqualityLagrangianPtr;
   /** Lagrangian for pre-jump inequality constraints */
-  std::unique_ptr<StateAugmentedLagrangianCollection> preJumpInequalityLagrangiantPtr;
+  std::unique_ptr<StateAugmentedLagrangianCollection> preJumpInequalityLagrangianPtr;
   /** Lagrangian for final equality constraints */
-  std::unique_ptr<StateAugmentedLagrangianCollection> finalEqualityLagrangiantPtr;
+  std::unique_ptr<StateAugmentedLagrangianCollection> finalEqualityLagrangianPtr;
   /** Lagrangian for final inequality constraints */
-  std::unique_ptr<StateAugmentedLagrangianCollection> finalInequalityLagrangiantPtr;
+  std::unique_ptr<StateAugmentedLagrangianCollection> finalInequalityLagrangianPtr;
 
   /* Dynamics */
   /** System dynamics pointer */

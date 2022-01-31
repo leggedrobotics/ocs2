@@ -35,7 +35,9 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t eulerDiscretization(SystemDynamicsBase& system, scalar_t t, const vector_t& x, const vector_t& u, scalar_t dt) {
-  return x + dt * system.computeFlowMap(t, x, u);
+  vector_t tmp = system.computeFlowMap(t, x, u);
+  tmp = x + dt * tmp;
+  return tmp;
 }
 
 /******************************************************************************************************/
@@ -63,9 +65,12 @@ vector_t rk2Discretization(SystemDynamicsBase& system, scalar_t t, const vector_
 
   // System evaluations
   const vector_t k1 = system.computeFlowMap(t, x, u);
-  const vector_t k2 = system.computeFlowMap(t + dt, x + dt * k1, u);
 
-  return x + dt_halve * k1 + dt_halve * k2;
+  vector_t tmp = x + dt * k1;
+  const vector_t k2 = system.computeFlowMap(t + dt, tmp, u);
+
+  tmp = x + dt_halve * k1 + dt_halve * k2;
+  return tmp;
 }
 
 /******************************************************************************************************/
@@ -108,11 +113,15 @@ vector_t rk4Discretization(SystemDynamicsBase& system, scalar_t t, const vector_
 
   // System evaluations
   const vector_t k1 = system.computeFlowMap(t, x, u);
-  const vector_t k2 = system.computeFlowMap(t + dt_halve, x + dt_halve * k1, u);
-  const vector_t k3 = system.computeFlowMap(t + dt_halve, x + dt_halve * k2, u);
-  const vector_t k4 = system.computeFlowMap(t + dt, x + dt * k3, u);
+  vector_t tmp = x + dt_halve * k1;
+  const vector_t k2 = system.computeFlowMap(t + dt_halve, tmp, u);
+  tmp = x + dt_halve * k2;
+  const vector_t k3 = system.computeFlowMap(t + dt_halve, tmp, u);
+  tmp = x + dt * k3;
+  const vector_t k4 = system.computeFlowMap(t + dt, tmp, u);
 
-  return x + dt_sixth * k1 + dt_third * k2 + dt_third * k3 + dt_sixth * k4;
+  tmp = x + dt_sixth * k1 + dt_third * k2 + dt_third * k3 + dt_sixth * k4;
+  return tmp;
 }
 
 /******************************************************************************************************/

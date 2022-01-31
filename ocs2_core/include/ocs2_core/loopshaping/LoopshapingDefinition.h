@@ -79,6 +79,9 @@ class LoopshapingDefinition {
    * @return state of the original system
    */
   vector_t getSystemState(const vector_t& state) const { return state.head(state.rows() - filter_.getNumStates()); }
+  void getSystemState(const vector_t& state, vector_t& systemState) const {
+    systemState = state.head(state.rows() - filter_.getNumStates());
+  }
 
   /**
    * @param state : state of the augmented system
@@ -86,12 +89,14 @@ class LoopshapingDefinition {
    * @return input of the original system
    */
   vector_t getSystemInput(const vector_t& state, const vector_t& input) const;
+  void getSystemInput(const vector_t& state, const vector_t& input, vector_t& systemInput) const;
 
   /**
    * @param state : state of the augmented system
    * @return state of the loopshaping filter
    */
   vector_t getFilterState(const vector_t& state) const { return state.tail(filter_.getNumStates()); }
+  void getFilterState(const vector_t& state, vector_t& filterState) const { filterState = state.tail(filter_.getNumStates()); }
 
   /**
    * @param state : state of the augmented system
@@ -99,6 +104,7 @@ class LoopshapingDefinition {
    * @return the filtered input
    */
   vector_t getFilteredInput(const vector_t& state, const vector_t& input) const;
+  void getFilteredInput(const vector_t& state, const vector_t& input, vector_t& filteredInput) const;
 
   /**
    * @param filterState : state of the loopshaping filter

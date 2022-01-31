@@ -51,14 +51,14 @@ OptimalControlProblem::OptimalControlProblem()
       preJumpEqualityConstraintPtr(new StateConstraintCollection),
       finalEqualityConstraintPtr(new StateConstraintCollection),
       /* Lagrangians */
-      equalityLagrangiantPtr(new StateInputCostCollection),
-      stateEqualityLagrangiantPtr(new StateCostCollection),
-      inequalityLagrangiantPtr(new StateInputCostCollection),
-      stateInequalityLagrangiantPtr(new StateCostCollection),
-      preJumpEqualityLagrangiantPtr(new StateCostCollection),
-      preJumpInequalityLagrangiantPtr(new StateCostCollection),
-      finalEqualityLagrangiantPtr(new StateCostCollection),
-      finalInequalityLagrangiantPtr(new StateCostCollection),
+      equalityLagrangianPtr(new StateInputCostCollection),
+      stateEqualityLagrangianPtr(new StateCostCollection),
+      inequalityLagrangianPtr(new StateInputCostCollection),
+      stateInequalityLagrangianPtr(new StateCostCollection),
+      preJumpEqualityLagrangianPtr(new StateCostCollection),
+      preJumpInequalityLagrangianPtr(new StateCostCollection),
+      finalEqualityLagrangianPtr(new StateCostCollection),
+      finalInequalityLagrangianPtr(new StateCostCollection),
       /* Misc. */
       preComputationPtr(new PreComputation),
       targetTrajectoriesPtr(nullptr) {}
@@ -83,14 +83,14 @@ OptimalControlProblem::OptimalControlProblem(const OptimalControlProblem& other)
       preJumpEqualityConstraintPtr(other.preJumpEqualityConstraintPtr->clone()),
       finalEqualityConstraintPtr(other.finalEqualityConstraintPtr->clone()),
       /* Lagrangians */
-      equalityLagrangiantPtr(other.equalityLagrangiantPtr->clone()),
-      stateEqualityLagrangiantPtr(other.stateEqualityLagrangiantPtr->clone()),
-      inequalityLagrangiantPtr(other.inequalityLagrangiantPtr->clone()),
-      stateInequalityLagrangiantPtr(other.stateInequalityLagrangiantPtr->clone()),
-      preJumpEqualityLagrangiantPtr(other.preJumpEqualityLagrangiantPtr->clone()),
-      preJumpInequalityLagrangiantPtr(other.preJumpInequalityLagrangiantPtr->clone()),
-      finalEqualityLagrangiantPtr(other.finalEqualityLagrangiantPtr->clone()),
-      finalInequalityLagrangiantPtr(other.finalInequalityLagrangiantPtr->clone()),
+      equalityLagrangianPtr(other.equalityLagrangianPtr->clone()),
+      stateEqualityLagrangianPtr(other.stateEqualityLagrangianPtr->clone()),
+      inequalityLagrangianPtr(other.inequalityLagrangianPtr->clone()),
+      stateInequalityLagrangianPtr(other.stateInequalityLagrangianPtr->clone()),
+      preJumpEqualityLagrangianPtr(other.preJumpEqualityLagrangianPtr->clone()),
+      preJumpInequalityLagrangianPtr(other.preJumpInequalityLagrangianPtr->clone()),
+      finalEqualityLagrangianPtr(other.finalEqualityLagrangianPtr->clone()),
+      finalInequalityLagrangianPtr(other.finalInequalityLagrangianPtr->clone()),
       /* Misc. */
       preComputationPtr(other.preComputationPtr->clone()),
       targetTrajectoriesPtr(other.targetTrajectoriesPtr) {
@@ -131,14 +131,14 @@ void OptimalControlProblem::swap(OptimalControlProblem& other) noexcept {
   finalEqualityConstraintPtr.swap(other.finalEqualityConstraintPtr);
 
   /* Lagrangians */
-  equalityLagrangiantPtr.swap(other.equalityLagrangiantPtr);
-  stateEqualityLagrangiantPtr.swap(other.stateEqualityLagrangiantPtr);
-  inequalityLagrangiantPtr.swap(other.inequalityLagrangiantPtr);
-  stateInequalityLagrangiantPtr.swap(other.stateInequalityLagrangiantPtr);
-  preJumpEqualityLagrangiantPtr.swap(other.preJumpEqualityLagrangiantPtr);
-  preJumpInequalityLagrangiantPtr.swap(other.preJumpInequalityLagrangiantPtr);
-  finalEqualityLagrangiantPtr.swap(other.finalEqualityLagrangiantPtr);
-  finalInequalityLagrangiantPtr.swap(other.finalInequalityLagrangiantPtr);
+  equalityLagrangianPtr.swap(other.equalityLagrangianPtr);
+  stateEqualityLagrangianPtr.swap(other.stateEqualityLagrangianPtr);
+  inequalityLagrangianPtr.swap(other.inequalityLagrangianPtr);
+  stateInequalityLagrangianPtr.swap(other.stateInequalityLagrangianPtr);
+  preJumpEqualityLagrangianPtr.swap(other.preJumpEqualityLagrangianPtr);
+  preJumpInequalityLagrangianPtr.swap(other.preJumpInequalityLagrangianPtr);
+  finalEqualityLagrangianPtr.swap(other.finalEqualityLagrangianPtr);
+  finalInequalityLagrangianPtr.swap(other.finalInequalityLagrangianPtr);
 
   /* Dynamics */
   dynamicsPtr.swap(other.dynamicsPtr);

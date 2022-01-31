@@ -214,13 +214,13 @@ void GaussNewtonDDP::getPrimalSolution(scalar_t finalTime, PrimalSolution* prima
     return index;
   };
 
-  auto getRequestedEventDataLength = [](const size_array_t& postEventIndices, int endIndex) {
-    return std::distance(postEventIndices.cbegin(), std::upper_bound(postEventIndices.cbegin(), postEventIndices.cend(), endIndex));
+  auto getRequestedEventDataLength = [](const size_array_t& postEventIndices, int finalIndex) {
+    return std::distance(postEventIndices.cbegin(), std::upper_bound(postEventIndices.cbegin(), postEventIndices.cend(), finalIndex));
   };
 
   // length of trajectories
   const int length = getRequestedDataLength(optimizedPrimalData_.primalSolution.timeTrajectory_, finalTime);
-  const int eventLenght = getRequestedEventDataLength(optimizedPrimalData_.primalSolution.postEventIndices_, length);
+  const int eventLenght = getRequestedEventDataLength(optimizedPrimalData_.primalSolution.postEventIndices_, length - 1);
 
   // fill trajectories
   primalSolutionPtr->timeTrajectory_.clear();

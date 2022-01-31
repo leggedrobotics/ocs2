@@ -35,11 +35,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_centroidal_model/CentroidalModelInfo.h>
 #include <ocs2_core/Types.h>
+#include <ocs2_legged_robot/common/Types.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
 #include <ocs2_ros_interfaces/mrt/DummyObserver.h>
 #include <ocs2_ros_interfaces/visualization/VisualizationColors.h>
-
-#include "ocs2_legged_robot/common/Types.h"
 
 namespace ocs2 {
 namespace legged_robot {

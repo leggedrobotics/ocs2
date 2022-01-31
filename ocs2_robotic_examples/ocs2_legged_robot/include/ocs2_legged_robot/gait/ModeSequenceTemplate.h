@@ -32,8 +32,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <vector>
 
-#include <ocs2_msgs/mode_schedule.h>
-
 #include <ocs2_core/reference/ModeSchedule.h>
 
 #include "ocs2_legged_robot/gait/Gait.h"
@@ -80,12 +78,6 @@ inline void swap(ModeSequenceTemplate& lh, ModeSequenceTemplate& rh) {
 
 /** Print the modesequence template */
 std::ostream& operator<<(std::ostream& stream, const ModeSequenceTemplate& modeSequenceTemplate);
-
-/** Convert mode sequence template to ROS message */
-ocs2_msgs::mode_schedule createModeSequenceTemplateMsg(const ModeSequenceTemplate& modeSequenceTemplate);
-
-/** Convert ROS message to mode sequence template */
-ModeSequenceTemplate readModeSequenceTemplateMsg(const ocs2_msgs::mode_schedule& modeScheduleMsg);
 
 /** Converts a mode sequence template to a gait */
 Gait toGait(const ModeSequenceTemplate& modeSequenceTemplate);

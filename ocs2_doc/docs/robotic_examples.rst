@@ -38,7 +38,7 @@ cost through a reference manager module.
 .. code-block:: bash
 
     # Build the example
-    catkin build ocs2_double_integrator ocs2_double_integrator_ros
+    catkin build ocs2_double_integrator_ros
     # Source workspace
     # Do not forget to change <...> parts
     source <directory_to_ws>/<catkin_ws_name>/devel/setup.bash
@@ -64,7 +64,7 @@ cart along the track.
 .. code-block:: bash
 
     # Build the example
-    catkin build ocs2_cartpole ocs2_cartpole_ros
+    catkin build ocs2_cartpole_ros
     # Source workspace
     # Do not forget to change <...> parts
     source <directory_to_ws>/<catkin_ws_name>/devel/setup.bash
@@ -92,7 +92,7 @@ control the robot’s XY position and yaw based on user command.
 .. code-block:: bash
 
     # Build the example
-    catkin build ocs2_ballbot ocs2_ballbot_ros
+    catkin build ocs2_ballbot_ros
     # Source workspace
     # Do not forget to change <...> parts
     source <directory_to_ws>/<catkin_ws_name>/devel/setup.bash
@@ -118,7 +118,7 @@ command defined as the quadrotor’s 3D position and yaw.
 .. code-block:: bash
 
     # Build the example
-    catkin build ocs2_quadrotor ocs2_quadrotor_ros
+    catkin build ocs2_quadrotor_ros
     # Source workspace
     # Do not forget to change <...> parts
     source <directory_to_ws>/<catkin_ws_name>/devel/setup.bash
@@ -152,7 +152,7 @@ usePreComputation flag in the config file.
 .. code-block:: bash
 
     # Build the example
-    catkin build ocs2_mobile_manipulator ocs2_mobile_manipulator_ros
+    catkin build ocs2_mobile_manipulator_ros
     # Source workspace
     # Do not forget to change <...> parts
     source <directory_to_ws>/<catkin_ws_name>/devel/setup.bash
@@ -193,13 +193,13 @@ considers the full kinematics of the robot.
 .. code-block:: bash
 
     # Build the example
-    catkin build ocs2_legged_robot
+    catkin build ocs2_legged_robot_ros
     # Source workspace
     # Do not forget to change <...> parts
     source <directory_to_ws>/<catkin_ws_name>/devel/setup.bash
 
     # Launch the example
-    roslaunch ocs2_legged_robot legged_robot.launch
+    roslaunch ocs2_legged_robot_ros legged_robot.launch
 
 .. image:: ../tools/sphinx/_static/gif/legged_robot.gif
    :alt: legged_robot.gif cannot be displayed!

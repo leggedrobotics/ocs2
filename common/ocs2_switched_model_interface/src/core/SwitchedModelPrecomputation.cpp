@@ -22,6 +22,7 @@ SwitchedModelPreComputation::SwitchedModelPreComputation(const SwingTrajectoryPl
     intermediateLinearOutputs(adComModel, adKinematicModel, state, input, y);
   };
   intermediateLinearOutputAdInterface_.reset(new ocs2::CppAdInterface(diffFunc, STATE_DIM + INPUT_DIM, libName, libFolder));
+  tapedStateInput_.resize(STATE_DIM + INPUT_DIM);
 
   const auto initCollisions = kinematicModel.collisionSpheresInBaseFrame(joint_coordinate_t::Zero());
   for (const auto& collision : initCollisions) {
@@ -51,18 +52,18 @@ SwitchedModelPreComputation::SwitchedModelPreComputation(const SwitchedModelPreC
       collisionRadii_(other.collisionRadii_),
       collisionSpheresActive_(other.collisionSpheresActive_),
       collisionSpheresInOriginFrame_(other.collisionSpheresInOriginFrame_),
-      collisionSpheresDerivative_(other.collisionSpheresDerivative_) {}
+      collisionSpheresDerivative_(other.collisionSpheresDerivative_),
+      tapedStateInput_(other.tapedStateInput_) {}
 
 void SwitchedModelPreComputation::request(ocs2::RequestSet request, scalar_t t, const vector_t& x, const vector_t& u) {
   updateFeetPhases(t);
 
   if (request.containsAny(ocs2::Request::Cost + ocs2::Request::Constraint + ocs2::Request::SoftConstraint)) {
-    vector_t tapedStateInput(x.rows() + u.rows());
-    tapedStateInput << x, u;
+    tapedStateInput_ << x, u;
 
-    updateIntermediateLinearOutputs(t, tapedStateInput);
+    updateIntermediateLinearOutputs(t, tapedStateInput_);
     if (request.contains(ocs2::Request::Approximation)) {
-      updateIntermediateLinearOutputDerivatives(t, tapedStateInput);
+      updateIntermediateLinearOutputDerivatives(t, tapedStateInput_);
     }
   }
 }

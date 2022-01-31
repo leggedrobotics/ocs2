@@ -80,6 +80,7 @@ class SwitchedModelPreComputation : public ocs2::PreComputation {
   std::vector<scalar_t> collisionRadii_;  // Does not include those for the feet
 
   // Storage for the precomputation
+  vector_t tapedStateInput_;
   feet_array_t<const FootPhase*> feetPhases_;
   contact_flag_t contactFlags_;
   feet_array_t<vector3_t> feetPositionInOriginFrame_;

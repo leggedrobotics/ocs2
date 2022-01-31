@@ -4,66 +4,96 @@
 
 #include "ocs2_switched_model_interface/cost/FrictionConeCost.h"
 
+#include <ocs2_switched_model_interface/core/Rotations.h>
+#include <ocs2_switched_model_interface/core/SwitchedModelPrecomputation.h>
+
 namespace switched_model {
 
-FrictionConeCost::FrictionConeCost(FrictionConeConstraint::Config config, int legNumber,
-                                   const SwitchedModelModeScheduleManager& modeScheduleManager,
+FrictionConeCost::FrictionConeCost(friction_cone::Config config, const SwitchedModelModeScheduleManager& modeScheduleManager,
                                    std::unique_ptr<ocs2::PenaltyBase> penaltyFunction)
-    : legNumber_(legNumber),
-      constraint_(new FrictionConeConstraint(config, legNumber, modeScheduleManager)),
-      penalty_(std::move(penaltyFunction)) {}
+    : config_(config), modeScheduleManager_(&modeScheduleManager), penalty_(std::move(penaltyFunction)) {}
 
 FrictionConeCost::FrictionConeCost(const FrictionConeCost& rhs)
-    : legNumber_(rhs.legNumber_), constraint_(rhs.constraint_->clone()), penalty_(rhs.penalty_->clone()) {}
+    : config_(rhs.config_), modeScheduleManager_(rhs.modeScheduleManager_), penalty_(rhs.penalty_->clone()) {}
 
 FrictionConeCost* FrictionConeCost::clone() const {
   return new FrictionConeCost(*this);
 }
 
+bool FrictionConeCost::isActive(scalar_t time) const {
+  return numberOfClosedContacts(modeScheduleManager_->getContactFlags(time)) > 0;
+}
+
 scalar_t FrictionConeCost::getValue(scalar_t time, const vector_t& state, const vector_t& input,
                                     const ocs2::TargetTrajectories& targetTrajectories, const ocs2::PreComputation& preComp) const {
-  const auto h = constraint_->getValue(time, state, input, preComp);
-  return penalty_->getValue(time, h(0));
+  const auto& switchedModelPreComp = ocs2::cast<SwitchedModelPreComputation>(preComp);
+
+  const vector3_t eulerXYZ = getOrientation(getBasePose(state));
+  const matrix3_t w_R_b = rotationMatrixBaseToOrigin(eulerXYZ);
+
+  const auto& contactFlags = switchedModelPreComp.getContactFlags();
+
+  scalar_t cost = 0.0;
+  for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
+    if (contactFlags[leg]) {
+      const int legIdx = 3 * leg;
+
+      const matrix3_t t_R_w = orientationWorldToTerrainFromSurfaceNormalInWorld(switchedModelPreComp.getSurfaceNormalInOriginFrame(leg));
+      const vector3_t forcesInWorld = w_R_b * input.segment(legIdx, 3);
+      const vector3_t forcesInTerrain = t_R_w * forcesInWorld;
+      const scalar_t h = frictionConeConstraint(config_, forcesInTerrain);
+      cost += penalty_->getValue(time, h);
+    }
+  }
+
+  return cost;
 }
 
 ScalarFunctionQuadraticApproximation FrictionConeCost::getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                                  const vector_t& input,
                                                                                  const ocs2::TargetTrajectories& targetTrajectories,
                                                                                  const ocs2::PreComputation& preComp) const {
-  auto h = constraint_->getQuadraticApproximation(time, state, input, preComp);
+  const auto& switchedModelPreComp = ocs2::cast<SwitchedModelPreComputation>(preComp);
 
-  const scalar_t penaltyValue = penalty_->getValue(time, h.f(0));
-  const scalar_t penaltyDerivative = penalty_->getDerivative(time, h.f(0));
-  const scalar_t penaltySecondDerivative = penalty_->getSecondDerivative(time, h.f(0));
+  const vector3_t eulerXYZ = getOrientation(getBasePose(state));
+  const matrix3_t w_R_b = rotationMatrixBaseToOrigin(eulerXYZ);
 
-  const vector3_t penaltySecondDev_dhdx = penaltySecondDerivative * h.dfdx.block<1, 3>(0, 0).transpose();
+  const auto& contactFlags = switchedModelPreComp.getContactFlags();
 
-  // to make sure that dfdux in the state-only case has a right size
-  ScalarFunctionQuadraticApproximation penaltyApproximation;
+  ScalarFunctionQuadraticApproximation penaltyApproximation = ScalarFunctionQuadraticApproximation::Zero(STATE_DIM, INPUT_DIM);
+  for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
+    if (contactFlags[leg]) {
+      const int legIdx = 3 * leg;
 
-  int legIdx = 3 * legNumber_;
+      const matrix3_t t_R_w = orientationWorldToTerrainFromSurfaceNormalInWorld(switchedModelPreComp.getSurfaceNormalInOriginFrame(leg));
+      const vector3_t forcesInBodyFrame = input.segment(legIdx, 3);
+      const vector3_t forcesInWorld = w_R_b * forcesInBodyFrame;
+      const vector3_t forcesInTerrain = t_R_w * forcesInWorld;
+      const auto coneDerivatives = frictionConeDerivatives(config_, forcesInTerrain, t_R_w, w_R_b, eulerXYZ, forcesInBodyFrame);
 
-  penaltyApproximation.f = penaltyValue;
+      const scalar_t penaltyValue = penalty_->getValue(time, coneDerivatives.coneConstraint);
+      const scalar_t penaltyDerivative = penalty_->getDerivative(time, coneDerivatives.coneConstraint);
+      const scalar_t penaltySecondDerivative = penalty_->getSecondDerivative(time, coneDerivatives.coneConstraint);
 
-  penaltyApproximation.dfdx.setZero(STATE_DIM);
-  penaltyApproximation.dfdx.segment<3>(0) = penaltyDerivative * h.dfdx.block<1, 3>(0, 0).transpose();
+      const vector3_t penaltySecondDev_dhdx = penaltySecondDerivative * coneDerivatives.dCone_deuler;
 
-  penaltyApproximation.dfdu.setZero(INPUT_DIM);
-  penaltyApproximation.dfdu.segment<3>(legIdx) = penaltyDerivative * h.dfdu.block<1, 3>(0, legIdx).transpose();
+      penaltyApproximation.f += penaltyValue;
 
-  penaltyApproximation.dfdxx = std::move(h.dfdxx[0]);
-  penaltyApproximation.dfdxx.block<3, 3>(0, 0) *= penaltyDerivative;
-  penaltyApproximation.dfdxx.block<3, 3>(0, 0).noalias() += penaltySecondDev_dhdx * h.dfdx.block<1, 3>(0, 0);
+      penaltyApproximation.dfdx.segment<3>(0) += penaltyDerivative * coneDerivatives.dCone_deuler;
 
-  penaltyApproximation.dfdux = std::move(h.dfdux[0]);
-  penaltyApproximation.dfdux.block<3, 3>(3 * legNumber_, 0) *= penaltyDerivative;
-  penaltyApproximation.dfdux.block<3, 3>(3 * legNumber_, 0).noalias() +=
-      h.dfdu.block<1, 3>(0, legIdx).transpose() * penaltySecondDev_dhdx.transpose();
+      penaltyApproximation.dfdu.segment<3>(legIdx) = penaltyDerivative * coneDerivatives.dCone_du;
 
-  penaltyApproximation.dfduu = std::move(h.dfduu[0]);
-  penaltyApproximation.dfduu.block<3, 3>(legIdx, legIdx) *= penaltyDerivative;
-  penaltyApproximation.dfduu.block<3, 3>(legIdx, legIdx).noalias() +=
-      penaltySecondDerivative * h.dfdu.block<1, 3>(0, legIdx).transpose() * h.dfdu.block<1, 3>(0, legIdx);
+      penaltyApproximation.dfdxx.block<3, 3>(0, 0) += penaltyDerivative * coneDerivatives.d2Cone_deuler2;
+      penaltyApproximation.dfdxx.block<3, 3>(0, 0).noalias() += penaltySecondDev_dhdx * coneDerivatives.dCone_deuler.transpose();
+
+      penaltyApproximation.dfdux.block<3, 3>(legIdx, 0) = penaltyDerivative * coneDerivatives.d2Cone_dudeuler;
+      penaltyApproximation.dfdux.block<3, 3>(legIdx, 0).noalias() += coneDerivatives.dCone_du * penaltySecondDev_dhdx.transpose();
+
+      penaltyApproximation.dfduu.block<3, 3>(legIdx, legIdx) = penaltyDerivative * coneDerivatives.d2Cone_du2;
+      penaltyApproximation.dfduu.block<3, 3>(legIdx, legIdx).noalias() +=
+          penaltySecondDerivative * coneDerivatives.dCone_du * coneDerivatives.dCone_du.transpose();
+    }
+  }
 
   return penaltyApproximation;
 }

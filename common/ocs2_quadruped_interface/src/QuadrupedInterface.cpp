@@ -125,13 +125,13 @@ std::unique_ptr<ocs2::StateInputConstraint> QuadrupedInterface::createEndEffecto
       leg, *getSwitchedModelModeScheduleManagerPtr(), getKinematicModelAd(), modelSettings().recompileLibraries_));
 }
 
-std::unique_ptr<ocs2::StateInputCost> QuadrupedInterface::createFrictionConeCost(size_t leg) const {
-  FrictionConeConstraint::Config frictionConfig(modelSettings().frictionCoefficient_, modelSettings().coneRegularization_,
-                                                modelSettings().gripperForce_);
+std::unique_ptr<ocs2::StateInputCost> QuadrupedInterface::createFrictionConeCost() const {
+  friction_cone::Config frictionConfig(modelSettings().frictionCoefficient_, modelSettings().coneRegularization_,
+                                       modelSettings().gripperForce_);
   std::unique_ptr<ocs2::PenaltyBase> penalty(
       new ocs2::RelaxedBarrierPenalty({modelSettings().muFrictionCone_, modelSettings().deltaFrictionCone_}));
   return std::unique_ptr<ocs2::StateInputCost>(
-      new FrictionConeCost(std::move(frictionConfig), leg, *getSwitchedModelModeScheduleManagerPtr(), std::move(penalty)));
+      new FrictionConeCost(std::move(frictionConfig), *getSwitchedModelModeScheduleManagerPtr(), std::move(penalty)));
 }
 
 }  // namespace switched_model

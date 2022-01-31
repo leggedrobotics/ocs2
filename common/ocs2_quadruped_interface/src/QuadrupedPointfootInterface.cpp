@@ -29,10 +29,11 @@ QuadrupedPointfootInterface::QuadrupedPointfootInterface(const kinematic_model_t
 
   // Cost terms
   problemPtr_->costPtr->add("MotionTrackingCost", createMotionTrackingCost());
-  problemPtr_->stateSoftConstraintPtr->add("FootPlacementCost", createFootPlacementCost());
-  problemPtr_->stateSoftConstraintPtr->add("CollisionAvoidanceCost", createCollisionAvoidanceCost());
-  problemPtr_->softConstraintPtr->add("JointLimitCost", createJointLimitsSoftConstraint());
-  problemPtr_->softConstraintPtr->add("TorqueLimitCost", createTorqueLimitsSoftConstraint(jointTorquesForWeightCompensation));
+  problemPtr_->stateCostPtr->add("FootPlacementCost", createFootPlacementCost());
+  problemPtr_->stateCostPtr->add("CollisionAvoidanceCost", createCollisionAvoidanceCost());
+  problemPtr_->costPtr->add("JointLimitCost", createJointLimitsSoftConstraint());
+  problemPtr_->costPtr->add("TorqueLimitCost", createTorqueLimitsSoftConstraint(jointTorquesForWeightCompensation));
+  problemPtr_->costPtr->add("FrictionCones", createFrictionConeCost());
 
   // Dynamics
   problemPtr_->dynamicsPtr = createDynamics();
@@ -43,7 +44,6 @@ QuadrupedPointfootInterface::QuadrupedPointfootInterface(const kinematic_model_t
     problemPtr_->equalityConstraintPtr->add(footName + "_ZeroForce", createZeroForceConstraint(i));
     problemPtr_->equalityConstraintPtr->add(footName + "_EENormal", createFootNormalConstraint(i));
     problemPtr_->equalityConstraintPtr->add(footName + "_EEVel", createEndEffectorVelocityConstraint(i));
-    problemPtr_->softConstraintPtr->add(footName + "_FrictionCone", createFrictionConeCost(i));
   }
 
   // Initialize cost to be able to query it

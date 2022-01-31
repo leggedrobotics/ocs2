@@ -52,8 +52,7 @@ std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(OptimalControl
     lqp.emplace_back(approximateStage(optimalControProblem, {t[k], x[k], u[k]}, {t[k + 1], x[k + 1]}, k == 0));
   }
 
-  ModelData modelData;
-  approximateFinalLQ(optimalControProblem, t[N], x[N], modelData);
+  auto modelData = approximateFinalLQ(optimalControProblem, t[N], x[N]);
 
   // checking the numerical properties
   const auto errSize = checkSize(modelData, x[N].rows(), 0);
@@ -74,8 +73,7 @@ std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(OptimalControl
 
 LinearQuadraticStage approximateStage(OptimalControlProblem& optimalControProblem, TrajectoryRef start, StateTrajectoryRef end,
                                       bool isInitialTime) {
-  ModelData modelData;
-  approximateIntermediateLQ(optimalControProblem, start.t, start.x, start.u, modelData);
+  const auto modelData = approximateIntermediateLQ(optimalControProblem, start.t, start.x, start.u);
 
   // checking the numerical properties
   const auto errSize = checkSize(modelData, start.x.rows(), start.u.rows());
@@ -93,7 +91,8 @@ LinearQuadraticStage approximateStage(OptimalControlProblem& optimalControProble
   LinearQuadraticStage lqStage;
   const auto dt = end.t - start.t;
 
-  lqStage.cost = approximateCost(modelData, dt);
+  lqStage.cost = modelData.cost;
+  lqStage.cost *= dt;
 
   // Linearized Dynamics after discretization: x0[k+1] + dx[k+1] = A dx[k] + B du[k] + F(x0[k], u0[k])
   lqStage.dynamics = approximateDynamics(modelData, start, dt);
@@ -104,20 +103,6 @@ LinearQuadraticStage approximateStage(OptimalControlProblem& optimalControProble
   lqStage.constraints = approximateConstraints(modelData, isInitialTime);
 
   return lqStage;
-}
-
-ScalarFunctionQuadraticApproximation approximateCost(const ModelData& modelData, scalar_t dt) {
-  // Approximates the cost accumulation of the dt interval.
-  // Use Euler integration
-  const auto continuousCosts = modelData.cost;
-  ScalarFunctionQuadraticApproximation discreteCosts;
-  discreteCosts.dfdxx = continuousCosts.dfdxx * dt;
-  discreteCosts.dfdux = continuousCosts.dfdux * dt;
-  discreteCosts.dfduu = continuousCosts.dfduu * dt;
-  discreteCosts.dfdx = continuousCosts.dfdx * dt;
-  discreteCosts.dfdu = continuousCosts.dfdu * dt;
-  discreteCosts.f = continuousCosts.f * dt;
-  return discreteCosts;
 }
 
 VectorFunctionLinearApproximation approximateDynamics(const ModelData& modelData, TrajectoryRef start, scalar_t dt) {

@@ -300,11 +300,7 @@ ScalarFunctionQuadraticApproximation GaussNewtonDDP::getHamiltonian(scalar_t tim
   // - state-input soft constraint cost
   // - state-only intermediate cost
   // - state-only soft constraint cost
-  const ModelData modelData = [&]() {
-    ModelData md;
-    ocs2::approximateIntermediateLQ(optimalControlProblemStock_[0], time, state, input, md);
-    return md;
-  }();
+  const auto modelData = ocs2::approximateIntermediateLQ(optimalControlProblemStock_[0], time, state, input);
 
   // check sizes
   if (ddpSettings_.checkNumericalStability_) {
@@ -786,16 +782,16 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
    * compute the Heuristics function at the final time. Also call shiftHessian on the Heuristics 2nd order derivative.
    */
   if (!nominalPrimalData_.primalSolution.timeTrajectory_.empty()) {
-    ModelData modelData;
     const auto& time = nominalPrimalData_.primalSolution.timeTrajectory_.back();
     const auto& state = nominalPrimalData_.primalSolution.stateTrajectory_.back();
-    ocs2::approximateFinalLQ(optimalControlProblemStock_[0], time, state, modelData);
+    auto modelData = ocs2::approximateFinalLQ(optimalControlProblemStock_[0], time, state);
 
     // checking the numerical properties
     if (ddpSettings_.checkNumericalStability_) {
       const std::string err = checkCostProperties(modelData) + checkConstraintProperties(modelData);
       if (!err.empty()) {
-        throw std::runtime_error("Ill-posed problem at final time: " + std::to_string(time) + "\n" + err);
+        throw std::runtime_error(
+            "[GaussNewtonDDP::approximateOptimalControlProblem] Ill-posed problem at final time: " + std::to_string(time) + "\n" + err);
       }
     }
 

@@ -44,7 +44,7 @@ struct PerformanceIndex {
   scalar_t merit = 0.0;
 
   /** The total cost of a rollout. */
-  scalar_t totalCost = 0.0;
+  scalar_t cost = 0.0;
 
   /** Sum of Squared Error (SSE) of system dynamics violation */
   scalar_t dynamicsViolationSSE = 0.0;
@@ -56,28 +56,28 @@ struct PerformanceIndex {
    */
   scalar_t equalityConstraintsSSE = 0.0;
 
-  /** Penalty of equality Lagrangians:
+  /** Sum of equality Lagrangians:
    * - Final: penalty for violation in state equality constraints
    * - PreJumps: penalty for violation in state equality constraints
    * - Intermediates: penalty for violation in state/state-input equality constraints
    */
-  scalar_t equalityLagrangiansPenalty = 0.0;
+  scalar_t equalityLagrangian = 0.0;
 
-  /** Penalty of inequality Lagrangians:
+  /** Sum of inequality Lagrangians:
    * - Final: penalty for violation in state inequality constraints
    * - PreJumps: penalty for violation in state inequality constraints
    * - Intermediates: penalty for violation in state/state-input inequality constraints
    */
-  scalar_t inequalityLagrangiansPenalty = 0.0;
+  scalar_t inequalityLagrangian = 0.0;
 
   /** Add performance indices */
   PerformanceIndex& operator+=(const PerformanceIndex& rhs) {
     this->merit += rhs.merit;
-    this->totalCost += rhs.totalCost;
+    this->cost += rhs.cost;
     this->dynamicsViolationSSE += rhs.dynamicsViolationSSE;
     this->equalityConstraintsSSE += rhs.equalityConstraintsSSE;
-    this->equalityLagrangiansPenalty += rhs.equalityLagrangiansPenalty;
-    this->inequalityLagrangiansPenalty += rhs.inequalityLagrangiansPenalty;
+    this->equalityLagrangian += rhs.equalityLagrangian;
+    this->inequalityLagrangian += rhs.inequalityLagrangian;
     return *this;
   }
 };
@@ -93,16 +93,16 @@ inline std::ostream& operator<<(std::ostream& stream, const PerformanceIndex& pe
   stream << std::left;  // fill from left
 
   stream << std::setw(indentation) << "";
-  stream << "Rollout Merit:                     " << std::setw(tabSpace) << performanceIndex.merit;
-  stream << "Rollout Cost:                      " << std::setw(tabSpace) << performanceIndex.totalCost << '\n';
+  stream << "Rollout Merit:              " << std::setw(tabSpace) << performanceIndex.merit;
+  stream << "Rollout Cost:               " << std::setw(tabSpace) << performanceIndex.cost << '\n';
 
   stream << std::setw(indentation) << "";
-  stream << "Dynamics violation SSE:            " << std::setw(tabSpace) << performanceIndex.dynamicsViolationSSE;
-  stream << "Equality constraints SSE:          " << std::setw(tabSpace) << performanceIndex.equalityConstraintsSSE << '\n';
+  stream << "Dynamics violation SSE:     " << std::setw(tabSpace) << performanceIndex.dynamicsViolationSSE;
+  stream << "Equality constraints SSE:   " << std::setw(tabSpace) << performanceIndex.equalityConstraintsSSE << '\n';
 
   stream << std::setw(indentation) << "";
-  stream << "Equality Lagrangians penalty:      " << std::setw(tabSpace) << performanceIndex.equalityLagrangiansPenalty;
-  stream << "Inequality Lagrangians penalty:    " << std::setw(tabSpace) << performanceIndex.inequalityLagrangiansPenalty;
+  stream << "Equality Lagrangian:        " << std::setw(tabSpace) << performanceIndex.equalityLagrangian;
+  stream << "Inequality Lagrangian:      " << std::setw(tabSpace) << performanceIndex.inequalityLagrangian;
 
   return stream;
 }

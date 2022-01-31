@@ -400,8 +400,7 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
 
   // Sum performance of the threads
   PerformanceIndex totalPerformance = std::accumulate(std::next(performance.begin()), performance.end(), performance.front());
-  totalPerformance.merit =
-      totalPerformance.totalCost + totalPerformance.equalityLagrangiansPenalty + totalPerformance.inequalityLagrangiansPenalty;
+  totalPerformance.merit = totalPerformance.cost + totalPerformance.equalityLagrangian + totalPerformance.inequalityLagrangian;
   return totalPerformance;
 }
 
@@ -447,8 +446,7 @@ PerformanceIndex MultipleShootingSolver::computePerformance(const std::vector<An
 
   // Sum performance of the threads
   PerformanceIndex totalPerformance = std::accumulate(std::next(performance.begin()), performance.end(), performance.front());
-  totalPerformance.merit =
-      totalPerformance.totalCost + totalPerformance.equalityLagrangiansPenalty + totalPerformance.inequalityLagrangiansPenalty;
+  totalPerformance.merit = totalPerformance.cost + totalPerformance.equalityLagrangian + totalPerformance.inequalityLagrangian;
   return totalPerformance;
 }
 

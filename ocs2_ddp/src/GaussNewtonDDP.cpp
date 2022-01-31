@@ -560,13 +560,13 @@ void GaussNewtonDDP::printRolloutInfo() const {
 /******************************************************************************************************/
 scalar_t GaussNewtonDDP::calculateRolloutMerit(const PerformanceIndex& performanceIndex) const {
   // cost
-  scalar_t merit = performanceIndex.totalCost;
+  scalar_t merit = performanceIndex.cost;
   // state/state-input equality constraints
   merit += constraintPenaltyCoefficients_.penaltyCoeff * std::sqrt(performanceIndex.equalityConstraintsSSE);
-  // state/state-input equality Lagrangians
-  merit += performanceIndex.equalityLagrangiansPenalty;
-  // state/state-input inequality Lagrangians
-  merit += performanceIndex.inequalityLagrangiansPenalty;
+  // state/state-input equality Lagrangian
+  merit += performanceIndex.equalityLagrangian;
+  // state/state-input inequality Lagrangian
+  merit += performanceIndex.inequalityLagrangian;
 
   return merit;
 }

@@ -145,7 +145,8 @@ void ILQR::discreteLQWorker(SystemDynamicsBase& system, scalar_t time, const vec
   modelData.dynamics.f.setZero(modelData.stateDim);
 
   // quadratic approximation to the cost function
-  modelData.cost = continuousTimeModelData.cost * timeStep;
+  modelData.cost = continuousTimeModelData.cost;
+  modelData.cost *= timeStep;
 
   // state equality constraints
   modelData.stateEqConstraint = continuousTimeModelData.stateEqConstraint;

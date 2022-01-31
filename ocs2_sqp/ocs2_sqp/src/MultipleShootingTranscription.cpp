@@ -59,7 +59,8 @@ Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlP
   optimalControlProblem.preComputationPtr->request(request, t, x, u);
 
   // Costs: Approximate the integral with forward euler
-  cost = approximateCost(optimalControlProblem, t, x, u) * dt;
+  cost = approximateCost(optimalControlProblem, t, x, u);
+  cost *= dt;
   performance.totalCost = cost.f;
 
   // Constraints

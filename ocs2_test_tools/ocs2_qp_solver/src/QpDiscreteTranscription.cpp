@@ -56,11 +56,15 @@ std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(OptimalControl
   approximateFinalLQ(optimalControProblem, t[N], x[N], modelData);
 
   // checking the numerical properties
-  checkSizes(modelData, x[N].rows(), 0);
-  const std::string err = checkCostProperties(modelData) + checkConstraintProperties(modelData);
-  if (!err.empty()) {
+  const auto errSize = checkSize(modelData, x[N].rows(), 0);
+  if (!errSize.empty()) {
     throw std::runtime_error("[qp_solver::getLinearQuadraticApproximation] Ill-posed problem at final time: " + std::to_string(t[N]) +
-                             "\n" + err);
+                             "\n" + errSize);
+  }
+  const std::string errProperties = checkCostProperties(modelData) + checkConstraintProperties(modelData);
+  if (!errProperties.empty()) {
+    throw std::runtime_error("[qp_solver::getLinearQuadraticApproximation] Ill-posed problem at final time: " + std::to_string(t[N]) +
+                             "\n" + errProperties);
   }
 
   lqp.emplace_back(std::move(modelData.cost), VectorFunctionLinearApproximation(), std::move(modelData.stateEqConstraint));
@@ -74,11 +78,16 @@ LinearQuadraticStage approximateStage(OptimalControlProblem& optimalControProble
   approximateIntermediateLQ(optimalControProblem, start.t, start.x, start.u, modelData);
 
   // checking the numerical properties
-  checkSizes(modelData, start.x.rows(), start.u.rows());
-  const std::string err = checkDynamicsProperties(modelData) + checkCostProperties(modelData) + checkConstraintProperties(modelData);
-  if (!err.empty()) {
+  const auto errSize = checkSize(modelData, start.x.rows(), start.u.rows());
+  if (!errSize.empty()) {
+    throw std::runtime_error("[[qp_solver::approximateStage] Ill-posed problem at intermediate time: " + std::to_string(start.t) + "\n" +
+                             errSize);
+  }
+  const std::string errProperties =
+      checkDynamicsProperties(modelData) + checkCostProperties(modelData) + checkConstraintProperties(modelData);
+  if (!errProperties.empty()) {
     throw std::runtime_error("[qp_solver::approximateStage] Ill-posed problem at intermediate time: " + std::to_string(start.t) + "\n" +
-                             err);
+                             errProperties);
   }
 
   LinearQuadraticStage lqStage;

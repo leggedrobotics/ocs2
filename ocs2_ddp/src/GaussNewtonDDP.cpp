@@ -305,7 +305,14 @@ ScalarFunctionQuadraticApproximation GaussNewtonDDP::getHamiltonian(scalar_t tim
     ocs2::approximateIntermediateLQ(optimalControlProblemStock_[0], time, state, input, md);
     return md;
   }();
-  checkSizes(modelData, state.rows(), input.rows());
+
+  // check sizes
+  if (ddpSettings_.checkNumericalStability_) {
+    const auto err = checkSize(modelData, state.rows(), input.rows());
+    if (!err.empty()) {
+      throw std::runtime_error("[GaussNewtonDDP::getHamiltonian] Mismatch in dimensions at time: " + std::to_string(time) + "\n" + err);
+    }
+  }
 
   // initialize the Hamiltonian with the augmented cost
   ScalarFunctionQuadraticApproximation hamiltonian(modelData.cost);
@@ -752,12 +759,16 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
 
         // checking the numerical properties
         if (ddpSettings_.checkNumericalStability_) {
-          checkSizes(modelData, state.rows(), 0);
-          const std::string err =
+          const auto errSize = checkSize(modelData, state.rows(), 0);
+          if (!errSize.empty()) {
+            throw std::runtime_error("[GaussNewtonDDP::approximateOptimalControlProblem] Mismatch in dimensions at intermediate time: " +
+                                     std::to_string(time) + "\n" + errSize);
+          }
+          const std::string errProperties =
               checkDynamicsProperties(modelData) + checkCostProperties(modelData) + checkConstraintProperties(modelData);
-          if (!err.empty()) {
-            throw std::runtime_error(
-                "[GaussNewtonDDP::approximateOptimalControlProblem] Ill-posed problem at event time: " + std::to_string(time) + "\n" + err);
+          if (!errProperties.empty()) {
+            throw std::runtime_error("[GaussNewtonDDP::approximateOptimalControlProblem] Ill-posed problem at event time: " +
+                                     std::to_string(time) + "\n" + errProperties);
           }
         }
 

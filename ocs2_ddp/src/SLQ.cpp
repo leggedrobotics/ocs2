@@ -98,13 +98,18 @@ void SLQ::approximateIntermediateLQ(PrimalDataContainer& primalData) {
 
       // checking the numerical properties
       if (settings().checkNumericalStability_) {
-        checkSizes(modelDataTrajectory[timeIndex], stateTrajectory[timeIndex].rows(), inputTrajectory[timeIndex].rows());
-        const std::string err = checkDynamicsProperties(modelDataTrajectory[timeIndex]) +
-                                checkCostProperties(modelDataTrajectory[timeIndex]) +
-                                checkConstraintProperties(modelDataTrajectory[timeIndex]);
-        if (!err.empty()) {
+        const auto errSize =
+            checkSize(modelDataTrajectory[timeIndex], stateTrajectory[timeIndex].rows(), inputTrajectory[timeIndex].rows());
+        if (!errSize.empty()) {
+          throw std::runtime_error("[SLQ::approximateIntermediateLQ] Mismatch in dimensions at intermediate time: " +
+                                   std::to_string(timeTrajectory[timeIndex]) + "\n" + errSize);
+        }
+        const std::string errProperties = checkDynamicsProperties(modelDataTrajectory[timeIndex]) +
+                                          checkCostProperties(modelDataTrajectory[timeIndex]) +
+                                          checkConstraintProperties(modelDataTrajectory[timeIndex]);
+        if (!errProperties.empty()) {
           throw std::runtime_error("[SLQ::approximateIntermediateLQ] Ill-posed problem at intermediate time: " +
-                                   std::to_string(timeTrajectory[timeIndex]) + "\n" + err);
+                                   std::to_string(timeTrajectory[timeIndex]) + "\n" + errProperties);
         }
       }
     }  // end of while loop

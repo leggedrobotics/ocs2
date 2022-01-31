@@ -37,43 +37,36 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void checkSizes(const ModelData& data, int stateDim, int inputDim) {
-  assert(data.stateDim == stateDim);
-  assert(data.inputDim == inputDim);
+std::string checkSize(const ModelData& data, int stateDim, int inputDim) {
+  std::stringstream errorDescription;
 
-  // dynamics flow map
-  if (data.dynamics.f.rows() > 0) {
-    assert(data.dynamics.f.size() == stateDim);
-    assert(data.dynamicsBias.size() == stateDim);
-    assert(data.dynamics.dfdx.rows() == stateDim);
-    assert(data.dynamics.dfdx.cols() == stateDim);
-    assert(data.dynamics.dfdu.rows() == stateDim);
-    assert(data.dynamics.dfdu.cols() == inputDim);
+  if (data.stateDim != stateDim) {
+    errorDescription << "data.stateDim != " << stateDim << "\n";
+  }
+  if (data.inputDim != inputDim) {
+    errorDescription << "data.inputDim != " << inputDim << "\n";
+  }
+
+  // dynamics
+  if (data.dynamics.f.size() > 0) {
+    errorDescription << checkSize(stateDim, stateDim, inputDim, data.dynamics, "dynamics");
+
+    if (data.dynamicsBias.size() != stateDim) {
+      errorDescription << "dynamicsBias.size() != " << stateDim << "\n";
+    }
   }
 
   // cost
-  assert(data.cost.dfdx.size() == stateDim);
-  assert(data.cost.dfdxx.rows() == stateDim);
-  assert(data.cost.dfdxx.cols() == stateDim);
-  assert(data.cost.dfdu.size() == inputDim);
-  assert(data.cost.dfduu.rows() == inputDim);
-  assert(data.cost.dfduu.cols() == inputDim);
-  assert(data.cost.dfdux.rows() == inputDim);
-  assert(data.cost.dfdux.cols() == stateDim);
+  errorDescription << checkSize(stateDim, inputDim, data.cost, "cost");
 
   // state equality constraints
-  if (data.stateEqConstraint.f.rows() > 0) {
-    assert(data.stateEqConstraint.dfdx.rows() == data.stateEqConstraint.f.rows());
-    assert(data.stateEqConstraint.dfdx.cols() == stateDim);
-  }
+  errorDescription << checkSize(data.stateEqConstraint.f.size(), stateDim, 0, data.stateEqConstraint, "stateEqConstraint");
 
   // state-input equality constraints
-  if (data.stateInputEqConstraint.f.rows() > 0) {
-    assert(data.stateInputEqConstraint.dfdx.rows() == data.stateInputEqConstraint.f.rows());
-    assert(data.stateInputEqConstraint.dfdx.cols() == stateDim);
-    assert(data.stateInputEqConstraint.dfdu.rows() == data.stateInputEqConstraint.f.rows());
-    assert(data.stateInputEqConstraint.dfdu.cols() == inputDim);
-  }
+  errorDescription << checkSize(data.stateInputEqConstraint.f.size(), stateDim, inputDim, data.stateInputEqConstraint,
+                                "stateInputEqConstraint");
+
+  return errorDescription.str();
 }
 
 /******************************************************************************************************/

@@ -103,12 +103,16 @@ void ILQR::approximateIntermediateLQ(PrimalDataContainer& primalData) {
 
       // checking the numerical properties
       if (settings().checkNumericalStability_) {
-        checkSizes(continuousTimeModelData, stateTrajectory[timeIndex].rows(), inputTrajectory[timeIndex].rows());
-        const std::string err = checkDynamicsProperties(continuousTimeModelData) + checkCostProperties(continuousTimeModelData) +
-                                checkConstraintProperties(continuousTimeModelData);
-        if (!err.empty()) {
+        const auto errSize = checkSize(continuousTimeModelData, stateTrajectory[timeIndex].rows(), inputTrajectory[timeIndex].rows());
+        if (!errSize.empty()) {
+          throw std::runtime_error("[ILQR::approximateIntermediateLQ] Mismatch in dimensions at intermediate time: " +
+                                   std::to_string(timeTrajectory[timeIndex]) + "\n" + errSize);
+        }
+        const auto errProperties = checkDynamicsProperties(continuousTimeModelData) + checkCostProperties(continuousTimeModelData) +
+                                   checkConstraintProperties(continuousTimeModelData);
+        if (!errProperties.empty()) {
           throw std::runtime_error("[ILQR::approximateIntermediateLQ] Ill-posed problem at intermediate time: " +
-                                   std::to_string(timeTrajectory[timeIndex]) + "\n" + err);
+                                   std::to_string(timeTrajectory[timeIndex]) + "\n" + errProperties);
         }
       }
 

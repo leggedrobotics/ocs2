@@ -213,13 +213,13 @@ void GaussNewtonDDP::getPrimalSolution(scalar_t finalTime, PrimalSolution* prima
     return index;
   };
 
-  auto getRequestedEventDataLength = [](const size_array_t& postEventIndices, int endIndex) {
-    return std::distance(postEventIndices.cbegin(), std::upper_bound(postEventIndices.cbegin(), postEventIndices.cend(), endIndex));
+  auto getRequestedEventDataLength = [](const size_array_t& postEventIndices, int finalIndex) {
+    return std::distance(postEventIndices.cbegin(), std::upper_bound(postEventIndices.cbegin(), postEventIndices.cend(), finalIndex));
   };
 
   // length of trajectories
   const int length = getRequestedDataLength(optimizedPrimalData_.primalSolution.timeTrajectory_, finalTime);
-  const int eventLenght = getRequestedEventDataLength(optimizedPrimalData_.primalSolution.postEventIndices_, length);
+  const int eventLenght = getRequestedEventDataLength(optimizedPrimalData_.primalSolution.postEventIndices_, length - 1);
 
   // fill trajectories
   primalSolutionPtr->timeTrajectory_.clear();
@@ -299,12 +299,15 @@ ScalarFunctionQuadraticApproximation GaussNewtonDDP::getHamiltonian(scalar_t tim
   // - state-input soft constraint cost
   // - state-only intermediate cost
   // - state-only soft constraint cost
-  const ModelData modelData = [&]() {
-    ModelData md;
-    ocs2::approximateIntermediateLQ(optimalControlProblemStock_[0], time, state, input, md);
-    return md;
-  }();
-  checkSizes(modelData, state.rows(), input.rows());
+  const auto modelData = ocs2::approximateIntermediateLQ(optimalControlProblemStock_[0], time, state, input);
+
+  // check sizes
+  if (ddpSettings_.checkNumericalStability_) {
+    const auto err = checkSize(modelData, state.rows(), input.rows());
+    if (!err.empty()) {
+      throw std::runtime_error("[GaussNewtonDDP::getHamiltonian] Mismatch in dimensions at time: " + std::to_string(time) + "\n" + err);
+    }
+  }
 
   // initialize the Hamiltonian with the augmented cost
   ScalarFunctionQuadraticApproximation hamiltonian(modelData.cost);
@@ -540,13 +543,13 @@ void GaussNewtonDDP::printRolloutInfo() const {
 /******************************************************************************************************/
 scalar_t GaussNewtonDDP::calculateRolloutMerit(const PerformanceIndex& performanceIndex) const {
   // cost
-  scalar_t merit = performanceIndex.totalCost;
+  scalar_t merit = performanceIndex.cost;
   // state/state-input equality constraints
   merit += constraintPenaltyCoefficients_.penaltyCoeff * std::sqrt(performanceIndex.equalityConstraintsSSE);
-  // state/state-input equality Lagrangians
-  merit += performanceIndex.equalityLagrangiansPenalty;
-  // state/state-input inequality Lagrangians
-  merit += performanceIndex.inequalityLagrangiansPenalty;
+  // state/state-input equality Lagrangian
+  merit += performanceIndex.equalityLagrangian;
+  // state/state-input inequality Lagrangian
+  merit += performanceIndex.inequalityLagrangian;
 
   return merit;
 }
@@ -735,12 +738,16 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
 
         // checking the numerical properties
         if (ddpSettings_.checkNumericalStability_) {
-          checkSizes(modelData, state.rows(), 0);
-          const std::string err =
+          const auto errSize = checkSize(modelData, state.rows(), 0);
+          if (!errSize.empty()) {
+            throw std::runtime_error("[GaussNewtonDDP::approximateOptimalControlProblem] Mismatch in dimensions at intermediate time: " +
+                                     std::to_string(time) + "\n" + errSize);
+          }
+          const std::string errProperties =
               checkDynamicsProperties(modelData) + checkCostProperties(modelData) + checkConstraintProperties(modelData);
-          if (!err.empty()) {
-            throw std::runtime_error(
-                "[GaussNewtonDDP::approximateOptimalControlProblem] Ill-posed problem at event time: " + std::to_string(time) + "\n" + err);
+          if (!errProperties.empty()) {
+            throw std::runtime_error("[GaussNewtonDDP::approximateOptimalControlProblem] Ill-posed problem at event time: " +
+                                     std::to_string(time) + "\n" + errProperties);
           }
         }
 
@@ -758,16 +765,16 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
    * compute the Heuristics function at the final time. Also call shiftHessian on the Heuristics 2nd order derivative.
    */
   if (!nominalPrimalData_.primalSolution.timeTrajectory_.empty()) {
-    ModelData modelData;
     const auto& time = nominalPrimalData_.primalSolution.timeTrajectory_.back();
     const auto& state = nominalPrimalData_.primalSolution.stateTrajectory_.back();
-    ocs2::approximateFinalLQ(optimalControlProblemStock_[0], time, state, modelData);
+    auto modelData = ocs2::approximateFinalLQ(optimalControlProblemStock_[0], time, state);
 
     // checking the numerical properties
     if (ddpSettings_.checkNumericalStability_) {
       const std::string err = checkCostProperties(modelData) + checkConstraintProperties(modelData);
       if (!err.empty()) {
-        throw std::runtime_error("Ill-posed problem at final time: " + std::to_string(time) + "\n" + err);
+        throw std::runtime_error(
+            "[GaussNewtonDDP::approximateOptimalControlProblem] Ill-posed problem at final time: " + std::to_string(time) + "\n" + err);
       }
     }
 

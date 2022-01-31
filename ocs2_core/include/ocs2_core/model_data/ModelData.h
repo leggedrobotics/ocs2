@@ -64,8 +64,9 @@ struct ModelData {
  * @param [in] data: The ModelData to be examined.
  * @param [in] stateDim: The dimension of the state vector.
  * @param [in] inputDim: The dimension of the input vector.
+ * @return The description of the error. If there was no error it would be empty;
  */
-void checkSizes(const ModelData& data, int stateDim, int inputDim);
+std::string checkSize(const ModelData& data, int stateDim, int inputDim);
 
 /**
  * Checks the numerical properties of the cost function and its derivatives.

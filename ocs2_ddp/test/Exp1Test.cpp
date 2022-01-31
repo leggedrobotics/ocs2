@@ -108,7 +108,7 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
 
   void performanceIndexTest(const ocs2::ddp::Settings& ddpSettings, const ocs2::PerformanceIndex& performanceIndex) const {
     const auto testName = getTestName(ddpSettings);
-    EXPECT_LT(fabs(performanceIndex.totalCost - expectedCost), 10 * ddpSettings.minRelCost_)
+    EXPECT_LT(fabs(performanceIndex.cost - expectedCost), 10 * ddpSettings.minRelCost_)
         << "MESSAGE: " << testName << ": failed in the total cost test!";
     EXPECT_LT(fabs(performanceIndex.equalityConstraintsSSE - expectedStateInputEqConstraintISE), 10 * ddpSettings.constraintTolerance_)
         << "MESSAGE: " << testName << ": failed in state-input equality constraint ISE test!";

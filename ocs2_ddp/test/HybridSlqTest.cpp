@@ -120,10 +120,10 @@ TEST(HybridSlqTest, state_rollout_slq) {
 
   ocs2::OptimalControlProblem problem;
   problem.dynamicsPtr.reset(systemDynamics.clone());
-  problem.inequalityLagrangiantPtr->add("bounds", std::move(softSystemLagrangian));
   problem.costPtr->add("cost", std::move(cost));
   problem.preJumpCostPtr->add("preJumpCost", std::move(preJumpCost));
   problem.finalCostPtr->add("finalCost", std::move(finalCost));
+  problem.softConstraintPtr->add("bounds", std::move(softSystemLagrangian));
 
   vector_t xNominal = vector_t::Zero(stateDim);
   vector_t uNominal = vector_t::Zero(inputDim);
@@ -180,5 +180,5 @@ TEST(HybridSlqTest, state_rollout_slq) {
 
   // Test 3: Check of cost function
   auto performanceIndecesST = slq.getPerformanceIndeces();
-  EXPECT_LT(performanceIndecesST.totalCost - 13.0, 10.0 * ddpSettings.minRelCost_);
+  EXPECT_LT(performanceIndecesST.cost - 13.0, 10.0 * ddpSettings.minRelCost_);
 }

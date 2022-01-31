@@ -27,13 +27,15 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <algorithm>
+#include "ocs2_legged_robot_ros/gait/GaitKeyboardPublisher.h"
 
-#include <ocs2_legged_robot/command/LeggedRobotModeSequenceKeyboard.h>
+#include <algorithm>
 
 #include <ocs2_core/misc/CommandLine.h>
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_msgs/mode_schedule.h>
+
+#include "ocs2_legged_robot_ros/gait/ModeSequenceTemplateRos.h"
 
 namespace ocs2 {
 namespace legged_robot {
@@ -41,8 +43,8 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LeggedRobotModeSequenceKeyboard::LeggedRobotModeSequenceKeyboard(ros::NodeHandle nodeHandle, const std::string& gaitFile,
-                                                                 const std::string& robotName, bool verbose) {
+GaitKeyboardPublisher::GaitKeyboardPublisher(ros::NodeHandle nodeHandle, const std::string& gaitFile, const std::string& robotName,
+                                             bool verbose) {
   ROS_INFO_STREAM(robotName + "_mpc_mode_schedule node is setting up ...");
   loadData::loadStdVector(gaitFile, "list", gaitList_, verbose);
 
@@ -58,7 +60,7 @@ LeggedRobotModeSequenceKeyboard::LeggedRobotModeSequenceKeyboard(ros::NodeHandle
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LeggedRobotModeSequenceKeyboard::getKeyboardCommand() {
+void GaitKeyboardPublisher::getKeyboardCommand() {
   const std::string commadMsg = "Enter the desired gait, for the list of available gait enter \"list\"";
   std::cout << commadMsg << ": ";
 
@@ -95,7 +97,7 @@ void LeggedRobotModeSequenceKeyboard::getKeyboardCommand() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LeggedRobotModeSequenceKeyboard::printGaitList(const std::vector<std::string>& gaitList) const {
+void GaitKeyboardPublisher::printGaitList(const std::vector<std::string>& gaitList) const {
   std::cout << "List of available gaits:\n";
   size_t itr = 0;
   for (const auto& s : gaitList) {

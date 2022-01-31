@@ -136,10 +136,10 @@ scalar_t PythonInterface::cost(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::
 
   if (penalty_ != nullptr) {
     const auto& targetTrajectories = *problem_.targetTrajectoriesPtr;
-    cost += problem_.equalityLagrangiantPtr->getValue(t, x, u, targetTrajectories, preComputation);
-    cost += problem_.stateEqualityLagrangiantPtr->getValue(t, x, targetTrajectories, preComputation);
-    cost += problem_.inequalityLagrangiantPtr->getValue(t, x, u, targetTrajectories, preComputation);
-    cost += problem_.stateInequalityLagrangiantPtr->getValue(t, x, targetTrajectories, preComputation);
+    cost += problem_.equalityLagrangianPtr->getValue(t, x, u, targetTrajectories, preComputation);
+    cost += problem_.stateEqualityLagrangianPtr->getValue(t, x, targetTrajectories, preComputation);
+    cost += problem_.inequalityLagrangianPtr->getValue(t, x, u, targetTrajectories, preComputation);
+    cost += problem_.stateInequalityLagrangianPtr->getValue(t, x, targetTrajectories, preComputation);
   }
 
   return cost;
@@ -163,23 +163,23 @@ ScalarFunctionQuadraticApproximation PythonInterface::costQuadraticApproximation
   // Lagrangians
   if (penalty_ != nullptr) {
     const auto& targetTrajectories = *problem_.targetTrajectoriesPtr;
-    if (!problem_.stateEqualityLagrangiantPtr->empty()) {
-      auto approx = problem_.stateEqualityLagrangiantPtr->getQuadraticApproximation(t, x, targetTrajectories, preComputation);
+    if (!problem_.stateEqualityLagrangianPtr->empty()) {
+      auto approx = problem_.stateEqualityLagrangianPtr->getQuadraticApproximation(t, x, targetTrajectories, preComputation);
       cost.f += approx.f;
       cost.dfdx += approx.dfdx;
       cost.dfdxx += approx.dfdxx;
     }
-    if (!problem_.stateInequalityLagrangiantPtr->empty()) {
-      auto approx = problem_.stateInequalityLagrangiantPtr->getQuadraticApproximation(t, x, targetTrajectories, preComputation);
+    if (!problem_.stateInequalityLagrangianPtr->empty()) {
+      auto approx = problem_.stateInequalityLagrangianPtr->getQuadraticApproximation(t, x, targetTrajectories, preComputation);
       cost.f += approx.f;
       cost.dfdx += approx.dfdx;
       cost.dfdxx += approx.dfdxx;
     }
-    if (!problem_.equalityLagrangiantPtr->empty()) {
-      cost += problem_.equalityLagrangiantPtr->getQuadraticApproximation(t, x, u, targetTrajectories, preComputation);
+    if (!problem_.equalityLagrangianPtr->empty()) {
+      cost += problem_.equalityLagrangianPtr->getQuadraticApproximation(t, x, u, targetTrajectories, preComputation);
     }
-    if (!problem_.inequalityLagrangiantPtr->empty()) {
-      cost += problem_.inequalityLagrangiantPtr->getQuadraticApproximation(t, x, u, targetTrajectories, preComputation);
+    if (!problem_.inequalityLagrangianPtr->empty()) {
+      cost += problem_.inequalityLagrangianPtr->getQuadraticApproximation(t, x, u, targetTrajectories, preComputation);
     }
   }
 

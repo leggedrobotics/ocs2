@@ -133,7 +133,7 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
 
   void performanceIndexTest(const ocs2::ddp::Settings& ddpSettings, const ocs2::PerformanceIndex& performanceIndex) const {
     const auto testName = getTestName(ddpSettings);
-    EXPECT_LT(performanceIndex.totalCost - expectedCost, 0.0) << "MESSAGE: " << testName << ": failed in the total cost test!";
+    EXPECT_LT(performanceIndex.cost - expectedCost, 0.0) << "MESSAGE: " << testName << ": failed in the cost test!";
     EXPECT_LT(fabs(performanceIndex.equalityConstraintsSSE - expectedStateInputEqConstraintISE), 10 * ddpSettings.constraintTolerance_)
         << "MESSAGE: " << testName << ": failed in state-input equality constraint ISE test!";
   }

@@ -161,6 +161,40 @@ std::string checkBeingPSD(const ScalarFunctionQuadraticApproximation& data, cons
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+std::string checkSize(int stateDim, int inputDim, const ScalarFunctionQuadraticApproximation& data, const std::string& dataName) {
+  std::stringstream errorDescription;
+
+  if (data.dfdx.size() != stateDim) {
+    errorDescription << dataName << ".dfdx.size() != " << stateDim << "\n";
+  }
+  if (data.dfdxx.rows() != stateDim) {
+    errorDescription << dataName << ".dfdxx.rows() != " << stateDim << "\n";
+  }
+  if (data.dfdxx.cols() != stateDim) {
+    errorDescription << dataName << ".dfdxx.cols() != " << stateDim << "\n";
+  }
+  if (data.dfdu.size() != inputDim) {
+    errorDescription << dataName << ".dfdu.size() != " << inputDim << "\n";
+  }
+  if (data.dfduu.rows() != inputDim) {
+    errorDescription << dataName << ".dfduu.rows() != " << inputDim << "\n";
+  }
+  if (data.dfduu.cols() != inputDim) {
+    errorDescription << dataName << ".dfduu.cols() != " << inputDim << "\n";
+  }
+  if (data.dfdux.rows() != inputDim) {
+    errorDescription << dataName << ".dfdux.rows() != " << inputDim << "\n";
+  }
+  if (data.dfdux.cols() != stateDim) {
+    errorDescription << dataName << ".dfdux.cols() != " << stateDim << "\n";
+  }
+
+  return errorDescription.str();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 std::ostream& operator<<(std::ostream& out, const ScalarFunctionQuadraticApproximation& f) {
   out << "f: " << f.f << '\n';
   out << "dfdx: " << f.dfdx.transpose() << '\n';
@@ -215,6 +249,32 @@ std::ostream& operator<<(std::ostream& out, const VectorFunctionLinearApproximat
   out << "dfdx:\n" << f.dfdx << '\n';
   out << "dfdu:\n" << f.dfdu << '\n';
   return out;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::string checkSize(int vectorDim, int stateDim, int inputDim, const VectorFunctionLinearApproximation& data,
+                      const std::string& dataName) {
+  std::stringstream errorDescription;
+
+  if (data.f.size() != vectorDim) {
+    errorDescription << dataName << ".f.size() != " << vectorDim << "\n";
+  }
+  if (vectorDim > 0 && data.dfdx.rows() != vectorDim) {
+    errorDescription << dataName << ".dfdx.rows() != " << vectorDim << "\n";
+  }
+  if (vectorDim > 0 && data.dfdx.cols() != stateDim) {
+    errorDescription << dataName << ".dfdx.cols() != " << stateDim << "\n";
+  }
+  if (vectorDim > 0 && data.dfdu.rows() != vectorDim) {
+    errorDescription << dataName << ".dfdu.rows() != " << vectorDim << "\n";
+  }
+  if (vectorDim > 0 && data.dfdu.cols() != inputDim) {
+    errorDescription << dataName << ".dfdu.cols() != " << inputDim << "\n";
+  }
+
+  return errorDescription.str();
 }
 
 /******************************************************************************************************/

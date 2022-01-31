@@ -43,11 +43,7 @@ solution solve(OptimalControlProblem& problem, scalar_t time, const vector_t& st
 
   // --- Form the Linear quadratic approximation ---
   // Obtain model data at the provided reference
-  const ModelData modelData = [&]() {
-    ModelData md;
-    approximateIntermediateLQ(problem, time, state, input, md);
-    return md;
-  }();
+  const auto modelData = approximateIntermediateLQ(problem, time, state, input);
 
   // checking the numerical properties
   if (settings.checkNumericalCharacteristics) {

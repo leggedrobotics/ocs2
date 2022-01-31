@@ -62,14 +62,6 @@ LinearQuadraticStage approximateStage(OptimalControlProblem& optimalControProble
                                       bool isInitialTime);
 
 /**
- * Computes the cost integral from a start condition over a dt interval
- * @param modelData: The continuous time optimal control problem evaluation.
- * @param dt : duration of the interval
- * @return Quadratic approximation of the accumulated costs
- */
-ScalarFunctionQuadraticApproximation approximateCost(const ModelData& modelData, scalar_t dt);
-
-/**
  * Computes the discrete dynamics from a start condition over a dt interval
  * @param modelData: The continuous time optimal control problem evaluation.
  * @param start : linearization point at the start of the interval

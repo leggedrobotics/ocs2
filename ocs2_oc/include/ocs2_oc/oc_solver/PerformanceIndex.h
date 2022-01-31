@@ -42,28 +42,42 @@ namespace ocs2 {
 struct PerformanceIndex {
   /** The merit function of a rollout. */
   scalar_t merit = 0.0;
+
   /** The total cost of a rollout. */
-  scalar_t totalCost = 0.0;
-  /** The integral of squared error for intermediate state-only equality constraints. */
-  scalar_t stateEqConstraintISE = 0.0;
-  /** The sum of squared error for intermediate state-only equality constraints. */
-  scalar_t stateEqFinalConstraintSSE = 0.0;
-  /** The integral of squared error for intermediate state-input equality constraints. */
-  scalar_t stateInputEqConstraintISE = 0.0;
-  /** The integral of squared error for intermediate inequality constraints violation. */
-  scalar_t inequalityConstraintISE = 0.0;
-  /** The total penalty of the intermediate inequality constraints violation. */
-  scalar_t inequalityConstraintPenalty = 0.0;
+  scalar_t cost = 0.0;
+
+  /** Sum of Squared Error (SSE) of system dynamics violation */
+  scalar_t dynamicsViolationSSE = 0.0;
+
+  /** Sum of Squared Error (SSE) of equality constraints:
+   * - Final: squared norm of violation in state equality constraints
+   * - PreJumps: sum of squared norm of violation in state equality constraints
+   * - Intermediates: Integral of squared norm violation in state/state-input equality constraints
+   */
+  scalar_t equalityConstraintsSSE = 0.0;
+
+  /** Sum of equality Lagrangians:
+   * - Final: penalty for violation in state equality constraints
+   * - PreJumps: penalty for violation in state equality constraints
+   * - Intermediates: penalty for violation in state/state-input equality constraints
+   */
+  scalar_t equalityLagrangian = 0.0;
+
+  /** Sum of inequality Lagrangians:
+   * - Final: penalty for violation in state inequality constraints
+   * - PreJumps: penalty for violation in state inequality constraints
+   * - Intermediates: penalty for violation in state/state-input inequality constraints
+   */
+  scalar_t inequalityLagrangian = 0.0;
 
   /** Add performance indices */
   PerformanceIndex& operator+=(const PerformanceIndex& rhs) {
     this->merit += rhs.merit;
-    this->totalCost += rhs.totalCost;
-    this->stateEqConstraintISE += rhs.stateEqConstraintISE;
-    this->stateEqFinalConstraintSSE += rhs.stateEqFinalConstraintSSE;
-    this->stateInputEqConstraintISE += rhs.stateInputEqConstraintISE;
-    this->inequalityConstraintISE += rhs.inequalityConstraintISE;
-    this->inequalityConstraintPenalty += rhs.inequalityConstraintPenalty;
+    this->cost += rhs.cost;
+    this->dynamicsViolationSSE += rhs.dynamicsViolationSSE;
+    this->equalityConstraintsSSE += rhs.equalityConstraintsSSE;
+    this->equalityLagrangian += rhs.equalityLagrangian;
+    this->inequalityLagrangian += rhs.inequalityLagrangian;
     return *this;
   }
 };
@@ -79,19 +93,16 @@ inline std::ostream& operator<<(std::ostream& stream, const PerformanceIndex& pe
   stream << std::left;  // fill from left
 
   stream << std::setw(indentation) << "";
-  stream << "rollout merit:                        " << std::setw(tabSpace) << performanceIndex.merit;
-  stream << "rollout cost:                         " << std::setw(tabSpace) << performanceIndex.totalCost << '\n';
+  stream << "Rollout Merit:              " << std::setw(tabSpace) << performanceIndex.merit;
+  stream << "Rollout Cost:               " << std::setw(tabSpace) << performanceIndex.cost << '\n';
 
   stream << std::setw(indentation) << "";
-  stream << "state equality constraints ISE:       " << std::setw(tabSpace) << performanceIndex.stateEqConstraintISE;
-  stream << "state-input equality constraints ISE: " << std::setw(tabSpace) << performanceIndex.stateInputEqConstraintISE << '\n';
+  stream << "Dynamics violation SSE:     " << std::setw(tabSpace) << performanceIndex.dynamicsViolationSSE;
+  stream << "Equality constraints SSE:   " << std::setw(tabSpace) << performanceIndex.equalityConstraintsSSE << '\n';
 
   stream << std::setw(indentation) << "";
-  stream << "inequality constraints ISE:           " << std::setw(tabSpace) << performanceIndex.inequalityConstraintISE;
-  stream << "inequality constraints penalty:       " << std::setw(tabSpace) << performanceIndex.inequalityConstraintPenalty << '\n';
-
-  stream << std::setw(indentation) << "";
-  stream << "state equality final constraints SSE: " << std::setw(tabSpace) << performanceIndex.stateEqFinalConstraintSSE;
+  stream << "Equality Lagrangian:        " << std::setw(tabSpace) << performanceIndex.equalityLagrangian;
+  stream << "Inequality Lagrangian:      " << std::setw(tabSpace) << performanceIndex.inequalityLagrangian;
 
   return stream;
 }

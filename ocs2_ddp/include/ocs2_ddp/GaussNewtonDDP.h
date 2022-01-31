@@ -38,10 +38,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/Numerics.h>
 #include <ocs2_core/model_data/ModelData.h>
 #include <ocs2_core/model_data/ModelDataLinearInterpolation.h>
-#include <ocs2_core/penalties/MultidimensionalPenalty.h>
 #include <ocs2_core/thread_support/ThreadPool.h>
 
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
+#include <ocs2_oc/oc_data/Metrics.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/oc_solver/SolverBase.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
@@ -59,17 +59,6 @@ namespace ocs2 {
  */
 class GaussNewtonDDP : public SolverBase {
  public:
-  struct ConstraintPenaltyCoefficients {
-    scalar_t stateEqConstrPenaltyTol = 1e-3;
-    scalar_t stateEqConstrPenaltyCoeff = 0.0;
-
-    scalar_t stateFinalEqConstrPenaltyTol = 1e-3;
-    scalar_t stateFinalEqConstrPenaltyCoeff = 0.0;
-
-    scalar_t stateInputEqConstrPenaltyTol = 1e-3;
-    scalar_t stateInputEqConstrPenaltyCoeff = 0.0;
-  };
-
   /**
    * Constructor
 
@@ -102,7 +91,7 @@ class GaussNewtonDDP : public SolverBase {
     return getValueFunctionImpl(time, state, optimizedPrimalData_, dualData_.valueFunctionTrajectory);
   }
 
-  ScalarFunctionQuadraticApproximation getHamiltonian(scalar_t time, const vector_t& state, const vector_t& input) const override;
+  ScalarFunctionQuadraticApproximation getHamiltonian(scalar_t time, const vector_t& state, const vector_t& input) override;
 
   vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const override {
     return getStateInputEqualityConstraintLagrangianImpl(time, state, nominalPrimalData_, dualData_);
@@ -384,28 +373,15 @@ class GaussNewtonDDP : public SolverBase {
                  ModelData& projectedModelData) const;
 
   /**
-   * Augments the cost function for the given model data.
-   *
-   * @param [in] workerIndex: Working agent index.
-   * @param [in] stateEqConstrPenaltyCoeff: The state-only equality penalty coefficient of the Augmented Lagrangian method.
-   * @param [in] stateInputEqConstrPenaltyCoeff: The state-input equality penalty coefficient of the Augmented Lagrangian method.
-   * @param modelData: The model data.
-   */
-  void augmentCostWorker(size_t workerIndex, scalar_t stateEqConstrPenaltyCoeff, scalar_t stateInputEqConstrPenaltyCoeff,
-                         ModelData& modelData) const;
-
-  /**
    * Initialize the constraint penalty coefficients.
    */
   void initializeConstraintPenalties();
 
   /**
    * Updates the constraint penalty coefficients.
-   * @param [in] stateEqConstraintISE: ISE of the intermediate state-only equality constraints.
-   * @param [in] stateEqFinalConstraintSSE: SSE of the state-only equality constraints at event times.
-   * @param [in] stateInputEqConstraintISE: ISE of the intermediate state-input equality constraints.
+   * @param [in] equalityConstraintsSSE: SSE of the equality constraints.
    */
-  void updateConstraintPenalties(scalar_t stateEqConstraintISE, scalar_t stateEqFinalConstraintSSE, scalar_t stateInputEqConstraintISE);
+  void updateConstraintPenalties(scalar_t equalityConstraintsSSE);
 
   /**
    * Runs the search strategy. It updates the controller and the corresponding trajectories only when the search is successful.
@@ -414,7 +390,7 @@ class GaussNewtonDDP : public SolverBase {
    * @param [in] lqModelExpectedCost: The expected cost based on the LQ model optimization.
    * @param [out] dstPrimalData: Optimized primal data container if it is an final search. otherwise nominal data container
    */
-  void runSearchStrategy(scalar_t lqModelExpectedCost, PrimalDataContainer& dstPrimalData);
+  void runSearchStrategy(scalar_t lqModelExpectedCost, PrimalDataContainer& dstPrimalData, MetricsCollection& metrics);
 
   /**
    * swap both primal and dual data cache
@@ -502,15 +478,20 @@ class GaussNewtonDDP : public SolverBase {
 
   std::vector<std::unique_ptr<RolloutBase>> dynamicsForwardRolloutPtrStock_;
   std::vector<std::unique_ptr<RolloutBase>> initializerRolloutPtrStock_;
-  std::unique_ptr<MultidimensionalPenalty> penaltyPtr_;
 
   // used for caching the nominal trajectories for which the LQ problem is
   // constructed and solved before terminating run()
   PrimalDataContainer cachedPrimalData_;
   DualDataContainer cachedDualData_;
 
+  MetricsCollection metrics_;
+
   ScalarFunctionQuadraticApproximation heuristics_;
 
+  struct ConstraintPenaltyCoefficients {
+    scalar_t penaltyTol = 1e-3;
+    scalar_t penaltyCoeff = 0.0;
+  };
   ConstraintPenaltyCoefficients constraintPenaltyCoefficients_;
 
   // forward pass and backward pass average time step

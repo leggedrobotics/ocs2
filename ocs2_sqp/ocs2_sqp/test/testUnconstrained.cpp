@@ -110,8 +110,8 @@ TEST(test_unconstrained, withFeedback) {
    */
   ASSERT_LE(solWithEmptyConstraint.second.size(), 2);
   ASSERT_LE(solWithNullConstraint.second.size(), 2);
-  ASSERT_LT(solWithEmptyConstraint.second.back().stateEqConstraintISE, tol);
-  ASSERT_LT(solWithNullConstraint.second.back().stateEqConstraintISE, tol);
+  ASSERT_LT(solWithEmptyConstraint.second.back().dynamicsViolationSSE, tol);
+  ASSERT_LT(solWithNullConstraint.second.back().dynamicsViolationSSE, tol);
 
   // Compare
   const auto& withEmptyConstraint = solWithEmptyConstraint.first;
@@ -143,8 +143,8 @@ TEST(test_unconstrained, noFeedback) {
    */
   ASSERT_LE(solWithEmptyConstraint.second.size(), 2);
   ASSERT_LE(solWithNullConstraint.second.size(), 2);
-  ASSERT_LT(solWithEmptyConstraint.second.back().stateEqConstraintISE, tol);
-  ASSERT_LT(solWithNullConstraint.second.back().stateEqConstraintISE, tol);
+  ASSERT_LT(solWithEmptyConstraint.second.back().dynamicsViolationSSE, tol);
+  ASSERT_LT(solWithNullConstraint.second.back().dynamicsViolationSSE, tol);
 
   // Compare
   const auto& withEmptyConstraint = solWithEmptyConstraint.first;

@@ -76,8 +76,8 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints) {
 
   // Check constraint satisfaction.
   const auto performance = solver.getPerformanceIndeces();
-  ASSERT_LT(performance.stateEqConstraintISE, 1e-6);
-  ASSERT_LT(performance.stateInputEqConstraintISE, 1e-6);
+  ASSERT_LT(performance.dynamicsViolationSSE, 1e-6);
+  ASSERT_LT(performance.equalityConstraintsSSE, 1e-6);
 
   // Check feedback controller
   for (int i = 0; i < primalSolution.timeTrajectory_.size() - 1; i++) {
@@ -129,8 +129,8 @@ TEST(test_circular_kinematics, solve_EqConstraints_inQPSubproblem) {
 
   // Check constraint satisfaction.
   const auto performance = solver.getPerformanceIndeces();
-  ASSERT_LT(performance.stateEqConstraintISE, 1e-6);
-  ASSERT_LT(performance.stateInputEqConstraintISE, 1e-6);
+  ASSERT_LT(performance.dynamicsViolationSSE, 1e-6);
+  ASSERT_LT(performance.equalityConstraintsSSE, 1e-6);
 
   // Check feedback controller
   for (int i = 0; i < primalSolution.timeTrajectory_.size() - 1; i++) {

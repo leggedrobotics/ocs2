@@ -41,62 +41,55 @@ namespace ocs2 {
  * The optimal control problem model data.
  */
 struct ModelData {
-  /**
-   * Displays all variables
-   */
-  void display() const;
+  int stateDim = 0;
+  int inputDim = 0;
+  scalar_t time = 0.0;
 
-  /**
-   * Checks whether the size of the member variables matches the state and input dimension.
-   *
-   * @param [in] stateDim: The dimension of the state vector.
-   * @param [in] inputDim: The dimension of the input vecotr.
-   */
-  void checkSizes(int stateDim, int inputDim) const;
+  // Dynamics
+  vector_t dynamicsBias;
+  matrix_t dynamicsCovariance;
+  VectorFunctionLinearApproximation dynamics;
 
-  /**
-   * Checks the numerical properties of the cost function and its derivatives.
-   * @return The description of the error. If there was no error it would be empty;
-   */
-  std::string checkCostProperties() const;
+  // Cost
+  ScalarFunctionQuadraticApproximation cost;
 
-  /**
-   * Checks the numerical properties of the dynamics derivatives.
-   * @return The description of the error. If there was no error it would be empty;
-   */
-  std::string checkDynamicsDerivativsProperties() const;
-
-  /**
-   * Checks the numerical properties of the constraint functions and derivatives.
-   * @return The description of the error. If there was no error it would be empty;
-   */
-  std::string checkConstraintProperties() const;
-
-  /**
-   * Variables
-   */
-  scalar_t time_ = 0;
-  int stateDim_ = 0;
-  int inputDim_ = 0;
-
-  // dynamics
-  VectorFunctionLinearApproximation dynamics_;
-  vector_t dynamicsBias_;
-  matrix_t dynamicsCovariance_;
-
-  // cost
-  ScalarFunctionQuadraticApproximation cost_;
-
-  // state equality constraints
-  VectorFunctionLinearApproximation stateEqConstr_;
-
-  // state-input equality constraints
-  VectorFunctionLinearApproximation stateInputEqConstr_;
-
-  // inequality constraints
-  VectorFunctionQuadraticApproximation ineqConstr_;
+  // Equality constraints
+  VectorFunctionLinearApproximation stateEqConstraint;
+  VectorFunctionLinearApproximation stateInputEqConstraint;
 };
 
-std::ostream& operator<<(std::ostream& out, const ModelData& data);
+/**
+ * Checks whether the size of the ModelData variables matches the given state and input dimensions.
+ *
+ * @param [in] data: The ModelData to be examined.
+ * @param [in] stateDim: The dimension of the state vector.
+ * @param [in] inputDim: The dimension of the input vector.
+ * @return The description of the error. If there was no error it would be empty;
+ */
+std::string checkSize(const ModelData& data, int stateDim, int inputDim);
+
+/**
+ * Checks the numerical properties of the cost function and its derivatives.
+ *
+ * @param [in] data: The ModelData to be examined.
+ * @return The description of the error. If there was no error it would be empty;
+ */
+std::string checkCostProperties(const ModelData& data);
+
+/**
+ * Checks the numerical properties of the dynamics derivatives.
+ *
+ * @param [in] data: The ModelData to be examined.
+ * @return The description of the error. If there was no error it would be empty;
+ */
+std::string checkDynamicsProperties(const ModelData& data);
+
+/**
+ * Checks the numerical properties of the constraint functions and derivatives.
+ *
+ * @param [in] data: The ModelData to be examined.
+ * @return The description of the error. If there was no error it would be empty;
+ */
+std::string checkConstraintProperties(const ModelData& data);
 
 }  // namespace ocs2

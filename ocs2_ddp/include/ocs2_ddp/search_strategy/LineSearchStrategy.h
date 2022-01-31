@@ -34,18 +34,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
-#include <ocs2_core/model_data/ModelData.h>
-#include <ocs2_core/penalties/MultidimensionalPenalty.h>
 #include <ocs2_core/thread_support/ThreadPool.h>
 
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
-#include <ocs2_oc/oc_solver/PerformanceIndex.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
 
-#include "SearchStrategyBase.h"
-#include "StrategySettings.h"
+#include "ocs2_ddp/search_strategy/SearchStrategyBase.h"
+#include "ocs2_ddp/search_strategy/StrategySettings.h"
 
 namespace ocs2 {
 
@@ -63,13 +59,12 @@ class LineSearchStrategy final : public SearchStrategyBase {
    * @param [in] threadPoolRef: A reference to the thread pool instance.
    * @param [in] rolloutRefStock: An array of references to the rollout.
    * @param [in] optimalControlProblemRef: An array of references to the optimal control problem.
-   * @param [in] ineqConstrPenaltyRef: A reference to the inequality constraints penalty.
    * @param [in] meritFunc: the merit function which gets the PerformanceIndex and returns the merit function value.
    */
   LineSearchStrategy(search_strategy::Settings baseSettings, line_search::Settings settings, ThreadPool& threadPoolRef,
                      std::vector<std::reference_wrapper<RolloutBase>> rolloutRefStock,
                      std::vector<std::reference_wrapper<OptimalControlProblem>> optimalControlProblemRef,
-                     MultidimensionalPenalty& ineqConstrPenaltyRef, std::function<scalar_t(const PerformanceIndex&)> meritFunc);
+                     std::function<scalar_t(const PerformanceIndex&)> meritFunc);
 
   /**
    * Default destructor.
@@ -83,7 +78,7 @@ class LineSearchStrategy final : public SearchStrategyBase {
 
   bool run(const scalar_t initTime, const vector_t& initState, const scalar_t finalTime, const scalar_t expectedCost,
            const ModeSchedule& modeSchedule, LinearController& controller, PerformanceIndex& performanceIndex,
-           PrimalDataContainer& dstPrimalData, scalar_t& avgTimeStepFP) override;
+           PrimalSolution& dstPrimalSolution, MetricsCollection& metrics, scalar_t& avgTimeStepFP) override;
 
   std::pair<bool, std::string> checkConvergence(bool unreliableControllerIncrement, const PerformanceIndex& previousPerformanceIndex,
                                                 const PerformanceIndex& currentPerformanceIndex) const override;
@@ -98,7 +93,7 @@ class LineSearchStrategy final : public SearchStrategyBase {
    * Defines line search task on a thread with various learning rates and choose the largest acceptable step-size.
    * The class computes the nominal controller and the nominal trajectories as well the corresponding performance indices.
    */
-  void lineSearchTask();
+  void lineSearchTask(const scalar_t initTime, const vector_t& initState, const scalar_t finalTime);
 
   /** Prints to output. */
   void printString(const std::string& text) const;
@@ -115,7 +110,8 @@ class LineSearchStrategy final : public SearchStrategyBase {
 
     std::atomic<scalar_t> stepLengthStar{0.0};
     PerformanceIndex* performanceIndexStarPtr;
-    PrimalDataContainer* primalDataStarPtr;
+    PrimalSolution* primalSolutionStarPtr;
+    MetricsCollection* metricsStarPtr;
     LinearController* controllerStarPtr;
   };
 
@@ -128,13 +124,18 @@ class LineSearchStrategy final : public SearchStrategyBase {
 
   std::vector<std::reference_wrapper<RolloutBase>> rolloutRefStock_;
   std::vector<std::reference_wrapper<OptimalControlProblem>> optimalControlProblemRefStock_;
-  MultidimensionalPenalty& ineqConstrPenaltyRef_;
   std::function<scalar_t(PerformanceIndex)> meritFunc_;
 
   std::atomic<scalar_t> avgTimeStepFP_{0.0};
 
-  // temperory primal data buffer for all threads. The intermediate rollout result of different step length will be stored here.
-  std::vector<PrimalDataContainer> primalDataStock_;
+  // temporary primal data buffer for all threads. The intermediate rollout result of different step length will be stored here.
+  struct TemporaryMemory {
+    PerformanceIndex performanceIndex;
+    PrimalSolution primalSolution;
+    MetricsCollection metrics;
+  };
+
+  std::vector<TemporaryMemory> temporaryMemories_;
 };
 
 }  // namespace ocs2

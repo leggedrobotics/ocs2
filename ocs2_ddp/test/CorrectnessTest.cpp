@@ -55,8 +55,6 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
   static constexpr size_t INPUT_DIM = 2;
   static constexpr ocs2::scalar_t solutionPrecision = 5e-3;
   static constexpr size_t numStateInputConstraints = 2;
-  static constexpr size_t numStateOnlyConstraints = 0;
-  static constexpr size_t numFinalStateOnlyConstraints = 0;
 
   DDPCorrectness() {
     srand(0);
@@ -97,10 +95,6 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
   }
 
   bool createFeasibleRandomProblem() {
-    static_assert(numStateInputConstraints + numStateOnlyConstraints <= INPUT_DIM,
-                  "The number of constraints must be less or equal to INPUT_DIM");
-    static_assert(numFinalStateOnlyConstraints <= STATE_DIM, "The number of final constraints must be less or equal to STATE_DIM");
-
     // dynamics
     systemPtr = ocs2::getOcs2Dynamics(ocs2::getRandomDynamics(STATE_DIM, INPUT_DIM));
     problemPtr.reset(new ocs2::OptimalControlProblem);
@@ -115,10 +109,6 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
     if (std::get<1>(GetParam()) == Constraining::CONSTARINED) {
       problemPtr->equalityConstraintPtr->add(
           "equality", ocs2::getOcs2Constraints(ocs2::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateInputConstraints)));
-      problemPtr->stateEqualityConstraintPtr->add(
-          "stateEquality", ocs2::getOcs2StateOnlyConstraints(ocs2::getRandomConstraints(STATE_DIM, 0, numStateOnlyConstraints)));
-      problemPtr->finalEqualityConstraintPtr->add(
-          "finalEquality", ocs2::getOcs2StateOnlyConstraints(ocs2::getRandomConstraints(STATE_DIM, 0, numFinalStateOnlyConstraints)));
     }
 
     // system operating points
@@ -224,7 +214,7 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
   void correctnessTest(const ocs2::ddp::Settings& ddpSettings, const ocs2::PerformanceIndex& performanceIndex,
                        const ocs2::PrimalSolution& ddpSolution) const {
     const auto testName = getTestName(ddpSettings);
-    EXPECT_LT(fabs(performanceIndex.totalCost - qpCost), 10 * ddpSettings.minRelCost_)
+    EXPECT_LT(fabs(performanceIndex.cost - qpCost), 10 * ddpSettings.minRelCost_)
         << "MESSAGE: " << testName << ": failed in the optimal cost test!";
     EXPECT_LT(relError(ddpSolution.stateTrajectory_.back(), qpSolution.stateTrajectory.back()), solutionPrecision)
         << "MESSAGE: " << testName << ": failed in the optimal final state test!";
@@ -253,8 +243,6 @@ constexpr size_t DDPCorrectness::N;
 constexpr size_t DDPCorrectness::STATE_DIM;
 constexpr size_t DDPCorrectness::INPUT_DIM;
 constexpr size_t DDPCorrectness::numStateInputConstraints;
-constexpr size_t DDPCorrectness::numStateOnlyConstraints;
-constexpr size_t DDPCorrectness::numFinalStateOnlyConstraints;
 constexpr ocs2::scalar_t DDPCorrectness::solutionPrecision;
 
 /******************************************************************************************************/

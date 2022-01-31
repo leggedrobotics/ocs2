@@ -79,35 +79,45 @@ ILQR::ILQR(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalC
 void ILQR::approximateIntermediateLQ(PrimalDataContainer& primalData) {
   // create alias
   const auto& timeTrajectory = primalData.primalSolution.timeTrajectory_;
-  const auto& postEventIndices = primalData.postEventIndices;
   const auto& stateTrajectory = primalData.primalSolution.stateTrajectory_;
   const auto& inputTrajectory = primalData.primalSolution.inputTrajectory_;
+  const auto& postEventIndices = primalData.primalSolution.postEventIndices_;
   auto& modelDataTrajectory = primalData.modelDataTrajectory;
+
+  modelDataTrajectory.clear();
+  modelDataTrajectory.resize(timeTrajectory.size());
 
   nextTimeIndex_ = 0;
   nextTaskId_ = 0;
   auto task = [&]() {
-    size_t timeIndex;
     size_t taskId = nextTaskId_++;  // assign task ID (atomic)
 
     ModelData continuousTimeModelData;
 
     // get next time index is atomic
+    size_t timeIndex;
     while ((timeIndex = nextTimeIndex_++) < timeTrajectory.size()) {
-      // execute continuous time LQ approximation for the given partition and time index
-      continuousTimeModelData = modelDataTrajectory[timeIndex];
+      // approximate continuous LQ for the given time index
+      ocs2::approximateIntermediateLQ(optimalControlProblemStock_[taskId], timeTrajectory[timeIndex], stateTrajectory[timeIndex],
+                                      inputTrajectory[timeIndex], continuousTimeModelData);
 
-      LinearQuadraticApproximator lqapprox(optimalControlProblemStock_[taskId], settings().checkNumericalStability_);
-      lqapprox.approximateLQProblem(timeTrajectory[timeIndex], stateTrajectory[timeIndex], inputTrajectory[timeIndex],
-                                    continuousTimeModelData);
-      continuousTimeModelData.checkSizes(stateTrajectory[timeIndex].rows(), inputTrajectory[timeIndex].rows());
-
-      // discretize LQ problem
-      scalar_t timeStep = 0.0;
-      if (timeIndex + 1 < timeTrajectory.size()) {
-        timeStep = timeTrajectory[timeIndex + 1] - timeTrajectory[timeIndex];
+      // checking the numerical properties
+      if (settings().checkNumericalStability_) {
+        const auto errSize = checkSize(continuousTimeModelData, stateTrajectory[timeIndex].rows(), inputTrajectory[timeIndex].rows());
+        if (!errSize.empty()) {
+          throw std::runtime_error("[ILQR::approximateIntermediateLQ] Mismatch in dimensions at intermediate time: " +
+                                   std::to_string(timeTrajectory[timeIndex]) + "\n" + errSize);
+        }
+        const auto errProperties = checkDynamicsProperties(continuousTimeModelData) + checkCostProperties(continuousTimeModelData) +
+                                   checkConstraintProperties(continuousTimeModelData);
+        if (!errProperties.empty()) {
+          throw std::runtime_error("[ILQR::approximateIntermediateLQ] Ill-posed problem at intermediate time: " +
+                                   std::to_string(timeTrajectory[timeIndex]) + "\n" + errProperties);
+        }
       }
 
+      // discretize LQ problem
+      const scalar_t timeStep = (timeIndex + 1 < timeTrajectory.size()) ? (timeTrajectory[timeIndex + 1] - timeTrajectory[timeIndex]) : 0.0;
       if (!numerics::almost_eq(timeStep, 0.0)) {
         discreteLQWorker(*optimalControlProblemStock_[taskId].dynamicsPtr, timeTrajectory[timeIndex], stateTrajectory[timeIndex],
                          inputTrajectory[timeIndex], timeStep, continuousTimeModelData, modelDataTrajectory[timeIndex]);
@@ -125,33 +135,24 @@ void ILQR::approximateIntermediateLQ(PrimalDataContainer& primalData) {
 /******************************************************************************************************/
 void ILQR::discreteLQWorker(SystemDynamicsBase& system, scalar_t time, const vector_t& state, const vector_t& input, scalar_t timeStep,
                             const ModelData& continuousTimeModelData, ModelData& modelData) {
-  /*
-   * linearize system dynamics
-   */
-  modelData.dynamics_ = sensitivityDiscretizer_(system, time, state, input, timeStep);
-  modelData.dynamics_.f.setZero(continuousTimeModelData.stateDim_);
+  modelData.time = continuousTimeModelData.time;
+  modelData.stateDim = continuousTimeModelData.stateDim;
+  modelData.inputDim = continuousTimeModelData.inputDim;
 
-  /*
-   * quadratic approximation to the cost function
-   */
-  modelData.cost_.f = continuousTimeModelData.cost_.f * timeStep;
-  modelData.cost_.dfdx = continuousTimeModelData.cost_.dfdx * timeStep;
-  modelData.cost_.dfdxx = continuousTimeModelData.cost_.dfdxx * timeStep;
-  modelData.cost_.dfdu = continuousTimeModelData.cost_.dfdu * timeStep;
-  modelData.cost_.dfduu = continuousTimeModelData.cost_.dfduu * timeStep;
-  modelData.cost_.dfdux = continuousTimeModelData.cost_.dfdux * timeStep;
+  // linearize system dynamics
+  modelData.dynamicsBias.setZero(modelData.stateDim);
+  modelData.dynamics = sensitivityDiscretizer_(system, time, state, input, timeStep);
+  modelData.dynamics.f.setZero(modelData.stateDim);
 
-  /*
-   * linearize constraints
-   */
+  // quadratic approximation to the cost function
+  modelData.cost = continuousTimeModelData.cost;
+  modelData.cost *= timeStep;
+
   // state equality constraints
-  modelData.stateEqConstr_ = continuousTimeModelData.stateEqConstr_;
+  modelData.stateEqConstraint = continuousTimeModelData.stateEqConstraint;
 
   // state-input equality constraints
-  modelData.stateInputEqConstr_ = continuousTimeModelData.stateInputEqConstr_;
-
-  // inequality constraints
-  modelData.ineqConstr_ = continuousTimeModelData.ineqConstr_;
+  modelData.stateInputEqConstraint = continuousTimeModelData.stateInputEqConstraint;
 }
 
 /******************************************************************************************************/
@@ -162,8 +163,8 @@ void ILQR::calculateControllerWorker(size_t timeIndex, const PrimalDataContainer
   const auto& nominalState = primalData.primalSolution.stateTrajectory_[timeIndex];
   const auto& nominalInput = primalData.primalSolution.inputTrajectory_[timeIndex];
 
-  const auto& EvProjected = dualData.projectedModelDataTrajectory[timeIndex].stateInputEqConstr_.f;
-  const auto& CmProjected = dualData.projectedModelDataTrajectory[timeIndex].stateInputEqConstr_.dfdx;
+  const auto& EvProjected = dualData.projectedModelDataTrajectory[timeIndex].stateInputEqConstraint.f;
+  const auto& CmProjected = dualData.projectedModelDataTrajectory[timeIndex].stateInputEqConstraint.dfdx;
 
   const auto& Qu = dualData.riccatiModificationTrajectory[timeIndex].constraintNullProjector_;
 
@@ -195,16 +196,16 @@ scalar_t ILQR::solveSequentialRiccatiEquations(const ScalarFunctionQuadraticAppr
   auto& finalProjectedLvFinal = projectedLvTrajectoryStock_.back();
   auto& finalProjectedKmFinal = projectedKmTrajectoryStock_.back();
 
-  const matrix_t SmDummy = matrix_t::Zero(finalModelData.stateDim_, finalModelData.stateDim_);
+  const matrix_t SmDummy = matrix_t::Zero(finalModelData.stateDim, finalModelData.stateDim);
   computeProjectionAndRiccatiModification(finalModelData, SmDummy, finalProjectedModelData, finalRiccatiModification);
 
   // projected feedforward
-  finalProjectedLvFinal = -finalProjectedModelData.cost_.dfdu - finalRiccatiModification.deltaGv_;
-  finalProjectedLvFinal.noalias() -= finalProjectedModelData.dynamics_.dfdu.transpose() * finalValueFunction.dfdx;
+  finalProjectedLvFinal = -finalProjectedModelData.cost.dfdu - finalRiccatiModification.deltaGv_;
+  finalProjectedLvFinal.noalias() -= finalProjectedModelData.dynamics.dfdu.transpose() * finalValueFunction.dfdx;
 
   // projected feedback
-  finalProjectedKmFinal = -finalProjectedModelData.cost_.dfdux - finalRiccatiModification.deltaGm_;
-  finalProjectedKmFinal.noalias() -= finalProjectedModelData.dynamics_.dfdu.transpose() * finalValueFunction.dfdxx;
+  finalProjectedKmFinal = -finalProjectedModelData.cost.dfdux - finalRiccatiModification.deltaGm_;
+  finalProjectedKmFinal.noalias() -= finalProjectedModelData.dynamics.dfdu.transpose() * finalValueFunction.dfdxx;
 
   return solveSequentialRiccatiEquationsImpl(finalValueFunction);
 }
@@ -213,9 +214,9 @@ scalar_t ILQR::solveSequentialRiccatiEquations(const ScalarFunctionQuadraticAppr
 /******************************************************************************************************/
 /******************************************************************************************************/
 matrix_t ILQR::computeHamiltonianHessian(const ModelData& modelData, const matrix_t& Sm) const {
-  const matrix_t BmTransSm = modelData.dynamics_.dfdu.transpose() * Sm;
-  matrix_t Hm = modelData.cost_.dfduu;
-  Hm.noalias() += BmTransSm * modelData.dynamics_.dfdu;
+  const matrix_t BmTransSm = modelData.dynamics.dfdu.transpose() * Sm;
+  matrix_t Hm = modelData.cost.dfduu;
+  Hm.noalias() += BmTransSm * modelData.dynamics.dfdu;
   return searchStrategyPtr_->augmentHamiltonianHessian(modelData, Hm);
 }
 
@@ -225,7 +226,7 @@ matrix_t ILQR::computeHamiltonianHessian(const ModelData& modelData, const matri
 void ILQR::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& partitionInterval,
                                   const ScalarFunctionQuadraticApproximation& finalValueFunction) {
   // find all events belonging to the current partition
-  const auto& postEventIndices = nominalPrimalData_.postEventIndices;
+  const auto& postEventIndices = nominalPrimalData_.primalSolution.postEventIndices_;
   const auto firstEventItr = std::upper_bound(postEventIndices.begin(), postEventIndices.end(), partitionInterval.first);
   const auto lastEventItr = std::upper_bound(postEventIndices.begin(), postEventIndices.end(), partitionInterval.second);
 
@@ -274,18 +275,18 @@ void ILQR::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>&
       auto& finalProjectedLvFinal = projectedLvTrajectoryStock_[curIndex];
       auto& finalProjectedKmFinal = projectedKmTrajectoryStock_[curIndex];
 
-      const matrix_t SmDummy = matrix_t::Zero(finalModelData.stateDim_, finalModelData.stateDim_);
+      const matrix_t SmDummy = matrix_t::Zero(finalModelData.stateDim, finalModelData.stateDim);
       computeProjectionAndRiccatiModification(finalModelData, SmDummy, finalProjectedModelData, finalRiccatiModification);
 
       // projected feedforward
-      finalProjectedLvFinal = -finalProjectedModelData.cost_.dfdu - finalRiccatiModification.deltaGv_;
+      finalProjectedLvFinal = -finalProjectedModelData.cost.dfdu - finalRiccatiModification.deltaGv_;
       finalProjectedLvFinal.noalias() -=
-          finalProjectedModelData.dynamics_.dfdu.transpose() * dualData_.valueFunctionTrajectory[curIndex].dfdx;
+          finalProjectedModelData.dynamics.dfdu.transpose() * dualData_.valueFunctionTrajectory[curIndex].dfdx;
 
       // projected feedback
-      finalProjectedKmFinal = -finalProjectedModelData.cost_.dfdux - finalRiccatiModification.deltaGm_;
+      finalProjectedKmFinal = -finalProjectedModelData.cost.dfdux - finalRiccatiModification.deltaGm_;
       finalProjectedKmFinal.noalias() -=
-          finalProjectedModelData.dynamics_.dfdu.transpose() * dualData_.valueFunctionTrajectory[curIndex].dfdxx;
+          finalProjectedModelData.dynamics.dfdu.transpose() * dualData_.valueFunctionTrajectory[curIndex].dfdxx;
 
       valueFunctionNext = &finalValueTemp;
 

@@ -41,33 +41,27 @@ namespace ocs2 {
  * This class contains the primal problem's solution.
  */
 struct PrimalSolution {
-  /**
-   * Constructor
-   */
+  /** Constructor */
   PrimalSolution() = default;
 
-  /**
-   * Destructor
-   */
+  /** Destructor */
   ~PrimalSolution() = default;
 
-  /**
-   * Copy constructor
-   */
+  /** Copy constructor */
   PrimalSolution(const PrimalSolution& other)
       : timeTrajectory_(other.timeTrajectory_),
         stateTrajectory_(other.stateTrajectory_),
         inputTrajectory_(other.inputTrajectory_),
+        postEventIndices_(other.postEventIndices_),
         modeSchedule_(other.modeSchedule_),
         controllerPtr_(other.controllerPtr_ ? other.controllerPtr_->clone() : nullptr) {}
 
-  /**
-   * Copy Assignment
-   */
+  /** Copy Assignment */
   PrimalSolution& operator=(const PrimalSolution& other) {
     timeTrajectory_ = other.timeTrajectory_;
     stateTrajectory_ = other.stateTrajectory_;
     inputTrajectory_ = other.inputTrajectory_;
+    postEventIndices_ = other.postEventIndices_;
     modeSchedule_ = other.modeSchedule_;
     if (other.controllerPtr_) {
       controllerPtr_.reset(other.controllerPtr_->clone());
@@ -77,28 +71,27 @@ struct PrimalSolution {
     return *this;
   }
 
-  /**
-   * Move constructor
-   */
+  /** Move constructor */
   PrimalSolution(PrimalSolution&& other) noexcept = default;
 
-  /**
-   * Move Assignement
-   */
+  /** Move Assignment */
   PrimalSolution& operator=(PrimalSolution&& other) noexcept = default;
 
-  inline void swap(PrimalSolution& other) {
+  /** Swap */
+  void swap(PrimalSolution& other) {
     timeTrajectory_.swap(other.timeTrajectory_);
     stateTrajectory_.swap(other.stateTrajectory_);
     inputTrajectory_.swap(other.inputTrajectory_);
+    postEventIndices_.swap(other.postEventIndices_);
     ::ocs2::swap(modeSchedule_, other.modeSchedule_);
     controllerPtr_.swap(other.controllerPtr_);
   }
 
-  inline void clear() {
+  void clear() {
     timeTrajectory_.clear();
     stateTrajectory_.clear();
     inputTrajectory_.clear();
+    postEventIndices_.clear();
     modeSchedule_.clear();
     if (controllerPtr_ != nullptr) {
       controllerPtr_->clear();
@@ -108,6 +101,7 @@ struct PrimalSolution {
   scalar_array_t timeTrajectory_;
   vector_array_t stateTrajectory_;
   vector_array_t inputTrajectory_;
+  size_array_t postEventIndices_;
   ModeSchedule modeSchedule_;
   std::unique_ptr<ControllerBase> controllerPtr_;
 };

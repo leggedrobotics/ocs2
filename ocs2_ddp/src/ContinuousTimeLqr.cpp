@@ -42,29 +42,30 @@ solution solve(OptimalControlProblem& problem, scalar_t time, const vector_t& st
   const size_t stateDim = state.size();
 
   // --- Form the Linear quadratic approximation ---
-  LinearQuadraticApproximator lqapprox(problem, settings.checkNumericalCharacteristics);
-
   // Obtain model data at the provided reference
-  ModelData modelData;
-  modelData.time_ = time;
-  modelData.stateDim_ = stateDim;
-  modelData.inputDim_ = input.size();
-  modelData.dynamicsBias_.setZero(stateDim);
-  lqapprox.approximateLQProblem(time, state, input, modelData);
+  const auto modelData = approximateIntermediateLQ(problem, time, state, input);
+
+  // checking the numerical properties
+  if (settings.checkNumericalCharacteristics) {
+    const std::string err = checkDynamicsProperties(modelData) + checkCostProperties(modelData) + checkConstraintProperties(modelData);
+    if (!err.empty()) {
+      throw std::runtime_error("[continuous_time_lqr::solve] Ill-posed problem at intermediate time: " + std::to_string(time) + "\n" + err);
+    }
+  }
 
   // --- Contstruct hamiltonian ---
   // Compute terms containing inv(R)
   matrix_t RinvU;
-  LinearAlgebra::computeInverseMatrixUUT(modelData.cost_.dfduu, RinvU);  // Rinv = RinvU * RinvU.transpose()
-  const matrix_t B_RinvU = modelData.dynamics_.dfdu * RinvU;
-  matrix_t PT_RinvU = modelData.cost_.dfdux.transpose() * RinvU;
+  LinearAlgebra::computeInverseMatrixUUT(modelData.cost.dfduu, RinvU);  // Rinv = RinvU * RinvU.transpose()
+  const matrix_t B_RinvU = modelData.dynamics.dfdu * RinvU;
+  matrix_t PT_RinvU = modelData.cost.dfdux.transpose() * RinvU;
   const matrix_t B_Rinv_BT = B_RinvU * B_RinvU.transpose();
   const matrix_t B_Rinv_P = B_RinvU * PT_RinvU.transpose();
   const matrix_t PT_Rinv_P = PT_RinvU * PT_RinvU.transpose();
 
   // Correct for state-input matrix
-  const matrix_t A = modelData.dynamics_.dfdx - B_Rinv_P;
-  const matrix_t Q = modelData.cost_.dfdxx - PT_Rinv_P;
+  const matrix_t A = modelData.dynamics.dfdx - B_Rinv_P;
+  const matrix_t Q = modelData.cost.dfdxx - PT_Rinv_P;
 
   // The permuted Hamiltonian is the initial point of the iterative algorithm
   matrix_t W = (matrix_t(2 * stateDim, 2 * stateDim) << -Q, -A.transpose(), -A, B_Rinv_BT).finished();

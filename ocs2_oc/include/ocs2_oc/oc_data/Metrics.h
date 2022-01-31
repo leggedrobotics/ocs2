@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,44 +27,50 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <iostream>
-#include <type_traits>
+#pragma once
 
-#include <gtest/gtest.h>
+#include <ocs2_core/Types.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 
-#include <ocs2_core/model_data/ModelDataLinearInterpolation.h>
+namespace ocs2 {
 
-using namespace ocs2;
+struct Metrics {
+  using value_t = std::pair<vector_t, scalar_t>;
 
-TEST(testModelData, testModelDataLinearInterpolation) {
-  // create data
-  const size_t N = 10;
-  std::vector<double> timeArray(N);
-  std::vector<ModelData> modelDataBaseArray(N);
+  // Cost
+  scalar_t cost;
 
-  for (size_t i = 0; i < N; i++) {
-    double t = 2.0 * i;
-    timeArray[i] = t;
-    modelDataBaseArray[i].time = t;
-    modelDataBaseArray[i].dynamics.f = Eigen::Vector3d::Ones() * t;
-    modelDataBaseArray[i].dynamics.dfdx = Eigen::Matrix3d::Ones() * t;
-  }
+  // Equality constraints
+  vector_t stateEqConstraint;
+  vector_t stateInputEqConstraint;
 
-  double time = 5.0;
-  // get (index, alpha) pair
-  const auto indexAlpha = LinearInterpolation::timeSegment(time, timeArray);
+  // Lagrangians
+  //  std::vector<value_t> stateEqLagrangian;
+  //  std::vector<value_t> stateIneqLagrangian;
+  //  std::vector<value_t> stateInputEqLagrangian;
+  //  std::vector<value_t> stateInputIneqLagrangian;
+  scalar_t stateEqLagrangian;
+  scalar_t stateIneqLagrangian;
+  scalar_t stateInputEqLagrangian;
+  scalar_t stateInputIneqLagrangian;
+};
 
-  const scalar_t enquiryScalar = LinearInterpolation::interpolate(indexAlpha, modelDataBaseArray, model_data::time);
-  const vector_t enquiryVector = LinearInterpolation::interpolate(indexAlpha, modelDataBaseArray, model_data::dynamics_f);
-  const matrix_t enquiryMatrix = LinearInterpolation::interpolate(indexAlpha, modelDataBaseArray, model_data::dynamics_dfdx);
+struct MetricsCollection {
+  Metrics final;
+  std::vector<Metrics> preJumps;
+  std::vector<Metrics> intermediates;
+};
 
-  EXPECT_TRUE(enquiryScalar == time);
-  EXPECT_TRUE(enquiryVector.isApprox(Eigen::Vector3d::Ones() * time));
-  EXPECT_TRUE(enquiryMatrix.isApprox(Eigen::Matrix3d::Ones() * time));
-}
+/** Exchanges the given values of Metrics */
+void swap(Metrics& lhs, Metrics& rhs);
 
-TEST(testModelData, testMovableCopyable) {
-  ASSERT_TRUE(std::is_copy_constructible<ModelData>::value);
-  ASSERT_TRUE(std::is_move_constructible<ModelData>::value);
-  ASSERT_TRUE(std::is_nothrow_move_constructible<ModelData>::value);
-}
+/** Clears the value of the given Metrics */
+void clear(Metrics& m);
+
+/** Exchanges the given values of MetricsCollection */
+void swap(MetricsCollection& lhs, MetricsCollection& rhs);
+
+/** Clears the value of the given MetricsCollection */
+void clear(MetricsCollection& m);
+
+}  // namespace ocs2

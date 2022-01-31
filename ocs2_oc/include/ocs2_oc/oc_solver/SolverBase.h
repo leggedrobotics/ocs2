@@ -180,7 +180,7 @@ class SolverBase {
    * @param [in] input: The inquiry input.
    * @return The quadratic approximation of the Hamiltonian at the requested time, state and input.
    */
-  virtual ScalarFunctionQuadraticApproximation getHamiltonian(scalar_t time, const vector_t& state, const vector_t& input) const = 0;
+  virtual ScalarFunctionQuadraticApproximation getHamiltonian(scalar_t time, const vector_t& state, const vector_t& input) = 0;
 
   /**
    * Calculates the Lagrange multiplier of the state-input equality constraints at the given time and state.

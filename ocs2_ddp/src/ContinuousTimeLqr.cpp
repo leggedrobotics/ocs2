@@ -40,12 +40,11 @@ namespace continuous_time_lqr {
 /******************************************************************************************************/
 solution solve(OptimalControlProblem& problem, scalar_t time, const vector_t& state, const vector_t& input, const Settings& settings) {
   // OCP check
-  if (!problem.equalityLagrangiantPtr->empty() || !problem.stateEqualityLagrangiantPtr->empty()) {
-    throw std::runtime_error("[getLinearQuadraticApproximation] equalityLagrangiantPtr and stateEqualityLagrangiantPtr should be empty!");
+  if (!problem.equalityLagrangianPtr->empty() || !problem.stateEqualityLagrangianPtr->empty()) {
+    throw std::runtime_error("[getLinearQuadraticApproximation] equalityLagrangianPtr and stateEqualityLagrangianPtr should be empty!");
   }
-  if (!problem.inequalityLagrangiantPtr->empty() || !problem.stateInequalityLagrangiantPtr->empty()) {
-    throw std::runtime_error(
-        "[getLinearQuadraticApproximation] inequalityLagrangiantPtr and stateInequalityLagrangiantPtr should be empty!");
+  if (!problem.inequalityLagrangianPtr->empty() || !problem.stateInequalityLagrangianPtr->empty()) {
+    throw std::runtime_error("[getLinearQuadraticApproximation] inequalityLagrangianPtr and stateInequalityLagrangianPtr should be empty!");
   }
 
   const size_t stateDim = state.size();

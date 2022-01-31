@@ -58,12 +58,13 @@ void approximateIntermediateLQ(OptimalControlProblem& problem, const scalar_t ti
  * @param [in] time: The current time.
  * @param [in] state: The current state.
  * @param [in] input: The current input.
+ * @param [in] multipliers: The current multipliers associated to the equality and inequality Lagrangians.
  * @return The output data model.
  */
 inline ModelData approximateIntermediateLQ(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
-                                           const vector_t& input) {
+                                           const vector_t& input, const MultiplierCollection& multipliers) {
   ModelData md;
-  approximateIntermediateLQ(problem, time, state, input, md);
+  approximateIntermediateLQ(problem, time, state, input, multipliers, md);
   return md;
 }
 
@@ -85,11 +86,13 @@ void approximatePreJumpLQ(OptimalControlProblem& problem, const scalar_t& time, 
  * @param [in] problem: The optimal control problem
  * @param [in] time: The current time.
  * @param [in] state: The current state.
+ * @param [in] multipliers: The current multipliers associated to the equality and inequality Lagrangians.
  * @return The output data model.
  */
-inline ModelData approximatePreJumpLQ(OptimalControlProblem& problem, const scalar_t& time, const vector_t& state) {
+inline ModelData approximatePreJumpLQ(OptimalControlProblem& problem, const scalar_t& time, const vector_t& state,
+                                      const MultiplierCollection& multipliers) {
   ModelData md;
-  approximatePreJumpLQ(problem, time, state, md);
+  approximatePreJumpLQ(problem, time, state, multipliers, md);
   return md;
 }
 
@@ -111,11 +114,13 @@ void approximateFinalLQ(OptimalControlProblem& problem, const scalar_t& time, co
  * @param [in] problem: The optimal control problem
  * @param [in] time: The current time.
  * @param [in] state: The current state.
+ * @param [in] multipliers: The current multipliers associated to the equality and inequality Lagrangians.
  * @return The output data model.
  */
-inline ModelData approximateFinalLQ(OptimalControlProblem& problem, const scalar_t& time, const vector_t& state) {
+inline ModelData approximateFinalLQ(OptimalControlProblem& problem, const scalar_t& time, const vector_t& state,
+                                    const MultiplierCollection& multipliers) {
   ModelData md;
-  approximateFinalLQ(problem, time, state, md);
+  approximateFinalLQ(problem, time, state, multipliers, md);
   return md;
 }
 

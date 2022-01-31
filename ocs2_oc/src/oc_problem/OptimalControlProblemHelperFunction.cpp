@@ -35,16 +35,16 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void initializeFinalMultiplierCollection(const OptimalControlProblem& ocp, scalar_t time, MultiplierCollection& multiplierCollection) {
-  ocp.finalEqualityLagrangiantPtr->initializeLagrangian(time, multiplierCollection.stateEq);
-  ocp.finalInequalityLagrangiantPtr->initializeLagrangian(time, multiplierCollection.stateIneq);
+  ocp.finalEqualityLagrangianPtr->initializeLagrangian(time, multiplierCollection.stateEq);
+  ocp.finalInequalityLagrangianPtr->initializeLagrangian(time, multiplierCollection.stateIneq);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void initializePreJumpMultiplierCollection(const OptimalControlProblem& ocp, scalar_t time, MultiplierCollection& multiplierCollection) {
-  ocp.preJumpEqualityLagrangiantPtr->initializeLagrangian(time, multiplierCollection.stateEq);
-  ocp.preJumpInequalityLagrangiantPtr->initializeLagrangian(time, multiplierCollection.stateIneq);
+  ocp.preJumpEqualityLagrangianPtr->initializeLagrangian(time, multiplierCollection.stateEq);
+  ocp.preJumpInequalityLagrangianPtr->initializeLagrangian(time, multiplierCollection.stateIneq);
 }
 
 /******************************************************************************************************/
@@ -52,10 +52,10 @@ void initializePreJumpMultiplierCollection(const OptimalControlProblem& ocp, sca
 /******************************************************************************************************/
 void initializeIntermediateMultiplierCollection(const OptimalControlProblem& ocp, scalar_t time,
                                                 MultiplierCollection& multiplierCollection) {
-  ocp.stateEqualityLagrangiantPtr->initializeLagrangian(time, multiplierCollection.stateEq);
-  ocp.stateInequalityLagrangiantPtr->initializeLagrangian(time, multiplierCollection.stateIneq);
-  ocp.equalityLagrangiantPtr->initializeLagrangian(time, multiplierCollection.stateInputEq);
-  ocp.inequalityLagrangiantPtr->initializeLagrangian(time, multiplierCollection.stateInputIneq);
+  ocp.stateEqualityLagrangianPtr->initializeLagrangian(time, multiplierCollection.stateEq);
+  ocp.stateInequalityLagrangianPtr->initializeLagrangian(time, multiplierCollection.stateIneq);
+  ocp.equalityLagrangianPtr->initializeLagrangian(time, multiplierCollection.stateInputEq);
+  ocp.inequalityLagrangianPtr->initializeLagrangian(time, multiplierCollection.stateInputIneq);
 }
 
 /******************************************************************************************************/
@@ -63,8 +63,8 @@ void initializeIntermediateMultiplierCollection(const OptimalControlProblem& ocp
 /******************************************************************************************************/
 void updateFinalMultiplierCollection(const OptimalControlProblem& ocp, scalar_t time, const vector_t& state,
                                      MetricsCollection& metricsCollection, MultiplierCollection& multiplierCollection) {
-  ocp.finalEqualityLagrangiantPtr->updateLagrangian(time, state, metricsCollection.stateEqLagrangian, multiplierCollection.stateEq);
-  ocp.finalInequalityLagrangiantPtr->updateLagrangian(time, state, metricsCollection.stateIneqLagrangian, multiplierCollection.stateIneq);
+  ocp.finalEqualityLagrangianPtr->updateLagrangian(time, state, metricsCollection.stateEqLagrangian, multiplierCollection.stateEq);
+  ocp.finalInequalityLagrangianPtr->updateLagrangian(time, state, metricsCollection.stateIneqLagrangian, multiplierCollection.stateIneq);
 }
 
 /******************************************************************************************************/
@@ -72,8 +72,8 @@ void updateFinalMultiplierCollection(const OptimalControlProblem& ocp, scalar_t 
 /******************************************************************************************************/
 void updatePreJumpMultiplierCollection(const OptimalControlProblem& ocp, scalar_t time, const vector_t& state,
                                        MetricsCollection& metricsCollection, MultiplierCollection& multiplierCollection) {
-  ocp.preJumpEqualityLagrangiantPtr->updateLagrangian(time, state, metricsCollection.stateEqLagrangian, multiplierCollection.stateEq);
-  ocp.preJumpInequalityLagrangiantPtr->updateLagrangian(time, state, metricsCollection.stateIneqLagrangian, multiplierCollection.stateIneq);
+  ocp.preJumpEqualityLagrangianPtr->updateLagrangian(time, state, metricsCollection.stateEqLagrangian, multiplierCollection.stateEq);
+  ocp.preJumpInequalityLagrangianPtr->updateLagrangian(time, state, metricsCollection.stateIneqLagrangian, multiplierCollection.stateIneq);
 }
 
 /******************************************************************************************************/
@@ -81,12 +81,12 @@ void updatePreJumpMultiplierCollection(const OptimalControlProblem& ocp, scalar_
 /******************************************************************************************************/
 void updateIntermediateMultiplierCollection(const OptimalControlProblem& ocp, scalar_t time, const vector_t& state, const vector_t& input,
                                             MetricsCollection& metricsCollection, MultiplierCollection& multiplierCollection) {
-  ocp.stateEqualityLagrangiantPtr->updateLagrangian(time, state, metricsCollection.stateEqLagrangian, multiplierCollection.stateEq);
-  ocp.stateInequalityLagrangiantPtr->updateLagrangian(time, state, metricsCollection.stateIneqLagrangian, multiplierCollection.stateIneq);
-  ocp.equalityLagrangiantPtr->updateLagrangian(time, state, input, metricsCollection.stateInputEqLagrangian,
-                                               multiplierCollection.stateInputEq);
-  ocp.inequalityLagrangiantPtr->updateLagrangian(time, state, input, metricsCollection.stateInputIneqLagrangian,
-                                                 multiplierCollection.stateInputIneq);
+  ocp.stateEqualityLagrangianPtr->updateLagrangian(time, state, metricsCollection.stateEqLagrangian, multiplierCollection.stateEq);
+  ocp.stateInequalityLagrangianPtr->updateLagrangian(time, state, metricsCollection.stateIneqLagrangian, multiplierCollection.stateIneq);
+  ocp.equalityLagrangianPtr->updateLagrangian(time, state, input, metricsCollection.stateInputEqLagrangian,
+                                              multiplierCollection.stateInputEq);
+  ocp.inequalityLagrangianPtr->updateLagrangian(time, state, input, metricsCollection.stateInputIneqLagrangian,
+                                                multiplierCollection.stateInputIneq);
 }
 
 }  // namespace ocs2

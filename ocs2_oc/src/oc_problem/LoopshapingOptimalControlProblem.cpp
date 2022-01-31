@@ -58,7 +58,7 @@ OptimalControlProblem create(const OptimalControlProblem& problem, std::shared_p
   //  augmentedProblem.preJumpInequalityLagrangianPtr = LoopshapingSoftConstraint::create(*problem.preJumpInequalityLagrangianPtr,
   //  loopshapingDefinition); augmentedProblem.finalEqualityLagrangianPtr =
   //  LoopshapingSoftConstraint::create(*problem.finalEqualityLagrangianPtr, loopshapingDefinition);
-  //  augmentedProblem.finalInequalityLagrangiantPtr = LoopshapingSoftConstraint::create(*problem.finalInequalityLagrangianPtr,
+  //  augmentedProblem.finalInequalityLagrangianPtr = LoopshapingSoftConstraint::create(*problem.finalInequalityLagrangianPtr,
   //  loopshapingDefinition);
 
   // Soft constraints

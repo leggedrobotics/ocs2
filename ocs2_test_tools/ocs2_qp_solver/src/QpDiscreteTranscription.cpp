@@ -37,16 +37,15 @@ namespace qp_solver {
 std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(OptimalControlProblem& optimalControProblem,
                                                                   const ContinuousTrajectory& nominalTrajectory) {
   // OCP check
-  if (!optimalControProblem.equalityLagrangiantPtr->empty() || !optimalControProblem.stateEqualityLagrangiantPtr->empty()) {
-    throw std::runtime_error("[getLinearQuadraticApproximation] equalityLagrangiantPtr and stateEqualityLagrangiantPtr should be empty!");
+  if (!optimalControProblem.equalityLagrangianPtr->empty() || !optimalControProblem.stateEqualityLagrangianPtr->empty()) {
+    throw std::runtime_error("[getLinearQuadraticApproximation] equalityLagrangianPtr and stateEqualityLagrangianPtr should be empty!");
   }
-  if (!optimalControProblem.inequalityLagrangiantPtr->empty() || !optimalControProblem.stateInequalityLagrangiantPtr->empty()) {
-    throw std::runtime_error(
-        "[getLinearQuadraticApproximation] inequalityLagrangiantPtr and stateInequalityLagrangiantPtr should be empty!");
+  if (!optimalControProblem.inequalityLagrangianPtr->empty() || !optimalControProblem.stateInequalityLagrangianPtr->empty()) {
+    throw std::runtime_error("[getLinearQuadraticApproximation] inequalityLagrangianPtr and stateInequalityLagrangianPtr should be empty!");
   }
-  if (!optimalControProblem.finalEqualityLagrangiantPtr->empty() || !optimalControProblem.finalInequalityLagrangiantPtr->empty()) {
+  if (!optimalControProblem.finalEqualityLagrangianPtr->empty() || !optimalControProblem.finalInequalityLagrangianPtr->empty()) {
     throw std::runtime_error(
-        "[getLinearQuadraticApproximation] finalEqualityLagrangiantPtr and finalInequalityLagrangiantPtr should be empty!");
+        "[getLinearQuadraticApproximation] finalEqualityLagrangianPtr and finalInequalityLagrangianPtr should be empty!");
   }
 
   if (nominalTrajectory.timeTrajectory.empty()) {

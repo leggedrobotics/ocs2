@@ -114,7 +114,7 @@ CartPoleInterface::CartPoleInterface(const std::string& taskFile, const std::str
     return std::unique_ptr<StateInputConstraint>(new LinearStateInputConstraint(e, C, D));
   };
   std::unique_ptr<StateInputAugmentedLagrangian> boundsLagrangian(new StateInputAugmentedLagrangian(getConstraint(), getPenalty()));
-  problem_.inequalityLagrangiantPtr->add("stateInputBounds", std::move(boundsLagrangian));
+  problem_.inequalityLagrangianPtr->add("stateInputBounds", std::move(boundsLagrangian));
 
   // Initialization
   cartPoleInitializerPtr_.reset(new DefaultInitializer(INPUT_DIM));

@@ -34,14 +34,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/algorithm/frames.hpp>
 #include <pinocchio/algorithm/kinematics.hpp>
 
-// OCS2
-#include "ocs2_legged_robot/gait/MotionPhaseDefinition.h"
-#include "ocs2_legged_robot/visualization/LeggedRobotVisualizer.h"
+#include "ocs2_legged_robot_ros/visualization/LeggedRobotVisualizer.h"
 
+// OCS2
 #include <ocs2_centroidal_model/AccessHelperFunctions.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
 #include <ocs2_ros_interfaces/visualization/VisualizationHelpers.h>
+#include "ocs2_legged_robot/gait/MotionPhaseDefinition.h"
 
 // Additional messages not in the helpers file
 #include <geometry_msgs/PoseArray.h>

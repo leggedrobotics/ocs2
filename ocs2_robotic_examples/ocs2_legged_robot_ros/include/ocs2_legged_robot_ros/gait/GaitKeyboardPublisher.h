@@ -29,38 +29,34 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/Types.h>
-#include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
+#include <string>
+#include <vector>
 
 #include <ros/ros.h>
-#include <mutex>
+#include <std_msgs/Bool.h>
 
-#include "ocs2_legged_robot/gait/GaitSchedule.h"
-#include "ocs2_legged_robot/gait/ModeSequenceTemplate.h"
-#include "ocs2_legged_robot/gait/MotionPhaseDefinition.h"
+#include <ocs2_legged_robot/gait/ModeSequenceTemplate.h>
 
 namespace ocs2 {
 namespace legged_robot {
-class GaitReceiver : public SolverSynchronizedModule {
+
+/** This class implements ModeSequence communication using ROS. */
+class GaitKeyboardPublisher {
  public:
-  GaitReceiver(ros::NodeHandle nodeHandle, std::shared_ptr<GaitSchedule> gaitSchedulePtr, const std::string& robotName);
+  GaitKeyboardPublisher(ros::NodeHandle nodeHandle, const std::string& gaitFile, const std::string& robotName, bool verbose = false);
 
-  void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                    const ReferenceManagerInterface& referenceManager) override;
-
-  void postSolverRun(const PrimalSolution& primalSolution) override{};
+  /** Prints the command line interface and responds to user input. Function returns after one user input. */
+  void getKeyboardCommand();
 
  private:
-  void mpcModeSequenceCallback(const ocs2_msgs::mode_schedule::ConstPtr& msg);
+  /** Prints the list of available gaits. */
+  void printGaitList(const std::vector<std::string>& gaitList) const;
 
-  std::shared_ptr<GaitSchedule> gaitSchedulePtr_;
+  std::vector<std::string> gaitList_;
+  std::map<std::string, ModeSequenceTemplate> gaitMap_;
 
-  ros::Subscriber mpcModeSequenceSubscriber_;
-
-  std::mutex receivedGaitMutex_;
-  std::atomic_bool gaitUpdated_;
-  ModeSequenceTemplate receivedGait_;
+  ros::Publisher modeSequenceTemplatePublisher_;
 };
 
 }  // namespace legged_robot
-}  // namespace ocs2
+}  // end of namespace ocs2

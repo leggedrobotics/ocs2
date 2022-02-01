@@ -67,7 +67,7 @@ vector_t RolloutBase::run(scalar_t initTime, const vector_t& initState, scalar_t
     // adjusting the start time for correcting the subsystem recognition
     constexpr auto eps = numeric_traits::weakEpsilon<scalar_t>();
     if (endTime - beginTime > eps) {
-      timeIntervalArray.back().first += ((i > 0) ? eps : 0.0);
+      timeIntervalArray.back().first += ((i > 0) ? eps : 0.0);  // don't adjust initial time
     } else {
       timeIntervalArray.back().first = endTime;
     }

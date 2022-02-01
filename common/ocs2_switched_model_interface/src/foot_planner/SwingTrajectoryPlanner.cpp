@@ -89,8 +89,6 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
   std::vector<scalar_t> eventTimes;
   std::vector<std::unique_ptr<FootPhase>> footPhases;
 
-  SwingPhase::SwingProfile swingProfile = defaultSwingProfile_;
-
   // First swing phase
   if (startsWithSwingPhase(contactTimings)) {
     SwingPhase::SwingEvent liftOff{lastContacts_[leg].first, settings_.liftOffVelocity, &lastContacts_[leg].second};
@@ -103,11 +101,12 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
       }
     }();
 
+    SwingPhase::SwingProfile swingProfile = defaultSwingProfile_;
     if (settings_.swingTrajectoryFromReference) {
       swingProfile.nodes = extractSwingProfileFromReference(leg, liftOff, touchDown);
+    } else {
+      applySwingMotionScaling(liftOff, touchDown, swingProfile);
     }
-
-    applySwingMotionScaling(liftOff, touchDown, swingProfile);
 
     footPhases.emplace_back(new SwingPhase(liftOff, touchDown, swingProfile, terrainModel_.get(), settings_.errorGain));
   }
@@ -144,11 +143,12 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
       }
     }();
 
+    SwingPhase::SwingProfile swingProfile = defaultSwingProfile_;
     if (settings_.swingTrajectoryFromReference) {
       swingProfile.nodes = extractSwingProfileFromReference(leg, liftOff, touchDown);
+    } else {
+      applySwingMotionScaling(liftOff, touchDown, swingProfile);
     }
-
-    applySwingMotionScaling(liftOff, touchDown, swingProfile);
 
     eventTimes.push_back(currentContactTiming.end);
     footPhases.emplace_back(new SwingPhase(liftOff, touchDown, swingProfile, terrainModel_.get(), settings_.errorGain));

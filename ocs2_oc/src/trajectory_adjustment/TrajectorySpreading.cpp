@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <iostream>
 #include <limits>
 
@@ -55,8 +56,8 @@ std::stringstream& operator<<(std::stringstream& out, const std::pair<int, int>&
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void TrajectorySpreading::set(const ModeSchedule& oldModeSchedule, const ModeSchedule& newModeSchedule,
-                              const scalar_array_t& oldTimeTrajectory) {
+auto TrajectorySpreading::set(const ModeSchedule& oldModeSchedule, const ModeSchedule& newModeSchedule,
+                              const scalar_array_t& oldTimeTrajectory) -> Status {
   // step 1: What modes do the original primal solution contain?
   const scalar_t oldInitTime = oldTimeTrajectory.front();
   const scalar_t oldFinalTime = oldTimeTrajectory.back();
@@ -163,11 +164,24 @@ void TrajectorySpreading::set(const ModeSchedule& oldModeSchedule, const ModeSch
   // if last mode of the new mode sequence is NOT matched
   else if (!isLastActiveModeOfNewModeSequenceMatched) {
     const auto mismatchEventTime = newModeSchedule.eventTimes[newStartIndexOfMatchedSequence + w - 1];
-    eraseFromIndex_ = lowerBoundIndex(oldTimeTrajectory, mismatchEventTime);
+    eraseFromIndex_ = upperBoundIndex(oldTimeTrajectory, mismatchEventTime);
   }
 
   // computes the index of the spreading values and intervals
   computeSpreadingStrategy(oldTimeTrajectory, oldMatchedEventTimes, newMatchedEventTimes);
+
+  // status
+  const auto reportStatus = [&]() {
+    Status status;
+    status.willTruncate = (eraseFromIndex_ < oldTimeTrajectory.size()) ? true : false;
+    status.willPerformTrajectorySpreading = false;
+    for (size_t i = 0; i < spreadingValueIndices_.size(); i++) {
+      if (std::abs(static_cast<int>(beginIndices_[i]) - static_cast<int>(endIndices_[i])) > 1) {
+        status.willPerformTrajectorySpreading = true;
+      }
+    }  // end of i loop
+    return status;
+  };
 
   // debug print
   if (debugPrint_) {
@@ -278,7 +292,9 @@ void TrajectorySpreading::set(const ModeSchedule& oldModeSchedule, const ModeSch
       std::cerr << "        " << beginIndices_[i] << " --> " << endIndices_[i] << " using value at " << spreadingValueIndices_[i] << "\n";
     }
   }
-}  // namespace ocs2
+
+  return reportStatus();
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

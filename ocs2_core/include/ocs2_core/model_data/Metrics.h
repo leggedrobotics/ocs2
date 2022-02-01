@@ -74,4 +74,7 @@ void swap(ProblemMetrics& lhs, ProblemMetrics& rhs);
 /** Clears the value of the given ProblemMetrics */
 void clear(ProblemMetrics& m);
 
+/** sums penalties of an array of Metrics */
+scalar_t sumPenalties(const std::vector<Metrics>& metricsArray);
+
 }  // namespace ocs2

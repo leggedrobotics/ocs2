@@ -85,4 +85,13 @@ void clear(ProblemMetrics& m) {
   m.intermediates.clear();
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t sumPenalties(const std::vector<Metrics>& metricsArray) {
+  scalar_t s = 0.0;
+  std::for_each(metricsArray.begin(), metricsArray.end(), [&s](const Metrics& m) { s += m.penalty; });
+  return s;
+}
+
 }  // namespace ocs2

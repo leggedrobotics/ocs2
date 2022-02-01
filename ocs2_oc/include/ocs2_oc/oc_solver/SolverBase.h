@@ -37,6 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/control/ControllerBase.h>
 
+#include <ocs2_oc/oc_data/DualSolution.h>
 #include <ocs2_oc/oc_data/PrimalSolution.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
 #include <ocs2_oc/synchronized_module/ReferenceManagerInterface.h>
@@ -164,6 +165,13 @@ class SolverBase {
   PrimalSolution primalSolution(scalar_t finalTime) const;
 
   /**
+   * @brief Returns the optimized dual solution.
+   *
+   * @return: The dual problem's solution.
+   */
+  virtual const DualSolution& getDualSolution() const = 0;
+
+  /**
    * Calculates the value function quadratic approximation at the given time and state.
    *
    * @param [in] time: The inquiry time
@@ -190,6 +198,14 @@ class SolverBase {
    * @return The Lagrange multiplier of the state-input equality constraints.
    */
   virtual vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const = 0;
+
+  /**
+   * Returns the intermediate dual solution at the given time.
+   *
+   * @param [in] time: The inquiry time
+   * @return The collection of multipliers associated to state/state-input, equality/inequality Lagrangian terms.
+   */
+  virtual MultiplierCollection getIntermediateDualSolution(scalar_t time) const = 0;
 
   /**
    * Gets benchmarking information.

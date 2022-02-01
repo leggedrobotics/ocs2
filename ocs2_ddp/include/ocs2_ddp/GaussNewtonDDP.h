@@ -87,6 +87,8 @@ class GaussNewtonDDP : public SolverBase {
 
   void getPrimalSolution(scalar_t finalTime, PrimalSolution* primalSolutionPtr) const final;
 
+  const DualSolution& getDualSolution() const final { return optimizedDualSolution_; }
+
   ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const override {
     return getValueFunctionImpl(time, state, optimizedPrimalData_, dualData_.valueFunctionTrajectory);
   }
@@ -95,6 +97,10 @@ class GaussNewtonDDP : public SolverBase {
 
   vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const override {
     return getStateInputEqualityConstraintLagrangianImpl(time, state, nominalPrimalData_, dualData_);
+  }
+
+  MultiplierCollection getIntermediateDualSolution(scalar_t time) const override {
+    return getIntermediateDualSolutionAtTime(nominalDualSolution_, time);
   }
 
   std::string getBenchmarkingInfo() const override;

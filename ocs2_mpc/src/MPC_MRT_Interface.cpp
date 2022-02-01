@@ -160,4 +160,11 @@ vector_t MPC_MRT_Interface::getStateInputEqualityConstraintLagrangian(scalar_t t
   return mpc_.getSolverPtr()->getStateInputEqualityConstraintLagrangian(time, state);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+MultiplierCollection MPC_MRT_Interface::getIntermediateDualSolution(scalar_t time) const {
+  return mpc_.getSolverPtr()->getIntermediateDualSolution(time);
+}
+
 }  // namespace ocs2

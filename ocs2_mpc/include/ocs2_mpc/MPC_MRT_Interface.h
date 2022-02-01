@@ -37,6 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <thread>
 
 #include <ocs2_core/misc/Benchmark.h>
+#include <ocs2_core/model_data/Multiplier.h>
 #include "ocs2_mpc/MPC_BASE.h"
 #include "ocs2_mpc/MRT_BASE.h"
 
@@ -98,6 +99,14 @@ class MPC_MRT_Interface final : public MRT_BASE {
    * @return The Lagrange multiplier at the requested time and state
    */
   vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const;
+
+  /**
+   * Returns the intermediate dual solution at the given time.
+   *
+   * @param [in] time: The inquiry time
+   * @return The collection of multipliers associated to state/state-input, equality/inequality Lagrangian terms.
+   */
+  MultiplierCollection getIntermediateDualSolution(scalar_t time) const;
 
  protected:
   /**

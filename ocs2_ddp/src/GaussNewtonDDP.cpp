@@ -321,8 +321,8 @@ ScalarFunctionQuadraticApproximation GaussNewtonDDP::getHamiltonian(scalar_t tim
   // - state-only intermediate cost
   // - state-only soft constraint cost
   const ModelData modelData = [&]() {
-    const auto multipliers = getIntermediateDualSolutionAtTime(nominalDualSolution_, time);
-    return ocs2::approximateIntermediateLQ(optimalControlProblemStock_[0], time, state, input, multipliers);
+    const auto multiplierCollection = getIntermediateDualSolution(time);
+    return ocs2::approximateIntermediateLQ(optimalControlProblemStock_[0], time, state, input, multiplierCollection);
   }();
 
   // check sizes

@@ -65,6 +65,10 @@ class MultipleShootingSolver : public SolverBase {
 
   void getPrimalSolution(scalar_t finalTime, PrimalSolution* primalSolutionPtr) const override { *primalSolutionPtr = primalSolution_; }
 
+  const DualSolution& getDualSolution() const override {
+    throw std::runtime_error("[MultipleShootingSolver] getDualSolution() not available yet.");
+  }
+
   size_t getNumIterations() const override { return totalNumIterations_; }
 
   const PerformanceIndex& getPerformanceIndeces() const override { return getIterationsLog().back(); };
@@ -81,6 +85,10 @@ class MultipleShootingSolver : public SolverBase {
 
   vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const override {
     throw std::runtime_error("[MultipleShootingSolver] getStateInputEqualityConstraintLagrangian() not available yet.");
+  }
+
+  MultiplierCollection getIntermediateDualSolution(scalar_t time) const override {
+    throw std::runtime_error("[MultipleShootingSolver] getIntermediateDualSolution() not available yet.");
   }
 
  private:

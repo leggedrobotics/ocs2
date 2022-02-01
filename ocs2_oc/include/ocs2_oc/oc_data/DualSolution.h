@@ -84,6 +84,12 @@ inline void clear(DualSolution& d) {
   d.intermediates.clear();
 }
 
+/**
+ * Calculates the intermediate dual solution at the given time.
+ *
+ * @param [in] time: The inquiry time
+ * @return The collection of multipliers associated to state/state-input, equality/inequality Lagrangian terms.
+ */
 inline MultiplierCollection getIntermediateDualSolutionAtTime(const DualSolution& dualSolution, scalar_t time) {
   const auto indexAlpha = LinearInterpolation::timeSegment(time, dualSolution.timeTrajectory);
   return LinearInterpolation::interpolate(indexAlpha, dualSolution.intermediates);

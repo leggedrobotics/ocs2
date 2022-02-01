@@ -27,15 +27,37 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#pragma once
-
-#include <ocs2_core/loopshaping/LoopshapingDefinition.h>
 #include <ocs2_core/loopshaping/LoopshapingPreComputation.h>
-#include <ocs2_core/loopshaping/LoopshapingPropertyTree.h>
-#include <ocs2_core/loopshaping/augmented_lagrangian/LoopshapingAugmentedLagrangian.h>
-#include <ocs2_core/loopshaping/constraint/LoopshapingConstraint.h>
-#include <ocs2_core/loopshaping/cost/LoopshapingCost.h>
-#include <ocs2_core/loopshaping/dynamics/LoopshapingDynamics.h>
-#include <ocs2_core/loopshaping/dynamics/LoopshapingFilterDynamics.h>
-#include <ocs2_core/loopshaping/initialization/LoopshapingInitializer.h>
-#include <ocs2_core/loopshaping/soft_constraint/LoopshapingSoftConstraint.h>
+#include <ocs2_core/loopshaping/augmented_lagrangian/LoopshapingStateInputAugmentedLagrangian.h>
+
+namespace ocs2 {
+
+std::vector<Metrics> LoopshapingStateInputAugmentedLagrangian::getValue(scalar_t t, const vector_t& x, const vector_t& u,
+                                                                        const std::vector<Multiplier>& termsMultiplier,
+                                                                        const PreComputation& preComp) const {
+  if (this->empty()) {
+    return {};
+  }
+
+  const LoopshapingPreComputation& preCompLS = cast<LoopshapingPreComputation>(preComp);
+  const auto& x_system = preCompLS.getSystemState();
+  const auto& u_system = preCompLS.getSystemInput();
+  const auto& preComp_system = preCompLS.getSystemPreComputation();
+
+  return StateInputAugmentedLagrangianCollection::getValue(t, x_system, u_system, termsMultiplier, preComp_system);
+}
+
+void LoopshapingStateInputAugmentedLagrangian::updateLagrangian(scalar_t t, const vector_t& x, const vector_t& u,
+                                                                std::vector<Metrics>& termsMetrics,
+                                                                std::vector<Multiplier>& termsMultiplier) const {
+  if (this->empty()) {
+    termsMultiplier.clear();
+  }
+
+  const auto x_system = loopshapingDefinition_->getSystemState(x);
+  const auto u_system = loopshapingDefinition_->getSystemInput(x, u);
+
+  StateInputAugmentedLagrangianCollection::updateLagrangian(t, x_system, u_system, termsMetrics, termsMultiplier);
+}
+
+}  // namespace ocs2

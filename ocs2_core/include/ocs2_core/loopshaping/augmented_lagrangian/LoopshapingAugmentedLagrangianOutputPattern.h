@@ -29,13 +29,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/loopshaping/LoopshapingDefinition.h>
-#include <ocs2_core/loopshaping/LoopshapingPreComputation.h>
-#include <ocs2_core/loopshaping/LoopshapingPropertyTree.h>
-#include <ocs2_core/loopshaping/augmented_lagrangian/LoopshapingAugmentedLagrangian.h>
-#include <ocs2_core/loopshaping/constraint/LoopshapingConstraint.h>
-#include <ocs2_core/loopshaping/cost/LoopshapingCost.h>
-#include <ocs2_core/loopshaping/dynamics/LoopshapingDynamics.h>
-#include <ocs2_core/loopshaping/dynamics/LoopshapingFilterDynamics.h>
-#include <ocs2_core/loopshaping/initialization/LoopshapingInitializer.h>
-#include <ocs2_core/loopshaping/soft_constraint/LoopshapingSoftConstraint.h>
+#include <ocs2_core/loopshaping/augmented_lagrangian/LoopshapingStateInputAugmentedLagrangian.h>
+
+namespace ocs2 {
+
+class LoopshapingAugmentedLagrangianOutputPattern final : public LoopshapingStateInputAugmentedLagrangian {
+ public:
+  LoopshapingAugmentedLagrangianOutputPattern(const StateInputAugmentedLagrangianCollection& lagrangianCollection,
+                                              std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
+      : LoopshapingStateInputAugmentedLagrangian(lagrangianCollection, std::move(loopshapingDefinition)) {}
+
+  ~LoopshapingAugmentedLagrangianOutputPattern() override = default;
+  LoopshapingAugmentedLagrangianOutputPattern* clone() const override { return new LoopshapingAugmentedLagrangianOutputPattern(*this); };
+
+  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u,
+                                                                 const std::vector<Multiplier>& termsMultiplier,
+                                                                 const PreComputation& preComp) const override;
+
+ private:
+  LoopshapingAugmentedLagrangianOutputPattern(const LoopshapingAugmentedLagrangianOutputPattern& obj) = default;
+};
+
+}  // namespace ocs2

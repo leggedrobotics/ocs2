@@ -44,29 +44,29 @@ namespace ocs2 {
  * This class collects a variable number of Augmented Lagrangian penalty terms and provides methods to get the
  * summed values and quadratic approximations. Each term can be accessed through its string name.
  */
-class StateAugmentedLagrangianCollection final : public Collection<StateAugmentedLagrangianInterface> {
+class StateAugmentedLagrangianCollection : public Collection<StateAugmentedLagrangianInterface> {
  public:
   StateAugmentedLagrangianCollection() = default;
   ~StateAugmentedLagrangianCollection() override = default;
   StateAugmentedLagrangianCollection* clone() const override;
 
   /** Get state constraints and their penalties for each active term */
-  std::vector<Metrics> getValue(scalar_t time, const vector_t& state, const std::vector<Multiplier>& termsMultiplier,
-                                const PreComputation& preComp) const;
+  virtual std::vector<Metrics> getValue(scalar_t time, const vector_t& state, const std::vector<Multiplier>& termsMultiplier,
+                                        const PreComputation& preComp) const;
 
   /** Get the sum of state Lagrangian penalties quadratic approximation */
-  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                 const std::vector<Multiplier>& termsMultiplier,
-                                                                 const PreComputation& preComp) const;
+  virtual ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
+                                                                         const std::vector<Multiplier>& termsMultiplier,
+                                                                         const PreComputation& preComp) const;
 
   /** Update Lagrange/penalty multipliers, and the penalty value for each active term. */
-  void updateLagrangian(scalar_t time, const vector_t& state, std::vector<Metrics>& termsMetrics,
-                        std::vector<Multiplier>& termsMultiplier) const;
+  virtual void updateLagrangian(scalar_t time, const vector_t& state, std::vector<Metrics>& termsMetrics,
+                                std::vector<Multiplier>& termsMultiplier) const;
 
   /** Initialize Lagrange/penalty multipliers for each active term. */
   void initializeLagrangian(scalar_t time, std::vector<Multiplier>& termsMultiplier) const;
 
- private:
+ protected:
   StateAugmentedLagrangianCollection(const StateAugmentedLagrangianCollection& other) = default;
 };
 

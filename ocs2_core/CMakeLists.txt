@@ -120,6 +120,11 @@ add_library(${PROJECT_NAME}
   src/loopshaping/soft_constraint/LoopshapingStateInputSoftConstraint.cpp
   src/loopshaping/soft_constraint/LoopshapingSoftConstraintEliminatePattern.cpp
   src/loopshaping/soft_constraint/LoopshapingSoftConstraintOutputPattern.cpp
+  src/loopshaping/augmented_lagrangian/LoopshapingAugmentedLagrangian.cpp
+  src/loopshaping/augmented_lagrangian/LoopshapingStateAugmentedLagrangian.cpp
+  src/loopshaping/augmented_lagrangian/LoopshapingStateInputAugmentedLagrangian.cpp
+  src/loopshaping/augmented_lagrangian/LoopshapingAugmentedLagrangianEliminatePattern.cpp
+  src/loopshaping/augmented_lagrangian/LoopshapingAugmentedLagrangianOutputPattern.cpp
   src/loopshaping/constraint/LoopshapingConstraint.cpp
   src/loopshaping/constraint/LoopshapingStateConstraint.cpp
   src/loopshaping/constraint/LoopshapingStateInputConstraint.cpp

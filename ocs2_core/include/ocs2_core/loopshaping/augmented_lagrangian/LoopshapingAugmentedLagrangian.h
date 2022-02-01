@@ -29,13 +29,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <memory>
+
+#include <ocs2_core/augmented_lagrangian/StateAugmentedLagrangianCollection.h>
+#include <ocs2_core/augmented_lagrangian/StateInputAugmentedLagrangianCollection.h>
 #include <ocs2_core/loopshaping/LoopshapingDefinition.h>
-#include <ocs2_core/loopshaping/LoopshapingPreComputation.h>
-#include <ocs2_core/loopshaping/LoopshapingPropertyTree.h>
-#include <ocs2_core/loopshaping/augmented_lagrangian/LoopshapingAugmentedLagrangian.h>
-#include <ocs2_core/loopshaping/constraint/LoopshapingConstraint.h>
-#include <ocs2_core/loopshaping/cost/LoopshapingCost.h>
-#include <ocs2_core/loopshaping/dynamics/LoopshapingDynamics.h>
-#include <ocs2_core/loopshaping/dynamics/LoopshapingFilterDynamics.h>
-#include <ocs2_core/loopshaping/initialization/LoopshapingInitializer.h>
-#include <ocs2_core/loopshaping/soft_constraint/LoopshapingSoftConstraint.h>
+
+namespace ocs2 {
+namespace LoopshapingAugmentedLagrangian {
+
+/** Factory for Loopshaping state-only augmented Lagrangian wrapper */
+std::unique_ptr<StateAugmentedLagrangianCollection> create(const StateAugmentedLagrangianCollection& systemAugmentedLagrangian,
+                                                           std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
+
+/** Factory for Loopshaping state-input augmented Lagrangian wrapper */
+std::unique_ptr<StateInputAugmentedLagrangianCollection> create(const StateInputAugmentedLagrangianCollection& systemAugmentedLagrangian,
+                                                                std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
+
+}  // namespace LoopshapingAugmentedLagrangian
+}  // namespace ocs2

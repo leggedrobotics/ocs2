@@ -29,13 +29,36 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <memory>
+
+#include <ocs2_core/augmented_lagrangian/StateInputAugmentedLagrangianCollection.h>
 #include <ocs2_core/loopshaping/LoopshapingDefinition.h>
-#include <ocs2_core/loopshaping/LoopshapingPreComputation.h>
-#include <ocs2_core/loopshaping/LoopshapingPropertyTree.h>
-#include <ocs2_core/loopshaping/augmented_lagrangian/LoopshapingAugmentedLagrangian.h>
-#include <ocs2_core/loopshaping/constraint/LoopshapingConstraint.h>
-#include <ocs2_core/loopshaping/cost/LoopshapingCost.h>
-#include <ocs2_core/loopshaping/dynamics/LoopshapingDynamics.h>
-#include <ocs2_core/loopshaping/dynamics/LoopshapingFilterDynamics.h>
-#include <ocs2_core/loopshaping/initialization/LoopshapingInitializer.h>
-#include <ocs2_core/loopshaping/soft_constraint/LoopshapingSoftConstraint.h>
+
+namespace ocs2 {
+
+/**
+ * Loopshaping state-input augmented Lagrangian decorator base class
+ */
+class LoopshapingStateInputAugmentedLagrangian : public StateInputAugmentedLagrangianCollection {
+ public:
+  ~LoopshapingStateInputAugmentedLagrangian() override = default;
+
+  std::vector<Metrics> getValue(scalar_t t, const vector_t& x, const vector_t& u, const std::vector<Multiplier>& termsMultiplier,
+                                const PreComputation& preComp) const final override;
+
+  void updateLagrangian(scalar_t t, const vector_t& x, const vector_t& u, std::vector<Metrics>& termsMetrics,
+                        std::vector<Multiplier>& termsMultiplier) const final override;
+
+ protected:
+  /** Constructor */
+  LoopshapingStateInputAugmentedLagrangian(const StateInputAugmentedLagrangianCollection& lagrangianCollection,
+                                           std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
+      : StateInputAugmentedLagrangianCollection(lagrangianCollection), loopshapingDefinition_(std::move(loopshapingDefinition)) {}
+
+  /** Copy constructor */
+  LoopshapingStateInputAugmentedLagrangian(const LoopshapingStateInputAugmentedLagrangian& other) = default;
+
+  std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
+};
+
+}  // namespace ocs2

@@ -131,15 +131,6 @@ class GaussNewtonDDP : public SolverBase {
                                            const size_array_t& postEventIndices, scalar_array_t& normalizedTimeTrajectory,
                                            size_array_t& normalizedPostEventIndices);
 
-  /**
-   * Adjust the controller based on the last changes in model schedule.
-   *
-   * @param [in] oldModeSchedule: The old mode schedule associated to the trajectories which should be adjusted.
-   * @param [in] newModeSchedule: The new mode schedule that should be adapted to.
-   * @param [in, out] oldController: The control policy that is associated with the old mode schedule.
-   */
-  void adjustController(const ModeSchedule& oldModeSchedule, const ModeSchedule& newModeSchedule, LinearController& oldController) const;
-
  protected:
   /**
    * Sets up optimizer for different number of partitions.

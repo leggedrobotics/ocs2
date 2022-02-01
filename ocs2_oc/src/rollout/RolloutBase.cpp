@@ -48,25 +48,26 @@ vector_t RolloutBase::run(scalar_t initTime, const vector_t& initState, scalar_t
   }
 
   // switching times
-  auto firstIndex = std::upper_bound(eventTimes.begin(), eventTimes.end(), initTime);
-  auto lastIndex = std::upper_bound(eventTimes.begin(), eventTimes.end(), finalTime);
+  auto firstIndex = std::upper_bound(eventTimes.begin(), eventTimes.end(), initTime);  // no event at initial time
+  auto lastIndex = std::lower_bound(eventTimes.begin(), eventTimes.end(), finalTime);  // no event at final time
   scalar_array_t switchingTimes;
   switchingTimes.push_back(initTime);
   switchingTimes.insert(switchingTimes.end(), firstIndex, lastIndex);
   switchingTimes.push_back(finalTime);
 
   // constructing the rollout time intervals
-  time_interval_array_t timeIntervalArray;
   const int numSubsystems = switchingTimes.size() - 1;
+  time_interval_array_t timeIntervalArray;
+  timeIntervalArray.reserve(numSubsystems);
   for (int i = 0; i < numSubsystems; i++) {
     const auto& beginTime = switchingTimes[i];
     const auto& endTime = switchingTimes[i + 1];
     timeIntervalArray.emplace_back(beginTime, endTime);
 
     // adjusting the start time for correcting the subsystem recognition
-    constexpr scalar_t eps = numeric_traits::weakEpsilon<scalar_t>();
+    constexpr auto eps = numeric_traits::weakEpsilon<scalar_t>();
     if (endTime - beginTime > eps) {
-      timeIntervalArray.back().first += eps;
+      timeIntervalArray.back().first += ((i > 0) ? eps : 0.0);
     } else {
       timeIntervalArray.back().first = endTime;
     }

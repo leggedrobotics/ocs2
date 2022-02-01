@@ -1141,8 +1141,8 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 
   // adjust controller
   if (!optimizedPrimalData_.primalSolution.controllerPtr_->empty()) {
-    trajectorySpread(optimizedPrimalData_.primalSolution.modeSchedule_, getReferenceManager().getModeSchedule(),
-                     optimizedPrimalData_.getLinearController());
+    std::ignore = trajectorySpread(optimizedPrimalData_.primalSolution.modeSchedule_, getReferenceManager().getModeSchedule(),
+                                   optimizedPrimalData_.getLinearController());
   }
 
   // check if after the truncation the internal controller is empty

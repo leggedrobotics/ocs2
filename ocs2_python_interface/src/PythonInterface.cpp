@@ -124,22 +124,26 @@ VectorFunctionLinearApproximation PythonInterface::flowMapLinearApproximation(sc
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t PythonInterface::cost(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::Ref<const vector_t> u) {
-  auto request = Request::Cost + Request::Cost + Request::SoftConstraint;
-  if (penalty_ != nullptr) {
-    request = request + Request::Constraint;
-  }
   auto& preComputation = *problem_.preComputationPtr;
+  const auto request = Request::Cost + Request::SoftConstraint + Request::Constraint;
   preComputation.request(request, t, x, u);
 
-  // get results
+  // cost
   scalar_t cost = computeCost(problem_, t, x, u);
 
-  if (penalty_ != nullptr) {
-    const auto& targetTrajectories = *problem_.targetTrajectoriesPtr;
-    cost += problem_.equalityLagrangianPtr->getValue(t, x, u, targetTrajectories, preComputation);
-    cost += problem_.stateEqualityLagrangianPtr->getValue(t, x, targetTrajectories, preComputation);
-    cost += problem_.inequalityLagrangianPtr->getValue(t, x, u, targetTrajectories, preComputation);
-    cost += problem_.stateInequalityLagrangianPtr->getValue(t, x, targetTrajectories, preComputation);
+  // Lagrangians
+  const auto m = mpcMrtInterface_->getIntermediateDualSolution(t);
+  if (!problem_.stateEqualityLagrangianPtr->empty()) {
+    cost += sumPenalties(problem_.stateEqualityLagrangianPtr->getValue(t, x, m.stateEq, preComputation));
+  }
+  if (!problem_.stateInequalityLagrangianPtr->empty()) {
+    cost += sumPenalties(problem_.stateInequalityLagrangianPtr->getValue(t, x, m.stateIneq, preComputation));
+  }
+  if (!problem_.equalityLagrangianPtr->empty()) {
+    cost += sumPenalties(problem_.equalityLagrangianPtr->getValue(t, x, u, m.stateInputEq, preComputation));
+  }
+  if (!problem_.inequalityLagrangianPtr->empty()) {
+    cost += sumPenalties(problem_.inequalityLagrangianPtr->getValue(t, x, u, m.stateInputIneq, preComputation));
   }
 
   return cost;
@@ -150,37 +154,32 @@ scalar_t PythonInterface::cost(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation PythonInterface::costQuadraticApproximation(scalar_t t, Eigen::Ref<const vector_t> x,
                                                                                  Eigen::Ref<const vector_t> u) {
-  auto request = Request::Cost + Request::Cost + Request::SoftConstraint + Request::Approximation;
-  if (penalty_ != nullptr) {
-    request = request + Request::Constraint;
-  }
   auto& preComputation = *problem_.preComputationPtr;
+  const auto request = Request::Cost + Request::SoftConstraint + Request::Constraint + Request::Approximation;
   preComputation.request(request, t, x, u);
 
-  // get results
+  // cost
   auto cost = approximateCost(problem_, t, x, u);
 
   // Lagrangians
-  if (penalty_ != nullptr) {
-    const auto& targetTrajectories = *problem_.targetTrajectoriesPtr;
-    if (!problem_.stateEqualityLagrangianPtr->empty()) {
-      auto approx = problem_.stateEqualityLagrangianPtr->getQuadraticApproximation(t, x, targetTrajectories, preComputation);
-      cost.f += approx.f;
-      cost.dfdx += approx.dfdx;
-      cost.dfdxx += approx.dfdxx;
-    }
-    if (!problem_.stateInequalityLagrangianPtr->empty()) {
-      auto approx = problem_.stateInequalityLagrangianPtr->getQuadraticApproximation(t, x, targetTrajectories, preComputation);
-      cost.f += approx.f;
-      cost.dfdx += approx.dfdx;
-      cost.dfdxx += approx.dfdxx;
-    }
-    if (!problem_.equalityLagrangianPtr->empty()) {
-      cost += problem_.equalityLagrangianPtr->getQuadraticApproximation(t, x, u, targetTrajectories, preComputation);
-    }
-    if (!problem_.inequalityLagrangianPtr->empty()) {
-      cost += problem_.inequalityLagrangianPtr->getQuadraticApproximation(t, x, u, targetTrajectories, preComputation);
-    }
+  const auto m = mpcMrtInterface_->getIntermediateDualSolution(t);
+  if (!problem_.stateEqualityLagrangianPtr->empty()) {
+    auto approx = problem_.stateEqualityLagrangianPtr->getQuadraticApproximation(t, x, m.stateEq, preComputation);
+    cost.f += approx.f;
+    cost.dfdx += approx.dfdx;
+    cost.dfdxx += approx.dfdxx;
+  }
+  if (!problem_.stateInequalityLagrangianPtr->empty()) {
+    auto approx = problem_.stateInequalityLagrangianPtr->getQuadraticApproximation(t, x, m.stateIneq, preComputation);
+    cost.f += approx.f;
+    cost.dfdx += approx.dfdx;
+    cost.dfdxx += approx.dfdxx;
+  }
+  if (!problem_.equalityLagrangianPtr->empty()) {
+    cost += problem_.equalityLagrangianPtr->getQuadraticApproximation(t, x, u, m.stateInputEq, preComputation);
+  }
+  if (!problem_.inequalityLagrangianPtr->empty()) {
+    cost += problem_.inequalityLagrangianPtr->getQuadraticApproximation(t, x, u, m.stateInputIneq, preComputation);
   }
 
   return cost;

@@ -48,9 +48,7 @@ FullyActuatedFloatingArmManipulatorDynamics::FullyActuatedFloatingArmManipulator
 /******************************************************************************************************/
 ad_vector_t FullyActuatedFloatingArmManipulatorDynamics::systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
                                                                        const ad_vector_t&) const {
-  ad_vector_t dxdt(state.size());
-  dxdt << input;
-  return dxdt;
+  return input;
 }
 
 }  // namespace mobile_manipulator

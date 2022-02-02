@@ -54,8 +54,8 @@ class SphereApproximation {
   using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
 
   /** Constructor
-   * @param [in] geomObjectId : index of the geometry object in GeometryModel
    * @param [in] geometry : geometry stored in GeometryModel
+   * @param [in] geomObjectId : index of the geometry object in GeometryModel
    * @param [in] maxExcess : maximum allowed excess from the object surface to the sphere surface
    * @param [in] shrinkRatio: ratio of shrinking maxExcess when recursive approximation of the cylinder base is necessary
    */

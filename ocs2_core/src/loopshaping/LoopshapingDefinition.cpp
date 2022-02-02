@@ -65,18 +65,17 @@ void LoopshapingDefinition::getSystemInput(const vector_t& state, const vector_t
   switch (loopshapingType_) {
     case LoopshapingType::outputpattern:
       systemInput = input;
-      return;
+      break;
     case LoopshapingType::eliminatepattern: {
       if (diagonal_) {
         systemInput = filter_.getCdiag().diagonal().cwiseProduct(state.tail(filter_.getNumStates())) +
                       filter_.getDdiag().diagonal().cwiseProduct(input);
-        return;
       } else {
         // u = C*x + D*v. Use noalias to prevent temporaries.
         systemInput.noalias() = filter_.getC() * state.tail(filter_.getNumStates());
         systemInput.noalias() += filter_.getD() * input;
-        return;
       }
+      break;
     }
     default:
       throw std::runtime_error("[LoopshapingDefinition::getSystemInput] invalid loopshaping type");

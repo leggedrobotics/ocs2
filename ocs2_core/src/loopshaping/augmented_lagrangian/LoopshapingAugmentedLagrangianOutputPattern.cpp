@@ -55,11 +55,10 @@ ScalarFunctionQuadraticApproximation LoopshapingAugmentedLagrangianOutputPattern
       LoopshapingStateInputAugmentedLagrangian::getQuadraticApproximation(t, x_system, u_system, termsMultiplier, preComp_system);
 
   ScalarFunctionQuadraticApproximation L;
-  L.f = L_system.f;
+  L.f = std::move(L_system.f);
 
-  L.dfdx.resize(stateDim);
+  L.dfdx.setZero(stateDim);
   L.dfdx.head(sysStateDim) = L_system.dfdx;
-  L.dfdx.tail(filtStateDim).setZero();
 
   L.dfdxx.setZero(stateDim, stateDim);
   L.dfdxx.topLeftCorner(sysStateDim, sysStateDim) = L_system.dfdxx;

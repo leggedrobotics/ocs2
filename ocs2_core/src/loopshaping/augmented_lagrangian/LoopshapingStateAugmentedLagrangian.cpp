@@ -59,11 +59,11 @@ ScalarFunctionQuadraticApproximation LoopshapingStateAugmentedLagrangian::getQua
   const auto sysStateDim = x_system.rows();
   const auto filtStateDim = x.rows() - sysStateDim;
 
-  const auto Phi_system = StateAugmentedLagrangianCollection::getQuadraticApproximation(t, x_system, termsMultiplier, preComp_system);
+  auto Phi_system = StateAugmentedLagrangianCollection::getQuadraticApproximation(t, x_system, termsMultiplier, preComp_system);
 
   ScalarFunctionQuadraticApproximation Phi;
-  Phi.f = Phi_system.f;
-  Phi.dfdx.resize(stateDim);
+  Phi.f = std::move(Phi_system.f);
+  Phi.dfdx.setZero(stateDim);
   Phi.dfdx.head(sysStateDim) = Phi_system.dfdx;
   Phi.dfdxx.setZero(stateDim, stateDim);
   Phi.dfdxx.topLeftCorner(sysStateDim, sysStateDim) = Phi_system.dfdxx;

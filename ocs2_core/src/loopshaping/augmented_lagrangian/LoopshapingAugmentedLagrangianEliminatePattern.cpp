@@ -50,13 +50,13 @@ ScalarFunctionQuadraticApproximation LoopshapingAugmentedLagrangianEliminatePatt
   const auto sysStateDim = x_system.rows();
   const auto filtStateDim = x_filter.rows();
 
-  const auto L_system =
+  auto L_system =
       LoopshapingStateInputAugmentedLagrangian::getQuadraticApproximation(t, x_system, u_system, termsMultiplier, preComp_system);
 
   ScalarFunctionQuadraticApproximation L;
 
   // f
-  L.f = L_system.f;
+  L.f = std::move(L_system.f);
 
   if (isDiagonal) {
     // dfdx

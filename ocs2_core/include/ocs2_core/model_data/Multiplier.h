@@ -89,7 +89,7 @@ vector_t toVector(const std::vector<Multiplier>& termsMultiplier);
  * Gets the size of constraint terms.
  *
  * @ param [in]termsMultiplier : Multipliers associated to an array of constraint terms.
- * @return An array of constraint terms size. It as the same size as the input array.
+ * @return An array of constraint terms size. It has the same size as the input array.
  */
 size_array_t getSizes(const std::vector<Multiplier>& termsMultiplier);
 

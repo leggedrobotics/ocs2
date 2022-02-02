@@ -69,10 +69,12 @@ class ModifiedRelaxedBarrierPenalty final : public AugmentedPenaltyBase {
     scalar_t stepSize;
   };
 
-  ModifiedRelaxedBarrierPenalty(Config config) : config_(std::move(config)) {
-    a_ = 1.0 / std::pow(1.0 + config_.relaxation, 2);
-    b_ = -1.0 / (1.0 + config_.relaxation);
-    c_ = -log(1.0 + config_.relaxation);
+  /** Constructor */
+  ModifiedRelaxedBarrierPenalty(Config config) : config_(std::move(config)), quadCoeff_(config_) {}
+
+  /** Factory function */
+  static std::unique_ptr<ModifiedRelaxedBarrierPenalty> create(Config config) {
+    return std::unique_ptr<ModifiedRelaxedBarrierPenalty>(new ModifiedRelaxedBarrierPenalty(std::move(config)));
   }
 
   ~ModifiedRelaxedBarrierPenalty() override = default;
@@ -85,7 +87,7 @@ class ModifiedRelaxedBarrierPenalty final : public AugmentedPenaltyBase {
       return -wFunc(l) * log(1.0 + v);
     } else {
       const scalar_t vDelta = v - config_.relaxation;
-      return wFunc(l) * (0.5 * a_ * vDelta * vDelta + b_ * vDelta + c_);
+      return wFunc(l) * (0.5 * quadCoeff_.c2 * vDelta * vDelta + quadCoeff_.c1 * vDelta + quadCoeff_.c0);
     }
   }
 
@@ -94,7 +96,7 @@ class ModifiedRelaxedBarrierPenalty final : public AugmentedPenaltyBase {
     if (v > config_.relaxation) {
       return -wFunc(l) / (1.0 + v) * dvdhFunc(l);
     } else {
-      return wFunc(l) * (a_ * (v - config_.relaxation) + b_) * dvdhFunc(l);
+      return wFunc(l) * (quadCoeff_.c2 * (v - config_.relaxation) + quadCoeff_.c1) * dvdhFunc(l);
     }
   }
 
@@ -104,7 +106,7 @@ class ModifiedRelaxedBarrierPenalty final : public AugmentedPenaltyBase {
     if (v > config_.relaxation) {
       return wFunc(l) / ((1.0 + v) * (1.0 + v)) * dvdh * dvdh;
     } else {
-      return wFunc(l) * a_ * dvdh * dvdh;
+      return wFunc(l) * quadCoeff_.c2 * dvdh * dvdh;
     }
   }
 
@@ -114,7 +116,7 @@ class ModifiedRelaxedBarrierPenalty final : public AugmentedPenaltyBase {
     if (v > config_.relaxation) {
       return std::max(lambdaMin, config_.stepSize * wFunc(l) / (1 + v));
     } else {
-      return std::max(lambdaMin, config_.stepSize * wFunc(l) * (-a_ * (v - config_.relaxation) - b_));
+      return std::max(lambdaMin, config_.stepSize * wFunc(l) * (-quadCoeff_.c2 * (v - config_.relaxation) - quadCoeff_.c1));
     }
   }
 
@@ -127,10 +129,18 @@ class ModifiedRelaxedBarrierPenalty final : public AugmentedPenaltyBase {
   scalar_t dvdhFunc(scalar_t l) const { return config_.scale / l; }
   scalar_t vFunc(scalar_t l, scalar_t h) const { return config_.scale * h / l; }
 
-  scalar_t a_ = 1.0;
-  scalar_t b_ = -1.0;
-  scalar_t c_ = 0.0;
+  struct QuadCoeff {
+    QuadCoeff(const Config& config) {
+      c2 = 1.0 / std::pow(1.0 + config.relaxation, 2);
+      c1 = -1.0 / (1.0 + config.relaxation);
+      c0 = -log(1.0 + config.relaxation);
+    }
+
+    scalar_t c2 = 0.0, c1 = 0.0, c0 = 0.0;
+  };
+
   const Config config_;
+  const QuadCoeff quadCoeff_;
 };
 
 }  // namespace augmented

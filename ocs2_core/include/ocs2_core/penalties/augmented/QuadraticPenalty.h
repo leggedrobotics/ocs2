@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <memory>
+
 #include "ocs2_core/penalties/augmented/AugmentedPenaltyBase.h"
 
 namespace ocs2 {
@@ -60,16 +62,19 @@ class QuadraticPenalty final : public AugmentedPenaltyBase {
    * stepSize: step-length parameter, see class description
    */
   struct Config {
-    Config(scalar_t scaleParam = 100.0, scalar_t stepSizeParam = 0.0) : scale(scaleParam), stepSize(stepSizeParam) {}
+    Config() : Config(100.0, 0.0) {}
+    Config(scalar_t scaleParam, scalar_t stepSizeParam) : scale(scaleParam), stepSize(stepSizeParam) {}
     scalar_t scale;
     scalar_t stepSize;
   };
 
-  /**
-   * Thos constructor sets both the scale and stepSize the same. This is a common practice in Augmented Lagrangian.
-   * @param [in] scale: Scaling of the cost.
-   */
+  /** Constructor */
   explicit QuadraticPenalty(Config config) : config_(std::move(config)) {}
+
+  /** Factory function */
+  static std::unique_ptr<QuadraticPenalty> create(Config config) {
+    return std::unique_ptr<QuadraticPenalty>(new QuadraticPenalty(std::move(config)));
+  }
 
   ~QuadraticPenalty() override = default;
   QuadraticPenalty* clone() const override { return new QuadraticPenalty(*this); }

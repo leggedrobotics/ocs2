@@ -70,7 +70,13 @@ class SlacknessSquaredHingePenalty final : public AugmentedPenaltyBase {
     scalar_t stepSize;
   };
 
+  /** Constructor */
   SlacknessSquaredHingePenalty(Config config) : config_(std::move(config)) {}
+
+  /** Factory function */
+  static std::unique_ptr<SlacknessSquaredHingePenalty> create(Config config) {
+    return std::unique_ptr<SlacknessSquaredHingePenalty>(new SlacknessSquaredHingePenalty(std::move(config)));
+  }
 
   ~SlacknessSquaredHingePenalty() override = default;
   SlacknessSquaredHingePenalty* clone() const override { return new SlacknessSquaredHingePenalty(*this); }

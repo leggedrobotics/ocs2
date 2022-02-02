@@ -67,6 +67,7 @@ include_directories(
 # Declare a C++ library
 add_library(${PROJECT_NAME}
   src/Types.cpp
+  src/augmented_lagrangian/AugmentedLagrangian.cpp
   src/augmented_lagrangian/StateAugmentedLagrangian.cpp
   src/augmented_lagrangian/StateInputAugmentedLagrangian.cpp
   src/augmented_lagrangian/StateAugmentedLagrangianCollection.cpp

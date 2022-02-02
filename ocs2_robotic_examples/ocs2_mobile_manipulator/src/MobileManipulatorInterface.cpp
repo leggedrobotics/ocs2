@@ -134,9 +134,9 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   std::cerr << " #### =============================================================================\n";
 
   // Default initial state
-  initialState_ = vector_t::Zero(manipulatorModelInfo_.stateDim);
-  int baseStateDim = manipulatorModelInfo_.stateDim - manipulatorModelInfo_.armDim;
-  int armStateDim = manipulatorModelInfo_.armDim;
+  initialState_.setZero(manipulatorModelInfo_.stateDim);
+  const int baseStateDim = manipulatorModelInfo_.stateDim - manipulatorModelInfo_.armDim;
+  const int armStateDim = manipulatorModelInfo_.armDim;
 
   // arm base DOFs initial state
   if (baseStateDim > 0) {
@@ -226,20 +226,19 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::unique_ptr<StateInputCost> MobileManipulatorInterface::getQuadraticInputCost(const std::string& taskFile) {
-  matrix_t R(manipulatorModelInfo_.inputDim, manipulatorModelInfo_.inputDim);
-  R.setZero();
-  int baseInputDim = manipulatorModelInfo_.inputDim - manipulatorModelInfo_.armDim;
-  int armStateDim = manipulatorModelInfo_.armDim;
+  matrix_t R = matrix_t::Zero(manipulatorModelInfo_.inputDim, manipulatorModelInfo_.inputDim);
+  const int baseInputDim = manipulatorModelInfo_.inputDim - manipulatorModelInfo_.armDim;
+  const int armStateDim = manipulatorModelInfo_.armDim;
 
   // arm base DOFs input costs
   if (baseInputDim > 0) {
-    matrix_t R_base(baseInputDim, baseInputDim);
+    matrix_t R_base = matrix_t::Zero(baseInputDim, baseInputDim);
     loadData::loadEigenMatrix(taskFile, "inputCost.R.base." + modelTypeEnumToString(manipulatorModelInfo_.manipulatorModelType), R_base);
     R.topLeftCorner(baseInputDim, baseInputDim) = R_base;
   }
 
   // arm joints DOFs input costs
-  matrix_t R_arm(armStateDim, armStateDim);
+  matrix_t R_arm = matrix_t::Zero(armStateDim, armStateDim);
   loadData::loadEigenMatrix(taskFile, "inputCost.R.arm", R_arm);
   R.bottomRightCorner(armStateDim, armStateDim) = R_arm;
 
@@ -343,17 +342,17 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstrain
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointVelocityLimitConstraint(const std::string& taskFile) {
-  int baseInputDim = manipulatorModelInfo_.inputDim - manipulatorModelInfo_.armDim;
-  int armInputDim = manipulatorModelInfo_.armDim;
-  vector_t lowerBound(manipulatorModelInfo_.inputDim);
-  vector_t upperBound(manipulatorModelInfo_.inputDim);
+  const int baseInputDim = manipulatorModelInfo_.inputDim - manipulatorModelInfo_.armDim;
+  const int armInputDim = manipulatorModelInfo_.armDim;
+  vector_t lowerBound = vector_t::Zero(manipulatorModelInfo_.inputDim);
+  vector_t upperBound = vector_t::Zero(manipulatorModelInfo_.inputDim);
   scalar_t mu = 1e-2;
   scalar_t delta = 1e-3;
 
   // arm base DOFs velocity limits
   if (baseInputDim > 0) {
-    vector_t lowerBoundBase(baseInputDim);
-    vector_t upperBoundBase(baseInputDim);
+    vector_t lowerBoundBase = vector_t::Zero(baseInputDim);
+    vector_t upperBoundBase = vector_t::Zero(baseInputDim);
 
     loadData::loadEigenMatrix(taskFile,
                               "jointVelocityLimits.lowerBound.base." + modelTypeEnumToString(manipulatorModelInfo_.manipulatorModelType),
@@ -366,8 +365,8 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointVelocityLimi
   }
 
   // arm joint DOFs velocity limits
-  vector_t lowerBoundArm(armInputDim);
-  vector_t upperBoundArm(armInputDim);
+  vector_t lowerBoundArm = vector_t::Zero(armInputDim);
+  vector_t upperBoundArm = vector_t::Zero(armInputDim);
   loadData::loadEigenMatrix(taskFile, "jointVelocityLimits.lowerBound.arm", lowerBoundArm);
   loadData::loadEigenMatrix(taskFile, "jointVelocityLimits.upperBound.arm", upperBoundArm);
   lowerBound.tail(armInputDim) = lowerBoundArm;

@@ -89,9 +89,6 @@ GaussNewtonDDP::GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rol
     initializerRolloutPtrStock_.emplace_back(new InitializerRollout(initializer, rollout.settings()));
   }  // end of i loop
 
-  // initialize Augmented Lagrangian parameters
-  initializeConstraintPenalties();
-
   // search strategy method
   const auto basicStrategySettings = [&]() {
     search_strategy::Settings s;
@@ -197,9 +194,6 @@ void GaussNewtonDDP::reset() {
   // dual solution
   clear(nominalDualSolution_);
   clear(optimizedDualSolution_);
-
-  // initialize Augmented Lagrangian parameters
-  initializeConstraintPenalties();
 
   // performance measures
   avgTimeStepFP_ = 0.0;
@@ -1195,7 +1189,7 @@ void GaussNewtonDDP::runInit() {
                           nominalPrimalData_.problemMetrics);
 
     // update dual
-    //  updateDualSolution(nominalPrimalData_.primalSolution, problemMetrics_, nominalDualSolution_);
+    //  updateDualSolution(nominalPrimalData_.primalSolution, nominalPrimalData_.problemMetrics, nominalDualSolution_);
 
     // This is necessary for:
     // + The moving horizon (MPC) application
@@ -1221,8 +1215,8 @@ void GaussNewtonDDP::runInit() {
   }
   initializationTimer_.endTimer();
 
-  // update the constraint penalty coefficients
-  updateConstraintPenalties(0.0);
+  // initialize penalty coefficients
+  initializeConstraintPenalties();
 
   // linearizing the dynamics and quadratizing the cost function along nominal trajectories
   linearQuadraticApproximationTimer_.startTimer();

@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_cartpole/CartPoleInterface.h"
 #include "ocs2_cartpole/dynamics/CartPoleSystemDynamics.h"
 
-#include <ocs2_core/augmented_lagrangian/StateInputAugmentedLagrangian.h>
+#include <ocs2_core/augmented_lagrangian/AugmentedLagrangian.h>
 #include <ocs2_core/constraint/LinearStateInputConstraint.h>
 #include <ocs2_core/cost/QuadraticStateCost.h>
 #include <ocs2_core/cost/QuadraticStateInputCost.h>
@@ -104,7 +104,7 @@ CartPoleInterface::CartPoleInterface(const std::string& taskFile, const std::str
   auto getPenalty = [&]() {
     augmented::SlacknessSquaredHingePenalty::Config boundsConfig;
     loadData::loadPenaltyConfig(taskFile, "bounds_penalty_config", boundsConfig);
-    return std::unique_ptr<augmented::AugmentedPenaltyBase>(new augmented::SlacknessSquaredHingePenalty(boundsConfig));
+    return augmented::SlacknessSquaredHingePenalty::create(boundsConfig);
   };
   auto getConstraint = [&]() {
     constexpr size_t numIneqConstraint = 2;
@@ -113,8 +113,7 @@ CartPoleInterface::CartPoleInterface(const std::string& taskFile, const std::str
     const matrix_t C = matrix_t::Zero(numIneqConstraint, STATE_DIM);
     return std::unique_ptr<StateInputConstraint>(new LinearStateInputConstraint(e, C, D));
   };
-  std::unique_ptr<StateInputAugmentedLagrangian> boundsLagrangian(new StateInputAugmentedLagrangian(getConstraint(), getPenalty()));
-  problem_.inequalityLagrangianPtr->add("stateInputBounds", std::move(boundsLagrangian));
+  problem_.inequalityLagrangianPtr->add("stateInputBounds", create(getConstraint(), getPenalty()));
 
   // Initialization
   cartPoleInitializerPtr_.reset(new DefaultInitializer(INPUT_DIM));

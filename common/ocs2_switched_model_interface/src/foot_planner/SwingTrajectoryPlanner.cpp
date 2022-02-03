@@ -343,7 +343,13 @@ scalar_t SwingTrajectoryPlanner::kinematicPenalty(const vector3_t& footPositionI
 std::vector<SwingPhase::SwingProfile::Node> SwingTrajectoryPlanner::extractSwingProfileFromReference(
     int leg, const SwingPhase::SwingEvent& liftoff, const SwingPhase::SwingEvent& touchdown) const {
   const scalar_t swingDuration = touchdown.time - liftoff.time;
-  const vector3_t swingVector = touchdown.terrainPlane->positionInWorld - liftoff.terrainPlane->positionInWorld;
+
+  vector3_t touchDownLocation = liftoff.terrainPlane->positionInWorld;
+  if (touchdown.terrainPlane != nullptr) {
+    touchDownLocation = touchdown.terrainPlane->positionInWorld;
+  }
+
+  const vector3_t swingVector = touchDownLocation - liftoff.terrainPlane->positionInWorld;
   const scalar_t swingDistance = swingVector.norm();
   vector3_t swingTrajectoryNormal = swingVector.cross(vector3_t(0.0, 0.0, 1.0).cross(swingVector)).normalized();
 

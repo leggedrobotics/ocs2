@@ -72,6 +72,10 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointVelocity(con
       vPinocchio.tail(modelInfo_.armDim) = input;
       break;
     }
+    case ManipulatorModelType::FullyActuatedFloatingArmManipulator: {
+      vPinocchio << input;
+      break;
+    }
     case ManipulatorModelType::WheelBasedMobileManipulator: {
       const auto theta = state(2);
       const auto v = input(0);  // forward velocity in base frame
@@ -99,6 +103,9 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getOcs2Jacobian(const vector_
       matrix_t dfdu(Jv.rows(), modelInfo_.inputDim);
       dfdu = Jv.template rightCols(modelInfo_.armDim);
       return {Jq, dfdu};
+    }
+    case ManipulatorModelType::FullyActuatedFloatingArmManipulator: {
+      return {Jq, Jv};
     }
     case ManipulatorModelType::WheelBasedMobileManipulator: {
       matrix_t dfdu(Jv.rows(), modelInfo_.inputDim);

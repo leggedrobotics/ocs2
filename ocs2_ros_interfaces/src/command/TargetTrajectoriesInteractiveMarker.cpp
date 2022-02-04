@@ -51,7 +51,7 @@ TargetTrajectoriesInteractiveMarker::TargetTrajectoriesInteractiveMarker(::ros::
   targetTrajectoriesPublisherPtr_.reset(new TargetTrajectoriesRosPublisher(nodeHandle, topicPrefix));
 
   // create an interactive marker for our server
-  menuHandler_.insert("First Entry", boost::bind(&TargetTrajectoriesInteractiveMarker::processFeedback, this, _1));
+  menuHandler_.insert("Send target pose", boost::bind(&TargetTrajectoriesInteractiveMarker::processFeedback, this, _1));
 
   // create an interactive marker for our server
   auto interactiveMarker = createInteractiveMarker();

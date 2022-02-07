@@ -53,45 +53,62 @@ void LoopshapingDefinition::print() const {
   std::cerr << "[LoopshapingDefinition] \n";
   filter_.print();
   std::cerr << "R on filtered inputs: \n" << R_ << std::endl;
-};
+}
 
 vector_t LoopshapingDefinition::getSystemInput(const vector_t& state, const vector_t& input) const {
+  vector_t systemInput;
+  getSystemInput(state, input, systemInput);
+  return systemInput;
+}
+
+void LoopshapingDefinition::getSystemInput(const vector_t& state, const vector_t& input, vector_t& systemInput) const {
   switch (loopshapingType_) {
-    case LoopshapingType::outputpattern:
-      return input;
+    case LoopshapingType::outputpattern: {
+      systemInput = input;
+      break;
+    }
     case LoopshapingType::eliminatepattern: {
       if (diagonal_) {
-        return filter_.getCdiag().diagonal().cwiseProduct(state.tail(filter_.getNumStates())) +
-               filter_.getDdiag().diagonal().cwiseProduct(input);
+        systemInput = filter_.getCdiag().diagonal().cwiseProduct(state.tail(filter_.getNumStates())) +
+                      filter_.getDdiag().diagonal().cwiseProduct(input);
       } else {
         // u = C*x + D*v. Use noalias to prevent temporaries.
-        vector_t u = filter_.getC() * state.tail(filter_.getNumStates());
-        u.noalias() += filter_.getD() * input;
-        return u;
+        systemInput.noalias() = filter_.getC() * state.tail(filter_.getNumStates());
+        systemInput.noalias() += filter_.getD() * input;
       }
+      break;
     }
     default:
       throw std::runtime_error("[LoopshapingDefinition::getSystemInput] invalid loopshaping type");
   }
-};
+}
 
 vector_t LoopshapingDefinition::getFilteredInput(const vector_t& state, const vector_t& input) const {
+  vector_t filteredInput;
+  getFilteredInput(state, input, filteredInput);
+  return filteredInput;
+}
+
+void LoopshapingDefinition::getFilteredInput(const vector_t& state, const vector_t& input, vector_t& filteredInput) const {
   switch (loopshapingType_) {
-    case LoopshapingType::outputpattern:
+    case LoopshapingType::outputpattern: {
       if (diagonal_) {
-        return filter_.getCdiag().diagonal().cwiseProduct(state.tail(filter_.getNumStates())) +
-               filter_.getDdiag().diagonal().cwiseProduct(input);
+        filteredInput = filter_.getCdiag().diagonal().cwiseProduct(state.tail(filter_.getNumStates())) +
+                        filter_.getDdiag().diagonal().cwiseProduct(input);
       } else {
-        vector_t u = filter_.getC() * state.tail(filter_.getNumStates());
-        u.noalias() += filter_.getD() * input;
-        return u;
+        filteredInput.noalias() = filter_.getC() * state.tail(filter_.getNumStates());
+        filteredInput.noalias() += filter_.getD() * input;
       }
-    case LoopshapingType::eliminatepattern:
-      return input;
+      break;
+    }
+    case LoopshapingType::eliminatepattern: {
+      filteredInput = input;
+      break;
+    }
     default:
       throw std::runtime_error("[LoopshapingDefinition::getFilteredInput] invalid loopshaping type");
   }
-};
+}
 
 vector_t LoopshapingDefinition::filterFlowMap(const vector_t& filterState, const vector_t& input) const {
   // Same equation for both loopshaping types

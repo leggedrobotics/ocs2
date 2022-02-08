@@ -72,6 +72,20 @@ link_directories(
   ${pinocchio_LIBRARY_DIRS}
 )
 
+# Main library
+add_library(${PROJECT_NAME}
+  src/gait/GaitKeyboardPublisher.cpp
+  src/gait/GaitReceiver.cpp
+  src/visualization/LeggedRobotVisualizer.cpp
+)
+add_dependencies(${PROJECT_NAME}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
+
 # DDP-MPC node for legged robot
 add_executable(legged_robot_ddp_mpc
   src/gait/GaitReceiver.cpp
@@ -144,6 +158,7 @@ if(cmake_clang_tools_FOUND)
    message(STATUS "Run clang tooling for target ocs2_legged_robot_ros")
    add_clang_tooling(
      TARGETS
+       ${PROJECT_NAME}
        legged_robot_ddp_mpc
        legged_robot_sqp_mpc
        legged_robot_dummy
@@ -160,6 +175,11 @@ endif(cmake_clang_tools_FOUND)
 #############
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
+install(TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 install(
   TARGETS

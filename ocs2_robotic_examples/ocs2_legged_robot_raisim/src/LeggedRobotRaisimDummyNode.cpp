@@ -29,7 +29,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ros/init.h>
 #include <ros/package.h>
-#include <urdf_parser/urdf_parser.h>
 
 #include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
@@ -47,31 +46,29 @@ using namespace ocs2;
 using namespace legged_robot;
 
 int main(int argc, char** argv) {
-  std::vector<std::string> programArgs{};
-  ::ros::removeROSArgs(argc, argv, programArgs);
-  if (programArgs.size() < 5) {
-    throw std::runtime_error("No robot name, config folder, target command file, or description file specified. Aborting.");
-  }
-  const std::string robotName(programArgs[1]);
-  const std::string configName(programArgs[2]);
-  const std::string targetCommandFile(programArgs[3]);
-  const std::string descriptionFile(programArgs[4]);
+  const std::string robotName = "legged_robot";
 
   // initialize ros node
   ros::init(argc, argv, robotName + "_raisim_dummy");
   ros::NodeHandle nodeHandle;
+  // Get node parameters
+  std::string taskFile, urdfFile, referenceFile, raisimFile, resourcePath;
+  nodeHandle.getParam("/taskFile", taskFile);
+  nodeHandle.getParam("/urdfFile", urdfFile);
+  nodeHandle.getParam("/referenceFile", referenceFile);
+  nodeHandle.getParam("/raisimFile", raisimFile);
+  nodeHandle.getParam("/resourcePath", resourcePath);
 
   // legged robot interface
-  LeggedRobotInterface interface(configName, targetCommandFile, urdf::parseURDFFile(descriptionFile));
+  LeggedRobotInterface interface(taskFile, urdfFile, referenceFile);
 
   // raisim rollout
   LeggedRobotRaisimConversions conversions(interface.getPinocchioInterface(), interface.getCentroidalModelInfo(),
                                            interface.getInitialState());
-  RaisimRolloutSettings raisimRolloutSettings(ros::package::getPath("ocs2_legged_robot_raisim") + "/config/raisim.info", "rollout", true);
-  conversions.loadSettings(ros::package::getPath("ocs2_legged_robot_raisim") + "/config/raisim.info", "rollout", true);
+  RaisimRolloutSettings raisimRolloutSettings(raisimFile, "rollout", true);
+  conversions.loadSettings(raisimFile, "rollout", true);
   RaisimRollout raisimRollout(
-      ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/urdf/anymal.urdf",
-      ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/meshes",
+      urdfFile, resourcePath,
       [&](const vector_t& state, const vector_t& input) { return conversions.stateToRaisimGenCoordGenVel(state, input); },
       [&](const Eigen::VectorXd& q, const Eigen::VectorXd& dq) { return conversions.raisimGenCoordGenVelToState(q, dq); },
       [&](double time, const vector_t& input, const vector_t& state, const Eigen::VectorXd& q, const Eigen::VectorXd& dq) {

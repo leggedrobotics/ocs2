@@ -34,6 +34,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/algorithm/kinematics-derivatives.hpp>
 #include <pinocchio/algorithm/kinematics.hpp>
 
+#include <gtest/gtest.h>
+
 #include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
 #include <ocs2_centroidal_model/ModelHelperFunctions.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
@@ -42,8 +44,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_legged_robot/common/ModelSettings.h"
 #include "ocs2_legged_robot/constraint/EndEffectorLinearConstraint.h"
 #include "ocs2_legged_robot/test/AnymalFactoryFunctions.h"
-
-#include <gtest/gtest.h>
 
 using namespace ocs2;
 using namespace legged_robot;

@@ -72,15 +72,17 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointVelocity(con
       vPinocchio.tail(modelInfo_.armDim) = input;
       break;
     }
+    case ManipulatorModelType::FullyActuatedFloatingArmManipulator: {
+      vPinocchio << input;
+      break;
+    }
     case ManipulatorModelType::WheelBasedMobileManipulator: {
       const auto theta = state(2);
       const auto v = input(0);  // forward velocity in base frame
       vPinocchio << cos(theta) * v, sin(theta) * v, input(1), input.tail(modelInfo_.armDim);
       break;
     }
-    default: {
-      throw std::runtime_error("The chosen manipulator model type is not supported!");
-    }
+    default: { throw std::runtime_error("The chosen manipulator model type is not supported!"); }
   }  // end of switch-case
 
   return vPinocchio;
@@ -102,6 +104,9 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getOcs2Jacobian(const vector_
       dfdu = Jv.template rightCols(modelInfo_.armDim);
       return {Jq, dfdu};
     }
+    case ManipulatorModelType::FullyActuatedFloatingArmManipulator: {
+      return {Jq, Jv};
+    }
     case ManipulatorModelType::WheelBasedMobileManipulator: {
       matrix_t dfdu(Jv.rows(), modelInfo_.inputDim);
       Eigen::Matrix<SCALAR, 3, 2> dvdu_base;
@@ -115,9 +120,7 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getOcs2Jacobian(const vector_
       dfdu.template rightCols(modelInfo_.armDim) = Jv.template rightCols(modelInfo_.armDim);
       return {Jq, dfdu};
     }
-    default: {
-      throw std::runtime_error("The chosen manipulator model type is not supported!");
-    }
+    default: { throw std::runtime_error("The chosen manipulator model type is not supported!"); }
   }  // end of switch-case
 }
 

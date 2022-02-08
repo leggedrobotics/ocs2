@@ -83,24 +83,5 @@ inline ocs2::vector_t getInitialState() {
   return x0;
 }
 
-inline void visualMatrixCompare(const ocs2::matrix_t& A, const ocs2::matrix_t& B, double tol = 1e-6) {
-  if (A.rows() != B.rows() || A.cols() != B.cols()) {
-    std::cerr << "Matrices are not of same size\n";
-  }
-  for (int row = 0; row < A.rows(); row++) {
-    bool ifAnyPrint = false;
-    for (int col = 0; col < A.cols(); col++) {
-      const double error = std::abs(A(row, col) - B(row, col));
-      if (error > tol) {
-        std::cerr << " (" << row << ", " << col << "): " << error;
-        ifAnyPrint = true;
-      }
-    }
-    if (ifAnyPrint) {
-      std::cerr << '\n';
-    }
-  }
-}
-
 }  // namespace centroidal_model
 }  // namespace ocs2

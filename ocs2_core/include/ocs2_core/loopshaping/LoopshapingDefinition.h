@@ -1,17 +1,17 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
- * Redistributions of source code must retain the above copyright notice, this
+* Redistributions of source code must retain the above copyright notice, this
   list of conditions and the following disclaimer.
 
- * Redistributions in binary form must reproduce the above copyright notice,
+* Redistributions in binary form must reproduce the above copyright notice,
   this list of conditions and the following disclaimer in the documentation
   and/or other materials provided with the distribution.
 
- * Neither the name of the copyright holder nor the names of its
+* Neither the name of the copyright holder nor the names of its
   contributors may be used to endorse or promote products derived from
   this software without specific prior written permission.
 
@@ -25,7 +25,7 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************/
+******************************************************************************/
 
 #pragma once
 
@@ -34,124 +34,120 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-enum class LoopshapingType { outputpattern, inputpattern, eliminatepattern };
+/**
+ * Loopshaping types:
+ *      outputpattern : The system inputs remain the inputs of the augmented system.
+ *                      Loopshaping inputs are a linear combination of state and system inputs
+ *      eliminatepattern : The loopshaping inputs become the inputs of the augmented system.
+ *                         The system inputs are retreived through a linear combination of state and system inputs.
+ */
+enum class LoopshapingType { outputpattern, eliminatepattern };
 
-/*
- *  Class to assemble and store the loopshaping definition
- *  The definition contains two filters
- *  r: filters on inputs
- *  s: filters on inputs (implemented as inverse)
+/**
+ *  Class to store and access the loopshaping definition
  */
 class LoopshapingDefinition {
  public:
-  LoopshapingDefinition(LoopshapingType loopshapingType, Filter filter, scalar_t gamma = 0.9)
-      : gamma_(gamma), loopshapingType_(loopshapingType), filter_(std::move(filter)) {
-    diagonal_ = true;
-    diagonal_ = diagonal_ && filter_.getA().isDiagonal();
-    diagonal_ = diagonal_ && filter_.getB().isDiagonal();
-    diagonal_ = diagonal_ && filter_.getC().isDiagonal();
-    diagonal_ = diagonal_ && filter_.getD().isDiagonal();
+  /**
+   * Constructor
+   * @param loopshapingType : Type of loopshaping system augmentation to apply
+   * @param filter : Filter encoding the dynamics between system and loopshaping (=filtered) inputs
+   * @param costMatrix : Quadratic cost term to apply to the filtered inputs. Defaults to identity if not provided.
+   */
+  LoopshapingDefinition(LoopshapingType loopshapingType, Filter filter, matrix_t costMatrix = matrix_t());
+
+  /** Get the loopshaping type */
+  LoopshapingType getType() const { return loopshapingType_; }
+
+  /** True if all matrices of the loopshaping filter are diagonal */
+  bool isDiagonal() const { return diagonal_; }
+
+  /** Get access to the filter specification */
+  const Filter& getInputFilter() const { return filter_; }
+
+  /** Compute the cost on the filtered inputs */
+  scalar_t loopshapingCost(const vector_t& filteredInput) const { return 0.5 * filteredInput.dot(R_ * filteredInput); }
+
+  /** Get the quadratic cost matrix for the filtered inputs */
+  matrix_t& costMatrix() { return R_; }
+
+  /** Display details of the LoopshapingDefinition  */
+  void print() const;
+
+  /**
+   * @param state : state of the augmented system
+   * @return state of the original system
+   */
+  vector_t getSystemState(const vector_t& state) const { return state.head(state.rows() - filter_.getNumStates()); }
+  void getSystemState(const vector_t& state, vector_t& systemState) const {
+    systemState = state.head(state.rows() - filter_.getNumStates());
   }
 
-  LoopshapingType getType() const { return loopshapingType_; };
-  bool isDiagonal() const { return diagonal_; };
-  const Filter& getInputFilter() const { return filter_; };
+  /**
+   * @param state : state of the augmented system
+   * @param input : input of the augmented system
+   * @return input of the original system
+   */
+  vector_t getSystemInput(const vector_t& state, const vector_t& input) const;
+  void getSystemInput(const vector_t& state, const vector_t& input, vector_t& systemInput) const;
 
-  void print() const { filter_.print(); };
+  /**
+   * @param state : state of the augmented system
+   * @return state of the loopshaping filter
+   */
+  vector_t getFilterState(const vector_t& state) const { return state.tail(filter_.getNumStates()); }
+  void getFilterState(const vector_t& state, vector_t& filterState) const { filterState = state.tail(filter_.getNumStates()); }
 
-  vector_t getSystemState(const vector_t& state) const { return state.head(state.rows() - filter_.getNumStates()); };
+  /**
+   * @param state : state of the augmented system
+   * @param input : input of the augmented system
+   * @return the filtered input
+   */
+  vector_t getFilteredInput(const vector_t& state, const vector_t& input) const;
+  void getFilteredInput(const vector_t& state, const vector_t& input, vector_t& filteredInput) const;
 
-  vector_t getSystemInput(const vector_t& state, const vector_t& input) const {
-    switch (loopshapingType_) {
-      case LoopshapingType::outputpattern: /* fall through */
-      case LoopshapingType::inputpattern:
-        if (input.rows() > filter_.getNumInputs()) {
-          return input.head(input.rows() - filter_.getNumInputs());
-        } else {
-          return input;
-        }
-      case LoopshapingType::eliminatepattern: {
-        if (diagonal_) {
-          return filter_.getCdiag().diagonal().cwiseProduct(state.tail(filter_.getNumStates())) +
-                 filter_.getDdiag().diagonal().cwiseProduct(input);
-        } else {
-          // u = C*x + D*v. Use noalias to prevent temporaries.
-          vector_t u = filter_.getC() * state.tail(filter_.getNumStates());
-          u.noalias() += filter_.getD() * input;
-          return u;
-        }
-      }
-      default:
-        throw std::runtime_error("[LoopshapingDefinition::getSystemInput] invalid loopshaping type");
-    }
-  };
+  /**
+   * @param filterState : state of the loopshaping filter
+   * @param input : input of the augmented system
+   * @return time derivative of the filter state
+   */
+  vector_t filterFlowMap(const vector_t& filterState, const vector_t& input) const;
 
-  vector_t getFilterState(const vector_t& state) const { return state.tail(filter_.getNumStates()); };
+  /**
+   * @param systemState : state of the original system
+   * @param filterState : state of the loopshaping filter
+   * @return state of the augmented system
+   */
+  vector_t concatenateSystemAndFilterState(const vector_t& systemState, const vector_t& filterState) const;
 
-  vector_t getFilteredInput(const vector_t& state, const vector_t& input) const {
-    switch (loopshapingType_) {
-      case LoopshapingType::outputpattern:
-        if (diagonal_) {
-          return filter_.getCdiag().diagonal().cwiseProduct(state.tail(filter_.getNumStates())) +
-                 filter_.getDdiag().diagonal().cwiseProduct(input.head(filter_.getNumInputs()));
-        } else {
-          vector_t u = filter_.getC() * state.tail(filter_.getNumStates());
-          u.noalias() += filter_.getD() * input.head(filter_.getNumInputs());
-          return u;
-        }
-      case LoopshapingType::inputpattern: /* fall through */
-      case LoopshapingType::eliminatepattern:
-        return input.tail(filter_.getNumInputs());
-      default:
-        throw std::runtime_error("[LoopshapingDefinition::getFilteredInput] invalid loopshaping type");
-    }
-  };
+  /**
+   * @param systemInput : input of the original system
+   * @param filterInput : the filtered input
+   * @return input of the augmented system
+   */
+  vector_t augmentedSystemInput(const vector_t& systemInput, const vector_t& filterInput) const;
 
-  vector_t concatenateSystemAndFilterState(const vector_t& systemState, const vector_t& filterState) const {
-    vector_t state(systemState.rows() + filter_.getNumStates());
-    state << systemState, filterState;
-    return state;
-  };
+  /**
+   * Finds a loopshaping state and input such that they are in equilibrium with a given system input
+   * @param systemInput : input of the original system
+   * @param filterState (return) : state of the loopshaping filter
+   * @param filterInput (return) : the filtered input
+   */
+  void getFilterEquilibrium(const vector_t& systemInput, vector_t& filterState, vector_t& filterInput) const;
 
-  vector_t concatenateSystemAndFilterInput(const vector_t& systemInput, const vector_t& filterInput) const {
-    switch (loopshapingType_) {
-      case LoopshapingType::outputpattern:
-        return systemInput;
-      case LoopshapingType::inputpattern: {
-        vector_t input(systemInput.rows() + filterInput.rows());
-        input << systemInput, filterInput;
-        return input;
-      }
-      case LoopshapingType::eliminatepattern:
-        return filterInput;
-      default:
-        throw std::runtime_error("[LoopshapingDefinition::concatenateSystemAndFilterInput] invalid loopshaping type");
-    }
-  };
-
-  void getFilterEquilibrium(const vector_t& systemInput, vector_t& filterState, vector_t& filterInput) const {
-    switch (loopshapingType_) {
-      case LoopshapingType::outputpattern:
-        // When systemInput is the input to the filter
-        filter_.findEquilibriumForInput(systemInput, filterState, filterInput);
-        break;
-      case LoopshapingType::inputpattern: /* fall through */
-      case LoopshapingType::eliminatepattern:
-        // When systemInput is the output of the filter
-        filter_.findEquilibriumForOutput(systemInput, filterState, filterInput);
-        break;
-      default:
-        throw std::runtime_error("[LoopshapingDefinition::getFilterEquilibrium] invalid loopshaping type");
-    }
-  }
-
- public:
-  scalar_t gamma_;
+  /**
+   * Finds a loopshaping input such that they are in equilibrium with a given system input
+   * @param systemInput : input of the original system
+   * @param filterState : state of the loopshaping filter
+   * @param filterInput (return) : the filtered input
+   */
+  void getFilterEquilibriumGivenState(const vector_t& systemInput, const vector_t& filterState, vector_t& filterInput) const;
 
  private:
   Filter filter_;
   LoopshapingType loopshapingType_;
   bool diagonal_;
+  matrix_t R_;
 };
 
 }  // namespace ocs2

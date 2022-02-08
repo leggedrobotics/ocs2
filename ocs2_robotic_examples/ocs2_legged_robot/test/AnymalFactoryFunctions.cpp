@@ -29,17 +29,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <string>
 
-#include <ros/package.h>
-
 #include "ocs2_legged_robot/test/AnymalFactoryFunctions.h"
 
 #include <ocs2_centroidal_model/FactoryFunctions.h>
-#include <ocs2_legged_robot/common/ModelSettings.h>
+#include <ocs2_robotic_assets/package_path.h>
+
+#include "ocs2_legged_robot/common/ModelSettings.h"
+#include "ocs2_legged_robot/package_path.h"
 
 namespace {
-const std::string ROBOT_URDF_PATH = ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/urdf/" + "anymal.urdf";
-const std::string ROBOT_TASK_FILE_PATH = ros::package::getPath("ocs2_legged_robot") + "/config/mpc/" + "task.info";
-const std::string ROBOT_COMMAND_PATH = ros::package::getPath("ocs2_legged_robot") + "/config/command/" + "targetTrajectories.info";
+const std::string URDF_FILE = ocs2::robotic_assets::getPath() + "/resources/anymal_c/urdf/anymal.urdf";
+const std::string TASK_FILE = ocs2::legged_robot::getPath() + "/config/mpc/" + "task.info";
+const std::string REFERENCE_FILE = ocs2::legged_robot::getPath() + "/config/command/" + "reference.info";
 }  // unnamed namespace
 
 namespace ocs2 {
@@ -49,7 +50,7 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::unique_ptr<PinocchioInterface> createAnymalPinocchioInterface() {
-  return std::unique_ptr<PinocchioInterface>(new PinocchioInterface(centroidal_model::createPinocchioInterface(ROBOT_URDF_PATH)));
+  return std::unique_ptr<PinocchioInterface>(new PinocchioInterface(centroidal_model::createPinocchioInterface(URDF_FILE)));
 }
 
 /******************************************************************************************************/
@@ -58,7 +59,7 @@ std::unique_ptr<PinocchioInterface> createAnymalPinocchioInterface() {
 CentroidalModelInfo createAnymalCentroidalModelInfo(const PinocchioInterface& pinocchioInterface, CentroidalModelType centroidalType) {
   const ModelSettings modelSettings;  // default constructor just to get contactNames3DoF
   return centroidal_model::createCentroidalModelInfo(pinocchioInterface, centroidalType,
-                                                     centroidal_model::loadDefaultJointState(12, ROBOT_COMMAND_PATH),
+                                                     centroidal_model::loadDefaultJointState(12, REFERENCE_FILE),
                                                      modelSettings.contactNames3DoF, modelSettings.contactNames6DoF);
 }
 
@@ -66,14 +67,14 @@ CentroidalModelInfo createAnymalCentroidalModelInfo(const PinocchioInterface& pi
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::shared_ptr<SwitchedModelReferenceManager> createReferenceManager(size_t numFeet) {
-  const auto initModeSchedule = loadModeSchedule(ROBOT_TASK_FILE_PATH, "initialModeSchedule", false);
-  const auto defaultModeSequenceTemplate = loadModeSequenceTemplate(ROBOT_TASK_FILE_PATH, "defaultModeSequenceTemplate", false);
+  const auto initModeSchedule = loadModeSchedule(REFERENCE_FILE, "initialModeSchedule", false);
+  const auto defaultModeSequenceTemplate = loadModeSequenceTemplate(REFERENCE_FILE, "defaultModeSequenceTemplate", false);
 
   const ModelSettings modelSettings;
   std::shared_ptr<GaitSchedule> gaitSchedule(
       new GaitSchedule(initModeSchedule, defaultModeSequenceTemplate, modelSettings.phaseTransitionStanceTime));
   std::unique_ptr<SwingTrajectoryPlanner> swingTrajectoryPlanner(
-      new SwingTrajectoryPlanner(loadSwingTrajectorySettings(ROBOT_TASK_FILE_PATH, "swing_trajectory_config", false), numFeet));
+      new SwingTrajectoryPlanner(loadSwingTrajectorySettings(TASK_FILE, "swing_trajectory_config", false), numFeet));
   return std::make_shared<SwitchedModelReferenceManager>(gaitSchedule, std::move(swingTrajectoryPlanner));
 }
 

@@ -1,13 +1,12 @@
 #include <ros/init.h>
 #include <ros/package.h>
-#include <urdf_parser/urdf_parser.h>
 
 #include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
 #include <ocs2_legged_robot/LeggedRobotInterface.h>
-#include <ocs2_legged_robot/gait/GaitReceiver.h>
-#include <ocs2_legged_robot/visualization/LeggedRobotVisualizer.h>
 #include <ocs2_legged_robot_raisim/LeggedRobotRaisimConversions.h>
 #include <ocs2_legged_robot_raisim/LeggedRobotRaisimVisualizer.h>
+#include <ocs2_legged_robot_ros/gait/GaitReceiver.h>
+#include <ocs2_legged_robot_ros/visualization/LeggedRobotVisualizer.h>
 #include <ocs2_mpcnet/control/MpcnetOnnxController.h>
 #include <ocs2_mpcnet/dummy/MpcnetDummyLoopRos.h>
 #include <ocs2_mpcnet/dummy/MpcnetDummyObserverRos.h>
@@ -22,25 +21,24 @@ using namespace ocs2;
 using namespace legged_robot;
 
 int main(int argc, char** argv) {
-  std::vector<std::string> programArgs{};
-  ::ros::removeROSArgs(argc, argv, programArgs);
-  if (programArgs.size() < 7) {
-    throw std::runtime_error(
-        "No robot name, config folder, target command file, description file, policy file path, or rollout type specified. Aborting.");
-  }
-  const std::string robotName(programArgs[1]);
-  const std::string configName(programArgs[2]);
-  const std::string targetCommandFile(programArgs[3]);
-  const std::string descriptionFile(programArgs[4]);
-  const std::string policyFilePath(programArgs[5]);
-  const bool raisim = (programArgs[6] == "true") ? true : false;
+  const std::string robotName = "legged_robot";
 
   // initialize ros node
   ros::init(argc, argv, robotName + "_mpcnet_dummy");
   ros::NodeHandle nodeHandle;
+  // Get node parameters
+  bool useRaisim;
+  std::string taskFile, urdfFile, referenceFile, raisimFile, resourcePath, policyFile;
+  nodeHandle.getParam("/taskFile", taskFile);
+  nodeHandle.getParam("/urdfFile", urdfFile);
+  nodeHandle.getParam("/referenceFile", referenceFile);
+  nodeHandle.getParam("/raisimFile", raisimFile);
+  nodeHandle.getParam("/resourcePath", resourcePath);
+  nodeHandle.getParam("/policyFile", policyFile);
+  nodeHandle.getParam("/useRaisim", useRaisim);
 
   // legged robot interface
-  LeggedRobotInterface leggedRobotInterface(configName, targetCommandFile, urdf::parseURDFFile(descriptionFile));
+  LeggedRobotInterface leggedRobotInterface(taskFile, urdfFile, referenceFile);
 
   // gait receiver
   auto gaitReceiverPtr =
@@ -55,22 +53,21 @@ int main(int argc, char** argv) {
   std::shared_ptr<MpcnetDefinitionBase> mpcnetDefinitionPtr(new LeggedRobotMpcnetDefinition(leggedRobotInterface.getInitialState()));
   std::unique_ptr<MpcnetControllerBase> mpcnetControllerPtr(
       new MpcnetOnnxController(mpcnetDefinitionPtr, rosReferenceManagerPtr, onnxEnvironmentPtr));
-  mpcnetControllerPtr->loadPolicyModel(policyFilePath);
+  mpcnetControllerPtr->loadPolicyModel(policyFile);
 
   // rollout
   std::unique_ptr<RolloutBase> rolloutPtr;
   raisim::HeightMap* terrainPtr = nullptr;
   std::unique_ptr<RaisimHeightmapRosConverter> heightmapPub;
   std::unique_ptr<LeggedRobotRaisimConversions> conversions;
-  if (raisim) {
+  if (useRaisim) {
     conversions.reset(new LeggedRobotRaisimConversions(leggedRobotInterface.getPinocchioInterface(),
                                                        leggedRobotInterface.getCentroidalModelInfo(),
                                                        leggedRobotInterface.getInitialState()));
-    RaisimRolloutSettings raisimRolloutSettings(ros::package::getPath("ocs2_legged_robot_raisim") + "/config/raisim.info", "rollout", true);
-    conversions->loadSettings(ros::package::getPath("ocs2_legged_robot_raisim") + "/config/raisim.info", "rollout", true);
+    RaisimRolloutSettings raisimRolloutSettings(raisimFile, "rollout", true);
+    conversions->loadSettings(raisimFile, "rollout", true);
     rolloutPtr.reset(new RaisimRollout(
-        ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/urdf/anymal.urdf",
-        ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/meshes",
+        urdfFile, resourcePath,
         [&](const vector_t& state, const vector_t& input) { return conversions->stateToRaisimGenCoordGenVel(state, input); },
         [&](const Eigen::VectorXd& q, const Eigen::VectorXd& dq) { return conversions->raisimGenCoordGenVelToState(q, dq); },
         [&](double time, const vector_t& input, const vector_t& state, const Eigen::VectorXd& q, const Eigen::VectorXd& dq) {
@@ -99,7 +96,7 @@ int main(int argc, char** argv) {
   PinocchioEndEffectorKinematics endEffectorKinematics(leggedRobotInterface.getPinocchioInterface(), pinocchioMapping,
                                                        leggedRobotInterface.modelSettings().contactNames3DoF);
   std::shared_ptr<LeggedRobotVisualizer> leggedRobotVisualizerPtr;
-  if (raisim) {
+  if (useRaisim) {
     leggedRobotVisualizerPtr.reset(new LeggedRobotRaisimVisualizer(
         leggedRobotInterface.getPinocchioInterface(), leggedRobotInterface.getCentroidalModelInfo(), endEffectorKinematics, nodeHandle));
     static_cast<LeggedRobotRaisimVisualizer*>(leggedRobotVisualizerPtr.get())->updateTerrain();

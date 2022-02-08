@@ -1,7 +1,6 @@
 #include "ocs2_legged_robot_mpcnet/LeggedRobotMpcnetInterface.h"
 
 #include <ros/package.h>
-#include <urdf_parser/urdf_parser.h>
 
 #include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_mpcnet/control/MpcnetOnnxController.h>
@@ -18,11 +17,12 @@ namespace legged_robot {
 LeggedRobotMpcnetInterface::LeggedRobotMpcnetInterface(size_t nDataGenerationThreads, size_t nPolicyEvaluationThreads, bool raisim) {
   // create ONNX environment
   auto onnxEnvironmentPtr = createOnnxEnvironment();
-  // path to config files
-  std::string taskFileFolderName = "mpc";
-  std::string targetCommandFile = ros::package::getPath("ocs2_legged_robot") + "/config/command/targetTrajectories.info";
-  // path to urdf file
+  // paths to files
+  std::string taskFile = ros::package::getPath("ocs2_legged_robot") + "/config/mpc/task.info";
   std::string urdfFile = ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/urdf/anymal.urdf";
+  std::string referenceFile = ros::package::getPath("ocs2_legged_robot") + "/config/command/reference.info";
+  std::string raisimFile = ros::package::getPath("ocs2_legged_robot_raisim") + "/config/raisim.info";
+  std::string resourcePath = ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/meshes";
   // set up MPC-Net rollout manager for data generation and policy evaluation
   std::vector<std::unique_ptr<MPC_BASE>> mpcPtrs;
   std::vector<std::unique_ptr<MpcnetControllerBase>> mpcnetPtrs;
@@ -35,24 +35,21 @@ LeggedRobotMpcnetInterface::LeggedRobotMpcnetInterface(size_t nDataGenerationThr
   mpcnetDefinitionPtrs.reserve(nDataGenerationThreads + nPolicyEvaluationThreads);
   referenceManagerPtrs.reserve(nDataGenerationThreads + nPolicyEvaluationThreads);
   for (int i = 0; i < (nDataGenerationThreads + nPolicyEvaluationThreads); i++) {
-    leggedRobotInterfacePtrs_.push_back(std::unique_ptr<LeggedRobotInterface>(
-        new LeggedRobotInterface(taskFileFolderName, targetCommandFile, urdf::parseURDFFile(urdfFile))));
+    leggedRobotInterfacePtrs_.push_back(std::unique_ptr<LeggedRobotInterface>(new LeggedRobotInterface(taskFile, urdfFile, referenceFile)));
     std::shared_ptr<MpcnetDefinitionBase> mpcnetDefinitionPtr(
         new LeggedRobotMpcnetDefinition(leggedRobotInterfacePtrs_[i]->getInitialState()));
     mpcPtrs.push_back(getMpc(*leggedRobotInterfacePtrs_[i]));
     mpcnetPtrs.push_back(std::unique_ptr<MpcnetControllerBase>(
         new MpcnetOnnxController(mpcnetDefinitionPtr, leggedRobotInterfacePtrs_[i]->getReferenceManagerPtr(), onnxEnvironmentPtr)));
     if (raisim) {
-      RaisimRolloutSettings raisimRolloutSettings(ros::package::getPath("ocs2_legged_robot_raisim") + "/config/raisim.info", "rollout");
+      RaisimRolloutSettings raisimRolloutSettings(raisimFile, "rollout");
       raisimRolloutSettings.portNumber_ += i;
       leggedRobotRaisimConversionsPtrs_.push_back(std::unique_ptr<LeggedRobotRaisimConversions>(new LeggedRobotRaisimConversions(
           leggedRobotInterfacePtrs_[i]->getPinocchioInterface(), leggedRobotInterfacePtrs_[i]->getCentroidalModelInfo(),
           leggedRobotInterfacePtrs_[i]->getInitialState())));
-      leggedRobotRaisimConversionsPtrs_[i]->loadSettings(ros::package::getPath("ocs2_legged_robot_raisim") + "/config/raisim.info",
-                                                         "rollout", true);
+      leggedRobotRaisimConversionsPtrs_[i]->loadSettings(raisimFile, "rollout", true);
       rolloutPtrs.push_back(std::unique_ptr<RolloutBase>(new RaisimRollout(
-          ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/urdf/anymal.urdf",
-          ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/meshes",
+          urdfFile, resourcePath,
           [&, i](const vector_t& state, const vector_t& input) {
             return leggedRobotRaisimConversionsPtrs_[i]->stateToRaisimGenCoordGenVel(state, input);
           },

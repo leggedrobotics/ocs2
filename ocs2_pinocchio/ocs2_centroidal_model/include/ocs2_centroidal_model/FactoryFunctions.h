@@ -43,15 +43,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace centroidal_model {
 
-/** Create a CentroidalModel PinocchioInterface from a URDF */
-PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath);
-PinocchioInterface createPinocchioInterface(const ::urdf::ModelInterfaceSharedPtr& urdfTree, const std::vector<std::string>& jointNames);
+/**
+ * Create a CentroidalModel PinocchioInterface from a URDF.
+ * @param [in] urdfFilePath: The absolute path to the URDF file for the robot.
+ */
+PinocchioInterface createPinocchioInterface(const std::string& urdfFilePath);
+
+/**
+ * Create a CentroidalModel PinocchioInterface from a URDF.
+ * @param [in] urdfFilePath: The absolute path to the URDF file for the robot.
+ * @param [in] jointNames: Any joint that is not listed in jointNames (a.k.a the extraneous joints) will be removed from the urdf.
+ */
+PinocchioInterface createPinocchioInterface(const std::string& urdfFilePath, const std::vector<std::string>& jointNames);
 
 /**
  * Create a scalar-typed CentroidalModelInfo.
  * @param [in] interface: Pinocchio interface
  * @param [in] type: Type of template model (SRBD or FRBD)
- * @param [in] nominalJointAngles: nominal join angles used in the SRBD model.
+ * @param [in] nominalJointAngles: nominal joint angles used in the SRBD model.
  * @param [in] threeDofContactNames: Names of end-effectors with 3 DoF contacts (force)
  * @param [in] sixDofContactNames: Names of end-effectors with 6 DoF contacts (force + torque)
  * @return CentroidalModelInfo

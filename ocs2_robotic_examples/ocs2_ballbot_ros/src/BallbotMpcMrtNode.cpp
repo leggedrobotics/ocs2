@@ -149,7 +149,7 @@ int main(int argc, char** argv) {
    * Main control loop.
    */
   ocs2::SystemObservation currentObservation = initObservation;
-  while (mpcRunning && ros::ok() && ros::master::check()) {
+  while (mpcRunning && ros::ok()) {
     ocs2::executeAndSleep(  // timed execution of the control loop
         [&]() {
           ROS_INFO_STREAM("### Current time " << currentObservation.time);

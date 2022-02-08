@@ -55,9 +55,11 @@ vector_t PinocchioCentroidalDynamics::getValue(scalar_t time, const vector_t& st
   const auto& interface = *pinocchioInterfacePtr_;
   const auto& info = mapping_.getCentroidalModelInfo();
   assert(info.stateDim == state.rows());
-  return (vector_t(info.stateDim) << getNormalizedCentroidalMomentumRate(interface, info, input),
-          mapping_.getPinocchioJointVelocity(state, input))
-      .finished();
+
+  vector_t f(info.stateDim);
+  f << getNormalizedCentroidalMomentumRate(interface, info, input), mapping_.getPinocchioJointVelocity(state, input);
+
+  return f;
 }
 
 /******************************************************************************************************/

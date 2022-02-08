@@ -247,8 +247,13 @@ void GaussNewtonDDP::getPrimalSolution(scalar_t finalTime, PrimalSolution* prima
   }
 
   auto upperBound = [](const scalar_array_t& array, scalar_t value) {
-    auto firstLargerValueIterator = std::upper_bound(array.begin(), array.end(), value);
-    return static_cast<int>(firstLargerValueIterator - array.begin());
+    const auto firstLargerValueIterator = std::upper_bound(array.cbegin(), array.cend(), value);
+    const auto diff = static_cast<int>(firstLargerValueIterator - array.begin());
+    if (firstLargerValueIterator != array.end()) {
+      return diff + 1;
+    } else {
+      return diff;
+    }
   };
 
   // fill trajectories
@@ -265,7 +270,6 @@ void GaussNewtonDDP::getPrimalSolution(scalar_t finalTime, PrimalSolution* prima
     }
     // length of the copy
     const int length = upperBound(nominalTimeTrajectoriesStock_[i], finalTime);
-
     primalSolutionPtr->timeTrajectory_.insert(primalSolutionPtr->timeTrajectory_.end(), nominalTimeTrajectoriesStock_[i].begin(),
                                               nominalTimeTrajectoriesStock_[i].begin() + length);
     primalSolutionPtr->stateTrajectory_.insert(primalSolutionPtr->stateTrajectory_.end(), nominalStateTrajectoriesStock_[i].begin(),

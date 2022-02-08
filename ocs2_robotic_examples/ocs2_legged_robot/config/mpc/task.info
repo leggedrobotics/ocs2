@@ -2,7 +2,7 @@ centroidalModelType             1      // 0: FullCentroidalDynamics, 1: Single R
   
 legged_robot_interface
 {
-  display                               false  // show the loaded parameters
+  verbose                               false  // show the loaded parameters
   useAnalyticalGradientsDynamics        false
   useAnalyticalGradientsConstraints     false
 }
@@ -26,30 +26,24 @@ swing_trajectory_config
   swingTimeScale                0.15
 }
 
-initialModeSchedule
+; multiple_shooting settings
+multiple_shooting
 {
-  modeSequence
-  {
-    [0]  STANCE
-    [1]  STANCE
-  }
-  eventTimes
-  {
-    [0]  0.5
-  }
-}
-
-defaultModeSequenceTemplate
-{
-  modeSequence
-  {
-    [0]  STANCE
-  }
-  switchingTimes
-  {
-    [0]  0.0
-    [1]  1.0
-  }
+  nThreads                              3
+  dt                                    0.015
+  sqpIteration                          1
+  deltaTol                              1e-4
+  g_max                                 1e-2
+  g_min                                 1e-6
+  inequalityConstraintMu                0.1
+  inequalityConstraintDelta             5.0
+  projectStateInputEqualityConstraints  true
+  printSolverStatistics                 true
+  printSolverStatus                     false
+  printLinesearch                       false
+  useFeedbackPolicy                     true
+  integratorType                        RK2
+  threadPriority                        50
 }
 
 ; DDP settings
@@ -73,7 +67,7 @@ ddp
   AbsTolODE                       1e-5
   RelTolODE                       1e-3
   maxNumStepsPerSecond            10000
-  timeStep                        1e-2
+  timeStep                        0.015
   backwardPassIntegratorType      ODE45
 
   constraintPenaltyInitialValue   20.0
@@ -101,7 +95,8 @@ rollout
 {
   AbsTolODE                       1e-5
   RelTolODE                       1e-3
-  timeStep                        1e-2
+  timeStep                        0.015
+  integratorType                  ODE45
   maxNumStepsPerSecond            10000
   checkNumericalStability         false
 }
@@ -121,8 +116,6 @@ mpc
 
   debugPrint                      false
   coldStart                       false
-
-  useParallelRiccatiSolver        true ; use disjoint riccati solver in multi-thread case
 
   solutionTimeWindow              -1  ; [s]
 

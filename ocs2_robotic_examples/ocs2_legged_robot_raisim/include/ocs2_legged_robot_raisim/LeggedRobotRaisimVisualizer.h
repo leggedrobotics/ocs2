@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <raisim/object/terrain/HeightMap.hpp>
 
-#include <ocs2_legged_robot/visualization/LeggedRobotVisualizer.h>
+#include <ocs2_legged_robot_ros/visualization/LeggedRobotVisualizer.h>
 
 namespace ocs2 {
 namespace legged_robot {

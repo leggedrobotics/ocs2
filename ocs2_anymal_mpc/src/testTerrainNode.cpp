@@ -61,8 +61,10 @@ int main(int argc, char* argv[]) {
   ros::WallRate rate(1.0);
   while (ros::ok() && ros::master::check()) {
     regionPublisher_.publish(toMessage(planarTerrain));
-    boundaryPublisher_.publish(convertBoundariesToRosPolygons(planarTerrain.planarRegions, planarTerrain.gridMap.getFrameId()));
-    insetPublisher_.publish(convertInsetsToRosPolygons(planarTerrain.planarRegions, planarTerrain.gridMap.getFrameId()));
+    const auto time = ros::Time::now();
+    boundaryPublisher_.publish(
+        convertBoundariesToRosPolygons(planarTerrain.planarRegions, planarTerrain.gridMap.getFrameId(), time.toNSec()));
+    insetPublisher_.publish(convertInsetsToRosPolygons(planarTerrain.planarRegions, planarTerrain.gridMap.getFrameId(), time.toNSec()));
 
     rate.sleep();
   }

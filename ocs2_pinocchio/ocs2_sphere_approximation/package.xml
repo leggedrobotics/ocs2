@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ocs2_sphere_approximation</name>
+  <version>0.0.0</version>
+  <description>The ocs2_sphere_approximation package</description>
+
+  <maintainer email="jichiu@student.ethz.ch">Jia-Ruei Chiu</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>cmake_clang_tools</build_depend>
+
+  <depend>ocs2_core</depend>
+  <depend>ocs2_robotic_tools</depend>
+  <depend>ocs2_pinocchio_interface</depend>
+  <depend>ocs2_robotic_assets</depend>
+  <depend>pinocchio</depend>
+</package>

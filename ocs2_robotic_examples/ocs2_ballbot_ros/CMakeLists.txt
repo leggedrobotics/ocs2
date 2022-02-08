@@ -110,6 +110,19 @@ target_link_libraries(ballbot_target
 )
 target_compile_options(ballbot_target PRIVATE ${OCS2_CXX_FLAGS})
 
+## Combined MPC MRT example
+add_executable(ballbot_mpc_mrt
+  src/BallbotMpcMrtNode.cpp
+  src/BallbotDummyVisualization.cpp
+  )
+add_dependencies(ballbot_mpc_mrt
+  ${catkin_EXPORTED_TARGETS}
+  )
+target_link_libraries(ballbot_mpc_mrt
+  ${catkin_LIBRARIES}
+  )
+target_compile_options(ballbot_mpc_mrt  PRIVATE ${OCS2_CXX_FLAGS})
+
 ## SQP node for ballbot
 add_executable(ballbot_sqp
   src/MultipleShootingBallbotNode.cpp

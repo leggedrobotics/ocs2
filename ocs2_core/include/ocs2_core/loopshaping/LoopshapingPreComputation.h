@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -65,9 +65,6 @@ class LoopshapingPreComputation final : public PreComputation {
   /** Precomputation evaluated for the system state and system input */
   const PreComputation& getSystemPreComputation() const { return *systemPreCompPtr_; }
 
-  /** Precomputation evaluated for the system state and filtered input */
-  const PreComputation& getFilteredSystemPreComputation() const { return *filteredSystemPreCompPtr_; }
-
  private:
   LoopshapingPreComputation(const LoopshapingPreComputation& rhs);
 
@@ -79,7 +76,6 @@ class LoopshapingPreComputation final : public PreComputation {
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
 
   std::unique_ptr<PreComputation> systemPreCompPtr_;
-  std::unique_ptr<PreComputation> filteredSystemPreCompPtr_;
 };
 
 }  // namespace ocs2

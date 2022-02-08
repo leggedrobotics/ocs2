@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -61,11 +61,15 @@ void LoopshapingInitializer::compute(scalar_t time, const vector_t& state, scala
   const vector_t systemState = loopshapingDefinition_->getSystemState(state);
   systembase_->compute(time, systemState, nextTime, systemInput, systemNextState);
 
-  // filter state-input initializer
-  vector_t equilibriumFilterNextState, equilibriumFilterInput;
-  loopshapingDefinition_->getFilterEquilibrium(systemInput, equilibriumFilterNextState, equilibriumFilterInput);
-  input = loopshapingDefinition_->concatenateSystemAndFilterInput(systemInput, equilibriumFilterInput);
-  nextState = loopshapingDefinition_->concatenateSystemAndFilterState(systemNextState, equilibriumFilterNextState);
+  // Compute input
+  vector_t equilibriumFilterInput;
+  const vector_t filterState = loopshapingDefinition_->getFilterState(state);
+  loopshapingDefinition_->getFilterEquilibriumGivenState(systemInput, filterState, equilibriumFilterInput);
+  input = loopshapingDefinition_->augmentedSystemInput(systemInput, equilibriumFilterInput);
+
+  // Next filter state
+  vector_t filterNextState = filterState + (nextTime - time) * loopshapingDefinition_->filterFlowMap(filterState, input);
+  nextState = loopshapingDefinition_->concatenateSystemAndFilterState(systemNextState, filterNextState);
 }
 
 }  // namespace ocs2

@@ -7,4 +7,7 @@ motionList
     [4] mocap_20211126
     [5] motion_v5
     [6] motion_v6
+    [7] recorded
+    [8] motion_v6_recorded
+    [9] walking_inplace_recorded
 }

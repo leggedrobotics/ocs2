@@ -28,45 +28,24 @@
 namespace switched_model {
 
 QuadrupedInterface::QuadrupedInterface(const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel,
-                                       const com_model_t& comModel, const ad_com_model_t& adComModel, const std::string& pathToConfigFolder)
+                                       const com_model_t& comModel, const ad_com_model_t& adComModel, Settings settings)
 
-    : kinematicModelPtr_(kinematicModel.clone()),
+    : settings_(std::move(settings)),
+      kinematicModelPtr_(kinematicModel.clone()),
       adKinematicModelPtr_(adKinematicModel.clone()),
       comModelPtr_(comModel.clone()),
       adComModelPtr_(adComModel.clone()),
       problemPtr_(new ocs2::OptimalControlProblem) {
-  loadSettings(pathToConfigFolder + "/task.info");
-}
+  std::unique_ptr<GaitSchedule> gaitSchedule(new GaitSchedule(0.0, settings_.defaultGait_));
 
-void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
-  rolloutSettings_ = ocs2::rollout::loadSettings(pathToConfigFile, "rollout");
-  modelSettings_ = loadModelSettings(pathToConfigFile);
-  trackingWeights_ = loadWeightsFromFile(pathToConfigFile, "tracking_cost_weights");
+  std::unique_ptr<SwingTrajectoryPlanner> swingTrajectoryPlanner(
+      new SwingTrajectoryPlanner(settings_.swingTrajectoryPlannerSettings_, getKinematicModel()));
 
-  // initial state of the switched system
-  Eigen::Matrix<scalar_t, RBD_STATE_DIM, 1> initRbdState;
-  ocs2::loadData::loadEigenMatrix(pathToConfigFile, "initialRobotState", initRbdState);
-  initialState_ = estimateComkinoModelState(initRbdState);
-
-  // Gait Schedule
-  const auto defaultModeSequenceTemplate = loadModeSequenceTemplate(pathToConfigFile, "defaultModeSequenceTemplate", false);
-  const auto defaultGait = toGait(defaultModeSequenceTemplate);
-  std::unique_ptr<GaitSchedule> gaitSchedule(new GaitSchedule(0.0, defaultGait));
-
-  // Swing trajectory planner
-  const auto swingTrajectorySettings = loadSwingTrajectorySettings(pathToConfigFile);
-  std::unique_ptr<SwingTrajectoryPlanner> swingTrajectoryPlanner(new SwingTrajectoryPlanner(swingTrajectorySettings, getKinematicModel()));
-
-  // Terrain
-  auto loadedTerrain = loadTerrainPlane(pathToConfigFile, true);
-  std::unique_ptr<TerrainModel> terrainModel(new PlanarTerrainModel(std::move(loadedTerrain)));
+  std::unique_ptr<TerrainModel> terrainModel(new PlanarTerrainModel(std::move(settings_.terrainPlane_)));
 
   // Mode schedule manager
   modeScheduleManagerPtr_ = std::make_shared<SwitchedModelModeScheduleManager>(std::move(gaitSchedule), std::move(swingTrajectoryPlanner),
                                                                                std::move(terrainModel));
-
-  // Display
-  std::cerr << "\nDefault Modes Sequence Template: \n" << defaultModeSequenceTemplate << std::endl;
 }
 
 std::unique_ptr<ocs2::PreComputation> QuadrupedInterface::createPrecomputation() const {
@@ -132,6 +111,30 @@ std::unique_ptr<ocs2::StateInputCost> QuadrupedInterface::createFrictionConeCost
       new ocs2::RelaxedBarrierPenalty({modelSettings().muFrictionCone_, modelSettings().deltaFrictionCone_}));
   return std::unique_ptr<ocs2::StateInputCost>(
       new FrictionConeCost(std::move(frictionConfig), *getSwitchedModelModeScheduleManagerPtr(), std::move(penalty)));
+}
+
+QuadrupedInterface::Settings loadQuadrupedSettings(const std::string& pathToConfigFile) {
+  QuadrupedInterface::Settings settings;
+  settings.rolloutSettings_ = ocs2::rollout::loadSettings(pathToConfigFile, "rollout");
+  settings.modelSettings_ = loadModelSettings(pathToConfigFile);
+  settings.trackingWeights_ = loadWeightsFromFile(pathToConfigFile, "tracking_cost_weights");
+
+  // initial state of the switched system
+  Eigen::Matrix<scalar_t, RBD_STATE_DIM, 1> initRbdState;
+  ocs2::loadData::loadEigenMatrix(pathToConfigFile, "initialRobotState", initRbdState);
+  settings.initialState_ = estimateComkinoModelState(initRbdState);
+
+  // Gait Schedule
+  const auto defaultModeSequenceTemplate = loadModeSequenceTemplate(pathToConfigFile, "defaultModeSequenceTemplate", false);
+  settings.defaultGait_ = toGait(defaultModeSequenceTemplate);
+
+  // Swing trajectory planner
+  settings.swingTrajectoryPlannerSettings_ = loadSwingTrajectorySettings(pathToConfigFile);
+
+  // Terrain
+  settings.terrainPlane_ = loadTerrainPlane(pathToConfigFile, true);
+
+  return settings;
 }
 
 }  // namespace switched_model

@@ -43,9 +43,6 @@ class QuadrupedLoopshapingInterface : public ocs2::LoopshapingRobotInterface {
   /** Gets the loaded initial state */
   const vector_t& getInitialState() const { return initialState_; }
 
-  /** Gets the loaded initial partition times */
-  const scalar_array_t& getInitialPartitionTimes() const { return getQuadrupedInterface().getInitialPartitionTimes(); }
-
   /** Access to model settings */
   const switched_model::ModelSettings& modelSettings() const { return getQuadrupedInterface().modelSettings(); };
 

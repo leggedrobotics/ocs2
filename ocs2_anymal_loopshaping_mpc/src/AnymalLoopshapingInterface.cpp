@@ -12,10 +12,14 @@ namespace anymal {
 
 std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAnymalLoopshapingInterface(AnymalModel model,
                                                                                                          const std::string& configFolder) {
-  auto quadrupedInterface = getAnymalInterface(model, configFolder);
+  return getAnymalLoopshapingInterface(model, switched_model::loadQuadrupedSettings(configFolder + "/task.info"),
+                                       ocs2::loopshaping_property_tree::load(configFolder + "/loopshaping.info"));
+}
 
-  // load loopshaping
-  auto loopshapingDefinition = ocs2::loopshaping_property_tree::load(configFolder + "/loopshaping.info");
+std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAnymalLoopshapingInterface(
+    AnymalModel model, switched_model::QuadrupedInterface::Settings settings,
+    std::shared_ptr<ocs2::LoopshapingDefinition> loopshapingDefinition) {
+  auto quadrupedInterface = getAnymalInterface(model, std::move(settings));
   loopshapingDefinition->costMatrix() = quadrupedInterface->nominalCostApproximation().dfduu;
   loopshapingDefinition->print();
 

@@ -12,6 +12,9 @@ namespace anymal {
 
 std::unique_ptr<switched_model::QuadrupedInterface> getAnymalInterface(AnymalModel model, const std::string& taskFolder);
 
+std::unique_ptr<switched_model::QuadrupedInterface> getAnymalInterface(AnymalModel model,
+                                                                       switched_model::QuadrupedInterface::Settings settings);
+
 std::string getConfigFolder(const std::string& configName);
 
 std::string getTaskFilePath(const std::string& configName);

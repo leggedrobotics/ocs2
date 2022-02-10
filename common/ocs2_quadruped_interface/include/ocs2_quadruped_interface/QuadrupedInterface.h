@@ -35,16 +35,26 @@ class QuadrupedInterface : public ocs2::RobotInterface {
   using synchronized_module_t = ocs2::SolverSynchronizedModule;
   using synchronized_module_ptr_array_t = std::vector<std::shared_ptr<synchronized_module_t>>;
 
+  struct Settings {
+    ocs2::rollout::Settings rolloutSettings_;
+    ModelSettings modelSettings_;
+    MotionTrackingCost::Weights trackingWeights_;
+    SwingTrajectoryPlannerSettings swingTrajectoryPlannerSettings_;
+    TerrainPlane terrainPlane_;
+    state_vector_t initialState_;
+    Gait defaultGait_;
+  };
+
   /**
    * Constructor
    * @param kinematicModel : Kinematics model
    * @param adKinematicModel : Kinematics model templated on the auto-differentiation scalar
    * @param comModel : Center of mass model
    * @param adComModel : Center of mass model templated on the auto-differentiation scalar
-   * @param pathToConfigFolder : Reads settings from the task.info in this folder
+   * @param settings : settomgs
    */
   QuadrupedInterface(const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel, const com_model_t& comModel,
-                     const ad_com_model_t& adComModel, const std::string& pathToConfigFolder);
+                     const ad_com_model_t& adComModel, Settings settings);
 
   /** Destructor */
   ~QuadrupedInterface() override = default;
@@ -66,20 +76,17 @@ class QuadrupedInterface : public ocs2::RobotInterface {
   const ad_com_model_t& getComModelAd() const { return *adComModelPtr_; }
 
   /** Gets the loaded initial state */
-  state_vector_t& getInitialState() { return initialState_; }
-  const state_vector_t& getInitialState() const { return initialState_; }
-
-  /** Gets the loaded initial partition times */
-  const scalar_array_t& getInitialPartitionTimes() const { return partitioningTimes_; }
+  state_vector_t& getInitialState() { return settings_.initialState_; }
+  const state_vector_t& getInitialState() const { return settings_.initialState_; }
 
   /** Access to rollout settings */
-  const ocs2::rollout::Settings& rolloutSettings() const { return rolloutSettings_; }
+  const ocs2::rollout::Settings& rolloutSettings() const { return settings_.rolloutSettings_; }
 
   /** Access to model settings */
-  const ModelSettings& modelSettings() const { return modelSettings_; };
+  const ModelSettings& modelSettings() const { return settings_.modelSettings_; };
 
   /** Access to cost settings */
-  const MotionTrackingCost::Weights& costSettings() const { return trackingWeights_; };
+  const MotionTrackingCost::Weights& costSettings() const { return settings_.trackingWeights_; };
 
   /** Gets the rollout class */
   virtual const ocs2::RolloutBase& getRollout() const = 0;
@@ -107,21 +114,15 @@ class QuadrupedInterface : public ocs2::RobotInterface {
   std::unique_ptr<ocs2::StateInputCost> createFrictionConeCost() const;
 
  private:
-  /** Load the general quadruped settings from file. */
-  void loadSettings(const std::string& pathToConfigFile);
-
-  ocs2::rollout::Settings rolloutSettings_;
-  ModelSettings modelSettings_;
-  MotionTrackingCost::Weights trackingWeights_;
-
+  Settings settings_;
   std::unique_ptr<kinematic_model_t> kinematicModelPtr_;
   std::unique_ptr<ad_kinematic_model_t> adKinematicModelPtr_;
   std::unique_ptr<com_model_t> comModelPtr_;
   std::unique_ptr<ad_com_model_t> adComModelPtr_;
   std::shared_ptr<SwitchedModelModeScheduleManager> modeScheduleManagerPtr_;
-
-  state_vector_t initialState_;
-  scalar_array_t partitioningTimes_;
 };
+
+/** Load the general quadruped settings from file. */
+QuadrupedInterface::Settings loadQuadrupedSettings(const std::string& pathToConfigFile);
 
 }  // end of namespace switched_model

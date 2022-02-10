@@ -14,11 +14,8 @@ namespace switched_model {
 
 QuadrupedPointfootInterface::QuadrupedPointfootInterface(const kinematic_model_t& kinematicModel,
                                                          const ad_kinematic_model_t& adKinematicModel, const com_model_t& comModel,
-                                                         const ad_com_model_t& adComModel, const std::string& pathToConfigFolder)
-    : QuadrupedInterface(kinematicModel, adKinematicModel, comModel, adComModel, pathToConfigFolder) {
-  const auto& settings = modelSettings();
-  const auto& costWeights = costSettings();
-
+                                                         const ad_com_model_t& adComModel, Settings settings)
+    : QuadrupedInterface(kinematicModel, adKinematicModel, comModel, adComModel, std::move(settings)) {
   // nominal values
   const auto stanceFlags = switched_model::constantFeetArray(true);
   const auto uSystemForWeightCompensation = weightCompensatingInputs(getComModel(), stanceFlags, switched_model::vector3_t::Zero());

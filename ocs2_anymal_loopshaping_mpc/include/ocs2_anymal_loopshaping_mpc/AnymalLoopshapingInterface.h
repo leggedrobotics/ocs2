@@ -12,6 +12,10 @@ namespace anymal {
 std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAnymalLoopshapingInterface(AnymalModel model,
                                                                                                          const std::string& configFolder);
 
+std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAnymalLoopshapingInterface(
+    AnymalModel model, switched_model::QuadrupedInterface::Settings settings,
+    std::shared_ptr<ocs2::LoopshapingDefinition> loopshapingDefinition);
+
 std::string getConfigFolderLoopshaping(const std::string& configName);
 
 std::string getTaskFilePathLoopshaping(const std::string& configName);

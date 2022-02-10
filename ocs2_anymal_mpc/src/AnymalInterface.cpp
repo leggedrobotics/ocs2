@@ -14,6 +14,11 @@ namespace anymal {
 std::unique_ptr<switched_model::QuadrupedInterface> getAnymalInterface(AnymalModel model, const std::string& taskFolder) {
   std::cerr << "Loading task file from: " << taskFolder << std::endl;
 
+  return getAnymalInterface(model, switched_model::loadQuadrupedSettings(taskFolder + "/task.info"));
+}
+
+std::unique_ptr<switched_model::QuadrupedInterface> getAnymalInterface(AnymalModel model,
+                                                                       switched_model::QuadrupedInterface::Settings settings) {
   auto kin = getAnymalKinematics(model);
   auto kinAd = getAnymalKinematicsAd(model);
   auto com = getAnymalComModel(model);
@@ -25,11 +30,11 @@ std::unique_ptr<switched_model::QuadrupedInterface> getAnymalInterface(AnymalMod
     case AnymalModel::Chimera:
     case AnymalModel::Camel:
       return std::unique_ptr<switched_model::QuadrupedInterface>(
-          new switched_model::QuadrupedPointfootInterface(*kin, *kinAd, *com, *comAd, taskFolder));
+          new switched_model::QuadrupedPointfootInterface(*kin, *kinAd, *com, *comAd, std::move(settings)));
     case AnymalModel::Wheels:
     case AnymalModel::WheelsChimera:
       return std::unique_ptr<switched_model::QuadrupedInterface>(
-          new switched_model::QuadrupedWheeledInterface(*kin, *kinAd, *com, *comAd, taskFolder));
+          new switched_model::QuadrupedWheeledInterface(*kin, *kinAd, *com, *comAd, std::move(settings)));
     default:
       throw std::runtime_error("[getAnymalInterface] unkown model");
   }

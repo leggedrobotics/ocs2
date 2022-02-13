@@ -4,10 +4,12 @@
   <version>0.0.0</version>
   <description>The ocs2_ballbot_mpcnet package</description>
 
+  <author email="areske@ethz.ch">Alexander Reske</author>
+
   <maintainer email="farbod.farshidian@gmail.com">Farbod Farshidian</maintainer>
   <maintainer email="areske@ethz.ch">Alexander Reske</maintainer>
 
-  <license>TODO</license>
+  <license>BSD-3</license>
 
   <buildtool_depend>catkin</buildtool_depend>
 

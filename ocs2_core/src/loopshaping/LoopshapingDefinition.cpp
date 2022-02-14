@@ -63,20 +63,20 @@ vector_t LoopshapingDefinition::getSystemInput(const vector_t& state, const vect
 
 void LoopshapingDefinition::getSystemInput(const vector_t& state, const vector_t& input, vector_t& systemInput) const {
   switch (loopshapingType_) {
-    case LoopshapingType::outputpattern:
+    case LoopshapingType::outputpattern: {
       systemInput = input;
-      return;
+      break;
+    }
     case LoopshapingType::eliminatepattern: {
       if (diagonal_) {
         systemInput = filter_.getCdiag().diagonal().cwiseProduct(state.tail(filter_.getNumStates())) +
                       filter_.getDdiag().diagonal().cwiseProduct(input);
-        return;
       } else {
         // u = C*x + D*v. Use noalias to prevent temporaries.
         systemInput.noalias() = filter_.getC() * state.tail(filter_.getNumStates());
         systemInput.noalias() += filter_.getD() * input;
-        return;
       }
+      break;
     }
     default:
       throw std::runtime_error("[LoopshapingDefinition::getSystemInput] invalid loopshaping type");
@@ -91,19 +91,20 @@ vector_t LoopshapingDefinition::getFilteredInput(const vector_t& state, const ve
 
 void LoopshapingDefinition::getFilteredInput(const vector_t& state, const vector_t& input, vector_t& filteredInput) const {
   switch (loopshapingType_) {
-    case LoopshapingType::outputpattern:
+    case LoopshapingType::outputpattern: {
       if (diagonal_) {
         filteredInput = filter_.getCdiag().diagonal().cwiseProduct(state.tail(filter_.getNumStates())) +
                         filter_.getDdiag().diagonal().cwiseProduct(input);
-        return;
       } else {
         filteredInput.noalias() = filter_.getC() * state.tail(filter_.getNumStates());
         filteredInput.noalias() += filter_.getD() * input;
-        return;
       }
-    case LoopshapingType::eliminatepattern:
+      break;
+    }
+    case LoopshapingType::eliminatepattern: {
       filteredInput = input;
-      return;
+      break;
+    }
     default:
       throw std::runtime_error("[LoopshapingDefinition::getFilteredInput] invalid loopshaping type");
   }

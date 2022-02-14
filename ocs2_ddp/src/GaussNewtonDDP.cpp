@@ -467,24 +467,20 @@ scalar_t GaussNewtonDDP::rolloutInitialTrajectory(PrimalDataContainer& primalDat
   auto& postEventIndices = primalData.primalSolution.postEventIndices_;
 
   // Find until where we have a controller available for the rollout
-  scalar_t controllerAvailableTill = controller->empty() ? initTime_ : static_cast<LinearController*>(controller)->timeStamp_.back();
+  const scalar_t controllerAvailableTill = controller->empty() ? initTime_ : static_cast<LinearController*>(controller)->timeStamp_.back();
 
   if (ddpSettings_.debugPrintRollout_) {
     std::cerr << "[GaussNewtonDDP::rolloutInitialTrajectory] for t = [" << initTime_ << ", " << finalTime_ << "]\n"
               << "\tcontroller available till t = " << controllerAvailableTill << "\n";
   }
 
-  vector_t xCurrent = initState_;
-  // Start and end of rollout segment
-  const scalar_t t0 = initTime_;
-  const scalar_t tf = finalTime_;
-
   // Divide the rollout segment in controller rollout and operating points
-  const std::pair<scalar_t, scalar_t> controllerRolloutFromTo{t0, std::max(t0, std::min(controllerAvailableTill, tf))};
-  const std::pair<scalar_t, scalar_t> operatingPointsFromTo{controllerRolloutFromTo.second, tf};
+  const std::pair<scalar_t, scalar_t> controllerRolloutFromTo{initTime_,
+                                                              std::max(initTime_, std::min(controllerAvailableTill, finalTime_))};
+  const std::pair<scalar_t, scalar_t> operatingPointsFromTo{controllerRolloutFromTo.second, finalTime_};
 
   if (ddpSettings_.debugPrintRollout_) {
-    std::cerr << "[GaussNewtonDDP::rolloutInitialTrajectory] for t = [" << t0 << ", " << tf << "]\n";
+    std::cerr << "[GaussNewtonDDP::rolloutInitialTrajectory] for t = [" << initTime_ << ", " << finalTime_ << "]\n";
     if (controllerRolloutFromTo.first < controllerRolloutFromTo.second) {
       std::cerr << "\twill use controller for t = [" << controllerRolloutFromTo.first << ", " << controllerRolloutFromTo.second << "]\n";
     }
@@ -494,6 +490,7 @@ scalar_t GaussNewtonDDP::rolloutInitialTrajectory(PrimalDataContainer& primalDat
   }
 
   // Rollout with controller
+  vector_t xCurrent = initState_;
   if (controllerRolloutFromTo.first < controllerRolloutFromTo.second) {
     xCurrent = dynamicsForwardRolloutPtrStock_[workerIndex]->run(controllerRolloutFromTo.first, xCurrent, controllerRolloutFromTo.second,
                                                                  controller, eventTimes, timeTrajectory, postEventIndices, stateTrajectory,
@@ -544,7 +541,7 @@ scalar_t GaussNewtonDDP::rolloutInitialTrajectory(PrimalDataContainer& primalDat
     RolloutBase::display(timeTrajectory, postEventIndices, stateTrajectory, &inputTrajectory);
   }
   // average time step
-  return (controllerAvailableTill - initTime_) / static_cast<scalar_t>(timeTrajectory.size());
+  return (std::min(controllerAvailableTill, finalTime_) - initTime_) / static_cast<scalar_t>(timeTrajectory.size());
 }
 
 /******************************************************************************************************/
@@ -616,37 +613,20 @@ scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const ScalarFunctio
 
   // testing the numerical stability of the Riccati equations
   if (ddpSettings_.checkNumericalStability_) {
-    int N = nominalPrimalData_.primalSolution.timeTrajectory_.size();
+    const int N = nominalPrimalData_.primalSolution.timeTrajectory_.size();
     for (int k = N - 1; k >= 0; k--) {
-      try {
-        const auto& valueFunction = dualData_.valueFunctionTrajectory[k];
-        if (!valueFunction.dfdxx.allFinite()) {
-          throw std::runtime_error("Sm is unstable.");
+      const auto errorDescription = checkBeingPSD(dualData_.valueFunctionTrajectory[k], "ValueFunction");
+      if (!errorDescription.empty()) {
+        std::stringstream throwMsg;
+        throwMsg << "at time " << nominalPrimalData_.primalSolution.timeTrajectory_[k] << ":\n";
+        throwMsg << errorDescription << "The error takes place in the following segment of trajectory:\n";
+        for (int kp = k; kp < std::min(k + 10, N); kp++) {
+          throwMsg << ">>> time: " << nominalPrimalData_.primalSolution.timeTrajectory_[kp] << "\n";
+          throwMsg << "|| Sm ||:\t" << dualData_.valueFunctionTrajectory[kp].dfdxx.norm() << "\n";
+          throwMsg << "|| Sv ||:\t" << dualData_.valueFunctionTrajectory[kp].dfdx.transpose().norm() << "\n";
+          throwMsg << "   s    :\t" << dualData_.valueFunctionTrajectory[kp].f << "\n";
         }
-        if (LinearAlgebra::eigenvalues(valueFunction.dfdxx).real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
-          throw std::runtime_error("Sm matrix is not positive semi-definite. It's smallest eigenvalue is " +
-                                   std::to_string(LinearAlgebra::eigenvalues(valueFunction.dfdxx).real().minCoeff()) + ".");
-        }
-        if (!valueFunction.dfdx.allFinite()) {
-          throw std::runtime_error("Sv is unstable.");
-        }
-        if (std::isnan(valueFunction.f)) {
-          throw std::runtime_error("s is unstable");
-        }
-      } catch (const std::exception& error) {
-        std::cerr << "what(): " << error.what() << " at time " << nominalPrimalData_.primalSolution.timeTrajectory_[k] << " [sec].\n";
-        for (int kp = k; kp < k + 10; kp++) {
-          if (kp >= N) {
-            continue;
-          }
-          std::cerr << "Sm[" << nominalPrimalData_.primalSolution.timeTrajectory_[kp] << "]:\n"
-                    << dualData_.valueFunctionTrajectory[kp].dfdxx.norm() << "\n";
-          std::cerr << "Sv[" << nominalPrimalData_.primalSolution.timeTrajectory_[kp] << "]:\t"
-                    << dualData_.valueFunctionTrajectory[kp].dfdx.transpose().norm() << "\n";
-          std::cerr << "s[" << nominalPrimalData_.primalSolution.timeTrajectory_[kp] << "]:\t" << dualData_.valueFunctionTrajectory[kp].f
-                    << "\n";
-        }
-        throw;
+        throw std::runtime_error(throwMsg.str());
       }
     }  // end of k loop
   }
@@ -844,13 +824,6 @@ void GaussNewtonDDP::computeProjections(const matrix_t& Hm, const matrix_t& Dm, 
     constraintNullProjector = HmInvUmUmT;
 
   } else {
-    // check numerics
-    if (ddpSettings_.checkNumericalStability_) {
-      if (LinearAlgebra::rank(Dm) != Dm.rows()) {
-        std::string msg = ">>> WARNING: The state-input constraints are rank deficient!";
-        this->printString(msg);
-      }
-    }
     // constraint projectors are obtained at once
     matrix_t DmDaggerTHmDmDaggerUUT;
     ocs2::LinearAlgebra::computeConstraintProjection(Dm, HmInvUmUmT, constraintRangeProjector, DmDaggerTHmDmDaggerUUT,
@@ -861,7 +834,7 @@ void GaussNewtonDDP::computeProjections(const matrix_t& Hm, const matrix_t& Dm, 
   if (ddpSettings_.checkNumericalStability_) {
     matrix_t HmProjected = constraintNullProjector.transpose() * Hm * constraintNullProjector;
     const int nullSpaceDim = Hm.rows() - Dm.rows();
-    if (!HmProjected.isApprox(matrix_t::Identity(nullSpaceDim, nullSpaceDim))) {
+    if (!HmProjected.isApprox(matrix_t::Identity(nullSpaceDim, nullSpaceDim), 1e-6)) {
       std::cerr << "HmProjected:\n" << HmProjected << "\n";
       throw std::runtime_error("HmProjected should be identity!");
     }

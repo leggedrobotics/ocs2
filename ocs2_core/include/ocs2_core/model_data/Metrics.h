@@ -41,6 +41,14 @@ struct Metrics {
   vector_t constraint;
 };
 
+/** A const reference view to Metrics. This is useful for having an array of references to Metrics. */
+struct MetricsConstRef {
+  MetricsConstRef(const Metrics& metricsArg) : penalty(metricsArg.penalty), constraint(metricsArg.constraint) {}
+
+  const scalar_t& penalty;
+  const vector_t& constraint;
+};
+
 struct MetricsCollection {
   // Cost
   scalar_t cost;

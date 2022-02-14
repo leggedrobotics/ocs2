@@ -39,8 +39,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_oc/oc_data/DualSolution.h>
 #include <ocs2_oc/oc_data/PrimalSolution.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
 #include <ocs2_oc/synchronized_module/ReferenceManagerInterface.h>
+#include <ocs2_oc/synchronized_module/SolverObserverModule.h>
 #include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 
 namespace ocs2 {
@@ -121,6 +123,19 @@ class SolverBase {
   }
 
   /**
+   * Adds one observer to the vector of modules that observe solver's dual solution and optimized metrics.
+   * @note: These observer can slow down the MPC. Only employ them during debugging and remove them for deployment.
+   */
+  void addObserverModule(std::unique_ptr<SolverObserverModule> observerModule) { observerModules_.push_back(std::move(observerModule)); }
+
+  /**
+   * @brief Returns a const reference to the definition of optimal control problem.
+   *
+   * @return The problem definition.
+   */
+  virtual const OptimalControlProblem& getOptimalControlProblem() const = 0;
+
+  /**
    * Returns the cost, merit function and ISEs of constraints for the latest optimized trajectory.
    *
    * @return PerformanceIndex of the last optimized trajectory.
@@ -170,6 +185,13 @@ class SolverBase {
    * @return: The dual problem's solution.
    */
   virtual const DualSolution& getDualSolution() const = 0;
+
+  /**
+   * @brief Returns the optimized value of the Metrics.
+   *
+   * @return: The solution's metrics.
+   */
+  virtual const ProblemMetrics& getSolutionMetrics() const = 0;
 
   /**
    * Calculates the value function quadratic approximation at the given time and state.
@@ -234,6 +256,7 @@ class SolverBase {
   mutable std::mutex outputDisplayGuardMutex_;
   std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr_;  // this pointer cannot be nullptr
   std::vector<std::shared_ptr<SolverSynchronizedModule>> synchronizedModules_;
+  std::vector<std::unique_ptr<SolverObserverModule>> observerModules_;
 };
 
 }  // namespace ocs2

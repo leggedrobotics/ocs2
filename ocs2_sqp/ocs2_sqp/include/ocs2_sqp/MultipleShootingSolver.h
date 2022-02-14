@@ -69,7 +69,13 @@ class MultipleShootingSolver : public SolverBase {
     throw std::runtime_error("[MultipleShootingSolver] getDualSolution() not available yet.");
   }
 
+  const ProblemMetrics& getSolutionMetrics() const override {
+    throw std::runtime_error("[MultipleShootingSolver] getSolutionMetrics() not available yet.");
+  }
+
   size_t getNumIterations() const override { return totalNumIterations_; }
+
+  const OptimalControlProblem& getOptimalControlProblem() const override { return ocpDefinitions_.front(); }
 
   const PerformanceIndex& getPerformanceIndeces() const override { return getIterationsLog().back(); };
 

@@ -50,6 +50,14 @@ struct Multiplier {
   vector_t lagrangian;
 };
 
+/** A const reference view to Multiplier. This is useful for having an array of references to Multipliers. */
+struct MultiplierConstRef {
+  MultiplierConstRef(const Multiplier& multiplierArg) : penalty(multiplierArg.penalty), lagrangian(multiplierArg.lagrangian) {}
+
+  const scalar_t& penalty;
+  const vector_t& lagrangian;
+};
+
 /**
  * The collection of Multiplier structure for all possible constraint terms in a particular time point.
  * stateEq : An array of state equality constraint terms.

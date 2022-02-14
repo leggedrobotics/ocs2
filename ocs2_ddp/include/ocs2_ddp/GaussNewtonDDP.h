@@ -81,13 +81,17 @@ class GaussNewtonDDP : public SolverBase {
 
   scalar_t getFinalTime() const override { return finalTime_; }
 
+  const OptimalControlProblem& getOptimalControlProblem() const override { return optimalControlProblemStock_.front(); }
+
   const PerformanceIndex& getPerformanceIndeces() const override { return performanceIndex_; }
 
   const std::vector<PerformanceIndex>& getIterationsLog() const override { return performanceIndexHistory_; }
 
   void getPrimalSolution(scalar_t finalTime, PrimalSolution* primalSolutionPtr) const final;
 
-  const DualSolution& getDualSolution() const final { return optimizedDualSolution_; }
+  const DualSolution& getDualSolution() const override { return optimizedDualSolution_; }
+
+  const ProblemMetrics& getSolutionMetrics() const override { return optimizedPrimalData_.problemMetrics; }
 
   ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const override {
     return getValueFunctionImpl(time, state, optimizedPrimalData_, dualData_.valueFunctionTrajectory);
@@ -110,6 +114,7 @@ class GaussNewtonDDP : public SolverBase {
    */
   const ddp::Settings& settings() const { return ddpSettings_; }
 
+ protected:
   /**
    * Retrieve time and post event trajectories of the current partition from the entire time and post event trajectories.
    * The resulting time and event indics are normalized to start integration from back.
@@ -137,7 +142,6 @@ class GaussNewtonDDP : public SolverBase {
                                            const size_array_t& postEventIndices, scalar_array_t& normalizedTimeTrajectory,
                                            size_array_t& normalizedPostEventIndices);
 
- protected:
   /**
    * Sets up optimizer for different number of partitions.
    *

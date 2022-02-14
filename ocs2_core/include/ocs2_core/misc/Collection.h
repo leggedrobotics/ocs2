@@ -62,11 +62,20 @@ class Collection {
   /**
    * Use to modify a term.
    * @tparam Derived: derived class of base type T to cast to. Casts to the base class by default
-   * @param name: Name of the cost term to modify
+   * @param name: Name of the term to modify
    * @return A reference to the underlying term
    */
   template <typename Derived = T>
   Derived& get(const std::string& name);
+
+  /**
+   * Finds the index of the term in the stored map.
+   *
+   * @param [in] name: Name of the term.
+   * @param [out] index : Term index.
+   * @return True if the name found in the collection.
+   */
+  bool getTermIndex(const std::string& name, size_t& index) const;
 
  protected:
   /** Copy constructor */
@@ -115,6 +124,21 @@ Collection<T>::Collection(const Collection& other) : termNameMap_(other.termName
   terms_.reserve(other.terms_.size());
   for (const auto& term : other.terms_) {
     terms_.emplace_back(term->clone());
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename T>
+bool Collection<T>::getTermIndex(const std::string& name, size_t& index) const {
+  auto itr = termNameMap_.find(name);
+  if (itr != termNameMap_.cend()) {
+    index = itr->second;
+    return true;
+  } else {
+    index = termNameMap_.size();
+    return false;
   }
 }
 

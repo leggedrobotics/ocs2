@@ -113,7 +113,7 @@ CartPoleInterface::CartPoleInterface(const std::string& taskFile, const std::str
     const matrix_t C = matrix_t::Zero(numIneqConstraint, STATE_DIM);
     return std::unique_ptr<StateInputConstraint>(new LinearStateInputConstraint(e, C, D));
   };
-  problem_.inequalityLagrangianPtr->add("stateInputBounds", create(getConstraint(), getPenalty()));
+  problem_.inequalityLagrangianPtr->add("InputLimits", create(getConstraint(), getPenalty()));
 
   // Initialization
   cartPoleInitializerPtr_.reset(new DefaultInitializer(INPUT_DIM));

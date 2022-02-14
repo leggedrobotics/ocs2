@@ -93,10 +93,14 @@ void SolverBase::preRun(scalar_t initTime, const vector_t& initState, scalar_t f
 /******************************************************************************************************/
 /******************************************************************************************************/
 void SolverBase::postRun() {
-  if (!synchronizedModules_.empty()) {
+  if (!synchronizedModules_.empty() || !observerModules_.empty()) {
     const auto solution = primalSolution(getFinalTime());
     for (auto& module : synchronizedModules_) {
       module->postSolverRun(solution);
+    }
+    for (auto& observer : observerModules_) {
+      observer->extractTermMetrics(getOptimalControlProblem(), solution, getSolutionMetrics());
+      observer->extractTermMultipliers(getOptimalControlProblem(), getDualSolution());
     }
   }
 }

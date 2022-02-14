@@ -17,6 +17,8 @@ add_message_files(
     mpc_target_trajectories.msg
     controller_data.msg
     mpc_flattened_controller.msg
+    metrics.msg
+    multiplier.msg
 )
 
 add_service_files(

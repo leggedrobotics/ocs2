@@ -65,6 +65,7 @@ add_library(${PROJECT_NAME}
   src/synchronized_module/ReferenceManager.cpp
   src/synchronized_module/LoopshapingReferenceManager.cpp
   src/synchronized_module/LoopshapingSynchronizedModule.cpp
+  src/synchronized_module/SolverObserverModule.cpp
   src/trajectory_adjustment/TrajectorySpreading.cpp
 )
 target_link_libraries(${PROJECT_NAME}

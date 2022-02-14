@@ -72,7 +72,7 @@ mpc
 
 bounds_penalty_config
 {
-  scale                       2e+2
+  scale                       200
   stepSize                    0.5
 }
 

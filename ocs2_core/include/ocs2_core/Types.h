@@ -136,6 +136,14 @@ struct ScalarFunctionQuadraticApproximation {
 std::ostream& operator<<(std::ostream& out, const ScalarFunctionQuadraticApproximation& f);
 
 /**
+ * Checks that the given matrix is valid, self-adjoint, and positive semi-definite (PSD).
+ * @param[in] data: Given matrix.
+ * @param[in] dataName: The name of the data which appears in the output error message.
+ * @return The description of the error. If there was no error it would be empty;
+ */
+std::string checkBeingPSD(const matrix_t& data, const std::string& dataName);
+
+/**
  * Checks that the given quadratic approximation is valid, self-adjoint, and positive semi-definite (PSD).
  * @param[in] data: Given quadratic approximation.
  * @param[in] dataName: The name of the data which appears in the output error message.

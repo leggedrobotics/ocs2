@@ -31,6 +31,58 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+void initializeDualSolution(const OptimalControlProblem& ocp, const PrimalSolution& primalSolution, const DualSolution& cachedDualSolution,
+                            DualSolution& dualSolution) {
+  // find the time period that we can interpolate the cached dual solution
+  const auto timePeriod = std::make_pair(primalSolution.timeTrajectory_.front(), primalSolution.timeTrajectory_.back());
+  const auto interpolatableTimePeriod =
+      findInterpolatableInterval(cachedDualSolution.timeTrajectory, primalSolution.modeSchedule_.eventTimes, timePeriod);
+  const bool interpolateTillFinalTime = numerics::almost_eq(interpolatableTimePeriod.second, timePeriod.second);
+
+  // clear and set time
+  clear(dualSolution);
+  dualSolution.timeTrajectory = primalSolution.timeTrajectory_;
+  dualSolution.postEventIndices = primalSolution.postEventIndices_;
+
+  // final
+  if (interpolateTillFinalTime && !ocs2::empty(cachedDualSolution.final)) {
+    dualSolution.final = cachedDualSolution.final;
+  } else {
+    initializeFinalMultiplierCollection(ocp, primalSolution.timeTrajectory_.back(), dualSolution.final);
+  }
+
+  // pre-jumps
+  dualSolution.preJumps.resize(primalSolution.postEventIndices_.size());
+  if (!primalSolution.postEventIndices_.empty()) {
+    const auto firstEventTime = primalSolution.timeTrajectory_[primalSolution.postEventIndices_[0] - 1];
+    const auto cacheEventIndexBias =
+        getEventCounter(cachedDualSolution.timeTrajectory, cachedDualSolution.postEventIndices, firstEventTime);
+
+    for (size_t i = 0; i < primalSolution.postEventIndices_.size(); i++) {
+      const auto cachedTimeIndex = cacheEventIndexBias + i;
+      const auto& time = primalSolution.timeTrajectory_[i];
+      auto& multiplierCollection = dualSolution.preJumps[i];
+      if (cachedTimeIndex < cachedDualSolution.preJumps.size()) {
+        multiplierCollection = cachedDualSolution.preJumps[cachedTimeIndex];
+      } else {
+        initializePreJumpMultiplierCollection(ocp, time, multiplierCollection);
+      }
+    }
+  }
+
+  // intermediates
+  dualSolution.intermediates.resize(primalSolution.timeTrajectory_.size());
+  for (size_t i = 0; i < primalSolution.timeTrajectory_.size(); i++) {
+    const auto& time = primalSolution.timeTrajectory_[i];
+    auto& multiplierCollection = dualSolution.intermediates[i];
+    if (interpolatableTimePeriod.first <= time && time <= interpolatableTimePeriod.second) {
+      multiplierCollection = getIntermediateDualSolutionAtTime(cachedDualSolution, time);
+    } else {
+      initializeIntermediateMultiplierCollection(ocp, time, multiplierCollection);
+    }
+  }
+}
+
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/

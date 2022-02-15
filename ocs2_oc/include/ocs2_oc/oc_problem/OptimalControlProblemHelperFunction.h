@@ -32,9 +32,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/model_data/Metrics.h>
 #include <ocs2_core/model_data/Multiplier.h>
 
+#include "ocs2_oc/oc_data/DualSolution.h"
+#include "ocs2_oc/oc_data/PrimalSolution.h"
 #include "ocs2_oc/oc_problem/OptimalControlProblem.h"
 
 namespace ocs2 {
+
+/**
+ * Initializes the dual solution based on the cached dual solution if interpolation is allowed or
+ * the Lagrangian initialization method in ocp.
+ */
+void initializeDualSolution(const OptimalControlProblem& ocp, const PrimalSolution& primalSolution, const DualSolution& cachedDualSolution,
+                            DualSolution& dualSolution);
 
 /** Initializes final MultiplierCollection for equality and inequality Lagrangians. */
 void initializeFinalMultiplierCollection(const OptimalControlProblem& ocp, scalar_t time, MultiplierCollection& multiplierCollection);

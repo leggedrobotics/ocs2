@@ -139,7 +139,7 @@ struct Solution {
   PrimalSolution primalSolution;
   PerformanceIndex performanceIndex;
   ProblemMetrics problemMetrics;
-  std::vector<MultiplierCollection> intermediateDualSolution;
+  DualSolution dualSolution;
   scalar_t avgTimeStep;
 };
 
@@ -148,20 +148,20 @@ struct SolutionRef {
       : primalSolution(s.primalSolution),
         performanceIndex(s.performanceIndex),
         problemMetrics(s.problemMetrics),
-        intermediateDualSolution(s.intermediateDualSolution),
+        dualSolution(s.dualSolution),
         avgTimeStep(s.avgTimeStep) {}
   SolutionRef(PrimalSolution& primalSolutionArg, PerformanceIndex& performanceIndexArg, ProblemMetrics& problemMetricsArg,
-              std::vector<MultiplierCollection>& intermediateDualSolutionArg, scalar_t& avgTimeStepArg)
+              DualSolution& dualSolutionArg, scalar_t& avgTimeStepArg)
       : primalSolution(primalSolutionArg),
         performanceIndex(performanceIndexArg),
         problemMetrics(problemMetricsArg),
-        intermediateDualSolution(intermediateDualSolutionArg),
+        dualSolution(dualSolutionArg),
         avgTimeStep(avgTimeStepArg) {}
 
   PrimalSolution& primalSolution;
   PerformanceIndex& performanceIndex;
   ProblemMetrics& problemMetrics;
-  std::vector<MultiplierCollection>& intermediateDualSolution;
+  DualSolution& dualSolution;
   scalar_t& avgTimeStep;
 };
 
@@ -169,7 +169,7 @@ inline void swap(SolutionRef lhs, SolutionRef rhs) {
   lhs.primalSolution.swap(rhs.primalSolution);
   swap(lhs.performanceIndex, rhs.performanceIndex);
   swap(lhs.problemMetrics, rhs.problemMetrics);
-  swap(lhs.intermediateDualSolution, rhs.intermediateDualSolution);
+  swap(lhs.dualSolution, rhs.dualSolution);
   std::swap(lhs.avgTimeStep, rhs.avgTimeStep);
 }
 

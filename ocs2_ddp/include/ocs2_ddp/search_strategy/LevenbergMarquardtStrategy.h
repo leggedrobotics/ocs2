@@ -101,6 +101,8 @@ class LevenbergMarquardtStrategy final : public SearchStrategyBase {
   RolloutBase& rolloutRef_;
   OptimalControlProblem& optimalControlProblemRef_;
   std::function<scalar_t(PerformanceIndex)> meritFunc_;
+
+  DualSolution tempDualSolution_;
 };
 
 }  // namespace ocs2

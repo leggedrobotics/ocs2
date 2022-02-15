@@ -32,6 +32,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_ddp/DDP_HelperFunctions.h"
 #include "ocs2_ddp/HessianCorrection.h"
 
+#include <ocs2_oc/oc_problem/OptimalControlProblemHelperFunction.h>
+#include <ocs2_oc/trajectory_adjustment/TrajectorySpreadingHelperFunctions.h>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
@@ -74,12 +77,20 @@ bool LevenbergMarquardtStrategy::run(const std::pair<scalar_t, scalar_t>& timePe
     incrementController(stepLength, unoptimizedController, getLinearController(solution.primalSolution));
     solution.avgTimeStep = rolloutTrajectory(rolloutRef_, timePeriod, initState, modeSchedule, solution.primalSolution);
 
-    // re-sample dual solution
-    sampleIntermediateDualSolution(dualSolution, solution.primalSolution.timeTrajectory_, solution.intermediateDualSolution);
+    // adjust dual solution
+    const DualSolution* adjustedDualSolutionPtr = &dualSolution;
+    if (!dualSolution.timeTrajectory.empty()) {
+      const auto status = trajectorySpread(modeSchedule, solution.primalSolution.modeSchedule_, dualSolution, tempDualSolution_);
+      if (status.willTruncate || status.willPerformTrajectorySpreading) {
+        adjustedDualSolutionPtr = &tempDualSolution_;
+      }
+    }
+
+    // initialize dual solution
+    initializeDualSolution(optimalControlProblemRef_, solution.primalSolution, *adjustedDualSolutionPtr, solution.dualSolution);
 
     // compute problem metrics
-    DualSolutionConstRef dualSolutionRef(dualSolution.final, dualSolution.preJumps, solution.intermediateDualSolution);
-    computeRolloutMetrics(optimalControlProblemRef_, solution.primalSolution, dualSolutionRef, solution.problemMetrics);
+    computeRolloutMetrics(optimalControlProblemRef_, solution.primalSolution, solution.dualSolution, solution.problemMetrics);
 
     // compute performanceIndex
     solution.performanceIndex = computeRolloutPerformanceIndex(solution.primalSolution.timeTrajectory_, solution.problemMetrics);

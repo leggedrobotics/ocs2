@@ -114,6 +114,7 @@ class LineSearchStrategy final : public SearchStrategyBase {
 
   const line_search::Settings settings_;
   ThreadPool& threadPoolRef_;
+  std::vector<DualSolution> tempDualSolutions_;
   std::vector<search_strategy::Solution> workersSolution_;
   std::vector<std::reference_wrapper<RolloutBase>> rolloutRefStock_;
   std::vector<std::reference_wrapper<OptimalControlProblem>> optimalControlProblemRefStock_;

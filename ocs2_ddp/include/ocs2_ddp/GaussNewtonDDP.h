@@ -453,8 +453,6 @@ class GaussNewtonDDP : public SolverBase {
 
   void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const ControllerBase* externalControllerPtr) override;
 
-  void initializeDualSolution(const DualSolution& cachedDualSolution, const PrimalSolution& primalSolution, DualSolution& dualSolution);
-
   void updateDualSolution(const PrimalSolution& primalSolution, ProblemMetrics& problemMetrics, DualSolutionRef dualSolution);
 
  protected:
@@ -515,9 +513,6 @@ class GaussNewtonDDP : public SolverBase {
   benchmark::RepeatedTimer computeControllerTimer_;
   benchmark::RepeatedTimer searchStrategyTimer_;
 
-  benchmark::RepeatedTimer finalMultiplierTimer_;
-  benchmark::RepeatedTimer preJumpMultiplierTimer_;
-  benchmark::RepeatedTimer intermediateMultiplierTimer_;
   benchmark::RepeatedTimer totalMultiplierTimer_;
 };
 

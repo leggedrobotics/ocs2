@@ -164,15 +164,8 @@ std::string GaussNewtonDDP::getBenchmarkingInfo() const {
                << computeControllerTotal / benchmarkTotal * 100 << "%)\n";
     infoStream << "\tSearch Strategy    :\t" << searchStrategyTimer_.getAverageInMilliseconds() << " [ms] \t\t("
                << searchStrategyTotal / benchmarkTotal * 100 << "%)\n";
-    infoStream << "\tLagrangian         :\t" << totalMultiplierTimer_.getAverageInMilliseconds() << " [ms] \t\t("
+    infoStream << "\tMultiplier         :\t" << totalMultiplierTimer_.getAverageInMilliseconds() << " [ms] \t\t("
                << totalMultiplierTotal / benchmarkTotal * 100 << "%)\n\n";
-
-    infoStream << "\tFinal Lagrangian        :\t" << finalMultiplierTimer_.getAverageInMilliseconds() << " [ms] \t\t("
-               << finalMultiplierTimer_.getTotalInMilliseconds() / totalMultiplierTotal * 100 << "%)\n";
-    infoStream << "\tPreJump Lagrangian      :\t" << preJumpMultiplierTimer_.getAverageInMilliseconds() << " [ms] \t\t("
-               << preJumpMultiplierTimer_.getTotalInMilliseconds() / totalMultiplierTotal * 100 << "%)\n";
-    infoStream << "\tIntermediate Lagrangian :\t" << intermediateMultiplierTimer_.getAverageInMilliseconds() << " [ms] \t\t("
-               << intermediateMultiplierTimer_.getTotalInMilliseconds() / totalMultiplierTotal * 100 << "%)\n";
   }
   return infoStream.str();
 }
@@ -208,9 +201,6 @@ void GaussNewtonDDP::reset() {
   computeControllerTimer_.reset();
   searchStrategyTimer_.reset();
 
-  finalMultiplierTimer_.reset();
-  preJumpMultiplierTimer_.reset();
-  intermediateMultiplierTimer_.reset();
   totalMultiplierTimer_.reset();
 }
 
@@ -924,17 +914,14 @@ void GaussNewtonDDP::runSearchStrategy(scalar_t lqModelExpectedCost, const Linea
 
   // Primal solution controller is now optimized.
   scalar_t avgTimeStep;
-  std::vector<MultiplierCollection> intermediateDualSolution;
-  search_strategy::SolutionRef solution(primalData.primalSolution, performanceIndex, primalData.problemMetrics, intermediateDualSolution,
+  DualSolution tempDualSolution;
+  search_strategy::SolutionRef solution(primalData.primalSolution, performanceIndex, primalData.problemMetrics, tempDualSolution,
                                         avgTimeStep);
   const bool success = searchStrategyPtr_->run({initTime_, finalTime_}, initState_, lqModelExpectedCost, unoptimizedController,
                                                dualSolution, modeSchedule, solution);
 
   if (success) {
-    dualSolution.intermediates.swap(intermediateDualSolution);
-    dualSolution.timeTrajectory = primalData.primalSolution.timeTrajectory_;
-    dualSolution.postEventIndices = primalData.primalSolution.postEventIndices_;
-
+    ocs2::swap(dualSolution, tempDualSolution);
     avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStep;
 
   } else {  // If fail, copy the entire cache back. To keep the consistency of cached data, all cache should be left untouched.
@@ -984,94 +971,6 @@ void GaussNewtonDDP::correctInitcachedNominalTrajectories() {
   // partition points. Usually, the cached value used to start each partition are aligned with the partition points in time, so there won't
   // be problems. But sometimes, in MPC setup, horizon shifts a lot between consecutive solve that the end value of the cache is needed to
   // start the second to last partition. Here, the time is not aligned, and we have to rectify cache to match state, input dimensions.
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void GaussNewtonDDP::initializeDualSolution(const DualSolution& cachedDualSolution, const PrimalSolution& primalSolution,
-                                            DualSolution& dualSolution) {
-  // find the time that until then we can interpolate the cached dual solution
-  const auto interpolateTillTime = [&]() -> scalar_t {
-    const auto& timeTrajectory = primalSolution.timeTrajectory_;
-    const auto& cachedTimeTrajectory = cachedDualSolution.timeTrajectory;
-    const auto& eventTimes = primalSolution.modeSchedule_.eventTimes;
-
-    if (cachedTimeTrajectory.empty()) {
-      return timeTrajectory.front() - 1e-4;  // no interpolation: a bit before initial time
-    } else {
-      const auto nextEventItr = std::lower_bound(eventTimes.cbegin(), eventTimes.cend(), cachedTimeTrajectory.back());
-      return (nextEventItr != eventTimes.end()) ? std::min(*nextEventItr, timeTrajectory.back()) : timeTrajectory.back();
-    }
-  }();
-
-  // resize
-  clear(dualSolution);
-  dualSolution.preJumps.resize(primalSolution.postEventIndices_.size());
-  dualSolution.intermediates.resize(primalSolution.timeTrajectory_.size());
-
-  intermediateMultiplierTimer_.startTimer();
-  // intermediates
-  nextTaskId_ = 0;
-  nextTimeIndex_ = 0;
-  auto intermediateTask = [&]() {
-    const size_t taskId = nextTaskId_++;  // assign task ID (atomic)
-
-    int timeIndex;  // timeIndex is assigned atomically
-    while ((timeIndex = nextTimeIndex_++) < primalSolution.timeTrajectory_.size()) {
-      const auto& time = primalSolution.timeTrajectory_[timeIndex];
-      auto& multiplierCollection = dualSolution.intermediates[timeIndex];
-      if (time <= interpolateTillTime) {
-        multiplierCollection = getIntermediateDualSolutionAtTime(cachedDualSolution, time);
-      } else {
-        initializeIntermediateMultiplierCollection(optimalControlProblemStock_[taskId], time, multiplierCollection);
-      }
-    }
-  };
-  runParallel(intermediateTask, 1);
-  intermediateMultiplierTimer_.endTimer();
-
-  preJumpMultiplierTimer_.startTimer();
-  // pre-jumps
-  if (!primalSolution.postEventIndices_.empty()) {
-    const auto firstEventTime = primalSolution.timeTrajectory_[primalSolution.postEventIndices_[0] - 1];
-    const auto cacheEventIndexBias =
-        getEventCounter(cachedDualSolution.timeTrajectory, cachedDualSolution.postEventIndices, firstEventTime);
-
-    nextTaskId_ = 0;
-    nextTimeIndex_ = 0;
-    auto preJumpTask = [&]() {
-      const size_t taskId = nextTaskId_++;  // assign task ID (atomic)
-
-      int timeIndex;  // timeIndex is assigned atomically
-      while ((timeIndex = nextTimeIndex_++) < primalSolution.postEventIndices_.size()) {
-        const auto cachedTimeIndex = cacheEventIndexBias + timeIndex;
-        const auto& time = primalSolution.timeTrajectory_[timeIndex];
-        auto& multiplierCollection = dualSolution.preJumps[timeIndex];
-        if (cachedTimeIndex < cachedDualSolution.preJumps.size()) {
-          multiplierCollection = cachedDualSolution.preJumps[cachedTimeIndex];
-        } else {
-          initializePreJumpMultiplierCollection(optimalControlProblemStock_[taskId], time, multiplierCollection);
-        }
-      }
-    };
-    runParallel(preJumpTask, 1);
-  }
-  preJumpMultiplierTimer_.endTimer();
-
-  finalMultiplierTimer_.startTimer();
-  // final
-  const bool interpolateTillFinalTime = numerics::almost_eq(interpolateTillTime, primalSolution.timeTrajectory_.back());
-  if (interpolateTillFinalTime && !ocs2::empty(cachedDualSolution.final)) {
-    dualSolution.final = cachedDualSolution.final;
-  } else {
-    initializeFinalMultiplierCollection(optimalControlProblemStock_[0], primalSolution.timeTrajectory_.back(), dualSolution.final);
-  }
-
-  // time
-  dualSolution.timeTrajectory = primalSolution.timeTrajectory_;
-  dualSolution.postEventIndices = primalSolution.postEventIndices_;
-  finalMultiplierTimer_.endTimer();
 }
 
 /******************************************************************************************************/
@@ -1147,15 +1046,15 @@ void GaussNewtonDDP::runInit() {
     // swap controller used to rollout the nominal trajectories back to nominal data container.
     nominalPrimalData_.primalSolution.controllerPtr_.swap(optimizedPrimalData_.primalSolution.controllerPtr_);
 
-    totalMultiplierTimer_.startTimer();
     // adjust dual solution
+    totalMultiplierTimer_.startTimer();
     if (!optimizedDualSolution_.timeTrajectory.empty()) {
       const auto status = trajectorySpread(optimizedPrimalData_.primalSolution.modeSchedule_,
                                            nominalPrimalData_.primalSolution.modeSchedule_, optimizedDualSolution_);
     }
 
     // initialize dual solution
-    initializeDualSolution(optimizedDualSolution_, nominalPrimalData_.primalSolution, nominalDualSolution_);
+    initializeDualSolution(optimalControlProblemStock_[0], nominalPrimalData_.primalSolution, optimizedDualSolution_, nominalDualSolution_);
     totalMultiplierTimer_.endTimer();
 
     computeRolloutMetrics(optimalControlProblemStock_[taskId], nominalPrimalData_.primalSolution, nominalDualSolution_,

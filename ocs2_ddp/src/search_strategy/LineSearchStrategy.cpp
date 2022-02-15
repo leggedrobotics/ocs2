@@ -32,6 +32,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_ddp/DDP_HelperFunctions.h"
 #include "ocs2_ddp/HessianCorrection.h"
 
+#include <ocs2_oc/oc_problem/OptimalControlProblemHelperFunction.h>
+#include <ocs2_oc/trajectory_adjustment/TrajectorySpreadingHelperFunctions.h>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
@@ -88,14 +91,21 @@ void LineSearchStrategy::computeSolution(size_t taskId, scalar_t stepLength, sea
   solution.avgTimeStep = rolloutTrajectory(rollout, *lineSearchInputRef_.timePeriodPtr, *lineSearchInputRef_.initStatePtr,
                                            *lineSearchInputRef_.modeSchedulePtr, solution.primalSolution);
 
-  // re-sample dual solution
-  sampleIntermediateDualSolution(*lineSearchInputRef_.dualSolutionPtr, solution.primalSolution.timeTrajectory_,
-                                 solution.intermediateDualSolution);
+  // adjust dual solution
+  const DualSolution* adjustedDualSolutionPtr = lineSearchInputRef_.dualSolutionPtr;
+  if (!lineSearchInputRef_.dualSolutionPtr->timeTrajectory.empty()) {
+    const auto status = trajectorySpread(*lineSearchInputRef_.modeSchedulePtr, solution.primalSolution.modeSchedule_,
+                                         *lineSearchInputRef_.dualSolutionPtr, tempDualSolutions_[taskId]);
+    if (status.willTruncate || status.willPerformTrajectorySpreading) {
+      adjustedDualSolutionPtr = &tempDualSolutions_[taskId];
+    }
+  }
+
+  // initialize dual solution
+  initializeDualSolution(problem, solution.primalSolution, *adjustedDualSolutionPtr, solution.dualSolution);
 
   // compute problem metrics
-  DualSolutionConstRef dualSolutionRef(lineSearchInputRef_.dualSolutionPtr->final, lineSearchInputRef_.dualSolutionPtr->preJumps,
-                                       solution.intermediateDualSolution);
-  computeRolloutMetrics(problem, solution.primalSolution, dualSolutionRef, solution.problemMetrics);
+  computeRolloutMetrics(problem, solution.primalSolution, solution.dualSolution, solution.problemMetrics);
 
   // compute performanceIndex
   solution.performanceIndex = computeRolloutPerformanceIndex(solution.primalSolution.timeTrajectory_, solution.problemMetrics);

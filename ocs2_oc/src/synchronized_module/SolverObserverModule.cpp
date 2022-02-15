@@ -38,14 +38,14 @@ void SolverObserverModule::extractTermMetrics(const OptimalControlProblem& ocp, 
                                               const ProblemMetrics& problemMetrics) {
   // search intermediate
   if (extractIntermediateTermMetrics(ocp, termsName_, problemMetrics.intermediates, termMetricsArray_)) {
-    if (!primalSolution.timeTrajectory_.empty()) {
+    if (!primalSolution.timeTrajectory_.empty() && metricsCallback_ != nullptr) {
       metricsCallback_(primalSolution.timeTrajectory_, termMetricsArray_);
     }
   }
 
   // search pre_jump
   else if (extractPreJumpTermMetrics(ocp, termsName_, problemMetrics.preJumps, termMetricsArray_)) {
-    if (!primalSolution.postEventIndices_.empty()) {
+    if (!primalSolution.postEventIndices_.empty() && metricsCallback_ != nullptr) {
       scalar_array_t timeArray(primalSolution.postEventIndices_.size());
       std::transform(primalSolution.postEventIndices_.cbegin(), primalSolution.postEventIndices_.cend(), timeArray.begin(),
                      [&](size_t postInd) -> scalar_t { return primalSolution.timeTrajectory_[postInd - 1]; });
@@ -57,7 +57,7 @@ void SolverObserverModule::extractTermMetrics(const OptimalControlProblem& ocp, 
   else {
     const Metrics* metricsPtr = extractFinalTermMetrics(ocp, termsName_, problemMetrics.final);
     if (metricsPtr != nullptr) {
-      if (!primalSolution.timeTrajectory_.empty()) {
+      if (!primalSolution.timeTrajectory_.empty() && metricsCallback_ != nullptr) {
         const scalar_array_t timeArray{primalSolution.timeTrajectory_.back()};
         termMetricsArray_.push_back(*metricsPtr);
         metricsCallback_(timeArray, termMetricsArray_);
@@ -76,14 +76,14 @@ void SolverObserverModule::extractTermMetrics(const OptimalControlProblem& ocp, 
 void SolverObserverModule::extractTermMultipliers(const OptimalControlProblem& ocp, const DualSolution& dualSolution) {
   // search intermediate
   if (extractIntermediateTermMultiplier(ocp, termsName_, dualSolution.intermediates, termMultiplierArray_)) {
-    if (!dualSolution.timeTrajectory.empty()) {
+    if (!dualSolution.timeTrajectory.empty() && multiplierCallback_ != nullptr) {
       multiplierCallback_(dualSolution.timeTrajectory, termMultiplierArray_);
     }
   }
 
   // search pre_jump
   else if (extractPreJumpTermMultiplier(ocp, termsName_, dualSolution.preJumps, termMultiplierArray_)) {
-    if (!dualSolution.postEventIndices.empty()) {
+    if (!dualSolution.postEventIndices.empty() && multiplierCallback_ != nullptr) {
       scalar_array_t timeArray(dualSolution.postEventIndices.size());
       std::transform(dualSolution.postEventIndices.cbegin(), dualSolution.postEventIndices.cend(), timeArray.begin(),
                      [&](size_t postInd) -> scalar_t { return dualSolution.timeTrajectory[postInd - 1]; });
@@ -95,7 +95,7 @@ void SolverObserverModule::extractTermMultipliers(const OptimalControlProblem& o
   else {
     const Multiplier* multiplierPtr = extractFinalTermMultiplier(ocp, termsName_, dualSolution.final);
     if (multiplierPtr != nullptr) {
-      if (!dualSolution.timeTrajectory.empty()) {
+      if (!dualSolution.timeTrajectory.empty() && multiplierCallback_ != nullptr) {
         const scalar_array_t timeArray{dualSolution.timeTrajectory.back()};
         termMultiplierArray_.push_back(*multiplierPtr);
         multiplierCallback_(timeArray, termMultiplierArray_);

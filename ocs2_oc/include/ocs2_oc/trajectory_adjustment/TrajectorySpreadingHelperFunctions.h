@@ -40,7 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * Adjusts a linear controller based on the last changes in model schedule using a TrajectorySpreading strategy.
+ * Adjusts in-place a linear controller based on the last changes in model schedule using a TrajectorySpreading strategy.
  *
  * @param [in] oldModeSchedule: The old mode schedule associated to the trajectories which should be adjusted.
  * @param [in] newModeSchedule: The new mode schedule that should be adapted to.
@@ -63,7 +63,7 @@ inline TrajectorySpreading::Status trajectorySpread(const ModeSchedule& oldModeS
 }
 
 /**
- * Adjusts a dual solution based on the last changes in model schedule using a TrajectorySpreading strategy.
+ * Adjusts in-place a dual solution based on the last changes in model schedule using a TrajectorySpreading strategy.
  *
  * @param [in] oldModeSchedule: The old mode schedule associated to the trajectories which should be adjusted.
  * @param [in] newModeSchedule: The new mode schedule that should be adapted to.
@@ -90,7 +90,42 @@ inline TrajectorySpreading::Status trajectorySpread(const ModeSchedule& oldModeS
 }
 
 /**
- * Adjusts a primal solution based on the last changes in model schedule using a TrajectorySpreading strategy.
+ * Adjusts a dual solution based on the last changes in model schedule using a TrajectorySpreading strategy.
+ *
+ * @note The function only updates newDualSolution if oldDualSolution requires modification which is the case
+ * if in the returned status: status.willTruncate == true OR status.willPerformTrajectorySpreading == true
+ *
+ * @param [in] oldModeSchedule: The old mode schedule associated to the trajectories which should be adjusted.
+ * @param [in] newModeSchedule: The new mode schedule that should be adapted to.
+ * @param [in] oldDualSolution: The dual solution that is associated with the old mode schedule.
+ * @param [out] newDualSolution: The updated dual solution that is associated with the new mode schedule.
+ * @returns the status of the devised trajectory spreading strategy.
+ */
+inline TrajectorySpreading::Status trajectorySpread(const ModeSchedule& oldModeSchedule, const ModeSchedule& newModeSchedule,
+                                                    const DualSolution& oldDualSolution, DualSolution& newDualSolution) {
+  // trajectory spreading
+  constexpr bool debugPrint = false;
+  TrajectorySpreading trajectorySpreading(debugPrint);
+  const auto status = trajectorySpreading.set(oldModeSchedule, newModeSchedule, oldDualSolution.timeTrajectory);
+
+  if (status.willTruncate || status.willPerformTrajectorySpreading) {
+    // adjust final, pre-jump, intermediate, time, postEventIndices
+    if (status.willTruncate) {
+      ocs2::clear(newDualSolution.final);
+    }
+    newDualSolution.preJumps = trajectorySpreading.extractEventsArray(oldDualSolution.preJumps);
+    newDualSolution.intermediates = oldDualSolution.intermediates;
+    trajectorySpreading.adjustTrajectory(newDualSolution.intermediates);
+    newDualSolution.timeTrajectory = oldDualSolution.timeTrajectory;
+    trajectorySpreading.adjustTimeTrajectory(newDualSolution.timeTrajectory);
+    newDualSolution.postEventIndices = trajectorySpreading.getPostEventIndices();
+  }
+
+  return status;
+}
+
+/**
+ * Adjusts in-place a primal solution based on the last changes in model schedule using a TrajectorySpreading strategy.
  * Note: PrimalSolution::controllerPtr_ will not be adjusted.
  *
  * @param [in] oldModeSchedule: The old mode schedule associated to the trajectories which should be adjusted.

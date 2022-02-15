@@ -10,7 +10,7 @@ model_settings
   deltaFrictionCone             5.0
 
   muFootPlacement               0.1   ; magnitude scaling
-  deltaFootPlacement            0.01  ; [m] distance from constraint boundary where the barrier becomes quadratic.
+  deltaFootPlacement            0.005  ; [m] distance from constraint boundary where the barrier becomes quadratic.
 
   muSdf                         2.5
   deltaSdf                      0.005
@@ -282,15 +282,15 @@ tracking_cost_weights
     joint_position_HAA       2.0;
     joint_position_HFE       2.0;
     joint_position_KFE       1.0;
-    foot_position_x         60.0;
-    foot_position_y         60.0;
-    foot_position_z         60.0;
+    foot_position_x         30.0;
+    foot_position_y         30.0;
+    foot_position_z         30.0;
     joint_velocity_HAA      0.02;
     joint_velocity_HFE      0.02;
     joint_velocity_KFE      0.01;
-    foot_velocity_x         10.0;
-    foot_velocity_y         10.0;
-    foot_velocity_z         10.0;
+    foot_velocity_x         15.0;
+    foot_velocity_y         15.0;
+    foot_velocity_z         15.0;
     contact_force_x        0.001;
     contact_force_y        0.001;
     contact_force_z        0.001;

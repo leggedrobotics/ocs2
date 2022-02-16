@@ -56,12 +56,15 @@ struct PrimalDataContainer {
   std::vector<ModelData> modelDataTrajectory;
   // event times model data
   std::vector<ModelData> modelDataEventTimes;
+  // final time model data
+  ModelData modelDataFinalTime;
 
   void swap(PrimalDataContainer& other) {
     primalSolution.swap(other.primalSolution);
     ocs2::swap(problemMetrics, other.problemMetrics);
     modelDataTrajectory.swap(other.modelDataTrajectory);
     modelDataEventTimes.swap(other.modelDataEventTimes);
+    std::swap(modelDataFinalTime, other.modelDataFinalTime);
   }
 
   void clear() {

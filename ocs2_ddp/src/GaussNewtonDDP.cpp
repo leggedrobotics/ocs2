@@ -751,10 +751,11 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
    * compute the Heuristics function at the final time. Also call shiftHessian on the Heuristics 2nd order derivative.
    */
   if (!nominalPrimalData_.primalSolution.timeTrajectory_.empty()) {
+    ModelData& modelData = nominalPrimalData_.modelDataFinalTime;
     const auto& time = nominalPrimalData_.primalSolution.timeTrajectory_.back();
     const auto& state = nominalPrimalData_.primalSolution.stateTrajectory_.back();
     const auto& multiplier = nominalDualData_.dualSolution.final;
-    auto modelData = ocs2::approximateFinalLQ(optimalControlProblemStock_[0], time, state, multiplier);
+    modelData = ocs2::approximateFinalLQ(optimalControlProblemStock_[0], time, state, multiplier);
 
     // checking the numerical properties
     if (ddpSettings_.checkNumericalStability_) {
@@ -765,11 +766,9 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
       }
     }
 
-    heuristics_ = std::move(modelData.cost);
-
     // shift Hessian for final time
     if (ddpSettings_.strategy_ == search_strategy::Type::LINE_SEARCH) {
-      hessian_correction::shiftHessian(ddpSettings_.lineSearch_.hessianCorrectionStrategy_, heuristics_.dfdxx,
+      hessian_correction::shiftHessian(ddpSettings_.lineSearch_.hessianCorrectionStrategy_, modelData.cost.dfdxx,
                                        ddpSettings_.lineSearch_.hessianCorrectionMultiple_);
     }
   }
@@ -1052,7 +1051,7 @@ void GaussNewtonDDP::runInit() {
 
   // solve Riccati equations
   backwardPassTimer_.startTimer();
-  avgTimeStepBP_ = solveSequentialRiccatiEquations(heuristics_);
+  avgTimeStepBP_ = solveSequentialRiccatiEquations(nominalPrimalData_.modelDataFinalTime.cost);
   backwardPassTimer_.endTimer();
 
   // calculate controller
@@ -1121,7 +1120,7 @@ void GaussNewtonDDP::runIteration(scalar_t lqModelExpectedCost) {
 
   // solve Riccati equations
   backwardPassTimer_.startTimer();
-  avgTimeStepBP_ = solveSequentialRiccatiEquations(heuristics_);
+  avgTimeStepBP_ = solveSequentialRiccatiEquations(nominalPrimalData_.modelDataFinalTime.cost);
   backwardPassTimer_.endTimer();
 
   // calculate controller

@@ -471,8 +471,6 @@ class GaussNewtonDDP : public SolverBase {
   DualDataContainer cachedDualData_;
   PrimalDataContainer cachedPrimalData_;
 
-  ScalarFunctionQuadraticApproximation heuristics_;
-
   struct ConstraintPenaltyCoefficients {
     scalar_t penaltyTol = 1e-3;
     scalar_t penaltyCoeff = 0.0;

@@ -91,20 +91,20 @@ class GaussNewtonDDP : public SolverBase {
 
   const DualSolution& getDualSolution() const override { return optimizedDualSolution_; }
 
-  const ProblemMetrics& getSolutionMetrics() const override { return optimizedPrimalData_.problemMetrics; }
+  const ProblemMetrics& getSolutionMetrics() const override { return optimizedProblemMetrics_; }
 
   ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const override {
-    return getValueFunctionImpl(time, state, optimizedPrimalData_, dualData_.valueFunctionTrajectory);
+    return getValueFunctionImpl(time, state, nominalPrimalData_.primalSolution, nominalDualData_.valueFunctionTrajectory);
   }
 
   ScalarFunctionQuadraticApproximation getHamiltonian(scalar_t time, const vector_t& state, const vector_t& input) override;
 
   vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const override {
-    return getStateInputEqualityConstraintLagrangianImpl(time, state, nominalPrimalData_, dualData_);
+    return getStateInputEqualityConstraintLagrangianImpl(time, state, nominalPrimalData_, nominalDualData_);
   }
 
   MultiplierCollection getIntermediateDualSolution(scalar_t time) const override {
-    return getIntermediateDualSolutionAtTime(nominalDualSolution_, time);
+    return getIntermediateDualSolutionAtTime(nominalDualData_.dualSolution, time);
   }
 
   std::string getBenchmarkingInfo() const override;
@@ -251,17 +251,17 @@ class GaussNewtonDDP : public SolverBase {
                                                          const DualDataContainer& dualData) const;
 
   /**
-   * Get the Value Function at time(time) from valueFunctionTrajectory. The the gradient of the value function will be corrected by using
-   * the hessian together with the difference between the current state and the corresponding state stored in the primalData.
+   * Get the Value Function at time (time) from valueFunctionTrajectory. The the gradient of the value function will be corrected by using
+   * the Hessian together with the difference between the current state and the corresponding state stored in the primalSolution.
    *
    * @param [in] time: Query time
    * @param [in] state: Current state
-   * @param [in] primalData: Primal Data
-   * @param [in] valueFunctionTrajectory: Dual Data
+   * @param [in] primalSolution: Primal solution
+   * @param [in] valueFunctionTrajectory: A trajectory of the value function quadratic approximation.
    * @return value function
    */
   ScalarFunctionQuadraticApproximation getValueFunctionImpl(
-      const scalar_t time, const vector_t& state, const PrimalDataContainer& primalData,
+      const scalar_t time, const vector_t& state, const PrimalSolution& primalSolution,
       const std::vector<ScalarFunctionQuadraticApproximation>& valueFunctionTrajectory) const;
 
   /**
@@ -272,7 +272,7 @@ class GaussNewtonDDP : public SolverBase {
    * @return ScalarFunctionQuadraticApproximation
    */
   ScalarFunctionQuadraticApproximation getValueFunctionFromCache(scalar_t time, const vector_t& state) const {
-    return getValueFunctionImpl(time, state, cachedPrimalData_, cachedDualData_.valueFunctionTrajectory);
+    return getValueFunctionImpl(time, state, cachedPrimalData_.primalSolution, cachedDualData_.valueFunctionTrajectory);
   }
 
   /**
@@ -386,32 +386,6 @@ class GaussNewtonDDP : public SolverBase {
   void updateConstraintPenalties(scalar_t equalityConstraintsSSE);
 
   /**
-   * Runs the search strategy. It updates the controller and the corresponding trajectories only when the search is successful.
-   * If fail, the cached primal data will be written to dstPrimalData.
-   *
-   * @param [in] lqModelExpectedCost: The expected cost based on the LQ model optimization.
-   * @param [in] unoptimizedController: The unoptimized controller which search will be performed.
-   * @param [in, out] dualSolution: The dual solution. If the search was successful, the intermediate dual solution would be re-sampled
-   * @param [out] primalData: Optimized primal data container if it is an final search. otherwise nominal data container
-   * @param [out] performanceIndex: The optimal performanceIndex which will be updated to the optimal one.
-   */
-  void runSearchStrategy(scalar_t lqModelExpectedCost, const LinearController& unoptimizedController, DualSolution& dualSolution,
-                         PrimalDataContainer& primalData, PerformanceIndex& performanceIndex);
-
-  /**
-   * swap both primal and dual data cache
-   */
-  void swapDataToCache();
-
-  /**
-   * Corrects the initial caching of the nominal trajectories.
-   * This is necessary for:
-   *   + The moving horizon (MPC) application
-   *   + The very first call of the algorithm where there is no previous nominal trajectories.
-   */
-  void correctInitcachedNominalTrajectories();
-
-  /**
    * Corrects for the tail of the cached trajectory based on the nominal trajectory. This compensates for the
    * the moving horizon (MPC) applications where the final time of the cached trajectory is smaller than the
    * nominal one.
@@ -456,11 +430,12 @@ class GaussNewtonDDP : public SolverBase {
   void updateDualSolution(const PrimalSolution& primalSolution, ProblemMetrics& problemMetrics, DualSolutionRef dualSolution);
 
  protected:
-  PrimalDataContainer nominalPrimalData_, optimizedPrimalData_;
+  // nominal data
+  DualDataContainer nominalDualData_;
+  PrimalDataContainer nominalPrimalData_;
+
   // controller that is calculated directly from dual solution. It is unoptimized because it haven't gone through searching.
   LinearController unoptimizedController_;
-
-  DualSolution nominalDualSolution_, optimizedDualSolution_;
 
   // multi-threading helper variables
   std::atomic_size_t nextTaskId_{0};
@@ -473,8 +448,6 @@ class GaussNewtonDDP : public SolverBase {
   std::unique_ptr<SearchStrategyBase> searchStrategyPtr_;
   std::vector<OptimalControlProblem> optimalControlProblemStock_;
 
-  DualDataContainer dualData_;
-
  private:
   const ddp::Settings ddpSettings_;
 
@@ -483,16 +456,20 @@ class GaussNewtonDDP : public SolverBase {
   unsigned long long int totalNumIterations_{0};
 
   PerformanceIndex performanceIndex_;
-
   std::vector<PerformanceIndex> performanceIndexHistory_;
 
   std::vector<std::unique_ptr<RolloutBase>> dynamicsForwardRolloutPtrStock_;
   std::vector<std::unique_ptr<RolloutBase>> initializerRolloutPtrStock_;
 
-  // used for caching the nominal trajectories for which the LQ problem is
+  // optimized data
+  DualSolution optimizedDualSolution_;
+  PrimalSolution optimizedPrimalSolution_;
+  ProblemMetrics optimizedProblemMetrics_;
+
+  // cached data used for caching the nominal trajectories for which the LQ problem is
   // constructed and solved before terminating run()
-  PrimalDataContainer cachedPrimalData_;
   DualDataContainer cachedDualData_;
+  PrimalDataContainer cachedPrimalData_;
 
   ScalarFunctionQuadraticApproximation heuristics_;
 

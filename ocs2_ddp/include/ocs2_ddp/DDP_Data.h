@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/model_data/Metrics.h>
 #include <ocs2_core/model_data/ModelData.h>
+#include <ocs2_oc/oc_data/DualSolution.h>
 #include <ocs2_oc/oc_data/PrimalSolution.h>
 
 #include "ocs2_ddp/riccati_equations/RiccatiModification.h"
@@ -79,6 +80,7 @@ struct PrimalDataContainer {
  *
  */
 struct DualDataContainer {
+  DualSolution dualSolution;
   // projected model data trajectory
   std::vector<ModelData> projectedModelDataTrajectory;
 
@@ -89,12 +91,14 @@ struct DualDataContainer {
   std::vector<ScalarFunctionQuadraticApproximation> valueFunctionTrajectory;
 
   inline void swap(DualDataContainer& other) {
+    ocs2::swap(dualSolution, other.dualSolution);
     projectedModelDataTrajectory.swap(other.projectedModelDataTrajectory);
     riccatiModificationTrajectory.swap(other.riccatiModificationTrajectory);
     valueFunctionTrajectory.swap(other.valueFunctionTrajectory);
   }
 
   inline void clear() {
+    ocs2::clear(dualSolution);
     projectedModelDataTrajectory.clear();
     riccatiModificationTrajectory.clear();
     valueFunctionTrajectory.clear();

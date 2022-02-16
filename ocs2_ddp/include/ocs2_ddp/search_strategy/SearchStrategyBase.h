@@ -136,41 +136,42 @@ namespace ocs2 {
 namespace search_strategy {
 
 struct Solution {
-  PrimalSolution primalSolution;
-  PerformanceIndex performanceIndex;
-  ProblemMetrics problemMetrics;
-  DualSolution dualSolution;
   scalar_t avgTimeStep;
+  DualSolution dualSolution;
+  PrimalSolution primalSolution;
+  ProblemMetrics problemMetrics;
+  PerformanceIndex performanceIndex;
 };
 
 struct SolutionRef {
   SolutionRef(Solution& s)
-      : primalSolution(s.primalSolution),
-        performanceIndex(s.performanceIndex),
-        problemMetrics(s.problemMetrics),
+      : avgTimeStep(s.avgTimeStep),
         dualSolution(s.dualSolution),
-        avgTimeStep(s.avgTimeStep) {}
-  SolutionRef(PrimalSolution& primalSolutionArg, PerformanceIndex& performanceIndexArg, ProblemMetrics& problemMetricsArg,
-              DualSolution& dualSolutionArg, scalar_t& avgTimeStepArg)
-      : primalSolution(primalSolutionArg),
-        performanceIndex(performanceIndexArg),
-        problemMetrics(problemMetricsArg),
-        dualSolution(dualSolutionArg),
-        avgTimeStep(avgTimeStepArg) {}
+        primalSolution(s.primalSolution),
+        problemMetrics(s.problemMetrics),
+        performanceIndex(s.performanceIndex) {}
 
-  PrimalSolution& primalSolution;
-  PerformanceIndex& performanceIndex;
-  ProblemMetrics& problemMetrics;
-  DualSolution& dualSolution;
+  SolutionRef(scalar_t& avgTimeStepArg, DualSolution& dualSolutionArg, PrimalSolution& primalSolutionArg, ProblemMetrics& problemMetricsArg,
+              PerformanceIndex& performanceIndexArg)
+      : avgTimeStep(avgTimeStepArg),
+        dualSolution(dualSolutionArg),
+        primalSolution(primalSolutionArg),
+        problemMetrics(problemMetricsArg),
+        performanceIndex(performanceIndexArg) {}
+
   scalar_t& avgTimeStep;
+  DualSolution& dualSolution;
+  PrimalSolution& primalSolution;
+  ProblemMetrics& problemMetrics;
+  PerformanceIndex& performanceIndex;
 };
 
 inline void swap(SolutionRef lhs, SolutionRef rhs) {
-  lhs.primalSolution.swap(rhs.primalSolution);
-  swap(lhs.performanceIndex, rhs.performanceIndex);
-  swap(lhs.problemMetrics, rhs.problemMetrics);
-  swap(lhs.dualSolution, rhs.dualSolution);
   std::swap(lhs.avgTimeStep, rhs.avgTimeStep);
+  ocs2::swap(lhs.dualSolution, rhs.dualSolution);
+  ocs2::swap(lhs.problemMetrics, rhs.problemMetrics);
+  lhs.primalSolution.swap(rhs.primalSolution);
+  ocs2::swap(lhs.performanceIndex, rhs.performanceIndex);
 }
 
 }  // namespace search_strategy

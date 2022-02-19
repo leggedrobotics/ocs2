@@ -107,6 +107,17 @@ target_link_libraries(${PROJECT_NAME}_test_terrain_node
   ${catkin_LIBRARIES}
   )
 
+add_executable(${PROJECT_NAME}_visualize_foothold_selection
+  src/visualizeFootholdSelection.cpp
+  )
+add_dependencies(${PROJECT_NAME}_visualize_foothold_selection
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+  )
+target_link_libraries(${PROJECT_NAME}_visualize_foothold_selection
+  ${catkin_LIBRARIES}
+  )
+
 # PyBindings library (c++ side)
 add_library(${PROJECT_NAME}_PyBindings_cpp
   src/AnymalPyBindings.cpp

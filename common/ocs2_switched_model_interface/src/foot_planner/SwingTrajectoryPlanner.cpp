@@ -8,6 +8,7 @@
 
 #include "ocs2_switched_model_interface/core/MotionPhaseDefinition.h"
 #include "ocs2_switched_model_interface/core/Rotations.h"
+#include "ocs2_switched_model_interface/foot_planner/KinematicFootPlacementPenalty.h"
 
 namespace switched_model {
 
@@ -259,13 +260,19 @@ std::pair<std::vector<ConvexTerrain>, std::vector<vector3_t>> SwingTrajectoryPla
           }
         }
 
-        // kinematic penalty = w * (overExtensionTouchdown^2 + overExtensionLiftoff^2)
-        const vector3_t hipInWorldTouchdown = kinematicsModel_->legRootInOriginFrame(
-            leg, targetTrajectories.getDesiredState(contactPhase.start).head<BASE_COORDINATE_SIZE>());
-        const vector3_t hipInWorldLiftoff =
-            kinematicsModel_->legRootInOriginFrame(leg, targetTrajectories.getDesiredState(contactEndTime).head<BASE_COORDINATE_SIZE>());
+        // Kinematic penalty
+        const base_coordinate_t basePoseAtTouchdown = getBasePose(targetTrajectories.getDesiredState(contactPhase.start));
+        const auto hipPositionInWorldTouchdown = kinematicsModel_->legRootInOriginFrame(leg, basePoseAtTouchdown);
+        const auto hipOrientationInWorldTouchdown = kinematicsModel_->orientationLegRootToOriginFrame(leg, basePoseAtTouchdown);
+        const base_coordinate_t basePoseAtLiftoff = getBasePose(targetTrajectories.getDesiredState(contactEndTime));
+        const auto hipPositionInWorldLiftoff = kinematicsModel_->legRootInOriginFrame(leg, basePoseAtLiftoff);
+        const auto hipOrientationInWorldLiftoff = kinematicsModel_->orientationLegRootToOriginFrame(leg, basePoseAtLiftoff);
+        ApproximateKinematicsConfig config;
+        config.kinematicPenaltyWeight = settings_.legOverExtensionPenalty;
+        config.maxLegExtension = settings_.nominalLegExtension;
         auto scoringFunction = [&](const vector3_t& footPositionInWorld) {
-          return this->kinematicPenalty(footPositionInWorld, hipInWorldTouchdown, hipInWorldLiftoff);
+          return computeKinematicPenalty(footPositionInWorld, hipPositionInWorldTouchdown, hipOrientationInWorldTouchdown, config) +
+                 computeKinematicPenalty(footPositionInWorld, hipPositionInWorldLiftoff, hipOrientationInWorldLiftoff, config);
         };
 
         if (contactPhase.start < finalTime) {
@@ -324,20 +331,6 @@ void SwingTrajectoryPlanner::updateLastContact(int leg, scalar_t expectedLiftOff
   auto lastContactTerrain = terrainModel.getLocalTerrainAtPositionInWorldAlongGravity(currentFootPosition);
   lastContactTerrain.positionInWorld = currentFootPosition;
   lastContacts_[leg] = {expectedLiftOff, lastContactTerrain};
-}
-
-scalar_t SwingTrajectoryPlanner::kinematicPenalty(const vector3_t& footPositionInWorld, const vector3_t& hipInWorldAtTouchdown,
-                                                  const vector3_t& hipInWorldAtLiftoff) const {
-  // Touchdown
-  const scalar_t legExtensionTouchdown = (footPositionInWorld - hipInWorldAtTouchdown).norm();
-  const scalar_t overExtensionTouchdown = std::max(legExtensionTouchdown - settings_.nominalLegExtension, 0.0);
-
-  // liftOff
-  const scalar_t legExtensionLiftoff = (footPositionInWorld - hipInWorldAtLiftoff).norm();
-  const scalar_t overExtensionLiftoff = std::max(legExtensionLiftoff - settings_.nominalLegExtension, 0.0);
-
-  return settings_.legOverExtensionPenalty *
-         (overExtensionTouchdown * overExtensionTouchdown + overExtensionLiftoff * overExtensionLiftoff);
 }
 
 std::vector<SwingPhase::SwingProfile::Node> SwingTrajectoryPlanner::extractSwingProfileFromReference(

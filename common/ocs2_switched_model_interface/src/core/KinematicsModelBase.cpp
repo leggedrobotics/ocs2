@@ -32,6 +32,17 @@ vector3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::legRootInOriginFrame(size_t
 }
 
 template <typename SCALAR_T>
+matrix3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::orientationLegRootToOriginFrame(size_t footIndex,
+                                                                                     const base_coordinate_s_t<SCALAR_T>& basePose) const {
+  auto rotationLegRootToOrigin = rotationMatrixBaseToOrigin(getOrientation(basePose));
+  if (footIndex == 1 || footIndex == 3) {  // Right side, need to point the x-axis backwards and y outwards = 180deg turn around z-axis
+    rotationLegRootToOrigin.col(0) = -rotationLegRootToOrigin.col(0);  // flip x-axis
+    rotationLegRootToOrigin.col(1) = -rotationLegRootToOrigin.col(1);  // flip y-axis
+  }
+  return rotationLegRootToOrigin;
+}
+
+template <typename SCALAR_T>
 vector3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::footPositionInOriginFrame(size_t footIndex,
                                                                                const base_coordinate_s_t<SCALAR_T>& basePose,
                                                                                const joint_coordinate_s_t<SCALAR_T>& jointPositions) const {

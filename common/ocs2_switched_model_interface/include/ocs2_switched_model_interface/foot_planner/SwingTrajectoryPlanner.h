@@ -76,8 +76,6 @@ class SwingTrajectoryPlanner {
   std::pair<std::vector<ConvexTerrain>, std::vector<vector3_t>> selectNominalFootholdTerrain(
       int leg, const std::vector<ContactTiming>& contactTimings, const ocs2::TargetTrajectories& targetTrajectories, scalar_t initTime,
       const comkino_state_t& currentState, scalar_t finalTime, const TerrainModel& terrainModel) const;
-  scalar_t kinematicPenalty(const vector3_t& footPositionInWorld, const vector3_t& hipInWorldAtTouchdown,
-                            const vector3_t& hipInWorldAtLiftoff) const;
   void applySwingMotionScaling(SwingPhase::SwingEvent& liftOff, SwingPhase::SwingEvent& touchDown,
                                SwingPhase::SwingProfile& swingProfile) const;
   std::vector<SwingPhase::SwingProfile::Node> extractSwingProfileFromReference(int leg, const SwingPhase::SwingEvent& liftoff,

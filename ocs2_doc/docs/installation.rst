@@ -103,6 +103,40 @@ Optional Dependencies
 
     We provide custom cmake config and version files to enable ``find_package(onnxruntime)`` without modifying ``LIBRARY_PATH`` and ``LD_LIBRARY_PATH``. Note that the last command above assumes that you cloned OCS2 into the folder ``git`` in your user's home directory.
 
+* `Virtual environments  <https://docs.python.org/3/library/venv.html>`__ are recommended when training MPC-Net policies:
+
+    .. code-block:: bash
+
+        sudo apt-get install python3-venv
+
+    Create an environment and give it access to the system site packages:
+
+    .. code-block:: bash
+
+        mkdir venvs && cd venvs
+        python3 -m venv mpcnet --system-site-packages
+
+    Activate the environment and install the requirements:
+
+    .. code-block:: bash
+
+        source ~/venvs/mpcnet/bin/activate
+        pip3 install torch tensorboard
+
+    Always activate the environment when running and monitoring the training, i.e. in one terminal:
+
+    .. code-block:: bash
+
+        source ~/venvs/mpcnet/bin/activate
+        pip3 <robot_name>_mpcnet.py
+
+    And in another terminal:
+
+    .. code-block:: bash
+
+        source ~/venvs/mpcnet/bin/activate
+        tensorboard --logdir=runs
+
 .. _doxid-ocs2_doc_installation_ocs2_doc_install:
 
 Installation

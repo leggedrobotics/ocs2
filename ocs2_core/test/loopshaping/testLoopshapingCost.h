@@ -73,17 +73,17 @@ class TestFixtureLoopShapingCost : LoopshapingTestConfiguration {
 
     // Reevaluate at disturbed state
     preComp_->request(Request::Cost, t, x_ + x_disturbance_, u_ + u_disturbance_);
-    scalar_t L_disturbance = loopshapingCost->getValue(t, x_ + x_disturbance_, u_ + u_disturbance_, targetTrajectories_, *preComp_);
+    const scalar_t L_disturbance = loopshapingCost->getValue(t, x_ + x_disturbance_, u_ + u_disturbance_, targetTrajectories_, *preComp_);
 
     // Evaluate approximation
-    scalar_t L_quad_approximation = L.f + L.dfdx.transpose() * x_disturbance_ + L.dfdu.transpose() * u_disturbance_ +
-                                    0.5 * x_disturbance_.transpose() * L.dfdxx * x_disturbance_ +
-                                    0.5 * u_disturbance_.transpose() * L.dfduu * u_disturbance_ +
-                                    u_disturbance_.transpose() * L.dfdux * x_disturbance_;
+    const scalar_t L_quad_approximation = L.f + L.dfdx.transpose() * x_disturbance_ + L.dfdu.transpose() * u_disturbance_ +
+                                          0.5 * x_disturbance_.transpose() * L.dfdxx * x_disturbance_ +
+                                          0.5 * u_disturbance_.transpose() * L.dfduu * u_disturbance_ +
+                                          u_disturbance_.transpose() * L.dfdux * x_disturbance_;
 
     // Difference between new evaluation and approximation should be less than tol
-    ASSERT_LE(std::abs(L_disturbance - L_quad_approximation), tol);
-  };
+    EXPECT_NEAR(L_disturbance, L_quad_approximation, tol);
+  }
 
   void testStateCostApproximation() const {
     preComp_->requestFinal(Request::Cost + Request::Approximation, t, x_);
@@ -93,13 +93,14 @@ class TestFixtureLoopShapingCost : LoopshapingTestConfiguration {
 
     // Reevaluate at disturbed state
     preComp_->requestFinal(Request::Cost, t, x_ + x_disturbance_);
-    scalar_t L_disturbance = loopshapingStateCost->getValue(t, x_ + x_disturbance_, targetTrajectories_, *preComp_);
+    const scalar_t L_disturbance = loopshapingStateCost->getValue(t, x_ + x_disturbance_, targetTrajectories_, *preComp_);
 
     // Evaluate approximation
-    scalar_t L_quad_approximation = L.f + L.dfdx.transpose() * x_disturbance_ + 0.5 * x_disturbance_.transpose() * L.dfdxx * x_disturbance_;
+    const scalar_t L_quad_approximation =
+        L.f + L.dfdx.transpose() * x_disturbance_ + 0.5 * x_disturbance_.transpose() * L.dfdxx * x_disturbance_;
 
     // Difference between new evaluation and approximation should be less than tol
-    ASSERT_LE(std::abs(L_disturbance - L_quad_approximation), tol);
+    EXPECT_NEAR(L_disturbance, L_quad_approximation, tol);
   }
 
  private:

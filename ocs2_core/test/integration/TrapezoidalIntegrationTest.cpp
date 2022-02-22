@@ -42,7 +42,7 @@ TEST(TrapezoidalIntegrationTest, Rectangle) {
 
   ocs2::scalar_array_t xTrj(numIntervals + 1, 0.0);
   auto x = -dx;
-  std::generate(xTrj.begin(), xTrj.end(), [&x, dx]() { return (x += dx); } );
+  std::generate(xTrj.begin(), xTrj.end(), [&x, dx]() { return (x += dx); });
 
   ocs2::scalar_array_t yTrj(numIntervals + 1, height);
 
@@ -59,11 +59,11 @@ TEST(TrapezoidalIntegrationTest, RightTriangle) {
 
   ocs2::scalar_array_t xTrj(numIntervals + 1, 0.0);
   auto x = -dx;
-  std::generate(xTrj.begin(), xTrj.end(), [&x, dx]() { return (x += dx); } );
+  std::generate(xTrj.begin(), xTrj.end(), [&x, dx]() { return (x += dx); });
 
   ocs2::scalar_array_t yTrj(numIntervals + 1, 0.0);
   auto y = -dy;
-  std::generate(yTrj.begin(), yTrj.end(), [&y, dy]() { return (y += dy); } );
+  std::generate(yTrj.begin(), yTrj.end(), [&y, dy]() { return (y += dy); });
 
   const auto area = ocs2::trapezoidalIntegration(xTrj, yTrj);
   ASSERT_NEAR(area, width * height / 2.0, 1e-12);

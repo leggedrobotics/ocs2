@@ -41,6 +41,19 @@ StateAugmentedLagrangianCollection* StateAugmentedLagrangianCollection::clone() 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+size_t StateAugmentedLagrangianCollection::getNumberOfActiveConstraints(scalar_t time) const {
+  size_t numConstraints = 0;
+  for (const auto& term : terms_) {
+    if (term->isActive(time)) {
+      numConstraints += term->getNumConstraints(time);
+    }
+  }
+  return numConstraints;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 std::vector<Metrics> StateAugmentedLagrangianCollection::getValue(scalar_t time, const vector_t& state,
                                                                   const std::vector<Multiplier>& termsMultiplier,
                                                                   const PreComputation& preComp) const {

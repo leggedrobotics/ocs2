@@ -50,6 +50,9 @@ class StateAugmentedLagrangianCollection : public Collection<StateAugmentedLagra
   ~StateAugmentedLagrangianCollection() override = default;
   StateAugmentedLagrangianCollection* clone() const override;
 
+  /** Get total number of active constraints. */
+  size_t getNumberOfActiveConstraints(scalar_t time) const;
+
   /** Get state constraints and their penalties for each active term */
   virtual std::vector<Metrics> getValue(scalar_t time, const vector_t& state, const std::vector<Multiplier>& termsMultiplier,
                                         const PreComputation& preComp) const;

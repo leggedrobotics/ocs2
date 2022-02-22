@@ -41,6 +41,19 @@ StateInputAugmentedLagrangianCollection* StateInputAugmentedLagrangianCollection
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+size_t StateInputAugmentedLagrangianCollection::getNumberOfActiveConstraints(scalar_t time) const {
+  size_t numConstraints = 0;
+  for (const auto& term : terms_) {
+    if (term->isActive(time)) {
+      numConstraints += term->getNumConstraints(time);
+    }
+  }
+  return numConstraints;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 std::vector<Metrics> StateInputAugmentedLagrangianCollection::getValue(scalar_t time, const vector_t& state, const vector_t& input,
                                                                        const std::vector<Multiplier>& termsMultiplier,
                                                                        const PreComputation& preComp) const {

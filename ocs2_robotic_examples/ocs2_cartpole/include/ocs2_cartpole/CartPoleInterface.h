@@ -54,8 +54,9 @@ class CartPoleInterface final : public RobotInterface {
    *
    * @param [in] taskFile: The absolute path to the configuration file for the MPC.
    * @param [in] libraryFolder: The absolute path to the directory to generate CppAD library into.
+   * @param [in] verbose: Flag to determine to print out the loaded settings and status of complied libraries.
    */
-  CartPoleInterface(const std::string& taskFile, const std::string& libraryFolder);
+  CartPoleInterface(const std::string& taskFile, const std::string& libraryFolder, bool verbose);
 
   /**
    * Destructor

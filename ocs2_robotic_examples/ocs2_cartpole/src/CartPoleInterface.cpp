@@ -51,7 +51,7 @@ namespace cartpole {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-CartPoleInterface::CartPoleInterface(const std::string& taskFile, const std::string& libraryFolder) {
+CartPoleInterface::CartPoleInterface(const std::string& taskFile, const std::string& libraryFolder, bool verbose) {
   // check that task file exists
   boost::filesystem::path taskFilePath(taskFile);
   if (boost::filesystem::exists(taskFilePath)) {
@@ -63,8 +63,6 @@ CartPoleInterface::CartPoleInterface(const std::string& taskFile, const std::str
   boost::filesystem::path libraryFolderPath(libraryFolder);
   boost::filesystem::create_directories(libraryFolderPath);
   std::cerr << "[CartPoleInterface] Generated library path: " << libraryFolderPath << "\n";
-
-  constexpr bool verbose = true;
 
   // Default initial condition
   loadData::loadEigenMatrix(taskFile, "initialState", initialState_);

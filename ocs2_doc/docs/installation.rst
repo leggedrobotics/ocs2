@@ -114,14 +114,21 @@ Optional Dependencies
     .. code-block:: bash
 
         mkdir venvs && cd venvs
-        python3 -m venv mpcnet --system-site-packages
+        python3 -m venv mpcnet
 
     Activate the environment and install the requirements:
 
     .. code-block:: bash
 
         source ~/venvs/mpcnet/bin/activate
-        pip3 install torch tensorboard
+        python3 -m pip install -r ~/git/ocs2_dev/ocs2_mpcnet/requirements.txt
+
+    Newer graphics cards might require a CUDA capability which is currently not supported by the standard PyTorch install.
+    In that case check `PyTorch Start Locally  <https://pytorch.org/get-started/locally/>`__ for a compatible version and, e.g., run:
+
+    .. code-block:: bash
+
+        pip3 install torch==1.10.2+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html
 
     Always activate the environment when running and monitoring the training, i.e. in one terminal:
 

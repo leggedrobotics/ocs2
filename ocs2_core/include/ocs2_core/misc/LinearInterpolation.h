@@ -195,7 +195,7 @@ auto interpolate(scalar_t enquiryTime, const std::vector<scalar_t>& timeArray, c
 /** Default interpolation */
 template <typename Data, class Alloc>
 Data interpolate(scalar_t enquiryTime, const std::vector<scalar_t>& timeArray, const std::vector<Data, Alloc>& dataArray) {
-  return interpolate<Data, Alloc>(enquiryTime, timeArray, dataArray, stdAccessFun<Data, Alloc>);
+  return interpolate(enquiryTime, timeArray, dataArray, stdAccessFun<Data, Alloc>);
 }
 
 }  // namespace LinearInterpolation

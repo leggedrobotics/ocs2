@@ -47,6 +47,9 @@ namespace LinearInterpolation {
 
 using index_alpha_t = std::pair<int, scalar_t>;
 
+template <class T>
+using remove_cvref_t = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
+
 /**
  * Helper comparison function for non-Eigen types.
  */
@@ -134,9 +137,9 @@ inline index_alpha_t timeSegment(scalar_t enquiryTime, const std::vector<scalar_
  * @tparam Field: Data's subfield type
  * @tparam Alloc: Specialized allocation class
  */
-template <typename Data, typename Field, class Alloc>
-Field interpolate(index_alpha_t indexAlpha, const std::vector<Data, Alloc>& dataArray,
-                  const Field& (*accessFun)(const std::vector<Data, Alloc>&, size_t)) {
+template <typename Data, class Alloc, class AccessFun>
+auto interpolate(index_alpha_t indexAlpha, const std::vector<Data, Alloc>& dataArray, AccessFun accessFun)
+    -> remove_cvref_t<typename std::result_of<AccessFun(const std::vector<Data, Alloc>&, size_t)>::type> {
   assert(dataArray.size() > 0);
   if (dataArray.size() > 1) {
     // Normal interpolation case
@@ -158,7 +161,7 @@ Field interpolate(index_alpha_t indexAlpha, const std::vector<Data, Alloc>& data
 /** Default interpolation */
 template <typename Data, class Alloc>
 Data interpolate(index_alpha_t indexAlpha, const std::vector<Data, Alloc>& dataArray) {
-  return interpolate<Data, Data, Alloc>(indexAlpha, dataArray, stdAccessFun<Data, Alloc>);
+  return interpolate(indexAlpha, dataArray, stdAccessFun<Data, Alloc>);
 }
 
 /**

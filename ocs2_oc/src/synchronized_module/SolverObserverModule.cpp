@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_oc/synchronized_module/SolverObserverModule.h"
 
+#include "ocs2_oc/oc_problem/OptimalControlProblemHelperFunction.h"
+
 namespace ocs2 {
 
 /******************************************************************************************************/

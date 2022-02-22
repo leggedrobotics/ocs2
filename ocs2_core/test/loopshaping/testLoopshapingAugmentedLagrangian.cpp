@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,31 +27,24 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#pragma once
+#include "testLoopshapingAugmentedLagrangian.h"
 
-// soft equalities
-#include <ocs2_core/penalties/penalties/QuadraticPenalty.h>
-#include <ocs2_core/penalties/penalties/SmoothAbsolutePenalty.h>
+#include <ocs2_core/test/testTools.h>
 
-// soft inequalities
-#include <ocs2_core/penalties/penalties/DoubleSidedPenalty.h>
-#include <ocs2_core/penalties/penalties/RelaxedBarrierPenalty.h>
-#include <ocs2_core/penalties/penalties/SquaredHingePenalty.h>
+using namespace ocs2;
 
-// hard equalities
-#include <ocs2_core/penalties/augmented/QuadraticPenalty.h>
-#include <ocs2_core/penalties/augmented/SmoothAbsolutePenalty.h>
+TEST(TestFixtureLoopShapingAugmentedLagrangian, testStateInputApproximation) {
+  for (const auto config : configNames) {
+    TestFixtureLoopShapingAugmentedLagrangian test(config);
+    test.testStateInputEvaluation();
+    test.testStateInputApproximation();
+  }
+}
 
-// hard inequalities
-#include <ocs2_core/penalties/augmented/ModifiedRelaxedBarrierPenalty.h>
-#include <ocs2_core/penalties/augmented/SlacknessSquaredHingePenalty.h>
-
-// load functions
-namespace ocs2 {
-namespace loadData {
-
-template <class ConfigType>
-void loadPenaltyConfig(const std::string& fileName, const std::string& fieldName, ConfigType& config, bool verbose = true);
-
-}  // namespace loadData
-}  // namespace ocs2
+TEST(TestFixtureLoopShapingAugmentedLagrangian, testStateApproximation) {
+  for (const auto config : configNames) {
+    TestFixtureLoopShapingAugmentedLagrangian test(config);
+    test.testStateEvaluation();
+    test.testStateApproximation();
+  }
+}

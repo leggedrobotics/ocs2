@@ -70,7 +70,8 @@ class TestFixtureLoopShapingDynamics : LoopshapingTestConfiguration {
 
     // Reevaluate at disturbed state
     preComp_->request(Request::Dynamics, t, x_ + x_disturbance_, u_ + u_disturbance_);
-    vector_t dx_disturbance = testLoopshapingDynamics->computeFlowMap(t, x_ + x_disturbance_, u_ + u_disturbance_, *preComp_);
+    vector_t dx_disturbance = testLoopshapingDynamics->computeFlowMap(t, x_ + x_disturbance_,
+                                                                            u_ + u_disturbance_, *preComp_);
 
     // Evaluate approximation
     vector_t dx_approximation = linearization.f + linearization.dfdx * x_disturbance_ + linearization.dfdu * u_disturbance_;

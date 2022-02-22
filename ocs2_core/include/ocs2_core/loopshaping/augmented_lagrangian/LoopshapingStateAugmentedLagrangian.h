@@ -29,57 +29,39 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <gtest/gtest.h>
-#include <experimental/filesystem>
+#include <memory>
 
-#include <ocs2_core/PreComputation.h>
+#include <ocs2_core/augmented_lagrangian/StateAugmentedLagrangianCollection.h>
 #include <ocs2_core/loopshaping/LoopshapingDefinition.h>
-#include <ocs2_core/loopshaping/LoopshapingPreComputation.h>
-#include <ocs2_core/loopshaping/LoopshapingPropertyTree.h>
 
 namespace ocs2 {
 
-const std::vector<std::string> configNames = {"loopshaping_r.conf", "loopshaping_r_ballbot.conf",
-                                              "loopshaping_s.conf", "loopshaping_s_integrator.conf"};
-
-inline std::string getAbsolutePathToConfigurationFile(const std::string& fileName) {
-  const std::experimental::filesystem::path pathToTest = std::experimental::filesystem::path(__FILE__);
-  return std::string(pathToTest.parent_path()) + "/" + fileName;
-}
-
-class LoopshapingTestConfiguration {
+/**
+ * Loopshaping state-only augmented Lagrangian collection class
+ */
+class LoopshapingStateAugmentedLagrangian final : public StateAugmentedLagrangianCollection {
  public:
-  LoopshapingTestConfiguration(const std::string& configName);
+  LoopshapingStateAugmentedLagrangian(const StateAugmentedLagrangianCollection& lagrangianCollection,
+                                      std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
+      : StateAugmentedLagrangianCollection(lagrangianCollection), loopshapingDefinition_(std::move(loopshapingDefinition)) {}
 
- protected:
-  std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
-  std::unique_ptr<PreComputation> preComp_sys_;
-  std::unique_ptr<LoopshapingPreComputation> preComp_;
+  ~LoopshapingStateAugmentedLagrangian() override = default;
+  LoopshapingStateAugmentedLagrangian* clone() const override { return new LoopshapingStateAugmentedLagrangian(*this); }
 
-  size_t systemStateDim_;
-  size_t filterStateDim_;
-  size_t inputDim_;
+  std::vector<Metrics> getValue(scalar_t t, const vector_t& x, const std::vector<Multiplier>& termsMultiplier,
+                                const PreComputation& preComp) const override;
 
-  const scalar_t tol = 1e-9;
+  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t t, const vector_t& x,
+                                                                 const std::vector<Multiplier>& termsMultiplier,
+                                                                 const PreComputation& preComp) const override;
 
-  scalar_t t;
-  vector_t x_;
-  vector_t u_;
-  vector_t x_sys_;
-  vector_t u_sys_;
-  vector_t x_filter_;
-  vector_t u_filter_;
-
-  vector_t x_disturbance_;
-  vector_t u_disturbance_;
-  vector_t x_sys_disturbance_;
-  vector_t u_sys_disturbance_;
-  vector_t x_filter_disturbance_;
-  vector_t u_filter_disturbance_;
+  void updateLagrangian(scalar_t t, const vector_t& x, std::vector<Metrics>& termsMetrics,
+                        std::vector<Multiplier>& termsMultiplier) const override;
 
  private:
-  void getRandomStateInput(size_t systemStateDim, size_t filterStateDim, size_t inputDim, vector_t& x_sys, vector_t& u_sys,
-                           vector_t& x_filter, vector_t& u_filter, vector_t& x, vector_t& u, scalar_t range = 1.0);
+  LoopshapingStateAugmentedLagrangian(const LoopshapingStateAugmentedLagrangian& other) = default;
+
+  std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
 };
 
 }  // namespace ocs2

@@ -413,8 +413,6 @@ class GaussNewtonDDP : public SolverBase {
 
   void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const ControllerBase* externalControllerPtr) override;
 
-  void updateDualSolution(const PrimalSolution& primalSolution, ProblemMetrics& problemMetrics, DualSolutionRef dualSolution);
-
  protected:
   // nominal data
   DualDataContainer nominalDualData_;

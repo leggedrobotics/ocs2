@@ -928,60 +928,6 @@ void GaussNewtonDDP::updateConstraintPenalties(scalar_t equalityConstraintsSSE) 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::updateDualSolution(const PrimalSolution& primalSolution, ProblemMetrics& problemMetrics,
-                                        DualSolutionRef dualSolution) {
-  // intermediates
-  nextTaskId_ = 0;
-  nextTimeIndex_ = 0;
-  auto intermediateTask = [&]() {
-    const size_t taskId = nextTaskId_++;  // assign task ID (atomic)
-    const auto& optimalControlProblem = optimalControlProblemStock_[taskId];
-
-    // timeIndex is atomic
-    int timeIndex;
-    while ((timeIndex = nextTimeIndex_++) < primalSolution.timeTrajectory_.size()) {
-      const auto& time = primalSolution.timeTrajectory_[timeIndex];
-      const auto& state = primalSolution.stateTrajectory_[timeIndex];
-      const auto& input = primalSolution.inputTrajectory_[timeIndex];
-      auto& metricsCollection = problemMetrics.intermediates[timeIndex];
-      auto& multiplierCollection = dualSolution.intermediates[timeIndex];
-      updateIntermediateMultiplierCollection(optimalControlProblem, time, state, input, metricsCollection, multiplierCollection);
-    }
-  };
-  runParallel(intermediateTask, ddpSettings_.nThreads_);
-
-  // preJump
-  nextTaskId_ = 0;
-  nextTimeIndex_ = 0;
-  auto preJumpTask = [&]() {
-    const size_t taskId = nextTaskId_++;  // assign task ID (atomic)
-    const auto& optimalControlProblem = optimalControlProblemStock_[taskId];
-
-    // timeIndex is atomic
-    int eventIndex;
-    while ((eventIndex = nextTimeIndex_++) < primalSolution.postEventIndices_.size()) {
-      const auto timeIndex = primalSolution.postEventIndices_[eventIndex] - 1;
-      const auto& time = primalSolution.timeTrajectory_[timeIndex];
-      const auto& state = primalSolution.stateTrajectory_[timeIndex];
-      auto& metricsCollection = problemMetrics.preJumps[eventIndex];
-      auto& multiplierCollection = dualSolution.preJumps[eventIndex];
-
-      updatePreJumpMultiplierCollection(optimalControlProblem, time, state, metricsCollection, multiplierCollection);
-    }
-  };
-  runParallel(preJumpTask, ddpSettings_.nThreads_);
-
-  // final
-  const auto& time = primalSolution.timeTrajectory_.back();
-  const auto& state = primalSolution.stateTrajectory_.back();
-  auto& metricsCollection = problemMetrics.final;
-  auto& multiplierCollection = dualSolution.final;
-  updateFinalMultiplierCollection(optimalControlProblemStock_[0], time, state, metricsCollection, multiplierCollection);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 void GaussNewtonDDP::runInit() {
   // disable Eigen multi-threading
   Eigen::setNbThreads(1);

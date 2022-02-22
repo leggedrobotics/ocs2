@@ -74,7 +74,6 @@ bounds_penalty_config
 {
   scale                       0.1
   stepSize                    1.0
-  relaxation                  0.0
 }
 
 ; initial state

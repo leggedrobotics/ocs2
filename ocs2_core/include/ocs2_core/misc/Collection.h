@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -51,6 +52,9 @@ class Collection {
   /** Checks if the collection has no elements */
   bool empty() const { return terms_.empty(); }
 
+  /** Erases all elements from the Collection. */
+  void clear();
+
   /**
    * Adds a term to the collection, and transfer ownership to the collection
    * The provided name must be unique and is later used to access the cost term.
@@ -58,6 +62,22 @@ class Collection {
    * @param term: Term to be added.
    */
   void add(std::string name, std::unique_ptr<T> term);
+
+  /**
+   * Erases a term from the collection.
+   *
+   * @param name: Name of the term.
+   * @return True if the term was in the Collection and false if the term was not found in the Collection.
+   */
+  bool erase(const std::string& name) { return (extract(name) != nullptr); }
+
+  /**
+   * Removes a term from the Collection and returns it as a unique_ptr.
+   *
+   * @param name: Name of the term.
+   * @return A unique pointer to the extracted term. If the term was not found it returns nullptr.
+   */
+  std::unique_ptr<T> extract(const std::string& name);
 
   /**
    * Use to modify a term.
@@ -93,6 +113,15 @@ class Collection {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename T>
+void Collection<T>::clear() {
+  terms_.clear();
+  termNameMap_.clear();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename T>
 void Collection<T>::add(std::string name, std::unique_ptr<T> term) {
   const size_t nextIndex = terms_.size();
   auto info = termNameMap_.emplace(std::move(name), nextIndex);
@@ -107,12 +136,44 @@ void Collection<T>::add(std::string name, std::unique_ptr<T> term) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename T>
+std::unique_ptr<T> Collection<T>::extract(const std::string& name) {
+  // find the term iterator with the name
+  const auto termItr = termNameMap_.find(name);
+
+  // term was not found
+  if (termItr == termNameMap_.end()) {
+    return nullptr;
+  }
+
+  // adjust the index of the terms added after the requested term
+  const size_t termInd = termItr->second;
+  for (auto itr = termNameMap_.begin(); itr != termNameMap_.end(); ++itr) {
+    if (itr->second > termInd) {
+      --itr->second;
+    }
+  }
+
+  // remove term from map
+  termNameMap_.erase(termItr);
+
+  // get the term
+  auto term = (std::move(terms_[termInd]));
+  // remove the term
+  terms_.erase(terms_.begin() + termInd);
+
+  return term;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename T>
 template <typename Derived>
 Derived& Collection<T>::get(const std::string& name) {
   static_assert(std::is_base_of<T, Derived>::value, "Template argument must derive from the base type of this collection");
   // if the key does not exist throws an exception
-  const auto costIndex = termNameMap_.at(name);
-  return dynamic_cast<Derived&>(*terms_[costIndex]);
+  const auto index = termNameMap_.at(name);
+  return dynamic_cast<Derived&>(*terms_[index]);
 }
 
 /******************************************************************************************************/

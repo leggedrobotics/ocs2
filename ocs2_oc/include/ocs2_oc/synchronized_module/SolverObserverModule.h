@@ -53,11 +53,12 @@ class SolverObserverModule {
   explicit SolverObserverModule(std::string termsName) : termsName_(std::move(termsName)) {}
 
   virtual ~SolverObserverModule() = default;
+  virtual SolverObserverModule* clone() const { return new SolverObserverModule(*this); }
 
   /**
    * Sets the callback for processing extracted metrics array.
    * The callback should have the following signature:
-   * void callback(const scalar_array_t& timeTrajectory, const std::vector<MetricsConstRef>& termsMetrics)
+   * void callback(const scalar_array_t& timeTrajectory, const std::vector<MetricsConstRef>& termMetrics)
    */
   template <class CallbackType>
   void setMetricsCallback(CallbackType&& callback) {
@@ -92,6 +93,9 @@ class SolverObserverModule {
   void extractTermMultipliers(const OptimalControlProblem& ocp, const DualSolution& dualSolution);
 
  protected:
+  SolverObserverModule(const SolverObserverModule& other)
+      : termsName_(other.termsName_), metricsCallback_(other.metricsCallback_), multiplierCallback_(other.multiplierCallback_) {}
+
   const std::string termsName_;
 
  private:

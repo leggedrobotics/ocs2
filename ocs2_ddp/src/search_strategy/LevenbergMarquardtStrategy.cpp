@@ -217,17 +217,15 @@ std::pair<bool, std::string> LevenbergMarquardtStrategy::checkConvergence(bool u
     isCostFunctionConverged = relCost <= baseSettings_.minRelCost;
   }
   const bool isConstraintsSatisfied = currentPerformanceIndex.equalityConstraintsSSE <= baseSettings_.constraintTolerance;
-  const bool isOptimizationConverged = (isCostFunctionConverged) && isConstraintsSatisfied;
+  const bool isOptimizationConverged = isCostFunctionConverged && isConstraintsSatisfied;
 
   // convergence info
   std::stringstream infoStream;
   if (isOptimizationConverged) {
     infoStream << "The algorithm has successfully terminated as: \n";
 
-    if (isCostFunctionConverged) {
-      infoStream << "    * The absolute relative change of cost (i.e., " << relCost << ") has reached to the minimum value ("
-                 << baseSettings_.minRelCost << ").\n";
-    }
+    infoStream << "    * The absolute relative change of cost (i.e., " << relCost << ") has reached to the minimum value ("
+               << baseSettings_.minRelCost << ").\n";
 
     infoStream << "    * The SSE of equality constraints (i.e., " << currentPerformanceIndex.equalityConstraintsSSE
                << ") has reached to its minimum value (" << baseSettings_.constraintTolerance << ").";

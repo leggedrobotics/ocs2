@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 
 #include <ocs2_core/Types.h>
+#include <ocs2_core/misc/Numerics.h>
 
 namespace ocs2 {
 
@@ -79,5 +80,27 @@ struct ModeSchedule {
 void swap(ModeSchedule& lh, ModeSchedule& rh);
 
 std::ostream& operator<<(std::ostream& stream, const ModeSchedule& modeSchedule);
+
+/**
+ * Gets the number of events that have preceded the given event time.
+ */
+inline size_t getEventCounter(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices, scalar_t eventTime) {
+  const auto eventIndexItr = std::find_if(postEventIndices.cbegin(), postEventIndices.cend(), [&](size_t postEventInd) {
+    return numerics::almost_eq(eventTime, timeTrajectory[postEventInd - 1]);
+  });
+  return std::distance(postEventIndices.cbegin(), eventIndexItr);
+}
+
+/**
+ * Finds the period that we can interpolate a trajectory with the given timestamp, timeTrajectory.
+ *
+ * @param [in] timeTrajectory: Timestamp of the data to be interpolated.
+ * @param [in] eventTimes: The event times array.
+ * @param [in] timePeriod: The requested time period for possible interpolation.
+ * @return The truncated time interval in which the interpolation is valid. In the case that the interpolation is not allowed it
+ * returns and interval of negative length i.e., (timePeriod.first, timePeriod.first - 1e-4).
+ */
+std::pair<scalar_t, scalar_t> findInterpolatableInterval(const scalar_array_t& timeTrajectory, const scalar_array_t& eventTimes,
+                                                         const std::pair<scalar_t, scalar_t>& timePeriod);
 
 }  // namespace ocs2

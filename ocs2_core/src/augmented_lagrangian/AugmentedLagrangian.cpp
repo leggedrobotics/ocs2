@@ -27,68 +27,41 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_core/reference/ModeSchedule.h"
-
-#include <ocs2_core/misc/Display.h>
-#include <ocs2_core/misc/Lookup.h>
+#include "ocs2_core/augmented_lagrangian/AugmentedLagrangian.h"
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ModeSchedule::ModeSchedule(std::vector<scalar_t> eventTimesInput, std::vector<size_t> modeSequenceInput)
-    : eventTimes(std::move(eventTimesInput)), modeSequence(std::move(modeSequenceInput)) {
-  assert(!modeSequence.empty());
-  assert(eventTimes.size() + 1 == modeSequence.size());
+std::unique_ptr<StateAugmentedLagrangian> create(std::unique_ptr<StateConstraint> constraintPtr,
+                                                 std::vector<std::unique_ptr<augmented::AugmentedPenaltyBase>> penaltyPtrArray) {
+  return std::unique_ptr<StateAugmentedLagrangian>(new StateAugmentedLagrangian(std::move(constraintPtr), std::move(penaltyPtrArray)));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-size_t ModeSchedule::modeAtTime(scalar_t time) const {
-  const auto ind = lookup::findIndexInTimeArray(eventTimes, time);
-  return modeSequence[ind];
+std::unique_ptr<StateAugmentedLagrangian> create(std::unique_ptr<StateConstraint> constraintPtr,
+                                                 std::unique_ptr<augmented::AugmentedPenaltyBase> penaltyPtr) {
+  return std::unique_ptr<StateAugmentedLagrangian>(new StateAugmentedLagrangian(std::move(constraintPtr), std::move(penaltyPtr)));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void swap(ModeSchedule& lh, ModeSchedule& rh) {
-  lh.eventTimes.swap(rh.eventTimes);
-  lh.modeSequence.swap(rh.modeSequence);
+std::unique_ptr<StateInputAugmentedLagrangian> create(std::unique_ptr<StateInputConstraint> constraintPtr,
+                                                      std::vector<std::unique_ptr<augmented::AugmentedPenaltyBase>> penaltyPtrArray) {
+  return std::unique_ptr<StateInputAugmentedLagrangian>(
+      new StateInputAugmentedLagrangian(std::move(constraintPtr), std::move(penaltyPtrArray)));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::ostream& operator<<(std::ostream& stream, const ModeSchedule& modeSchedule) {
-  stream << "event times:   {" << toDelimitedString(modeSchedule.eventTimes) << "}\n";
-  stream << "mode sequence: {" << toDelimitedString(modeSchedule.modeSequence) << "}\n";
-  return stream;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-std::pair<scalar_t, scalar_t> findInterpolatableInterval(const scalar_array_t& timeTrajectory, const scalar_array_t& eventTimes,
-                                                         const std::pair<scalar_t, scalar_t>& timePeriod) {
-  // no interpolation: a bit before initial time
-  const std::pair<scalar_t, scalar_t> emptyInterpolatableInterval{timePeriod.first, timePeriod.first - 1e-4};
-
-  if (timeTrajectory.empty() || timePeriod.first > timePeriod.second) {
-    return emptyInterpolatableInterval;
-
-  } else {
-    const auto pastEventItr =
-        std::find_if(eventTimes.crbegin(), eventTimes.crend(), [&](const scalar_t& te) { return te <= timeTrajectory.front(); });
-    const auto initialTime = (pastEventItr != eventTimes.crend()) ? std::max(*pastEventItr, timePeriod.first) : timePeriod.first;
-
-    const auto nextEventItr = std::lower_bound(eventTimes.cbegin(), eventTimes.cend(), timeTrajectory.back());
-    const auto finalTime = (nextEventItr != eventTimes.cend()) ? std::min(*nextEventItr, timePeriod.second) : timePeriod.second;
-
-    return (initialTime < finalTime) ? std::make_pair(initialTime, finalTime) : emptyInterpolatableInterval;
-  }
+std::unique_ptr<StateInputAugmentedLagrangian> create(std::unique_ptr<StateInputConstraint> constraintPtr,
+                                                      std::unique_ptr<augmented::AugmentedPenaltyBase> penaltyPtr) {
+  return std::unique_ptr<StateInputAugmentedLagrangian>(new StateInputAugmentedLagrangian(std::move(constraintPtr), std::move(penaltyPtr)));
 }
 
 }  // namespace ocs2

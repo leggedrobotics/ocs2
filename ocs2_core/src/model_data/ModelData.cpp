@@ -77,15 +77,38 @@ std::string checkCostProperties(const ModelData& data) {
 
   errorDescription << checkBeingPSD(data.cost, "cost");
 
+  // check if R is invertible and its schur complement is PSD
   if (data.cost.dfduu.size() > 0) {
     const auto rcond = data.cost.dfduu.ldlt().rcond();
     if (rcond < Eigen::NumTraits<scalar_t>::epsilon()) {
       errorDescription << "Cost second derivative w.r.t. input is not invertible. It's reciprocal condition number is " +
                               std::to_string(rcond) + ".\n";
+    } else {
+      // check schur complement of R being PSD
+      errorDescription << schurComplementOfCostHessianIsPsd(data.cost);
     }
   }
 
   return errorDescription.str();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::string schurComplementOfCostHessianIsPsd(const ScalarFunctionQuadraticApproximation& cost) {
+  if (cost.dfdxx.size() > 0 && cost.dfduu.size() > 0) {
+    matrix_t UofUUT;
+    LinearAlgebra::computeInverseMatrixUUT(cost.dfduu, UofUUT);
+    const matrix_t UT_P = UofUUT.transpose() * cost.dfdux;
+    matrix_t inputHessianSchurComplement = cost.dfdxx;
+    inputHessianSchurComplement.noalias() -= UT_P.transpose() * UT_P;
+
+    // check for being psd
+    return checkBeingPSD(inputHessianSchurComplement, "Schur complement of cost second derivative w.r.t. input");
+
+  } else {
+    return "Either cost.dfdxx or cost.dfduu are not set!";
+  }
 }
 
 /******************************************************************************************************/
@@ -105,6 +128,32 @@ std::string checkDynamicsProperties(const ModelData& data) {
   }
   if (!data.dynamics.dfdu.allFinite()) {
     errorDescription << "Dynamics derivative w.r.t. input is not finite.";
+  }
+
+  return errorDescription.str();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::string checkControllability(const VectorFunctionLinearApproximation& dynamics) {
+  const size_t stateDim = dynamics.dfdu.rows();
+  const size_t inputDim = dynamics.dfdu.cols();
+
+  // controllability matrix
+  matrix_t ctrlMatrix(stateDim, inputDim * stateDim);
+  ctrlMatrix.leftCols(inputDim) = dynamics.dfdu;
+  for (size_t i = 1; i < stateDim; i++) {
+    ctrlMatrix.middleCols(i * inputDim, inputDim).noalias() = dynamics.dfdx * ctrlMatrix.middleCols((i - 1) * inputDim, inputDim);
+  }
+
+  // controllability rank
+  const size_t ctrlMatrixRank = LinearAlgebra::rank(ctrlMatrix);
+
+  std::stringstream errorDescription;
+  if (ctrlMatrixRank < stateDim) {
+    errorDescription << "Uncontrollable system: controllability matrix rank should be " << stateDim << " as opposed to " << ctrlMatrixRank
+                     << "\n";
   }
 
   return errorDescription.str();

@@ -27,59 +27,50 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#pragma once
-
-#include <gtest/gtest.h>
-#include <experimental/filesystem>
-
-#include <ocs2_core/PreComputation.h>
-#include <ocs2_core/loopshaping/LoopshapingDefinition.h>
 #include <ocs2_core/loopshaping/LoopshapingPreComputation.h>
-#include <ocs2_core/loopshaping/LoopshapingPropertyTree.h>
+#include <ocs2_core/loopshaping/augmented_lagrangian/LoopshapingAugmentedLagrangianOutputPattern.h>
 
 namespace ocs2 {
 
-const std::vector<std::string> configNames = {"loopshaping_r.conf", "loopshaping_r_ballbot.conf", "loopshaping_s.conf",
-                                              "loopshaping_s_integrator.conf"};
+ScalarFunctionQuadraticApproximation LoopshapingAugmentedLagrangianOutputPattern::getQuadraticApproximation(
+    scalar_t t, const vector_t& x, const vector_t& u, const std::vector<Multiplier>& termsMultiplier, const PreComputation& preComp) const {
+  if (this->empty()) {
+    return ScalarFunctionQuadraticApproximation::Zero(x.rows(), u.rows());
+  }
 
-inline std::string getAbsolutePathToConfigurationFile(const std::string& fileName) {
-  const std::experimental::filesystem::path pathToTest = std::experimental::filesystem::path(__FILE__);
-  return std::string(pathToTest.parent_path()) + "/" + fileName;
+  const bool isDiagonal = loopshapingDefinition_->isDiagonal();
+  const auto& r_filter = loopshapingDefinition_->getInputFilter();
+  const auto& preCompLS = cast<LoopshapingPreComputation>(preComp);
+  const auto& x_system = preCompLS.getSystemState();
+  const auto& u_system = preCompLS.getSystemInput();
+  const auto& x_filter = preCompLS.getFilterState();
+  const auto& preComp_system = preCompLS.getSystemPreComputation();
+  const auto stateDim = x.rows();
+  const auto inputDim = u.rows();
+  const auto sysStateDim = x_system.rows();
+  const auto filtStateDim = x_filter.rows();
+
+  // Not const, so we can move
+  auto L_system =
+      LoopshapingStateInputAugmentedLagrangian::getQuadraticApproximation(t, x_system, u_system, termsMultiplier, preComp_system);
+
+  ScalarFunctionQuadraticApproximation L;
+  L.f = std::move(L_system.f);
+
+  L.dfdx.setZero(stateDim);
+  L.dfdx.head(sysStateDim) = L_system.dfdx;
+
+  L.dfdxx.setZero(stateDim, stateDim);
+  L.dfdxx.topLeftCorner(sysStateDim, sysStateDim) = L_system.dfdxx;
+
+  L.dfdu = std::move(L_system.dfdu);
+  L.dfduu = std::move(L_system.dfduu);
+
+  L.dfdux.resize(inputDim, stateDim);
+  L.dfdux.leftCols(sysStateDim) = L_system.dfdux;
+  L.dfdux.rightCols(filtStateDim).setZero();
+
+  return L;
 }
-
-class LoopshapingTestConfiguration {
- public:
-  LoopshapingTestConfiguration(const std::string& configName);
-
- protected:
-  std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
-  std::unique_ptr<PreComputation> preComp_sys_;
-  std::unique_ptr<LoopshapingPreComputation> preComp_;
-
-  size_t systemStateDim_;
-  size_t filterStateDim_;
-  size_t inputDim_;
-
-  const scalar_t tol = 1e-9;
-
-  scalar_t t;
-  vector_t x_;
-  vector_t u_;
-  vector_t x_sys_;
-  vector_t u_sys_;
-  vector_t x_filter_;
-  vector_t u_filter_;
-
-  vector_t x_disturbance_;
-  vector_t u_disturbance_;
-  vector_t x_sys_disturbance_;
-  vector_t u_sys_disturbance_;
-  vector_t x_filter_disturbance_;
-  vector_t u_filter_disturbance_;
-
- private:
-  void getRandomStateInput(size_t systemStateDim, size_t filterStateDim, size_t inputDim, vector_t& x_sys, vector_t& u_sys,
-                           vector_t& x_filter, vector_t& u_filter, vector_t& x, vector_t& u, scalar_t range = 1.0);
-};
 
 }  // namespace ocs2

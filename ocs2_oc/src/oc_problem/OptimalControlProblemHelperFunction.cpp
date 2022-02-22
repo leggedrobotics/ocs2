@@ -113,6 +113,45 @@ void initializeIntermediateMultiplierCollection(const OptimalControlProblem& ocp
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+void updateDualSolution(const OptimalControlProblem& ocp, const PrimalSolution& primalSolution, ProblemMetrics& problemMetrics,
+                        DualSolutionRef dualSolution) {
+  // final
+  if (!primalSolution.timeTrajectory_.empty()) {
+    const auto& time = primalSolution.timeTrajectory_.back();
+    const auto& state = primalSolution.stateTrajectory_.back();
+    auto& metricsCollection = problemMetrics.final;
+    auto& multiplierCollection = dualSolution.final;
+    updateFinalMultiplierCollection(ocp, time, state, metricsCollection, multiplierCollection);
+  }
+
+  // preJump
+  assert(dualSolution.preJumps.size() == primalSolution.postEventIndices_.size());
+  assert(problemMetrics.preJumps.size() == primalSolution.postEventIndices_.size());
+  for (size_t i = 0; i < primalSolution.postEventIndices_.size(); i++) {
+    const auto timeIndex = primalSolution.postEventIndices_[i] - 1;
+    const auto& time = primalSolution.timeTrajectory_[timeIndex];
+    const auto& state = primalSolution.stateTrajectory_[timeIndex];
+    auto& metricsCollection = problemMetrics.preJumps[i];
+    auto& multiplierCollection = dualSolution.preJumps[i];
+    updatePreJumpMultiplierCollection(ocp, time, state, metricsCollection, multiplierCollection);
+  }
+
+  // intermediates
+  assert(dualSolution.intermediates.size() == primalSolution.timeTrajectory_.size());
+  assert(problemMetrics.intermediates.size() == primalSolution.timeTrajectory_.size());
+  for (size_t i = 0; i < primalSolution.timeTrajectory_.size(); i++) {
+    const auto& time = primalSolution.timeTrajectory_[i];
+    const auto& state = primalSolution.stateTrajectory_[i];
+    const auto& input = primalSolution.inputTrajectory_[i];
+    auto& metricsCollection = problemMetrics.intermediates[i];
+    auto& multiplierCollection = dualSolution.intermediates[i];
+    updateIntermediateMultiplierCollection(ocp, time, state, input, metricsCollection, multiplierCollection);
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void updateFinalMultiplierCollection(const OptimalControlProblem& ocp, scalar_t time, const vector_t& state,
                                      MetricsCollection& metricsCollection, MultiplierCollection& multiplierCollection) {
   ocp.finalEqualityLagrangianPtr->updateLagrangian(time, state, metricsCollection.stateEqLagrangian, multiplierCollection.stateEq);

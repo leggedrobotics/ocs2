@@ -56,21 +56,28 @@ void initializeIntermediateMultiplierCollection(const OptimalControlProblem& ocp
                                                 MultiplierCollection& multiplierCollection);
 
 /**
- * Updates final MultiplierCollection for equality and inequality Lagrangians.
+ * Updates in-place the dual solution based on its current solution and state-onpit values using the Lagrangian update method in ocp.
+ * Moreover it also updates the penalties of ProblemMetrics based on the update multipliers.
+ */
+void updateDualSolution(const OptimalControlProblem& ocp, const PrimalSolution& primalSolution, ProblemMetrics& problemMetrics,
+                        DualSolutionRef dualSolution);
+
+/**
+ * Updates in-place final MultiplierCollection for equality and inequality Lagrangians.
  * Moreover it also updates the penalties of MetricsCollection based on the update multipliers.
  */
 void updateFinalMultiplierCollection(const OptimalControlProblem& ocp, scalar_t time, const vector_t& state,
                                      MetricsCollection& metricsCollection, MultiplierCollection& multiplierCollection);
 
 /**
- * Updates pre-jump MultiplierCollection for equality and inequality Lagrangians.
+ * Updates in-place pre-jump MultiplierCollection for equality and inequality Lagrangians.
  * Moreover it also updates the penalties of MetricsCollection based on the update multipliers.
  */
 void updatePreJumpMultiplierCollection(const OptimalControlProblem& ocp, scalar_t time, const vector_t& state,
                                        MetricsCollection& metricsCollection, MultiplierCollection& multiplierCollection);
 
 /**
- * Updates intermediate MultiplierCollection for equality and inequality Lagrangians.
+ * Updates in-place intermediate MultiplierCollection for equality and inequality Lagrangians.
  * Moreover it also updates the penalties of MetricsCollection based on the update multipliers.
  */
 void updateIntermediateMultiplierCollection(const OptimalControlProblem& ocp, scalar_t time, const vector_t& state, const vector_t& input,

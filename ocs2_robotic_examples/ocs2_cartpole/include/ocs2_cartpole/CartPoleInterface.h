@@ -70,6 +70,7 @@ class CartPoleInterface final : public RobotInterface {
 
   mpc::Settings& mpcSettings() { return mpcSettings_; }
 
+  OptimalControlProblem& optimalControlProblem() { return problem_; }
   const OptimalControlProblem& getOptimalControlProblem() const override { return problem_; }
 
   const RolloutBase& getRollout() const { return *rolloutPtr_; }

@@ -39,8 +39,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-const std::vector<std::string> configNames = {"loopshaping_r.conf", "loopshaping_r_ballbot.conf", "loopshaping_s.conf",
-                                              "loopshaping_s_integrator.conf"};
+const std::vector<std::string> configNames = {"loopshaping_r.conf", "loopshaping_r_ballbot.conf",
+                                              "loopshaping_s.conf", "loopshaping_s_integrator.conf"};
 
 inline std::string getAbsolutePathToConfigurationFile(const std::string& fileName) {
   const std::experimental::filesystem::path pathToTest = std::experimental::filesystem::path(__FILE__);

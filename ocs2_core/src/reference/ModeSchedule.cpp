@@ -68,4 +68,27 @@ std::ostream& operator<<(std::ostream& stream, const ModeSchedule& modeSchedule)
   return stream;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::pair<scalar_t, scalar_t> findInterpolatableInterval(const scalar_array_t& timeTrajectory, const scalar_array_t& eventTimes,
+                                                         const std::pair<scalar_t, scalar_t>& timePeriod) {
+  // no interpolation: a bit before initial time
+  const std::pair<scalar_t, scalar_t> emptyInterpolatableInterval{timePeriod.first, timePeriod.first - 1e-4};
+
+  if (timeTrajectory.empty() || timePeriod.first > timePeriod.second) {
+    return emptyInterpolatableInterval;
+
+  } else {
+    const auto pastEventItr =
+        std::find_if(eventTimes.crbegin(), eventTimes.crend(), [&](const scalar_t& te) { return te <= timeTrajectory.front(); });
+    const auto initialTime = (pastEventItr != eventTimes.crend()) ? std::max(*pastEventItr, timePeriod.first) : timePeriod.first;
+
+    const auto nextEventItr = std::lower_bound(eventTimes.cbegin(), eventTimes.cend(), timeTrajectory.back());
+    const auto finalTime = (nextEventItr != eventTimes.cend()) ? std::min(*nextEventItr, timePeriod.second) : timePeriod.second;
+
+    return (initialTime < finalTime) ? std::make_pair(initialTime, finalTime) : emptyInterpolatableInterval;
+  }
+}
+
 }  // namespace ocs2

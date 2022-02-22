@@ -84,7 +84,7 @@ class QuadraticPenalty final : public AugmentedPenaltyBase {
   scalar_t getDerivative(scalar_t t, scalar_t l, scalar_t h) const override { return -l + config_.scale * h; }
   scalar_t getSecondDerivative(scalar_t t, scalar_t l, scalar_t h) const override { return config_.scale; }
 
-  scalar_t updateMultiplier(scalar_t t, scalar_t l, scalar_t h) const override { return l - config_.stepSize * h; }
+  scalar_t updateMultiplier(scalar_t t, scalar_t l, scalar_t h) const override { return l - config_.stepSize * config_.scale * h; }
   scalar_t initializeMultiplier() const override { return 0.0; }
 
  private:

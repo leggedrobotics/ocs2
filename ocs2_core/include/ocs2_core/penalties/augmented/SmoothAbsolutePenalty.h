@@ -95,7 +95,7 @@ class SmoothAbsolutePenalty final : public AugmentedPenaltyBase {
     return config_.scale * deltaSquare / pow(h * h + deltaSquare, 1.5);
   }
 
-  scalar_t updateMultiplier(scalar_t t, scalar_t l, scalar_t h) const override { return l - config_.stepSize * h; }
+  scalar_t updateMultiplier(scalar_t t, scalar_t l, scalar_t h) const override { return l - config_.stepSize * config_.scale * h; }
   scalar_t initializeMultiplier() const override { return 0.0; }
 
  private:

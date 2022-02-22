@@ -64,6 +64,7 @@ add_library(${PROJECT_NAME}
   src/mrt/MRT_ROS_Dummy_Loop.cpp
   src/mrt/MRT_ROS_Interface.cpp
   src/synchronized_module/RosReferenceManager.cpp
+  src/synchronized_module/RosSolverObserverModule.cpp
   src/visualization/VisualizationHelpers.cpp
   src/visualization/VisualizationColors.cpp
 )

@@ -112,6 +112,16 @@ size_array_t getSizes(const std::vector<Multiplier>& termsMultiplier);
 std::vector<Multiplier> toMultipliers(const size_array_t& termsSize, const vector_t& vec);
 
 namespace LinearInterpolation {
+
+/**
+ * Linearly interpolates a trajectory of Multipliers.
+ *
+ * @param [in] indexAlpha : index and interpolation coefficient (alpha) pair.
+ * @param [in] dataArray : A trajectory of MultiplierConstRef.
+ * @return The interpolated Multiplier at indexAlpha.
+ */
+Multiplier interpolate(const index_alpha_t& indexAlpha, const std::vector<MultiplierConstRef>& dataArray);
+
 /**
  * Linearly interpolates a trajectory of MultiplierCollections.
  *

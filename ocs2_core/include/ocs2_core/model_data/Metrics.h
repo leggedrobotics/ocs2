@@ -29,7 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/Types.h>
+#include "ocs2_core/Types.h"
+#include "ocs2_core/misc/LinearInterpolation.h"
 
 namespace ocs2 {
 
@@ -63,6 +64,28 @@ struct MetricsCollection {
   std::vector<Metrics> stateInputEqLagrangian;
   std::vector<Metrics> stateInputIneqLagrangian;
 };
+
+namespace LinearInterpolation {
+
+/**
+ * Linearly interpolates a trajectory of Metrics.
+ *
+ * @param [in] indexAlpha : index and interpolation coefficient (alpha) pair.
+ * @param [in] dataArray : A trajectory of MetricsConstRef.
+ * @return The interpolated Metrics at indexAlpha.
+ */
+Metrics interpolate(const index_alpha_t& indexAlpha, const std::vector<MetricsConstRef>& dataArray);
+
+/**
+ * Linearly interpolates a trajectory of MetricsCollection.
+ *
+ * @param [in] indexAlpha : index and interpolation coefficient (alpha) pair.
+ * @param [in] dataArray : A trajectory of MetricsCollection.
+ * @return The interpolated MetricsCollection at indexAlpha.
+ */
+MetricsCollection interpolate(const index_alpha_t& indexAlpha, const std::vector<MetricsCollection>& dataArray);
+
+}  // namespace LinearInterpolation
 
 struct ProblemMetrics {
   MetricsCollection final;

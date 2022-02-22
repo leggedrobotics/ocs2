@@ -104,10 +104,24 @@ size_array_t getSizes(const std::vector<Multiplier>& termsMultiplier) {
   return s;
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 namespace LinearInterpolation {
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+Multiplier interpolate(const index_alpha_t& indexAlpha, const std::vector<MultiplierConstRef>& dataArray) {
+  const auto penalty = interpolate(
+      indexAlpha, dataArray, [](const std::vector<MultiplierConstRef>& array, size_t t) -> const scalar_t& { return array[t].penalty; });
+
+  const auto lagrangian = interpolate(
+      indexAlpha, dataArray, [](const std::vector<MultiplierConstRef>& array, size_t t) -> const vector_t& { return array[t].lagrangian; });
+
+  return {penalty, lagrangian};
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 MultiplierCollection interpolate(const index_alpha_t& indexAlpha, const std::vector<MultiplierCollection>& dataArray) {
   // number of terms
   const auto ind = indexAlpha.second > 0.5 ? indexAlpha.first : indexAlpha.first + 1;

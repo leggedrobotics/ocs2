@@ -76,7 +76,7 @@ TEST(HybridSlqTest, state_rollout_slq) {
     settings.algorithm_ = ddp::Algorithm::SLQ;
     settings.displayInfo_ = true;
     settings.displayShortSummary_ = true;
-    settings.maxNumIterations_ = 80;
+    settings.maxNumIterations_ = 100;
     settings.nThreads_ = 1;
     settings.minRelCost_ = 1e-6;  // to avoid early termination
     settings.checkNumericalStability_ = false;

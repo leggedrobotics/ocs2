@@ -138,7 +138,7 @@ TEST(HybridSlqTest, state_rollout_slq) {
   // Test 1: Check constraint compliance. It uses a solver observer to get metrics for the bounds constraints
   std::unique_ptr<SolverObserverModule> boundsConstraintsObserverPtr(new SolverObserverModule("bounds"));
   boundsConstraintsObserverPtr->setMetricsCallback([&](const scalar_array_t& timeTraj, const std::vector<MetricsConstRef>& metricsTraj) {
-    constexpr scalar_t constraintViolationTolerance = 1e-3;
+    constexpr scalar_t constraintViolationTolerance = 1e-2;
     for (auto metricsConstRef : metricsTraj) {
       const vector_t constraintViolation = metricsConstRef.constraint.cwiseMin(0.0);
       EXPECT_NEAR(constraintViolation(0), 0.0, constraintViolationTolerance);

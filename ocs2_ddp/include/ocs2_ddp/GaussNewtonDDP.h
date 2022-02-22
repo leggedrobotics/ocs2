@@ -386,20 +386,6 @@ class GaussNewtonDDP : public SolverBase {
   void updateConstraintPenalties(scalar_t equalityConstraintsSSE);
 
   /**
-   * Corrects for the tail of the cached trajectory based on the nominal trajectory. This compensates for the
-   * the moving horizon (MPC) applications where the final time of the cached trajectory is smaller than the
-   * nominal one.
-   *
-   * @param [in] timeSegment: The interval index and interpolation coefficient alpha of the cached trajectory final
-   * time in the nominal time trajectory.
-   * @param [in] currentTrajectory: The nominal trajectory.
-   * @param [out] cachedTrajectory: The cached trajectory.
-   */
-  template <typename Data_T, class Alloc>
-  static void correctcachedTrajectoryTail(std::pair<int, scalar_t> timeSegment, const std::vector<Data_T, Alloc>& currentTrajectory,
-                                          std::vector<Data_T, Alloc>& cachedTrajectory);
-
-  /**
    * Runs the initialization method for Gauss-Newton DDP.
    */
   void runInit();
@@ -490,21 +476,5 @@ class GaussNewtonDDP : public SolverBase {
 
   benchmark::RepeatedTimer totalMultiplierTimer_;
 };
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename Data_T, class Alloc>
-void GaussNewtonDDP::correctcachedTrajectoryTail(std::pair<int, scalar_t> timeSegment, const std::vector<Data_T, Alloc>& currentTrajectory,
-                                                 std::vector<Data_T, Alloc>& cachedTrajectory) {
-  // adding the fist cashed value
-  Data_T firstCachedValue = LinearInterpolation::interpolate(timeSegment, currentTrajectory);
-  cachedTrajectory.emplace_back(std::move(firstCachedValue));
-
-  // Concatenate the rest
-  const int ignoredSizeOfNominal = timeSegment.first + 1;
-
-  cachedTrajectory.insert(cachedTrajectory.end(), currentTrajectory.begin() + ignoredSizeOfNominal, currentTrajectory.end());
-}
 
 }  // namespace ocs2

@@ -473,8 +473,7 @@ class GaussNewtonDDP : public SolverBase {
   benchmark::RepeatedTimer backwardPassTimer_;
   benchmark::RepeatedTimer computeControllerTimer_;
   benchmark::RepeatedTimer searchStrategyTimer_;
-
-  benchmark::RepeatedTimer totalMultiplierTimer_;
+  benchmark::RepeatedTimer totalDualSolutionTimer_;
 };
 
 }  // namespace ocs2

@@ -30,7 +30,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_core/model_data/Metrics.h"
 
 namespace ocs2 {
-
 namespace LinearInterpolation {
 
 /******************************************************************************************************/
@@ -109,69 +108,6 @@ MetricsCollection interpolate(const index_alpha_t& indexAlpha, const std::vector
 
   return out;
 }
+
 }  // namespace LinearInterpolation
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void swap(MetricsCollection& lhs, MetricsCollection& rhs) {
-  // Cost
-  std::swap(lhs.cost, rhs.cost);
-
-  // Equality constraints
-  lhs.stateEqConstraint.swap(rhs.stateEqConstraint);
-  lhs.stateInputEqConstraint.swap(rhs.stateInputEqConstraint);
-
-  // Lagrangians
-  lhs.stateEqLagrangian.swap(rhs.stateEqLagrangian);
-  lhs.stateIneqLagrangian.swap(rhs.stateIneqLagrangian);
-  lhs.stateInputEqLagrangian.swap(rhs.stateInputEqLagrangian);
-  lhs.stateInputIneqLagrangian.swap(rhs.stateInputIneqLagrangian);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void clear(MetricsCollection& m) {
-  // Cost
-  m.cost = 0.0;
-
-  // Equality constraints
-  m.stateEqConstraint = vector_t();
-  m.stateInputEqConstraint = vector_t();
-
-  // Lagrangians
-  m.stateEqLagrangian.clear();
-  m.stateIneqLagrangian.clear();
-  m.stateInputEqLagrangian.clear();
-  m.stateInputIneqLagrangian.clear();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void swap(ProblemMetrics& lhs, ProblemMetrics& rhs) {
-  swap(lhs.final, rhs.final);
-  lhs.preJumps.swap(rhs.preJumps);
-  lhs.intermediates.swap(rhs.intermediates);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void clear(ProblemMetrics& m) {
-  clear(m.final);
-  m.preJumps.clear();
-  m.intermediates.clear();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-scalar_t sumPenalties(const std::vector<Metrics>& metricsArray) {
-  scalar_t s = 0.0;
-  std::for_each(metricsArray.begin(), metricsArray.end(), [&s](const Metrics& m) { s += m.penalty; });
-  return s;
-}
-
 }  // namespace ocs2

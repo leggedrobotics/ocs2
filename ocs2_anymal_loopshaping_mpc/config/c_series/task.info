@@ -94,7 +94,7 @@ model_settings
     errorGain                         20.0
     swingTimeScale                    0.15
     sdfMidswingMargin                 0.04
-    terrainMargin                     0.0
+    terrainMargin                     0.04
     previousFootholdFactor            0.2
     previousFootholdDeadzone          0.025
     previousFootholdTimeDeadzone      0.30

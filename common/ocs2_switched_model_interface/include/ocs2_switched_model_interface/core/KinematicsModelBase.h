@@ -38,6 +38,11 @@ class KinematicsModelBase {
 
   matrix3_s_t<SCALAR_T> orientationLegRootToOriginFrame(size_t footIndex, const base_coordinate_s_t<SCALAR_T>& basePose) const;
 
+  vector3_s_t<SCALAR_T> legRootVelocityInBaseFrame(size_t footIndex, const base_coordinate_s_t<SCALAR_T>& baseTwistInBaseFrame) const;
+
+  vector3_s_t<SCALAR_T> legRootVelocityInOriginFrame(size_t footIndex, const base_coordinate_s_t<SCALAR_T>& basePoseInOriginFrame,
+                                                     const base_coordinate_s_t<SCALAR_T>& baseTwistInBaseFrame) const;
+
   virtual vector3_s_t<SCALAR_T> positionBaseToFootInBaseFrame(size_t footIndex,
                                                               const joint_coordinate_s_t<SCALAR_T>& jointPositions) const = 0;
 
@@ -76,9 +81,10 @@ class KinematicsModelBase {
                                                 const joint_coordinate_s_t<SCALAR_T>& jointPositions,
                                                 const joint_coordinate_s_t<SCALAR_T>& jointVelocities) const;
 
-  std::array<vector3_s_t<SCALAR_T>, NUM_CONTACT_POINTS> feetVelocitiesInOriginFrame(
-      const base_coordinate_s_t<SCALAR_T>& basePoseInOriginFrame, const base_coordinate_s_t<SCALAR_T>& baseTwistInBaseFrame,
-      const joint_coordinate_s_t<SCALAR_T>& jointPositions, const joint_coordinate_s_t<SCALAR_T>& jointVelocities) const;
+  feet_array_t<vector3_s_t<SCALAR_T>> feetVelocitiesInOriginFrame(const base_coordinate_s_t<SCALAR_T>& basePoseInOriginFrame,
+                                                                  const base_coordinate_s_t<SCALAR_T>& baseTwistInBaseFrame,
+                                                                  const joint_coordinate_s_t<SCALAR_T>& jointPositions,
+                                                                  const joint_coordinate_s_t<SCALAR_T>& jointVelocities) const;
 
   struct CollisionSphere {
     vector3_s_t<SCALAR_T> position;

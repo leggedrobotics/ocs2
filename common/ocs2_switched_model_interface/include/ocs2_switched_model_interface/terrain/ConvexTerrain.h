@@ -18,4 +18,13 @@ struct ConvexTerrain {
   std::vector<vector2_t> boundary;
 };
 
+inline int getNextVertex(int i, size_t N) {
+  int next = i + 1;
+  return (next < N) ? next : 0;  // next point with wrap around
+}
+
+inline int getPreviousVertex(int i, size_t N) {
+  return (i > 0) ? (i - 1) : (N - 1);  // previous point with wrap around
+}
+
 }  // namespace switched_model

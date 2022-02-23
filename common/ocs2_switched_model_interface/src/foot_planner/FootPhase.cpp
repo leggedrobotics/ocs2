@@ -17,7 +17,7 @@ FootTangentialConstraintMatrix tangentialConstraintsFromConvexTerrain(const Conv
   if (numberOfConstraints > 0) {
     for (int i = 0; i < stanceTerrain.boundary.size(); ++i) {
       // Determine next point in counter clockwise direction
-      int j = ((i + 1) < stanceTerrain.boundary.size()) ? i + 1 : 0;  // next point with wrap around
+      int j = getNextVertex(i, stanceTerrain.boundary.size());
       vector2_t start2end = stanceTerrain.boundary[j] - stanceTerrain.boundary[i];
 
       // Get 2D constraint A_terrain * p_terrain + b - margin >= 0

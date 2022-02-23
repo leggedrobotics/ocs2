@@ -91,7 +91,7 @@ class TestCartpole : public testing::TestWithParam<std::tuple<ddp::Algorithm, Pe
     const auto algorithm = std::get<0>(GetParam());
     auto ddpSettings = cartPoleInterfacePtr->ddpSettings();
     ddpSettings.algorithm_ = algorithm;
-    ddpSettings.maxNumIterations_ = 80;
+    ddpSettings.maxNumIterations_ = 100;
     ddpSettings.minRelCost_ = 1e-12;  // to avoid early termination
     ddpSettings.displayInfo_ = false;
     ddpSettings.displayShortSummary_ = true;

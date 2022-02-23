@@ -23,14 +23,14 @@ s_inv_filter
         numRepeats  12;
         numPoles    1;
         numZeros    1;
-        scaling     9;
+        scaling     3;
         zeros
         {
            (0) 0.0;
         }
         poles
         {
-           (0) -100.0;
+           (0) -50.0;
         }
     }
 }

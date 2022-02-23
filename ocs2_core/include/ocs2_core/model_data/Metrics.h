@@ -63,7 +63,42 @@ struct MetricsCollection {
   std::vector<Metrics> stateIneqLagrangian;
   std::vector<Metrics> stateInputEqLagrangian;
   std::vector<Metrics> stateInputIneqLagrangian;
+
+  /** Exchanges the values of MetricsCollection */
+  void swap(MetricsCollection& other) {
+    // Cost
+    std::swap(cost, other.cost);
+    // Equality constraints
+    stateEqConstraint.swap(other.stateEqConstraint);
+    stateInputEqConstraint.swap(other.stateInputEqConstraint);
+    // Lagrangians
+    stateEqLagrangian.swap(other.stateEqLagrangian);
+    stateIneqLagrangian.swap(other.stateIneqLagrangian);
+    stateInputEqLagrangian.swap(other.stateInputEqLagrangian);
+    stateInputIneqLagrangian.swap(other.stateInputIneqLagrangian);
+  }
+
+  /** Clears the value of the MetricsCollection */
+  void clear() {
+    // Cost
+    cost = 0.0;
+    // Equality constraints
+    stateEqConstraint = vector_t();
+    stateInputEqConstraint = vector_t();
+    // Lagrangians
+    stateEqLagrangian.clear();
+    stateIneqLagrangian.clear();
+    stateInputEqLagrangian.clear();
+    stateInputIneqLagrangian.clear();
+  }
 };
+
+/** Sums penalties of an array of Metrics */
+inline scalar_t sumPenalties(const std::vector<Metrics>& metricsArray) {
+  scalar_t s = 0.0;
+  std::for_each(metricsArray.begin(), metricsArray.end(), [&s](const Metrics& m) { s += m.penalty; });
+  return s;
+}
 
 namespace LinearInterpolation {
 
@@ -86,26 +121,5 @@ Metrics interpolate(const index_alpha_t& indexAlpha, const std::vector<MetricsCo
 MetricsCollection interpolate(const index_alpha_t& indexAlpha, const std::vector<MetricsCollection>& dataArray);
 
 }  // namespace LinearInterpolation
-
-struct ProblemMetrics {
-  MetricsCollection final;
-  std::vector<MetricsCollection> preJumps;
-  std::vector<MetricsCollection> intermediates;
-};
-
-/** Exchanges the given values of MetricsCollection */
-void swap(MetricsCollection& lhs, MetricsCollection& rhs);
-
-/** Clears the value of the given MetricsCollection */
-void clear(MetricsCollection& m);
-
-/** Exchanges the given values of ProblemMetrics */
-void swap(ProblemMetrics& lhs, ProblemMetrics& rhs);
-
-/** Clears the value of the given ProblemMetrics */
-void clear(ProblemMetrics& m);
-
-/** sums penalties of an array of Metrics */
-scalar_t sumPenalties(const std::vector<Metrics>& metricsArray);
 
 }  // namespace ocs2

@@ -36,33 +36,6 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void swap(MultiplierCollection& lhs, MultiplierCollection& rhs) {
-  lhs.stateEq.swap(rhs.stateEq);
-  lhs.stateIneq.swap(rhs.stateIneq);
-  lhs.stateInputEq.swap(rhs.stateInputEq);
-  lhs.stateInputIneq.swap(rhs.stateInputIneq);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void clear(MultiplierCollection& m) {
-  m.stateEq.clear();
-  m.stateIneq.clear();
-  m.stateInputEq.clear();
-  m.stateInputIneq.clear();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-bool empty(const MultiplierCollection& m) {
-  return m.stateEq.empty() && m.stateIneq.empty() && m.stateInputEq.empty() && m.stateInputIneq.empty();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 vector_t toVector(const std::vector<Multiplier>& termsMultiplier) {
   size_t n = 0;
   std::for_each(termsMultiplier.begin(), termsMultiplier.end(), [&](const Multiplier& m) { n += (1 + m.lagrangian.size()); });
@@ -104,6 +77,9 @@ size_array_t getSizes(const std::vector<Multiplier>& termsMultiplier) {
   return s;
 }
 
+}  // namespace ocs2
+
+namespace ocs2 {
 namespace LinearInterpolation {
 
 /******************************************************************************************************/
@@ -182,6 +158,6 @@ MultiplierCollection interpolate(const index_alpha_t& indexAlpha, const std::vec
 
   return out;
 }
-}  // namespace LinearInterpolation
 
+}  // namespace LinearInterpolation
 }  // namespace ocs2

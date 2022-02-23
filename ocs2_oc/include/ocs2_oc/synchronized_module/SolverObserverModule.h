@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/model_data/Metrics.h>
 
 #include "ocs2_oc/oc_data/DualSolution.h"
+#include "ocs2_oc/oc_data/ProblemMetrics.h"
 #include "ocs2_oc/oc_problem/OptimalControlProblem.h"
 
 namespace ocs2 {

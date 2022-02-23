@@ -74,16 +74,26 @@ struct MultiplierCollection {
   std::vector<Multiplier> stateInputEq;
   // state-input inequality
   std::vector<Multiplier> stateInputIneq;
+
+  /** Exchanges the values of MultiplierCollection. */
+  void swap(MultiplierCollection& other) {
+    stateEq.swap(other.stateEq);
+    stateIneq.swap(other.stateIneq);
+    stateInputEq.swap(other.stateInputEq);
+    stateInputIneq.swap(other.stateInputIneq);
+  }
+
+  /** Clears the values of the MultiplierCollection. */
+  void clear() {
+    stateEq.clear();
+    stateIneq.clear();
+    stateInputEq.clear();
+    stateInputIneq.clear();
+  }
+
+  /** Whether the MultiplierCollection is empty. */
+  bool empty() const { return stateEq.empty() && stateIneq.empty() && stateInputEq.empty() && stateInputIneq.empty(); }
 };
-
-/** Exchanges the values of two MultiplierCollection. */
-void swap(MultiplierCollection& lhs, MultiplierCollection& rhs);
-
-/** Clears the vector containers of the given MultiplierCollection. */
-void clear(MultiplierCollection& m);
-
-/** Whether the given MultiplierCollection is empty. */
-bool empty(const MultiplierCollection& m);
 
 /**
  * Serializes an array of Multiplier structures associated to an array of constraint terms.

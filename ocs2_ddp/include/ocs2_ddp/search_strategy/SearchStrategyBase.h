@@ -41,6 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_oc/oc_data/DualSolution.h>
 #include <ocs2_oc/oc_data/PrimalSolution.h>
+#include <ocs2_oc/oc_data/ProblemMetrics.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
 
 #include "ocs2_ddp/search_strategy/StrategySettings.h"
@@ -168,9 +169,9 @@ struct SolutionRef {
 
 inline void swap(SolutionRef lhs, SolutionRef rhs) {
   std::swap(lhs.avgTimeStep, rhs.avgTimeStep);
-  ocs2::swap(lhs.dualSolution, rhs.dualSolution);
-  ocs2::swap(lhs.problemMetrics, rhs.problemMetrics);
+  lhs.dualSolution.swap(rhs.dualSolution);
   lhs.primalSolution.swap(rhs.primalSolution);
+  lhs.problemMetrics.swap(rhs.problemMetrics);
   ocs2::swap(lhs.performanceIndex, rhs.performanceIndex);
 }
 

@@ -184,9 +184,9 @@ void GaussNewtonDDP::reset() {
   cachedPrimalData_.clear();
 
   // optimized data
-  ocs2::clear(optimizedDualSolution_);
+  optimizedDualSolution_.clear();
   optimizedPrimalSolution_.clear();
-  ocs2::clear(optimizedProblemMetrics_);
+  optimizedProblemMetrics_.clear();
 
   // performance measures
   avgTimeStepFP_ = 0.0;

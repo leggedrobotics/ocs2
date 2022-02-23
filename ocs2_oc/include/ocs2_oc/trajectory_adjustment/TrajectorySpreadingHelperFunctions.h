@@ -79,7 +79,7 @@ inline TrajectorySpreading::Status trajectorySpread(const ModeSchedule& oldModeS
 
   // adjust final, pre-jump, intermediate, time, postEventIndices
   if (status.willTruncate) {
-    ocs2::clear(dualSolution.final);
+    dualSolution.final.clear();
   }
   dualSolution.preJumps = trajectorySpreading.extractEventsArray(dualSolution.preJumps);
   trajectorySpreading.adjustTrajectory(dualSolution.intermediates);
@@ -111,7 +111,7 @@ inline TrajectorySpreading::Status trajectorySpread(const ModeSchedule& oldModeS
   if (status.willTruncate || status.willPerformTrajectorySpreading) {
     // adjust final, pre-jump, intermediate, time, postEventIndices
     if (status.willTruncate) {
-      ocs2::clear(newDualSolution.final);
+      newDualSolution.final.clear();
     }
     newDualSolution.preJumps = trajectorySpreading.extractEventsArray(oldDualSolution.preJumps);
     newDualSolution.intermediates = oldDualSolution.intermediates;

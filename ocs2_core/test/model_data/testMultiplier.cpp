@@ -127,11 +127,11 @@ TEST(TestMultiplier, testSwap) {
 
   auto termsMultiplierRef = termsMultiplier;
   ocs2::MultiplierCollection termsMultiplierNew;
-  ocs2::swap(termsMultiplier, termsMultiplierNew);
+  termsMultiplier.swap(termsMultiplierNew);
 
   EXPECT_TRUE(isApprox(termsMultiplierNew, termsMultiplierRef, 1e-10));
 
-  clear(termsMultiplierRef);
+  termsMultiplierRef.clear();
   EXPECT_TRUE(isApprox(termsMultiplier, termsMultiplierRef, 1e-10));
 }
 

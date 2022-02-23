@@ -48,7 +48,7 @@ void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution&
   const auto& uTrajectory = primalSolution.inputTrajectory_;
   const auto& postEventIndices = primalSolution.postEventIndices_;
 
-  clear(problemMetrics);
+  problemMetrics.clear();
   problemMetrics.preJumps.reserve(postEventIndices.size());
   problemMetrics.intermediates.reserve(tTrajectory.size());
 

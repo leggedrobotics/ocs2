@@ -41,6 +41,24 @@ struct DualSolution {
   MultiplierCollection final;
   std::vector<MultiplierCollection> preJumps;
   std::vector<MultiplierCollection> intermediates;
+
+  /** Exchanges the content of DualSolution */
+  void swap(DualSolution& other) {
+    timeTrajectory.swap(other.timeTrajectory);
+    postEventIndices.swap(other.postEventIndices);
+    final.swap(other.final);
+    preJumps.swap(other.preJumps);
+    intermediates.swap(other.intermediates);
+  }
+
+  /** Clears the content of the DualSolution */
+  void clear() {
+    timeTrajectory.clear();
+    postEventIndices.clear();
+    final.clear();
+    preJumps.clear();
+    intermediates.clear();
+  }
 };
 
 struct DualSolutionRef {
@@ -68,25 +86,10 @@ struct DualSolutionConstRef {
   const std::vector<MultiplierCollection>& intermediates;
 };
 
-inline void swap(DualSolution& lhs, DualSolution& rhs) {
-  lhs.timeTrajectory.swap(rhs.timeTrajectory);
-  lhs.postEventIndices.swap(rhs.postEventIndices);
-  swap(lhs.final, rhs.final);
-  lhs.preJumps.swap(rhs.preJumps);
-  lhs.intermediates.swap(rhs.intermediates);
-}
-
-inline void clear(DualSolution& d) {
-  d.timeTrajectory.clear();
-  d.postEventIndices.clear();
-  clear(d.final);
-  d.preJumps.clear();
-  d.intermediates.clear();
-}
-
 /**
  * Calculates the intermediate dual solution at the given time.
  *
+ * @param [in] dualSolution: The dual solution
  * @param [in] time: The inquiry time
  * @return The collection of multipliers associated to state/state-input, equality/inequality Lagrangian terms.
  */
@@ -95,6 +98,13 @@ inline MultiplierCollection getIntermediateDualSolutionAtTime(const DualSolution
   return LinearInterpolation::interpolate(indexAlpha, dualSolution.intermediates);
 }
 
+/**
+ * Samples the intermediate dual solution at the given time array.
+ *
+ * @param [in] dualSolution: The dual solution
+ * @param [in] timeTrajectory: The time array
+ * @param [out] intermediateDualSolution: An array of sampled MultiplierCollection.
+ */
 inline void sampleIntermediateDualSolution(const DualSolution& dualSolution, const scalar_array_t& timeTrajectory,
                                            std::vector<MultiplierCollection>& intermediateDualSolution) {
   // re-sample dual solution

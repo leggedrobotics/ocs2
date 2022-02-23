@@ -40,12 +40,12 @@ void initializeDualSolution(const OptimalControlProblem& ocp, const PrimalSoluti
   const bool interpolateTillFinalTime = numerics::almost_eq(interpolatableTimePeriod.second, timePeriod.second);
 
   // clear and set time
-  clear(dualSolution);
+  dualSolution.clear();
   dualSolution.timeTrajectory = primalSolution.timeTrajectory_;
   dualSolution.postEventIndices = primalSolution.postEventIndices_;
 
   // final
-  if (interpolateTillFinalTime && !ocs2::empty(cachedDualSolution.final)) {
+  if (interpolateTillFinalTime && !cachedDualSolution.final.empty()) {
     dualSolution.final = cachedDualSolution.final;
   } else {
     initializeFinalMultiplierCollection(ocp, primalSolution.timeTrajectory_.back(), dualSolution.final);

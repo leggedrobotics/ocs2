@@ -231,7 +231,7 @@ TEST_F(Exp0, ddp_hamiltonian) {
   constexpr size_t numThreads = 2;
   auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, numThreads, ocs2::search_strategy::Type::LINE_SEARCH);
   ddpSettings.useFeedbackPolicy_ = true;
-  ddpSettings.minRelCost_ = 1e-6;  // to allow more iterations that the effect of final linesearch is negligible
+  ddpSettings.minRelCost_ = 1e-9;  // to allow more iterations that the effect of final linesearch is negligible
   ddpSettings.maxNumIterations_ = 50;
 
   // dynamics and rollout
@@ -248,7 +248,7 @@ TEST_F(Exp0, ddp_hamiltonian) {
   const auto solution = ddp.primalSolution(finalTime);
 
   // define precision for tests
-  constexpr ocs2::scalar_t precision = 1e-6;
+  constexpr ocs2::scalar_t precision = 1e-3;
 
   // get Hamiltonian at current solution
   // expected outcome: true, because the current solution should be optimal

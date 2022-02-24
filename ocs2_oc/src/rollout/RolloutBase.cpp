@@ -61,13 +61,10 @@ vector_t RolloutBase::run(scalar_t initTime, const vector_t& initState, scalar_t
   for (int i = 0; i < numSubsystems; i++) {
     const auto& beginTime = switchingTimes[i];
     const auto& endTime = switchingTimes[i + 1];
-    timeIntervalArray[i] = std::make_pair(beginTime, endTime);
 
-    // adjusting the start time to correct for subsystem recognition, but no adjustment is required for the initial time.
-    if (i > 0) {
-      constexpr auto eps = numeric_traits::weakEpsilon<scalar_t>();
-      timeIntervalArray[i].first = (endTime - beginTime > eps) ? (beginTime + eps) : endTime;
-    }
+    // adjusting the start time to correct for subsystem recognition
+    constexpr auto eps = numeric_traits::weakEpsilon<scalar_t>();
+    timeIntervalArray[i] = std::make_pair(std::min(beginTime + eps, endTime), endTime);
   }  // end of for loop
 
   return runImpl(timeIntervalArray, initState, controller, timeTrajectory, postEventIndicesStock, stateTrajectory, inputTrajectory);

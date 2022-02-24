@@ -63,6 +63,7 @@ vector_t RolloutBase::run(scalar_t initTime, const vector_t& initState, scalar_t
     const auto& endTime = switchingTimes[i + 1];
 
     // adjusting the start time to correct for subsystem recognition
+    //  const scalar_t eps = (i > 0) ? numeric_traits::weakEpsilon<scalar_t>() : 0.0;
     constexpr auto eps = numeric_traits::weakEpsilon<scalar_t>();
     timeIntervalArray[i] = std::make_pair(std::min(beginTime + eps, endTime), endTime);
   }  // end of for loop

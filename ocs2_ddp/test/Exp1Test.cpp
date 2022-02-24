@@ -136,6 +136,8 @@ TEST_F(Exp1, ddp_hamiltonian) {
   // ddp settings
   auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, 2, ocs2::search_strategy::Type::LINE_SEARCH);
   ddpSettings.useFeedbackPolicy_ = true;
+  ddpSettings.minRelCost_ = 1e-6;  // to allow more iterations that the effect of final linesearch is negligible
+  ddpSettings.maxNumIterations_ = 50;
 
   // dynamics and rollout
   ocs2::EXP1_System systemDynamics(referenceManagerPtr);

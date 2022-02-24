@@ -184,14 +184,14 @@ TEST_F(Exp0, ddp_feedforward_policy) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_F(Exp0, ddp_caching) {
+TEST_F(Exp0, ddp_moving_horizon) {
   // ddp settings
-  auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, 2, ocs2::search_strategy::Type::LINE_SEARCH);
-  ddpSettings.displayInfo_ = false;
+  constexpr size_t numThreads = 2;
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, numThreads, ocs2::search_strategy::Type::LINE_SEARCH);
 
   // event times
   const ocs2::scalar_array_t eventTimes{1.0};
-  const std::vector<size_t> modeSequence{0, 1};
+  const ocs2::size_array_t modeSequence{0, 1};
   referenceManagerPtr = ocs2::getExp0ReferenceManager(eventTimes, modeSequence);
 
   // dynamics and rollout
@@ -202,27 +202,22 @@ TEST_F(Exp0, ddp_caching) {
   ocs2::SLQ ddp(ddpSettings, rollout, problem, *initializerPtr);
   ddp.setReferenceManager(referenceManagerPtr);
 
-  // run single core SLQ (no active event)
+  // run SLQ (no active event)
   ocs2::scalar_t startTime = 0.2;
-  ocs2::scalar_t finalTime = 0.7;
+  ocs2::scalar_t finalTime = 0.9;
   EXPECT_NO_THROW(ddp.run(startTime, initState, finalTime));
 
-  // run similar to the MPC setup (a new partition)
-  startTime = 0.4;
-  finalTime = 0.9;
-  EXPECT_NO_THROW(ddp.run(startTime, initState, finalTime));
-
-  // run similar to the MPC setup (one active event)
+  // move the time horizon (overlap with one active event)
   startTime = 0.6;
   finalTime = 1.2;
   EXPECT_NO_THROW(ddp.run(startTime, initState, finalTime));
 
-  // run similar to the MPC setup (no active event + a new partition)
+  // move the time horizon (overlap with no active event)
   startTime = 1.1;
   finalTime = 1.5;
   EXPECT_NO_THROW(ddp.run(startTime, initState, finalTime));
 
-  // run similar to the MPC setup (no overlap)
+  // move the time horizon (no overlap)
   startTime = 1.6;
   finalTime = 2.0;
   EXPECT_NO_THROW(ddp.run(startTime, initState, finalTime));
@@ -233,8 +228,11 @@ TEST_F(Exp0, ddp_caching) {
 /******************************************************************************************************/
 TEST_F(Exp0, ddp_hamiltonian) {
   // ddp settings
-  auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, 2, ocs2::search_strategy::Type::LINE_SEARCH);
+  constexpr size_t numThreads = 2;
+  auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, numThreads, ocs2::search_strategy::Type::LINE_SEARCH);
   ddpSettings.useFeedbackPolicy_ = true;
+  ddpSettings.minRelCost_ = 1e-6;  // to allow more iterations that the effect of final linesearch is negligible
+  ddpSettings.maxNumIterations_ = 50;
 
   // dynamics and rollout
   ocs2::EXP0_System systemDynamics(referenceManagerPtr);
@@ -250,7 +248,7 @@ TEST_F(Exp0, ddp_hamiltonian) {
   const auto solution = ddp.primalSolution(finalTime);
 
   // define precision for tests
-  constexpr ocs2::scalar_t precision = 1e-3;
+  constexpr ocs2::scalar_t precision = ocs2::numeric_traits::weakEpsilon<ocs2::scalar_t>();
 
   // get Hamiltonian at current solution
   // expected outcome: true, because the current solution should be optimal

@@ -57,17 +57,16 @@ vector_t RolloutBase::run(scalar_t initTime, const vector_t& initState, scalar_t
 
   // constructing the rollout time intervals
   const int numSubsystems = switchingTimes.size() - 1;  // switchingTimes contains at least two elements
-  time_interval_array_t timeIntervalArray;
-  timeIntervalArray.reserve(numSubsystems);
+  time_interval_array_t timeIntervalArray(numSubsystems);
   for (int i = 0; i < numSubsystems; i++) {
     const auto& beginTime = switchingTimes[i];
     const auto& endTime = switchingTimes[i + 1];
-    timeIntervalArray.emplace_back(beginTime, endTime);
+    timeIntervalArray[i] = std::make_pair(beginTime, endTime);
 
     // adjusting the start time to correct for subsystem recognition, but no adjustment is required for the initial time.
     if (i > 0) {
       constexpr auto eps = numeric_traits::weakEpsilon<scalar_t>();
-      timeIntervalArray.back().first = (endTime - beginTime > eps) ? (beginTime + eps) : endTime;
+      timeIntervalArray[i].first = (endTime - beginTime > eps) ? (beginTime + eps) : endTime;
     }
   }  // end of for loop
 

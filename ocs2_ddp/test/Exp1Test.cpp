@@ -153,7 +153,7 @@ TEST_F(Exp1, ddp_hamiltonian) {
   const auto solution = ddp.primalSolution(finalTime);
 
   // define precision for tests
-  constexpr ocs2::scalar_t precision = ocs2::numeric_traits::weakEpsilon<ocs2::scalar_t>();
+  constexpr ocs2::scalar_t precision = 1e-6;
   // note: in the following highly non-linear system means more than quadratic in the state
 
   // get Hamiltonian at current solution

@@ -171,15 +171,10 @@ auto TrajectorySpreading::set(const ModeSchedule& oldModeSchedule, const ModeSch
   computeSpreadingStrategy(oldTimeTrajectory, oldMatchedEventTimes, newMatchedEventTimes);
 
   // status
-  const auto reportStatus = [&]() {
+  const auto reportStatus = [&]() -> Status {
     Status status;
-    status.willTruncate = (eraseFromIndex_ < oldTimeTrajectory.size()) ? true : false;
-    status.willPerformTrajectorySpreading = false;
-    for (size_t i = 0; i < spreadingValueIndices_.size(); i++) {
-      if (std::abs(static_cast<int>(beginIndices_[i]) - static_cast<int>(endIndices_[i])) > 1) {
-        status.willPerformTrajectorySpreading = true;
-      }
-    }  // end of i loop
+    status.willTruncate = (eraseFromIndex_ < oldTimeTrajectory.size());
+    status.willPerformTrajectorySpreading = !spreadingValueIndices_.empty();
     return status;
   };
 
@@ -334,6 +329,10 @@ void TrajectorySpreading::computeSpreadingStrategy(const scalar_array_t& oldTime
       beginIndices_.push_back(newPostEventIndices[j]);
       endIndices_.push_back(endIndex);
       spreadingValueIndices_.push_back(oldPostEventIndices[j]);
+
+      // Check the assumption that zero length adjustment is excluded. Note that (newPostEventIndices[j] != eraseFromIndex_) since
+      // eraseFromIndex_ will be the next postEventIndex after newPostEventIndices[j]. See phase 3 of adding matched event time.
+      assert(beginIndices_.back() != endIndices_.back());
     }
 
     /**
@@ -354,6 +353,10 @@ void TrajectorySpreading::computeSpreadingStrategy(const scalar_array_t& oldTime
       beginIndices_.push_back(beginIndex);
       endIndices_.push_back(newPostEventIndices[j]);
       spreadingValueIndices_.push_back(oldPreEventIndex);
+
+      // Check the assumption that zero length adjustment is excluded. Note that oldPostEventIndices[j] and newPostEventIndices[j - 1]
+      // must be different.
+      assert(beginIndices_.back() != endIndices_.back());
     }
 
     // the first index can be post event index but it is meaningless to store it in the indices array.

@@ -94,6 +94,39 @@ scalar_t computeControllerUpdateIS(const LinearController& controller);
 void adjustController(const ModeSchedule& oldModeSchedule, const ModeSchedule& newModeSchedule, LinearController& oldController);
 
 /**
+ * Outputs a controller with same same time stamp and gains as unoptimizedController. However, bias is incremented based on:
+ * biasArray = unoptimizedController.biasArray + stepLength * unoptimizedController.deltaBiasArray
+ */
+void incrementController(scalar_t stepLength, const LinearController& unoptimizedController, LinearController& controller);
+
+/**
+ * Retrieve time and post event trajectories of the current partition from the entire time and post event trajectories.
+ * The resulting time and event indics are normalized to start integration from back.
+ *
+ *
+ * The riccati equations are solved backwards in time
+ * the normalizedTimeTrajectory time is therefore filled with negative time in the reverse order, for example:
+ * nominalTime =      [0.0, 1.0, 2.0, ..., 10.0]
+ * normalizedTime = [-10.0, ..., -2.0, -1.0, -0.0]
+ *
+ * The event indices are counted from the back the current partition, for example:
+ * nominalTime =      [0.0, 1.0, 2.0(*), 3.0, 4.0(*)]
+ * eventIndices = [2, 4]
+ *
+ * normalizedTime = [-4.0, -3.0(*), -2.0, -1.0(*), -0.0]
+ * normalizedeventIndices = [1, 3]
+ *
+ * @param [in] partitionInterval: Current active interval
+ * @param [in] timeTrajectory: The whole time trajectory
+ * @param [in] postEventIndices: The post event index array
+ * @param [out] normalizedTimeTrajectory: Nomalized time trajectory of the current interval
+ * @param [out] normalizedPostEventIndices: Nomalized ost event index array of the current interval
+ */
+void retrieveActiveNormalizedTime(const std::pair<int, int>& partitionInterval, const scalar_array_t& timeTrajectory,
+                                  const size_array_t& postEventIndices, scalar_array_t& normalizedTimeTrajectory,
+                                  size_array_t& normalizedPostEventIndices);
+
+/**
  * Gets a reference to the linear controller from the given primal solution.
  */
 inline LinearController& getLinearController(PrimalSolution& primalSolution) {
@@ -108,11 +141,5 @@ inline const LinearController& getLinearController(const PrimalSolution& primalS
   assert(dynamic_cast<const LinearController*>(primalSolution.controllerPtr_.get()) != nullptr);
   return static_cast<const LinearController&>(*primalSolution.controllerPtr_);
 }
-
-/**
- * Outputs a controller with same same time stamp and gains as unoptimizedController. However, bias is incremented based on:
- * biasArray = unoptimizedController.biasArray + stepLength * unoptimizedController.deltaBiasArray
- */
-void incrementController(scalar_t stepLength, const LinearController& unoptimizedController, LinearController& controller);
 
 }  // namespace ocs2

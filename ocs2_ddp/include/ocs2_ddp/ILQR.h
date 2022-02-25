@@ -42,7 +42,6 @@ namespace ocs2 {
  */
 class ILQR : public GaussNewtonDDP {
  public:
-  using BASE = GaussNewtonDDP;
   /**
    * Constructor
    *

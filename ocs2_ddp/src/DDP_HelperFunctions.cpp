@@ -204,4 +204,28 @@ void incrementController(scalar_t stepLength, const LinearController& unoptimize
   }
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void retrieveActiveNormalizedTime(const std::pair<int, int>& partitionInterval, const scalar_array_t& timeTrajectory,
+                                  const size_array_t& postEventIndices, scalar_array_t& normalizedTimeTrajectory,
+                                  size_array_t& normalizedPostEventIndices) {
+  // Although the rightmost point is excluded from the current interval, i.e. it won't be written into the dual solution array, we still
+  // the following two (+1) are essential to start the backward pass
+  auto firstTimeItr = timeTrajectory.begin() + partitionInterval.first;
+  auto lastTimeItr = timeTrajectory.begin() + partitionInterval.second + 1;
+  const int N = partitionInterval.second - partitionInterval.first + 1;
+  // normalized time
+  normalizedTimeTrajectory.resize(N);
+  std::transform(firstTimeItr, lastTimeItr, normalizedTimeTrajectory.rbegin(), [](scalar_t t) -> scalar_t { return -t; });
+
+  auto firstEventItr = std::upper_bound(postEventIndices.begin(), postEventIndices.end(), partitionInterval.first);
+  auto lastEventItr = std::upper_bound(postEventIndices.begin(), postEventIndices.end(), partitionInterval.second);
+  const int NE = std::distance(firstEventItr, lastEventItr);
+  // normalized event past the index
+  normalizedPostEventIndices.resize(NE);
+  std::transform(firstEventItr, lastEventItr, normalizedPostEventIndices.rbegin(),
+                 [N, &partitionInterval](size_t i) -> size_t { return N - i + partitionInterval.first; });
+}
+
 }  // namespace ocs2

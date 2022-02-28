@@ -14,8 +14,6 @@ namespace ocs2 {
  */
 class MpcnetControllerBase : public ControllerBase {
  public:
-  using Base = ControllerBase;
-
   /**
    * Constructor.
    * @param [in] mpcnetDefinitionPtr : Pointer to the MPC-Net definitions.
@@ -66,6 +64,11 @@ class MpcnetControllerBase : public ControllerBase {
   MpcnetControllerBase* clone() const override = 0;
 
  protected:
+  /**
+   * Copy constructor.
+   */
+  MpcnetControllerBase(const MpcnetControllerBase& other) : MpcnetControllerBase(other.mpcnetDefinitionPtr_, other.referenceManagerPtr_) {}
+
   std::shared_ptr<MpcnetDefinitionBase> mpcnetDefinitionPtr_;
   std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr_;
 };

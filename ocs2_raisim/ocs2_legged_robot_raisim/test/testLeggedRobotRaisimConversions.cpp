@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ros/package.h>
 
-#include <ocs2_raisim/RaisimRolloutSettings.h>
+#include <ocs2_raisim_core/RaisimRolloutSettings.h>
 
 #include <ocs2_legged_robot/LeggedRobotInterface.h>
 

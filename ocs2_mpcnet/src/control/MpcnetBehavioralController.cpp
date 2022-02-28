@@ -17,7 +17,7 @@ vector_t MpcnetBehavioralController::computeInput(scalar_t t, const vector_t& x)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MpcnetBehavioralController::concatenate(const Base* otherController, int index, int length) {
+void MpcnetBehavioralController::concatenate(const ControllerBase* otherController, int index, int length) {
   if (optimalControllerPtr_) {
     optimalControllerPtr_->concatenate(otherController, index, length);
   }

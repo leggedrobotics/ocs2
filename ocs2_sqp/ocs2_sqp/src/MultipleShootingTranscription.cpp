@@ -94,7 +94,8 @@ PerformanceIndex computeIntermediatePerformance(const OptimalControlProblem& opt
   PerformanceIndex performance;
 
   // Dynamics
-  const vector_t dynamicsGap = discretizer(*optimalControlProblem.dynamicsPtr, t, x, u, dt) - x_next;
+  vector_t dynamicsGap = discretizer(*optimalControlProblem.dynamicsPtr, t, x, u, dt);
+  dynamicsGap -= x_next;
   performance.stateEqConstraintISE = dt * dynamicsGap.squaredNorm();
 
   // Precomputation for other terms

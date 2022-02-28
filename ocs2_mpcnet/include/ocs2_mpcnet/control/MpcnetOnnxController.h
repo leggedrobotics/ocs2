@@ -25,9 +25,8 @@ inline std::shared_ptr<Ort::Env> createOnnxEnvironment() {
  * U: predicted expert inputs (1 x dimensionOfInput x numberOfExperts).
  * @note The additional first dimension with size 1 for the variables of the model comes from batch processing during training.
  */
-class MpcnetOnnxController : public MpcnetControllerBase {
+class MpcnetOnnxController final : public MpcnetControllerBase {
  public:
-  using Base = MpcnetControllerBase;
   using tensor_element_t = float;
 
   /**
@@ -38,7 +37,7 @@ class MpcnetOnnxController : public MpcnetControllerBase {
    */
   MpcnetOnnxController(std::shared_ptr<MpcnetDefinitionBase> mpcnetDefinitionPtr,
                        std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr, std::shared_ptr<Ort::Env> onnxEnvironmentPtr)
-      : Base(mpcnetDefinitionPtr, referenceManagerPtr), onnxEnvironmentPtr_(onnxEnvironmentPtr) {}
+      : MpcnetControllerBase(mpcnetDefinitionPtr, referenceManagerPtr), onnxEnvironmentPtr_(onnxEnvironmentPtr) {}
 
   /**
    * Constructor, initializes all members of the controller.
@@ -55,12 +54,6 @@ class MpcnetOnnxController : public MpcnetControllerBase {
   }
 
   /**
-   * Copy constructor.
-   */
-  MpcnetOnnxController(const MpcnetOnnxController& other)
-      : MpcnetOnnxController(other.mpcnetDefinitionPtr_, other.referenceManagerPtr_, other.onnxEnvironmentPtr_, other.policyFilePath_) {}
-
-  /**
    * Default destructor.
    */
   ~MpcnetOnnxController() override = default;
@@ -69,7 +62,7 @@ class MpcnetOnnxController : public MpcnetControllerBase {
 
   vector_t computeInput(const scalar_t t, const vector_t& x) override;
 
-  void concatenate(const typename Base::Base* otherController, int index, int length) override {
+  void concatenate(const ControllerBase* otherController, int index, int length) override {
     throw std::runtime_error("MpcnetOnnxController::concatenate not implemented.");
   }
 
@@ -81,11 +74,15 @@ class MpcnetOnnxController : public MpcnetControllerBase {
 
   MpcnetOnnxController* clone() const override { return new MpcnetOnnxController(*this); }
 
- protected:
+ private:
+  /**
+   * Copy constructor.
+   */
+  MpcnetOnnxController(const MpcnetOnnxController& other)
+      : MpcnetOnnxController(other.mpcnetDefinitionPtr_, other.referenceManagerPtr_, other.onnxEnvironmentPtr_, other.policyFilePath_) {}
+
   std::shared_ptr<Ort::Env> onnxEnvironmentPtr_;
   std::string policyFilePath_;
-
- private:
   std::unique_ptr<Ort::Session> sessionPtr_;
   std::vector<const char*> inputNames_;
   std::vector<const char*> outputNames_;

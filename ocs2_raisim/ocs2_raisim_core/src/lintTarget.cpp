@@ -27,8 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_raisim/RaisimRollout.h"
-#include "ocs2_raisim/RaisimRolloutSettings.h"
+#include "ocs2_raisim_core/RaisimRollout.h"
+#include "ocs2_raisim_core/RaisimRolloutSettings.h"
 
 int main() {
   return 0;

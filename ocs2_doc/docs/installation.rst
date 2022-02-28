@@ -63,7 +63,7 @@ Optional Dependencies
     
     .. code-block:: bash
     
-    	git clone --depth 1 https://github.com/raisimTech/raisimLib.git
+    	git clone --depth 1 https://github.com/raisimTech/raisimLib.git -b v1.1.01
     
     For installation, follow the `instructions <https://raisim.com/sections/Installation.html>`__ 
     of the RaiSim webpage. Alternatively, in order to make the installation easy to find for 
@@ -102,6 +102,47 @@ Optional Dependencies
         rsync -a ~/git/ocs2/ocs2_mpcnet/misc/onnxruntime/cmake/ ~/.local/share/cmake/onnxruntime
 
     We provide custom cmake config and version files to enable ``find_package(onnxruntime)`` without modifying ``LIBRARY_PATH`` and ``LD_LIBRARY_PATH``. Note that the last command above assumes that you cloned OCS2 into the folder ``git`` in your user's home directory.
+
+* `Virtual environments  <https://docs.python.org/3/library/venv.html>`__ are recommended when training MPC-Net policies:
+
+    .. code-block:: bash
+
+        sudo apt-get install python3-venv
+
+    Create an environment and give it access to the system site packages:
+
+    .. code-block:: bash
+
+        mkdir venvs && cd venvs
+        python3 -m venv mpcnet
+
+    Activate the environment and install the requirements:
+
+    .. code-block:: bash
+
+        source ~/venvs/mpcnet/bin/activate
+        python3 -m pip install -r ~/git/ocs2_dev/ocs2_mpcnet/requirements.txt
+
+    Newer graphics cards might require a CUDA capability which is currently not supported by the standard PyTorch install.
+    In that case check `PyTorch Start Locally  <https://pytorch.org/get-started/locally/>`__ for a compatible version and, e.g., run:
+
+    .. code-block:: bash
+
+        pip3 install torch==1.10.2+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html
+
+    Always activate the environment when running and monitoring the training, i.e. in one terminal:
+
+    .. code-block:: bash
+
+        source ~/venvs/mpcnet/bin/activate
+        pip3 <robot_name>_mpcnet.py
+
+    And in another terminal:
+
+    .. code-block:: bash
+
+        source ~/venvs/mpcnet/bin/activate
+        tensorboard --logdir=runs
 
 .. _doxid-ocs2_doc_installation_ocs2_doc_install:
 

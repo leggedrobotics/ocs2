@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_oc/rollout/RolloutBase.h>
 
-#include "ocs2_raisim/RaisimRolloutSettings.h"
+#include "ocs2_raisim_core/RaisimRolloutSettings.h"
 
 namespace ocs2 {
 

@@ -36,7 +36,7 @@ MpcnetDataGeneration::DataPtr MpcnetDataGeneration::run(scalar_t alpha, const st
   // set up behavioral controller with mixture parameter alpha and learned controller
   MpcnetBehavioralController behavioralController;
   behavioralController.setAlpha(alpha);
-  behavioralController.setLearnedController(mpcnetPtr_->clone());
+  behavioralController.setLearnedController(*mpcnetPtr_);
 
   // set up scalar standard normal generator and compute Cholesky decomposition of covariance matrix
   std::random_device randomDevice;
@@ -91,7 +91,7 @@ MpcnetDataGeneration::DataPtr MpcnetDataGeneration::run(scalar_t alpha, const st
       }
 
       // update behavioral controller with MPC controller
-      behavioralController.setOptimalController(primalSolution.controllerPtr_->clone());
+      behavioralController.setOptimalController(*primalSolution.controllerPtr_);
 
       // forward simulate system with behavioral controller
       scalar_array_t timeTrajectory;

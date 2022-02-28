@@ -6,7 +6,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   roscpp
-  ocs2_raisim
+  ocs2_raisim_core
   grid_map_msgs
 )
 

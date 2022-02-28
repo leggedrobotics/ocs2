@@ -25,7 +25,7 @@ inline std::shared_ptr<Ort::Env> createOnnxEnvironment() {
  * U: predicted expert inputs (1 x dimensionOfInput x numberOfExperts).
  * @note The additional first dimension with size 1 for the variables of the model comes from batch processing during training.
  */
-class MpcnetOnnxController : public MpcnetControllerBase {
+class MpcnetOnnxController final : public MpcnetControllerBase {
  public:
   using Base = MpcnetControllerBase;
   using tensor_element_t = float;

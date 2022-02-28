@@ -13,7 +13,7 @@ namespace ocs2 {
  * and a learned policy (e.g. explicitly represented by a neural network).
  * The behavioral policy is pi_behavioral = alpha * pi_optimal + (1 - alpha) * pi_learned with alpha in [0, 1].
  */
-class MpcnetBehavioralController : public ControllerBase {
+class MpcnetBehavioralController final : public ControllerBase {
  public:
   using Base = ControllerBase;
   using Optimal = ControllerBase;

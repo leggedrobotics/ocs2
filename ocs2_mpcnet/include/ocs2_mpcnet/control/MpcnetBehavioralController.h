@@ -15,10 +15,6 @@ namespace ocs2 {
  */
 class MpcnetBehavioralController final : public ControllerBase {
  public:
-  using Base = ControllerBase;
-  using Optimal = ControllerBase;
-  using Learned = MpcnetControllerBase;
-
   /**
    * Default constructor, leaves object uninitialized.
    */
@@ -30,10 +26,10 @@ class MpcnetBehavioralController final : public ControllerBase {
    * @param [in] optimalControllerPtr : Pointer to the optimal controller.
    * @param [in] learnedControllerPtr : Pointer to the learned controller.
    */
-  MpcnetBehavioralController(scalar_t alpha, Optimal* optimalControllerPtr, Learned* learnedControllerPtr)
+  MpcnetBehavioralController(scalar_t alpha, ControllerBase* optimalControllerPtr, MpcnetControllerBase* learnedControllerPtr)
       : alpha_(alpha),
-        optimalControllerPtr_(std::unique_ptr<Optimal>(optimalControllerPtr)),
-        learnedControllerPtr_(std::unique_ptr<Learned>(learnedControllerPtr)) {}
+        optimalControllerPtr_(std::unique_ptr<ControllerBase>(optimalControllerPtr)),
+        learnedControllerPtr_(std::unique_ptr<MpcnetControllerBase>(learnedControllerPtr)) {}
 
   /**
    * Copy constructor.
@@ -56,17 +52,17 @@ class MpcnetBehavioralController final : public ControllerBase {
    * Set the optimal controller.
    * @param [in] optimalControllerPtr : Pointer to the optimal controller.
    */
-  void setOptimalController(Optimal* optimalControllerPtr) { optimalControllerPtr_.reset(optimalControllerPtr); }
+  void setOptimalController(ControllerBase* optimalControllerPtr) { optimalControllerPtr_.reset(optimalControllerPtr); }
 
   /**
    * Set the learned controller.
    * @param [in] learnedControllerPtr : Pointer to the learned controller.
    */
-  void setLearnedController(Learned* learnedControllerPtr) { learnedControllerPtr_.reset(learnedControllerPtr); }
+  void setLearnedController(MpcnetControllerBase* learnedControllerPtr) { learnedControllerPtr_.reset(learnedControllerPtr); }
 
   vector_t computeInput(scalar_t t, const vector_t& x) override;
 
-  void concatenate(const Base* otherController, int index, int length) override;
+  void concatenate(const ControllerBase* otherController, int index, int length) override;
 
   int size() const override;
 
@@ -80,8 +76,8 @@ class MpcnetBehavioralController final : public ControllerBase {
 
  private:
   scalar_t alpha_;
-  std::unique_ptr<Optimal> optimalControllerPtr_;
-  std::unique_ptr<Learned> learnedControllerPtr_;
+  std::unique_ptr<ControllerBase> optimalControllerPtr_;
+  std::unique_ptr<MpcnetControllerBase> learnedControllerPtr_;
 };
 
 }  // namespace ocs2

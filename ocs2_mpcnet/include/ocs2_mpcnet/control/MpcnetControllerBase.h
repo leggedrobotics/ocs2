@@ -14,8 +14,6 @@ namespace ocs2 {
  */
 class MpcnetControllerBase : public ControllerBase {
  public:
-  using Base = ControllerBase;
-
   /**
    * Constructor.
    * @param [in] mpcnetDefinitionPtr : Pointer to the MPC-Net definitions.

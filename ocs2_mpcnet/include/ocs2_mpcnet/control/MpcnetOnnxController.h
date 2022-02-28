@@ -27,7 +27,6 @@ inline std::shared_ptr<Ort::Env> createOnnxEnvironment() {
  */
 class MpcnetOnnxController final : public MpcnetControllerBase {
  public:
-  using Base = MpcnetControllerBase;
   using tensor_element_t = float;
 
   /**
@@ -38,7 +37,7 @@ class MpcnetOnnxController final : public MpcnetControllerBase {
    */
   MpcnetOnnxController(std::shared_ptr<MpcnetDefinitionBase> mpcnetDefinitionPtr,
                        std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr, std::shared_ptr<Ort::Env> onnxEnvironmentPtr)
-      : Base(mpcnetDefinitionPtr, referenceManagerPtr), onnxEnvironmentPtr_(onnxEnvironmentPtr) {}
+      : MpcnetControllerBase(mpcnetDefinitionPtr, referenceManagerPtr), onnxEnvironmentPtr_(onnxEnvironmentPtr) {}
 
   /**
    * Constructor, initializes all members of the controller.
@@ -69,7 +68,7 @@ class MpcnetOnnxController final : public MpcnetControllerBase {
 
   vector_t computeInput(const scalar_t t, const vector_t& x) override;
 
-  void concatenate(const typename Base::Base* otherController, int index, int length) override {
+  void concatenate(const ControllerBase* otherController, int index, int length) override {
     throw std::runtime_error("MpcnetOnnxController::concatenate not implemented.");
   }
 

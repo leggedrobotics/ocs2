@@ -32,12 +32,6 @@ class MpcnetBehavioralController final : public ControllerBase {
         learnedControllerPtr_(std::unique_ptr<MpcnetControllerBase>(learnedController.clone())) {}
 
   /**
-   * Copy constructor.
-   */
-  MpcnetBehavioralController(const MpcnetBehavioralController& other)
-      : MpcnetBehavioralController(other.alpha_, *other.optimalControllerPtr_, *other.learnedControllerPtr_) {}
-
-  /**
    * Default destructor.
    */
   ~MpcnetBehavioralController() override = default;
@@ -75,6 +69,12 @@ class MpcnetBehavioralController final : public ControllerBase {
   MpcnetBehavioralController* clone() const override { return new MpcnetBehavioralController(*this); }
 
  private:
+  /**
+   * Copy constructor.
+   */
+  MpcnetBehavioralController(const MpcnetBehavioralController& other)
+      : MpcnetBehavioralController(other.alpha_, *other.optimalControllerPtr_, *other.learnedControllerPtr_) {}
+
   scalar_t alpha_;
   std::unique_ptr<ControllerBase> optimalControllerPtr_;
   std::unique_ptr<MpcnetControllerBase> learnedControllerPtr_;

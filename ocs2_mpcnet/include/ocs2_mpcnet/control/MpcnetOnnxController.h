@@ -54,12 +54,6 @@ class MpcnetOnnxController final : public MpcnetControllerBase {
   }
 
   /**
-   * Copy constructor.
-   */
-  MpcnetOnnxController(const MpcnetOnnxController& other)
-      : MpcnetOnnxController(other.mpcnetDefinitionPtr_, other.referenceManagerPtr_, other.onnxEnvironmentPtr_, other.policyFilePath_) {}
-
-  /**
    * Default destructor.
    */
   ~MpcnetOnnxController() override = default;
@@ -80,11 +74,15 @@ class MpcnetOnnxController final : public MpcnetControllerBase {
 
   MpcnetOnnxController* clone() const override { return new MpcnetOnnxController(*this); }
 
- protected:
+ private:
+  /**
+   * Copy constructor.
+   */
+  MpcnetOnnxController(const MpcnetOnnxController& other)
+      : MpcnetOnnxController(other.mpcnetDefinitionPtr_, other.referenceManagerPtr_, other.onnxEnvironmentPtr_, other.policyFilePath_) {}
+
   std::shared_ptr<Ort::Env> onnxEnvironmentPtr_;
   std::string policyFilePath_;
-
- private:
   std::unique_ptr<Ort::Session> sessionPtr_;
   std::vector<const char*> inputNames_;
   std::vector<const char*> outputNames_;

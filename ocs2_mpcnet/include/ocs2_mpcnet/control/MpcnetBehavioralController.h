@@ -23,19 +23,19 @@ class MpcnetBehavioralController final : public ControllerBase {
   /**
    * Constructor, initializes all required members of the controller.
    * @param [in] alpha : The mixture parameter.
-   * @param [in] optimalControllerPtr : Pointer to the optimal controller.
-   * @param [in] learnedControllerPtr : Pointer to the learned controller.
+   * @param [in] optimalController : The optimal controller (this class takes ownership of a clone).
+   * @param [in] learnedController : The learned controller (this class takes ownership of a clone).
    */
-  MpcnetBehavioralController(scalar_t alpha, ControllerBase* optimalControllerPtr, MpcnetControllerBase* learnedControllerPtr)
+  MpcnetBehavioralController(scalar_t alpha, const ControllerBase& optimalController, const MpcnetControllerBase& learnedController)
       : alpha_(alpha),
-        optimalControllerPtr_(std::unique_ptr<ControllerBase>(optimalControllerPtr)),
-        learnedControllerPtr_(std::unique_ptr<MpcnetControllerBase>(learnedControllerPtr)) {}
+        optimalControllerPtr_(std::unique_ptr<ControllerBase>(optimalController.clone())),
+        learnedControllerPtr_(std::unique_ptr<MpcnetControllerBase>(learnedController.clone())) {}
 
   /**
    * Copy constructor.
    */
   MpcnetBehavioralController(const MpcnetBehavioralController& other)
-      : MpcnetBehavioralController(other.alpha_, other.optimalControllerPtr_->clone(), other.learnedControllerPtr_->clone()) {}
+      : MpcnetBehavioralController(other.alpha_, *other.optimalControllerPtr_, *other.learnedControllerPtr_) {}
 
   /**
    * Default destructor.
@@ -50,15 +50,15 @@ class MpcnetBehavioralController final : public ControllerBase {
 
   /**
    * Set the optimal controller.
-   * @param [in] optimalControllerPtr : Pointer to the optimal controller.
+   * @param [in] optimalController : The optimal controller (this class takes ownership of a clone).
    */
-  void setOptimalController(ControllerBase* optimalControllerPtr) { optimalControllerPtr_.reset(optimalControllerPtr); }
+  void setOptimalController(const ControllerBase& optimalController) { optimalControllerPtr_.reset(optimalController.clone()); }
 
   /**
    * Set the learned controller.
-   * @param [in] learnedControllerPtr : Pointer to the learned controller.
+   * @param [in] learnedController : The learned controller (this class takes ownership of a clone).
    */
-  void setLearnedController(MpcnetControllerBase* learnedControllerPtr) { learnedControllerPtr_.reset(learnedControllerPtr); }
+  void setLearnedController(const MpcnetControllerBase& learnedController) { learnedControllerPtr_.reset(learnedController.clone()); }
 
   vector_t computeInput(scalar_t t, const vector_t& x) override;
 

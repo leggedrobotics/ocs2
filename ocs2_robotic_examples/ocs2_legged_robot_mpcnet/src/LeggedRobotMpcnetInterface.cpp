@@ -6,8 +6,8 @@
 #include <ocs2_mpcnet/control/MpcnetOnnxController.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_oc/synchronized_module/ReferenceManager.h>
-#include <ocs2_raisim/RaisimRollout.h>
-#include <ocs2_raisim/RaisimRolloutSettings.h>
+#include <ocs2_raisim_core/RaisimRollout.h>
+#include <ocs2_raisim_core/RaisimRolloutSettings.h>
 
 #include "ocs2_legged_robot_mpcnet/LeggedRobotMpcnetDefinition.h"
 

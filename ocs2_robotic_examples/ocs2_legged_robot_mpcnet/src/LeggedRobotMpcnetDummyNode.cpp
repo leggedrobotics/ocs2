@@ -11,7 +11,7 @@
 #include <ocs2_mpcnet/dummy/MpcnetDummyLoopRos.h>
 #include <ocs2_mpcnet/dummy/MpcnetDummyObserverRos.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
-#include <ocs2_raisim/RaisimRollout.h>
+#include <ocs2_raisim_core/RaisimRollout.h>
 #include <ocs2_raisim_ros/RaisimHeightmapRosConverter.h>
 #include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
 

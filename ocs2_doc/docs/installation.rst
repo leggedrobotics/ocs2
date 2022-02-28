@@ -63,7 +63,7 @@ Optional Dependencies
     
     .. code-block:: bash
     
-    	git clone --depth 1 https://github.com/raisimTech/raisimLib.git
+    	git clone --depth 1 https://github.com/raisimTech/raisimLib.git -b v1.1.01
     
     For installation, follow the `instructions <https://raisim.com/sections/Installation.html>`__ 
     of the RaiSim webpage. Alternatively, in order to make the installation easy to find for 

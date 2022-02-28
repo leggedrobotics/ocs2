@@ -73,7 +73,10 @@ int main(int argc, char** argv) {
         [&](double time, const vector_t& input, const vector_t& state, const Eigen::VectorXd& q, const Eigen::VectorXd& dq) {
           return conversions->inputToRaisimGeneralizedForce(time, input, state, q, dq);
         },
-        nullptr, raisimRolloutSettings, nullptr));
+        nullptr, raisimRolloutSettings,
+        [&](double time, const vector_t& input, const vector_t& state, const Eigen::VectorXd& q, const Eigen::VectorXd& dq) {
+          return conversions->inputToRaisimPdTargets(time, input, state, q, dq);
+        }));
     // terrain
     if (raisimRolloutSettings.generateTerrain_) {
       raisim::TerrainProperties terrainProperties;

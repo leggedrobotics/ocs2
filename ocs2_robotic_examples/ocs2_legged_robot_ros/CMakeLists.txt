@@ -72,41 +72,63 @@ link_directories(
   ${pinocchio_LIBRARY_DIRS}
 )
 
+# Main library
+add_library(${PROJECT_NAME}
+  src/gait/GaitKeyboardPublisher.cpp
+  src/gait/GaitReceiver.cpp
+  src/visualization/LeggedRobotVisualizer.cpp
+)
+add_dependencies(${PROJECT_NAME}
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
+
 # DDP-MPC node for legged robot
 add_executable(legged_robot_ddp_mpc
-  src/gait/GaitReceiver.cpp
   src/LeggedRobotDdpMpcNode.cpp
 )
 add_dependencies(legged_robot_ddp_mpc
+  ${PROJECT_NAME}
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(legged_robot_ddp_mpc
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 target_compile_options(legged_robot_ddp_mpc PRIVATE ${OCS2_CXX_FLAGS})
 
 ## SQP-MPC node for legged robot
 add_executable(legged_robot_sqp_mpc
-  src/gait/GaitReceiver.cpp
   src/LeggedRobotSqpMpcNode.cpp
 )
 add_dependencies(legged_robot_sqp_mpc
+  ${PROJECT_NAME}
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(legged_robot_sqp_mpc
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 target_compile_options(legged_robot_sqp_mpc  PRIVATE ${OCS2_CXX_FLAGS})
 
 # Dummy node
 add_executable(legged_robot_dummy
-  src/visualization/LeggedRobotVisualizer.cpp
   src/LeggedRobotDummyNode.cpp
 )
 add_dependencies(legged_robot_dummy
+  ${PROJECT_NAME}
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(legged_robot_dummy
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 target_compile_options(legged_robot_dummy PRIVATE ${OCS2_CXX_FLAGS})
@@ -116,22 +138,27 @@ add_executable(legged_robot_target
   src/LeggedRobotPoseCommandNode.cpp
 )
 add_dependencies(legged_robot_target
+  ${PROJECT_NAME}
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(legged_robot_target
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 target_compile_options(legged_robot_target PRIVATE ${OCS2_CXX_FLAGS})
 
 # Keyboard command node for gait
 add_executable(legged_robot_gait_command
-  src/gait/GaitKeyboardPublisher.cpp
   src/LeggedRobotGaitCommandNode.cpp
 )
 add_dependencies(legged_robot_gait_command
+  ${PROJECT_NAME}
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(legged_robot_gait_command
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 target_compile_options(legged_robot_gait_command PRIVATE ${OCS2_CXX_FLAGS})
@@ -144,6 +171,7 @@ if(cmake_clang_tools_FOUND)
    message(STATUS "Run clang tooling for target ocs2_legged_robot_ros")
    add_clang_tooling(
      TARGETS
+       ${PROJECT_NAME}
        legged_robot_ddp_mpc
        legged_robot_sqp_mpc
        legged_robot_dummy
@@ -160,6 +188,11 @@ endif(cmake_clang_tools_FOUND)
 #############
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
+install(TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 install(
   TARGETS

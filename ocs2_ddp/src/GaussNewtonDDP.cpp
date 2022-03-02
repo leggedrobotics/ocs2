@@ -410,7 +410,7 @@ void GaussNewtonDDP::runParallel(std::function<void(void)> taskFunction, size_t 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t GaussNewtonDDP::rolloutInitialTrajectory(PrimalDataContainer& primalData, ControllerBase* controller, size_t workerIndex /*= 0*/) {
+void GaussNewtonDDP::rolloutInitialTrajectory(PrimalDataContainer& primalData, ControllerBase* controller, size_t workerIndex /*= 0*/) {
   assert(primalData.primalSolution.controllerPtr_.get() != controller);
   // clear output
   primalData.clear();
@@ -424,21 +424,15 @@ scalar_t GaussNewtonDDP::rolloutInitialTrajectory(PrimalDataContainer& primalDat
   auto& inputTrajectory = primalData.primalSolution.inputTrajectory_;
   auto& postEventIndices = primalData.primalSolution.postEventIndices_;
 
-  // Find until where we have a controller available for the rollout
-  const scalar_t controllerAvailableTill = controller->empty() ? initTime_ : static_cast<LinearController*>(controller)->timeStamp_.back();
+  // divide the rollout segment in controller rollout and operating points
+  const auto controllerAvailableTill = controller->empty() ? initTime_ : static_cast<LinearController*>(controller)->timeStamp_.back();
+  const auto controllerRolloutFromTo = std::make_pair(initTime_, std::max(initTime_, std::min(controllerAvailableTill, finalTime_)));
+  const auto operatingPointsFromTo = std::make_pair(controllerRolloutFromTo.second, finalTime_);
 
-  if (ddpSettings_.debugPrintRollout_) {
-    std::cerr << "[GaussNewtonDDP::rolloutInitialTrajectory] for t = [" << initTime_ << ", " << finalTime_ << "]\n"
-              << "\tcontroller available till t = " << controllerAvailableTill << "\n";
-  }
-
-  // Divide the rollout segment in controller rollout and operating points
-  const std::pair<scalar_t, scalar_t> controllerRolloutFromTo{initTime_,
-                                                              std::max(initTime_, std::min(controllerAvailableTill, finalTime_))};
-  const std::pair<scalar_t, scalar_t> operatingPointsFromTo{controllerRolloutFromTo.second, finalTime_};
-
+  // display
   if (ddpSettings_.debugPrintRollout_) {
     std::cerr << "[GaussNewtonDDP::rolloutInitialTrajectory] for t = [" << initTime_ << ", " << finalTime_ << "]\n";
+    std::cerr << "\tcontroller available till t = " << controllerAvailableTill << "\n";
     if (controllerRolloutFromTo.first < controllerRolloutFromTo.second) {
       std::cerr << "\twill use controller for t = [" << controllerRolloutFromTo.first << ", " << controllerRolloutFromTo.second << "]\n";
     }
@@ -447,15 +441,15 @@ scalar_t GaussNewtonDDP::rolloutInitialTrajectory(PrimalDataContainer& primalDat
     }
   }
 
-  // Rollout with controller
+  // rollout with controller
   vector_t xCurrent = initState_;
   if (controllerRolloutFromTo.first < controllerRolloutFromTo.second) {
-    xCurrent = dynamicsForwardRolloutPtrStock_[workerIndex]->run(controllerRolloutFromTo.first, xCurrent, controllerRolloutFromTo.second,
+    xCurrent = dynamicsForwardRolloutPtrStock_[workerIndex]->run(controllerRolloutFromTo.first, initState_, controllerRolloutFromTo.second,
                                                                  controller, eventTimes, timeTrajectory, postEventIndices, stateTrajectory,
                                                                  inputTrajectory);
   }
 
-  // Finish rollout with operating points
+  // finish rollout with operating points
   if (operatingPointsFromTo.first < operatingPointsFromTo.second) {
     // Remove last point of the controller rollout if it is directly past an event. Here where we want to use the initializer
     // instead. However, we do start the integration at the state after the event. i.e. the jump map remains applied.
@@ -488,18 +482,16 @@ scalar_t GaussNewtonDDP::rolloutInitialTrajectory(PrimalDataContainer& primalDat
   }
 
   if (!xCurrent.allFinite()) {
-    throw std::runtime_error("System became unstable during the rollout.");
+    throw std::runtime_error("[GaussNewtonDDP::rolloutInitialTrajectory] System became unstable during the initial rollout!");
   }
 
   // debug print
   if (ddpSettings_.debugPrintRollout_) {
-    std::cerr << "\n++++++++++++++++++++++++++++++\n";
+    std::cerr << "\n++++++++++++++++++++++++++++++++++++++++\n";
     std::cerr << "[GaussNewtonDDP::rolloutInitialTrajectory] for t = [" << timeTrajectory.front() << ", " << timeTrajectory.back() << "]";
-    std::cerr << "\n++++++++++++++++++++++++++++++\n";
+    std::cerr << "\n+++++++++++++++++++++++++++++++++++++++++\n";
     RolloutBase::display(timeTrajectory, postEventIndices, stateTrajectory, &inputTrajectory);
   }
-  // average time step
-  return (std::min(controllerAvailableTill, finalTime_) - initTime_) / static_cast<scalar_t>(timeTrajectory.size());
 }
 
 /******************************************************************************************************/
@@ -974,7 +966,7 @@ void GaussNewtonDDP::runInit() {
     // perform a rollout
     // Nominal controller is stored in the optimized primal data as it is either the result of previous solve or it is provided by user and
     // copied to optimized data container manually at the beginning of runImpl
-    const auto avgTimeStep = rolloutInitialTrajectory(nominalPrimalData_, optimizedPrimalData_.primalSolution.controllerPtr_.get(), taskId);
+    rolloutInitialTrajectory(nominalPrimalData_, optimizedPrimalData_.primalSolution.controllerPtr_.get(), taskId);
     // swap controller used to rollout the nominal trajectories back to nominal data container.
     nominalPrimalData_.primalSolution.controllerPtr_.swap(optimizedPrimalData_.primalSolution.controllerPtr_);
 

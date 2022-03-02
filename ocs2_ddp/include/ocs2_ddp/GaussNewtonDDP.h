@@ -250,10 +250,8 @@ class GaussNewtonDDP : public SolverBase {
    * @param [in] primalData: primalData
    * @param [in] controller: nominal controller used to rollout (time, state, input...) trajectories
    * @param [in] workerIndex: working thread (default is 0).
-   *
-   * @return average time step.
    */
-  scalar_t rolloutInitialTrajectory(PrimalDataContainer& primalData, ControllerBase* controller, size_t workerIndex = 0);
+  void rolloutInitialTrajectory(PrimalDataContainer& primalData, ControllerBase* controller, size_t workerIndex = 0);
 
   /**
    * Calculates the controller. This method uses the following variables:

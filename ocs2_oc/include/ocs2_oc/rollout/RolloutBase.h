@@ -84,6 +84,12 @@ class RolloutBase {
   virtual void reactivateRollout() {}
 
   /**
+   * Resets the simulator state to the initial state in the next runImpl.
+   * @note This is relevant if a physics engine (e.g. RaiSim) is used.
+   */
+  virtual void resetRollout() {}
+
+  /**
    * Returns pointer to the class.
    *
    * @return A raw pointer to the class.

@@ -36,8 +36,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
-#include <ocs2_self_collision/loadStdVectorOfPair.h>
 #include <ocs2_robotic_assets/package_path.h>
+#include <ocs2_self_collision/loadStdVectorOfPair.h>
 
 #include "ocs2_mobile_manipulator/FactoryFunctions.h"
 #include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"

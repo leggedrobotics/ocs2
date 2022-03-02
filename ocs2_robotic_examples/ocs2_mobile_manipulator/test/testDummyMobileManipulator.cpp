@@ -98,7 +98,7 @@ class MobileManipulatorIntegrationTest : public testing::Test {
   static constexpr scalar_t tolerance = 1e-2;
   static constexpr scalar_t f_mpc = 10.0;
   static constexpr scalar_t initTime = 1234.5;  // start from a random time
-  static constexpr scalar_t finalTime = initTime + 5.0;
+  static constexpr scalar_t finalTime = initTime + 10.0;
 
   const vector3_t goalPosition = vector3_t(-0.5, -0.8, 0.6);
   const quaternion_t goalOrientation = quaternion_t(0.33, 0.0, 0.0, 0.95);

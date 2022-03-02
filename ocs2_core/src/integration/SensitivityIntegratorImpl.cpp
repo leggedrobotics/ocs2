@@ -35,7 +35,9 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t eulerDiscretization(SystemDynamicsBase& system, scalar_t t, const vector_t& x, const vector_t& u, scalar_t dt) {
-  return x + dt * system.computeFlowMap(t, x, u);
+  vector_t tmp = system.computeFlowMap(t, x, u);
+  tmp = x + dt * tmp;
+  return tmp;
 }
 
 /******************************************************************************************************/
@@ -63,9 +65,12 @@ vector_t rk2Discretization(SystemDynamicsBase& system, scalar_t t, const vector_
 
   // System evaluations
   const vector_t k1 = system.computeFlowMap(t, x, u);
-  const vector_t k2 = system.computeFlowMap(t + dt, x + dt * k1, u);
 
-  return x + dt_halve * k1 + dt_halve * k2;
+  vector_t tmp = x + dt * k1;
+  const vector_t k2 = system.computeFlowMap(t + dt, tmp, u);
+
+  tmp = x + dt_halve * k1 + dt_halve * k2;
+  return tmp;
 }
 
 /******************************************************************************************************/
@@ -108,11 +113,15 @@ vector_t rk4Discretization(SystemDynamicsBase& system, scalar_t t, const vector_
 
   // System evaluations
   const vector_t k1 = system.computeFlowMap(t, x, u);
-  const vector_t k2 = system.computeFlowMap(t + dt_halve, x + dt_halve * k1, u);
-  const vector_t k3 = system.computeFlowMap(t + dt_halve, x + dt_halve * k2, u);
-  const vector_t k4 = system.computeFlowMap(t + dt, x + dt * k3, u);
+  vector_t tmp = x + dt_halve * k1;
+  const vector_t k2 = system.computeFlowMap(t + dt_halve, tmp, u);
+  tmp = x + dt_halve * k2;
+  const vector_t k3 = system.computeFlowMap(t + dt_halve, tmp, u);
+  tmp = x + dt * k3;
+  const vector_t k4 = system.computeFlowMap(t + dt, tmp, u);
 
-  return x + dt_sixth * k1 + dt_third * k2 + dt_third * k3 + dt_sixth * k4;
+  tmp = x + dt_sixth * k1 + dt_third * k2 + dt_third * k3 + dt_sixth * k4;
+  return tmp;
 }
 
 /******************************************************************************************************/
@@ -126,9 +135,12 @@ VectorFunctionLinearApproximation rk4SensitivityDiscretization(SystemDynamicsBas
 
   // System evaluations
   VectorFunctionLinearApproximation k1 = system.linearApproximation(t, x, u);
-  VectorFunctionLinearApproximation k2 = system.linearApproximation(t + dt_halve, x + dt_halve * k1.f, u);
-  VectorFunctionLinearApproximation k3 = system.linearApproximation(t + dt_halve, x + dt_halve * k2.f, u);
-  VectorFunctionLinearApproximation k4 = system.linearApproximation(t + dt, x + dt * k3.f, u);
+  vector_t tmpV = x + dt_halve * k1.f;
+  VectorFunctionLinearApproximation k2 = system.linearApproximation(t + dt_halve, tmpV, u);
+  tmpV = x + dt_halve * k2.f;
+  VectorFunctionLinearApproximation k3 = system.linearApproximation(t + dt_halve, tmpV, u);
+  tmpV = x + dt * k3.f;
+  VectorFunctionLinearApproximation k4 = system.linearApproximation(t + dt, tmpV, u);
 
   // Input sensitivity \dot{Su} = dfdx(t) Su + dfdu(t), with Su(0) = Zero()
   // Re-use memory from k.dfdu as dkduk

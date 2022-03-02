@@ -93,23 +93,24 @@ std::ostream& operator<<(std::ostream& stream, const ModeSchedule& modeSchedule)
 size_t getNumberOfPrecedingEvents(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices, scalar_t eventTime);
 
 /**
- * Finds the intersection of the requested period i.e., timePeriod, to the time interval of the modes that timeTrajectory covers.
+ * Finds the intersection of the requested period i.e., timePeriod, to the time interval of the modes that timeTrajectory
+ * covers, i.e., extendable interval.
  *
  * Case 1: non-empty interval
  * eventTimes       s0             s2         s2          s3
- * ------------------|--------------|----------|-----------|-------
- * timeTrajectory ---------****************------------------------
- * Covered modes ----+++++++++++++++++++++++++++-------------------
- * Requested timePeriod ----------------[           ]--------------
- * Output ------------------------------[******]-------------------
+ * ------------------------|--------------|----------|-----------|-------
+ * timeTrajectory ---------------****************------------------------
+ * Extendable interval ----+++++++++++++++++++++++++++-------------------
+ * Requested timePeriod ----------------------[           ]--------------
+ * Output ------------------------------------[******]-------------------
  *
  * Case 2: empty interval
  * eventTimes       s0             s2         s2          s3
- * ------------------|--------------|----------|-----------|-------
- * timeTrajectory ---------******************----------------------
- * Covered modes ----+++++++++++++++++++++++++++-------------------
- * Requested timePeriod ---------------------------[           ]---
- * Output ----------------------------------------][---------------
+ * ------------------------|--------------|----------|-----------|-------
+ * timeTrajectory ---------------******************----------------------
+ * Extendable interval ----+++++++++++++++++++++++++++-------------------
+ * Requested timePeriod -----------------------------------[         ]---
+ * Output ------------------------------------------------][-------------
  *
  * @param [in] timeTrajectory: Timestamp of the data to be interpolated.
  * @param [in] eventTimes: The event times array.

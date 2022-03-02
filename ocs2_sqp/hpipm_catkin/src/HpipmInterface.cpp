@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "hpipm_catkin/HpipmInterface.h"
 
+#include <ocs2_core/misc/LinearAlgebra.h>
+
 extern "C" {
 #include <hpipm_d_ocp_qp.h>
 #include <hpipm_d_ocp_qp_dim.h>
@@ -325,20 +327,6 @@ class HpipmInterface::Impl {
     return true;
   }
 
-  /**
-   *  Set the eigenvalues of a triangular matrix to a minimum magnitude (maintaining the sign).
-   */
-  void setTriangularMinimumEigenvalues(matrix_t& Lr, scalar_t minEigenValue = 1e-12) {
-    for (Eigen::Index i = 0; i < Lr.rows(); ++i) {
-      scalar_t& eigenValue = Lr(i, i);  // diagonal element is the eigenvalue
-      if (eigenValue < 0.0) {
-        eigenValue = std::min(-minEigenValue, eigenValue);
-      } else {
-        eigenValue = std::max(minEigenValue, eigenValue);
-      }
-    }
-  }
-
   matrix_array_t getRiccatiFeedback(const VectorFunctionLinearApproximation& dynamics0, const ScalarFunctionQuadraticApproximation& cost0) {
     const int N = ocpSize_.numStages;
     matrix_array_t RiccatiFeedback(N);
@@ -349,7 +337,7 @@ class HpipmInterface::Impl {
 
     matrix_t Lr(ocpSize_.numInputs[0], ocpSize_.numInputs[0]);
     d_ocp_qp_ipm_get_ric_Lr(&qp_, &arg_, &workspace_, 0, Lr.data());  // Lr matrix is lower triangular
-    setTriangularMinimumEigenvalues(Lr);
+    LinearAlgebra::setTriangularMinimumEigenvalues(Lr);
 
     // RiccatiFeedback[0] = - (inv(Lr)^T * inv(Lr)) * (S0 + B0^T * P1 * A0)
     RiccatiFeedback[0] = -cost0.dfdux;
@@ -366,7 +354,7 @@ class HpipmInterface::Impl {
         // RiccatiFeedback[k] = -(Ls * Lr.inverse()).transpose();
         Lr.resize(numInput, numInput);
         d_ocp_qp_ipm_get_ric_Lr(&qp_, &arg_, &workspace_, k, Lr.data());  // Lr matrix is lower triangular
-        setTriangularMinimumEigenvalues(Lr);
+        LinearAlgebra::setTriangularMinimumEigenvalues(Lr);
 
         Ls.resize(ocpSize_.numStates[k], numInput);
         d_ocp_qp_ipm_get_ric_Ls(&qp_, &arg_, &workspace_, k, Ls.data());
@@ -388,7 +376,7 @@ class HpipmInterface::Impl {
 
     matrix_t Lr(ocpSize_.numInputs[0], ocpSize_.numInputs[0]);
     d_ocp_qp_ipm_get_ric_Lr(&qp_, &arg_, &workspace_, 0, Lr.data());
-    setTriangularMinimumEigenvalues(Lr);
+    LinearAlgebra::setTriangularMinimumEigenvalues(Lr);
 
     vector_t p1(ocpSize_.numStates[1]);
     d_ocp_qp_ipm_get_ric_p(&qp_, &arg_, &workspace_, 1, p1.data());
@@ -428,7 +416,7 @@ class HpipmInterface::Impl {
     // k = 0
     matrix_t Lr0(ocpSize_.numInputs[0], ocpSize_.numInputs[0]);
     d_ocp_qp_ipm_get_ric_Lr(&qp_, &arg_, &workspace_, 0, Lr0.data());
-    setTriangularMinimumEigenvalues(Lr0);
+    LinearAlgebra::setTriangularMinimumEigenvalues(Lr0);
 
     // Shorthand notation
     const matrix_t& A0 = dynamics0.dfdx;

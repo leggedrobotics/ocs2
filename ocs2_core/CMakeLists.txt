@@ -333,6 +333,15 @@ target_link_libraries(test_ModelData
   gtest_main
 )
 
+catkin_add_gtest(test_ModeSchedule
+  test/reference/testModeSchedule.cpp
+)
+target_link_libraries(test_ModeSchedule
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
+
 catkin_add_gtest(test_Logging
   test/misc/testLogging.cpp
 )

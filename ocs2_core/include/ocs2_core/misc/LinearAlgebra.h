@@ -47,6 +47,20 @@ void computeConstraintProjection(const matrix_t& Dm, const matrix_t& RmInvUmUmT,
                                  matrix_t& RmInvConstrainedUUT);
 
 /**
+ *  Set the eigenvalues of a triangular matrix to a minimum magnitude (maintaining the sign).
+ */
+inline void setTriangularMinimumEigenvalues(matrix_t& Lr, scalar_t minEigenValue = numeric_traits::weakEpsilon<scalar_t>()) {
+  for (Eigen::Index i = 0; i < Lr.rows(); ++i) {
+    scalar_t& eigenValue = Lr(i, i);  // diagonal element is the eigenvalue
+    if (eigenValue < 0.0) {
+      eigenValue = std::min(-minEigenValue, eigenValue);
+    } else {
+      eigenValue = std::max(minEigenValue, eigenValue);
+    }
+  }
+}
+
+/**
  * Makes the input matrix PSD using a eigenvalue decomposition.
  *
  * @tparam Derived type.

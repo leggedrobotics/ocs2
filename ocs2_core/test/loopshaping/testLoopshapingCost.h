@@ -64,7 +64,7 @@ class TestFixtureLoopShapingCost : LoopshapingTestConfiguration {
     // Create Loopshaping cost collection wrappers
     loopshapingCost = LoopshapingCost::create(systemCostCollection, loopshapingDefinition_);
     loopshapingStateCost = LoopshapingCost::create(systemStateCostCollection, loopshapingDefinition_);
-  };
+  }
 
   void testStateInputCostApproximation() const {
     // Extract Quadratic approximation
@@ -82,7 +82,7 @@ class TestFixtureLoopShapingCost : LoopshapingTestConfiguration {
 
     // Difference between new evaluation and approximation should be less than tol
     EXPECT_NEAR(L_disturbance, L_quad_approximation, tol);
-  };
+  }
 
   void testStateCostApproximation() const {
     preComp_->requestFinal(Request::Cost + Request::Approximation, t, x_);

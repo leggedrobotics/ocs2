@@ -47,6 +47,9 @@ namespace LinearInterpolation {
 
 using index_alpha_t = std::pair<int, scalar_t>;
 
+template <class T>
+using remove_cvref_t = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
+
 /**
  * Helper comparison function for non-Eigen types.
  */
@@ -128,15 +131,17 @@ inline index_alpha_t timeSegment(scalar_t enquiryTime, const std::vector<scalar_
  *
  * @param [in] indexAlpha : index and interpolation coefficient (alpha) pair
  * @param [in] dataArray: vector of data
- * @param [in] accessFun: Method to access the subfield of Data in vector
+ * @param [in] accessFun: Method to access the subfield of Data in array. The signature of the accessFun
+ *                        should be equivalent to the following where Field is any subfield of Data:
+ *                        const Field& AccessFun(const std::vector<Data, Alloc>& array, size_t index)
+ * @return The interpolation result
  *
  * @tparam Data: Data type
- * @tparam Field: Data's subfield type
  * @tparam Alloc: Specialized allocation class
  */
-template <typename Data, typename Field, class Alloc>
-Field interpolate(index_alpha_t indexAlpha, const std::vector<Data, Alloc>& dataArray,
-                  const Field& (*accessFun)(const std::vector<Data, Alloc>&, size_t)) {
+template <typename Data, class Alloc, class AccessFun>
+auto interpolate(index_alpha_t indexAlpha, const std::vector<Data, Alloc>& dataArray, AccessFun accessFun)
+    -> remove_cvref_t<typename std::result_of<AccessFun(const std::vector<Data, Alloc>&, size_t)>::type> {
   assert(dataArray.size() > 0);
   if (dataArray.size() > 1) {
     // Normal interpolation case
@@ -158,7 +163,7 @@ Field interpolate(index_alpha_t indexAlpha, const std::vector<Data, Alloc>& data
 /** Default interpolation */
 template <typename Data, class Alloc>
 Data interpolate(index_alpha_t indexAlpha, const std::vector<Data, Alloc>& dataArray) {
-  return interpolate<Data, Data, Alloc>(indexAlpha, dataArray, stdAccessFun<Data, Alloc>);
+  return interpolate(indexAlpha, dataArray, stdAccessFun<Data, Alloc>);
 }
 
 /**
@@ -173,23 +178,24 @@ Data interpolate(index_alpha_t indexAlpha, const std::vector<Data, Alloc>& dataA
  * @param [in] enquiryTime: The enquiry time for interpolation.
  * @param [in] timeArray: Times vector
  * @param [in] dataArray: Data vector
- * @param [in] accessFun: Subfield data access method
+ * @param [in] accessFun: Method to access the subfield of Data in array. The signature of the accessFun
+ *                        should be equivalent to the following where Field is any subfield of Data:
+ *                        const Field& AccessFun(const std::vector<Data, Alloc>& array, size_t index)
  * @return The interpolation result
  *
  * @tparam Data: Data type
- * @tparam Field: Data's subfield type
  * @tparam Alloc: Specialized allocation class
  */
-template <typename Data, typename Field, class Alloc>
-Field interpolate(scalar_t enquiryTime, const std::vector<scalar_t>& timeArray, const std::vector<Data, Alloc>& dataArray,
-                  const Field& (*accessFun)(const std::vector<Data, Alloc>&, size_t)) {
+template <typename Data, class Alloc, class AccessFun>
+auto interpolate(scalar_t enquiryTime, const std::vector<scalar_t>& timeArray, const std::vector<Data, Alloc>& dataArray,
+                 AccessFun accessFun) -> remove_cvref_t<typename std::result_of<AccessFun(const std::vector<Data, Alloc>&, size_t)>::type> {
   return interpolate(timeSegment(enquiryTime, timeArray), dataArray, accessFun);
 }
 
 /** Default interpolation */
 template <typename Data, class Alloc>
 Data interpolate(scalar_t enquiryTime, const std::vector<scalar_t>& timeArray, const std::vector<Data, Alloc>& dataArray) {
-  return interpolate<Data, Data, Alloc>(enquiryTime, timeArray, dataArray, stdAccessFun<Data, Alloc>);
+  return interpolate(enquiryTime, timeArray, dataArray, stdAccessFun<Data, Alloc>);
 }
 
 }  // namespace LinearInterpolation

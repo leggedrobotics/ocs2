@@ -65,7 +65,7 @@ class TestFixtureLoopShapingSoftConstraint : LoopshapingTestConfiguration {
     // Create Loopshaping cost collection wrappers
     loopshapingSoftConstraint = LoopshapingSoftConstraint::create(systemCostCollection, loopshapingDefinition_);
     loopshapingStateSoftConstraint = LoopshapingSoftConstraint::create(systemStateCostCollection, loopshapingDefinition_);
-  };
+  }
 
   void testStateInputApproximation() const {
     // Extract Quadratic approximation

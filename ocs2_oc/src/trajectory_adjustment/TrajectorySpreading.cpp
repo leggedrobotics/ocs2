@@ -46,11 +46,6 @@ std::ostream& operator<<(std::ostream& os, const std::pair<int, int>& ind) {
   return os;
 }
 
-std::stringstream& operator<<(std::stringstream& out, const std::pair<int, int>& ind) {
-  out << "(" << ind.first << ", " << ind.second << ")";
-  return out;
-}
-
 /**
  * Returns the first mismatching pair of elements from two ranges: one defined by [first1, last1) and
  * another defined by [first2,last2).

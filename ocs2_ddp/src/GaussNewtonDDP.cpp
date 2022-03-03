@@ -912,7 +912,7 @@ void GaussNewtonDDP::runInit() {
     // perform a rollout
     // Nominal controller is stored in the optimized primal data as it is either the result of previous solve or it is provided by user and
     // copied to optimized data container manually at the beginning of runImpl
-    const auto avgTimeStep = rolloutInitialTrajectory(nominalPrimalData_, optimizedPrimalSolution_.controllerPtr_.get(), taskId);
+    rolloutInitialTrajectory(nominalPrimalData_, optimizedPrimalSolution_.controllerPtr_.get(), taskId);
     // swap controller used to rollout the nominal trajectories back to nominal data container.
     nominalPrimalData_.primalSolution.controllerPtr_.swap(optimizedPrimalSolution_.controllerPtr_);
 

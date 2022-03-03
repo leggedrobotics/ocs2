@@ -944,16 +944,6 @@ void GaussNewtonDDP::swapDataToCache() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::correctInitcachedNominalTrajectories() {
-  // TODO: Cache Rectification Take care of the case where the end system of the cached trajectories is different from the system in the
-  // partition points. Usually, the cached value used to start each partition are aligned with the partition points in time, so there won't
-  // be problems. But sometimes, in MPC setup, horizon shifts a lot between consecutive solve that the end value of the cache is needed to
-  // start the second to last partition. Here, the time is not aligned, and we have to rectify cache to match state, input dimensions.
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 void GaussNewtonDDP::runInit() {
   // disable Eigen multi-threading
   Eigen::setNbThreads(1);
@@ -971,11 +961,6 @@ void GaussNewtonDDP::runInit() {
     nominalPrimalData_.primalSolution.controllerPtr_.swap(optimizedPrimalData_.primalSolution.controllerPtr_);
 
     computeRolloutMetrics(optimalControlProblemStock_[taskId], nominalPrimalData_.primalSolution, metrics_);
-
-    // This is necessary for:
-    // + The moving horizon (MPC) application
-    // + The very first call of the algorithm where there is no previous nominal trajectories.
-    correctInitcachedNominalTrajectories();
 
     performanceIndex_ = computeRolloutPerformanceIndex(nominalPrimalData_.primalSolution.timeTrajectory_, metrics_);
 

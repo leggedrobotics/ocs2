@@ -357,14 +357,6 @@ class GaussNewtonDDP : public SolverBase {
   void swapDataToCache();
 
   /**
-   * Corrects the initial caching of the nominal trajectories.
-   * This is necessary for:
-   *   + The moving horizon (MPC) application
-   *   + The very first call of the algorithm where there is no previous nominal trajectories.
-   */
-  void correctInitcachedNominalTrajectories();
-
-  /**
    * Runs the initialization method for Gauss-Newton DDP.
    */
   void runInit();

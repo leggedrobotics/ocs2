@@ -88,7 +88,7 @@ class GaussNewtonDDP : public SolverBase {
   void getPrimalSolution(scalar_t finalTime, PrimalSolution* primalSolutionPtr) const final;
 
   ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const override {
-    return getValueFunctionImpl(time, state, optimizedPrimalData_, dualData_.valueFunctionTrajectory);
+    return getValueFunctionImpl(time, state, nominalPrimalData_, dualData_.valueFunctionTrajectory);
   }
 
   ScalarFunctionQuadraticApproximation getHamiltonian(scalar_t time, const vector_t& state, const vector_t& input) override;
@@ -130,15 +130,6 @@ class GaussNewtonDDP : public SolverBase {
   static void retrieveActiveNormalizedTime(const std::pair<int, int>& partitionInterval, const scalar_array_t& timeTrajectory,
                                            const size_array_t& postEventIndices, scalar_array_t& normalizedTimeTrajectory,
                                            size_array_t& normalizedPostEventIndices);
-
-  /**
-   * Adjust the controller based on the last changes in model schedule.
-   *
-   * @param [in] oldModeSchedule: The old mode schedule associated to the trajectories which should be adjusted.
-   * @param [in] newModeSchedule: The new mode schedule that should be adapted to.
-   * @param [in, out] oldController: The control policy that is associated with the old mode schedule.
-   */
-  void adjustController(const ModeSchedule& oldModeSchedule, const ModeSchedule& newModeSchedule, LinearController& oldController) const;
 
  protected:
   /**

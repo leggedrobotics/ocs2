@@ -57,6 +57,9 @@ class RaisimRolloutSettings {
    * @param[in] dGains Gains on generalized velocity for the Raisim-internal PD controller (if controlMode != FORCE_AND_TORQUE)
    * @param[in] generateTerrain Whether or not uneven terrain should be used inside raisim
    * @param[in] terrainRoughness: z scale of the raisim heightmap
+   * @param[in] terrainSeed: Seed for generating the random terrain
+   * @param[in] raisimServer: Whether or not to launch the Raisim server, e.g. needed for visualization with Raisim Unity
+   * @param[in] portNumber: Port number for the server, e.g. change if you have multiple instances of the RaisimRollout class
    */
   explicit RaisimRolloutSettings(rollout::Settings rolloutSettings = rollout::Settings(), bool setSimulatorStateOnRolloutRunAlways = true,
                                  bool setSimulatorStateOnRolloutRunOnce = false, int controlDecimation = 1,
@@ -64,7 +67,8 @@ class RaisimRolloutSettings {
                                  raisim::ControlMode::Type controlMode = raisim::ControlMode::FORCE_AND_TORQUE,
                                  const Eigen::VectorXd& pGains = Eigen::VectorXd::Zero(0),  // NOLINT(modernize-pass-by-value)
                                  const Eigen::VectorXd& dGains = Eigen::VectorXd::Zero(0),  // NOLINT(modernize-pass-by-value)
-                                 bool generateTerrain = false, scalar_t terrainRoughness = 1.0, int terrainSeed = 1)
+                                 bool generateTerrain = false, scalar_t terrainRoughness = 1.0, int terrainSeed = 1,
+                                 bool raisimServer = true, int portNumber = 8080)
       : rolloutSettings_(std::move(rolloutSettings)),
         setSimulatorStateOnRolloutRunAlways_(setSimulatorStateOnRolloutRunAlways),
         setSimulatorStateOnRolloutRunOnce_(setSimulatorStateOnRolloutRunOnce),
@@ -75,7 +79,9 @@ class RaisimRolloutSettings {
         dGains_(dGains),
         generateTerrain_(generateTerrain),
         terrainRoughness_(terrainRoughness),
-        terrainSeed_(terrainSeed) {}
+        terrainSeed_(terrainSeed),
+        raisimServer_(raisimServer),
+        portNumber_(portNumber) {}
 
   /**
    * @brief Constructor taking directly a settings file for initialization
@@ -108,6 +114,8 @@ class RaisimRolloutSettings {
   bool generateTerrain_;
   scalar_t terrainRoughness_;
   int terrainSeed_;
+  bool raisimServer_;
+  int portNumber_;
 };
 
 inline void RaisimRolloutSettings::loadSettings(const std::string& filename, const std::string& fieldName, bool verbose) {
@@ -143,6 +151,8 @@ inline void RaisimRolloutSettings::loadSettings(const std::string& filename, con
   loadData::loadPtreeValue(pt, generateTerrain_, raisimFieldName + ".generateTerrain", verbose);
   loadData::loadPtreeValue(pt, terrainRoughness_, raisimFieldName + ".terrainRoughness", verbose);
   loadData::loadPtreeValue(pt, terrainSeed_, raisimFieldName + ".terrainSeed", verbose);
+  loadData::loadPtreeValue(pt, raisimServer_, raisimFieldName + ".raisimServer", verbose);
+  loadData::loadPtreeValue(pt, portNumber_, raisimFieldName + ".portNumber", verbose);
 }
 
 }  // namespace ocs2

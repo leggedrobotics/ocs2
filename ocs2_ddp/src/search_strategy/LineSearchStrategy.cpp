@@ -251,31 +251,22 @@ std::pair<bool, std::string> LineSearchStrategy::checkConvergence(bool unreliabl
                                                                   const PerformanceIndex& previousPerformanceIndex,
                                                                   const PerformanceIndex& currentPerformanceIndex) const {
   // loop break variables
-  bool isStepLengthStarZero = false;
-  bool isCostFunctionConverged = false;
   const scalar_t currentTotalCost =
       currentPerformanceIndex.cost + currentPerformanceIndex.equalityLagrangian + currentPerformanceIndex.inequalityLagrangian;
   const scalar_t previousTotalCost =
       previousPerformanceIndex.cost + previousPerformanceIndex.equalityLagrangian + previousPerformanceIndex.inequalityLagrangian;
   const scalar_t relCost = std::abs(currentTotalCost - previousTotalCost);
-  isStepLengthStarZero = numerics::almost_eq(bestStepSize_.load(), 0.0) && !unreliableControllerIncrement;
-  isCostFunctionConverged = relCost <= baseSettings_.minRelCost;
+  const bool isCostFunctionConverged = relCost <= baseSettings_.minRelCost;
   const bool isConstraintsSatisfied = currentPerformanceIndex.equalityConstraintsSSE <= baseSettings_.constraintTolerance;
-  const bool isOptimizationConverged = (isCostFunctionConverged || isStepLengthStarZero) && isConstraintsSatisfied;
+  const bool isOptimizationConverged = isCostFunctionConverged && isConstraintsSatisfied;
 
   // convergence info
   std::stringstream infoStream;
   if (isOptimizationConverged) {
     infoStream << "The algorithm has successfully terminated as: \n";
 
-    if (isStepLengthStarZero) {
-      infoStream << "    * The step length reduced to zero.\n";
-    }
-
-    if (isCostFunctionConverged) {
-      infoStream << "    * The absolute relative change of cost (i.e., " << relCost << ") has reached to the minimum value ("
-                 << baseSettings_.minRelCost << ").\n";
-    }
+    infoStream << "    * The absolute relative change of cost (i.e., " << relCost << ") has reached to the minimum value ("
+               << baseSettings_.minRelCost << ").\n";
 
     infoStream << "    * The SSE of equality constraints (i.e., " << currentPerformanceIndex.equalityConstraintsSSE
                << ") has reached to its minimum value (" << baseSettings_.constraintTolerance << ").";

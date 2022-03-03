@@ -103,57 +103,61 @@ ScalarFunctionQuadraticApproximation ScalarFunctionQuadraticApproximation::Zero(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::string checkBeingPSD(const ScalarFunctionQuadraticApproximation& data, const std::string& dataName) {
-  const bool checkState = (data.dfdx.size() > 0);
-  const bool checkInput = (data.dfdu.size() > 0);
+std::string checkBeingPSD(const matrix_t& data, const std::string& dataName) {
+  if (data.size() == 0) {
+    return std::string{};
+  }
 
+  std::stringstream errorDescription;
+
+  // check if it has valid values
+  if (!data.allFinite()) {
+    errorDescription << dataName << " is not finite.\n";
+  }
+
+  // check for being square
+  if (data.rows() != data.cols()) {
+    errorDescription << dataName << " is not a square matrix.\n";
+
+  } else {
+    // check for being self-adjoint
+    if (!data.isApprox(data.transpose(), 1e-6)) {
+      errorDescription << dataName << " is not self-adjoint.\n";
+    }
+
+    // check for being psd
+    const auto minEigenvalue = LinearAlgebra::symmetricEigenvalues(data).minCoeff();
+    if (minEigenvalue < -Eigen::NumTraits<scalar_t>::epsilon()) {
+      errorDescription << dataName << " is not PSD. It's smallest eigenvalue is " + std::to_string(minEigenvalue) + ".\n";
+    }
+  }
+
+  return errorDescription.str();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::string checkBeingPSD(const ScalarFunctionQuadraticApproximation& data, const std::string& dataName) {
   std::stringstream errorDescription;
 
   // check if they are valid values
   if (data.f != data.f) {
     errorDescription << dataName << " is not finite.\n";
   }
-  if (checkState && !data.dfdx.allFinite()) {
+  if (data.dfdx.size() > 0 && !data.dfdx.allFinite()) {
     errorDescription << dataName << " first derivative w.r.t. state is not finite.\n";
   }
-  if (checkState && !data.dfdxx.allFinite()) {
-    errorDescription << dataName << " second derivative w.r.t. state is not finite.\n";
-  }
-  if (checkInput && !data.dfdu.allFinite()) {
+  if (data.dfdu.size() > 0 && !data.dfdu.allFinite()) {
     errorDescription << dataName << " first derivative w.r.t. input is not finite.\n";
   }
-  if (checkInput && !data.dfduu.allFinite()) {
-    errorDescription << dataName << " second derivative w.r.t. input is not finite.\n";
-  }
-  if (checkState && checkInput && !data.dfdux.allFinite()) {
+  if (data.dfdux.size() > 0 && !data.dfdux.allFinite()) {
     errorDescription << dataName << " second derivative w.r.t. input-state is not finite.\n";
   }
 
-  // check for being self-adjoint
-  if (checkState && !data.dfdxx.isApprox(data.dfdxx.transpose())) {
-    errorDescription << dataName << " second derivative w.r.t. state is not self-adjoint.\n";
-  }
-  if (checkInput && !data.dfduu.isApprox(data.dfduu.transpose())) {
-    errorDescription << dataName << " second derivative w.r.t. input is not self-adjoint.\n";
-  }
-
   // check for being psd
-  if (checkState) {
-    const auto stateHessianMinEigenvalue = LinearAlgebra::symmetricEigenvalues(data.dfdxx).minCoeff();
-    if (stateHessianMinEigenvalue < -Eigen::NumTraits<scalar_t>::epsilon()) {
-      errorDescription << dataName
-                       << " second derivative w.r.t. state is not PSD. It's smallest eigenvalue is " +
-                              std::to_string(stateHessianMinEigenvalue) + ".\n";
-    }
-  }
-  if (checkInput) {
-    const auto inputHessianMinEigenvalue = LinearAlgebra::symmetricEigenvalues(data.dfduu).minCoeff();
-    if (inputHessianMinEigenvalue < -Eigen::NumTraits<scalar_t>::epsilon()) {
-      errorDescription << dataName
-                       << " second derivative w.r.t. input is not PSD. It's smallest eigenvalue is " +
-                              std::to_string(inputHessianMinEigenvalue) + ".\n";
-    }
-  }
+  errorDescription << checkBeingPSD(data.dfdxx, dataName + " second derivative w.r.t. state");
+  errorDescription << checkBeingPSD(data.dfduu, dataName + " second derivative w.r.t. input");
 
   return errorDescription.str();
 }

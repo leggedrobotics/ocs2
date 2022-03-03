@@ -35,10 +35,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/integration/TrapezoidalIntegration.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
-#include <ocs2_core/misc/Lookup.h>
 
 #include <ocs2_oc/approximate_model/ChangeOfInputVariables.h>
 #include <ocs2_oc/rollout/InitializerRollout.h>
+#include <ocs2_oc/trajectory_adjustment/TrajectorySpreadingHelperFunctions.h>
 
 #include <ocs2_ddp/DDP_HelperFunctions.h>
 #include <ocs2_ddp/HessianCorrection.h>
@@ -944,16 +944,6 @@ void GaussNewtonDDP::swapDataToCache() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::correctInitcachedNominalTrajectories() {
-  // TODO: Cache Rectification Take care of the case where the end system of the cached trajectories is different from the system in the
-  // partition points. Usually, the cached value used to start each partition are aligned with the partition points in time, so there won't
-  // be problems. But sometimes, in MPC setup, horizon shifts a lot between consecutive solve that the end value of the cache is needed to
-  // start the second to last partition. Here, the time is not aligned, and we have to rectify cache to match state, input dimensions.
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 void GaussNewtonDDP::runInit() {
   // disable Eigen multi-threading
   Eigen::setNbThreads(1);
@@ -971,11 +961,6 @@ void GaussNewtonDDP::runInit() {
     nominalPrimalData_.primalSolution.controllerPtr_.swap(optimizedPrimalData_.primalSolution.controllerPtr_);
 
     computeRolloutMetrics(optimalControlProblemStock_[taskId], nominalPrimalData_.primalSolution, metrics_);
-
-    // This is necessary for:
-    // + The moving horizon (MPC) application
-    // + The very first call of the algorithm where there is no previous nominal trajectories.
-    correctInitcachedNominalTrajectories();
 
     performanceIndex_ = computeRolloutPerformanceIndex(nominalPrimalData_.primalSolution.timeTrajectory_, metrics_);
 
@@ -1101,8 +1086,8 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 
   // adjust controller
   if (!optimizedPrimalData_.primalSolution.controllerPtr_->empty()) {
-    adjustController(optimizedPrimalData_.primalSolution.modeSchedule_, getReferenceManager().getModeSchedule(),
-                     getLinearController(optimizedPrimalData_.primalSolution));
+    std::ignore = trajectorySpread(optimizedPrimalData_.primalSolution.modeSchedule_, getReferenceManager().getModeSchedule(),
+                                   getLinearController(optimizedPrimalData_.primalSolution));
   }
 
   // check if after the truncation the internal controller is empty

@@ -35,7 +35,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/integration/TrapezoidalIntegration.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
-#include <ocs2_core/misc/Lookup.h>
 
 #include <ocs2_oc/approximate_model/ChangeOfInputVariables.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblemHelperFunction.h>
@@ -378,30 +377,6 @@ vector_t GaussNewtonDDP::getStateInputEqualityConstraintLagrangianImpl(scalar_t 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::retrieveActiveNormalizedTime(const std::pair<int, int>& partitionInterval, const scalar_array_t& timeTrajectory,
-                                                  const size_array_t& postEventIndices, scalar_array_t& normalizedTimeTrajectory,
-                                                  size_array_t& normalizedPostEventIndices) {
-  // Although the rightmost point is excluded from the current interval, i.e. it won't be written into the dual solution array, we still
-  // the following two (+1) are essential to start the backward pass
-  auto firstTimeItr = timeTrajectory.begin() + partitionInterval.first;
-  auto lastTimeItr = timeTrajectory.begin() + partitionInterval.second + 1;
-  const int N = partitionInterval.second - partitionInterval.first + 1;
-  // normalized time
-  normalizedTimeTrajectory.resize(N);
-  std::transform(firstTimeItr, lastTimeItr, normalizedTimeTrajectory.rbegin(), [](scalar_t t) -> scalar_t { return -t; });
-
-  auto firstEventItr = std::upper_bound(postEventIndices.begin(), postEventIndices.end(), partitionInterval.first);
-  auto lastEventItr = std::upper_bound(postEventIndices.begin(), postEventIndices.end(), partitionInterval.second);
-  const int NE = std::distance(firstEventItr, lastEventItr);
-  // normalized event past the index
-  normalizedPostEventIndices.resize(NE);
-  std::transform(firstEventItr, lastEventItr, normalizedPostEventIndices.rbegin(),
-                 [N, &partitionInterval](size_t i) -> size_t { return N - i + partitionInterval.first; });
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 std::vector<std::pair<int, int>> GaussNewtonDDP::getPartitionIntervalsFromTimeTrajectory(const scalar_array_t& timeTrajectory,
                                                                                          int numWorkers) {
   scalar_array_t desiredPartitionPoints(numWorkers + 1);
@@ -438,7 +413,7 @@ void GaussNewtonDDP::runParallel(std::function<void(void)> taskFunction, size_t 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t GaussNewtonDDP::rolloutInitialTrajectory(PrimalDataContainer& primalData, ControllerBase* controller, size_t workerIndex /*= 0*/) {
+void GaussNewtonDDP::rolloutInitialTrajectory(PrimalDataContainer& primalData, ControllerBase* controller, size_t workerIndex /*= 0*/) {
   assert(primalData.primalSolution.controllerPtr_.get() != controller);
   // clear output
   primalData.clear();
@@ -452,21 +427,15 @@ scalar_t GaussNewtonDDP::rolloutInitialTrajectory(PrimalDataContainer& primalDat
   auto& inputTrajectory = primalData.primalSolution.inputTrajectory_;
   auto& postEventIndices = primalData.primalSolution.postEventIndices_;
 
-  // Find until where we have a controller available for the rollout
-  const scalar_t controllerAvailableTill = controller->empty() ? initTime_ : static_cast<LinearController*>(controller)->timeStamp_.back();
+  // divide the rollout segment in controller rollout and operating points
+  const auto controllerAvailableTill = controller->empty() ? initTime_ : static_cast<LinearController*>(controller)->timeStamp_.back();
+  const auto controllerRolloutFromTo = std::make_pair(initTime_, std::max(initTime_, std::min(controllerAvailableTill, finalTime_)));
+  const auto operatingPointsFromTo = std::make_pair(controllerRolloutFromTo.second, finalTime_);
 
-  if (ddpSettings_.debugPrintRollout_) {
-    std::cerr << "[GaussNewtonDDP::rolloutInitialTrajectory] for t = [" << initTime_ << ", " << finalTime_ << "]\n"
-              << "\tcontroller available till t = " << controllerAvailableTill << "\n";
-  }
-
-  // Divide the rollout segment in controller rollout and operating points
-  const std::pair<scalar_t, scalar_t> controllerRolloutFromTo{initTime_,
-                                                              std::max(initTime_, std::min(controllerAvailableTill, finalTime_))};
-  const std::pair<scalar_t, scalar_t> operatingPointsFromTo{controllerRolloutFromTo.second, finalTime_};
-
+  // display
   if (ddpSettings_.debugPrintRollout_) {
     std::cerr << "[GaussNewtonDDP::rolloutInitialTrajectory] for t = [" << initTime_ << ", " << finalTime_ << "]\n";
+    std::cerr << "\tcontroller available till t = " << controllerAvailableTill << "\n";
     if (controllerRolloutFromTo.first < controllerRolloutFromTo.second) {
       std::cerr << "\twill use controller for t = [" << controllerRolloutFromTo.first << ", " << controllerRolloutFromTo.second << "]\n";
     }
@@ -475,15 +444,15 @@ scalar_t GaussNewtonDDP::rolloutInitialTrajectory(PrimalDataContainer& primalDat
     }
   }
 
-  // Rollout with controller
+  // rollout with controller
   vector_t xCurrent = initState_;
   if (controllerRolloutFromTo.first < controllerRolloutFromTo.second) {
-    xCurrent = dynamicsForwardRolloutPtrStock_[workerIndex]->run(controllerRolloutFromTo.first, xCurrent, controllerRolloutFromTo.second,
+    xCurrent = dynamicsForwardRolloutPtrStock_[workerIndex]->run(controllerRolloutFromTo.first, initState_, controllerRolloutFromTo.second,
                                                                  controller, eventTimes, timeTrajectory, postEventIndices, stateTrajectory,
                                                                  inputTrajectory);
   }
 
-  // Finish rollout with operating points
+  // finish rollout with operating points
   if (operatingPointsFromTo.first < operatingPointsFromTo.second) {
     // Remove last point of the controller rollout if it is directly past an event. Here where we want to use the initializer
     // instead. However, we do start the integration at the state after the event. i.e. the jump map remains applied.
@@ -516,18 +485,16 @@ scalar_t GaussNewtonDDP::rolloutInitialTrajectory(PrimalDataContainer& primalDat
   }
 
   if (!xCurrent.allFinite()) {
-    throw std::runtime_error("System became unstable during the rollout.");
+    throw std::runtime_error("[GaussNewtonDDP::rolloutInitialTrajectory] System became unstable during the initial rollout!");
   }
 
   // debug print
   if (ddpSettings_.debugPrintRollout_) {
-    std::cerr << "\n++++++++++++++++++++++++++++++\n";
+    std::cerr << "\n++++++++++++++++++++++++++++++++++++++++\n";
     std::cerr << "[GaussNewtonDDP::rolloutInitialTrajectory] for t = [" << timeTrajectory.front() << ", " << timeTrajectory.back() << "]";
-    std::cerr << "\n++++++++++++++++++++++++++++++\n";
+    std::cerr << "\n+++++++++++++++++++++++++++++++++++++++++\n";
     RolloutBase::display(timeTrajectory, postEventIndices, stateTrajectory, &inputTrajectory);
   }
-  // average time step
-  return (std::min(controllerAvailableTill, finalTime_) - initTime_) / static_cast<scalar_t>(timeTrajectory.size());
 }
 
 /******************************************************************************************************/
@@ -1124,8 +1091,8 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 
   // adjust controller
   if (!optimizedPrimalSolution_.controllerPtr_->empty()) {
-    trajectorySpread(optimizedPrimalSolution_.modeSchedule_, getReferenceManager().getModeSchedule(),
-                     getLinearController(optimizedPrimalSolution_));
+    std::ignore = trajectorySpread(optimizedPrimalSolution_.modeSchedule_, getReferenceManager().getModeSchedule(),
+                                   getLinearController(optimizedPrimalSolution_));
   }
 
   // check if after the truncation the internal controller is empty

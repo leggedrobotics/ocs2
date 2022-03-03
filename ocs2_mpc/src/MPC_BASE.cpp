@@ -29,7 +29,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <algorithm>
 
-#include <ocs2_core/misc/Lookup.h>
 #include <ocs2_mpc/MPC_BASE.h>
 
 namespace ocs2 {

@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
 
   // initial command
   vector_t initTarget(7);
-  initTarget.head(3) << 0, 1, 1;
+  initTarget.head(3) << 1, 0, 1;
   initTarget.tail(4) << Eigen::Quaternion<scalar_t>(1, 0, 0, 0).coeffs();
   const vector_t zeroInput = vector_t::Zero(interface.getManipulatorModelInfo().inputDim);
   const TargetTrajectories initTargetTrajectories({initObservation.time}, {initTarget}, {zeroInput});

@@ -42,8 +42,6 @@ namespace ocs2 {
  */
 class SLQ final : public GaussNewtonDDP {
  public:
-  using BASE = GaussNewtonDDP;
-
   /**
    * Constructor
    *

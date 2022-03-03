@@ -171,6 +171,9 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
   std::unique_ptr<CppAdInterface> jumpMapADInterfacePtr_;
   std::unique_ptr<CppAdInterface> guardSurfacesADInterfacePtr_;
 
+  vector_t tapedTimeStateInput_;
+  vector_t tapedTimeState_;
+
   /** Cached jacobians for time derivative */
   matrix_t flowJacobian_;
   matrix_t jumpJacobian_;

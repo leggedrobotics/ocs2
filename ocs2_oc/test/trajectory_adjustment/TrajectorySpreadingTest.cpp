@@ -193,7 +193,7 @@ class TrajectorySpreadingTest : public testing::Test {
       const ocs2::scalar_t finalTime = spreadResult.timeTrajectory.back();
 
       const auto startEventItr = std::upper_bound(updatedModeSchedule.eventTimes.begin(), updatedModeSchedule.eventTimes.end(), initTime);
-      // If the last time coincides with the event time, the time point is dropped because the it cannot be pre-event.
+      // If a time point is aligned with(the same as) an event time, it belongs to the pre-mode.
       const auto endEventItr = std::lower_bound(updatedModeSchedule.eventTimes.begin(), updatedModeSchedule.eventTimes.end(), finalTime);
 
       ocs2::size_array_t postEventIndice(endEventItr - startEventItr);

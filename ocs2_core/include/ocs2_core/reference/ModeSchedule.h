@@ -33,7 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/misc/Numerics.h>
 
 namespace ocs2 {
 
@@ -77,22 +76,41 @@ struct ModeSchedule {
   std::vector<size_t> modeSequence;  // mode sequence of size N
 };
 
+/** Exchanges the given values. */
 void swap(ModeSchedule& lh, ModeSchedule& rh);
 
+/** Inserts modeSchedule into the output stream. */
 std::ostream& operator<<(std::ostream& stream, const ModeSchedule& modeSchedule);
 
 /**
  * Gets the number of events that have preceded the given event time.
+ *
+ * @param [in] timeTrajectory: A trajectory of timestamps.
+ * @param [in] postEventIndices: An array of post-event time index in the time trajectory.
+ * @param [in] eventTime: The requested event time.
+ * @return The number of events that have preceded the given event time.
  */
-inline size_t getEventCounter(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices, scalar_t eventTime) {
-  const auto eventIndexItr = std::find_if(postEventIndices.cbegin(), postEventIndices.cend(), [&](size_t postEventInd) {
-    return numerics::almost_eq(eventTime, timeTrajectory[postEventInd - 1]);
-  });
-  return std::distance(postEventIndices.cbegin(), eventIndexItr);
-}
+size_t getNumberOfPrecedingEvents(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices, scalar_t eventTime);
 
 /**
- * Finds the period that we can interpolate a trajectory with the given timestamp, timeTrajectory.
+ * Finds the intersection of the requested period i.e., timePeriod, to the time interval of the modes that timeTrajectory
+ * covers, i.e., extendable interval.
+ *
+ * Case 1: non-empty interval
+ * eventTimes       s0             s2         s2          s3
+ * ------------------------|--------------|----------|-----------|-------
+ * timeTrajectory ---------------****************------------------------
+ * Extendable interval ----+++++++++++++++++++++++++++-------------------
+ * Requested timePeriod ----------------------[           ]--------------
+ * Output ------------------------------------[******]-------------------
+ *
+ * Case 2: empty interval
+ * eventTimes       s0             s2         s2          s3
+ * ------------------------|--------------|----------|-----------|-------
+ * timeTrajectory ---------------******************----------------------
+ * Extendable interval ----+++++++++++++++++++++++++++-------------------
+ * Requested timePeriod -----------------------------------[         ]---
+ * Output ------------------------------------------------][-------------
  *
  * @param [in] timeTrajectory: Timestamp of the data to be interpolated.
  * @param [in] eventTimes: The event times array.
@@ -100,7 +118,7 @@ inline size_t getEventCounter(const scalar_array_t& timeTrajectory, const size_a
  * @return The truncated time interval in which the interpolation is valid. In the case that the interpolation is not allowed it
  * returns and interval of negative length i.e., (timePeriod.first, timePeriod.first - 1e-4).
  */
-std::pair<scalar_t, scalar_t> findInterpolatableInterval(const scalar_array_t& timeTrajectory, const scalar_array_t& eventTimes,
-                                                         const std::pair<scalar_t, scalar_t>& timePeriod);
+std::pair<scalar_t, scalar_t> findIntersectionToExtendableInterval(const scalar_array_t& timeTrajectory, const scalar_array_t& eventTimes,
+                                                                   const std::pair<scalar_t, scalar_t>& timePeriod);
 
 }  // namespace ocs2

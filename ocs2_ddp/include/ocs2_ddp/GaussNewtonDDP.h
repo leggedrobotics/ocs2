@@ -116,40 +116,6 @@ class GaussNewtonDDP : public SolverBase {
 
  protected:
   /**
-   * Retrieve time and post event trajectories of the current partition from the entire time and post event trajectories.
-   * The resulting time and event indics are normalized to start integration from back.
-   *
-   *
-   * The riccati equations are solved backwards in time
-   * the normalizedTimeTrajectory time is therefore filled with negative time in the reverse order, for example:
-   * nominalTime =      [0.0, 1.0, 2.0, ..., 10.0]
-   * normalizedTime = [-10.0, ..., -2.0, -1.0, -0.0]
-   *
-   * The event indices are counted from the back the current partition, for example:
-   * nominalTime =      [0.0, 1.0, 2.0(*), 3.0, 4.0(*)]
-   * eventIndices = [2, 4]
-   *
-   * normalizedTime = [-4.0, -3.0(*), -2.0, -1.0(*), -0.0]
-   * normalizedeventIndices = [1, 3]
-   *
-   * @param [in] partitionInterval: Current active interval
-   * @param [in] timeTrajectory: The whole time trajectory
-   * @param [in] postEventIndices: The post event index array
-   * @param [out] normalizedTimeTrajectory: Nomalized time trajectory of the current interval
-   * @param [out] normalizedPostEventIndices: Nomalized ost event index array of the current interval
-   */
-  static void retrieveActiveNormalizedTime(const std::pair<int, int>& partitionInterval, const scalar_array_t& timeTrajectory,
-                                           const size_array_t& postEventIndices, scalar_array_t& normalizedTimeTrajectory,
-                                           size_array_t& normalizedPostEventIndices);
-
-  /**
-   * Sets up optimizer for different number of partitions.
-   *
-   * @param [in] numPartitions: number of partitions.
-   */
-  virtual void setupOptimizer(size_t numPartitions){};
-
-  /**
    * Helper to run task multiple times in parallel (blocking)
    *
    * @param [in] taskFunction: task function
@@ -187,18 +153,6 @@ class GaussNewtonDDP : public SolverBase {
    * @param [in,out] primalData: The primal Data
    */
   virtual void approximateIntermediateLQ(const DualSolution& dualSolution, PrimalDataContainer& primalData) = 0;
-
-  /**
-   * Calculates the controller. This method uses the following variables:
-   * - constrained, linearized model
-   * - constrained, quadratized cost
-   *
-   * The method modifies:
-   * - nominalControllersStock_: the controller that stabilizes the system
-   * around the new nominal trajectory and improves the constraints as well as
-   * the increment to the feed-forward control input.
-   */
-  void calculateController();
 
   /**
    * Calculate controller for the timeIndex by using primal and dual and write the result back to dstController
@@ -307,10 +261,20 @@ class GaussNewtonDDP : public SolverBase {
    * @param [in] primalData: primalData
    * @param [in] controller: nominal controller used to rollout (time, state, input...) trajectories
    * @param [in] workerIndex: working thread (default is 0).
-   *
-   * @return average time step.
    */
-  scalar_t rolloutInitialTrajectory(PrimalDataContainer& primalData, ControllerBase* controller, size_t workerIndex = 0);
+  void rolloutInitialTrajectory(PrimalDataContainer& primalData, ControllerBase* controller, size_t workerIndex = 0);
+
+  /**
+   * Calculates the controller. This method uses the following variables:
+   * - constrained, linearized model
+   * - constrained, quadratized cost
+   *
+   * The method modifies:
+   * - nominalControllersStock_: the controller that stabilizes the system
+   * around the new nominal trajectory and improves the constraints as well as
+   * the increment to the feed-forward control input.
+   */
+  void calculateController();
 
   /**
    * Display rollout info and scores.

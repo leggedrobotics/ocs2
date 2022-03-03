@@ -104,20 +104,28 @@ ScalarFunctionQuadraticApproximation ScalarFunctionQuadraticApproximation::Zero(
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::string checkBeingPSD(const matrix_t& data, const std::string& dataName) {
+  if (data.size() == 0) {
+    return std::string{};
+  }
+
   std::stringstream errorDescription;
 
-  // check if they are valid values
-  if (data.size() > 0 && !data.allFinite()) {
+  // check if it has valid values
+  if (!data.allFinite()) {
     errorDescription << dataName << " is not finite.\n";
   }
 
-  // check for being self-adjoint
-  if (data.size() > 0 && !data.isApprox(data.transpose(), 1e-6)) {
-    errorDescription << dataName << " is not self-adjoint.\n";
-  }
+  // check for being square
+  if (data.rows() != data.cols()) {
+    errorDescription << dataName << " is not a square matrix.\n";
 
-  // check for being psd
-  if (data.size() > 0) {
+  } else {
+    // check for being self-adjoint
+    if (!data.isApprox(data.transpose(), 1e-6)) {
+      errorDescription << dataName << " is not self-adjoint.\n";
+    }
+
+    // check for being psd
     const auto minEigenvalue = LinearAlgebra::symmetricEigenvalues(data).minCoeff();
     if (minEigenvalue < -Eigen::NumTraits<scalar_t>::epsilon()) {
       errorDescription << dataName << " is not PSD. It's smallest eigenvalue is " + std::to_string(minEigenvalue) + ".\n";

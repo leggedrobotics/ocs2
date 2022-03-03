@@ -98,6 +98,7 @@ void computeConstraintProjection(const matrix_t& Dm, const matrix_t& RmInvUmUmT,
   Eigen::HouseholderQR<matrix_t> QRof_RmInvUmUmTT_DmT(RmInvUmUmT.transpose() * Dm.transpose());
 
   matrix_t QRof_RmInvUmUmTT_DmT_Rc = QRof_RmInvUmUmTT_DmT.matrixQR().topRows(numConstraints).triangularView<Eigen::Upper>();
+  setTriangularMinimumEigenvalues(QRof_RmInvUmUmTT_DmT_Rc);
 
   // Computes the inverse of Rc with an efficient in-place forward-backward substitution
   // Turns out that this is equal to the UUT decomposition of DmDagger^T * R * DmDagger after simplification

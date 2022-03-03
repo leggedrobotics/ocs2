@@ -35,7 +35,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/integration/TrapezoidalIntegration.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
-#include <ocs2_core/misc/Lookup.h>
 
 #include <ocs2_oc/approximate_model/ChangeOfInputVariables.h>
 #include <ocs2_oc/rollout/InitializerRollout.h>

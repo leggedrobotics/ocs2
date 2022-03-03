@@ -35,7 +35,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <limits>
 
 #include <ocs2_core/NumericTraits.h>
-#include <ocs2_core/misc/Lookup.h>
 #include <ocs2_core/misc/Numerics.h>
 
 namespace ocs2 {

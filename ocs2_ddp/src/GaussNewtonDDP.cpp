@@ -35,10 +35,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/integration/TrapezoidalIntegration.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
-#include <ocs2_core/misc/Lookup.h>
 
 #include <ocs2_oc/approximate_model/ChangeOfInputVariables.h>
 #include <ocs2_oc/rollout/InitializerRollout.h>
+#include <ocs2_oc/trajectory_adjustment/TrajectorySpreadingHelperFunctions.h>
 
 #include <ocs2_ddp/DDP_HelperFunctions.h>
 #include <ocs2_ddp/HessianCorrection.h>
@@ -1101,8 +1101,8 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 
   // adjust controller
   if (!optimizedPrimalData_.primalSolution.controllerPtr_->empty()) {
-    adjustController(optimizedPrimalData_.primalSolution.modeSchedule_, getReferenceManager().getModeSchedule(),
-                     getLinearController(optimizedPrimalData_.primalSolution));
+    std::ignore = trajectorySpread(optimizedPrimalData_.primalSolution.modeSchedule_, getReferenceManager().getModeSchedule(),
+                                   getLinearController(optimizedPrimalData_.primalSolution));
   }
 
   // check if after the truncation the internal controller is empty

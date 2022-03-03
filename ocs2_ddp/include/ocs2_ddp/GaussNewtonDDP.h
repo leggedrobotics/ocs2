@@ -88,7 +88,7 @@ class GaussNewtonDDP : public SolverBase {
   void getPrimalSolution(scalar_t finalTime, PrimalSolution* primalSolutionPtr) const final;
 
   ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const override {
-    return getValueFunctionImpl(time, state, optimizedPrimalData_, dualData_.valueFunctionTrajectory);
+    return getValueFunctionImpl(time, state, nominalPrimalData_, dualData_.valueFunctionTrajectory);
   }
 
   ScalarFunctionQuadraticApproximation getHamiltonian(scalar_t time, const vector_t& state, const vector_t& input) override;

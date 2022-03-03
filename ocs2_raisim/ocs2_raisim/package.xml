@@ -2,21 +2,23 @@
 <package format="2">
   <name>ocs2_raisim</name>
   <version>0.0.1</version>
-  <description>The ocs2_raisim package</description>
+  <description>The ocs2_raisim metapackage</description>
+
+  <author email="areske@ethz.ch">Alexander Reske</author>
 
   <maintainer email="farbod.farshidian@gmail.com">Farbod Farshidian</maintainer>
-  <maintainer email="jcarius@ethz.ch">Jan Carius</maintainer>
-  <maintainer email="rgrandia@ethz.ch">Ruben Grandia</maintainer>
+  <maintainer email="areske@ethz.ch">Alexander Reske</maintainer>
 
   <license>BSD</license>
 
-  <author email="jcarius@ethz.ch">Jan Carius</author>
-
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>cmake_modules</build_depend>
-  <build_depend>cmake_clang_tools</build_depend>
 
-  <depend>ocs2_core</depend>
-  <depend>ocs2_oc</depend>
+  <exec_depend>ocs2_legged_robot_raisim</exec_depend>
+  <exec_depend>ocs2_raisim_core</exec_depend>
+  <exec_depend>ocs2_raisim_ros</exec_depend>
+
+  <export>
+    <metapackage />
+  </export>
 
 </package>

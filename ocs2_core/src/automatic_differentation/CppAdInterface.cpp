@@ -210,7 +210,7 @@ ScalarFunctionQuadraticApproximation CppAdInterface::getGaussNewtonApproximation
   model_->SparseJacobian(xpArrayView, sparseJacobianArrayView, &rows, &cols);
 
   // Sparse evaluation of J' * f
-  gnApprox.dfdx = vector_t::Zero(variableDim_);
+  gnApprox.dfdx.setZero(variableDim_);
   for (size_t i = 0; i < nnzJacobian_; i++) {
     gnApprox.dfdx(cols[i]) += sparseJacobian[i] * valueVector(rows[i]);
   }
@@ -221,7 +221,7 @@ ScalarFunctionQuadraticApproximation CppAdInterface::getGaussNewtonApproximation
    * Because the sparse elements are ordered first by row, then by column, we process J row-by-row.
    * For each row of J, we add the non-zero pairs (i, j) to H(i, j).
    */
-  gnApprox.dfdxx = matrix_t::Zero(variableDim_, variableDim_);
+  gnApprox.dfdxx.setZero(variableDim_, variableDim_);
   for (size_t i = 0; i < nnzJacobian_; ++i) {
     const size_t row_i = rows[i];
     const size_t col_i = cols[i];

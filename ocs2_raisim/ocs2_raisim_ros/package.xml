@@ -2,7 +2,7 @@
 <package format="2">
   <name>ocs2_raisim_ros</name>
   <version>0.0.1</version>
-  <description>This package provides ROS functionality to the ocs2_raisim package</description>
+  <description>This package provides ROS functionality to the ocs2_raisim_core package</description>
 
   <maintainer email="farbod.farshidian@gmail.com">Farbod Farshidian</maintainer>
   <maintainer email="jcarius@ethz.ch">Jan Carius</maintainer>
@@ -17,7 +17,7 @@
   <build_depend>cmake_clang_tools</build_depend>
 
   <depend>roscpp</depend>
-  <depend>ocs2_raisim</depend>
+  <depend>ocs2_raisim_core</depend>
   <depend>grid_map_msgs</depend>
 
   <exec_depend>grid_map_rviz_plugin</exec_depend>

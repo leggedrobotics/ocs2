@@ -86,8 +86,8 @@ auto TrajectorySpreading::set(const ModeSchedule& oldModeSchedule, const ModeSch
                                          newModeSchedule.modeSequence.begin() + newStartIndexOfMatchedSequence);
 
     while (std::distance(newModeSchedule.modeSequence.begin() + newLastActiveModeIndex, mismatchedIndex.second) > 1) {
-      mismatchedIndex.first -= 1;
-      mismatchedIndex.second -= 1;
+      --mismatchedIndex.first;
+      --mismatchedIndex.second;
     }
     // end TODO
     w = std::distance(oldModeSchedule.modeSequence.begin() + oldStartIndexOfMatchedSequence, mismatchedIndex.first);
@@ -96,7 +96,7 @@ auto TrajectorySpreading::set(const ModeSchedule& oldModeSchedule, const ModeSch
       break;
     } else {
       // move starting index forward to find the first matched mode in the old mode schedule
-      oldStartIndexOfMatchedSequence++;
+      ++oldStartIndexOfMatchedSequence;
     }
   }
 
@@ -123,7 +123,7 @@ auto TrajectorySpreading::set(const ModeSchedule& oldModeSchedule, const ModeSch
   // As the first matched mode must be the leading mode of the new mode schedule, in the case that the first matched mode is NOT the
   // leading mode of the old mode schedule, the triggering event time need to be shifted back to the beginning of trajectories
   // In summary, Triggering event time can be either ignored (leading mode of both old and new schedule are matched) or shifted backward.
-  if (oldStartIndexOfMatchedSequence > oldFirstActiveModeIndex) {
+  if (w > 0 && oldStartIndexOfMatchedSequence > oldFirstActiveModeIndex) {
     const auto oldLastTriggeredEvent = oldModeSchedule.eventTimes[oldStartIndexOfMatchedSequence - 1];
     const auto newLastTriggeredEvent = oldInitTime - 1e-4;  // a bit before the updated initial time
 

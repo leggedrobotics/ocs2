@@ -68,7 +68,6 @@ PerformanceIndex computeRolloutPerformanceIndex(const scalar_array_t& timeTrajec
  * @param [in] timePeriod: Initial and final times period
  * @param [in] initState: Initial state
  * @param [in] modeSchedule: The mode schedule
- * @param [in] controller: Control policies.
  * @param [in, out] primalSolution: The resulting primal solution. Make sure that primalSolution::controllerPtr is set since
  *                                  the rollout is performed based on the controller stored in primalSolution.
  *

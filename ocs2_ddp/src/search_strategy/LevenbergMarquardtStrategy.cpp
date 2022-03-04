@@ -27,10 +27,10 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/integration/TrapezoidalIntegration.h>
+#include "ocs2_ddp/search_strategy/LevenbergMarquardtStrategy.h"
 
-#include <ocs2_ddp/HessianCorrection.h>
-#include <ocs2_ddp/search_strategy/LevenbergMarquardtStrategy.h>
+#include "ocs2_ddp/DDP_HelperFunctions.h"
+#include "ocs2_ddp/HessianCorrection.h"
 
 namespace ocs2 {
 
@@ -39,13 +39,11 @@ namespace ocs2 {
 /******************************************************************************************************/
 LevenbergMarquardtStrategy::LevenbergMarquardtStrategy(search_strategy::Settings baseSettings, levenberg_marquardt::Settings settings,
                                                        RolloutBase& rolloutRef, OptimalControlProblem& optimalControlProblemRef,
-                                                       SoftConstraintPenalty& ineqConstrPenaltyRef,
                                                        std::function<scalar_t(const PerformanceIndex&)> meritFunc)
     : SearchStrategyBase(std::move(baseSettings)),
       settings_(std::move(settings)),
       rolloutRef_(rolloutRef),
       optimalControlProblemRef_(optimalControlProblemRef),
-      ineqConstrPenaltyRef_(ineqConstrPenaltyRef),
       meritFunc_(std::move(meritFunc)) {}
 
 /******************************************************************************************************/
@@ -58,49 +56,35 @@ void LevenbergMarquardtStrategy::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-bool LevenbergMarquardtStrategy::run(scalar_t expectedCost, const ModeSchedule& modeSchedule,
-                                     std::vector<LinearController>& controllersStock, PerformanceIndex& performanceIndex,
-                                     scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
-                                     vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
-                                     std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
-                                     std::vector<std::vector<ModelData>>& modelDataEventTimesStock, scalar_t& avgTimeStepFP) {
+bool LevenbergMarquardtStrategy::run(const std::pair<scalar_t, scalar_t>& timePeriod, const vector_t& initState,
+                                     const scalar_t expectedCost, const LinearController& unoptimizedController,
+                                     const ModeSchedule& modeSchedule, search_strategy::SolutionRef solution) {
   constexpr size_t taskId = 0;
 
   // previous merit and the expected reduction
-  const auto prevMerit = performanceIndex.merit;
-  const auto expectedReduction = performanceIndex.merit - expectedCost;
+  const auto prevMerit = solution.performanceIndex.merit;
+  const auto expectedReduction = solution.performanceIndex.merit - expectedCost;
 
-  // do a full step rollout
+  // stepsize
   const scalar_t stepLength = numerics::almost_eq(expectedReduction, 0.0) ? 0.0 : 1.0;
-  for (auto& controller : controllersStock) {
-    for (size_t k = 0; k < controller.size(); k++) {
-      controller.biasArray_[k] += stepLength * controller.deltaBiasArray_[k];
-    }
-  }
 
   try {
-    // perform a rollout
-    const auto avgTimeStep =
-        rolloutTrajectory(rolloutRef_, modeSchedule, controllersStock, timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
-                          inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock);
-    scalar_t heuristicsValue = 0.0;
-    rolloutCostAndConstraints(optimalControlProblemRef_, timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
-                              inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock, heuristicsValue);
+    // compute primal solution
+    incrementController(stepLength, unoptimizedController, getLinearController(solution.primalSolution));
+    solution.avgTimeStep = rolloutTrajectory(rolloutRef_, timePeriod, initState, modeSchedule, solution.primalSolution);
 
-    // compute average time step of forward rollout
-    avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStep;
+    // compute metrics
+    computeRolloutMetrics(optimalControlProblemRef_, solution.primalSolution, solution.metrics);
 
-    performanceIndex = calculateRolloutPerformanceIndex(ineqConstrPenaltyRef_, timeTrajectoriesStock, modelDataTrajectoriesStock,
-                                                        modelDataEventTimesStock, heuristicsValue);
-
-    // calculates rollout merit
-    performanceIndex.merit = meritFunc_(performanceIndex);
+    // compute performanceIndex
+    solution.performanceIndex = computeRolloutPerformanceIndex(solution.primalSolution.timeTrajectory_, solution.metrics);
+    solution.performanceIndex.merit = meritFunc_(solution.performanceIndex);
 
     // display
     if (baseSettings_.displayInfo) {
       std::stringstream infoDisplay;
       infoDisplay << "    [Thread " << taskId << "] - step length " << stepLength << '\n';
-      infoDisplay << std::setw(4) << performanceIndex << "\n\n";
+      infoDisplay << std::setw(4) << solution.performanceIndex << "\n\n";
       std::cerr << infoDisplay.str();
     }
 
@@ -108,12 +92,12 @@ bool LevenbergMarquardtStrategy::run(scalar_t expectedCost, const ModeSchedule& 
     if (baseSettings_.displayInfo) {
       std::cerr << "    [Thread " << taskId << "] rollout with step length " << stepLength << " is terminated: " << error.what() << "\n";
     }
-    performanceIndex.merit = std::numeric_limits<scalar_t>::max();
-    performanceIndex.totalCost = std::numeric_limits<scalar_t>::max();
+    solution.performanceIndex.merit = std::numeric_limits<scalar_t>::max();
+    solution.performanceIndex.cost = std::numeric_limits<scalar_t>::max();
   }
 
   // compute pho (the ratio between actual reduction and predicted reduction)
-  const auto actualReduction = prevMerit - performanceIndex.merit;
+  const auto actualReduction = prevMerit - solution.performanceIndex.merit;
 
   if (std::abs(actualReduction) < baseSettings_.minRelCost || expectedReduction <= baseSettings_.minRelCost) {
     levenbergMarquardtModule_.pho = 1.0;
@@ -191,10 +175,6 @@ bool LevenbergMarquardtStrategy::run(scalar_t expectedCost, const ModeSchedule& 
   if (levenbergMarquardtModule_.pho >= settings_.minAcceptedPho_) {
     // accept the solution
     levenbergMarquardtModule_.numSuccessiveRejections = 0;
-    // update nominal controller: just clear the feedforward increments
-    for (auto& controller : controllersStock) {
-      controller.deltaBiasArray_.clear();
-    }
     return true;
 
   } else {
@@ -212,25 +192,26 @@ std::pair<bool, std::string> LevenbergMarquardtStrategy::checkConvergence(bool u
                                                                           const PerformanceIndex& currentPerformanceIndex) const {
   // loop break variables
   bool isCostFunctionConverged = false;
-  const scalar_t relCost = std::abs(currentPerformanceIndex.totalCost + currentPerformanceIndex.inequalityConstraintPenalty -
-                                    previousPerformanceIndex.totalCost - previousPerformanceIndex.inequalityConstraintPenalty);
+  const scalar_t currentTotalCost =
+      currentPerformanceIndex.cost + currentPerformanceIndex.equalityLagrangian + currentPerformanceIndex.inequalityLagrangian;
+  const scalar_t previousTotalCost =
+      previousPerformanceIndex.cost + previousPerformanceIndex.equalityLagrangian + previousPerformanceIndex.inequalityLagrangian;
+  const scalar_t relCost = std::abs(currentTotalCost - previousTotalCost);
   if (levenbergMarquardtModule_.numSuccessiveRejections == 0 && !unreliableControllerIncrement) {
     isCostFunctionConverged = relCost <= baseSettings_.minRelCost;
   }
-  const bool isConstraintsSatisfied = currentPerformanceIndex.stateInputEqConstraintISE <= baseSettings_.constraintTolerance;
-  const bool isOptimizationConverged = (isCostFunctionConverged) && isConstraintsSatisfied;
+  const bool isConstraintsSatisfied = currentPerformanceIndex.equalityConstraintsSSE <= baseSettings_.constraintTolerance;
+  const bool isOptimizationConverged = isCostFunctionConverged && isConstraintsSatisfied;
 
   // convergence info
   std::stringstream infoStream;
   if (isOptimizationConverged) {
     infoStream << "The algorithm has successfully terminated as: \n";
 
-    if (isCostFunctionConverged) {
-      infoStream << "    * The absolute relative change of cost (i.e., " << relCost << ") has reached to the minimum value ("
-                 << baseSettings_.minRelCost << ").\n";
-    }
+    infoStream << "    * The absolute relative change of cost (i.e., " << relCost << ") has reached to the minimum value ("
+               << baseSettings_.minRelCost << ").\n";
 
-    infoStream << "    * The ISE of state-input equality constraint (i.e., " << currentPerformanceIndex.stateInputEqConstraintISE
+    infoStream << "    * The SSE of equality constraints (i.e., " << currentPerformanceIndex.equalityConstraintsSSE
                << ") has reached to its minimum value (" << baseSettings_.constraintTolerance << ").";
   }
 
@@ -242,12 +223,12 @@ std::pair<bool, std::string> LevenbergMarquardtStrategy::checkConvergence(bool u
 /******************************************************************************************************/
 void LevenbergMarquardtStrategy::computeRiccatiModification(const ModelData& projectedModelData, matrix_t& deltaQm, vector_t& deltaGv,
                                                             matrix_t& deltaGm) const {
-  const auto& HvProjected = projectedModelData.dynamicsBias_;
-  const auto& AmProjected = projectedModelData.dynamics_.dfdx;
-  const auto& BmProjected = projectedModelData.dynamics_.dfdu;
+  const auto& HvProjected = projectedModelData.dynamicsBias;
+  const auto& AmProjected = projectedModelData.dynamics.dfdx;
+  const auto& BmProjected = projectedModelData.dynamics.dfdu;
 
   // deltaQm, deltaRm, deltaPm
-  deltaQm.setZero(projectedModelData.stateDim_, projectedModelData.stateDim_);
+  deltaQm.setZero(projectedModelData.stateDim, projectedModelData.stateDim);
   deltaGv.noalias() = levenbergMarquardtModule_.riccatiMultiple * BmProjected.transpose() * HvProjected;
   deltaGm.noalias() = levenbergMarquardtModule_.riccatiMultiple * BmProjected.transpose() * AmProjected;
 }
@@ -257,7 +238,7 @@ void LevenbergMarquardtStrategy::computeRiccatiModification(const ModelData& pro
 /******************************************************************************************************/
 matrix_t LevenbergMarquardtStrategy::augmentHamiltonianHessian(const ModelData& modelData, const matrix_t& Hm) const {
   matrix_t HmAug = Hm;
-  HmAug.noalias() += levenbergMarquardtModule_.riccatiMultiple * modelData.dynamics_.dfdu.transpose() * modelData.dynamics_.dfdu;
+  HmAug.noalias() += levenbergMarquardtModule_.riccatiMultiple * modelData.dynamics.dfdu.transpose() * modelData.dynamics.dfdu;
   return HmAug;
 }
 

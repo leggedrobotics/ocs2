@@ -37,15 +37,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/model_data/ModelData.h>
 #include <ocs2_core/reference/ModeSchedule.h>
-#include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
 
-#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
+#include <ocs2_oc/oc_data/Metrics.h>
+#include <ocs2_oc/oc_data/PrimalSolution.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
-#include <ocs2_oc/rollout/RolloutBase.h>
 
-#include "StrategySettings.h"
+#include "ocs2_ddp/search_strategy/StrategySettings.h"
 
 namespace ocs2 {
+
+// forward declaration
+namespace search_strategy {
+struct Solution;
+struct SolutionRef;
+}  // namespace search_strategy
 
 /**
  * This class is an interface class for search strategies such as line-search, trust-region.
@@ -58,26 +63,9 @@ class SearchStrategyBase {
    */
   explicit SearchStrategyBase(search_strategy::Settings baseSettings) : baseSettings_(std::move(baseSettings)) {}
 
-  /**
-   * Default destructor.
-   */
   virtual ~SearchStrategyBase() = default;
-
   SearchStrategyBase(const SearchStrategyBase&) = delete;
   SearchStrategyBase& operator=(const SearchStrategyBase&) = delete;
-
-  /**
-   * Initializes the strategy.
-   *
-   * @param [in] initTime: The initial time.
-   * @param [in] initState: The initial state.
-   * @param [in] finalTime: The final time.
-   * @param [in] partitioningTimes: The partitioning times between subsystems.
-   * @param [in] initActivePartition: The first active time partition based on the initTime.
-   * @param [in] finalActivePartition: The last active time partition based on the finalTime.
-   */
-  void initalize(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
-                 size_t initActivePartition, size_t finalActivePartition);
 
   /**
    * Resets the class to its state after construction.
@@ -87,24 +75,17 @@ class SearchStrategyBase {
   /**
    * Finds the optimal trajectories, controller, and performance index based on the given controller and its increment.
    *
+   * @param [in] timePeriod: Initial and final times pair.
+   * @param [in] initState: Initial state
    * @param [in] expectedCost: The expected cost based on the LQ model optimization.
-   * @param [in] modeSchedule: The mode schedule.
-   * @param [in,out] controllersStock: Array of control policies.
-   * @param [in, out] performanceIndex: The current performanceIndex which will be updated to the optimal one.
-   * @param [out] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
-   * @param [out] postEventIndicesStock: Array of the post-event indices.
-   * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
-   * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
-   * @param [out] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
-   * @param [out] modelDataEventTimesStock: Array of model data at event times.
-   * @param [out] avgTimeStepFP: The average time-step used during forward rollout.
+   * @param [in] unoptimizedController: The unoptimized controller which search will be performed.
+   * @param [in] ModeSchedule The current mode schedule.
+   * @param [out] solution: Output of search (primalSolution, performanceIndex, metrics, avgTimeStep)
    * @return whether the search was successful or failed.
    */
-  virtual bool run(scalar_t expectedCost, const ModeSchedule& modeSchedule, std::vector<LinearController>& controllersStock,
-                   PerformanceIndex& performanceIndex, scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
-                   vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
-                   std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
-                   std::vector<std::vector<ModelData>>& modelDataEventTimesStock, scalar_t& avgTimeStepFP) = 0;
+  virtual bool run(const std::pair<scalar_t, scalar_t>& timePeriod, const vector_t& initState, const scalar_t expectedCost,
+                   const LinearController& unoptimizedController, const ModeSchedule& modeSchedule,
+                   search_strategy::SolutionRef solution) = 0;
 
   /**
    * Checks convergence of the main loop of DDP.
@@ -139,82 +120,44 @@ class SearchStrategyBase {
    */
   virtual matrix_t augmentHamiltonianHessian(const ModelData& modelData, const matrix_t& Hm) const = 0;
 
-  /**
-   * Evaluates cost and constraints along the given time trajectories.
-   *
-   * @param [in] problem: A reference to the optimal control problem.
-   * @param [in] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
-   * @param [in] postEventIndicesStock: Array of the post-event indices.
-   * @param [in] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
-   * @param [in] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
-   * @param [out] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
-   * @param [out] modelDataEventTimesStock: Array of model data at event times.
-   * @param [out] heuristicsValue: The Heuristics function value.
-   */
-  void rolloutCostAndConstraints(OptimalControlProblem& problem, const scalar_array2_t& timeTrajectoriesStock,
-                                 const size_array2_t& postEventIndicesStock, const vector_array2_t& stateTrajectoriesStock,
-                                 const vector_array2_t& inputTrajectoriesStock,
-                                 std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
-                                 std::vector<std::vector<ModelData>>& modelDataEventTimesStock, scalar_t& heuristicsValue) const;
-
-  /**
-   * Calculates constraints ISE (Integral of Square Error), cost function integral, and the merit function.
-   *
-   * @param [in] ineqConstrPenalty: A reference to the inequality constraints penalty function.
-   * @param [in] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
-   * @param [in] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
-   * @param [in] modelDataEventTimesStock: Array of model data at event times.
-   * @param [in] heuristicsValue: The Heuristics function value.
-   *
-   * @return The cost, merit function and ISEs of constraints for the trajectory.
-   */
-  PerformanceIndex calculateRolloutPerformanceIndex(const SoftConstraintPenalty& ineqConstrPenalty,
-                                                    const scalar_array2_t& timeTrajectoriesStock,
-                                                    const std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
-                                                    const std::vector<std::vector<ModelData>>& modelDataEventTimesStock,
-                                                    scalar_t heuristicsValue) const;
-
  protected:
-  /**
-   * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
-   * to integrate the system dynamics in time period [initTime, finalTime].
-   *
-   * @param [in] rollout: A reference to the rollout class.
-   * @param [in] modeSchedule: The mode schedule
-   * @param [in] controllersStock: Array of control policies.
-   * @param [out] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
-   * @param [out] postEventIndicesStock: Array of the post-event indices.
-   * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
-   * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
-   * @param [out] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
-   * @param [out] modelDataEventTimesStock: Array of model data at event times.
-   *
-   * @return average time step.
-   */
-  scalar_t rolloutTrajectory(RolloutBase& rollout, const ModeSchedule& modeSchedule, std::vector<LinearController>& controllersStock,
-                             scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
-                             vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
-                             std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
-                             std::vector<std::vector<ModelData>>& modelDataEventTimesStock) const;
-
-  /**
-   * Calculates the integral of the squared (IS) norm of the controller update.
-   *
-   * @param [in] controllersStock: An array of controllers.
-   * @retuen The integral of the squared (IS) norm of the controller update.
-   */
-  scalar_t calculateControllerUpdateIS(const std::vector<LinearController>& controllersStock) const;
-
-  search_strategy::Settings baseSettings_;
-
-  scalar_t initTime_;
-  scalar_t finalTime_;
-  vector_t initState_;
-
-  size_t initActivePartition_ = 0;
-  size_t finalActivePartition_ = 0;
-  size_t numPartitions_ = 0;
-  scalar_array_t partitioningTimes_;
+  const search_strategy::Settings baseSettings_;
 };
 
+}  // namespace ocs2
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+namespace ocs2 {
+namespace search_strategy {
+
+struct Solution {
+  PrimalSolution primalSolution;
+  PerformanceIndex performanceIndex;
+  MetricsCollection metrics;
+  scalar_t avgTimeStep;
+};
+
+struct SolutionRef {
+  SolutionRef(Solution& s)
+      : primalSolution(s.primalSolution), performanceIndex(s.performanceIndex), metrics(s.metrics), avgTimeStep(s.avgTimeStep) {}
+  SolutionRef(PrimalSolution& primalSolutionArg, PerformanceIndex& performanceIndexArg, MetricsCollection& metricsArg,
+              scalar_t& avgTimeStepArg)
+      : primalSolution(primalSolutionArg), performanceIndex(performanceIndexArg), metrics(metricsArg), avgTimeStep(avgTimeStepArg) {}
+
+  PrimalSolution& primalSolution;
+  PerformanceIndex& performanceIndex;
+  MetricsCollection& metrics;
+  scalar_t& avgTimeStep;
+};
+
+inline void swap(SolutionRef lhs, SolutionRef rhs) {
+  lhs.primalSolution.swap(rhs.primalSolution);
+  swap(lhs.performanceIndex, rhs.performanceIndex);
+  swap(lhs.metrics, rhs.metrics);
+  std::swap(lhs.avgTimeStep, rhs.avgTimeStep);
+}
+
+}  // namespace search_strategy
 }  // namespace ocs2

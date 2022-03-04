@@ -48,7 +48,6 @@ TEST(exp1_gddp_test, optimum_gradient_test) {
   slqSettings.ddpSettings_.displayInfo_ = false;
   slqSettings.ddpSettings_.displayShortSummary_ = true;
   slqSettings.ddpSettings_.preComputeRiccatiTerms_ = true;
-  slqSettings.useNominalTimeForBackwardPass_ = true;
   slqSettings.ddpSettings_.maxNumIterations_ = 30;
   slqSettings.ddpSettings_.nThreads_ = 1;  // single threaded
   slqSettings.ddpSettings_.maxNumIterations_ = 30;

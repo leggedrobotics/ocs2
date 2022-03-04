@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,29 +27,41 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/soft_constraint/penalties/QuadraticPenalty.h>
+#pragma once
+
+#include <ocs2_core/penalties/penalties/PenaltyBase.h>
 
 namespace ocs2 {
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-scalar_t QuadraticPenalty::getValue(scalar_t t, scalar_t h) const {
-  return 0.5 * mu_ * h * h;
-}
+/**
+ *  Implements the penalty for a single equality constraint \f$ h = 0 \f$. This leads to the following:
+ *
+ *  \f[
+ *      L_{A} = \frac{\mu}{2} h^2.
+ *  \f]
+ *
+ *  where \f$ \mu \f$ is the scale.
+ */
+class QuadraticPenalty final : public PenaltyBase {
+ public:
+  /**
+   * Thos constructor sets both the scale and stepLength the same. This is a common practice in Augmented Lagrangian.
+   * @param [in] scale: Scaling of the cost.
+   */
+  explicit QuadraticPenalty(scalar_t scale) : scale_(scale) {}
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-scalar_t QuadraticPenalty::getDerivative(scalar_t t, scalar_t h) const {
-  return mu_ * h;
-}
+  ~QuadraticPenalty() override = default;
+  QuadraticPenalty* clone() const override { return new QuadraticPenalty(*this); }
+  std::string name() const override { return "QuadraticPenalty"; }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-scalar_t QuadraticPenalty::getSecondDerivative(scalar_t t, scalar_t h) const {
-  return mu_;
-}
+  scalar_t getValue(scalar_t t, scalar_t h) const override { return 0.5 * scale_ * h * h; }
+  scalar_t getDerivative(scalar_t t, scalar_t h) const override { return scale_ * h; }
+  scalar_t getSecondDerivative(scalar_t t, scalar_t h) const override { return scale_; }
+
+ private:
+  QuadraticPenalty(const QuadraticPenalty& other) = default;
+
+  const scalar_t scale_;
+};
 
 }  // namespace ocs2

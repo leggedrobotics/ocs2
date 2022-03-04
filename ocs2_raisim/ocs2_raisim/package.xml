@@ -13,9 +13,9 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <exec_depend>ocs2_legged_robot_raisim</exec_depend>
   <exec_depend>ocs2_raisim_core</exec_depend>
   <exec_depend>ocs2_raisim_ros</exec_depend>
+  <exec_depend>ocs2_legged_robot_raisim</exec_depend>
 
   <export>
     <metapackage />

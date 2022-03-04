@@ -27,42 +27,50 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/soft_constraint/penalties/SquaredHingePenalty.h>
+#pragma once
+
+#include <ocs2_core/Types.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 
 namespace ocs2 {
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-scalar_t SquaredHingePenalty::getValue(scalar_t t, scalar_t h) const {
-  if (h < config_.delta) {
-    const scalar_t delta_h = h - config_.delta;
-    return config_.mu * 0.5 * delta_h * delta_h;
-  } else {
-    return 0;
-  }
-}
+struct Metrics {
+  using value_t = std::pair<vector_t, scalar_t>;
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-scalar_t SquaredHingePenalty::getDerivative(scalar_t t, scalar_t h) const {
-  if (h < config_.delta) {
-    return config_.mu * (h - config_.delta);
-  } else {
-    return 0;
-  }
-}
+  // Cost
+  scalar_t cost;
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-scalar_t SquaredHingePenalty::getSecondDerivative(scalar_t t, scalar_t h) const {
-  if (h < config_.delta) {
-    return config_.mu;
-  } else {
-    return 0;
-  }
-}
+  // Equality constraints
+  vector_t stateEqConstraint;
+  vector_t stateInputEqConstraint;
+
+  // Lagrangians
+  //  std::vector<value_t> stateEqLagrangian;
+  //  std::vector<value_t> stateIneqLagrangian;
+  //  std::vector<value_t> stateInputEqLagrangian;
+  //  std::vector<value_t> stateInputIneqLagrangian;
+  scalar_t stateEqLagrangian;
+  scalar_t stateIneqLagrangian;
+  scalar_t stateInputEqLagrangian;
+  scalar_t stateInputIneqLagrangian;
+};
+
+struct MetricsCollection {
+  Metrics final;
+  std::vector<Metrics> preJumps;
+  std::vector<Metrics> intermediates;
+};
+
+/** Exchanges the given values of Metrics */
+void swap(Metrics& lhs, Metrics& rhs);
+
+/** Clears the value of the given Metrics */
+void clear(Metrics& m);
+
+/** Exchanges the given values of MetricsCollection */
+void swap(MetricsCollection& lhs, MetricsCollection& rhs);
+
+/** Clears the value of the given MetricsCollection */
+void clear(MetricsCollection& m);
 
 }  // namespace ocs2

@@ -39,6 +39,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/cost/QuadraticStateCost.h>
 #include <ocs2_core/cost/QuadraticStateInputCost.h>
 #include <ocs2_core/initialization/OperatingPoints.h>
+#include <ocs2_core/penalties/Penalties.h>
+#include <ocs2_core/soft_constraint/StateInputSoftConstraint.h>
 
 #include <ocs2_ddp/SLQ.h>
 
@@ -75,16 +77,14 @@ TEST(HybridSlqTest, state_rollout_slq) {
   ddpSettings.displayShortSummary_ = true;
   ddpSettings.maxNumIterations_ = 30;
   ddpSettings.nThreads_ = 1;
-  ddpSettings.inequalityConstraintMu_ = 0.1;
-  ddpSettings.inequalityConstraintDelta_ = 1e-4;
   ddpSettings.checkNumericalStability_ = false;
   ddpSettings.absTolODE_ = 1e-10;
   ddpSettings.relTolODE_ = 1e-7;
   ddpSettings.maxNumStepsPerSecond_ = 10000;
-  ddpSettings.useNominalTimeForBackwardPass_ = true;
   ddpSettings.useFeedbackPolicy_ = true;
   ddpSettings.debugPrintRollout_ = false;
   ddpSettings.strategy_ = search_strategy::Type::LINE_SEARCH;
+  ddpSettings.lineSearch_.minStepLength_ = 0.001;
 
   rollout::Settings rolloutSettings;
   rolloutSettings.absTolODE = 1e-10;
@@ -95,10 +95,6 @@ TEST(HybridSlqTest, state_rollout_slq) {
   scalar_t startTime = 0.0;
   scalar_t finalTime = 5.0;
 
-  std::vector<scalar_t> partitioningTimes;
-  partitioningTimes.push_back(startTime);
-  partitioningTimes.push_back(finalTime);
-
   vector_t initState(stateDim);
   initState << 0, 1, 1;
 
@@ -108,6 +104,8 @@ TEST(HybridSlqTest, state_rollout_slq) {
 
   // constraints
   std::unique_ptr<StateInputConstraint> systemConstraints(new HybridSysBounds);
+  std::unique_ptr<PenaltyBase> penalty(new RelaxedBarrierPenalty({0.2, 1e-4}));
+  std::unique_ptr<StateInputCost> softSystemLagrangian(new StateInputSoftConstraint(std::move(systemConstraints), std::move(penalty)));
 
   // cost function
   matrix_t Q(stateDim, stateDim);
@@ -122,10 +120,10 @@ TEST(HybridSlqTest, state_rollout_slq) {
 
   ocs2::OptimalControlProblem problem;
   problem.dynamicsPtr.reset(systemDynamics.clone());
-  problem.inequalityConstraintPtr->add("bounds", std::move(systemConstraints));
   problem.costPtr->add("cost", std::move(cost));
   problem.preJumpCostPtr->add("preJumpCost", std::move(preJumpCost));
   problem.finalCostPtr->add("finalCost", std::move(finalCost));
+  problem.softConstraintPtr->add("bounds", std::move(softSystemLagrangian));
 
   vector_t xNominal = vector_t::Zero(stateDim);
   vector_t uNominal = vector_t::Zero(inputDim);
@@ -142,7 +140,7 @@ TEST(HybridSlqTest, state_rollout_slq) {
   // SLQ
   SLQ slq(ddpSettings, stateTriggeredRollout, problem, operatingTrajectories);
   slq.setReferenceManager(referenceManager);
-  slq.run(startTime, initState, finalTime, partitioningTimes);
+  slq.run(startTime, initState, finalTime);
   auto solution = slq.primalSolution(finalTime);
   std::cout << "SLQ Procedure Done" << std::endl;
 
@@ -179,7 +177,8 @@ TEST(HybridSlqTest, state_rollout_slq) {
       std::cout << solution.timeTrajectory_[i] << "," << guardSurfaces[0] << "," << guardSurfaces[1] << std::endl;
     }
   }
+
   // Test 3: Check of cost function
   auto performanceIndecesST = slq.getPerformanceIndeces();
-  EXPECT_LT(std::fabs(performanceIndecesST.totalCost - 20.08), 10.0 * ddpSettings.minRelCost_);
+  EXPECT_LT(performanceIndecesST.cost - 13.0, 10.0 * ddpSettings.minRelCost_);
 }

@@ -31,9 +31,9 @@ ddp
 {
   algorithm                     SLQ
 
-  nThreads                      1
+  nThreads                      4
 
-  maxNumIterations              10
+  maxNumIterations              1
   minRelCost                    0.1
   constraintTolerance           1e-3
 
@@ -51,14 +51,13 @@ ddp
   inequalityConstraintDelta     1.1
 
   preComputeRiccatiTerms        true
-  useNominalTimeForBackwardPass false
 
   useFeedbackPolicy             false
 
   strategy                      LINE_SEARCH
   lineSearch
   {
-    minStepLength                 1.0
+    minStepLength                 0.1
     maxStepLength                 1.0
     hessianCorrectionStrategy     DIAGONAL_SHIFT
     hessianCorrectionMultiple     1e-3
@@ -79,20 +78,10 @@ rollout
 mpc
 {
   timeHorizon                    2.0   ; [s]
-  numPartitions                  4
   solutionTimeWindow             0.2   ; [s]
-
-  debugPrint                     false
-
   coldStart                      false
 
-  initMaxNumIterations           10
-  initMinStepLength              0.1
-  initMaxStepLength              1.0
-
-  runtimeMaxNumIterations        1
-  runtimeMinStepLength           0.1
-  runtimeMaxStepLength           1.0
+  debugPrint                     false
 
   mpcDesiredFrequency            100   ; [Hz]
   mrtDesiredFrequency            400   ; [Hz]

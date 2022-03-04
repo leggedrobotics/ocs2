@@ -29,54 +29,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/Types.h>
+// soft equalities
+#include <ocs2_core/penalties/penalties/QuadraticPenalty.h>
+#include <ocs2_core/penalties/penalties/SmoothAbsolutePenalty.h>
 
-namespace ocs2 {
-
-/**
- * The penalty function interface class is used to penalize constraint violation by adding a penalty term to the cost function.
- * We assume that the penalty function is convex. In general, the penalty is a function of time and constraint violation.
- */
-class PenaltyBase {
- public:
-  /** Default constructor */
-  PenaltyBase() = default;
-
-  /** Default destructor */
-  virtual ~PenaltyBase() = default;
-
-  /** Clones the class */
-  virtual PenaltyBase* clone() const = 0;
-
-  /**
-   * Compute the penalty value at a certain constraint value.
-   *
-   * @param [in] t: The time that the constraint is evaluated.
-   * @param [in] h: Constraint value.
-   * @return penalty cost.
-   */
-  virtual scalar_t getValue(scalar_t t, scalar_t h) const = 0;
-
-  /**
-   * Compute the penalty derivative at a certain constraint value.
-   *
-   * @param [in] t: The time that the constraint is evaluated.
-   * @param [in] h: Constraint value.
-   * @return penalty derivative with respect to constraint value.
-   */
-  virtual scalar_t getDerivative(scalar_t t, scalar_t h) const = 0;
-
-  /**
-   * Compute the penalty second derivative at a certain constraint value.
-   *
-   * @param [in] t: The time that the constraint is evaluated.
-   * @param [in] h: Constraint value.
-   * @return penalty second derivative with respect to constraint value.
-   */
-  virtual scalar_t getSecondDerivative(scalar_t t, scalar_t h) const = 0;
-
- protected:
-  PenaltyBase(const PenaltyBase& other) = default;
-};
-
-}  // namespace ocs2
+// soft inequalities
+#include <ocs2_core/penalties/penalties/DoubleSidedPenalty.h>
+#include <ocs2_core/penalties/penalties/RelaxedBarrierPenalty.h>
+#include <ocs2_core/penalties/penalties/SquaredHingePenalty.h>

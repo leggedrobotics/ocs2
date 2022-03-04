@@ -57,11 +57,10 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints) {
   const ocs2::scalar_t startTime = 0.0;
   const ocs2::scalar_t finalTime = 1.0;
   const ocs2::vector_t initState = (ocs2::vector_t(2) << 1.0, 0.0).finished();  // radius 1.0
-  const ocs2::scalar_array_t partitioningTimes{0.0};                            // doesn't matter
 
   // Solve
   ocs2::MultipleShootingSolver solver(settings, problem, zeroInitializer);
-  solver.run(startTime, initState, finalTime, partitioningTimes);
+  solver.run(startTime, initState, finalTime);
 
   // Inspect solution
   const auto primalSolution = solver.primalSolution(finalTime);
@@ -77,8 +76,8 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints) {
 
   // Check constraint satisfaction.
   const auto performance = solver.getPerformanceIndeces();
-  ASSERT_LT(performance.stateEqConstraintISE, 1e-6);
-  ASSERT_LT(performance.stateInputEqConstraintISE, 1e-6);
+  ASSERT_LT(performance.dynamicsViolationSSE, 1e-6);
+  ASSERT_LT(performance.equalityConstraintsSSE, 1e-6);
 
   // Check feedback controller
   for (int i = 0; i < primalSolution.timeTrajectory_.size() - 1; i++) {
@@ -111,11 +110,10 @@ TEST(test_circular_kinematics, solve_EqConstraints_inQPSubproblem) {
   const ocs2::scalar_t startTime = 0.0;
   const ocs2::scalar_t finalTime = 1.0;
   const ocs2::vector_t initState = (ocs2::vector_t(2) << 1.0, 0.0).finished();  // radius 1.0
-  const ocs2::scalar_array_t partitioningTimes{0.0};                            // doesn't matter
 
   // Solve
   ocs2::MultipleShootingSolver solver(settings, problem, zeroInitializer);
-  solver.run(startTime, initState, finalTime, partitioningTimes);
+  solver.run(startTime, initState, finalTime);
 
   // Inspect solution
   const auto primalSolution = solver.primalSolution(finalTime);
@@ -131,8 +129,8 @@ TEST(test_circular_kinematics, solve_EqConstraints_inQPSubproblem) {
 
   // Check constraint satisfaction.
   const auto performance = solver.getPerformanceIndeces();
-  ASSERT_LT(performance.stateEqConstraintISE, 1e-6);
-  ASSERT_LT(performance.stateInputEqConstraintISE, 1e-6);
+  ASSERT_LT(performance.dynamicsViolationSSE, 1e-6);
+  ASSERT_LT(performance.equalityConstraintsSSE, 1e-6);
 
   // Check feedback controller
   for (int i = 0; i < primalSolution.timeTrajectory_.size() - 1; i++) {

@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/StateInputConstraint.h>
 #include <ocs2_core/cost/StateInputCost.h>
-#include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
+#include <ocs2_core/penalties/MultidimensionalPenalty.h>
 
 namespace ocs2 {
 
@@ -93,7 +93,7 @@ class StateInputSoftConstraint final : public StateInputCost {
   StateInputSoftConstraint(const StateInputSoftConstraint& other);
 
   std::unique_ptr<StateInputConstraint> constraintPtr_;
-  SoftConstraintPenalty penalty_;
+  MultidimensionalPenalty penalty_;
 };
 
 }  // namespace ocs2

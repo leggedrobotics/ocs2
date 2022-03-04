@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/control/LinearController.h>
-#include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenalty.h>
+#include <ocs2_core/penalties/penalties/RelaxedBarrierPenalty.h>
 
 #include "ocs2_sqp/MultipleShootingInitialization.h"
 #include "ocs2_sqp/MultipleShootingTranscription.h"
@@ -120,8 +120,7 @@ const std::vector<PerformanceIndex>& MultipleShootingSolver::getIterationsLog() 
   }
 }
 
-void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime,
-                                     const scalar_array_t& partitioningTimes) {
+void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
   if (settings_.printSolverStatus || settings_.printLinesearch) {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
     std::cerr << "\n+++++++++++++ SQP solver is initialized ++++++++++++++";
@@ -397,11 +396,11 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
   runParallel(std::move(parallelTask));
 
   // Account for init state in performance
-  performance.front().stateEqConstraintISE += (initState - x.front()).squaredNorm();
+  performance.front().dynamicsViolationSSE += (initState - x.front()).squaredNorm();
 
   // Sum performance of the threads
   PerformanceIndex totalPerformance = std::accumulate(std::next(performance.begin()), performance.end(), performance.front());
-  totalPerformance.merit = totalPerformance.totalCost + totalPerformance.inequalityConstraintPenalty;
+  totalPerformance.merit = totalPerformance.cost + totalPerformance.equalityLagrangian + totalPerformance.inequalityLagrangian;
   return totalPerformance;
 }
 
@@ -443,11 +442,11 @@ PerformanceIndex MultipleShootingSolver::computePerformance(const std::vector<An
   runParallel(std::move(parallelTask));
 
   // Account for init state in performance
-  performance.front().stateEqConstraintISE += (initState - x.front()).squaredNorm();
+  performance.front().dynamicsViolationSSE += (initState - x.front()).squaredNorm();
 
   // Sum performance of the threads
   PerformanceIndex totalPerformance = std::accumulate(std::next(performance.begin()), performance.end(), performance.front());
-  totalPerformance.merit = totalPerformance.totalCost + totalPerformance.inequalityConstraintPenalty;
+  totalPerformance.merit = totalPerformance.cost + totalPerformance.equalityLagrangian + totalPerformance.inequalityLagrangian;
   return totalPerformance;
 }
 
@@ -472,10 +471,7 @@ std::pair<bool, PerformanceIndex> MultipleShootingSolver::takeStep(const Perform
   if (settings_.printLinesearch) {
     std::cerr << std::setprecision(9) << std::fixed;
     std::cerr << "\n=== Linesearch ===\n";
-    std::cerr << "Baseline:\n";
-    std::cerr << "\tMerit: " << baseline.merit << "\t DynamicsISE: " << baseline.stateEqConstraintISE
-              << "\t StateInputISE: " << baseline.stateInputEqConstraintISE << "\t IneqISE: " << baseline.inequalityConstraintISE
-              << "\t Penalty: " << baseline.inequalityConstraintPenalty << "\n";
+    std::cerr << "Baseline:\n" << baseline << "\n";
   }
 
   // Some settings and shorthands
@@ -492,7 +488,7 @@ std::pair<bool, PerformanceIndex> MultipleShootingSolver::takeStep(const Perform
 
   // Total Constraint violation function
   auto constraintViolation = [](const PerformanceIndex& performance) -> scalar_t {
-    return std::sqrt(performance.stateEqConstraintISE + performance.stateInputEqConstraintISE + performance.inequalityConstraintISE);
+    return std::sqrt(performance.dynamicsViolationSSE + performance.equalityConstraintsSSE);
   };
 
   const scalar_t baselineConstraintViolation = constraintViolation(baseline);
@@ -536,10 +532,7 @@ std::pair<bool, PerformanceIndex> MultipleShootingSolver::takeStep(const Perform
     if (settings_.printLinesearch) {
       std::cerr << "Stepsize = " << alpha << (stepAccepted ? std::string{" (Accepted)"} : std::string{" (Rejected)"}) << "\n";
       std::cerr << "|dx| = " << alpha * deltaXnorm << "\t|du| = " << alpha * deltaUnorm << "\n";
-      std::cerr << "\tMerit: " << performanceNew.merit << "\t DynamicsISE: " << performanceNew.stateEqConstraintISE
-                << "\t StateInputISE: " << performanceNew.stateInputEqConstraintISE
-                << "\t IneqISE: " << performanceNew.inequalityConstraintISE << "\t Penalty: " << performanceNew.inequalityConstraintPenalty
-                << "\n";
+      std::cerr << performanceNew << "\n";
     }
 
     // Exit conditions

@@ -27,56 +27,72 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_mpc/MPC_DDP.h>
-
-#include <ocs2_ddp/ILQR.h>
-#include <ocs2_ddp/SLQ.h>
+#include "ocs2_oc/oc_data/Metrics.h"
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MPC_DDP::MPC_DDP(mpc::Settings mpcSettings, ddp::Settings ddpSettings, const RolloutBase& rollout,
-                 const OptimalControlProblem& optimalControlProblem, const Initializer& initializer)
-    : MPC_BASE(std::move(mpcSettings)) {
-  switch (ddpSettings.algorithm_) {
-    case ddp::Algorithm::SLQ:
-      ddpPtr_.reset(new SLQ(std::move(ddpSettings), rollout, optimalControlProblem, initializer));
-      break;
-    case ddp::Algorithm::ILQR:
-      ddpPtr_.reset(new ILQR(std::move(ddpSettings), rollout, optimalControlProblem, initializer));
-      break;
-  }
+void swap(Metrics& lhs, Metrics& rhs) {
+  // Cost
+  std::swap(lhs.cost, rhs.cost);
+
+  // Equality constraints
+  lhs.stateEqConstraint.swap(rhs.stateEqConstraint);
+  lhs.stateInputEqConstraint.swap(rhs.stateInputEqConstraint);
+
+  // Lagrangians
+  //  lhs.stateEqLagrangian.swap(rhs.stateEqLagrangian);
+  //  lhs.stateIneqLagrangian.swap(rhs.stateIneqLagrangian);
+  //  lhs.stateInputEqLagrangian.swap(rhs.stateInputEqLagrangian);
+  //  lhs.stateInputIneqLagrangian.swap(rhs.stateInputIneqLagrangian);
+
+  std::swap(lhs.stateEqLagrangian, rhs.stateEqLagrangian);
+  std::swap(lhs.stateIneqLagrangian, rhs.stateIneqLagrangian);
+  std::swap(lhs.stateInputEqLagrangian, rhs.stateInputEqLagrangian);
+  std::swap(lhs.stateInputIneqLagrangian, rhs.stateInputIneqLagrangian);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_DDP::calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
-  // updating real-time iteration settings
-  if (MPC_BASE::initRun_ && ddpPtr_->settings().strategy_ == search_strategy::Type::LINE_SEARCH) {
-    ddpPtr_->settings().maxNumIterations_ = this->settings().initMaxNumIterations_;
-    ddpPtr_->settings().lineSearch_.maxStepLength_ = this->settings().initMaxStepLength_;
-    ddpPtr_->settings().lineSearch_.minStepLength_ = this->settings().initMinStepLength_;
-  } else {
-    ddpPtr_->settings().maxNumIterations_ = this->settings().runtimeMaxNumIterations_;
-    ddpPtr_->settings().lineSearch_.maxStepLength_ = this->settings().runtimeMaxStepLength_;
-    ddpPtr_->settings().lineSearch_.minStepLength_ = this->settings().runtimeMinStepLength_;
-  }
+void clear(Metrics& m) {
+  // Cost
+  m.cost = 0.0;
 
-  // calculate controller
-  if (this->settings().coldStart_) {
-    ddpPtr_->reset();
-    ddpPtr_->run(initTime, initState, finalTime, MPC_BASE::partitionTimes_);
+  // Equality constraints
+  m.stateEqConstraint = vector_t();
+  m.stateInputEqConstraint = vector_t();
 
-  } else {
-    if (MPC_BASE::initRun_) {
-      ddpPtr_->run(initTime, initState, finalTime, MPC_BASE::partitionTimes_);
-    } else {
-      ddpPtr_->run(initTime, initState, finalTime, MPC_BASE::partitionTimes_, std::vector<ControllerBase*>());
-    }
-  }
+  // Lagrangians
+  //  m.stateEqLagrangian.clear();
+  //  m.stateIneqLagrangian.clear();
+  //  m.stateInputEqLagrangian.clear();
+  //  m.stateInputIneqLagrangian.clear();
+
+  m.stateEqLagrangian = 0.0;
+  m.stateIneqLagrangian = 0.0;
+  m.stateInputEqLagrangian = 0.0;
+  m.stateInputIneqLagrangian = 0.0;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void swap(MetricsCollection& lhs, MetricsCollection& rhs) {
+  swap(lhs.final, rhs.final);
+  lhs.preJumps.swap(rhs.preJumps);
+  lhs.intermediates.swap(rhs.intermediates);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void clear(MetricsCollection& m) {
+  clear(m.final);
+  m.preJumps.clear();
+  m.intermediates.clear();
 }
 
 }  // namespace ocs2

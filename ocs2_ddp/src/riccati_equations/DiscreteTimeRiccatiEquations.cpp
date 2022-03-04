@@ -68,18 +68,18 @@ void DiscreteTimeRiccatiEquations::computeMapILQR(const ModelData& projectedMode
                                                   matrix_t& projectedKm, vector_t& projectedLv, matrix_t& Sm, vector_t& Sv,
                                                   scalar_t& s) const {
   // precomputation (1)
-  dreCache.Sm_projectedHv_.noalias() = SmNext * projectedModelData.dynamicsBias_;
-  dreCache.Sm_projectedAm_.noalias() = SmNext * projectedModelData.dynamics_.dfdx;
-  dreCache.Sm_projectedBm_.noalias() = SmNext * projectedModelData.dynamics_.dfdu;
+  dreCache.Sm_projectedHv_.noalias() = SmNext * projectedModelData.dynamicsBias;
+  dreCache.Sm_projectedAm_.noalias() = SmNext * projectedModelData.dynamics.dfdx;
+  dreCache.Sm_projectedBm_.noalias() = SmNext * projectedModelData.dynamics.dfdu;
   dreCache.Sv_plus_Sm_projectedHv_ = SvNext + dreCache.Sm_projectedHv_;
 
   // projectedGm = projectedPm + projectedBm^T * Sm * projectedAm
-  dreCache.projectedGm_ = projectedModelData.cost_.dfdux;
-  dreCache.projectedGm_.noalias() += projectedModelData.dynamics_.dfdu.transpose() * dreCache.Sm_projectedAm_;
+  dreCache.projectedGm_ = projectedModelData.cost.dfdux;
+  dreCache.projectedGm_.noalias() += projectedModelData.dynamics.dfdu.transpose() * dreCache.Sm_projectedAm_;
 
   // projectedGv = projectedRv + projectedBm^T * (Sv + Sm * projectedHv)
-  dreCache.projectedGv_ = projectedModelData.cost_.dfdu;
-  dreCache.projectedGv_.noalias() += projectedModelData.dynamics_.dfdu.transpose() * dreCache.Sv_plus_Sm_projectedHv_;
+  dreCache.projectedGv_ = projectedModelData.cost.dfdu;
+  dreCache.projectedGv_.noalias() += projectedModelData.dynamics.dfdu.transpose() * dreCache.Sv_plus_Sm_projectedHv_;
 
   // projected feedback
   projectedKm = -dreCache.projectedGm_ - riccatiModification.deltaGm_;
@@ -90,8 +90,8 @@ void DiscreteTimeRiccatiEquations::computeMapILQR(const ModelData& projectedMode
   dreCache.projectedKm_T_projectedGm_.noalias() = projectedKm.transpose() * dreCache.projectedGm_;
   if (!reducedFormRiccati_) {
     // projectedHm
-    dreCache.projectedHm_ = projectedModelData.cost_.dfduu;
-    dreCache.projectedHm_.noalias() += dreCache.Sm_projectedBm_.transpose() * projectedModelData.dynamics_.dfdu;
+    dreCache.projectedHm_ = projectedModelData.cost.dfduu;
+    dreCache.projectedHm_.noalias() += dreCache.Sm_projectedBm_.transpose() * projectedModelData.dynamics.dfdu;
 
     dreCache.projectedHm_projectedKm_.noalias() = dreCache.projectedHm_ * projectedKm;
     dreCache.projectedHm_projectedLv_.noalias() = dreCache.projectedHm_ * projectedLv;
@@ -101,9 +101,9 @@ void DiscreteTimeRiccatiEquations::computeMapILQR(const ModelData& projectedMode
    * Sm
    */
   // = Qm + deltaQm
-  Sm = projectedModelData.cost_.dfdxx + riccatiModification.deltaQm_;
+  Sm = projectedModelData.cost.dfdxx + riccatiModification.deltaQm_;
   // += Am^T * Sm * Am
-  Sm.noalias() += dreCache.Sm_projectedAm_.transpose() * projectedModelData.dynamics_.dfdx;
+  Sm.noalias() += dreCache.Sm_projectedAm_.transpose() * projectedModelData.dynamics.dfdx;
   if (reducedFormRiccati_) {
     // += Km^T * Gm + Gm^T * Km
     Sm += dreCache.projectedKm_T_projectedGm_;
@@ -118,9 +118,9 @@ void DiscreteTimeRiccatiEquations::computeMapILQR(const ModelData& projectedMode
    * Sv
    */
   // = Qv
-  Sv = projectedModelData.cost_.dfdx;
+  Sv = projectedModelData.cost.dfdx;
   // += Am^T * (Sv + Sm * Hv)
-  Sv.noalias() += projectedModelData.dynamics_.dfdx.transpose() * dreCache.Sv_plus_Sm_projectedHv_;
+  Sv.noalias() += projectedModelData.dynamics.dfdx.transpose() * dreCache.Sv_plus_Sm_projectedHv_;
   if (reducedFormRiccati_) {
     // += Gm^T * Lv
     Sv.noalias() += dreCache.projectedGm_.transpose() * projectedLv;
@@ -137,11 +137,11 @@ void DiscreteTimeRiccatiEquations::computeMapILQR(const ModelData& projectedMode
    * s
    */
   // = s + q
-  s = sNext + projectedModelData.cost_.f;
+  s = sNext + projectedModelData.cost.f;
   // += Hv^T * (Sv + Sm * Hv)
-  s += projectedModelData.dynamicsBias_.dot(dreCache.Sv_plus_Sm_projectedHv_);
+  s += projectedModelData.dynamicsBias.dot(dreCache.Sv_plus_Sm_projectedHv_);
   // -= 0.5 Hv^T * Sm * Hv
-  s -= 0.5 * projectedModelData.dynamicsBias_.dot(dreCache.Sm_projectedHv_);
+  s -= 0.5 * projectedModelData.dynamicsBias.dot(dreCache.Sm_projectedHv_);
   if (reducedFormRiccati_) {
     // += 0.5 Lv^T Gv
     s += 0.5 * projectedLv.dot(dreCache.projectedGv_);
@@ -161,14 +161,14 @@ void DiscreteTimeRiccatiEquations::computeMapILEG(const ModelData& projectedMode
                                                   const vector_t& SvNext, const scalar_t& sNext, DiscreteTimeRiccatiData& dreCache,
                                                   matrix_t& projectedKm, vector_t& projectedLv, matrix_t& Sm, vector_t& Sv,
                                                   scalar_t& s) const {
-  dreCache.Sigma_Sv_.noalias() = projectedModelData.dynamicsCovariance_ * SvNext;
-  dreCache.I_minus_Sm_Sigma_.setIdentity(projectedModelData.stateDim_, projectedModelData.stateDim_);
-  dreCache.I_minus_Sm_Sigma_.noalias() -= SmNext * projectedModelData.dynamicsCovariance_;
+  dreCache.Sigma_Sv_.noalias() = projectedModelData.dynamicsCovariance * SvNext;
+  dreCache.I_minus_Sm_Sigma_.setIdentity(projectedModelData.stateDim, projectedModelData.stateDim);
+  dreCache.I_minus_Sm_Sigma_.noalias() -= SmNext * projectedModelData.dynamicsCovariance;
 
   Eigen::LDLT<matrix_t> ldltSm(dreCache.I_minus_Sm_Sigma_);
   scalar_t det_I_minus_Sm_Sigma_ = ldltSm.vectorD().array().log().sum();
 
-  dreCache.inv_I_minus_Sm_Sigma_.setIdentity(projectedModelData.stateDim_, projectedModelData.stateDim_);
+  dreCache.inv_I_minus_Sm_Sigma_.setIdentity(projectedModelData.stateDim, projectedModelData.stateDim);
   ldltSm.solveInPlace(dreCache.inv_I_minus_Sm_Sigma_);
 
   dreCache.SmNextStochastic_.noalias() = dreCache.inv_I_minus_Sm_Sigma_ * SmNext;

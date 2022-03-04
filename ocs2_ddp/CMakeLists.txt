@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   ocs2_core
   ocs2_oc
+  ocs2_mpc
   ocs2_qp_solver
 )
 find_package(Boost REQUIRED COMPONENTS
@@ -31,6 +32,7 @@ catkin_package(
   CATKIN_DEPENDS
     ocs2_core
     ocs2_oc
+    ocs2_mpc
     ocs2_qp_solver
   DEPENDS
     Boost
@@ -54,7 +56,6 @@ add_library(${PROJECT_NAME}
   src/riccati_equations/RiccatiModification.cpp
   src/search_strategy/LevenbergMarquardtStrategy.cpp
   src/search_strategy/LineSearchStrategy.cpp
-  src/search_strategy/SearchStrategyBase.cpp
   src/search_strategy/StrategySettings.cpp
   src/ContinuousTimeLqr.cpp
   src/GaussNewtonDDP.cpp
@@ -62,6 +63,7 @@ add_library(${PROJECT_NAME}
   src/ILQR.cpp
   src/SLQ.cpp
   src/DDP_Settings.cpp
+  src/DDP_HelperFunctions.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}

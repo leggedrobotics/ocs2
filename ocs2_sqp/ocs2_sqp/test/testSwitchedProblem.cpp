@@ -139,14 +139,13 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithEventTime(scal
   const ocs2::scalar_t startTime = 0.0;
   const ocs2::scalar_t finalTime = 1.0;
   const ocs2::vector_t initState = ocs2::vector_t::Random(n);
-  const ocs2::scalar_array_t partitioningTimes{0.0};
 
   // Set up solver
   ocs2::MultipleShootingSolver solver(settings, problem, zeroInitializer);
   solver.setReferenceManager(referenceManagerPtr);
 
   // Solve
-  solver.run(startTime, initState, finalTime, partitioningTimes);
+  solver.run(startTime, initState, finalTime);
   return {solver.primalSolution(finalTime), solver.getIterationsLog()};
 }
 
@@ -168,7 +167,7 @@ TEST(test_switched_problem, switched_constraint) {
    * - Linear dynamics should be satisfied after the step.
    */
   ASSERT_LE(performanceLog.size(), 2);
-  ASSERT_LT(performanceLog.back().stateEqConstraintISE, tol);
+  ASSERT_LT(performanceLog.back().dynamicsViolationSSE, tol);
 
   // Should have correct node pre and post event time, with corresponding inputs
   ASSERT_EQ(primalSolution.timeTrajectory_[4], eventTime);
@@ -212,7 +211,7 @@ TEST(test_switched_problem, event_at_beginning) {
    * - Linear dynamics should be satisfied after the step.
    */
   ASSERT_LE(performanceLog.size(), 2);
-  ASSERT_LT(performanceLog.back().stateEqConstraintISE, tol);
+  ASSERT_LT(performanceLog.back().dynamicsViolationSSE, tol);
 
   // Should have correct post event time start
   ASSERT_EQ(primalSolution.timeTrajectory_[0], eventTime);
@@ -249,7 +248,7 @@ TEST(test_switched_problem, event_at_end) {
    * - Linear dynamics should be satisfied after the step.
    */
   ASSERT_LE(performanceLog.size(), 2);
-  ASSERT_LT(performanceLog.back().stateEqConstraintISE, tol);
+  ASSERT_LT(performanceLog.back().dynamicsViolationSSE, tol);
 
   // Should have correct node pre and post event time
   ASSERT_TRUE(std::none_of(primalSolution.timeTrajectory_.begin(), primalSolution.timeTrajectory_.end(),

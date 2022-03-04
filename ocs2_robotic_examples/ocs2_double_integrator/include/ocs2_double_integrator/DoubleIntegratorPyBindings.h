@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ocs2_mpc/MPC_DDP.h>
+#include <ocs2_ddp/GaussNewtonDDP_MPC.h>
 #include <ocs2_python_interface/PythonInterface.h>
 
 #include "ocs2_double_integrator/DoubleIntegratorInterface.h"
@@ -30,7 +30,7 @@ class DoubleIntegratorPyBindings final : public PythonInterface {
     DoubleIntegratorInterface doubleIntegratorInterface(taskFile, libraryFolder);
 
     // MPC
-    std::unique_ptr<MPC_DDP> mpcPtr(new MPC_DDP(
+    std::unique_ptr<GaussNewtonDDP_MPC> mpcPtr(new GaussNewtonDDP_MPC(
         doubleIntegratorInterface.mpcSettings(), doubleIntegratorInterface.ddpSettings(), doubleIntegratorInterface.getRollout(),
         doubleIntegratorInterface.getOptimalControlProblem(), doubleIntegratorInterface.getInitializer()));
     mpcPtr->getSolverPtr()->setReferenceManager(doubleIntegratorInterface.getReferenceManagerPtr());

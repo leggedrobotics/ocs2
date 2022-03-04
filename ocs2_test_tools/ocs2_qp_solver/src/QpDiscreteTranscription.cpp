@@ -27,10 +27,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-//
-// Created by rgrandia on 26.02.20.
-//
-
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
 
 #include "ocs2_qp_solver/QpDiscreteTranscription.h"
@@ -56,25 +52,47 @@ std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(OptimalControl
     lqp.emplace_back(approximateStage(optimalControProblem, {t[k], x[k], u[k]}, {t[k + 1], x[k + 1]}, k == 0));
   }
 
-  ModelData modelData;
-  LinearQuadraticApproximator lqapprox(optimalControProblem);
-  lqapprox.approximateLQProblemAtFinalTime(t[N], x[N], modelData);
-  lqp.emplace_back(std::move(modelData.cost_), VectorFunctionLinearApproximation(), std::move(modelData.stateEqConstr_));
+  auto modelData = approximateFinalLQ(optimalControProblem, t[N], x[N]);
+
+  // checking the numerical properties
+  const auto errSize = checkSize(modelData, x[N].rows(), 0);
+  if (!errSize.empty()) {
+    throw std::runtime_error("[qp_solver::getLinearQuadraticApproximation] Ill-posed problem at final time: " + std::to_string(t[N]) +
+                             "\n" + errSize);
+  }
+  const std::string errProperties = checkCostProperties(modelData) + checkConstraintProperties(modelData);
+  if (!errProperties.empty()) {
+    throw std::runtime_error("[qp_solver::getLinearQuadraticApproximation] Ill-posed problem at final time: " + std::to_string(t[N]) +
+                             "\n" + errProperties);
+  }
+
+  lqp.emplace_back(std::move(modelData.cost), VectorFunctionLinearApproximation(), std::move(modelData.stateEqConstraint));
 
   return lqp;
 }
 
 LinearQuadraticStage approximateStage(OptimalControlProblem& optimalControProblem, TrajectoryRef start, StateTrajectoryRef end,
                                       bool isInitialTime) {
+  const auto modelData = approximateIntermediateLQ(optimalControProblem, start.t, start.x, start.u);
+
+  // checking the numerical properties
+  const auto errSize = checkSize(modelData, start.x.rows(), start.u.rows());
+  if (!errSize.empty()) {
+    throw std::runtime_error("[[qp_solver::approximateStage] Ill-posed problem at intermediate time: " + std::to_string(start.t) + "\n" +
+                             errSize);
+  }
+  const std::string errProperties =
+      checkDynamicsProperties(modelData) + checkCostProperties(modelData) + checkConstraintProperties(modelData);
+  if (!errProperties.empty()) {
+    throw std::runtime_error("[qp_solver::approximateStage] Ill-posed problem at intermediate time: " + std::to_string(start.t) + "\n" +
+                             errProperties);
+  }
+
   LinearQuadraticStage lqStage;
-  auto dt = end.t - start.t;
+  const auto dt = end.t - start.t;
 
-  LinearQuadraticApproximator lqapprox(optimalControProblem);
-
-  ModelData modelData;
-  lqapprox.approximateLQProblem(start.t, start.x, start.u, modelData);
-
-  lqStage.cost = approximateCost(modelData, dt);
+  lqStage.cost = modelData.cost;
+  lqStage.cost *= dt;
 
   // Linearized Dynamics after discretization: x0[k+1] + dx[k+1] = A dx[k] + B du[k] + F(x0[k], u0[k])
   lqStage.dynamics = approximateDynamics(modelData, start, dt);
@@ -87,27 +105,13 @@ LinearQuadraticStage approximateStage(OptimalControlProblem& optimalControProble
   return lqStage;
 }
 
-ScalarFunctionQuadraticApproximation approximateCost(const ModelData& modelData, scalar_t dt) {
-  // Approximates the cost accumulation of the dt interval.
-  // Use Euler integration
-  const auto continuousCosts = modelData.cost_;
-  ScalarFunctionQuadraticApproximation discreteCosts;
-  discreteCosts.dfdxx = continuousCosts.dfdxx * dt;
-  discreteCosts.dfdux = continuousCosts.dfdux * dt;
-  discreteCosts.dfduu = continuousCosts.dfduu * dt;
-  discreteCosts.dfdx = continuousCosts.dfdx * dt;
-  discreteCosts.dfdu = continuousCosts.dfdu * dt;
-  discreteCosts.f = continuousCosts.f * dt;
-  return discreteCosts;
-}
-
 VectorFunctionLinearApproximation approximateDynamics(const ModelData& modelData, TrajectoryRef start, scalar_t dt) {
   // Forward Euler discretization
   // x[k+1] = x[k] + dt * dxdt[k]
   // x[k+1] = (x0[k] + dx[k]) + dt * dxdt[k]
   // x[k+1] = (x0[k] + dx[k]) + dt * (A_c dx[k] + B_c du[k] + b_c)
   // x[k+1] = (I + A_c * dt) dx[k] + (B_c * dt) du[k] + (b_c * dt + x0[k])
-  const auto& continuousDynamics = modelData.dynamics_;
+  const auto& continuousDynamics = modelData.dynamics;
   VectorFunctionLinearApproximation discreteDynamics;
   discreteDynamics.dfdx = continuousDynamics.dfdx * dt;
   discreteDynamics.dfdx.diagonal().array() += 1.0;
@@ -120,11 +124,11 @@ VectorFunctionLinearApproximation approximateConstraints(const ModelData& modelD
   VectorFunctionLinearApproximation constraintsApproximation;
   if (isInitialTime) {
     // only use stat-input constraints for initial time
-    constraintsApproximation = std::move(modelData.stateInputEqConstr_);
+    constraintsApproximation = std::move(modelData.stateInputEqConstraint);
   } else {
     // concatenate stat-input and state-only constraints
-    const auto& stateInputConstraint = modelData.stateInputEqConstr_;
-    const auto& stateConstraint = modelData.stateEqConstr_;
+    const auto& stateInputConstraint = modelData.stateInputEqConstraint;
+    const auto& stateConstraint = modelData.stateEqConstraint;
     const auto numStateInputConstraints = stateInputConstraint.f.size();
     const auto numStateConstraints = stateConstraint.f.size();
     const auto numStates = stateInputConstraint.dfdx.cols();

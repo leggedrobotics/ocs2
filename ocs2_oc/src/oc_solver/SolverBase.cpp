@@ -46,19 +46,18 @@ SolverBase::SolverBase() : referenceManagerPtr_(new ReferenceManager) {}
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) {
+void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
   preRun(initTime, initState, finalTime);
-  runImpl(initTime, initState, finalTime, partitioningTimes);
+  runImpl(initTime, initState, finalTime);
   postRun();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
-                     const std::vector<ControllerBase*>& controllersPtrStock) {
+void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const ControllerBase* externalControllerPtr) {
   preRun(initTime, initState, finalTime);
-  runImpl(initTime, initState, finalTime, partitioningTimes, controllersPtrStock);
+  runImpl(initTime, initState, finalTime, externalControllerPtr);
   postRun();
 }
 

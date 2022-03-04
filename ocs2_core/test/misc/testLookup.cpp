@@ -6,8 +6,7 @@
 using namespace ocs2;
 using namespace lookup;
 
-TEST(testLookup, findIndexInTimeArray)
-{
+TEST(testLookup, findIndexInTimeArray) {
   // Normal case
   std::vector<double> timeArray{-1.0, 2.0, 3.0};
   ASSERT_EQ(findIndexInTimeArray(timeArray, -2.0), 0);
@@ -16,7 +15,7 @@ TEST(testLookup, findIndexInTimeArray)
   ASSERT_EQ(findIndexInTimeArray(timeArray, 2.0), 1);
   ASSERT_EQ(findIndexInTimeArray(timeArray, 2.5), 2);
   ASSERT_EQ(findIndexInTimeArray(timeArray, 3.0), 2);
-  ASSERT_EQ(findIndexInTimeArray(timeArray,  4.0), 3);
+  ASSERT_EQ(findIndexInTimeArray(timeArray, 4.0), 3);
 
   // With repetitions
   std::vector<double> timeArrayRepeated{-1.0, 2.0, 2.0, 2.0, 3.0};
@@ -33,12 +32,11 @@ TEST(testLookup, findIndexInTimeArray)
   // empty time
   std::vector<double> timeArrayEmpty;
   ASSERT_EQ(findIndexInTimeArray(timeArrayEmpty, -1.0), 0);
-  ASSERT_EQ(findIndexInTimeArray(timeArrayEmpty,  0.0), 0);
-  ASSERT_EQ(findIndexInTimeArray(timeArrayEmpty,  1.0), 0);
+  ASSERT_EQ(findIndexInTimeArray(timeArrayEmpty, 0.0), 0);
+  ASSERT_EQ(findIndexInTimeArray(timeArrayEmpty, 1.0), 0);
 }
 
-TEST(testLookup, findIndexInTimeArray_precision_lowNumbers)
-{
+TEST(testLookup, findIndexInTimeArray_precision_lowNumbers) {
   std::vector<double> timeArray{0.0};
   double tQuery = timeArray.front();
 
@@ -57,8 +55,7 @@ TEST(testLookup, findIndexInTimeArray_precision_lowNumbers)
   ASSERT_EQ(findIndexInTimeArray(timeArray, tQueryPlus), 1);
 }
 
-TEST(testLookup, findIndexInTimeArray_precision_highNumbers)
-{
+TEST(testLookup, findIndexInTimeArray_precision_highNumbers) {
   std::vector<double> timeArray{10000.0};
   double tQuery = timeArray.front();
 
@@ -77,8 +74,7 @@ TEST(testLookup, findIndexInTimeArray_precision_highNumbers)
   ASSERT_EQ(findIndexInTimeArray(timeArray, tQueryPlus), 1);
 }
 
-TEST(testLookup, findIntervalInTimeArray)
-{
+TEST(testLookup, findIntervalInTimeArray) {
   // Normal case
   std::vector<double> timeArray{-1.0, 2.0, 3.0};
   ASSERT_EQ(findIntervalInTimeArray(timeArray, -2.0), -1);
@@ -87,7 +83,7 @@ TEST(testLookup, findIntervalInTimeArray)
   ASSERT_EQ(findIntervalInTimeArray(timeArray, 2.0), 0);
   ASSERT_EQ(findIntervalInTimeArray(timeArray, 2.5), 1);
   ASSERT_EQ(findIntervalInTimeArray(timeArray, 3.0), 1);
-  ASSERT_EQ(findIntervalInTimeArray(timeArray,  4.0), 2);
+  ASSERT_EQ(findIntervalInTimeArray(timeArray, 4.0), 2);
 
   // With repetitions
   std::vector<double> timeArrayRepeated{-1.0, 2.0, 2.0, 2.0, 3.0};
@@ -104,12 +100,11 @@ TEST(testLookup, findIntervalInTimeArray)
   // empty time
   std::vector<double> timeArrayEmpty;
   ASSERT_EQ(findIntervalInTimeArray(timeArrayEmpty, -1.0), 0);
-  ASSERT_EQ(findIntervalInTimeArray(timeArrayEmpty,  0.0), 0);
-  ASSERT_EQ(findIntervalInTimeArray(timeArrayEmpty,  1.0), 0);
+  ASSERT_EQ(findIntervalInTimeArray(timeArrayEmpty, 0.0), 0);
+  ASSERT_EQ(findIntervalInTimeArray(timeArrayEmpty, 1.0), 0);
 }
 
-TEST(testLookup, findActiveIntervalInTimeArray)
-{
+TEST(testLookup, findActiveIntervalInTimeArray) {
   // Normal case
   std::vector<double> timeArray{-1.0, 2.0, 3.0};
   ASSERT_EQ(findActiveIntervalInTimeArray(timeArray, -2.0), -1);
@@ -118,7 +113,7 @@ TEST(testLookup, findActiveIntervalInTimeArray)
   ASSERT_EQ(findActiveIntervalInTimeArray(timeArray, 2.0), 0);
   ASSERT_EQ(findActiveIntervalInTimeArray(timeArray, 2.5), 1);
   ASSERT_EQ(findActiveIntervalInTimeArray(timeArray, 3.0), 1);
-  ASSERT_EQ(findActiveIntervalInTimeArray(timeArray,  4.0), 2);
+  ASSERT_EQ(findActiveIntervalInTimeArray(timeArray, 4.0), 2);
 
   // With repetitions
   std::vector<double> timeArrayRepeated{-1.0, 2.0, 2.0, 2.0, 3.0};
@@ -135,21 +130,20 @@ TEST(testLookup, findActiveIntervalInTimeArray)
   // empty time
   std::vector<double> timeArrayEmpty;
   ASSERT_EQ(findActiveIntervalInTimeArray(timeArrayEmpty, -1.0), 0);
-  ASSERT_EQ(findActiveIntervalInTimeArray(timeArrayEmpty,  0.0), 0);
-  ASSERT_EQ(findActiveIntervalInTimeArray(timeArrayEmpty,  1.0), 0);
+  ASSERT_EQ(findActiveIntervalInTimeArray(timeArrayEmpty, 0.0), 0);
+  ASSERT_EQ(findActiveIntervalInTimeArray(timeArrayEmpty, 1.0), 0);
 }
 
-TEST(testLookup, findBoundedActiveIntervalInTimeArray)
-{
+TEST(testLookup, findBoundedActiveIntervalInTimeArray) {
   // Normal case
   std::vector<double> timeArray{-1.0, 2.0, 3.0};
-  ASSERT_ANY_THROW(findBoundedActiveIntervalInTimeArray(timeArray, -2.0)); // throws on -1
+  ASSERT_ANY_THROW(findBoundedActiveIntervalInTimeArray(timeArray, -2.0));  // throws on -1
   ASSERT_EQ(findBoundedActiveIntervalInTimeArray(timeArray, -1.0), 0);
   ASSERT_EQ(findBoundedActiveIntervalInTimeArray(timeArray, 0.0), 0);
   ASSERT_EQ(findBoundedActiveIntervalInTimeArray(timeArray, 2.0), 0);
   ASSERT_EQ(findBoundedActiveIntervalInTimeArray(timeArray, 2.5), 1);
   ASSERT_EQ(findBoundedActiveIntervalInTimeArray(timeArray, 3.0), 1);
-  ASSERT_ANY_THROW(findBoundedActiveIntervalInTimeArray(timeArray,  4.0)); // throws on 2
+  ASSERT_ANY_THROW(findBoundedActiveIntervalInTimeArray(timeArray, 4.0));  // throws on 2
 
   // With repetitions
   std::vector<double> timeArrayRepeated{-1.0, 2.0, 2.0, 2.0, 3.0};
@@ -166,6 +160,6 @@ TEST(testLookup, findBoundedActiveIntervalInTimeArray)
   // empty time -> always throws
   std::vector<double> timeArrayEmpty;
   ASSERT_ANY_THROW(findBoundedActiveIntervalInTimeArray(timeArrayEmpty, -1.0));
-  ASSERT_ANY_THROW(findBoundedActiveIntervalInTimeArray(timeArrayEmpty,  0.0));
-  ASSERT_ANY_THROW(findBoundedActiveIntervalInTimeArray(timeArrayEmpty,  1.0));
+  ASSERT_ANY_THROW(findBoundedActiveIntervalInTimeArray(timeArrayEmpty, 0.0));
+  ASSERT_ANY_THROW(findBoundedActiveIntervalInTimeArray(timeArrayEmpty, 1.0));
 }

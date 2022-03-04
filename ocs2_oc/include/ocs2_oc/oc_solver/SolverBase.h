@@ -70,9 +70,8 @@ class SolverBase {
    * @param [in] initTime: The initial time.
    * @param [in] initState: The initial state.
    * @param [in] finalTime: The final time.
-   * @param [in] partitioningTimes: The partitioning times between subsystems.
    */
-  void run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes);
+  void run(scalar_t initTime, const vector_t& initState, scalar_t finalTime);
 
   /**
    * The main routine of solver which runs the optimizer for a given initial state, initial time, final time, and
@@ -82,13 +81,12 @@ class SolverBase {
    * @param [in] initState: The initial state.
    * @param [in] finalTime: The final time.
    * @param [in] partitioningTimes: The time partitioning.
-   * @param [in] controllersPtrStock: Array of pointers to the initial control policies. If you want to use the control
-   * policy which was designed by the previous call of the "run" routine, you should pass an empty array. In the this case, two scenarios
-   * are possible: either the internal controller is already set (such as the MPC case where the warm starting option is set true) or the
-   * internal controller is empty in which instead of performing a rollout the operating trajectories will be used.
+   * @param [in] externalControllerPtr: A pointer to the initial control policies. If you want to use the control policy which was designed
+   * by the previous call of the "run" routine, you should either pass nullptr or use the other run method. In either cases, two scenarios
+   * are possible: either the internal controller is already available (such as the MPC case where the warm starting option is set true) or
+   * the internal controller is empty in which instead of performing a rollout the operating trajectories will be used.
    */
-  void run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
-           const std::vector<ControllerBase*>& controllersPtrStock);
+  void run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const ControllerBase* externalControllerPtr);
 
   /**
    * Sets the ReferenceManager which manages both ModeSchedule and TargetTrajectories. This module updates before SynchronizedModules.
@@ -150,13 +148,6 @@ class SolverBase {
   virtual scalar_t getFinalTime() const = 0;
 
   /**
-   * Returns the partitioning times
-   *
-   * @return partitioning times
-   */
-  virtual const scalar_array_t& getPartitioningTimes() const = 0;
-
-  /**
    * @brief Returns the optimized policy data.
    *
    * @param [in] finalTime: The final time.
@@ -189,7 +180,7 @@ class SolverBase {
    * @param [in] input: The inquiry input.
    * @return The quadratic approximation of the Hamiltonian at the requested time, state and input.
    */
-  virtual ScalarFunctionQuadraticApproximation getHamiltonian(scalar_t time, const vector_t& state, const vector_t& input) const = 0;
+  virtual ScalarFunctionQuadraticApproximation getHamiltonian(scalar_t time, const vector_t& state, const vector_t& input) = 0;
 
   /**
    * Calculates the Lagrange multiplier of the state-input equality constraints at the given time and state.
@@ -199,20 +190,6 @@ class SolverBase {
    * @return The Lagrange multiplier of the state-input equality constraints.
    */
   virtual vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const = 0;
-
-  /**
-   * Rewinds optimizer internal variables.
-   *
-   * @param [in] firstIndex: The index which we want to rewind to.
-   */
-  virtual void rewindOptimizer(size_t firstIndex) = 0;
-
-  /**
-   * Get rewind counter.
-   *
-   * @return Number of partition rewinds since construction of the class.
-   */
-  virtual const unsigned long long int& getRewindCounter() const = 0;
 
   /**
    * Gets benchmarking information.
@@ -227,16 +204,17 @@ class SolverBase {
   void printString(const std::string& text) const;
 
  private:
-  virtual void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) = 0;
+  virtual void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) = 0;
 
-  virtual void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
-                       const std::vector<ControllerBase*>& controllersPtrStock) = 0;
+  virtual void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const ControllerBase* externalControllerPtr) = 0;
 
   void preRun(scalar_t initTime, const vector_t& initState, scalar_t finalTime);
 
   void postRun();
 
- private:
+  /***********
+   * Variables
+   ***********/
   mutable std::mutex outputDisplayGuardMutex_;
   std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr_;  // this pointer cannot be nullptr
   std::vector<std::shared_ptr<SolverSynchronizedModule>> synchronizedModules_;

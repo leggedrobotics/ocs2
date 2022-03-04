@@ -364,8 +364,10 @@ catkin build ocs2_legged_robot_ros
 <span class="c1"># Do not forget to change &lt;...&gt; parts</span>
 <span class="nb">source</span> &lt;directory_to_ws&gt;/&lt;catkin_ws_name&gt;/devel/setup.bash
 
-<span class="c1"># Launch the example</span>
-roslaunch ocs2_legged_robot_ros legged_robot.launch
+<span class="c1"># Launch the example for DDP</span>
+roslaunch ocs2_legged_robot_ros legged_robot_ddp.launch
+<span class="c1"># OR launch the example for SQP</span>
+roslaunch ocs2_legged_robot_ros legged_robot_sqp.launch
 </pre></div>
 </div>
 <a class="reference external image-reference" href="_static/gif/legged_robot.gif"><img alt="legged_robot.gif cannot be displayed!" src="_images/legged_robot.gif" /></a>

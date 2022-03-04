@@ -198,8 +198,10 @@ considers the full kinematics of the robot.
     # Do not forget to change <...> parts
     source <directory_to_ws>/<catkin_ws_name>/devel/setup.bash
 
-    # Launch the example
-    roslaunch ocs2_legged_robot_ros legged_robot.launch
+    # Launch the example for DDP
+    roslaunch ocs2_legged_robot_ros legged_robot_ddp.launch
+    # OR launch the example for SQP
+    roslaunch ocs2_legged_robot_ros legged_robot_sqp.launch
 
 .. image:: ../tools/sphinx/_static/gif/legged_robot.gif
    :alt: legged_robot.gif cannot be displayed!

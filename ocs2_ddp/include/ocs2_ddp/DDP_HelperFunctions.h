@@ -69,7 +69,8 @@ PerformanceIndex computeRolloutPerformanceIndex(const scalar_array_t& timeTrajec
  * @param [in] initState: Initial state
  * @param [in] modeSchedule: The mode schedule
  * @param [in] controller: Control policies.
- * @param [out] primalSolution: The resulting primal solution.
+ * @param [in, out] primalSolution: The resulting primal solution. Make sure that primalSolution::controllerPtr is set since
+ *                                  the rollout is performed based on the controller stored in primalSolution.
  *
  * @return average time step.
  */
@@ -85,7 +86,7 @@ scalar_t rolloutTrajectory(RolloutBase& rollout, const std::pair<scalar_t, scala
 scalar_t computeControllerUpdateIS(const LinearController& controller);
 
 /**
- * Outputs a controller with same same time stamp and gains as unoptimizedController. However, bias is incremented based on:
+ * Outputs a controller with the same time stamp and gains as unoptimizedController. However, bias is incremented based on:
  * biasArray = unoptimizedController.biasArray + stepLength * unoptimizedController.deltaBiasArray
  */
 void incrementController(scalar_t stepLength, const LinearController& unoptimizedController, LinearController& controller);

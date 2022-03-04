@@ -2,7 +2,7 @@
 
 #include <ros/package.h>
 
-#include <ocs2_mpc/MPC_DDP.h>
+#include <ocs2_ddp/GaussNewtonDDP_MPC.h>
 #include <ocs2_mpcnet/control/MpcnetOnnxController.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_oc/synchronized_module/ReferenceManager.h>
@@ -53,9 +53,9 @@ BallbotMpcnetInterface::BallbotMpcnetInterface(size_t nDataGenerationThreads, si
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::unique_ptr<MPC_BASE> BallbotMpcnetInterface::getMpc(BallbotInterface& ballbotInterface) {
-  std::unique_ptr<MPC_BASE> mpcPtr(new MPC_DDP(ballbotInterface.mpcSettings(), ballbotInterface.ddpSettings(),
-                                               ballbotInterface.getRollout(), ballbotInterface.getOptimalControlProblem(),
-                                               ballbotInterface.getInitializer()));
+  std::unique_ptr<MPC_BASE> mpcPtr(new GaussNewtonDDP_MPC(ballbotInterface.mpcSettings(), ballbotInterface.ddpSettings(),
+                                                          ballbotInterface.getRollout(), ballbotInterface.getOptimalControlProblem(),
+                                                          ballbotInterface.getInitializer()));
   mpcPtr->getSolverPtr()->setReferenceManager(ballbotInterface.getReferenceManagerPtr());
   return mpcPtr;
 }

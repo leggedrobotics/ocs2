@@ -27,10 +27,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-//
-// Created by rgrandia on 26.02.20.
-//
-
 #include "ocs2_qp_solver/QpSolver.h"
 
 #include <Eigen/LU>

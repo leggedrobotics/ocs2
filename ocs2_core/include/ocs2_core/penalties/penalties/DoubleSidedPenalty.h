@@ -29,57 +29,51 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/soft_constraint/penalties/PenaltyBase.h>
+#include <memory>
+
+#include <ocs2_core/penalties/penalties/PenaltyBase.h>
 
 namespace ocs2 {
 
 /**
- * Implements the smooth-absolute function for a single equality constraint \f$ h = 0 \f$
+ * Implements the double sided inequality \f$ l \leq h \leq u \f$ with a given penalty function \f$ p() \f$.
  *
  * \f[
- *   p(h) = \mu sqrt(x^2 + \delta^2).
- * \f]
- *
- * where \f$ \mu > 0 \f$, and \f$ \delta > 0 \f$ are user defined parameters. Note that
- * \f$ \delta \f$ defines the error bound between the absolute function and its approximation:
- *
- * \f[
- *   | x - sqrt(x^2 + \delta^2) | \leq \delta, \quad \forall x \in R
+ *   p_{box}(h) = p(h - l) + p(u - h)
  * \f]
  */
-class SmoothAbsolutePenalty final : public PenaltyBase {
+class DoubleSidedPenalty final : public PenaltyBase {
  public:
   /**
-   * Configuration object for the smooth absolute penalty.
-   * mu : scaling factor
-   * delta: relaxation parameter, see class description
-   */
-  struct Config {
-    Config() : Config(1.0, 1e-2) {}
-    Config(scalar_t muParam, scalar_t deltaParam) : mu(muParam), delta(deltaParam) {}
-    scalar_t mu;
-    scalar_t delta;
-  };
-
-  /**
    * Constructor
-   * @param [in] config: Configuration object containing mu and delta.
+   * @param [in] lowerBound: The lower bound.
+   * @param [in] upperBound: The upper bound.
+   * @param [in] penalty: The penalty for the two inequality constraint.
    */
-  explicit SmoothAbsolutePenalty(Config config) : config_(std::move(config)) {}
+  DoubleSidedPenalty(scalar_t lowerBound, scalar_t upperBound, std::unique_ptr<PenaltyBase> penalty)
+      : lowerBound_(lowerBound), upperBound_(upperBound), penaltyPtr_(std::move(penalty)) {}
 
-  /** Default destructor */
-  ~SmoothAbsolutePenalty() override = default;
+  ~DoubleSidedPenalty() override = default;
+  DoubleSidedPenalty* clone() const override { return new DoubleSidedPenalty(*this); }
+  std::string name() const override { return "DoubleSidedPenalty"; }
 
-  SmoothAbsolutePenalty* clone() const override { return new SmoothAbsolutePenalty(*this); }
-
-  scalar_t getValue(scalar_t t, scalar_t h) const override;
-  scalar_t getDerivative(scalar_t t, scalar_t h) const override;
-  scalar_t getSecondDerivative(scalar_t t, scalar_t h) const override;
+  scalar_t getValue(scalar_t t, scalar_t h) const override {
+    return penaltyPtr_->getValue(t, h - lowerBound_) + penaltyPtr_->getValue(t, upperBound_ - h);
+  }
+  scalar_t getDerivative(scalar_t t, scalar_t h) const override {
+    return penaltyPtr_->getDerivative(t, h - lowerBound_) - penaltyPtr_->getDerivative(t, upperBound_ - h);
+  }
+  scalar_t getSecondDerivative(scalar_t t, scalar_t h) const override {
+    return penaltyPtr_->getSecondDerivative(t, h - lowerBound_) + penaltyPtr_->getSecondDerivative(t, upperBound_ - h);
+  }
 
  private:
-  SmoothAbsolutePenalty(const SmoothAbsolutePenalty& other) = default;
+  DoubleSidedPenalty(const DoubleSidedPenalty& other)
+      : lowerBound_(other.lowerBound_), upperBound_(other.upperBound_), penaltyPtr_(other.penaltyPtr_->clone()) {}
 
-  Config config_;
+  const scalar_t lowerBound_;
+  const scalar_t upperBound_;
+  std::unique_ptr<PenaltyBase> penaltyPtr_;
 };
 
 }  // namespace ocs2

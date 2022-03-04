@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ros/package.h>
 
-#include <ocs2_mpc/MPC_DDP.h>
+#include <ocs2_ddp/GaussNewtonDDP_MPC.h>
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 
@@ -64,8 +64,8 @@ TEST(BallbotIntegrationTest, createMPC) {
   ballbot::BallbotInterface ballbotInterface(taskFile, libFolder);
 
   // MPC
-  ocs2::MPC_DDP mpc(ballbotInterface.mpcSettings(), ballbotInterface.ddpSettings(), ballbotInterface.getRollout(),
-                    ballbotInterface.getOptimalControlProblem(), ballbotInterface.getInitializer());
+  ocs2::GaussNewtonDDP_MPC mpc(ballbotInterface.mpcSettings(), ballbotInterface.ddpSettings(), ballbotInterface.getRollout(),
+                               ballbotInterface.getOptimalControlProblem(), ballbotInterface.getInitializer());
   mpc.getSolverPtr()->setReferenceManager(ballbotInterface.getReferenceManagerPtr());
 
   // Create MPC ROS node

@@ -19,7 +19,7 @@ ddp
 
   nThreads                     1
 
-  maxNumIterations             10
+  maxNumIterations             1
   minRelCost                   0.1
   constraintTolerance          1e-3
 
@@ -44,7 +44,7 @@ ddp
   strategy                       LINE_SEARCH
   lineSearch
   {
-    minStepLength              1.0
+    minStepLength              0.1
     maxStepLength              1.0
     hessianCorrectionStrategy  EIGENVALUE_MODIFICATION
     hessianCorrectionMultiple  1e-3
@@ -65,20 +65,10 @@ rollout
 mpc
 {
   timeHorizon                 2.5  ; [s]
-  numPartitions               2
   solutionTimeWindow          -1   ; maximum [s]
-
-  debugPrint                  false
-
   coldStart                   false
 
-  initMaxNumIterations        10
-  initMinStepLength           0.1
-  initMaxStepLength           1.0
-
-  runtimeMaxNumIterations     1
-  runtimeMinStepLength        1.0
-  runtimeMaxStepLength        1.0
+  debugPrint                  false
 
   mpcDesiredFrequency         100  ; [Hz]
   mrtDesiredFrequency         400  ; [Hz]

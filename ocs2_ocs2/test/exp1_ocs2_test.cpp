@@ -45,7 +45,6 @@ TEST(exp1_gslq_test, exp1_ocs2_test) {
   SLQ_Settings slqSettings;
   slqSettings.ddpSettings_.displayInfo_ = false;
   slqSettings.ddpSettings_.displayShortSummary_ = false;
-  slqSettings.useNominalTimeForBackwardPass_ = true;
   slqSettings.ddpSettings_.maxNumIterations_ = 30;
   slqSettings.ddpSettings_.nThreads_ = 3;
   slqSettings.ddpSettings_.maxNumIterations_ = 30;

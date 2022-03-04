@@ -45,9 +45,9 @@ TEST(testModelData, testModelDataLinearInterpolation) {
   for (size_t i = 0; i < N; i++) {
     double t = 2.0 * i;
     timeArray[i] = t;
-    modelDataBaseArray[i].time_ = t;
-    modelDataBaseArray[i].dynamics_.f = Eigen::Vector3d::Ones() * t;
-    modelDataBaseArray[i].dynamics_.dfdx = Eigen::Matrix3d::Ones() * t;
+    modelDataBaseArray[i].time = t;
+    modelDataBaseArray[i].dynamics.f = Eigen::Vector3d::Ones() * t;
+    modelDataBaseArray[i].dynamics.dfdx = Eigen::Matrix3d::Ones() * t;
   }
 
   double time = 5.0;

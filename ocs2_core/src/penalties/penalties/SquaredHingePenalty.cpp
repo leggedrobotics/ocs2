@@ -27,42 +27,42 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenalty.h>
+#include <ocs2_core/penalties/penalties/SquaredHingePenalty.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t RelaxedBarrierPenalty::getValue(scalar_t t, scalar_t h) const {
-  if (h > config_.delta) {
-    return -config_.mu * log(h);
+scalar_t SquaredHingePenalty::getValue(scalar_t t, scalar_t h) const {
+  if (h < config_.delta) {
+    const scalar_t delta_h = h - config_.delta;
+    return config_.mu * 0.5 * delta_h * delta_h;
   } else {
-    const scalar_t delta_h = (h - 2.0 * config_.delta) / config_.delta;
-    return config_.mu * (-log(config_.delta) + 0.5 * delta_h * delta_h - 0.5);
-  };
+    return 0;
+  }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t RelaxedBarrierPenalty::getDerivative(scalar_t t, scalar_t h) const {
-  if (h > config_.delta) {
-    return -config_.mu / h;
+scalar_t SquaredHingePenalty::getDerivative(scalar_t t, scalar_t h) const {
+  if (h < config_.delta) {
+    return config_.mu * (h - config_.delta);
   } else {
-    return config_.mu * ((h - 2.0 * config_.delta) / (config_.delta * config_.delta));
-  };
+    return 0;
+  }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t RelaxedBarrierPenalty::getSecondDerivative(scalar_t t, scalar_t h) const {
-  if (h > config_.delta) {
-    return config_.mu / (h * h);
+scalar_t SquaredHingePenalty::getSecondDerivative(scalar_t t, scalar_t h) const {
+  if (h < config_.delta) {
+    return config_.mu;
   } else {
-    return config_.mu / (config_.delta * config_.delta);
-  };
+    return 0;
+  }
 }
 
 }  // namespace ocs2

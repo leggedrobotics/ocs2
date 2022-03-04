@@ -4,7 +4,7 @@ namespace ocs2 {
 namespace ballbot {
 
 vector_t BallbotMpcnetDefinition::getGeneralizedTime(scalar_t t, const ModeSchedule& modeSchedule) {
-  return t * vector_t::Ones(1);
+  return vector_t::Zero(1);
 }
 
 vector_t BallbotMpcnetDefinition::getRelativeState(scalar_t t, const vector_t& x, const TargetTrajectories& targetTrajectories) {

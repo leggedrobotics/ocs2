@@ -2,7 +2,7 @@
 
 #include <ros/package.h>
 
-#include <ocs2_mpc/MPC_DDP.h>
+#include <ocs2_ddp/GaussNewtonDDP_MPC.h>
 #include <ocs2_mpcnet/control/MpcnetOnnxController.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_oc/synchronized_module/ReferenceManager.h>
@@ -78,9 +78,9 @@ LeggedRobotMpcnetInterface::LeggedRobotMpcnetInterface(size_t nDataGenerationThr
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::unique_ptr<MPC_BASE> LeggedRobotMpcnetInterface::getMpc(LeggedRobotInterface& leggedRobotInterface) {
-  std::unique_ptr<MPC_BASE> mpcPtr(new MPC_DDP(leggedRobotInterface.mpcSettings(), leggedRobotInterface.ddpSettings(),
-                                               leggedRobotInterface.getRollout(), leggedRobotInterface.getOptimalControlProblem(),
-                                               leggedRobotInterface.getInitializer()));
+  std::unique_ptr<MPC_BASE> mpcPtr(
+      new GaussNewtonDDP_MPC(leggedRobotInterface.mpcSettings(), leggedRobotInterface.ddpSettings(), leggedRobotInterface.getRollout(),
+                             leggedRobotInterface.getOptimalControlProblem(), leggedRobotInterface.getInitializer()));
   mpcPtr->getSolverPtr()->setReferenceManager(leggedRobotInterface.getReferenceManagerPtr());
   return mpcPtr;
 }

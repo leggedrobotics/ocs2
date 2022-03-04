@@ -87,6 +87,16 @@ inline PerformanceIndex operator+(PerformanceIndex lhs, const PerformanceIndex& 
   return lhs;
 }
 
+/** Swaps performance indices */
+inline void swap(PerformanceIndex& lhs, PerformanceIndex& rhs) {
+  std::swap(lhs.merit, rhs.merit);
+  std::swap(lhs.cost, rhs.cost);
+  std::swap(lhs.dynamicsViolationSSE, rhs.dynamicsViolationSSE);
+  std::swap(lhs.equalityConstraintsSSE, rhs.equalityConstraintsSSE);
+  std::swap(lhs.equalityLagrangian, rhs.equalityLagrangian);
+  std::swap(lhs.inequalityLagrangian, rhs.inequalityLagrangian);
+}
+
 inline std::ostream& operator<<(std::ostream& stream, const PerformanceIndex& performanceIndex) {
   const size_t tabSpace = 12;
   const auto indentation = stream.width();

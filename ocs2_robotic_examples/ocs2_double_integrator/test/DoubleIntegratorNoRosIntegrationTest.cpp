@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_double_integrator/package_path.h>
 
 #include <ocs2_core/thread_support/ExecuteAndSleep.h>
+#include <ocs2_ddp/GaussNewtonDDP_MPC.h>
 #include <ocs2_mpc/MPC_MRT_Interface.h>
 
 using namespace ocs2;
@@ -56,18 +57,17 @@ class DoubleIntegratorIntegrationTest : public testing::Test {
     doubleIntegratorInterfacePtr->getReferenceManagerPtr()->setTargetTrajectories(std::move(targetTrajectories));
   }
 
-  std::unique_ptr<MPC_DDP> getMpc(bool warmStart) {
+  std::unique_ptr<GaussNewtonDDP_MPC> getMpc(bool warmStart) {
     auto& interface = *doubleIntegratorInterfacePtr;
     auto mpcSettings = interface.mpcSettings();
+    auto ddpSettings = interface.ddpSettings();
     if (!warmStart) {
       mpcSettings.coldStart_ = true;
-      mpcSettings.runtimeMaxNumIterations_ = mpcSettings.initMaxNumIterations_;
-      mpcSettings.runtimeMinStepLength_ = mpcSettings.initMinStepLength_;
-      mpcSettings.runtimeMaxStepLength_ = mpcSettings.initMaxStepLength_;
+      ddpSettings.maxNumIterations_ = 5;
     }
 
-    std::unique_ptr<MPC_DDP> mpcPtr(new MPC_DDP(mpcSettings, interface.ddpSettings(), interface.getRollout(),
-                                                interface.getOptimalControlProblem(), interface.getInitializer()));
+    std::unique_ptr<GaussNewtonDDP_MPC> mpcPtr(new GaussNewtonDDP_MPC(mpcSettings, ddpSettings, interface.getRollout(),
+                                                                      interface.getOptimalControlProblem(), interface.getInitializer()));
     mpcPtr->getSolverPtr()->setReferenceManager(interface.getReferenceManagerPtr());
 
     return mpcPtr;

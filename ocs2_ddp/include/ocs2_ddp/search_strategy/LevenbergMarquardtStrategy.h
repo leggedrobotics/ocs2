@@ -34,17 +34,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
-#include <ocs2_core/model_data/ModelData.h>
-#include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
 #include <ocs2_core/thread_support/ThreadPool.h>
+
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
-#include <ocs2_oc/oc_solver/PerformanceIndex.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
 
-#include "SearchStrategyBase.h"
-#include "StrategySettings.h"
+#include "ocs2_ddp/search_strategy/SearchStrategyBase.h"
+#include "ocs2_ddp/search_strategy/StrategySettings.h"
 
 namespace ocs2 {
 
@@ -62,12 +59,10 @@ class LevenbergMarquardtStrategy final : public SearchStrategyBase {
    * @param [in] settings: The Levenberg Marquardt settings.
    * @param [in] rolloutRef: A reference to the rollout.
    * @param [in] optimalControlProblemRef: A reference to the optimal control problem.
-   * @param [in] ineqConstrPenaltyRef: A reference to the inequality constraints penalty.
    * @param [in] meritFunc: the merit function which gets the PerformanceIndex and returns the merit function value.
    */
   LevenbergMarquardtStrategy(search_strategy::Settings baseSettings, levenberg_marquardt::Settings settings, RolloutBase& rolloutRefStock,
-                             OptimalControlProblem& optimalControlProblemRef, SoftConstraintPenalty& ineqConstrPenalty,
-                             std::function<scalar_t(const PerformanceIndex&)> meritFunc);
+                             OptimalControlProblem& optimalControlProblemRef, std::function<scalar_t(const PerformanceIndex&)> meritFunc);
 
   /**
    * Default destructor.
@@ -79,11 +74,8 @@ class LevenbergMarquardtStrategy final : public SearchStrategyBase {
 
   void reset() override;
 
-  bool run(scalar_t expectedCost, const ModeSchedule& modeSchedule, std::vector<LinearController>& controllersStock,
-           PerformanceIndex& performanceIndex, scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
-           vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
-           std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock, std::vector<std::vector<ModelData>>& modelDataEventTimesStock,
-           scalar_t& avgTimeStepFP) override;
+  bool run(const std::pair<scalar_t, scalar_t>& timePeriod, const vector_t& initState, const scalar_t expectedCost,
+           const LinearController& unoptimizedController, const ModeSchedule& modeSchedule, search_strategy::SolutionRef solution) override;
 
   std::pair<bool, std::string> checkConvergence(bool unreliableControllerIncrement, const PerformanceIndex& previousPerformanceIndex,
                                                 const PerformanceIndex& currentPerformanceIndex) const override;
@@ -102,12 +94,11 @@ class LevenbergMarquardtStrategy final : public SearchStrategyBase {
     size_t numSuccessiveRejections = 0;           // the number of successive rejections of solution.
   };
 
-  levenberg_marquardt::Settings settings_;
+  const levenberg_marquardt::Settings settings_;
   LevenbergMarquardtModule levenbergMarquardtModule_;
 
   RolloutBase& rolloutRef_;
   OptimalControlProblem& optimalControlProblemRef_;
-  SoftConstraintPenalty& ineqConstrPenaltyRef_;
   std::function<scalar_t(PerformanceIndex)> meritFunc_;
 
   scalar_t avgTimeStepFP_ = 0.0;

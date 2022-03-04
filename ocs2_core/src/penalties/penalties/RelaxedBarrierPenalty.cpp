@@ -27,35 +27,42 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/soft_constraint/penalties/DoubleSidedPenalty.h>
+#include <ocs2_core/penalties/penalties/RelaxedBarrierPenalty.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-DoubleSidedPenalty::DoubleSidedPenalty(const DoubleSidedPenalty& other)
-    : lowerBound_(other.lowerBound_), upperBound_(other.upperBound_), penaltyPtr_(other.penaltyPtr_->clone()) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-scalar_t DoubleSidedPenalty::getValue(scalar_t t, scalar_t h) const {
-  return penaltyPtr_->getValue(t, h - lowerBound_) + penaltyPtr_->getValue(t, upperBound_ - h);
+scalar_t RelaxedBarrierPenalty::getValue(scalar_t t, scalar_t h) const {
+  if (h > config_.delta) {
+    return -config_.mu * log(h);
+  } else {
+    const scalar_t delta_h = (h - 2.0 * config_.delta) / config_.delta;
+    return config_.mu * (-log(config_.delta) + 0.5 * delta_h * delta_h - 0.5);
+  };
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t DoubleSidedPenalty::getDerivative(scalar_t t, scalar_t h) const {
-  return penaltyPtr_->getDerivative(t, h - lowerBound_) - penaltyPtr_->getDerivative(t, upperBound_ - h);
+scalar_t RelaxedBarrierPenalty::getDerivative(scalar_t t, scalar_t h) const {
+  if (h > config_.delta) {
+    return -config_.mu / h;
+  } else {
+    return config_.mu * ((h - 2.0 * config_.delta) / (config_.delta * config_.delta));
+  };
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t DoubleSidedPenalty::getSecondDerivative(scalar_t t, scalar_t h) const {
-  return penaltyPtr_->getSecondDerivative(t, h - lowerBound_) + penaltyPtr_->getSecondDerivative(t, upperBound_ - h);
+scalar_t RelaxedBarrierPenalty::getSecondDerivative(scalar_t t, scalar_t h) const {
+  if (h > config_.delta) {
+    return config_.mu / (h * h);
+  } else {
+    return config_.mu / (config_.delta * config_.delta);
+  };
 }
 
 }  // namespace ocs2

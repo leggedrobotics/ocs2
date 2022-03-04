@@ -29,45 +29,56 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <memory>
-
-#include <ocs2_core/soft_constraint/penalties/PenaltyBase.h>
+#include <ocs2_core/penalties/penalties/PenaltyBase.h>
 
 namespace ocs2 {
 
 /**
- * Implements the double sided inequality \f$ l \leq h \leq u \f$ with a given penalty function \f$ p() \f$.
+ * Implements the relaxed barrier function for a single inequality constraint \f$ h \geq 0 \f$
  *
  * \f[
- *   p_{box}(h) = p(h - l) + p(u - h)
+ *   p(h)=\left\lbrace
+ *               \begin{array}{ll}
+ *                 -\mu \ln(h) & if \quad  h > \delta, \\
+ *                 -\mu \ln(\delta) + \mu \frac{1}{2} \left( \left( \frac{h-2\delta}{\delta} \right)^2 - 1 \right) & otherwise,
+ *               \end{array}
+ *             \right.
  * \f]
+ *
+ * where \f$ \mu \geq 0 \f$, and \f$ \delta \geq 0 \f$ are user defined parameters.
  */
-class DoubleSidedPenalty final : public PenaltyBase {
+class RelaxedBarrierPenalty final : public PenaltyBase {
  public:
   /**
-   * Constructor
-   * @param [in] lowerBound: The lower bound.
-   * @param [in] upperBound: The upper bound.
-   * @param [in] penalty: The penalty for the two inequality constraint.
+   * Configuration object for the relaxed barrier penalty.
+   * mu : scaling factor
+   * delta: relaxation parameter, see class description
    */
-  DoubleSidedPenalty(scalar_t lowerBound, scalar_t upperBound, std::unique_ptr<PenaltyBase> penalty)
-      : lowerBound_(lowerBound), upperBound_(upperBound), penaltyPtr_(std::move(penalty)) {}
+  struct Config {
+    Config() : Config(1.0, 1e-3) {}
+    Config(scalar_t muParam, scalar_t deltaParam) : mu(muParam), delta(deltaParam) {}
+    scalar_t mu;
+    scalar_t delta;
+  };
 
-  /** Default destructor */
-  ~DoubleSidedPenalty() override = default;
+  /**
+   * Constructor
+   * @param [in] config: Configuration object containing mu and delta.
+   */
+  explicit RelaxedBarrierPenalty(Config config) : config_(std::move(config)) {}
 
-  DoubleSidedPenalty* clone() const override { return new DoubleSidedPenalty(*this); }
+  ~RelaxedBarrierPenalty() override = default;
+  RelaxedBarrierPenalty* clone() const override { return new RelaxedBarrierPenalty(*this); }
+  std::string name() const override { return "RelaxedBarrierPenalty"; }
 
   scalar_t getValue(scalar_t t, scalar_t h) const override;
   scalar_t getDerivative(scalar_t t, scalar_t h) const override;
   scalar_t getSecondDerivative(scalar_t t, scalar_t h) const override;
 
  private:
-  DoubleSidedPenalty(const DoubleSidedPenalty& other);
+  RelaxedBarrierPenalty(const RelaxedBarrierPenalty& other) = default;
 
-  std::unique_ptr<PenaltyBase> penaltyPtr_;
-  scalar_t lowerBound_;
-  scalar_t upperBound_;
+  const Config config_;
 };
 
 }  // namespace ocs2

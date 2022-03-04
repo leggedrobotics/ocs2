@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,32 +27,58 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <cmath>
+#pragma once
 
-#include <ocs2_core/soft_constraint/penalties/SmoothAbsolutePenalty.h>
+#include <ocs2_core/penalties/penalties/PenaltyBase.h>
 
 namespace ocs2 {
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-scalar_t SmoothAbsolutePenalty::getValue(scalar_t t, scalar_t h) const {
-  return config_.mu * sqrt(h * h + config_.delta * config_.delta);
-}
+/**
+ * Implements the squared-hinge function for a single inequality constraint \f$ h \geq 0 \f$
+ *
+ * \f[
+ *   p(h)=\left\lbrace
+ *               \begin{array}{ll}
+ *                 \frac{\mu}{2} (h - \delta)^2 & if \quad  h < \delta, \\
+ *                 0 & otherwise,
+ *               \end{array}
+ *             \right.
+ * \f]
+ *
+ * where \f$ \mu > 0 \f$, and \f$ \delta \in R \f$ are user defined parameters.
+ */
+class SquaredHingePenalty final : public PenaltyBase {
+ public:
+  /**
+   * Configuration object for the squared hinge penalty.
+   * mu : scaling factor
+   * delta: relaxation parameter, see class description
+   */
+  struct Config {
+    Config() : Config(100.0, 1e-1) {}
+    Config(scalar_t muParam, scalar_t deltaParam) : mu(muParam), delta(deltaParam) {}
+    scalar_t mu;
+    scalar_t delta;
+  };
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-scalar_t SmoothAbsolutePenalty::getDerivative(scalar_t t, scalar_t h) const {
-  return config_.mu * h / sqrt(h * h + config_.delta * config_.delta);
-}
+  /**
+   * Constructor
+   * @param [in] config: Configuration object containing mu and delta.
+   */
+  explicit SquaredHingePenalty(Config config) : config_(std::move(config)) {}
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-scalar_t SmoothAbsolutePenalty::getSecondDerivative(scalar_t t, scalar_t h) const {
-  const scalar_t deltaSquare = config_.delta * config_.delta;
-  return config_.mu * deltaSquare / pow(h * h + deltaSquare, 1.5);
-}
+  ~SquaredHingePenalty() override = default;
+  SquaredHingePenalty* clone() const override { return new SquaredHingePenalty(*this); }
+  std::string name() const override { return "SquaredHingePenalty"; }
+
+  scalar_t getValue(scalar_t t, scalar_t h) const override;
+  scalar_t getDerivative(scalar_t t, scalar_t h) const override;
+  scalar_t getSecondDerivative(scalar_t t, scalar_t h) const override;
+
+ private:
+  SquaredHingePenalty(const SquaredHingePenalty& other) = default;
+
+  Config config_;
+};
 
 }  // namespace ocs2

@@ -44,36 +44,30 @@ vector_t RolloutBase::run(scalar_t initTime, const vector_t& initState, scalar_t
                           const scalar_array_t& eventTimes, scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock,
                           vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) {
   if (initTime > finalTime) {
-    throw std::runtime_error("Initial time should be less-equal to final time.");
+    throw std::runtime_error("[RolloutBase::run] The initial time should be less-equal to the final time!");
   }
 
   // switching times
-  auto firstIndex = std::upper_bound(eventTimes.begin(), eventTimes.end(), initTime);
-  auto lastIndex = std::upper_bound(eventTimes.begin(), eventTimes.end(), finalTime);
+  const auto firstIndex = std::upper_bound(eventTimes.cbegin(), eventTimes.cend(), initTime);  // no event at initial time
+  const auto lastIndex = std::lower_bound(eventTimes.cbegin(), eventTimes.cend(), finalTime);  // no event at final time
   scalar_array_t switchingTimes;
   switchingTimes.push_back(initTime);
   switchingTimes.insert(switchingTimes.end(), firstIndex, lastIndex);
   switchingTimes.push_back(finalTime);
 
   // constructing the rollout time intervals
-  time_interval_array_t timeIntervalArray;
-  const int numSubsystems = switchingTimes.size() - 1;
+  const int numSubsystems = switchingTimes.size() - 1;  // switchingTimes contains at least two elements
+  time_interval_array_t timeIntervalArray(numSubsystems);
   for (int i = 0; i < numSubsystems; i++) {
     const auto& beginTime = switchingTimes[i];
     const auto& endTime = switchingTimes[i + 1];
-    timeIntervalArray.emplace_back(beginTime, endTime);
 
-    // adjusting the start time for correcting the subsystem recognition
-    constexpr scalar_t eps = numeric_traits::weakEpsilon<scalar_t>();
-    if (endTime - beginTime > eps) {
-      timeIntervalArray.back().first += eps;
-    } else {
-      timeIntervalArray.back().first = endTime;
-    }
+    // adjusting the start time to correct for subsystem recognition
+    constexpr auto eps = numeric_traits::weakEpsilon<scalar_t>();
+    timeIntervalArray[i] = std::make_pair(std::min(beginTime + eps, endTime), endTime);
   }  // end of for loop
 
-  return runImpl(std::move(timeIntervalArray), initState, controller, timeTrajectory, postEventIndicesStock, stateTrajectory,
-                 inputTrajectory);
+  return runImpl(timeIntervalArray, initState, controller, timeTrajectory, postEventIndicesStock, stateTrajectory, inputTrajectory);
 }
 
 /******************************************************************************************************/

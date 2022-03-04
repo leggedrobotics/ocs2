@@ -29,8 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
-#include <ocs2_core/soft_constraint/penalties/DoubleSidedPenalty.h>
-#include <ocs2_core/soft_constraint/penalties/SquaredHingePenalty.h>
+#include <ocs2_core/penalties/penalties/DoubleSidedPenalty.h>
+#include <ocs2_core/penalties/penalties/SquaredHingePenalty.h>
 
 TEST(testDoubleSidedPenalty, value) {
   const ocs2::scalar_t eps = 1e-9;

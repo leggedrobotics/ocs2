@@ -17,6 +17,7 @@
 
   <depend>roscpp</depend>
   <depend>ocs2_mpc</depend>
+  <depend>ocs2_ddp</depend>
   <depend>ocs2_robotic_tools</depend>
 
 </package>

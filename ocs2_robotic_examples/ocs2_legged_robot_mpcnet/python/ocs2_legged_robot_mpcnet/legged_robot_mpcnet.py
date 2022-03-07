@@ -167,15 +167,15 @@ try:
             u_predicted = bmv(input_transformation, u_predicted)
             U_predicted = bmm(input_transformation, U_predicted)
             # compute the empirical loss
-            empirical_experts_loss = experts_loss.compute_batch(x, x, u_predicted, u, dHdxx, dHdux, dHduu, dHdx, dHdu, H).sum()
-            empirical_gating_loss = gating_loss.compute_batch(p, p_predicted).sum()
+            empirical_experts_loss = experts_loss.compute_batch(x, x, u_predicted, u, dHdxx, dHdux, dHduu, dHdx, dHdu, H).sum() / batch_size
+            empirical_gating_loss = gating_loss.compute_batch(p, p_predicted).sum() / batch_size
             empirical_loss = empirical_experts_loss + my_lambda * empirical_gating_loss
             # compute the gradients
             empirical_loss.backward()
             # logging
-            writer.add_scalar('objective/empirical_experts_loss', empirical_experts_loss.item() / batch_size, iteration)
-            writer.add_scalar('objective/empirical_gating_loss', empirical_gating_loss.item() / batch_size, iteration)
-            writer.add_scalar('objective/empirical_loss', empirical_loss.item() / batch_size, iteration)
+            writer.add_scalar('objective/empirical_experts_loss', empirical_experts_loss.item(), iteration)
+            writer.add_scalar('objective/empirical_gating_loss', empirical_gating_loss.item(), iteration)
+            writer.add_scalar('objective/empirical_loss', empirical_loss.item(), iteration)
             # return empirical loss
             return empirical_loss
         optimizer.step(closure)

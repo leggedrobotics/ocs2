@@ -49,7 +49,7 @@ StateTriggeredRollout::StateTriggeredRollout(const ControlledSystemBase& systemD
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t StateTriggeredRollout::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, ControllerBase* controller,
-                                    ModeSchedule& modeSchedule, scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock,
+                                    ModeSchedule& modeSchedule, scalar_array_t& timeTrajectory, size_array_t& postEventIndices,
                                     vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) {
   if (initTime > finalTime) {
     throw std::runtime_error("[StateTriggeredRollout::run] The initial time should be less-equal to the final time!");
@@ -69,7 +69,7 @@ vector_t StateTriggeredRollout::run(scalar_t initTime, const vector_t& initState
   stateTrajectory.reserve(maxNumSteps + 1);
   inputTrajectory.clear();
   inputTrajectory.reserve(maxNumSteps + 1);
-  postEventIndicesStock.clear();
+  postEventIndices.clear();
 
   // set controller
   StateBasedLinearController trajectorySpreadingController;
@@ -153,7 +153,7 @@ vector_t StateTriggeredRollout::run(scalar_t initTime, const vector_t& initState
       x0 = systemDynamicsPtr_->computeJumpMap(queryTime, queryState);
 
       // append the event to array with event indices
-      postEventIndicesStock.push_back(stateTrajectory.size());
+      postEventIndices.push_back(stateTrajectory.size());
 
       // append to modeSchedule
       modeSchedule.eventTimes.push_back(queryTime);
@@ -193,7 +193,7 @@ vector_t StateTriggeredRollout::run(scalar_t initTime, const vector_t& initState
   }  // end of while loop
 
   // check for the numerical stability
-  this->checkNumericalStability(*controller, timeTrajectory, postEventIndicesStock, stateTrajectory, inputTrajectory);
+  this->checkNumericalStability(*controller, timeTrajectory, postEventIndices, stateTrajectory, inputTrajectory);
 
   return stateTrajectory.back();
 }

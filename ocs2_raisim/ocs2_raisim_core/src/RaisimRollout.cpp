@@ -107,7 +107,7 @@ void RaisimRollout::setPdGains(const Eigen::VectorXd& pGain, const Eigen::Vector
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t RaisimRollout::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, ControllerBase* controller,
-                            ModeSchedule& modeSchedule, scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock,
+                            ModeSchedule& modeSchedule, scalar_array_t& timeTrajectory, size_array_t& postEventIndices,
                             vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) {
   if (initTime > finalTime) {
     throw std::runtime_error("[RaisimRollout::run] The initial time should be less-equal to the final time!");
@@ -130,8 +130,8 @@ vector_t RaisimRollout::run(scalar_t initTime, const vector_t& initState, scalar
   stateTrajectory.reserve(maxNumSteps + numSubsystems);
   inputTrajectory.clear();
   inputTrajectory.reserve(maxNumSteps + numSubsystems);
-  postEventIndicesStock.clear();
-  postEventIndicesStock.reserve(numSubsystems - 1);
+  postEventIndices.clear();
+  postEventIndices.reserve(numSubsystems - 1);
 
   // Set inital state to simulation if requested
   if (raisimRolloutSettings_.setSimulatorStateOnRolloutRunAlways_ or raisimRolloutSettings_.setSimulatorStateOnRolloutRunOnce_) {
@@ -146,9 +146,9 @@ vector_t RaisimRollout::run(scalar_t initTime, const vector_t& initState, scalar
   // loop through intervals and integrate each separately
   for (const auto& interval : timeIntervalArray) {
     runSimulation(interval, controller, timeTrajectory, stateTrajectory, inputTrajectory);
-    postEventIndicesStock.push_back(stateTrajectory.size());
+    postEventIndices.push_back(stateTrajectory.size());
   }
-  postEventIndicesStock.pop_back();  // the last interval does not have any events afterwards
+  postEventIndices.pop_back();  // the last interval does not have any events afterwards
 
   return stateTrajectory.back();
 }

@@ -98,25 +98,25 @@ class RolloutBase {
    * @param [in, out] modeSchedule: Defines the sequence of modes and the associated event times. For TimeTriggeredRollout
    *                                this is an input argument while for StateTriggeredRollout this is an output argument.
    * @param [out] timeTrajectory: The time trajectory stamp.
-   * @param [out] postEventIndicesStock: Indices containing past-the-end index of events trigger.
+   * @param [out] postEventIndices: Indices containing past-the-end index of events trigger.
    * @param [out] stateTrajectory: The state trajectory.
    * @param [out] inputTrajectory: The control input trajectory.
    *
    * @return The final state (state jump is considered if it took place)
    */
   virtual vector_t run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, ControllerBase* controller,
-                       ModeSchedule& modeSchedule, scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock,
+                       ModeSchedule& modeSchedule, scalar_array_t& timeTrajectory, size_array_t& postEventIndices,
                        vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) = 0;
 
   /**
    * Prints out the rollout.
    *
    * @param [in] timeTrajectory: The time trajectory stamp.
-   * @param [in] postEventIndicesStock: An array of the post-event indices.
+   * @param [in] postEventIndices: An array of the post-event indices.
    * @param [in] stateTrajectory: The state trajectory.
    * @param [in] inputTrajectory: The control input trajectory.
    */
-  static void display(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndicesStock,
+  static void display(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
                       const vector_array_t& stateTrajectory, const vector_array_t* const inputTrajectory);
 
  protected:
@@ -126,7 +126,7 @@ class RolloutBase {
 
   /** Checks for the numerical stability if rollout::Settings::checkNumericalStability is true. */
   void checkNumericalStability(const ControllerBase& controller, const scalar_array_t& timeTrajectory,
-                               const size_array_t& postEventIndicesStock, const vector_array_t& stateTrajectory,
+                               const size_array_t& postEventIndices, const vector_array_t& stateTrajectory,
                                const vector_array_t& inputTrajectory) const;
 
   const rollout::Settings rolloutSettings_;

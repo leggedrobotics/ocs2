@@ -69,20 +69,20 @@ std::vector<std::pair<scalar_t, scalar_t>> RolloutBase::findActiveModesTimeInter
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void RolloutBase::display(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndicesStock,
-                          const vector_array_t& stateTrajectory, const vector_array_t* const inputTrajectory) {
+void RolloutBase::display(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices, const vector_array_t& stateTrajectory,
+                          const vector_array_t* const inputTrajectory) {
   std::cerr << "Trajectory length:      " << timeTrajectory.size() << '\n';
-  std::cerr << "Total number of events: " << postEventIndicesStock.size() << '\n';
-  if (!postEventIndicesStock.empty()) {
+  std::cerr << "Total number of events: " << postEventIndices.size() << '\n';
+  if (!postEventIndices.empty()) {
     std::cerr << "Event times: ";
-    for (size_t ind : postEventIndicesStock) {
+    for (size_t ind : postEventIndices) {
       std::cerr << timeTrajectory[ind] << ", ";
     }
     std::cerr << '\n';
   }
   std::cerr << '\n';
 
-  const size_t numSubsystems = postEventIndicesStock.size() + 1;
+  const size_t numSubsystems = postEventIndices.size() + 1;
   size_t k = 0;
   for (size_t i = 0; i < numSubsystems; i++) {
     for (; k < timeTrajectory.size(); k++) {
@@ -93,7 +93,7 @@ void RolloutBase::display(const scalar_array_t& timeTrajectory, const size_array
         std::cerr << "Input: " << std::setprecision(3) << (*inputTrajectory)[k].transpose() << '\n';
       }
 
-      if (i < postEventIndicesStock.size() && k + 1 == postEventIndicesStock[i]) {
+      if (i < postEventIndices.size() && k + 1 == postEventIndices[i]) {
         std::cerr << "+++ event took place +++" << '\n';
         k++;
         break;
@@ -106,7 +106,7 @@ void RolloutBase::display(const scalar_array_t& timeTrajectory, const size_array
 /******************************************************************************************************/
 /******************************************************************************************************/
 void RolloutBase::checkNumericalStability(const ControllerBase& controller, const scalar_array_t& timeTrajectory,
-                                          const size_array_t& postEventIndicesStock, const vector_array_t& stateTrajectory,
+                                          const size_array_t& postEventIndices, const vector_array_t& stateTrajectory,
                                           const vector_array_t& inputTrajectory) const {
   if (!rolloutSettings_.checkNumericalStability) {
     return;
@@ -137,7 +137,7 @@ void RolloutBase::checkNumericalStability(const ControllerBase& controller, cons
 
       // display
       const vector_array_t* const inputTrajectoryTempPtr = rolloutSettings_.reconstructInputTrajectory ? &inputTrajectoryTemp : nullptr;
-      display(timeTrajectoryTemp, postEventIndicesStock, stateTrajectoryTemp, inputTrajectoryTempPtr);
+      display(timeTrajectoryTemp, postEventIndices, stateTrajectoryTemp, inputTrajectoryTempPtr);
 
       controller.display();
 

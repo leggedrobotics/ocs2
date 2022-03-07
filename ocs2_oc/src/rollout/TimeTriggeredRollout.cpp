@@ -44,7 +44,7 @@ TimeTriggeredRollout::TimeTriggeredRollout(const ControlledSystemBase& systemDyn
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t TimeTriggeredRollout::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, ControllerBase* controller,
-                                   ModeSchedule& modeSchedule, scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock,
+                                   ModeSchedule& modeSchedule, scalar_array_t& timeTrajectory, size_array_t& postEventIndices,
                                    vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) {
   if (initTime > finalTime) {
     throw std::runtime_error("[TimeTriggeredRollout::run] The initial time should be less-equal to the final time!");
@@ -68,8 +68,8 @@ vector_t TimeTriggeredRollout::run(scalar_t initTime, const vector_t& initState,
   stateTrajectory.reserve(maxNumSteps + 1);
   inputTrajectory.clear();
   inputTrajectory.reserve(maxNumSteps + 1);
-  postEventIndicesStock.clear();
-  postEventIndicesStock.reserve(numEvents);
+  postEventIndices.clear();
+  postEventIndices.reserve(numEvents);
 
   // set controller
   systemDynamicsPtr_->setController(controller);
@@ -103,14 +103,14 @@ vector_t TimeTriggeredRollout::run(scalar_t initTime, const vector_t& initState,
 
     // a jump has taken place
     if (i < numEvents) {
-      postEventIndicesStock.push_back(stateTrajectory.size());
+      postEventIndices.push_back(stateTrajectory.size());
       // jump map
       beginState = systemDynamicsPtr_->computeJumpMap(timeTrajectory.back(), stateTrajectory.back());
     }
   }  // end of i loop
 
   // check for the numerical stability
-  this->checkNumericalStability(*controller, timeTrajectory, postEventIndicesStock, stateTrajectory, inputTrajectory);
+  this->checkNumericalStability(*controller, timeTrajectory, postEventIndices, stateTrajectory, inputTrajectory);
 
   return stateTrajectory.back();
 }

@@ -142,8 +142,7 @@ void MRT_BASE::rolloutPolicy(scalar_t currentTime, const vector_t& currentState,
   vector_array_t stateTrajectory, inputTrajectory;
   const scalar_t finalTime = currentTime + timeStep;
   rolloutPtr_->run(currentTime, currentState, finalTime, activePrimalSolutionPtr_->controllerPtr_.get(),
-                   activePrimalSolutionPtr_->modeSchedule_.eventTimes, timeTrajectory, postEventIndicesStock, stateTrajectory,
-                   inputTrajectory);
+                   activePrimalSolutionPtr_->modeSchedule_, timeTrajectory, postEventIndicesStock, stateTrajectory, inputTrajectory);
 
   mpcState = stateTrajectory.back();
   mpcInput = inputTrajectory.back();

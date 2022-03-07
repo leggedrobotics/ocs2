@@ -48,7 +48,7 @@ os.makedirs(name="policies/" + folder)
 loss = Loss()
 
 # memory
-memory_capacity = 1000000
+memory_capacity = 100000
 memory = Memory(memory_capacity, config.TIME_DIM, config.STATE_DIM, config.INPUT_DIM)
 
 # policy

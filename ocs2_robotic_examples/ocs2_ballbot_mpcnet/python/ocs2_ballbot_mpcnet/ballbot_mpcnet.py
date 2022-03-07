@@ -145,11 +145,11 @@ try:
             u_predicted = bmv(input_transformation, u_predicted)
             U_predicted = bmm(input_transformation, U_predicted)
             # compute the empirical loss
-            empirical_loss = loss.compute_batch(x, x, u_predicted, u, dHdxx, dHdux, dHduu, dHdx, dHdu, H).sum()
+            empirical_loss = loss.compute_batch(x, x, u_predicted, u, dHdxx, dHdux, dHduu, dHdx, dHdu, H).sum() / batch_size
             # compute the gradients
             empirical_loss.backward()
             # logging
-            writer.add_scalar('objective/empirical_loss', empirical_loss.item() / batch_size, iteration)
+            writer.add_scalar('objective/empirical_loss', empirical_loss.item(), iteration)
             # return empirical loss
             return empirical_loss
         optimizer.step(closure)

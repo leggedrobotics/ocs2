@@ -45,9 +45,6 @@ namespace ocs2 {
  */
 class RaisimRollout final : public RolloutBase {
  public:
-  using typename RolloutBase::time_interval_array_t;
-  using typename RolloutBase::time_interval_t;
-
   using state_to_raisim_gen_coord_gen_vel_t = std::function<std::pair<Eigen::VectorXd, Eigen::VectorXd>(const vector_t&, const vector_t&)>;
   using raisim_gen_coord_gen_vel_to_state_t = std::function<vector_t(const Eigen::VectorXd&, const Eigen::VectorXd&)>;
   using input_to_raisim_generalized_force_t =
@@ -127,10 +124,9 @@ class RaisimRollout final : public RolloutBase {
    */
   void setPdGains(const Eigen::VectorXd& pGain, const Eigen::VectorXd& dGain);
 
- protected:
-  vector_t runImpl(const time_interval_array_t& timeIntervalArray, const vector_t& initState, ControllerBase* controller,
-                   scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, vector_array_t& stateTrajectory,
-                   vector_array_t& inputTrajectory) override;
+  vector_t run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, ControllerBase* controller, ModeSchedule& modeSchedule,
+               scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, vector_array_t& stateTrajectory,
+               vector_array_t& inputTrajectory) override;
 
  private:
   /**
@@ -142,7 +138,7 @@ class RaisimRollout final : public RolloutBase {
    * @param[out] stateTrajectory: Vector to which states will be appended
    * @param[out] inputTrajectory: Vector to which inputs will be appended
    */
-  void runSimulation(const time_interval_t& timeInterval, ControllerBase* controller, scalar_array_t& timeTrajectory,
+  void runSimulation(const std::pair<scalar_t, scalar_t>& timeInterval, ControllerBase* controller, scalar_array_t& timeTrajectory,
                      vector_array_t& stateTrajectory, vector_array_t& inputTrajectory);
 
   //! Helper method to remove the ground plane from simulation

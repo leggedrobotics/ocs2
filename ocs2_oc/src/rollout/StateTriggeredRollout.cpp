@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_oc/rollout/StateTriggeredRollout.h>
+#include "ocs2_oc/rollout/StateTriggeredRollout.h"
 
 #include <ocs2_core/control/StateBasedLinearController.h>
 #include <ocs2_oc/rollout/RootFinder.h>
@@ -37,26 +37,39 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t StateTriggeredRollout::runImpl(const time_interval_array_t& timeIntervalArray, const vector_t& initState,
-                                        ControllerBase* controller, scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces,
-                                        vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) {
+StateTriggeredRollout::StateTriggeredRollout(const ControlledSystemBase& systemDynamics, rollout::Settings rolloutSettings)
+    : RolloutBase(std::move(rolloutSettings)),
+      systemDynamicsPtr_(systemDynamics.clone()),
+      systemEventHandlersPtr_(new StateTriggeredEventHandler(this->settings().timeStep)) {
+  // construct dynamicsIntegratorsPtr
+  dynamicsIntegratorPtr_ = std::move(newIntegrator(this->settings().integratorType, systemEventHandlersPtr_));
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+vector_t StateTriggeredRollout::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, ControllerBase* controller,
+                                    ModeSchedule& modeSchedule, scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock,
+                                    vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) {
+  if (initTime > finalTime) {
+    throw std::runtime_error("[StateTriggeredRollout::run] The initial time should be less-equal to the final time!");
+  }
   if (controller == nullptr) {
-    throw std::runtime_error("The input controller is not set.");
+    throw std::runtime_error("[StateTriggeredRollout::run] Controller is not set!");
   }
 
   // max number of steps for integration
-  const auto maxNumSteps = static_cast<size_t>(this->settings().maxNumStepsPerSecond *
-                                               std::max(1.0, timeIntervalArray.back().second - timeIntervalArray.front().first));
+  const auto maxNumSteps = static_cast<size_t>(this->settings().maxNumStepsPerSecond * std::max(1.0, finalTime - initTime));
 
   // clearing the output trajectories
+  modeSchedule.clear();
   timeTrajectory.clear();
   timeTrajectory.reserve(maxNumSteps + 1);
   stateTrajectory.clear();
   stateTrajectory.reserve(maxNumSteps + 1);
   inputTrajectory.clear();
   inputTrajectory.reserve(maxNumSteps + 1);
-  eventsPastTheEndIndeces.clear();
-  eventsPastTheEndIndeces.reserve(maxNumSteps);
+  postEventIndicesStock.clear();
 
   // set controller
   StateBasedLinearController trajectorySpreadingController;
@@ -73,19 +86,19 @@ vector_t StateTriggeredRollout::runImpl(const time_interval_array_t& timeInterva
   // reset the event class
   systemEventHandlersPtr_->reset();
 
-  vector_t x0 = initState;
-  int k_u = 0;  // control input iterator
+  RootFinder rootFinder(this->settings().rootFindingAlgorithm);  // root-finding algorithm
 
+  // TODO: this should be the current mode
   size_t eventID = 0;
-  scalar_t t0 = timeIntervalArray.front().first;
-  scalar_t t1 = timeIntervalArray.back().second;
-  const scalar_t finalTime = t1;  // stored separately due to overwriting t1 when refining
+  scalar_t t0 = initTime;
+  scalar_t t1 = finalTime;
+  vector_t x0 = initState;
+  modeSchedule.modeSequence.push_back(eventID);
 
   bool refining = false;
+  int k_u = 0;                    // control input iterator
   int singleEventIterations = 0;  // iterations for a single event
   int numTotalIterations = 0;     // overall number of iterations
-
-  RootFinder rootFinder(this->settings().rootFindingAlgorithm);  // root-finding algorithm
 
   while (true) {  // keeps looping until end time condition is fulfilled, after which the loop is broken
     bool triggered = false;
@@ -140,7 +153,11 @@ vector_t StateTriggeredRollout::runImpl(const time_interval_array_t& timeInterva
       x0 = systemDynamicsPtr_->computeJumpMap(queryTime, queryState);
 
       // append the event to array with event indices
-      eventsPastTheEndIndeces.push_back(stateTrajectory.size());
+      postEventIndicesStock.push_back(stateTrajectory.size());
+
+      // append to modeSchedule
+      modeSchedule.eventTimes.push_back(queryTime);
+      modeSchedule.modeSequence.push_back(eventID);
 
       // determine guard surface cross value and update the eventHandler
       vector_t guardSurfacesCross = systemDynamicsPtr_->computeGuardSurfaces(t0, x0);
@@ -176,7 +193,7 @@ vector_t StateTriggeredRollout::runImpl(const time_interval_array_t& timeInterva
   }  // end of while loop
 
   // check for the numerical stability
-  this->checkNumericalStability(controller, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
+  this->checkNumericalStability(*controller, timeTrajectory, postEventIndicesStock, stateTrajectory, inputTrajectory);
 
   return stateTrajectory.back();
 }

@@ -89,7 +89,8 @@ class TrajectorySpreadingTest : public testing::Test {
   /******************************************************************************************************/
   Result rollout(const ocs2::ModeSchedule& modeSchedule, const std::pair<ocs2::scalar_t, ocs2::scalar_t>& timeInterval) const {
     Result out;
-    rolloutPtr->run(timeInterval.first, initState, timeInterval.second, controllerPtr.get(), modeSchedule.eventTimes, out.timeTrajectory,
+    ocs2::ModeSchedule modeScheduleTemp = modeSchedule;  // since it is TimeTriggeredRollout, it will not be changed
+    rolloutPtr->run(timeInterval.first, initState, timeInterval.second, controllerPtr.get(), modeScheduleTemp, out.timeTrajectory,
                     out.postEventsIndeces, out.stateTrajectory, out.inputTrajectory);
 
     out.eventDataArray.resize(out.postEventsIndeces.size());

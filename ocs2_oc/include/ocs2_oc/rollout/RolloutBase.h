@@ -34,8 +34,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/control/ControllerBase.h>
+#include "ocs2_core/reference/ModeSchedule.h"
 
-#include "RolloutSettings.h"
+#include "ocs2_oc/rollout/RolloutSettings.h"
 
 namespace ocs2 {
 
@@ -44,9 +45,6 @@ namespace ocs2 {
  */
 class RolloutBase {
  public:
-  using time_interval_t = std::pair<scalar_t, scalar_t>;
-  using time_interval_array_t = std::vector<time_interval_t>;
-
   /**
    * Default constructor.
    *
@@ -58,13 +56,6 @@ class RolloutBase {
    * Default destructor.
    */
   virtual ~RolloutBase() = default;
-
-  /**
-   * Returns the rollout settings.
-   *
-   * @return The rollout settings.
-   */
-  rollout::Settings& settings() { return rolloutSettings_; }
 
   /**
    * Returns the rollout settings.
@@ -104,7 +95,8 @@ class RolloutBase {
    * @param [in] initState: The initial state.
    * @param [in] finalTime: The final time.
    * @param [in] controller: control policy.
-   * @param [in] eventTimes: The sorted event times array which can cover time beyond initTime and finalTime {s_0 < ... < s_{n-1}}.
+   * @param [in, out] modeSchedule: Defines the sequence of modes and the associated event times. For TimeTriggeredRollout
+   *                                this is an input argument while for StateTriggeredRollout this is an output argument.
    * @param [out] timeTrajectory: The time trajectory stamp.
    * @param [out] postEventIndicesStock: Indices containing past-the-end index of events trigger.
    * @param [out] stateTrajectory: The state trajectory.
@@ -112,9 +104,9 @@ class RolloutBase {
    *
    * @return The final state (state jump is considered if it took place)
    */
-  vector_t run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, ControllerBase* controller,
-               const scalar_array_t& eventTimes, scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock,
-               vector_array_t& stateTrajectory, vector_array_t& inputTrajectory);
+  virtual vector_t run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, ControllerBase* controller,
+                       ModeSchedule& modeSchedule, scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock,
+                       vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) = 0;
 
   /**
    * Prints out the rollout.
@@ -128,37 +120,16 @@ class RolloutBase {
                       const vector_array_t& stateTrajectory, const vector_array_t* const inputTrajectory);
 
  protected:
-  /**
-   * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
-   * to integrate the system dynamics in time period [initTime, finalTime].
-   *
-   * @param [in] timeIntervalArray: An array of the rollout's start and final times.
-   * @param [in] initState: The initial state.
-   * @param [in] controller: control policy.
-   * @param [out] timeTrajectory: The time trajectory stamp.
-   * @param [out] postEventIndicesStock: Indices containing past-the-end index of events trigger.
-   * @param [out] stateTrajectory: The state trajectory.
-   * @param [out] inputTrajectory: The control input trajectory.
-   *
-   * @return The final state (state jump is considered if it took place)
-   */
-  virtual vector_t runImpl(const time_interval_array_t& timeIntervalArray, const vector_t& initState, ControllerBase* controller,
-                           scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, vector_array_t& stateTrajectory,
-                           vector_array_t& inputTrajectory) = 0;
+  /** Extracts an array of the rollout's start and final times for each active mode. */
+  std::vector<std::pair<scalar_t, scalar_t>> findActiveModesTimeInterval(scalar_t initTime, scalar_t finalTime,
+                                                                         const scalar_array_t& eventTimes) const;
 
-  /**
-   * Checks for the numerical stability if rollout::Settings::checkNumericalStability is true.
-   *
-   * @param [in] timeTrajectory: The time trajectory stamp.
-   * @param [in] postEventIndicesStock: Indices containing past-the-end index of events trigger.
-   * @param [in] stateTrajectory: The state trajectory.
-   * @param [in] inputTrajectory: The control input trajectory.
-   */
-  void checkNumericalStability(ControllerBase* controller, const scalar_array_t& timeTrajectory, const size_array_t& postEventIndicesStock,
-                               const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory) const;
+  /** Checks for the numerical stability if rollout::Settings::checkNumericalStability is true. */
+  void checkNumericalStability(const ControllerBase& controller, const scalar_array_t& timeTrajectory,
+                               const size_array_t& postEventIndicesStock, const vector_array_t& stateTrajectory,
+                               const vector_array_t& inputTrajectory) const;
 
- private:
-  rollout::Settings rolloutSettings_;
+  const rollout::Settings rolloutSettings_;
 };
 
 }  // namespace ocs2

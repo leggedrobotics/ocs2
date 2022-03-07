@@ -27,26 +27,22 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include "ocs2_oc/rollout/RolloutBase.h"
+
+#include <algorithm>
 #include <iomanip>
 #include <iostream>
 
 #include <ocs2_core/NumericTraits.h>
 #include <ocs2_core/misc/Numerics.h>
 
-#include <ocs2_oc/rollout/RolloutBase.h>
-
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t RolloutBase::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, ControllerBase* controller,
-                          const scalar_array_t& eventTimes, scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock,
-                          vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) {
-  if (initTime > finalTime) {
-    throw std::runtime_error("[RolloutBase::run] The initial time should be less-equal to the final time!");
-  }
-
+std::vector<std::pair<scalar_t, scalar_t>> RolloutBase::findActiveModesTimeInterval(scalar_t initTime, scalar_t finalTime,
+                                                                                    const scalar_array_t& eventTimes) const {
   // switching times
   const auto firstIndex = std::upper_bound(eventTimes.cbegin(), eventTimes.cend(), initTime);  // no event at initial time
   const auto lastIndex = std::lower_bound(eventTimes.cbegin(), eventTimes.cend(), finalTime);  // no event at final time
@@ -57,7 +53,7 @@ vector_t RolloutBase::run(scalar_t initTime, const vector_t& initState, scalar_t
 
   // constructing the rollout time intervals
   const int numSubsystems = switchingTimes.size() - 1;  // switchingTimes contains at least two elements
-  time_interval_array_t timeIntervalArray(numSubsystems);
+  std::vector<std::pair<scalar_t, scalar_t>> timeIntervalArray(numSubsystems);
   for (int i = 0; i < numSubsystems; i++) {
     const auto& beginTime = switchingTimes[i];
     const auto& endTime = switchingTimes[i + 1];
@@ -67,7 +63,7 @@ vector_t RolloutBase::run(scalar_t initTime, const vector_t& initState, scalar_t
     timeIntervalArray[i] = std::make_pair(std::min(beginTime + eps, endTime), endTime);
   }  // end of for loop
 
-  return runImpl(timeIntervalArray, initState, controller, timeTrajectory, postEventIndicesStock, stateTrajectory, inputTrajectory);
+  return timeIntervalArray;
 }
 
 /******************************************************************************************************/
@@ -109,7 +105,7 @@ void RolloutBase::display(const scalar_array_t& timeTrajectory, const size_array
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void RolloutBase::checkNumericalStability(ControllerBase* controller, const scalar_array_t& timeTrajectory,
+void RolloutBase::checkNumericalStability(const ControllerBase& controller, const scalar_array_t& timeTrajectory,
                                           const size_array_t& postEventIndicesStock, const vector_array_t& stateTrajectory,
                                           const vector_array_t& inputTrajectory) const {
   if (!rolloutSettings_.checkNumericalStability) {
@@ -143,7 +139,7 @@ void RolloutBase::checkNumericalStability(ControllerBase* controller, const scal
       const vector_array_t* const inputTrajectoryTempPtr = rolloutSettings_.reconstructInputTrajectory ? &inputTrajectoryTemp : nullptr;
       display(timeTrajectoryTemp, postEventIndicesStock, stateTrajectoryTemp, inputTrajectoryTempPtr);
 
-      controller->display();
+      controller.display();
 
       throw;
     }

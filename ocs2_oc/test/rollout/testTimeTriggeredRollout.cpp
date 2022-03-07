@@ -48,8 +48,8 @@ TEST(time_rollout_test, time_rollout_test) {
   const scalar_t finalTime = 10.0;
   const vector_t initState = vector_t::Zero(nx);
 
-  // event times
-  const std::vector<scalar_t> eventTimes{3.0, 4.0, 4.0};
+  // ModeSchedule
+  ModeSchedule modeSchedule({3.0, 4.0, 4.0}, {0, 1, 2, 3});
 
   const matrix_t A = (matrix_t(nx, nx) << -2.0, -1.0, 1.0, 0.0).finished();
   const matrix_t B = (matrix_t(nx, nu) << 1.0, 0.0).finished();
@@ -79,7 +79,7 @@ TEST(time_rollout_test, time_rollout_test) {
   vector_array_t stateTrajectory;
   vector_array_t inputTrajectory;
 
-  rolloutBasePtr->run(initTime, initState, finalTime, &controller, eventTimes, timeTrajectory, eventsPastTheEndIndeces,
+  rolloutBasePtr->run(initTime, initState, finalTime, &controller, modeSchedule, timeTrajectory, eventsPastTheEndIndeces,
                       stateTrajectory, inputTrajectory);
 
   // check sizes

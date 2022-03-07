@@ -49,9 +49,15 @@ InitializerRollout* InitializerRollout::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t InitializerRollout::runImpl(const time_interval_array_t& timeIntervalArray, const vector_t& initState, ControllerBase*,
-                                     scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, vector_array_t& stateTrajectory,
-                                     vector_array_t& inputTrajectory) {
+vector_t InitializerRollout::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, ControllerBase* controller,
+                                 ModeSchedule& modeSchedule, scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock,
+                                 vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) {
+  if (initTime > finalTime) {
+    throw std::runtime_error("[InitializerRollout::run] The initial time should be less-equal to the final time!");
+  }
+
+  // extract sub-systems
+  const auto timeIntervalArray = findActiveModesTimeInterval(initTime, finalTime, modeSchedule.eventTimes);
   const auto numSubsystems = timeIntervalArray.size();
   const auto numEvents = numSubsystems - 1;
   const size_t maxNumSteps = (timeIntervalArray.back().second - timeIntervalArray.front().first) / settings().timeStep;

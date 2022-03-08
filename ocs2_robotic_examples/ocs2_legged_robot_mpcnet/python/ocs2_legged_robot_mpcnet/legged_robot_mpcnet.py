@@ -84,7 +84,7 @@ learning_rate_gating_net = learning_rate_default
 learning_rate_expert_nets = learning_rate_default
 optimizer = torch.optim.Adam([{'params': policy.gating_net.parameters(), 'lr': learning_rate_gating_net},
                               {'params': policy.expert_nets.parameters(), 'lr': learning_rate_expert_nets}],
-                             lr=learning_rate_default, amsgrad=True)
+                             lr=learning_rate_default)
 
 # weights for ["stance", "trot_1", "trot_2"]
 weights = [1, 2, 2]

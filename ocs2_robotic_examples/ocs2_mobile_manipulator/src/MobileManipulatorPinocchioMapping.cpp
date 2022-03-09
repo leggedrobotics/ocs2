@@ -82,7 +82,9 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointVelocity(con
       vPinocchio << cos(theta) * v, sin(theta) * v, input(1), input.tail(modelInfo_.armDim);
       break;
     }
-    default: { throw std::runtime_error("The chosen manipulator model type is not supported!"); }
+    default: {
+      throw std::runtime_error("The chosen manipulator model type is not supported!");
+    }
   }  // end of switch-case
 
   return vPinocchio;
@@ -120,7 +122,9 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getOcs2Jacobian(const vector_
       dfdu.template rightCols(modelInfo_.armDim) = Jv.template rightCols(modelInfo_.armDim);
       return {Jq, dfdu};
     }
-    default: { throw std::runtime_error("The chosen manipulator model type is not supported!"); }
+    default: {
+      throw std::runtime_error("The chosen manipulator model type is not supported!");
+    }
   }  // end of switch-case
 }
 

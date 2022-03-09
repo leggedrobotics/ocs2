@@ -148,7 +148,9 @@ Eigen::Matrix<SCALAR_T, 6, 3> getCentroidalMomentumZyxGradient(const PinocchioIn
       rworldframe.noalias() = R * rbaseframe;
       break;
     }
-    default: { throw std::runtime_error("The chosen centroidal model type is not supported."); }
+    default: {
+      throw std::runtime_error("The chosen centroidal model type is not supported.");
+    }
   }
 
   const auto S = skewSymmetricMatrix(rworldframe);

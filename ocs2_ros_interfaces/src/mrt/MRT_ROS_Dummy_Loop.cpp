@@ -58,7 +58,7 @@ void MRT_ROS_Dummy_Loop::run(const SystemObservation& initObservation, const Tar
   while (!mrt_.initialPolicyReceived() && ros::ok() && ros::master::check()) {
     mrt_.spinMRT();
     mrt_.setCurrentObservation(initObservation);
-    ros::WallRate(mrtDesiredFrequency_).sleep();
+    ros::Rate(mrtDesiredFrequency_).sleep();
   }
   ROS_INFO_STREAM("Initial policy has been received.");
 
@@ -88,7 +88,7 @@ void MRT_ROS_Dummy_Loop::synchronizedDummyLoop(const SystemObservation& initObse
     return mrt_.updatePolicy() && std::abs(mrt_.getPolicy().timeTrajectory_.front() - time) < (tol / mpcDesiredFrequency_);
   };
 
-  ros::WallRate simRate(mrtDesiredFrequency_);
+  ros::Rate simRate(mrtDesiredFrequency_);
   while (ros::ok() && ros::master::check()) {
     std::cout << "### Current time " << currentObservation.time << "\n";
 
@@ -134,7 +134,7 @@ void MRT_ROS_Dummy_Loop::realtimeDummyLoop(const SystemObservation& initObservat
   // Loop variables
   SystemObservation currentObservation = initObservation;
 
-  ros::WallRate simRate(mrtDesiredFrequency_);
+  ros::Rate simRate(mrtDesiredFrequency_);
   while (ros::ok() && ros::master::check()) {
     std::cout << "### Current time " << currentObservation.time << "\n";
 

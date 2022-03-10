@@ -18,6 +18,7 @@
 #include <ocs2_switched_model_interface/cost/FrictionConeCost.h>
 #include <ocs2_switched_model_interface/cost/JointLimitsSoftConstraint.h>
 #include <ocs2_switched_model_interface/cost/MotionTrackingCost.h>
+#include <ocs2_switched_model_interface/cost/MotionTrackingTerminalCost.h>
 #include <ocs2_switched_model_interface/cost/TorqueLimitsSoftConstraint.h>
 #include <ocs2_switched_model_interface/dynamics/ComKinoSystemDynamicsAd.h>
 #include <ocs2_switched_model_interface/foot_planner/SwingTrajectoryPlanner.h>
@@ -58,6 +59,11 @@ std::unique_ptr<ocs2::StateInputCost> QuadrupedInterface::createMotionTrackingCo
   return std::unique_ptr<ocs2::StateInputCost>(new MotionTrackingCost(
       costSettings(), *getSwitchedModelModeScheduleManagerPtr(), getSwitchedModelModeScheduleManagerPtr()->getSwingTrajectoryPlanner(),
       getKinematicModel(), getKinematicModelAd(), getComModel(), getComModelAd(), modelSettings().recompileLibraries_));
+}
+
+std::unique_ptr<ocs2::StateCost> QuadrupedInterface::createMotionTrackingTerminalCost(matrix_t Q) const {
+  return std::unique_ptr<ocs2::StateCost>(
+      new MotionTrackingTerminalCost(std::move(Q), getSwitchedModelModeScheduleManagerPtr()->getSwingTrajectoryPlanner()));
 }
 
 std::unique_ptr<ocs2::StateCost> QuadrupedInterface::createFootPlacementCost() const {

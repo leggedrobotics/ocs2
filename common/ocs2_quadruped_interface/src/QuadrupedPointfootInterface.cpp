@@ -4,8 +4,6 @@
 
 #include "ocs2_quadruped_interface/QuadrupedPointfootInterface.h"
 
-#include <ocs2_core/cost/QuadraticStateCost.h>
-#include <ocs2_core/soft_constraint/StateInputSoftConstraint.h>
 #include <ocs2_ddp/ContinuousTimeLqr.h>
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
 #include <ocs2_switched_model_interface/core/TorqueApproximation.h>
@@ -51,8 +49,7 @@ QuadrupedPointfootInterface::QuadrupedPointfootInterface(const kinematic_model_t
   getSwitchedModelModeScheduleManagerPtr()->preSolverRun(0.0, 1.0, getInitialState());
   auto lqrSolution = ocs2::continuous_time_lqr::solve(*problemPtr_, 0.0, getInitialState(), uSystemForWeightCompensation);
   lqrSolution.valueFunction *= 10.0;
-  std::unique_ptr<ocs2::StateCost> terminalCost(new ocs2::QuadraticStateCost(lqrSolution.valueFunction));
-  problemPtr_->finalCostPtr->add("lqr_terminal_cost", std::move(terminalCost));
+  problemPtr_->finalCostPtr->add("lqr_terminal_cost", createMotionTrackingTerminalCost(lqrSolution.valueFunction));
 
   // Store cost approximation at nominal state input
   nominalCostApproximation_ = ocs2::approximateCost(*problemPtr_, 0.0, getInitialState(), uSystemForWeightCompensation);

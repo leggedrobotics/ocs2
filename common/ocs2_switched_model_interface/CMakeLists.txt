@@ -58,6 +58,7 @@ add_library(${PROJECT_NAME}
 	src/cost/JointLimitsSoftConstraint.cpp
 	src/cost/LinearStateInequalitySoftConstraint.cpp
 	src/cost/MotionTrackingCost.cpp
+	src/cost/MotionTrackingTerminalCost.cpp
 	src/cost/TorqueLimitsSoftConstraint.cpp
 	src/foot_planner/KinematicFootPlacementPenalty.cpp
 	src/foot_planner/CubicSpline.cpp

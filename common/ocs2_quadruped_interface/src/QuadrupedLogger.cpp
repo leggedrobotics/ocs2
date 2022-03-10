@@ -43,18 +43,19 @@ std::string QuadrupedLogger::getLogHeader() const {
          "contactflag_RF" << delim <<
          "contactflag_LH" << delim <<
          "contactflag_RH" << delim <<
-         "base_roll" << delim <<
-         "base_pitch" << delim <<
-         "base_yaw" << delim <<
          "base_positionInWorld_x" << delim <<
          "base_positionInWorld_y" << delim <<
          "base_positionInWorld_z" << delim <<
-         "base_angularvelocityInBase_x" << delim <<
-         "base_angularvelocityInBase_y" << delim <<
-         "base_angularvelocityInBase_z" << delim <<
+         "base_quaternion_w" << delim <<
+         "base_quaternion_x" << delim <<
+         "base_quaternion_y" << delim <<
+         "base_quaternion_z" << delim <<
          "base_linearvelocityInBase_x" << delim <<
          "base_linearvelocityInBase_y" << delim <<
-         "base_linearvelocityInBase_z" << delim;
+         "base_linearvelocityInBase_z" << delim <<
+         "base_angularvelocityInBase_x" << delim <<
+         "base_angularvelocityInBase_y" << delim <<
+         "base_angularvelocityInBase_z" << delim;
   // clang-format on
   for (const auto& name : namesPerLeg("jointAngle", {"HAA", "HFE", "KFE"})) {
     header << name << delim;
@@ -63,9 +64,6 @@ std::string QuadrupedLogger::getLogHeader() const {
     header << name << delim;
   }
   for (const auto& name : namesPerLeg("contactForcesInWorld", {"x", "y", "z"})) {
-    header << name << delim;
-  }
-  for (const auto& name : namesPerLeg("torques", {"HAA", "HFE", "KFE"})) {
     header << name << delim;
   }
   for (const auto& name : additionalColumns_) {
@@ -78,12 +76,11 @@ int QuadrupedLogger::getNumColumns() const {
   int numColumns = 0;
   numColumns += 1;                          // time
   numColumns += NUM_CONTACT_POINTS;         // contactFlags
-  numColumns += BASE_COORDINATE_SIZE;       // base pose
+  numColumns += BASE_COORDINATE_SIZE + 1;   // base pose (with quaternion)
   numColumns += BASE_COORDINATE_SIZE;       // base twist
   numColumns += JOINT_COORDINATE_SIZE;      // joint angles
   numColumns += JOINT_COORDINATE_SIZE;      // joint velocities
   numColumns += 3 * NUM_CONTACT_POINTS;     // contact forces
-  numColumns += JOINT_COORDINATE_SIZE;      // torques
   numColumns += additionalColumns_.size();  // extra columns
   return numColumns;
 }
@@ -97,10 +94,14 @@ void QuadrupedLogger::addLine(const ocs2::SystemObservation& observation, const 
 
   // Extract elements from state
   const base_coordinate_t basePose = getBasePose(state);
+  const auto basePosition = getPositionInOrigin(basePose);
   const base_coordinate_t baseLocalVelocities = getBaseLocalVelocities(state);
+  const auto baseAngularVelocities = getAngularVelocity(baseLocalVelocities);
+  const auto baseLinearVelocities = getLinearVelocity(baseLocalVelocities);
   const joint_coordinate_t qJoints = getJointPositions(state);
   const joint_coordinate_t dqJoints = getJointVelocities(input);
   const Eigen::Matrix3d o_R_b = rotationMatrixBaseToOrigin(getOrientation(basePose));
+  const auto quat = ocs2::matrixToQuaternion(o_R_b);
 
   // Contact state
   const contact_flag_t contactFlags = modeNumber2StanceLeg(observation.mode);
@@ -113,9 +114,6 @@ void QuadrupedLogger::addLine(const ocs2::SystemObservation& observation, const 
     contactForcesInWorld[i] = o_R_b * contactForcesInBase[i];
   }
 
-  // Torques
-  const feet_array_t<vector3_t> torques = toArray(torqueApproximation(qJoints, contactForcesInBase, *kinematicModel_));
-
   // Fill log
   vector_t logEntry(getNumColumns());
   // clang-format off
@@ -125,18 +123,19 @@ void QuadrupedLogger::addLine(const ocs2::SystemObservation& observation, const 
       static_cast<double>(contactFlags[1]),
       static_cast<double>(contactFlags[2]),
       static_cast<double>(contactFlags[3]),
-      basePose,
-      baseLocalVelocities,
+      basePosition,
+      quat.w(),
+      quat.x(),
+      quat.y(),
+      quat.z(),
+      baseLinearVelocities,
+      baseAngularVelocities,
       qJoints,
       dqJoints,
       contactForcesInWorld[0],
       contactForcesInWorld[1],
       contactForcesInWorld[2],
       contactForcesInWorld[3],
-      torques[0],
-      torques[1],
-      torques[2],
-      torques[3],
       additionalColumns;
   // clang-format on
 

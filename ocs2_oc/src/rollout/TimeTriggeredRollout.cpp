@@ -27,26 +27,39 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
+#include "ocs2_oc/rollout/TimeTriggeredRollout.h"
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t TimeTriggeredRollout::runImpl(const time_interval_array_t& timeIntervalArray, const vector_t& initState,
-                                       ControllerBase* controller, scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock,
-                                       vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) {
+TimeTriggeredRollout::TimeTriggeredRollout(const ControlledSystemBase& systemDynamics, rollout::Settings rolloutSettings)
+    : RolloutBase(std::move(rolloutSettings)), systemDynamicsPtr_(systemDynamics.clone()), systemEventHandlersPtr_(new SystemEventHandler) {
+  // construct dynamicsIntegratorsPtr
+  dynamicsIntegratorPtr_ = std::move(newIntegrator(this->settings().integratorType, systemEventHandlersPtr_));
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+vector_t TimeTriggeredRollout::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, ControllerBase* controller,
+                                   ModeSchedule& modeSchedule, scalar_array_t& timeTrajectory, size_array_t& postEventIndices,
+                                   vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) {
+  if (initTime > finalTime) {
+    throw std::runtime_error("[TimeTriggeredRollout::run] The initial time should be less-equal to the final time!");
+  }
   if (controller == nullptr) {
-    throw std::runtime_error("[TimeTriggeredRollout::runImpl] The input controller is not set.");
+    throw std::runtime_error("[TimeTriggeredRollout::run] Controller is not set!");
   }
 
+  // extract sub-systems
+  const auto timeIntervalArray = findActiveModesTimeInterval(initTime, finalTime, modeSchedule.eventTimes);
   const int numSubsystems = timeIntervalArray.size();
   const int numEvents = numSubsystems - 1;
 
   // max number of steps for integration
-  const auto maxNumSteps = static_cast<size_t>(this->settings().maxNumStepsPerSecond *
-                                               std::max(1.0, timeIntervalArray.back().second - timeIntervalArray.front().first));
+  const auto maxNumSteps = static_cast<size_t>(this->settings().maxNumStepsPerSecond * std::max(1.0, finalTime - initTime));
 
   // clearing the output trajectories
   timeTrajectory.clear();
@@ -55,8 +68,8 @@ vector_t TimeTriggeredRollout::runImpl(const time_interval_array_t& timeInterval
   stateTrajectory.reserve(maxNumSteps + 1);
   inputTrajectory.clear();
   inputTrajectory.reserve(maxNumSteps + 1);
-  postEventIndicesStock.clear();
-  postEventIndicesStock.reserve(numEvents);
+  postEventIndices.clear();
+  postEventIndices.reserve(numEvents);
 
   // set controller
   systemDynamicsPtr_->setController(controller);
@@ -90,14 +103,14 @@ vector_t TimeTriggeredRollout::runImpl(const time_interval_array_t& timeInterval
 
     // a jump has taken place
     if (i < numEvents) {
-      postEventIndicesStock.push_back(stateTrajectory.size());
+      postEventIndices.push_back(stateTrajectory.size());
       // jump map
       beginState = systemDynamicsPtr_->computeJumpMap(timeTrajectory.back(), stateTrajectory.back());
     }
   }  // end of i loop
 
   // check for the numerical stability
-  this->checkNumericalStability(controller, timeTrajectory, postEventIndicesStock, stateTrajectory, inputTrajectory);
+  this->checkNumericalStability(*controller, timeTrajectory, postEventIndices, stateTrajectory, inputTrajectory);
 
   return stateTrajectory.back();
 }

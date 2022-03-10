@@ -417,11 +417,11 @@ void GaussNewtonDDP::rolloutInitialTrajectory(PrimalDataContainer& primalData, C
   assert(primalData.primalSolution.controllerPtr_.get() != controller);
   // clear output
   primalData.clear();
-  // get event times
-  const scalar_array_t& eventTimes = this->getReferenceManager().getModeSchedule().eventTimes;
+  // for non-StateTriggeredRollout initialize modeSchedule
   primalData.primalSolution.modeSchedule_ = this->getReferenceManager().getModeSchedule();
 
   // create alias
+  auto& modeSchedule = primalData.primalSolution.modeSchedule_;
   auto& timeTrajectory = primalData.primalSolution.timeTrajectory_;
   auto& stateTrajectory = primalData.primalSolution.stateTrajectory_;
   auto& inputTrajectory = primalData.primalSolution.inputTrajectory_;
@@ -448,8 +448,8 @@ void GaussNewtonDDP::rolloutInitialTrajectory(PrimalDataContainer& primalData, C
   vector_t xCurrent = initState_;
   if (controllerRolloutFromTo.first < controllerRolloutFromTo.second) {
     xCurrent = dynamicsForwardRolloutPtrStock_[workerIndex]->run(controllerRolloutFromTo.first, initState_, controllerRolloutFromTo.second,
-                                                                 controller, eventTimes, timeTrajectory, postEventIndices, stateTrajectory,
-                                                                 inputTrajectory);
+                                                                 controller, modeSchedule, timeTrajectory, postEventIndices,
+                                                                 stateTrajectory, inputTrajectory);
   }
 
   // finish rollout with operating points
@@ -469,7 +469,7 @@ void GaussNewtonDDP::rolloutInitialTrajectory(PrimalDataContainer& primalData, C
     vector_array_t stateTrajectoryTail;
     vector_array_t inputTrajectoryTail;
     xCurrent = initializerRolloutPtrStock_[workerIndex]->run(operatingPointsFromTo.first, xCurrent, operatingPointsFromTo.second, nullptr,
-                                                             eventTimes, timeTrajectoryTail, eventsPastTheEndIndecesTail,
+                                                             modeSchedule, timeTrajectoryTail, eventsPastTheEndIndecesTail,
                                                              stateTrajectoryTail, inputTrajectoryTail);
 
     // Add controller rollout length to event past the indeces

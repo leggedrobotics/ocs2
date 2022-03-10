@@ -74,8 +74,9 @@ bool LevenbergMarquardtStrategy::run(const std::pair<scalar_t, scalar_t>& timePe
 
   try {
     // compute primal solution
+    solution.primalSolution.modeSchedule_ = modeSchedule;
     incrementController(stepLength, unoptimizedController, getLinearController(solution.primalSolution));
-    solution.avgTimeStep = rolloutTrajectory(rolloutRef_, timePeriod, initState, modeSchedule, solution.primalSolution);
+    solution.avgTimeStep = rolloutTrajectory(rolloutRef_, timePeriod.first, initState, timePeriod.second, solution.primalSolution);
 
     // adjust dual solution
     const DualSolution* adjustedDualSolutionPtr = &dualSolution;

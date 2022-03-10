@@ -258,21 +258,14 @@ class GaussNewtonDDP : public SolverBase {
    * Attention: Do NOT pass the controllerPtr of the same primalData used for the first parameter to the second parameter, as all
    * member variables(including controller) of primal data will be cleared.
    *
-   * @param [in] primalData: primalData
+   * @param [out] primalData: primalData
    * @param [in] controller: nominal controller used to rollout (time, state, input...) trajectories
    * @param [in] workerIndex: working thread (default is 0).
    */
   void rolloutInitialTrajectory(PrimalDataContainer& primalData, ControllerBase* controller, size_t workerIndex = 0);
 
   /**
-   * Calculates the controller. This method uses the following variables:
-   * - constrained, linearized model
-   * - constrained, quadratized cost
-   *
-   * The method modifies:
-   * - nominalControllersStock_: the controller that stabilizes the system
-   * around the new nominal trajectory and improves the constraints as well as
-   * the increment to the feed-forward control input.
+   * Calculates the controller. This method uses the following variables. The method modifies unoptimizedController_.
    */
   void calculateController();
 

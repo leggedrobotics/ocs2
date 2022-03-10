@@ -68,16 +68,17 @@ PerformanceIndex computeRolloutPerformanceIndex(const scalar_array_t& timeTrajec
  * to integrate the system dynamics in time period [initTime, finalTime].
  *
  * @param [in] rollout: A reference to the rollout class.
- * @param [in] timePeriod: Initial and final times period
- * @param [in] initState: Initial state
- * @param [in] modeSchedule: The mode schedule
- * @param [in] controller: Control policies.
- * @param [out] primalSolution: The resulting primal solution.
+ * @param [in] initTime: The initial time.
+ * @param [in] initState: The initial state.
+ * @param [in] finalTime: The final time.
+ * @param [in, out] primalSolution: The resulting primal solution. Make sure that primalSolution::controllerPtr is set since
+ *                                  the rollout is performed based on the controller stored in primalSolution. Moreover,
+ *                                  except for StateTriggeredRollout, one should also set primalSolution::modeSchedule.
  *
  * @return average time step.
  */
-scalar_t rolloutTrajectory(RolloutBase& rollout, const std::pair<scalar_t, scalar_t>& timePeriod, const vector_t& initState,
-                           const ModeSchedule& modeSchedule, PrimalSolution& primalSolution);
+scalar_t rolloutTrajectory(RolloutBase& rollout, scalar_t initTime, const vector_t& initState, scalar_t finalTime,
+                           PrimalSolution& primalSolution);
 
 /**
  * Computes the integral of the squared (IS) norm of the controller update.
@@ -88,7 +89,7 @@ scalar_t rolloutTrajectory(RolloutBase& rollout, const std::pair<scalar_t, scala
 scalar_t computeControllerUpdateIS(const LinearController& controller);
 
 /**
- * Outputs a controller with same same time stamp and gains as unoptimizedController. However, bias is incremented based on:
+ * Outputs a controller with the same time stamp and gains as unoptimizedController. However, bias is incremented based on:
  * biasArray = unoptimizedController.biasArray + stepLength * unoptimizedController.deltaBiasArray
  */
 void incrementController(scalar_t stepLength, const LinearController& unoptimizedController, LinearController& controller);

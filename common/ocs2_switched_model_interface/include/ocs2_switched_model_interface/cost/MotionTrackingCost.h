@@ -28,11 +28,11 @@ class MotionTrackingCost : public ocs2::StateInputCostGaussNewtonAd {
     vector3_t comPosition{1000.0, 1000.0, 1500.0};
     vector3_t comAngularVelocity{5.0, 10.0, 10.0};
     vector3_t comLinearVelocity{15.0, 15.0, 30.0};
-    vector3_t jointPosition{2.0, 2.0, 1.0};
-    vector3_t footPosition{vector3_t::Constant(60.0)};
-    vector3_t jointVelocity{0.02, 0.02, 0.01};
-    vector3_t footVelocity{vector3_t::Constant(1.0)};
-    vector3_t contactForce{vector3_t::Constant(0.001)};
+    feet_array_t<vector3_t> jointPosition = constantFeetArray(vector3_t(2.0, 2.0, 1.0));
+    feet_array_t<vector3_t> footPosition = constantFeetArray(vector3_t(60.0, 60.0, 60.0));
+    feet_array_t<vector3_t> jointVelocity = constantFeetArray(vector3_t(0.02, 0.02, 0.01));
+    feet_array_t<vector3_t> footVelocity = constantFeetArray(vector3_t(1.0, 1.0, 1.0));
+    feet_array_t<vector3_t> contactForce = constantFeetArray(vector3_t(0.001, 0.001, 0.001));
   };
 
   using kinematic_model_t = KinematicsModelBase<ocs2::scalar_t>;
@@ -64,8 +64,7 @@ class MotionTrackingCost : public ocs2::StateInputCostGaussNewtonAd {
   std::unique_ptr<com_model_t> comModelPtr_;
   std::unique_ptr<ad_com_model_t> adComModelPtr_;
 
-  // Only needed during model generation
-  ocs2::ad_vector_t sqrtWeights_;
+  ocs2::vector_t sqrtWeights_;
 };
 
 MotionTrackingCost::Weights loadWeightsFromFile(const std::string& filename, const std::string& fieldname, bool verbose = true);

@@ -117,15 +117,15 @@ MotionTrackingCost::MotionTrackingCost(const Weights& settings, const SwitchedMo
   weightStruct.comAngularVelocity = settings.comAngularVelocity.cwiseSqrt();
   weightStruct.comLinearVelocity = settings.comLinearVelocity.cwiseSqrt();
   for (size_t leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
-    weightStruct.jointPosition[leg] = settings.jointPosition.cwiseSqrt();
-    weightStruct.footPosition[leg] = settings.footPosition.cwiseSqrt();
-    weightStruct.jointVelocity[leg] = settings.jointVelocity.cwiseSqrt();
-    weightStruct.footVelocity[leg] = settings.footVelocity.cwiseSqrt();
-    weightStruct.contactForce[leg] = settings.contactForce.cwiseSqrt();
+    weightStruct.jointPosition[leg] = settings.jointPosition[leg].cwiseSqrt();
+    weightStruct.footPosition[leg] = settings.footPosition[leg].cwiseSqrt();
+    weightStruct.jointVelocity[leg] = settings.jointVelocity[leg].cwiseSqrt();
+    weightStruct.footVelocity[leg] = settings.footVelocity[leg].cwiseSqrt();
+    weightStruct.contactForce[leg] = settings.contactForce[leg].cwiseSqrt();
   }
-  sqrtWeights_ = costElementsToVector(weightStruct).cast<ocs2::ad_scalar_t>();
+  sqrtWeights_ = costElementsToVector(weightStruct);
 
-  initialize(STATE_DIM, INPUT_DIM, costVectorLength, "MotionTrackingCost", "/tmp/ocs2", recompile);
+  initialize(STATE_DIM, INPUT_DIM, costVectorLength + sqrtWeights_.size(), "MotionTrackingCost", "/tmp/ocs2", recompile);
 };
 
 ocs2::vector_t MotionTrackingCost::getParameters(ocs2::scalar_t time, const ocs2::TargetTrajectories& targetTrajectories) const {
@@ -141,7 +141,9 @@ ocs2::vector_t MotionTrackingCost::getParameters(ocs2::scalar_t time, const ocs2
         weightCompensatingInputs(*comModelPtr_, contactFlags, getOrientation(getBasePose(xRef))).head<3 * NUM_CONTACT_POINTS>();
   }
 
-  return computeMotionReferences(time, xRef, uRef, *swingTrajectoryPlannerPtr_);
+  ocs2::vector_t parameters(costVectorLength + sqrtWeights_.size());
+  parameters << computeMotionReferences(time, xRef, uRef, *swingTrajectoryPlannerPtr_), sqrtWeights_;
+  return parameters;
 }
 
 MotionTrackingCost::MotionTrackingCost(const MotionTrackingCost& other)
@@ -156,8 +158,11 @@ MotionTrackingCost::MotionTrackingCost(const MotionTrackingCost& other)
 
 ocs2::ad_vector_t MotionTrackingCost::costVectorFunction(ocs2::ad_scalar_t time, const ocs2::ad_vector_t& state,
                                                          const ocs2::ad_vector_t& input, const ocs2::ad_vector_t& parameters) const {
+  auto referenceTargets = parameters.head(costVectorLength);
+  auto sqrtWeights = parameters.tail(sqrtWeights_.size());
+
   const auto currentTargets = computeMotionTargets<ocs2::ad_scalar_t>(state, input, *adKinematicModelPtr_, *adComModelPtr_);
-  ocs2::ad_vector_t errors = (currentTargets - parameters).cwiseProduct(sqrtWeights_);
+  ocs2::ad_vector_t errors = (currentTargets - referenceTargets).cwiseProduct(sqrtWeights);
 
   // Rotation error
   auto rotationErrorInWorld = rotationError(rotationMatrixOriginToBase<ocs2::ad_scalar_t>(currentTargets.head<3>()),
@@ -165,7 +170,7 @@ ocs2::ad_vector_t MotionTrackingCost::costVectorFunction(ocs2::ad_scalar_t time,
   auto rotationErrorInRef = rotateVectorOriginToBase<ocs2::ad_scalar_t>(rotationErrorInWorld, parameters.head<3>());
 
   // For the orientation, we replace the error in Euler angles coordinates with a proper rotation error.
-  errors.head<3>() = rotationErrorInRef.cwiseProduct(sqrtWeights_.head<3>());
+  errors.head<3>() = rotationErrorInRef.cwiseProduct(sqrtWeights.head<3>());
   return errors;
 }
 
@@ -192,21 +197,24 @@ MotionTrackingCost::Weights loadWeightsFromFile(const std::string& filename, con
   ocs2::loadData::loadPtreeValue(pt, weights.comLinearVelocity.x(), fieldname + ".base_linear_vel_x", verbose);
   ocs2::loadData::loadPtreeValue(pt, weights.comLinearVelocity.y(), fieldname + ".base_linear_vel_y", verbose);
   ocs2::loadData::loadPtreeValue(pt, weights.comLinearVelocity.z(), fieldname + ".base_linear_vel_z", verbose);
-  ocs2::loadData::loadPtreeValue(pt, weights.jointPosition.x(), fieldname + ".joint_position_HAA", verbose);
-  ocs2::loadData::loadPtreeValue(pt, weights.jointPosition.y(), fieldname + ".joint_position_HFE", verbose);
-  ocs2::loadData::loadPtreeValue(pt, weights.jointPosition.z(), fieldname + ".joint_position_KFE", verbose);
-  ocs2::loadData::loadPtreeValue(pt, weights.footPosition.x(), fieldname + ".foot_position_x", verbose);
-  ocs2::loadData::loadPtreeValue(pt, weights.footPosition.y(), fieldname + ".foot_position_y", verbose);
-  ocs2::loadData::loadPtreeValue(pt, weights.footPosition.z(), fieldname + ".foot_position_z", verbose);
-  ocs2::loadData::loadPtreeValue(pt, weights.jointVelocity.x(), fieldname + ".joint_velocity_HAA", verbose);
-  ocs2::loadData::loadPtreeValue(pt, weights.jointVelocity.y(), fieldname + ".joint_velocity_HFE", verbose);
-  ocs2::loadData::loadPtreeValue(pt, weights.jointVelocity.z(), fieldname + ".joint_velocity_KFE", verbose);
-  ocs2::loadData::loadPtreeValue(pt, weights.footVelocity.x(), fieldname + ".foot_velocity_x", verbose);
-  ocs2::loadData::loadPtreeValue(pt, weights.footVelocity.y(), fieldname + ".foot_velocity_y", verbose);
-  ocs2::loadData::loadPtreeValue(pt, weights.footVelocity.z(), fieldname + ".foot_velocity_z", verbose);
-  ocs2::loadData::loadPtreeValue(pt, weights.contactForce.x(), fieldname + ".contact_force_x", verbose);
-  ocs2::loadData::loadPtreeValue(pt, weights.contactForce.y(), fieldname + ".contact_force_y", verbose);
-  ocs2::loadData::loadPtreeValue(pt, weights.contactForce.z(), fieldname + ".contact_force_z", verbose);
+  for (size_t leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
+    bool legVerbose = verbose && (leg == 0);
+    ocs2::loadData::loadPtreeValue(pt, weights.jointPosition[leg].x(), fieldname + ".joint_position_HAA", legVerbose);
+    ocs2::loadData::loadPtreeValue(pt, weights.jointPosition[leg].y(), fieldname + ".joint_position_HFE", legVerbose);
+    ocs2::loadData::loadPtreeValue(pt, weights.jointPosition[leg].z(), fieldname + ".joint_position_KFE", legVerbose);
+    ocs2::loadData::loadPtreeValue(pt, weights.footPosition[leg].x(), fieldname + ".foot_position_x", legVerbose);
+    ocs2::loadData::loadPtreeValue(pt, weights.footPosition[leg].y(), fieldname + ".foot_position_y", legVerbose);
+    ocs2::loadData::loadPtreeValue(pt, weights.footPosition[leg].z(), fieldname + ".foot_position_z", legVerbose);
+    ocs2::loadData::loadPtreeValue(pt, weights.jointVelocity[leg].x(), fieldname + ".joint_velocity_HAA", legVerbose);
+    ocs2::loadData::loadPtreeValue(pt, weights.jointVelocity[leg].y(), fieldname + ".joint_velocity_HFE", legVerbose);
+    ocs2::loadData::loadPtreeValue(pt, weights.jointVelocity[leg].z(), fieldname + ".joint_velocity_KFE", legVerbose);
+    ocs2::loadData::loadPtreeValue(pt, weights.footVelocity[leg].x(), fieldname + ".foot_velocity_x", legVerbose);
+    ocs2::loadData::loadPtreeValue(pt, weights.footVelocity[leg].y(), fieldname + ".foot_velocity_y", legVerbose);
+    ocs2::loadData::loadPtreeValue(pt, weights.footVelocity[leg].z(), fieldname + ".foot_velocity_z", legVerbose);
+    ocs2::loadData::loadPtreeValue(pt, weights.contactForce[leg].x(), fieldname + ".contact_force_x", legVerbose);
+    ocs2::loadData::loadPtreeValue(pt, weights.contactForce[leg].y(), fieldname + ".contact_force_y", legVerbose);
+    ocs2::loadData::loadPtreeValue(pt, weights.contactForce[leg].z(), fieldname + ".contact_force_z", legVerbose);
+  }
 
   if (verbose) {
     std::cerr << " #### ================================================ ####" << std::endl;

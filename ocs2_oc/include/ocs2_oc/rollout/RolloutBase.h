@@ -116,8 +116,8 @@ class RolloutBase {
    * @param [in] stateTrajectory: The state trajectory.
    * @param [in] inputTrajectory: The control input trajectory.
    */
-  static void display(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
-                      const vector_array_t& stateTrajectory, const vector_array_t* const inputTrajectory);
+  static void display(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices, const vector_array_t& stateTrajectory,
+                      const vector_array_t* const inputTrajectory);
 
  protected:
   /** Extracts an array of the rollout's start and final times for each active mode. */
@@ -125,9 +125,8 @@ class RolloutBase {
                                                                          const scalar_array_t& eventTimes) const;
 
   /** Checks for the numerical stability if rollout::Settings::checkNumericalStability is true. */
-  void checkNumericalStability(const ControllerBase& controller, const scalar_array_t& timeTrajectory,
-                               const size_array_t& postEventIndices, const vector_array_t& stateTrajectory,
-                               const vector_array_t& inputTrajectory) const;
+  void checkNumericalStability(const ControllerBase& controller, const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
+                               const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory) const;
 
   const rollout::Settings rolloutSettings_;
 };

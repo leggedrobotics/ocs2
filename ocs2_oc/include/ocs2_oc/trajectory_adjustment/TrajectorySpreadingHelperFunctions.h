@@ -108,18 +108,20 @@ inline TrajectorySpreading::Status trajectorySpread(const ModeSchedule& oldModeS
   TrajectorySpreading trajectorySpreading(debugPrint);
   const auto status = trajectorySpreading.set(oldModeSchedule, newModeSchedule, oldDualSolution.timeTrajectory);
 
-  if (status.willTruncate || status.willPerformTrajectorySpreading) {
-    // adjust final, pre-jump, intermediate, time, postEventIndices
-    if (status.willTruncate) {
-      newDualSolution.final.clear();
-    }
-    newDualSolution.preJumps = trajectorySpreading.extractEventsArray(oldDualSolution.preJumps);
-    newDualSolution.intermediates = oldDualSolution.intermediates;
-    trajectorySpreading.adjustTrajectory(newDualSolution.intermediates);
-    newDualSolution.timeTrajectory = oldDualSolution.timeTrajectory;
-    trajectorySpreading.adjustTimeTrajectory(newDualSolution.timeTrajectory);
-    newDualSolution.postEventIndices = trajectorySpreading.getPostEventIndices();
+  newDualSolution.clear();
+
+  // adjust time and postEventIndices
+  newDualSolution.timeTrajectory = oldDualSolution.timeTrajectory;
+  trajectorySpreading.adjustTimeTrajectory(newDualSolution.timeTrajectory);
+  newDualSolution.postEventIndices = trajectorySpreading.getPostEventIndices();
+
+  // adjust final, pre-jump and intermediate
+  if (!status.willTruncate) {
+    newDualSolution.final = oldDualSolution.final;
   }
+  newDualSolution.preJumps = trajectorySpreading.extractEventsArray(oldDualSolution.preJumps);
+  newDualSolution.intermediates = oldDualSolution.intermediates;
+  trajectorySpreading.adjustTrajectory(newDualSolution.intermediates);
 
   return status;
 }

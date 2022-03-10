@@ -89,7 +89,8 @@ class TrajectorySpreadingTest : public testing::Test {
   /******************************************************************************************************/
   Result rollout(const ocs2::ModeSchedule& modeSchedule, const std::pair<ocs2::scalar_t, ocs2::scalar_t>& timeInterval) const {
     Result out;
-    rolloutPtr->run(timeInterval.first, initState, timeInterval.second, controllerPtr.get(), modeSchedule.eventTimes, out.timeTrajectory,
+    ocs2::ModeSchedule modeScheduleTemp = modeSchedule;  // since it is TimeTriggeredRollout, it will not be changed
+    rolloutPtr->run(timeInterval.first, initState, timeInterval.second, controllerPtr.get(), modeScheduleTemp, out.timeTrajectory,
                     out.postEventsIndeces, out.stateTrajectory, out.inputTrajectory);
 
     out.eventDataArray.resize(out.postEventsIndeces.size());
@@ -193,7 +194,7 @@ class TrajectorySpreadingTest : public testing::Test {
       const ocs2::scalar_t finalTime = spreadResult.timeTrajectory.back();
 
       const auto startEventItr = std::upper_bound(updatedModeSchedule.eventTimes.begin(), updatedModeSchedule.eventTimes.end(), initTime);
-      // If the last time coincides with the event time, the time point is dropped because the it cannot be pre-event.
+      // If a time point is aligned with(the same as) an event time, it belongs to the pre-mode.
       const auto endEventItr = std::lower_bound(updatedModeSchedule.eventTimes.begin(), updatedModeSchedule.eventTimes.end(), finalTime);
 
       ocs2::size_array_t postEventIndice(endEventItr - startEventItr);

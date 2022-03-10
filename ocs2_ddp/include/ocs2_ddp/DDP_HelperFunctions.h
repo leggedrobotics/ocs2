@@ -68,16 +68,17 @@ PerformanceIndex computeRolloutPerformanceIndex(const scalar_array_t& timeTrajec
  * to integrate the system dynamics in time period [initTime, finalTime].
  *
  * @param [in] rollout: A reference to the rollout class.
- * @param [in] timePeriod: Initial and final times period
- * @param [in] initState: Initial state
- * @param [in] modeSchedule: The mode schedule
- * @param [in] controller: Control policies.
- * @param [out] primalSolution: The resulting primal solution.
+ * @param [in] initTime: The initial time.
+ * @param [in] initState: The initial state.
+ * @param [in] finalTime: The final time.
+ * @param [in, out] primalSolution: The resulting primal solution. Make sure that primalSolution::controllerPtr is set since
+ *                                  the rollout is performed based on the controller stored in primalSolution. Moreover,
+ *                                  except for StateTriggeredRollout, one should also set primalSolution::modeSchedule.
  *
  * @return average time step.
  */
-scalar_t rolloutTrajectory(RolloutBase& rollout, const std::pair<scalar_t, scalar_t>& timePeriod, const vector_t& initState,
-                           const ModeSchedule& modeSchedule, PrimalSolution& primalSolution);
+scalar_t rolloutTrajectory(RolloutBase& rollout, scalar_t initTime, const vector_t& initState, scalar_t finalTime,
+                           PrimalSolution& primalSolution);
 
 /**
  * Computes the integral of the squared (IS) norm of the controller update.
@@ -86,6 +87,39 @@ scalar_t rolloutTrajectory(RolloutBase& rollout, const std::pair<scalar_t, scala
  * @return The integral of the squared (IS) norm of the controller update.
  */
 scalar_t computeControllerUpdateIS(const LinearController& controller);
+
+/**
+ * Outputs a controller with the same time stamp and gains as unoptimizedController. However, bias is incremented based on:
+ * biasArray = unoptimizedController.biasArray + stepLength * unoptimizedController.deltaBiasArray
+ */
+void incrementController(scalar_t stepLength, const LinearController& unoptimizedController, LinearController& controller);
+
+/**
+ * Retrieve time and post event trajectories of the current partition from the entire time and post event trajectories.
+ * The resulting time and event indics are normalized to start integration from back.
+ *
+ *
+ * The riccati equations are solved backwards in time
+ * the normalizedTimeTrajectory time is therefore filled with negative time in the reverse order, for example:
+ * nominalTime =      [0.0, 1.0, 2.0, ..., 10.0]
+ * normalizedTime = [-10.0, ..., -2.0, -1.0, -0.0]
+ *
+ * The event indices are counted from the back the current partition, for example:
+ * nominalTime =      [0.0, 1.0, 2.0(*), 3.0, 4.0(*)]
+ * eventIndices = [2, 4]
+ *
+ * normalizedTime = [-4.0, -3.0(*), -2.0, -1.0(*), -0.0]
+ * normalizedeventIndices = [1, 3]
+ *
+ * @param [in] partitionInterval: Current active interval
+ * @param [in] timeTrajectory: The whole time trajectory
+ * @param [in] postEventIndices: The post event index array
+ * @param [out] normalizedTimeTrajectory: Nomalized time trajectory of the current interval
+ * @param [out] normalizedPostEventIndices: Nomalized ost event index array of the current interval
+ */
+void retrieveActiveNormalizedTime(const std::pair<int, int>& partitionInterval, const scalar_array_t& timeTrajectory,
+                                  const size_array_t& postEventIndices, scalar_array_t& normalizedTimeTrajectory,
+                                  size_array_t& normalizedPostEventIndices);
 
 /**
  * Gets a reference to the linear controller from the given primal solution.
@@ -102,11 +136,5 @@ inline const LinearController& getLinearController(const PrimalSolution& primalS
   assert(dynamic_cast<const LinearController*>(primalSolution.controllerPtr_.get()) != nullptr);
   return static_cast<const LinearController&>(*primalSolution.controllerPtr_);
 }
-
-/**
- * Outputs a controller with same same time stamp and gains as unoptimizedController. However, bias is incremented based on:
- * biasArray = unoptimizedController.biasArray + stepLength * unoptimizedController.deltaBiasArray
- */
-void incrementController(scalar_t stepLength, const LinearController& unoptimizedController, LinearController& controller);
 
 }  // namespace ocs2

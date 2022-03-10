@@ -28,6 +28,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include "ocs2_ddp/SLQ.h"
+
+#include "ocs2_ddp/DDP_HelperFunctions.h"
 #include "ocs2_ddp/riccati_equations/RiccatiModificationInterpolation.h"
 
 namespace ocs2 {
@@ -37,7 +39,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 SLQ::SLQ(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalControlProblem& optimalControlProblem,
          const Initializer& initializer)
-    : BASE(std::move(ddpSettings), rollout, optimalControlProblem, initializer) {
+    : GaussNewtonDDP(std::move(ddpSettings), rollout, optimalControlProblem, initializer) {
   if (settings().algorithm_ != ddp::Algorithm::SLQ) {
     throw std::runtime_error("[SLQ] In DDP setting the algorithm name is set \"" + ddp::toAlgorithmName(settings().algorithm_) +
                              "\" while SLQ is instantiated!");

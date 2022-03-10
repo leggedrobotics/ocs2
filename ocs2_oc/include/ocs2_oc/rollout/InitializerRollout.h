@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/initialization/Initializer.h>
 
-#include "RolloutBase.h"
+#include "ocs2_oc/rollout/RolloutBase.h"
 
 namespace ocs2 {
 
@@ -50,16 +50,14 @@ class InitializerRollout : public RolloutBase {
    */
   explicit InitializerRollout(const Initializer& initializer, rollout::Settings rolloutSettings = rollout::Settings());
 
-  /** Default destructor. */
   ~InitializerRollout() override = default;
-
   InitializerRollout* clone() const override;
 
- private:
-  vector_t runImpl(const time_interval_array_t& timeIntervalArray, const vector_t& initState, ControllerBase* controller,
-                   scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, vector_array_t& stateTrajectory,
-                   vector_array_t& inputTrajectory) override;
+  vector_t run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, ControllerBase* controller, ModeSchedule& modeSchedule,
+               scalar_array_t& timeTrajectory, size_array_t& postEventIndices, vector_array_t& stateTrajectory,
+               vector_array_t& inputTrajectory) override;
 
+ private:
   std::unique_ptr<Initializer> initializerPtr_;
 };
 

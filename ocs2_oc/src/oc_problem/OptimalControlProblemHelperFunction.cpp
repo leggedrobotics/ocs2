@@ -31,12 +31,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void initializeDualSolution(const OptimalControlProblem& ocp, const PrimalSolution& primalSolution, const DualSolution& cachedDualSolution,
                             DualSolution& dualSolution) {
   // find the time period that we can interpolate the cached dual solution
   const auto timePeriod = std::make_pair(primalSolution.timeTrajectory_.front(), primalSolution.timeTrajectory_.back());
   const auto interpolatableTimePeriod =
-      findInterpolatableInterval(cachedDualSolution.timeTrajectory, primalSolution.modeSchedule_.eventTimes, timePeriod);
+      findIntersectionToExtendableInterval(cachedDualSolution.timeTrajectory, primalSolution.modeSchedule_.eventTimes, timePeriod);
   const bool interpolateTillFinalTime = numerics::almost_eq(interpolatableTimePeriod.second, timePeriod.second);
 
   // clear and set time
@@ -56,7 +59,7 @@ void initializeDualSolution(const OptimalControlProblem& ocp, const PrimalSoluti
   if (!primalSolution.postEventIndices_.empty()) {
     const auto firstEventTime = primalSolution.timeTrajectory_[primalSolution.postEventIndices_[0] - 1];
     const auto cacheEventIndexBias =
-        getEventCounter(cachedDualSolution.timeTrajectory, cachedDualSolution.postEventIndices, firstEventTime);
+        getNumberOfPrecedingEvents(cachedDualSolution.timeTrajectory, cachedDualSolution.postEventIndices, firstEventTime);
 
     for (size_t i = 0; i < primalSolution.postEventIndices_.size(); i++) {
       const auto cachedTimeIndex = cacheEventIndexBias + i;

@@ -57,10 +57,10 @@ LoopshapingPreComputation* LoopshapingPreComputation::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LoopshapingPreComputation::request(RequestSet request, scalar_t t, const vector_t& x, const vector_t& u) {
-  systemState_ = loopshapingDefinition_->getSystemState(x);
-  systemInput_ = loopshapingDefinition_->getSystemInput(x, u);
-  filterState_ = loopshapingDefinition_->getFilterState(x);
-  filterInput_ = loopshapingDefinition_->getFilteredInput(x, u);
+  loopshapingDefinition_->getSystemState(x, systemState_);
+  loopshapingDefinition_->getSystemInput(x, u, systemInput_);
+  loopshapingDefinition_->getFilterState(x, filterState_);
+  loopshapingDefinition_->getFilteredInput(x, u, filterInput_);
 
   systemPreCompPtr_->request(request, t, systemState_, systemInput_);
 }
@@ -69,8 +69,8 @@ void LoopshapingPreComputation::request(RequestSet request, scalar_t t, const ve
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LoopshapingPreComputation::requestPreJump(RequestSet request, scalar_t t, const vector_t& x) {
-  systemState_ = loopshapingDefinition_->getSystemState(x);
-  filterState_ = loopshapingDefinition_->getFilterState(x);
+  loopshapingDefinition_->getSystemState(x, systemState_);
+  loopshapingDefinition_->getFilterState(x, filterState_);
 
   systemPreCompPtr_->requestPreJump(request, t, systemState_);
 }
@@ -79,8 +79,8 @@ void LoopshapingPreComputation::requestPreJump(RequestSet request, scalar_t t, c
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LoopshapingPreComputation::requestFinal(RequestSet request, scalar_t t, const vector_t& x) {
-  systemState_ = loopshapingDefinition_->getSystemState(x);
-  filterState_ = loopshapingDefinition_->getFilterState(x);
+  loopshapingDefinition_->getSystemState(x, systemState_);
+  loopshapingDefinition_->getFilterState(x, filterState_);
 
   systemPreCompPtr_->requestFinal(request, t, systemState_);
 }

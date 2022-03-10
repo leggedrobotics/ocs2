@@ -47,6 +47,7 @@ LineSearchStrategy::LineSearchStrategy(search_strategy::Settings baseSettings, l
     : SearchStrategyBase(std::move(baseSettings)),
       settings_(std::move(settings)),
       threadPoolRef_(threadPoolRef),
+      tempDualSolutions_(threadPoolRef.numThreads() + 1),
       workersSolution_(threadPoolRef.numThreads() + 1),
       rolloutRefStock_(std::move(rolloutRefStock)),
       optimalControlProblemRefStock_(std::move(optimalControlProblemRefStock)),
@@ -87,9 +88,10 @@ void LineSearchStrategy::computeSolution(size_t taskId, scalar_t stepLength, sea
   auto& rollout = rolloutRefStock_[taskId];
 
   // compute primal solution
+  solution.primalSolution.modeSchedule_ = *lineSearchInputRef_.modeSchedulePtr;
   incrementController(stepLength, *lineSearchInputRef_.unoptimizedControllerPtr, getLinearController(solution.primalSolution));
-  solution.avgTimeStep = rolloutTrajectory(rollout, *lineSearchInputRef_.timePeriodPtr, *lineSearchInputRef_.initStatePtr,
-                                           *lineSearchInputRef_.modeSchedulePtr, solution.primalSolution);
+  solution.avgTimeStep = rolloutTrajectory(rollout, lineSearchInputRef_.timePeriodPtr->first, *lineSearchInputRef_.initStatePtr,
+                                           lineSearchInputRef_.timePeriodPtr->second, solution.primalSolution);
 
   // adjust dual solution
   const DualSolution* adjustedDualSolutionPtr = lineSearchInputRef_.dualSolutionPtr;

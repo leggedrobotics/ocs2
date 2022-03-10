@@ -27,21 +27,23 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include "ocs2_raisim/RaisimRollout.h"
+#include "ocs2_raisim_core/RaisimRollout.h"
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-RaisimRollout::RaisimRollout(std::string urdf, state_to_raisim_gen_coord_gen_vel_t stateToRaisimGenCoordGenVel,
+RaisimRollout::RaisimRollout(std::string urdfFile, std::string resourcePath,
+                             state_to_raisim_gen_coord_gen_vel_t stateToRaisimGenCoordGenVel,
                              raisim_gen_coord_gen_vel_to_state_t raisimGenCoordGenVelToState,
                              input_to_raisim_generalized_force_t inputToRaisimGeneralizedForce,
                              data_extraction_callback_t dataExtractionCallback, RaisimRolloutSettings raisimRolloutSettings,
                              input_to_raisim_pd_targets_t inputToRaisimPdTargets)
     : RolloutBase(raisimRolloutSettings.rolloutSettings_),
       raisimRolloutSettings_(std::move(raisimRolloutSettings)),
-      urdf_(std::move(urdf)),
+      urdfFile_(std::move(urdfFile)),
+      resourcePath_(std::move(resourcePath)),
       ground_(nullptr),
       system_(nullptr),
       stateToRaisimGenCoordGenVel_(std::move(stateToRaisimGenCoordGenVel)),
@@ -51,7 +53,7 @@ RaisimRollout::RaisimRollout(std::string urdf, state_to_raisim_gen_coord_gen_vel
       inputToRaisimPdTargets_(std::move(inputToRaisimPdTargets)) {
   world_.setTimeStep(this->settings().timeStep);
 
-  system_ = world_.addArticulatedSystem(urdf_, "", raisimRolloutSettings_.orderedJointNames_);
+  system_ = world_.addArticulatedSystem(urdfFile_, resourcePath_, raisimRolloutSettings_.orderedJointNames_);
   system_->setControlMode(raisimRolloutSettings_.controlMode_);
   if (raisimRolloutSettings_.controlMode_ != raisim::ControlMode::FORCE_AND_TORQUE) {
     system_->setPdGains(raisimRolloutSettings_.pGains_, raisimRolloutSettings_.dGains_);
@@ -64,30 +66,26 @@ RaisimRollout::RaisimRollout(std::string urdf, state_to_raisim_gen_coord_gen_vel
     std::cerr << "\t" << bodyName;
   }
   std::cerr << std::endl;
+  const auto movableJointNames = system_->getMovableJointNames();
+  std::cerr << "Movable Joint Names are";
+  for (const auto& movableJointName : movableJointNames) {
+    std::cerr << "\t" << movableJointName;
+  }
+  std::cerr << std::endl;
 
   ground_ = world_.addGround();
 
-#ifdef USE_RAISIM_VISUALIZER
-  auto vis = raisim::OgreVis::get();
-  vis->setWorld(&world_);
-  vis->setWindowSize(1280, 720);
-  // more setup options here: https://github.com/leggedrobotics/raisimGym/blob/master/raisim_gym/env/env/ANYmal/Environment.hpp
-  vis->initApp();
-
-  systemVisual_ = vis->createGraphicalObject(system_, "system");
-  groundVisual_ = vis->createGraphicalObject(ground_, 20, "floor", "checkerboard_green");
-
-  vis->setDesiredFPS(30);
-  vis->select(groundVisual_->at(0), false);
-  vis->getCameraMan()->setYawPitchDist(Ogre::Radian(M_PI_4), Ogre::Radian(-1.3), 3, true);
-#endif
+  if (raisimRolloutSettings_.raisimServer_) {
+    serverPtr_.reset(new raisim::RaisimServer(&world_));
+    serverPtr_->launchServer(raisimRolloutSettings_.portNumber_);
+  }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 RaisimRollout::RaisimRollout(const RaisimRollout& other)
-    : RaisimRollout(other.urdf_, other.stateToRaisimGenCoordGenVel_, other.raisimGenCoordGenVelToState_,
+    : RaisimRollout(other.urdfFile_, other.resourcePath_, other.stateToRaisimGenCoordGenVel_, other.raisimGenCoordGenVelToState_,
                     other.inputToRaisimGeneralizedForce_, other.dataExtractionCallback_, other.raisimRolloutSettings_,
                     other.inputToRaisimPdTargets_) {
   if (other.heightMap_ != nullptr) {
@@ -108,25 +106,32 @@ void RaisimRollout::setPdGains(const Eigen::VectorXd& pGain, const Eigen::Vector
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t RaisimRollout::runImpl(const time_interval_array_t& timeIntervalArray, const vector_t& initState, ControllerBase* controller,
-                                scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, vector_array_t& stateTrajectory,
-                                vector_array_t& inputTrajectory) {
-  assert(controller != nullptr);
+vector_t RaisimRollout::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, ControllerBase* controller,
+                            ModeSchedule& modeSchedule, scalar_array_t& timeTrajectory, size_array_t& postEventIndices,
+                            vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) {
+  if (initTime > finalTime) {
+    throw std::runtime_error("[RaisimRollout::run] The initial time should be less-equal to the final time!");
+  }
+  if (controller == nullptr) {
+    throw std::runtime_error("[RaisimRollout::run] Controller is not set!");
+  }
 
   world_.setTimeStep(this->settings().timeStep);
 
-  // Prepare arrays
+  // extract sub-systems
+  const auto timeIntervalArray = findActiveModesTimeInterval(initTime, finalTime, modeSchedule.eventTimes);
   const int numSubsystems = timeIntervalArray.size();
-  const auto maxNumSteps =
-      static_cast<int>(std::round((timeIntervalArray.back().second - timeIntervalArray.front().first) / this->settings().timeStep));
+  const auto maxNumSteps = static_cast<int>(std::round((finalTime- initTime) / this->settings().timeStep));
+
+  // Prepare arrays
   timeTrajectory.clear();
   timeTrajectory.reserve(maxNumSteps + numSubsystems);
   stateTrajectory.clear();
   stateTrajectory.reserve(maxNumSteps + numSubsystems);
   inputTrajectory.clear();
   inputTrajectory.reserve(maxNumSteps + numSubsystems);
-  postEventIndicesStock.clear();
-  postEventIndicesStock.reserve(numSubsystems - 1);
+  postEventIndices.clear();
+  postEventIndices.reserve(numSubsystems - 1);
 
   // Set inital state to simulation if requested
   if (raisimRolloutSettings_.setSimulatorStateOnRolloutRunAlways_ or raisimRolloutSettings_.setSimulatorStateOnRolloutRunOnce_) {
@@ -141,9 +146,9 @@ vector_t RaisimRollout::runImpl(const time_interval_array_t& timeIntervalArray, 
   // loop through intervals and integrate each separately
   for (const auto& interval : timeIntervalArray) {
     runSimulation(interval, controller, timeTrajectory, stateTrajectory, inputTrajectory);
-    postEventIndicesStock.push_back(stateTrajectory.size());
+    postEventIndices.push_back(stateTrajectory.size());
   }
-  postEventIndicesStock.pop_back();  // the last interval does not have any events afterwards
+  postEventIndices.pop_back();  // the last interval does not have any events afterwards
 
   return stateTrajectory.back();
 }
@@ -188,9 +193,6 @@ const raisim::HeightMap* RaisimRollout::getTerrain() const {
 void RaisimRollout::deleteGroundPlane() {
   if (ground_ != nullptr) {
     world_.removeObject(ground_);
-#ifdef USE_RAISIM_VISUALIZER
-    raisim::OgreVis::get()->remove(ground_);
-#endif
     ground_ = nullptr;
   }
 }
@@ -198,8 +200,8 @@ void RaisimRollout::deleteGroundPlane() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void RaisimRollout::runSimulation(const time_interval_t& timeInterval, ControllerBase* controller, scalar_array_t& timeTrajectory,
-                                  vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) {
+void RaisimRollout::runSimulation(const std::pair<scalar_t, scalar_t>& timeInterval, ControllerBase* controller,
+                                  scalar_array_t& timeTrajectory, vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) {
   const auto numSteps = static_cast<int>(std::ceil((timeInterval.second - timeInterval.first) / this->settings().timeStep));
 
   for (int i = 0; i < numSteps; i++) {
@@ -229,7 +231,7 @@ void RaisimRollout::runSimulation(const time_interval_t& timeInterval, Controlle
       system_->getState(raisim_q, raisim_dq);
       stateTrajectory.emplace_back(raisimGenCoordGenVelToState_(raisim_q, raisim_dq));
       if (stateTrajectory.back().hasNaN()) {
-        throw std::runtime_error("RaisimRollout::runSimulation - nan in state");
+        throw std::runtime_error("[RaisimRollout::runSimulation] nan in state");
       }
 
       // input might have been computed by initialization already
@@ -248,11 +250,6 @@ void RaisimRollout::runSimulation(const time_interval_t& timeInterval, Controlle
     }
 
     world_.integrate2();  // actually move time foward and change the state
-
-#ifdef USE_RAISIM_VISUALIZER
-    auto vis = raisim::OgreVis::get();
-    vis->renderOneFrame();
-#endif
   }
 
   world_.setTimeStep(this->settings().timeStep);

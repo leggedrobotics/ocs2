@@ -64,7 +64,7 @@ CsvData readCsv(const std::string& fileName) {
   return result;
 }
 
-std::pair<ocs2::TargetTrajectories, Gait> readMotion(const CsvData& csvData) {
+std::pair<ocs2::TargetTrajectories, Gait> readMotion(const CsvData& csvData, scalar_t dt) {
   verifyHeader(csvData.header);
 
   const auto numDataPoints = csvData.data.size();
@@ -92,6 +92,11 @@ std::pair<ocs2::TargetTrajectories, Gait> readMotion(const CsvData& csvData) {
     if (mode != gait.modeSequence.back()) {
       gait.eventPhases.push_back((t - t0) / duration);
       gait.modeSequence.push_back(mode);
+    } else {
+      // Drop a point if dt is smaller than desired
+      if (!targetTrajectories.empty() && t < targetTrajectories.timeTrajectory.back() + dt) {
+        continue;
+      }
     }
 
     // Time trajectory
@@ -120,8 +125,14 @@ std::pair<ocs2::TargetTrajectories, Gait> readMotion(const CsvData& csvData) {
     const auto prevYaw = targetTrajectories.stateTrajectory.empty() ? 0.0 : targetTrajectories.stateTrajectory.back()[2];
     const auto newYaw = findOrientationClostestToReference(newOrientation[2], prevYaw);
     const vector3_t eulerXYZ(newOrientation[0], newOrientation[1], newYaw);
+    const matrix3_t o_R_b = rotationMatrixBaseToOrigin(eulerXYZ);
 
-    assert(rotationMatrixBaseToOrigin(eulerXYZ).isApprox(quaternion.toRotationMatrix()));
+    assert(o_R_b.isApprox(quaternion.toRotationMatrix()));
+
+    vector_t contactForcesInBase(3 * NUM_CONTACT_POINTS);
+    for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
+      contactForcesInBase.segment<3>(3 * i) = o_R_b.transpose() * contactForces.segment<3>(3 * i);
+    }
 
     // State trajectory
     targetTrajectories.stateTrajectory.push_back(vector_t(STATE_DIM));
@@ -130,7 +141,7 @@ std::pair<ocs2::TargetTrajectories, Gait> readMotion(const CsvData& csvData) {
 
     // Input trajectory
     targetTrajectories.inputTrajectory.push_back(vector_t(INPUT_DIM));
-    targetTrajectories.inputTrajectory.back() << contactForces, jointVelocities;
+    targetTrajectories.inputTrajectory.back() << contactForcesInBase, jointVelocities;
   }
   return {targetTrajectories, gait};
 }

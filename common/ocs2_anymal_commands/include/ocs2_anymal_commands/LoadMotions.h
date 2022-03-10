@@ -37,8 +37,12 @@ CsvData readCsv(const std::string& fileName);
  * contactForcesInWorld_LF_x, contactForcesInWorld_LF_y, contactForcesInWorld_LF_z, contactForcesInWorld_RF_x, contactForcesInWorld_RF_y,
  * contactForcesInWorld_RF_z, contactForcesInWorld_LH_x, contactForcesInWorld_LH_y, contactForcesInWorld_LH_z, contactForcesInWorld_RH_x,
  * contactForcesInWorld_RH_y, contactForcesInWorld_RH_z
+ *
+ * @param fileName : absolute path of the file
+ * @param dt : approximate sampling interval. Reference points closer than this dt will be dropped. Set to negative to load all points.
+ * @return reference motion and gait
  */
-std::pair<ocs2::TargetTrajectories, Gait> readMotion(const CsvData& fileName);
+std::pair<ocs2::TargetTrajectories, Gait> readMotion(const CsvData& fileName, scalar_t dt = -1.0);
 
 void verifyHeader(const std::vector<std::string>& provided);
 

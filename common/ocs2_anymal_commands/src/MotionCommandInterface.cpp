@@ -14,14 +14,18 @@
 namespace switched_model {
 
 MotionCommandInterface::MotionCommandInterface(const std::string& configFile) {
-  std::vector<std::string> motionList;
   bool verbose = false;
+
+  scalar_t dt = 0.0;
+  ocs2::loadData::loadCppDataType(configFile, "dt", dt);
+
+  std::vector<std::string> motionList;
   ocs2::loadData::loadStdVector(configFile, "motionList", motionList, verbose);
 
   const std::string motionFilesPath = ros::package::getPath("ocs2_anymal_commands") + "/config/motions/";
   for (const auto& motionName : motionList) {
     const auto csvData = readCsv(motionFilesPath + motionName + ".txt");
-    motionData_.insert({motionName, readMotion(csvData)});
+    motionData_.insert({motionName, readMotion(csvData, dt)});
   }
   printAnimationList();
 }

@@ -123,7 +123,7 @@ TEST(HybridSlqTest, state_rollout_slq) {
   problem.costPtr->add("cost", std::move(cost));
   problem.preJumpCostPtr->add("preJumpCost", std::move(preJumpCost));
   problem.finalCostPtr->add("finalCost", std::move(finalCost));
-  problem.inequalityLagrangianPtr->add("bounds", create(std::move(boundsConstraints), augmented::SlacknessSquaredHingePenalty::create({100.0, 0.2})));
+  problem.inequalityLagrangianPtr->add("bounds", create(std::move(boundsConstraints), augmented::SlacknessSquaredHingePenalty::create({100.0, 0.1})));
 
   const vector_t xNominal = vector_t::Zero(STATE_DIM);
   const vector_t uNominal = vector_t::Zero(INPUT_DIM);
@@ -139,12 +139,12 @@ TEST(HybridSlqTest, state_rollout_slq) {
   std::unique_ptr<SolverObserverModule> boundsConstraintsObserverPtr(new SolverObserverModule("bounds"));
   boundsConstraintsObserverPtr->setMetricsCallback([&](const scalar_array_t& timeTraj, const std::vector<MetricsConstRef>& metricsTraj) {
     constexpr scalar_t constraintViolationTolerance = 1e-2;
-    for (auto metricsConstRef : metricsTraj) {
-      const vector_t constraintViolation = metricsConstRef.constraint.cwiseMin(0.0);
-      EXPECT_NEAR(constraintViolation(0), 0.0, constraintViolationTolerance);
-      EXPECT_NEAR(constraintViolation(1), 0.0, constraintViolationTolerance);
-      EXPECT_NEAR(constraintViolation(2), 0.0, constraintViolationTolerance);
-      EXPECT_NEAR(constraintViolation(3), 0.0, constraintViolationTolerance);
+    for (size_t i = 0; i < metricsTraj.size(); i++) {
+      const vector_t constraintViolation = metricsTraj[i].constraint.cwiseMin(0.0);
+      EXPECT_NEAR(constraintViolation(0), 0.0, constraintViolationTolerance) << "At time " << timeTraj[i] << "\n";
+      EXPECT_NEAR(constraintViolation(1), 0.0, constraintViolationTolerance) << "At time " << timeTraj[i] << "\n";
+      EXPECT_NEAR(constraintViolation(2), 0.0, constraintViolationTolerance) << "At time " << timeTraj[i] << "\n";
+      EXPECT_NEAR(constraintViolation(3), 0.0, constraintViolationTolerance) << "At time " << timeTraj[i] << "\n";
     }
   });
 

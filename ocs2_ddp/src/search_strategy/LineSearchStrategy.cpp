@@ -47,6 +47,7 @@ LineSearchStrategy::LineSearchStrategy(search_strategy::Settings baseSettings, l
     : SearchStrategyBase(std::move(baseSettings)),
       settings_(std::move(settings)),
       threadPoolRef_(threadPoolRef),
+      tempDualSolutions_(threadPoolRef.numThreads() + 1),
       workersSolution_(threadPoolRef.numThreads() + 1),
       rolloutRefStock_(std::move(rolloutRefStock)),
       optimalControlProblemRefStock_(std::move(optimalControlProblemRefStock)),

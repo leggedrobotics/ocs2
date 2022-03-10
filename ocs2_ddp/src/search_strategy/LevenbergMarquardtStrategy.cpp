@@ -56,47 +56,35 @@ void LevenbergMarquardtStrategy::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-bool LevenbergMarquardtStrategy::run(const scalar_t initTime, const vector_t& initState, const scalar_t finalTime,
-                                     const scalar_t expectedCost, const ModeSchedule& modeSchedule, LinearController& controller,
-                                     PerformanceIndex& performanceIndex, PrimalSolution& dstPrimalSolution, MetricsCollection& metrics,
-                                     scalar_t& avgTimeStepFP) {
+bool LevenbergMarquardtStrategy::run(const std::pair<scalar_t, scalar_t>& timePeriod, const vector_t& initState,
+                                     const scalar_t expectedCost, const LinearController& unoptimizedController,
+                                     const ModeSchedule& modeSchedule, search_strategy::SolutionRef solution) {
   constexpr size_t taskId = 0;
 
   // previous merit and the expected reduction
-  const auto prevMerit = performanceIndex.merit;
-  const auto expectedReduction = performanceIndex.merit - expectedCost;
+  const auto prevMerit = solution.performanceIndex.merit;
+  const auto expectedReduction = solution.performanceIndex.merit - expectedCost;
 
-  // do a full step rollout
+  // stepsize
   const scalar_t stepLength = numerics::almost_eq(expectedReduction, 0.0) ? 0.0 : 1.0;
-  for (size_t k = 0; k < controller.size(); k++) {
-    controller.biasArray_[k] += stepLength * controller.deltaBiasArray_[k];
-  }
 
   try {
-    // perform a rollout
-    const auto avgTimeStep = rolloutTrajectory(rolloutRef_, initTime, initState, finalTime, modeSchedule, controller, dstPrimalSolution);
-    // compute average time step of forward rollout
-    avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStep;
-    // debug print
-    if (baseSettings_.debugPrintRollout) {
-      std::cerr << "\n++++++++++++++++++++++++++++++\n";
-      std::cerr << "\n++++++++++++++++++++++++++++++\n";
-      RolloutBase::display(dstPrimalSolution.timeTrajectory_, dstPrimalSolution.postEventIndices_, dstPrimalSolution.stateTrajectory_,
-                           &dstPrimalSolution.inputTrajectory_);
-    }
+    // compute primal solution
+    incrementController(stepLength, unoptimizedController, getLinearController(solution.primalSolution));
+    solution.avgTimeStep = rolloutTrajectory(rolloutRef_, timePeriod, initState, modeSchedule, solution.primalSolution);
 
-    computeRolloutMetrics(optimalControlProblemRef_, dstPrimalSolution, metrics);
+    // compute metrics
+    computeRolloutMetrics(optimalControlProblemRef_, solution.primalSolution, solution.metrics);
 
-    performanceIndex = computeRolloutPerformanceIndex(dstPrimalSolution.timeTrajectory_, metrics);
-
-    // calculates rollout merit
-    performanceIndex.merit = meritFunc_(performanceIndex);
+    // compute performanceIndex
+    solution.performanceIndex = computeRolloutPerformanceIndex(solution.primalSolution.timeTrajectory_, solution.metrics);
+    solution.performanceIndex.merit = meritFunc_(solution.performanceIndex);
 
     // display
     if (baseSettings_.displayInfo) {
       std::stringstream infoDisplay;
       infoDisplay << "    [Thread " << taskId << "] - step length " << stepLength << '\n';
-      infoDisplay << std::setw(4) << performanceIndex << "\n\n";
+      infoDisplay << std::setw(4) << solution.performanceIndex << "\n\n";
       std::cerr << infoDisplay.str();
     }
 
@@ -104,12 +92,12 @@ bool LevenbergMarquardtStrategy::run(const scalar_t initTime, const vector_t& in
     if (baseSettings_.displayInfo) {
       std::cerr << "    [Thread " << taskId << "] rollout with step length " << stepLength << " is terminated: " << error.what() << "\n";
     }
-    performanceIndex.merit = std::numeric_limits<scalar_t>::max();
-    performanceIndex.cost = std::numeric_limits<scalar_t>::max();
+    solution.performanceIndex.merit = std::numeric_limits<scalar_t>::max();
+    solution.performanceIndex.cost = std::numeric_limits<scalar_t>::max();
   }
 
   // compute pho (the ratio between actual reduction and predicted reduction)
-  const auto actualReduction = prevMerit - performanceIndex.merit;
+  const auto actualReduction = prevMerit - solution.performanceIndex.merit;
 
   if (std::abs(actualReduction) < baseSettings_.minRelCost || expectedReduction <= baseSettings_.minRelCost) {
     levenbergMarquardtModule_.pho = 1.0;
@@ -213,17 +201,15 @@ std::pair<bool, std::string> LevenbergMarquardtStrategy::checkConvergence(bool u
     isCostFunctionConverged = relCost <= baseSettings_.minRelCost;
   }
   const bool isConstraintsSatisfied = currentPerformanceIndex.equalityConstraintsSSE <= baseSettings_.constraintTolerance;
-  const bool isOptimizationConverged = (isCostFunctionConverged) && isConstraintsSatisfied;
+  const bool isOptimizationConverged = isCostFunctionConverged && isConstraintsSatisfied;
 
   // convergence info
   std::stringstream infoStream;
   if (isOptimizationConverged) {
     infoStream << "The algorithm has successfully terminated as: \n";
 
-    if (isCostFunctionConverged) {
-      infoStream << "    * The absolute relative change of cost (i.e., " << relCost << ") has reached to the minimum value ("
-                 << baseSettings_.minRelCost << ").\n";
-    }
+    infoStream << "    * The absolute relative change of cost (i.e., " << relCost << ") has reached to the minimum value ("
+               << baseSettings_.minRelCost << ").\n";
 
     infoStream << "    * The SSE of equality constraints (i.e., " << currentPerformanceIndex.equalityConstraintsSSE
                << ") has reached to its minimum value (" << baseSettings_.constraintTolerance << ").";

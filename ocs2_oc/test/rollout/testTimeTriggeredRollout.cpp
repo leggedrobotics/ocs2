@@ -42,41 +42,34 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using namespace ocs2;
 
 TEST(time_rollout_test, time_rollout_test) {
-  const size_t nx = 2;
-  const size_t nu = 1;
-  scalar_t initTime = 0.0;
-  scalar_t finalTime = 10.0;
+  constexpr size_t nx = 2;
+  constexpr size_t nu = 1;
+  const scalar_t initTime = 0.0;
+  const scalar_t finalTime = 10.0;
+  const vector_t initState = vector_t::Zero(nx);
 
-  Eigen::Matrix2d A(nx, nx);
-  A << -2, -1, 1, 0;
-  Eigen::Vector2d B(nx, nu);
-  B << 1, 0;
+  // event times
+  const std::vector<scalar_t> eventTimes{3.0, 4.0, 4.0};
 
+  const matrix_t A = (matrix_t(nx, nx) << -2.0, -1.0, 1.0, 0.0).finished();
+  const matrix_t B = (matrix_t(nx, nu) << 1.0, 0.0).finished();
   LinearSystemDynamics systemDynamics(A, B);
 
   // controller
-  scalar_array_t cntTimeStamp{initTime, finalTime};
-  vector_array_t uff(2, vector_t::Ones(nu));
-  matrix_array_t k(2, matrix_t::Zero(nu, nx));
-  auto controller = std::unique_ptr<LinearController>(new LinearController(cntTimeStamp, uff, k));
+  const scalar_array_t cntTimeStamp{initTime, finalTime};
+  const vector_array_t uff(2, vector_t::Ones(nu));
+  const matrix_array_t k(2, matrix_t::Zero(nu, nx));
+  LinearController controller(cntTimeStamp, uff, k);
 
-  vector_t initState = vector_t::Zero(nx);
-
-  // partitioning times
-  std::vector<scalar_t> partitioningTimes{0.0, 4.0, 5.0, 7.0};
-
-  // event times
-  std::vector<scalar_t> eventTimes = std::vector<scalar_t>{3.0, 4.0, 4.0};
-
-  /******************************************************************************************************/
-  /******************************************************************************************************/
-  /******************************************************************************************************/
   // Rollout Settings
-  rollout::Settings rolloutSettings;
-  rolloutSettings.absTolODE = 1e-7;
-  rolloutSettings.relTolODE = 1e-5;
-  rolloutSettings.timeStep = 1e-3;
-  rolloutSettings.maxNumStepsPerSecond = 10000;
+  const auto rolloutSettings = [&] {
+      rollout::Settings settings;
+      settings.absTolODE = 1e-7;
+      settings.relTolODE = 1e-5;
+      settings.timeStep = 1e-3;
+      settings.maxNumStepsPerSecond = 10000;
+      return settings;
+  }();
 
   // rollout class
   std::unique_ptr<RolloutBase> rolloutBasePtr(new TimeTriggeredRollout(systemDynamics, rolloutSettings));
@@ -86,13 +79,9 @@ TEST(time_rollout_test, time_rollout_test) {
   vector_array_t stateTrajectory;
   vector_array_t inputTrajectory;
 
-  size_t partitionIndex = 0;
-  rolloutBasePtr->run(initTime, initState, finalTime, controller.get(), eventTimes, timeTrajectory, eventsPastTheEndIndeces,
+  rolloutBasePtr->run(initTime, initState, finalTime, &controller, eventTimes, timeTrajectory, eventsPastTheEndIndeces,
                       stateTrajectory, inputTrajectory);
 
-  /******************************************************************************************************/
-  /******************************************************************************************************/
-  /******************************************************************************************************/
   // check sizes
   const auto totalSize = timeTrajectory.size();
   ASSERT_EQ(totalSize, stateTrajectory.size());

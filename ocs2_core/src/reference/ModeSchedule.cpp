@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/misc/Display.h>
 #include <ocs2_core/misc/Lookup.h>
+#include <ocs2_core/misc/Numerics.h>
 
 namespace ocs2 {
 
@@ -71,8 +72,30 @@ std::ostream& operator<<(std::ostream& stream, const ModeSchedule& modeSchedule)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::pair<scalar_t, scalar_t> findInterpolatableInterval(const scalar_array_t& timeTrajectory, const scalar_array_t& eventTimes,
-                                                         const std::pair<scalar_t, scalar_t>& timePeriod) {
+size_t getNumberOfPrecedingEvents(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices, scalar_t eventTime) {
+  // the case of empty time trajectory and eventTime smaller or equal to the initial time
+  if (timeTrajectory.empty() || eventTime <= timeTrajectory.front()) {
+    return 0;
+  }
+
+  const auto eventIndexItr = std::find_if(postEventIndices.cbegin(), postEventIndices.cend(), [&](size_t postEventInd) {
+    return numerics::almost_eq(eventTime, timeTrajectory[postEventInd - 1]);
+  });
+
+  // if the given time did not match any event time but it is smaller than the final time
+  if (eventIndexItr == postEventIndices.cend() && eventTime < timeTrajectory.back()) {
+    throw std::runtime_error(
+        "[getNumberOfPrecedingEvents] The requested time is within the time trajectory but it is not marked as an event!");
+  }
+
+  return std::distance(postEventIndices.cbegin(), eventIndexItr);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::pair<scalar_t, scalar_t> findIntersectionToExtendableInterval(const scalar_array_t& timeTrajectory, const scalar_array_t& eventTimes,
+                                                                   const std::pair<scalar_t, scalar_t>& timePeriod) {
   // no interpolation: a bit before initial time
   const std::pair<scalar_t, scalar_t> emptyInterpolatableInterval{timePeriod.first, timePeriod.first - 1e-4};
 

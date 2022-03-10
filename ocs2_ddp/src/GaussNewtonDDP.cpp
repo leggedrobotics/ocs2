@@ -683,7 +683,7 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
         const size_t preEventIndex = nominalPrimalData_.primalSolution.postEventIndices_[timeIndex] - 1;
         const auto& time = nominalPrimalData_.primalSolution.timeTrajectory_[preEventIndex];
         const auto& state = nominalPrimalData_.primalSolution.stateTrajectory_[preEventIndex];
-        const auto& multiplier = nominalDualData_.dualSolution.preJumps[preEventIndex];
+        const auto& multiplier = nominalDualData_.dualSolution.preJumps[timeIndex];
 
         // approximate LQ for the pre-event node
         ocs2::approximatePreJumpLQ(optimalControlProblemStock_[taskId], time, state, multiplier, modelData);

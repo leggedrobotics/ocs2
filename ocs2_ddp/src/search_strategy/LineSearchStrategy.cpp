@@ -93,12 +93,16 @@ void LineSearchStrategy::computeSolution(size_t taskId, scalar_t stepLength, sea
   solution.avgTimeStep = rolloutTrajectory(rollout, lineSearchInputRef_.timePeriodPtr->first, *lineSearchInputRef_.initStatePtr,
                                            lineSearchInputRef_.timePeriodPtr->second, solution.primalSolution);
 
-  // adjust dual solution
+  // adjust dual solution only if it is required
   const DualSolution* adjustedDualSolutionPtr = lineSearchInputRef_.dualSolutionPtr;
   if (!lineSearchInputRef_.dualSolutionPtr->timeTrajectory.empty()) {
-    const auto status = trajectorySpread(*lineSearchInputRef_.modeSchedulePtr, solution.primalSolution.modeSchedule_,
-                                         *lineSearchInputRef_.dualSolutionPtr, tempDualSolutions_[taskId]);
+    // trajectory spreading
+    constexpr bool debugPrint = false;
+    TrajectorySpreading trajectorySpreading(debugPrint);
+    const auto status = trajectorySpreading.set(*lineSearchInputRef_.modeSchedulePtr, solution.primalSolution.modeSchedule_,
+                                                lineSearchInputRef_.dualSolutionPtr->timeTrajectory);
     if (status.willTruncate || status.willPerformTrajectorySpreading) {
+      trajectorySpread(trajectorySpreading, *lineSearchInputRef_.dualSolutionPtr, tempDualSolutions_[taskId]);
       adjustedDualSolutionPtr = &tempDualSolutions_[taskId];
     }
   }

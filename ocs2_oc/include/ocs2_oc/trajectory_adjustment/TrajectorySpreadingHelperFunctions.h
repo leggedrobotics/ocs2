@@ -92,22 +92,13 @@ inline TrajectorySpreading::Status trajectorySpread(const ModeSchedule& oldModeS
 /**
  * Adjusts a dual solution based on the last changes in model schedule using a TrajectorySpreading strategy.
  *
- * @note The function only updates newDualSolution if oldDualSolution requires modification which is the case
- * if in the returned status: status.willTruncate == true OR status.willPerformTrajectorySpreading == true
- *
- * @param [in] oldModeSchedule: The old mode schedule associated to the trajectories which should be adjusted.
- * @param [in] newModeSchedule: The new mode schedule that should be adapted to.
+ * @param [in] trajectorySpreading: An updated trajectorySpreading instance. In order to update trajectorySpreading
+ *                                  call TrajectorySpreading::set.
  * @param [in] oldDualSolution: The dual solution that is associated with the old mode schedule.
  * @param [out] newDualSolution: The updated dual solution that is associated with the new mode schedule.
- * @returns the status of the devised trajectory spreading strategy.
  */
-inline TrajectorySpreading::Status trajectorySpread(const ModeSchedule& oldModeSchedule, const ModeSchedule& newModeSchedule,
-                                                    const DualSolution& oldDualSolution, DualSolution& newDualSolution) {
-  // trajectory spreading
-  constexpr bool debugPrint = false;
-  TrajectorySpreading trajectorySpreading(debugPrint);
-  const auto status = trajectorySpreading.set(oldModeSchedule, newModeSchedule, oldDualSolution.timeTrajectory);
-
+inline void trajectorySpread(const TrajectorySpreading& trajectorySpreading, const DualSolution& oldDualSolution,
+                             DualSolution& newDualSolution) {
   newDualSolution.clear();
 
   // adjust time and postEventIndices
@@ -116,14 +107,12 @@ inline TrajectorySpreading::Status trajectorySpread(const ModeSchedule& oldModeS
   newDualSolution.postEventIndices = trajectorySpreading.getPostEventIndices();
 
   // adjust final, pre-jump and intermediate
-  if (!status.willTruncate) {
+  if (!trajectorySpreading.getStatus().willTruncate) {
     newDualSolution.final = oldDualSolution.final;
   }
   newDualSolution.preJumps = trajectorySpreading.extractEventsArray(oldDualSolution.preJumps);
   newDualSolution.intermediates = oldDualSolution.intermediates;
   trajectorySpreading.adjustTrajectory(newDualSolution.intermediates);
-
-  return status;
 }
 
 /**

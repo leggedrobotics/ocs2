@@ -78,11 +78,15 @@ bool LevenbergMarquardtStrategy::run(const std::pair<scalar_t, scalar_t>& timePe
     incrementController(stepLength, unoptimizedController, getLinearController(solution.primalSolution));
     solution.avgTimeStep = rolloutTrajectory(rolloutRef_, timePeriod.first, initState, timePeriod.second, solution.primalSolution);
 
-    // adjust dual solution
+    // adjust dual solution only if it is required
     const DualSolution* adjustedDualSolutionPtr = &dualSolution;
     if (!dualSolution.timeTrajectory.empty()) {
-      const auto status = trajectorySpread(modeSchedule, solution.primalSolution.modeSchedule_, dualSolution, tempDualSolution_);
+      // trajectory spreading
+      constexpr bool debugPrint = false;
+      TrajectorySpreading trajectorySpreading(debugPrint);
+      const auto status = trajectorySpreading.set(modeSchedule, solution.primalSolution.modeSchedule_, dualSolution.timeTrajectory);
       if (status.willTruncate || status.willPerformTrajectorySpreading) {
+        trajectorySpread(trajectorySpreading, dualSolution, tempDualSolution_);
         adjustedDualSolutionPtr = &tempDualSolution_;
       }
     }

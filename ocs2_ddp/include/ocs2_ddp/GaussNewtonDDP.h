@@ -104,41 +104,7 @@ class GaussNewtonDDP : public SolverBase {
    */
   const ddp::Settings& settings() const { return ddpSettings_; }
 
-  /**
-   * Retrieve time and post event trajectories of the current partition from the entire time and post event trajectories.
-   * The resulting time and event indics are normalized to start integration from back.
-   *
-   *
-   * The riccati equations are solved backwards in time
-   * the normalizedTimeTrajectory time is therefore filled with negative time in the reverse order, for example:
-   * nominalTime =      [0.0, 1.0, 2.0, ..., 10.0]
-   * normalizedTime = [-10.0, ..., -2.0, -1.0, -0.0]
-   *
-   * The event indices are counted from the back the current partition, for example:
-   * nominalTime =      [0.0, 1.0, 2.0(*), 3.0, 4.0(*)]
-   * eventIndices = [2, 4]
-   *
-   * normalizedTime = [-4.0, -3.0(*), -2.0, -1.0(*), -0.0]
-   * normalizedeventIndices = [1, 3]
-   *
-   * @param [in] partitionInterval: Current active interval
-   * @param [in] timeTrajectory: The whole time trajectory
-   * @param [in] postEventIndices: The post event index array
-   * @param [out] normalizedTimeTrajectory: Nomalized time trajectory of the current interval
-   * @param [out] normalizedPostEventIndices: Nomalized ost event index array of the current interval
-   */
-  static void retrieveActiveNormalizedTime(const std::pair<int, int>& partitionInterval, const scalar_array_t& timeTrajectory,
-                                           const size_array_t& postEventIndices, scalar_array_t& normalizedTimeTrajectory,
-                                           size_array_t& normalizedPostEventIndices);
-
  protected:
-  /**
-   * Sets up optimizer for different number of partitions.
-   *
-   * @param [in] numPartitions: number of partitions.
-   */
-  virtual void setupOptimizer(size_t numPartitions){};
-
   /**
    * Helper to run task multiple times in parallel (blocking)
    *
@@ -176,18 +142,6 @@ class GaussNewtonDDP : public SolverBase {
    * @param [in,out] primalData: The primal Data
    */
   virtual void approximateIntermediateLQ(PrimalDataContainer& primalData) = 0;
-
-  /**
-   * Calculates the controller. This method uses the following variables:
-   * - constrained, linearized model
-   * - constrained, quadratized cost
-   *
-   * The method modifies:
-   * - nominalControllersStock_: the controller that stabilizes the system
-   * around the new nominal trajectory and improves the constraints as well as
-   * the increment to the feed-forward control input.
-   */
-  void calculateController();
 
   /**
    * Calculate controller for the timeIndex by using primal and dual and write the result back to dstController
@@ -293,13 +247,16 @@ class GaussNewtonDDP : public SolverBase {
    * Attention: Do NOT pass the controllerPtr of the same primalData used for the first parameter to the second parameter, as all
    * member variables(including controller) of primal data will be cleared.
    *
-   * @param [in] primalData: primalData
+   * @param [out] primalData: primalData
    * @param [in] controller: nominal controller used to rollout (time, state, input...) trajectories
    * @param [in] workerIndex: working thread (default is 0).
-   *
-   * @return average time step.
    */
-  scalar_t rolloutInitialTrajectory(PrimalDataContainer& primalData, ControllerBase* controller, size_t workerIndex = 0);
+  void rolloutInitialTrajectory(PrimalDataContainer& primalData, ControllerBase* controller, size_t workerIndex = 0);
+
+  /**
+   * Calculates the controller. This method uses the following variables. The method modifies unoptimizedController_.
+   */
+  void calculateController();
 
   /**
    * Display rollout info and scores.
@@ -379,36 +336,18 @@ class GaussNewtonDDP : public SolverBase {
    * If fail, the cached primal data will be written to dstPrimalData.
    *
    * @param [in] lqModelExpectedCost: The expected cost based on the LQ model optimization.
-   * @param [out] dstPrimalData: Optimized primal data container if it is an final search. otherwise nominal data container
+   * @param [in] unoptimizedController: The unoptimized controller which search will be performed.
+   * @param [out] primalData: Optimized primal data container if it is an final search. otherwise nominal data container
+   * @param [out] performanceIndex: The optimal performanceIndex which will be updated to the optimal one.
+   * @param [out] metrics: The optimal trajectories metrics.
    */
-  void runSearchStrategy(scalar_t lqModelExpectedCost, PrimalDataContainer& dstPrimalData, MetricsCollection& metrics);
+  void runSearchStrategy(scalar_t lqModelExpectedCost, const LinearController& unoptimizedController, PrimalDataContainer& primalData,
+                         PerformanceIndex& performanceIndex, MetricsCollection& metrics);
 
   /**
    * swap both primal and dual data cache
    */
   void swapDataToCache();
-
-  /**
-   * Corrects the initial caching of the nominal trajectories.
-   * This is necessary for:
-   *   + The moving horizon (MPC) application
-   *   + The very first call of the algorithm where there is no previous nominal trajectories.
-   */
-  void correctInitcachedNominalTrajectories();
-
-  /**
-   * Corrects for the tail of the cached trajectory based on the nominal trajectory. This compensates for the
-   * the moving horizon (MPC) applications where the final time of the cached trajectory is smaller than the
-   * nominal one.
-   *
-   * @param [in] timeSegment: The interval index and interpolation coefficient alpha of the cached trajectory final
-   * time in the nominal time trajectory.
-   * @param [in] currentTrajectory: The nominal trajectory.
-   * @param [out] cachedTrajectory: The cached trajectory.
-   */
-  template <typename Data_T, class Alloc>
-  static void correctcachedTrajectoryTail(std::pair<int, scalar_t> timeSegment, const std::vector<Data_T, Alloc>& currentTrajectory,
-                                          std::vector<Data_T, Alloc>& cachedTrajectory);
 
   /**
    * Runs the initialization method for Gauss-Newton DDP.
@@ -496,21 +435,5 @@ class GaussNewtonDDP : public SolverBase {
   benchmark::RepeatedTimer computeControllerTimer_;
   benchmark::RepeatedTimer searchStrategyTimer_;
 };
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename Data_T, class Alloc>
-void GaussNewtonDDP::correctcachedTrajectoryTail(std::pair<int, scalar_t> timeSegment, const std::vector<Data_T, Alloc>& currentTrajectory,
-                                                 std::vector<Data_T, Alloc>& cachedTrajectory) {
-  // adding the fist cashed value
-  Data_T firstCachedValue = LinearInterpolation::interpolate(timeSegment, currentTrajectory);
-  cachedTrajectory.emplace_back(std::move(firstCachedValue));
-
-  // Concatenate the rest
-  const int ignoredSizeOfNominal = timeSegment.first + 1;
-
-  cachedTrajectory.insert(cachedTrajectory.end(), currentTrajectory.begin() + ignoredSizeOfNominal, currentTrajectory.end());
-}
 
 }  // namespace ocs2

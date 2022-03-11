@@ -463,7 +463,7 @@ scalar_t GaussNewtonDDP::rolloutInitialTrajectory(PrimalDataContainer& primalDat
 
   // Divide the rollout segment in controller rollout and operating points
   const std::pair<scalar_t, scalar_t> controllerRolloutFromTo{t0, std::max(t0, std::min(controllerAvailableTill, tf))};
-  const std::pair<scalar_t, scalar_t> operatingPointsFromTo{controllerRolloutFromTo.second, tf};
+  std::pair<scalar_t, scalar_t> operatingPointsFromTo{controllerRolloutFromTo.second, tf};
 
   if (ddpSettings_.debugPrintRollout_) {
     std::cerr << "[GaussNewtonDDP::rolloutInitialTrajectory] for t = [" << t0 << ", " << tf << "]\n";
@@ -492,6 +492,10 @@ scalar_t GaussNewtonDDP::rolloutInitialTrajectory(PrimalDataContainer& primalDat
       stateTrajectory.pop_back();
       inputTrajectory.pop_back();
       // eventsPastTheEndIndeces is not removed because we need to mark the start of the operatingPointTrajectory as being after an event.
+
+      // adjusting the start time to correct for subsystem recognition
+      constexpr auto eps = numeric_traits::weakEpsilon<scalar_t>();
+      operatingPointsFromTo.first = std::min(operatingPointsFromTo.first + eps, operatingPointsFromTo.second);
     }
 
     scalar_array_t timeTrajectoryTail;

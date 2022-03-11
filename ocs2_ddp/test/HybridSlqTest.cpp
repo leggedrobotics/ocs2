@@ -123,7 +123,7 @@ TEST(HybridSlqTest, state_rollout_slq) {
   problem.costPtr->add("cost", std::move(cost));
   problem.preJumpCostPtr->add("preJumpCost", std::move(preJumpCost));
   problem.finalCostPtr->add("finalCost", std::move(finalCost));
-  problem.inequalityLagrangianPtr->add("bounds", create(std::move(boundsConstraints), augmented::SlacknessSquaredHingePenalty::create({100.0, 0.1})));
+  problem.inequalityLagrangianPtr->add("bounds", create(std::move(boundsConstraints), augmented::SlacknessSquaredHingePenalty::create({150.0, 0.1})));
 
   const vector_t xNominal = vector_t::Zero(STATE_DIM);
   const vector_t uNominal = vector_t::Zero(INPUT_DIM);

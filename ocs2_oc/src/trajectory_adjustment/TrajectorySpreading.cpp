@@ -74,11 +74,11 @@ auto TrajectorySpreading::set(const ModeSchedule& oldModeSchedule, const ModeSch
 
   // note: sizeof(eventTimes) + 1 == sizeof(modeSequence)
   const int oldFirstActiveModeIndex = upperBoundIndex(oldModeSchedule.eventTimes, oldInitTime);  // no event at initial time
-  const int oldLastActiveModeIndex = lowerBoundIndex(oldModeSchedule.eventTimes, oldFinalTime);  // no event at final time
+  const int oldLastActiveModeIndex = upperBoundIndex(oldModeSchedule.eventTimes, oldFinalTime);  // can be an event at final time
 
   // step 2: What modes do the new mode schedule need?
   const int newFirstActiveModeIndex = upperBoundIndex(newModeSchedule.eventTimes, oldInitTime);  // no event at initial time
-  const int newLastActiveModeIndex = lowerBoundIndex(newModeSchedule.eventTimes, oldFinalTime);  // no event at final time
+  const int newLastActiveModeIndex = upperBoundIndex(newModeSchedule.eventTimes, oldFinalTime);  // can be an event at final time
 
   // the starting mode of the matched sequence may differ from the leading mode of the old mode schedule.
   auto oldStartIndexOfMatchedSequence = oldFirstActiveModeIndex;

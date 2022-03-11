@@ -59,6 +59,7 @@ add_library(${PROJECT_NAME}
   src/QuadrupedMpc.cpp
   src/QuadrupedMpcNode.cpp
   src/QuadrupedPointfootInterface.cpp
+  src/QuadrupedTfPublisher.cpp
   src/QuadrupedVisualizer.cpp
   src/QuadrupedWheeledInterface.cpp
   src/SwingPlanningVisualizer.cpp

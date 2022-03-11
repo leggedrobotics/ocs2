@@ -56,6 +56,7 @@ class SwingTrajectoryPlanner {
                           const feet_array_t<std::vector<ContactTiming>>& contactTimingsPerLeg);
 
   void adaptJointReferencesWithInverseKinematics(const inverse_kinematics_function_t& inverseKinematicsFunction, scalar_t finalTime);
+  const ocs2::TargetTrajectories& getTargetTrajectories() const { return targetTrajectories_; }
 
   const FootPhase& getFootPhase(size_t leg, scalar_t time) const;
 

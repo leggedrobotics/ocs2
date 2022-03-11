@@ -45,17 +45,7 @@ void QuadrupedVisualizer::launchVisualizerNode(ros::NodeHandle& nodeHandle) {
   currentFeetPosesPublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/currentFeetPoses", 1);
   currentCollisionSpheresPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("/ocs2_anymal/currentCollisionSpheres", 1);
 
-  // Load URDF model
-  urdf::Model urdfModel;
-  if (!urdfModel.initParam("ocs2_anymal_description")) {
-    std::cerr << "[QuadrupedVisualizer] Could not read URDF from: \"ocs2_anymal_description\"" << std::endl;
-  } else {
-    KDL::Tree kdlTree;
-    kdl_parser::treeFromUrdfModel(urdfModel, kdlTree);
-
-    robotStatePublisherPtr_.reset(new robot_state_publisher::RobotStatePublisher(kdlTree));
-    robotStatePublisherPtr_->publishFixedTransforms(true);
-  }
+  quadrupedTfPublisher_.launchNode(nodeHandle, "ocs2_anymal_description");
 }
 
 void QuadrupedVisualizer::update(const ocs2::SystemObservation& observation, const ocs2::PrimalSolution& primalSolution,
@@ -93,34 +83,10 @@ void QuadrupedVisualizer::publishObservation(ros::Time timeStamp, const ocs2::Sy
   }
 
   // Publish
-  publishJointTransforms(timeStamp, qJoints);
-  publishBaseTransform(timeStamp, basePose);
+  quadrupedTfPublisher_.publish(timeStamp, basePose, qJoints, frameId_);
   publishCartesianMarkers(timeStamp, modeNumber2StanceLeg(observation.mode), feetPosition, feetForce);
   publishEndEffectorPoses(timeStamp, feetPosition, feetOrientations);
   publishCollisionSpheres(timeStamp, basePose, qJoints);
-}
-
-void QuadrupedVisualizer::publishJointTransforms(ros::Time timeStamp, const joint_coordinate_t& jointAngles) const {
-  if (robotStatePublisherPtr_ != nullptr) {
-    std::map<std::string, double> jointPositions{{"LF_HAA", jointAngles[0]}, {"LF_HFE", jointAngles[1]},  {"LF_KFE", jointAngles[2]},
-                                                 {"RF_HAA", jointAngles[3]}, {"RF_HFE", jointAngles[4]},  {"RF_KFE", jointAngles[5]},
-                                                 {"LH_HAA", jointAngles[6]}, {"LH_HFE", jointAngles[7]},  {"LH_KFE", jointAngles[8]},
-                                                 {"RH_HAA", jointAngles[9]}, {"RH_HFE", jointAngles[10]}, {"RH_KFE", jointAngles[11]}};
-    robotStatePublisherPtr_->publishTransforms(jointPositions, timeStamp);
-  }
-}
-
-void QuadrupedVisualizer::publishBaseTransform(ros::Time timeStamp, const base_coordinate_t& basePose) {
-  if (robotStatePublisherPtr_ != nullptr) {
-    geometry_msgs::TransformStamped baseToWorldTransform;
-    baseToWorldTransform.header = ocs2::getHeaderMsg(frameId_, timeStamp);
-    baseToWorldTransform.child_frame_id = "base";
-
-    const Eigen::Quaternion<scalar_t> q_world_base = quaternionBaseToOrigin<scalar_t>(getOrientation(basePose));
-    baseToWorldTransform.transform.rotation = ocs2::getOrientationMsg(q_world_base);
-    baseToWorldTransform.transform.translation = ocs2::getVectorMsg(getPositionInOrigin(basePose));
-    tfBroadcaster_.sendTransform(baseToWorldTransform);
-  }
 }
 
 void QuadrupedVisualizer::publishTrajectory(const std::vector<ocs2::SystemObservation>& system_observation_array, double speed) {

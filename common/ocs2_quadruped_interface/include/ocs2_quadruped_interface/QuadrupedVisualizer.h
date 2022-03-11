@@ -14,6 +14,8 @@
 #include <ocs2_ros_interfaces/mrt/DummyObserver.h>
 #include <ocs2_ros_interfaces/visualization/VisualizationColors.h>
 
+#include "ocs2_quadruped_interface/QuadrupedTfPublisher.h"
+
 namespace switched_model {
 
 class QuadrupedVisualizer : public ocs2::DummyObserver {
@@ -63,8 +65,6 @@ class QuadrupedVisualizer : public ocs2::DummyObserver {
                                        const vector_array_t& mpcStateTrajectory, const ocs2::ModeSchedule& modeSchedule) const;
 
  private:
-  void publishJointTransforms(ros::Time timeStamp, const joint_coordinate_t& jointAngles) const;
-  void publishBaseTransform(ros::Time timeStamp, const base_coordinate_t& basePose);
   void publishCartesianMarkers(ros::Time timeStamp, const contact_flag_t& contactFlags, const feet_array_t<vector3_t>& feetPosition,
                                const feet_array_t<vector3_t>& feetForce) const;
   void publishEndEffectorPoses(ros::Time timeStamp, const feet_array_t<vector3_t>& feetPositions,
@@ -73,8 +73,7 @@ class QuadrupedVisualizer : public ocs2::DummyObserver {
 
   std::unique_ptr<kinematic_model_t> kinematicModelPtr_;
 
-  tf::TransformBroadcaster tfBroadcaster_;
-  std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_;
+  QuadrupedTfPublisher quadrupedTfPublisher_;
 
   // Cost desired publisher.
   ros::Publisher costDesiredBasePositionPublisher_;

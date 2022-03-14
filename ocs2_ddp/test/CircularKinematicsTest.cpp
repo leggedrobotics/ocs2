@@ -71,20 +71,19 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
     rolloutSettings.timeStep = timeStep;
     rolloutSettings.maxNumStepsPerSecond = 10000;
 
-    switch(algorithmType) {
-    case ocs2::ddp::Algorithm::SLQ:
-      rolloutSettings.integratorType = ocs2::IntegratorType::ODE45;
-      break;
-    case ocs2::ddp::Algorithm::ILQR:
-      rolloutSettings.integratorType = ocs2::IntegratorType::RK4;
-      break;
-    default:
-      throw std::runtime_error("Not supported Algorithm!");
+    switch (algorithmType) {
+      case ocs2::ddp::Algorithm::SLQ:
+        rolloutSettings.integratorType = ocs2::IntegratorType::ODE45;
+        break;
+      case ocs2::ddp::Algorithm::ILQR:
+        rolloutSettings.integratorType = ocs2::IntegratorType::RK4;
+        break;
+      default:
+        throw std::runtime_error("Not supported Algorithm!");
     }
 
     return rolloutSettings;
   };
-
 
   ocs2::ddp::Settings getSettings(ocs2::ddp::Algorithm algorithmType, size_t numThreads, ocs2::search_strategy::Type strategy,
                                   bool display = false) const {
@@ -99,15 +98,15 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
     ddpSettings.relTolODE_ = 1e-7;
     ddpSettings.maxNumStepsPerSecond_ = 10000;
     ddpSettings.timeStep_ = timeStep;
-    switch(algorithmType) {
-    case ocs2::ddp::Algorithm::SLQ:
-      ddpSettings.backwardPassIntegratorType_ = ocs2::IntegratorType::ODE45;
-      break;
-    case ocs2::ddp::Algorithm::ILQR:
-      ddpSettings.backwardPassIntegratorType_ = ocs2::IntegratorType::RK4;
-      break;
-    default:
-      throw std::runtime_error("Not supported Algorithm!");
+    switch (algorithmType) {
+      case ocs2::ddp::Algorithm::SLQ:
+        ddpSettings.backwardPassIntegratorType_ = ocs2::IntegratorType::ODE45;
+        break;
+      case ocs2::ddp::Algorithm::ILQR:
+        ddpSettings.backwardPassIntegratorType_ = ocs2::IntegratorType::RK4;
+        break;
+      default:
+        throw std::runtime_error("Not supported Algorithm!");
     }
     ddpSettings.maxNumIterations_ = 150;
     ddpSettings.minRelCost_ = 1e-3;

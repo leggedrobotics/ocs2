@@ -101,8 +101,7 @@ class BouncingMassCost final : public ocs2::StateInputCost {
   }
 
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u,
-                                                                 const ocs2::TargetTrajectories&,
-                                                                 const PreComputation&) const override {
+                                                                 const ocs2::TargetTrajectories&, const PreComputation&) const override {
     const auto stateInput = getNominalStateInput(t, x, u);
     vector_t xDeviation = x - stateInput.first;
     vector_t uDeviation = u - stateInput.second;
@@ -147,8 +146,7 @@ class BouncingMassFinalCost final : public ocs2::StateCost {
     return 0.5 * xDeviation.dot(QFinal_ * xDeviation);
   }
 
-  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t t, const vector_t& x,
-                                                                 const ocs2::TargetTrajectories&,
+  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t t, const vector_t& x, const ocs2::TargetTrajectories&,
                                                                  const PreComputation&) const override {
     vector_t xDeviation = x - getNominalFinalState(t, x);
 

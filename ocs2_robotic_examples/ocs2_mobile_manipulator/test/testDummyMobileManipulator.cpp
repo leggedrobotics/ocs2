@@ -75,8 +75,9 @@ class MobileManipulatorIntegrationTest : public testing::Test {
 
   std::unique_ptr<GaussNewtonDDP_MPC> getMpc() {
     auto& interface = *mobileManipulatorInterfacePtr;
-    std::unique_ptr<GaussNewtonDDP_MPC> mpcPtr(new GaussNewtonDDP_MPC(interface.mpcSettings(), interface.ddpSettings(), interface.getRollout(),
-                                                                      interface.getOptimalControlProblem(), interface.getInitializer()));
+    std::unique_ptr<GaussNewtonDDP_MPC> mpcPtr(new GaussNewtonDDP_MPC(interface.mpcSettings(), interface.ddpSettings(),
+                                                                      interface.getRollout(), interface.getOptimalControlProblem(),
+                                                                      interface.getInitializer()));
     mpcPtr->getSolverPtr()->setReferenceManager(mobileManipulatorInterfacePtr->getReferenceManagerPtr());
     return mpcPtr;
   }

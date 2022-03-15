@@ -96,17 +96,6 @@ target_link_libraries(${PROJECT_NAME}_wheels_dummy_visualization_node
   ${catkin_LIBRARIES}
 )
 
-add_executable(${PROJECT_NAME}_test_terrain_node
-  src/testTerrainNode.cpp
-  )
-add_dependencies(${PROJECT_NAME}_test_terrain_node
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS}
-  )
-target_link_libraries(${PROJECT_NAME}_test_terrain_node
-  ${catkin_LIBRARIES}
-  )
-
 add_executable(${PROJECT_NAME}_visualize_foothold_selection
   src/visualizeFootholdSelection.cpp
   )

@@ -27,9 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <ros/init.h>
 #include <ros/package.h>
-#include <ros/ros.h>
-#include <urdf_parser/urdf_parser.h>
 
 #include <ocs2_ballbot/BallbotInterface.h>
 #include <ocs2_ballbot_ros/BallbotDummyVisualization.h>

@@ -66,7 +66,7 @@ MpcnetPolicyEvaluation::MetricsPtr MpcnetPolicyEvaluation::run(const std::string
       if (!mpcPtr_->run(time, state)) {
         throw std::runtime_error("[MpcnetPolicyEvaluation::run] main routine of MPC returned false.");
       }
-      PrimalSolution primalSolution = mpcPtr_->getSolverPtr()->primalSolution(mpcPtr_->getSolverPtr()->getFinalTime());
+      const auto primalSolution = mpcPtr_->getSolverPtr()->primalSolution(mpcPtr_->getSolverPtr()->getFinalTime());
 
       // incurred quantities
       vector_t input = mpcnetPtr_->computeInput(time, state);

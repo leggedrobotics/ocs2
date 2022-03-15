@@ -21,6 +21,9 @@ struct TerrainPlane {
   TerrainPlane() : positionInWorld(vector3_t::Zero()), orientationWorldToTerrain(matrix3_t::Identity()) {}
   TerrainPlane(vector3_t positionInWorld_, matrix3_t orientationWorldToTerrain_)
       : positionInWorld(std::move(positionInWorld_)), orientationWorldToTerrain(std::move(orientationWorldToTerrain_)) {}
+
+  explicit TerrainPlane(const Eigen::Isometry3d& transform)
+      : positionInWorld(transform.translation()), orientationWorldToTerrain(transform.linear().transpose()) {}
 };
 
 struct NormalAndPosition {
@@ -40,15 +43,22 @@ inline vector3_t surfaceNormalInWorld(const TerrainPlane& terrainPlane) {
  */
 inline Eigen::Matrix<scalar_t, 2, 3> tangentialBasisFromSurfaceNormal(const vector3_t& surfaceNormal) {
   // Cross with any vector that is not equal to surfaceNormal
-  vector3_t perpendicularVector = surfaceNormal.cross(vector3_t::UnitX());
-  if (perpendicularVector.squaredNorm() < 0.01) {  // check if unitX was too close to the surface normal.
-    perpendicularVector = surfaceNormal.cross(vector3_t::UnitY());
+  Eigen::Vector3d yAxisInGlobal = surfaceNormal.cross(Eigen::Vector3d::UnitX());
+  {  // Normalize the yAxis. Need to pick a different direction if z happened to intersect with unitX
+    const auto ySquaredNorm = yAxisInGlobal.squaredNorm();
+    const double crossTolerance = 1e-3;
+    if (ySquaredNorm > crossTolerance) {
+      yAxisInGlobal /= std::sqrt(ySquaredNorm);
+    } else {
+      // normal was almost equal to unitX. Pick the y-axis in a different way (approximately equal to unitY):
+      yAxisInGlobal = surfaceNormal.cross(Eigen::Vector3d::UnitY().cross(surfaceNormal)).normalized();
+    }
   }
 
   // Assumes the surface normal is normalized
   Eigen::Matrix<scalar_t, 2, 3> tangentBasis;
-  tangentBasis.row(0) = perpendicularVector.normalized();
-  tangentBasis.row(1) = surfaceNormal.cross(tangentBasis.row(0));
+  tangentBasis.row(0) = yAxisInGlobal.cross(surfaceNormal);
+  tangentBasis.row(1) = yAxisInGlobal;
   return tangentBasis;
 }
 

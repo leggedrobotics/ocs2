@@ -58,6 +58,9 @@ TEST(TestTerrainPlane, tangentialBasisFromSurfaceNormalUnitX) {
   ASSERT_LT(std::abs(tangentialBasis.row(0).dot(surfaceNormal)), tol);
   ASSERT_LT(std::abs(tangentialBasis.row(1).dot(surfaceNormal)), tol);
   ASSERT_LT(std::abs(tangentialBasis.row(0).dot(tangentialBasis.row(1))), tol);
+
+  // Y is still unit y
+  ASSERT_TRUE(tangentialBasis.row(1).transpose().isApprox(vector3_t::UnitY()));
 }
 
 TEST(TestTerrainPlane, orientationWorldToTerrainFromSurfaceNormalInWorld) {
@@ -82,6 +85,12 @@ TEST(TestTerrainPlane, orientationWorldToTerrainFromSurfaceNormalInWorld) {
   ASSERT_LT(std::abs(xAxisInWorld.dot(yAxisInWorld)), tol);
   ASSERT_LT(std::abs(xAxisInWorld.dot(zAxisInWorld)), tol);
   ASSERT_LT(std::abs(yAxisInWorld.dot(zAxisInWorld)), tol);
+}
+
+TEST(TestTerrainPlane, orientationWorldToTerrainFromSurfaceNormalInWorld_identity) {
+  // If the normal is in z direction in world. We want to retrieve the identity rotation. (local and world frame are aligned)
+  const matrix3_t R_WtoT = orientationWorldToTerrainFromSurfaceNormalInWorld(vector3_t::UnitZ());
+  ASSERT_TRUE(R_WtoT.isApprox(matrix3_t::Identity()));
 }
 
 TEST(TestTerrainPlane, projectPositionInWorldOntoPlane) {

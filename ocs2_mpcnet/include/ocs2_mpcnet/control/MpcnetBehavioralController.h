@@ -16,20 +16,13 @@ namespace ocs2 {
 class MpcnetBehavioralController final : public ControllerBase {
  public:
   /**
-   * Default constructor, leaves object uninitialized.
-   */
-  MpcnetBehavioralController() = default;
-
-  /**
-   * Constructor, initializes all required members of the controller.
+   * Constructor.
    * @param [in] alpha : The mixture parameter.
    * @param [in] optimalController : The optimal controller (this class takes ownership of a clone).
    * @param [in] learnedController : The learned controller (this class takes ownership of a clone).
    */
   MpcnetBehavioralController(scalar_t alpha, const ControllerBase& optimalController, const MpcnetControllerBase& learnedController)
-      : alpha_(alpha),
-        optimalControllerPtr_(std::unique_ptr<ControllerBase>(optimalController.clone())),
-        learnedControllerPtr_(std::unique_ptr<MpcnetControllerBase>(learnedController.clone())) {}
+      : alpha_(alpha), optimalControllerPtr_(optimalController.clone()), learnedControllerPtr_(learnedController.clone()) {}
 
   /**
    * Default destructor.

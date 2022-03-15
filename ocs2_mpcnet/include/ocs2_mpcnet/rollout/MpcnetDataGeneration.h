@@ -18,17 +18,11 @@ namespace ocs2 {
  */
 class MpcnetDataGeneration {
  public:
-  using mpc_t = MPC_BASE;
-  using mpcnet_t = MpcnetControllerBase;
-  using rollout_t = RolloutBase;
-  using mpcnet_definition_t = MpcnetDefinitionBase;
-  using reference_manager_t = ReferenceManagerInterface;
-
   struct DataPoint {
+    size_t mode;
     scalar_t t;
     vector_t x;
     vector_t u;
-    size_t mode;
     vector_t generalizedTime;
     vector_t relativeState;
     matrix_t inputTransformation;
@@ -45,8 +39,9 @@ class MpcnetDataGeneration {
    * @param [in] mpcnetDefinitionPtr : Pointer to the MPC-Net definitions to be used (shared ownership).
    * @param [in] referenceManagerPtr : Pointer to the reference manager to be used (shared ownership).
    */
-  MpcnetDataGeneration(std::unique_ptr<mpc_t> mpcPtr, std::unique_ptr<mpcnet_t> mpcnetPtr, std::unique_ptr<rollout_t> rolloutPtr,
-                       std::shared_ptr<mpcnet_definition_t> mpcnetDefinitionPtr, std::shared_ptr<reference_manager_t> referenceManagerPtr)
+  MpcnetDataGeneration(std::unique_ptr<MPC_BASE> mpcPtr, std::unique_ptr<MpcnetControllerBase> mpcnetPtr,
+                       std::unique_ptr<RolloutBase> rolloutPtr, std::shared_ptr<MpcnetDefinitionBase> mpcnetDefinitionPtr,
+                       std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr)
       : mpcPtr_(std::move(mpcPtr)),
         mpcnetPtr_(std::move(mpcnetPtr)),
         rolloutPtr_(std::move(rolloutPtr)),
@@ -57,6 +52,16 @@ class MpcnetDataGeneration {
    * Default destructor.
    */
   virtual ~MpcnetDataGeneration() = default;
+
+  /**
+   * Deleted copy constructor.
+   */
+  MpcnetDataGeneration(const MpcnetDataGeneration&) = delete;
+
+  /**
+   * Deleted copy assignment.
+   */
+  MpcnetDataGeneration& operator=(const MpcnetDataGeneration&) = delete;
 
   /**
    * Run the data generation.
@@ -76,11 +81,11 @@ class MpcnetDataGeneration {
               const TargetTrajectories& targetTrajectories);
 
  private:
-  std::unique_ptr<mpc_t> mpcPtr_;
-  std::unique_ptr<mpcnet_t> mpcnetPtr_;
-  std::unique_ptr<rollout_t> rolloutPtr_;
-  std::shared_ptr<mpcnet_definition_t> mpcnetDefinitionPtr_;
-  std::shared_ptr<reference_manager_t> referenceManagerPtr_;
+  std::unique_ptr<MPC_BASE> mpcPtr_;
+  std::unique_ptr<MpcnetControllerBase> mpcnetPtr_;
+  std::unique_ptr<RolloutBase> rolloutPtr_;
+  std::shared_ptr<MpcnetDefinitionBase> mpcnetDefinitionPtr_;
+  std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr_;
 };
 
 }  // namespace ocs2

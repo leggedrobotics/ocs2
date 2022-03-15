@@ -17,12 +17,6 @@ namespace ocs2 {
  */
 class MpcnetPolicyEvaluation {
  public:
-  using mpc_t = MPC_BASE;
-  using mpcnet_t = MpcnetControllerBase;
-  using rollout_t = RolloutBase;
-  using mpcnet_definition_t = MpcnetDefinitionBase;
-  using reference_manager_t = ReferenceManagerInterface;
-
   struct Metrics {
     scalar_t survivalTime = 0.0;
     scalar_t incurredHamiltonian = 0.0;
@@ -38,8 +32,9 @@ class MpcnetPolicyEvaluation {
    * @param [in] mpcnetDefinitionPtr: Pointer to the MPC-Net definitions to be used (shared ownership).
    * @param [in] referenceManagerPtr: Pointer to the reference manager to be used (shared ownership).
    */
-  MpcnetPolicyEvaluation(std::unique_ptr<mpc_t> mpcPtr, std::unique_ptr<mpcnet_t> mpcnetPtr, std::unique_ptr<rollout_t> rolloutPtr,
-                         std::shared_ptr<mpcnet_definition_t> mpcnetDefinitionPtr, std::shared_ptr<reference_manager_t> referenceManagerPtr)
+  MpcnetPolicyEvaluation(std::unique_ptr<MPC_BASE> mpcPtr, std::unique_ptr<MpcnetControllerBase> mpcnetPtr,
+                         std::unique_ptr<RolloutBase> rolloutPtr, std::shared_ptr<MpcnetDefinitionBase> mpcnetDefinitionPtr,
+                         std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr)
       : mpcPtr_(std::move(mpcPtr)),
         mpcnetPtr_(std::move(mpcnetPtr)),
         rolloutPtr_(std::move(rolloutPtr)),
@@ -50,6 +45,16 @@ class MpcnetPolicyEvaluation {
    * Default destructor.
    */
   virtual ~MpcnetPolicyEvaluation() = default;
+
+  /**
+   * Deleted copy constructor.
+   */
+  MpcnetPolicyEvaluation(const MpcnetPolicyEvaluation&) = delete;
+
+  /**
+   * Deleted copy assignment.
+   */
+  MpcnetPolicyEvaluation& operator=(const MpcnetPolicyEvaluation&) = delete;
 
   /**
    * Run the policy evaluation.
@@ -64,11 +69,11 @@ class MpcnetPolicyEvaluation {
                  const ModeSchedule& modeSchedule, const TargetTrajectories& targetTrajectories);
 
  private:
-  std::unique_ptr<mpc_t> mpcPtr_;
-  std::unique_ptr<mpcnet_t> mpcnetPtr_;
-  std::unique_ptr<rollout_t> rolloutPtr_;
-  std::shared_ptr<mpcnet_definition_t> mpcnetDefinitionPtr_;
-  std::shared_ptr<reference_manager_t> referenceManagerPtr_;
+  std::unique_ptr<MPC_BASE> mpcPtr_;
+  std::unique_ptr<MpcnetControllerBase> mpcnetPtr_;
+  std::unique_ptr<RolloutBase> rolloutPtr_;
+  std::shared_ptr<MpcnetDefinitionBase> mpcnetDefinitionPtr_;
+  std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr_;
 };
 
 }  // namespace ocs2

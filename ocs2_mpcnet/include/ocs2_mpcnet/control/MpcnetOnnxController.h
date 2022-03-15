@@ -27,8 +27,6 @@ inline std::shared_ptr<Ort::Env> createOnnxEnvironment() {
  */
 class MpcnetOnnxController final : public MpcnetControllerBase {
  public:
-  using tensor_element_t = float;
-
   /**
    * Constructor, does not load the model of the policy.
    * @param [in] mpcnetDefinitionPtr : Pointer to the MPC-Net definitions.
@@ -63,18 +61,20 @@ class MpcnetOnnxController final : public MpcnetControllerBase {
   vector_t computeInput(const scalar_t t, const vector_t& x) override;
 
   void concatenate(const ControllerBase* otherController, int index, int length) override {
-    throw std::runtime_error("MpcnetOnnxController::concatenate not implemented.");
+    throw std::runtime_error("[MpcnetOnnxController::concatenate] not implemented.");
   }
 
-  int size() const override { throw std::runtime_error("MpcnetOnnxController::size not implemented."); }
+  int size() const override { throw std::runtime_error("[MpcnetOnnxController::size] not implemented."); }
 
-  void clear() override { throw std::runtime_error("MpcnetOnnxController::clear not implemented."); }
+  void clear() override { throw std::runtime_error("[MpcnetOnnxController::clear] not implemented."); }
 
-  bool empty() const override { throw std::runtime_error("MpcnetOnnxController::empty not implemented."); }
+  bool empty() const override { throw std::runtime_error("[MpcnetOnnxController::empty] not implemented."); }
 
   MpcnetOnnxController* clone() const override { return new MpcnetOnnxController(*this); }
 
  private:
+  using tensor_element_t = float;
+
   /**
    * Copy constructor.
    */

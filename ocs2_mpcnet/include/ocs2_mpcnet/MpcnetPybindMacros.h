@@ -64,10 +64,10 @@ using namespace pybind11::literals;
     /* bind data point struct */                                                                            \
     pybind11::class_<MPCNET_INTERFACE::data_point_t>(m, "DataPoint")                                        \
         .def(pybind11::init<>())                                                                            \
+        .def_readwrite("mode", &MPCNET_INTERFACE::data_point_t::mode)                                       \
         .def_readwrite("t", &MPCNET_INTERFACE::data_point_t::t)                                             \
         .def_readwrite("x", &MPCNET_INTERFACE::data_point_t::x)                                             \
         .def_readwrite("u", &MPCNET_INTERFACE::data_point_t::u)                                             \
-        .def_readwrite("mode", &MPCNET_INTERFACE::data_point_t::mode)                                       \
         .def_readwrite("generalized_time", &MPCNET_INTERFACE::data_point_t::generalizedTime)                \
         .def_readwrite("relative_state", &MPCNET_INTERFACE::data_point_t::relativeState)                    \
         .def_readwrite("input_transformation", &MPCNET_INTERFACE::data_point_t::inputTransformation)        \

@@ -34,19 +34,16 @@ MpcnetDataGeneration::DataPtr MpcnetDataGeneration::run(scalar_t alpha, const st
   referenceManagerPtr_->setTargetTrajectories(targetTrajectories);
 
   // set up behavioral controller with mixture parameter alpha and learned controller
-  MpcnetBehavioralController behavioralController;
-  behavioralController.setAlpha(alpha);
-  behavioralController.setLearnedController(*mpcnetPtr_);
+  std::unique_ptr<MpcnetBehavioralController> behavioralControllerPtr;
+  behavioralControllerPtr->setAlpha(alpha);
+  behavioralControllerPtr->setLearnedController(*mpcnetPtr_);
 
   // set up scalar standard normal generator and compute Cholesky decomposition of covariance matrix
   std::random_device randomDevice;
   std::default_random_engine pseudoRandomNumberGenerator(randomDevice());
   std::normal_distribution<scalar_t> standardNormalDistribution(scalar_t(0.0), scalar_t(1.0));
-  std::function<scalar_t(scalar_t)> standardNormalNullaryOp = [&](scalar_t) -> scalar_t {
-    return standardNormalDistribution(pseudoRandomNumberGenerator);
-  };
-  matrix_t S = samplingCovariance;
-  matrix_t L = S.llt().matrixL();
+  auto standardNormalNullaryOp = [&](scalar_t) -> scalar_t { return standardNormalDistribution(pseudoRandomNumberGenerator); };
+  const matrix_t L = samplingCovariance.llt().matrixL();
 
   // run data generation
   int iteration = 0;
@@ -54,9 +51,9 @@ MpcnetDataGeneration::DataPtr MpcnetDataGeneration::run(scalar_t alpha, const st
     while (time <= targetTrajectories.timeTrajectory.back()) {
       // run mpc and get solution
       if (!mpcPtr_->run(time, state)) {
-        throw std::runtime_error("MpcnetDataGeneration::run Main routine of MPC returned false.");
+        throw std::runtime_error("[MpcnetDataGeneration::run] main routine of MPC returned false.");
       }
-      PrimalSolution primalSolution = mpcPtr_->getSolverPtr()->primalSolution(mpcPtr_->getSolverPtr()->getFinalTime());
+      const auto primalSolution = mpcPtr_->getSolverPtr()->primalSolution(mpcPtr_->getSolverPtr()->getFinalTime());
 
       // downsample the data signal by an integer factor
       if (iteration % dataDecimation == 0) {
@@ -67,9 +64,10 @@ MpcnetDataGeneration::DataPtr MpcnetDataGeneration::run(scalar_t alpha, const st
           dataPoint.x = primalSolution.stateTrajectory_.front();
           dataPoint.u = primalSolution.controllerPtr_->computeInput(dataPoint.t, dataPoint.x);
           dataPoint.mode = primalSolution.modeSchedule_.modeAtTime(dataPoint.t);
-          dataPoint.generalizedTime = mpcnetPtr_->getGeneralizedTime(dataPoint.t);
-          dataPoint.relativeState = mpcnetPtr_->getRelativeState(dataPoint.t, dataPoint.x);
-          dataPoint.inputTransformation = mpcnetPtr_->getInputTransformation(dataPoint.t, dataPoint.x);
+          dataPoint.generalizedTime = mpcnetDefinitionPtr_->getGeneralizedTime(dataPoint.t, referenceManagerPtr_->getModeSchedule());
+          dataPoint.relativeState =
+              mpcnetDefinitionPtr_->getRelativeState(dataPoint.t, dataPoint.x, referenceManagerPtr_->getTargetTrajectories());
+          dataPoint.inputTransformation = mpcnetDefinitionPtr_->getInputTransformation(dataPoint.t, dataPoint.x);
           dataPoint.hamiltonian = mpcPtr_->getSolverPtr()->getHamiltonian(dataPoint.t, dataPoint.x, dataPoint.u);
           dataPtr->push_back(std::move(dataPoint));
         }
@@ -78,20 +76,21 @@ MpcnetDataGeneration::DataPtr MpcnetDataGeneration::run(scalar_t alpha, const st
         for (int i = 0; i < nSamples; i++) {
           DataPoint dataPoint;
           dataPoint.t = primalSolution.timeTrajectory_.front();
-          dataPoint.x = primalSolution.stateTrajectory_.front() +
-                        L * vector_t::NullaryExpr(primalSolution.stateTrajectory_.front().size(), standardNormalNullaryOp);
+          dataPoint.x = primalSolution.stateTrajectory_.front();
+          dataPoint.x.noalias() += L * vector_t::NullaryExpr(primalSolution.stateTrajectory_.front().size(), standardNormalNullaryOp);
           dataPoint.u = primalSolution.controllerPtr_->computeInput(dataPoint.t, dataPoint.x);
           dataPoint.mode = primalSolution.modeSchedule_.modeAtTime(dataPoint.t);
-          dataPoint.generalizedTime = mpcnetPtr_->getGeneralizedTime(dataPoint.t);
-          dataPoint.relativeState = mpcnetPtr_->getRelativeState(dataPoint.t, dataPoint.x);
-          dataPoint.inputTransformation = mpcnetPtr_->getInputTransformation(dataPoint.t, dataPoint.x);
+          dataPoint.generalizedTime = mpcnetDefinitionPtr_->getGeneralizedTime(dataPoint.t, referenceManagerPtr_->getModeSchedule());
+          dataPoint.relativeState =
+              mpcnetDefinitionPtr_->getRelativeState(dataPoint.t, dataPoint.x, referenceManagerPtr_->getTargetTrajectories());
+          dataPoint.inputTransformation = mpcnetDefinitionPtr_->getInputTransformation(dataPoint.t, dataPoint.x);
           dataPoint.hamiltonian = mpcPtr_->getSolverPtr()->getHamiltonian(dataPoint.t, dataPoint.x, dataPoint.u);
           dataPtr->push_back(std::move(dataPoint));
         }
       }
 
       // update behavioral controller with MPC controller
-      behavioralController.setOptimalController(*primalSolution.controllerPtr_);
+      behavioralControllerPtr->setOptimalController(*primalSolution.controllerPtr_);
 
       // forward simulate system with behavioral controller
       scalar_array_t timeTrajectory;
@@ -99,22 +98,22 @@ MpcnetDataGeneration::DataPtr MpcnetDataGeneration::run(scalar_t alpha, const st
       vector_array_t stateTrajectory;
       vector_array_t inputTrajectory;
       rolloutPtr_->run(primalSolution.timeTrajectory_.front(), primalSolution.stateTrajectory_.front(),
-                       primalSolution.timeTrajectory_.front() + timeStep, &behavioralController, primalSolution.modeSchedule_.eventTimes,
-                       timeTrajectory, postEventIndicesStock, stateTrajectory, inputTrajectory);
+                       primalSolution.timeTrajectory_.front() + timeStep, behavioralControllerPtr.get(),
+                       primalSolution.modeSchedule_.eventTimes, timeTrajectory, postEventIndicesStock, stateTrajectory, inputTrajectory);
 
       // update time, state and iteration
       time = timeTrajectory.back();
       state = stateTrajectory.back();
-      iteration++;
+      ++iteration;
 
       // check if forward simulated system diverged
       if (!mpcnetDefinitionPtr_->validState(state)) {
-        throw std::runtime_error("MpcnetDataGeneration::run State is not valid.");
+        throw std::runtime_error("[MpcnetDataGeneration::run] state is not valid.");
       }
     }
   } catch (const std::exception& e) {
     // print error for exceptions
-    std::cerr << "MpcnetDataGeneration::run A standard exception was caught, with message: " << e.what() << std::endl;
+    std::cerr << "[MpcnetDataGeneration::run] a standard exception was caught, with message: " << e.what() << "\n";
     // this data generation run failed, clear data
     dataPtr->clear();
   }

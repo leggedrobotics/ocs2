@@ -18,12 +18,6 @@ class MpcnetInterfaceBase {
   using metrics_array_t = MpcnetRolloutManager::metrics_array_t;
   using metrics_ptr_t = MpcnetRolloutManager::metrics_ptr_t;
 
- protected:
-  /**
-   * Default constructor.
-   */
-  MpcnetInterfaceBase() = default;
-
  public:
   /**
    * Default destructor.
@@ -65,6 +59,11 @@ class MpcnetInterfaceBase {
   metrics_array_t getComputedMetrics();
 
  protected:
+  /**
+   * Default constructor.
+   */
+  MpcnetInterfaceBase() = default;
+
   std::unique_ptr<MpcnetRolloutManager> mpcnetRolloutManagerPtr_;
 };
 

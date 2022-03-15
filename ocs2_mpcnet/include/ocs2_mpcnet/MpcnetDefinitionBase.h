@@ -11,14 +11,19 @@ namespace ocs2 {
 class MpcnetDefinitionBase {
  public:
   /**
-   * Default constructor.
-   */
-  MpcnetDefinitionBase() = default;
-
-  /**
    * Default destructor.
    */
   virtual ~MpcnetDefinitionBase() = default;
+
+  /**
+   * Deleted copy constructor.
+   */
+  MpcnetDefinitionBase(const MpcnetDefinitionBase&) = delete;
+
+  /**
+   * Deleted copy assignment.
+   */
+  MpcnetDefinitionBase& operator=(const MpcnetDefinitionBase&) = delete;
 
   /**
    * Get the generalized time.

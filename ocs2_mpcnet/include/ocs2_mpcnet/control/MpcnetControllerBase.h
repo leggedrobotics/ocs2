@@ -34,6 +34,16 @@ class MpcnetControllerBase : public ControllerBase {
    */
   virtual void loadPolicyModel(const std::string& policyFilePath) = 0;
 
+  ControllerType getType() const override { return ControllerType::MPCNET; }
+
+  MpcnetControllerBase* clone() const override = 0;
+
+ protected:
+  /**
+   * Copy constructor.
+   */
+  MpcnetControllerBase(const MpcnetControllerBase& other) : MpcnetControllerBase(other.mpcnetDefinitionPtr_, other.referenceManagerPtr_) {}
+
   /**
    * Get the generalized time.
    * @param [in] t : Absolute time.
@@ -58,16 +68,6 @@ class MpcnetControllerBase : public ControllerBase {
    * @return The input transformation.
    */
   matrix_t getInputTransformation(scalar_t t, const vector_t& x) { return mpcnetDefinitionPtr_->getInputTransformation(t, x); }
-
-  ControllerType getType() const override { return ControllerType::MPCNET; }
-
-  MpcnetControllerBase* clone() const override = 0;
-
- protected:
-  /**
-   * Copy constructor.
-   */
-  MpcnetControllerBase(const MpcnetControllerBase& other) : MpcnetControllerBase(other.mpcnetDefinitionPtr_, other.referenceManagerPtr_) {}
 
   std::shared_ptr<MpcnetDefinitionBase> mpcnetDefinitionPtr_;
   std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr_;

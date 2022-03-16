@@ -72,16 +72,33 @@ class SwingTrajectoryPlanner {
 
  private:
   void updateLastContact(int leg, scalar_t expectedLiftOff, const vector3_t& currentFootPosition, const TerrainModel& terrainModel);
+
   std::pair<std::vector<scalar_t>, std::vector<std::unique_ptr<FootPhase>>> generateSwingTrajectories(
       int leg, const std::vector<ContactTiming>& contactTimings, scalar_t finalTime) const;
-  std::pair<std::vector<ConvexTerrain>, std::vector<vector3_t>> selectNominalFootholdTerrain(
-      int leg, const std::vector<ContactTiming>& contactTimings, const ocs2::TargetTrajectories& targetTrajectories, scalar_t initTime,
-      const comkino_state_t& currentState, scalar_t finalTime, const TerrainModel& terrainModel) const;
+
+  std::vector<vector3_t> selectHeuristicFootholds(int leg, const std::vector<ContactTiming>& contactTimings,
+                                                  const ocs2::TargetTrajectories& targetTrajectories, scalar_t initTime,
+                                                  const comkino_state_t& currentState, scalar_t finalTime) const;
+
+  std::vector<ConvexTerrain> selectNominalFootholdTerrain(int leg, const std::vector<ContactTiming>& contactTimings,
+                                                          const std::vector<vector3_t>& heuristicFootholds,
+                                                          const ocs2::TargetTrajectories& targetTrajectories, scalar_t initTime,
+                                                          const comkino_state_t& currentState, scalar_t finalTime,
+                                                          const TerrainModel& terrainModel) const;
+
   void applySwingMotionScaling(SwingPhase::SwingEvent& liftOff, SwingPhase::SwingEvent& touchDown,
                                SwingPhase::SwingProfile& swingProfile) const;
+
   std::vector<SwingPhase::SwingProfile::Node> extractSwingProfileFromReference(int leg, const SwingPhase::SwingEvent& liftoff,
                                                                                const SwingPhase::SwingEvent& touchdown) const;
+
   void setDefaultSwingProfile();
+
+  scalar_t getContactEndTime(const ContactTiming& contactPhase, scalar_t finalTime) const;
+
+  const FootPhase* getFootPhaseIfInContact(size_t leg, scalar_t time) const;
+
+  vector3_t filterFoothold(const vector3_t& newFoothold, const vector3_t& previousFoothold) const;
 
   SwingTrajectoryPlannerSettings settings_;
   SwingPhase::SwingProfile defaultSwingProfile_;

@@ -63,9 +63,12 @@ void SwingTrajectoryPlanner::updateSwingMotions(scalar_t initTime, scalar_t fina
       }
     }
 
-    // Nominal footholds / terrain planes
-    std::tie(nominalFootholdsPerLeg_[leg], heuristicFootholdsPerLeg_[leg]) =
-        selectNominalFootholdTerrain(leg, contactTimings, targetTrajectories, initTime, currentState, finalTime, *terrainModel_);
+    // Select heuristic footholds.
+    heuristicFootholdsPerLeg_[leg] = selectHeuristicFootholds(leg, contactTimings, targetTrajectories, initTime, currentState, finalTime);
+
+    // Select terrain constraints based on the heuristic footholds.
+    nominalFootholdsPerLeg_[leg] = selectNominalFootholdTerrain(leg, contactTimings, heuristicFootholdsPerLeg_[leg], targetTrajectories,
+                                                                initTime, currentState, finalTime, *terrainModel_);
 
     // Create swing trajectories
     std::tie(feetNormalTrajectoriesEvents_[leg], feetNormalTrajectories_[leg]) = generateSwingTrajectories(leg, contactTimings, finalTime);
@@ -179,21 +182,23 @@ void SwingTrajectoryPlanner::applySwingMotionScaling(SwingPhase::SwingEvent& lif
   }
 }
 
-std::pair<std::vector<ConvexTerrain>, std::vector<vector3_t>> SwingTrajectoryPlanner::selectNominalFootholdTerrain(
-    int leg, const std::vector<ContactTiming>& contactTimings, const ocs2::TargetTrajectories& targetTrajectories, scalar_t initTime,
-    const comkino_state_t& currentState, scalar_t finalTime, const TerrainModel& terrainModel) const {
-  // Zmp preparation
+std::vector<vector3_t> SwingTrajectoryPlanner::selectHeuristicFootholds(int leg, const std::vector<ContactTiming>& contactTimings,
+                                                                        const ocs2::TargetTrajectories& targetTrajectories,
+                                                                        scalar_t initTime, const comkino_state_t& currentState,
+                                                                        scalar_t finalTime) const {
+  // Zmp preparation : measured state
   const auto initBasePose = getBasePose(currentState);
-  const auto initBasePosition = getPositionInOrigin(initBasePose);
   const auto initBaseOrientation = getOrientation(initBasePose);
   const auto initBaseTwistInBase = getBaseLocalVelocities(currentState);
   const auto initBaseLinearVelocityInWorld = rotateVectorBaseToOrigin(getLinearVelocity(initBaseTwistInBase), initBaseOrientation);
-  vector_t initDesiredState = targetTrajectories.getDesiredState(initTime);
+
+  // Zmp preparation : desired state
+  const vector_t initDesiredState = targetTrajectories.getDesiredState(initTime);
   const base_coordinate_t initDesiredBasePose = initDesiredState.head<BASE_COORDINATE_SIZE>();
-  const auto initDesiredBasePosition = getPositionInOrigin(initDesiredBasePose);
+  const auto initDesiredOrientation = getOrientation(initDesiredBasePose);
   const base_coordinate_t initDesiredBaseTwistInBase = initDesiredState.segment<BASE_COORDINATE_SIZE>(BASE_COORDINATE_SIZE);
   const auto initDesiredBaseLinearVelocityInWorld =
-      rotateVectorBaseToOrigin(getLinearVelocity(initDesiredBaseTwistInBase), getOrientation(initDesiredBasePose));
+      rotateVectorBaseToOrigin(getLinearVelocity(initDesiredBaseTwistInBase), initDesiredOrientation);
 
   // Compute zmp / inverted pendulum foot placement offset: delta p = sqrt(h / g) * (v - v_des)
   scalar_t pendulumFrequency = std::sqrt(settings_.invertedPendulumHeight / 9.81);
@@ -201,63 +206,86 @@ std::pair<std::vector<ConvexTerrain>, std::vector<vector3_t>> SwingTrajectoryPla
   scalar_t zmpY = pendulumFrequency * (initBaseLinearVelocityInWorld.y() - initDesiredBaseLinearVelocityInWorld.y());
   const vector3_t zmpReactiveOffset = {zmpX, zmpY, 0.0};
 
-  std::vector<ConvexTerrain> nominalFootholdTerrain;
+  // Heuristic footholds to fill
   std::vector<vector3_t> heuristicFootholds;
 
-  // Nominal foothold is equal to current foothold for legs in contact
+  // Heuristic foothold is equal to current foothold for legs in contact
   if (startsWithStancePhase(contactTimings)) {
-    ConvexTerrain convexTerrain;
-    convexTerrain.plane = lastContacts_[leg].second;
-    nominalFootholdTerrain.push_back(convexTerrain);
-    heuristicFootholds.push_back(convexTerrain.plane.positionInWorld);
+    heuristicFootholds.push_back(lastContacts_[leg].second.positionInWorld);
   }
 
   // For future contact phases, use TargetTrajectories at halve the contact phase
   int contactCount = 0;
   for (const auto& contactPhase : contactTimings) {
     if (hasStartTime(contactPhase)) {
+      const scalar_t contactEndTime = getContactEndTime(contactPhase, finalTime);
+      const scalar_t middleContactTime = 0.5 * (contactEndTime + contactPhase.start);
+
+      // Compute foot position from cost desired trajectory
+      const vector_t state = targetTrajectories.getDesiredState(middleContactTime);
+      const auto desiredBasePose = getBasePose(state);
+      const auto desiredJointPositions = getJointPositions(state);
+      vector3_t referenceFootholdPositionInWorld = kinematicsModel_->footPositionInOriginFrame(leg, desiredBasePose, desiredJointPositions);
+
+      // Add ZMP offset to the first upcoming foothold.
+      if (contactCount == 0) {
+        referenceFootholdPositionInWorld += zmpReactiveOffset;
+      }
+
+      // One foothold added per contactPhase
+      heuristicFootholds.push_back(referenceFootholdPositionInWorld);
+
+      // Can stop for this leg if we have processed one contact phase after (or extending across) the horizon
+      if (contactEndTime > finalTime) {
+        break;
+      }
+    }
+    ++contactCount;
+  }
+
+  return heuristicFootholds;
+}
+
+std::vector<ConvexTerrain> SwingTrajectoryPlanner::selectNominalFootholdTerrain(int leg, const std::vector<ContactTiming>& contactTimings,
+                                                                                const std::vector<vector3_t>& heuristicFootholds,
+                                                                                const ocs2::TargetTrajectories& targetTrajectories,
+                                                                                scalar_t initTime, const comkino_state_t& currentState,
+                                                                                scalar_t finalTime,
+                                                                                const TerrainModel& terrainModel) const {
+  // Will increment the heuristic each time after selecting a nominalFootholdTerrain
+  auto heuristicFootholdIt = heuristicFootholds.cbegin();
+  std::vector<ConvexTerrain> nominalFootholdTerrain;
+
+  // Nominal foothold is equal to current foothold for legs in contact
+  if (startsWithStancePhase(contactTimings)) {
+    ConvexTerrain convexTerrain;
+    convexTerrain.plane = lastContacts_[leg].second;
+    nominalFootholdTerrain.push_back(convexTerrain);
+    ++heuristicFootholdIt;  // Skip this heuristic. Use lastContact directly
+  }
+
+  // For future contact phases
+  for (const auto& contactPhase : contactTimings) {
+    if (hasStartTime(contactPhase)) {
       const scalar_t timeTillContact = contactPhase.start - initTime;
-      const scalar_t contactEndTime =
-          hasEndTime(contactPhase) ? contactPhase.end : std::max(finalTime + settings_.referenceExtensionAfterHorizon, contactPhase.start);
+      const scalar_t contactEndTime = getContactEndTime(contactPhase, finalTime);
       const scalar_t middleContactTime = 0.5 * (contactEndTime + contactPhase.start);
 
       // Get previous foothold if there was one at this time
-      const FootPhase* previousIterationContact = nullptr;
-      if (!feetNormalTrajectories_[leg].empty()) {
-        const auto& footPhase = getFootPhase(leg, middleContactTime);
-        if (footPhase.contactFlag()) {
-          previousIterationContact = &footPhase;
-        }
-      }
+      const FootPhase* previousIterationContact = getFootPhaseIfInContact(leg, middleContactTime);
 
       if (timeTillContact < settings_.previousFootholdTimeDeadzone && previousIterationContact != nullptr) {
         // Simply copy the information out of the previous iteration
         nominalFootholdTerrain.push_back(*previousIterationContact->nominalFootholdConstraint());
-        heuristicFootholds.push_back(previousIterationContact->nominalFootholdLocation());
+        ++heuristicFootholdIt;  // Skip this heuristic. Using the previous terrain instead
       } else {
-        // Compute foot position from cost desired trajectory
-        const vector_t state = targetTrajectories.getDesiredState(middleContactTime);
-        const base_coordinate_t desiredBasePose = state.head<BASE_COORDINATE_SIZE>();
-        const joint_coordinate_t desiredJointPositions = state.segment<JOINT_COORDINATE_SIZE>(2 * BASE_COORDINATE_SIZE);
-        vector3_t referenceFootholdPositionInWorld =
-            kinematicsModel_->footPositionInOriginFrame(leg, desiredBasePose, desiredJointPositions);
+        // Select the terrain base on the heuristic
+        vector3_t referenceFootholdPositionInWorld = *heuristicFootholdIt;
 
-        // Add ZMP offset to the first upcoming foothold.
-        if (contactCount == 0) {
-          referenceFootholdPositionInWorld += zmpReactiveOffset;
-        }
-
-        // Apply Position deadzone and low pass filter w.r.t. previous foothold
+        // Filter w.r.t. previous foothold
         if (previousIterationContact != nullptr) {
-          vector3_t previousFootholdPositionInWorld = previousIterationContact->nominalFootholdLocation();
-
-          if ((referenceFootholdPositionInWorld - previousFootholdPositionInWorld).norm() < settings_.previousFootholdDeadzone) {
-            referenceFootholdPositionInWorld = previousFootholdPositionInWorld;
-          } else {
-            // low pass filter
-            const scalar_t lambda = settings_.previousFootholdFactor;
-            referenceFootholdPositionInWorld = lambda * previousFootholdPositionInWorld + (1.0 - lambda) * referenceFootholdPositionInWorld;
-          }
+          referenceFootholdPositionInWorld =
+              filterFoothold(referenceFootholdPositionInWorld, previousIterationContact->nominalFootholdLocation());
         }
 
         // Kinematic penalty
@@ -278,17 +306,15 @@ std::pair<std::vector<ConvexTerrain>, std::vector<vector3_t>> SwingTrajectoryPla
         if (contactPhase.start < finalTime) {
           ConvexTerrain convexTerrain = terrainModel.getConvexTerrainAtPositionInWorld(referenceFootholdPositionInWorld, scoringFunction);
           nominalFootholdTerrain.push_back(convexTerrain);
-          heuristicFootholds.push_back(referenceFootholdPositionInWorld);
+          ++heuristicFootholdIt;
         } else {  // After the horizon -> we are only interested in the position and orientation
           ConvexTerrain convexTerrain;
           convexTerrain.plane =
               terrainModel.getLocalTerrainAtPositionInWorldAlongGravity(referenceFootholdPositionInWorld, scoringFunction);
           nominalFootholdTerrain.push_back(convexTerrain);
-          heuristicFootholds.push_back(referenceFootholdPositionInWorld);
+          ++heuristicFootholdIt;
         }
       }
-
-      ++contactCount;
 
       // Can stop for this leg if we have processed one contact phase after (or extending across) the horizon
       if (contactEndTime > finalTime) {
@@ -297,7 +323,7 @@ std::pair<std::vector<ConvexTerrain>, std::vector<vector3_t>> SwingTrajectoryPla
     }
   }
 
-  return {nominalFootholdTerrain, heuristicFootholds};
+  return nominalFootholdTerrain;
 }
 
 void SwingTrajectoryPlanner::adaptJointReferencesWithInverseKinematics(const inverse_kinematics_function_t& inverseKinematicsFunction,
@@ -402,6 +428,32 @@ void SwingTrajectoryPlanner::setDefaultSwingProfile() {
   midPoint.tangentialProgress = 0.6;
   midPoint.tangentialVelocityFactor = 2.0;
   defaultSwingProfile_.nodes.push_back(midPoint);
+}
+
+scalar_t SwingTrajectoryPlanner::getContactEndTime(const ContactTiming& contactPhase, scalar_t finalTime) const {
+  return hasEndTime(contactPhase) ? contactPhase.end : std::max(finalTime + settings_.referenceExtensionAfterHorizon, contactPhase.start);
+}
+
+const FootPhase* SwingTrajectoryPlanner::getFootPhaseIfInContact(size_t leg, scalar_t time) const {
+  const FootPhase* previousIterationContact = nullptr;
+  if (!feetNormalTrajectories_[leg].empty()) {
+    const auto& footPhase = getFootPhase(leg, time);
+    if (footPhase.contactFlag()) {
+      previousIterationContact = &footPhase;
+    }
+  }
+  return previousIterationContact;
+}
+
+vector3_t SwingTrajectoryPlanner::filterFoothold(const vector3_t& newFoothold, const vector3_t& previousFoothold) const {
+  // Apply Position deadzone and low pass filter
+  if ((newFoothold - previousFoothold).norm() < settings_.previousFootholdDeadzone) {
+    return previousFoothold;
+  } else {
+    // low pass filter
+    const scalar_t lambda = settings_.previousFootholdFactor;
+    return lambda * previousFoothold + (1.0 - lambda) * newFoothold;
+  }
 }
 
 SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& filename, bool verbose) {

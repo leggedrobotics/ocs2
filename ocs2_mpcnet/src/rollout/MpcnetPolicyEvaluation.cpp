@@ -35,10 +35,10 @@ namespace mpcnet {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-metrics_ptr_t MpcnetPolicyEvaluation::run(const std::string& policyFilePath, scalar_t timeStep, const SystemObservation& initialObservation,
-                                          const ModeSchedule& modeSchedule, const TargetTrajectories& targetTrajectories) {
-  // declare metrics pointer
-  metrics_ptr_t metricsPtr(new metrics_t);
+metrics_t MpcnetPolicyEvaluation::run(const std::string& policyFilePath, scalar_t timeStep, const SystemObservation& initialObservation,
+                                      const ModeSchedule& modeSchedule, const TargetTrajectories& targetTrajectories) {
+  // declare metrics
+  metrics_t metrics;
 
   // init time and state
   scalar_t time = initialObservation.time;
@@ -69,7 +69,7 @@ metrics_ptr_t MpcnetPolicyEvaluation::run(const std::string& policyFilePath, sca
 
       // incurred quantities
       vector_t input = mpcnetPtr_->computeInput(time, state);
-      metricsPtr->incurredHamiltonian += mpcPtr_->getSolverPtr()->getHamiltonian(time, state, input).f * timeStep;
+      metrics.incurredHamiltonian += mpcPtr_->getSolverPtr()->getHamiltonian(time, state, input).f * timeStep;
 
       // forward simulate system with learned controller
       scalar_array_t timeTrajectory;
@@ -94,14 +94,14 @@ metrics_ptr_t MpcnetPolicyEvaluation::run(const std::string& policyFilePath, sca
     // print error for exceptions
     std::cerr << "[MpcnetPolicyEvaluation::run] a standard exception was caught, with message: " << e.what() << "\n";
     // this policy evaluation run failed, incurred quantities are not reported
-    metricsPtr->incurredHamiltonian = std::numeric_limits<scalar_t>::quiet_NaN();
+    metrics.incurredHamiltonian = std::numeric_limits<scalar_t>::quiet_NaN();
   }
 
   // report survival time
-  metricsPtr->survivalTime = time;
+  metrics.survivalTime = time;
 
-  // return metrics pointer
-  return metricsPtr;
+  // return metrics
+  return metrics;
 }
 
 }  // namespace mpcnet

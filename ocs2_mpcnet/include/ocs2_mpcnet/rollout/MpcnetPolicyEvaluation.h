@@ -87,10 +87,10 @@ class MpcnetPolicyEvaluation {
    * @param [in] initialObservation : The initial system observation to start from (time and state required).
    * @param [in] modeSchedule : The mode schedule providing the event times and mode sequence.
    * @param [in] targetTrajectories : The target trajectories to be tracked.
-   * @return Pointer to the computed metrics.
+   * @return The computed metrics.
    */
-  metrics_ptr_t run(const std::string& policyFilePath, scalar_t timeStep, const SystemObservation& initialObservation,
-                    const ModeSchedule& modeSchedule, const TargetTrajectories& targetTrajectories);
+  metrics_t run(const std::string& policyFilePath, scalar_t timeStep, const SystemObservation& initialObservation,
+                const ModeSchedule& modeSchedule, const TargetTrajectories& targetTrajectories);
 
  private:
   std::unique_ptr<MPC_BASE> mpcPtr_;

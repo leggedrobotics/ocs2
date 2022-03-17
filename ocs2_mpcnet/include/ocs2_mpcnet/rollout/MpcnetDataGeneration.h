@@ -92,11 +92,11 @@ class MpcnetDataGeneration {
    * @param [in] initialObservation : The initial system observation to start from (time and state required).
    * @param [in] modeSchedule : The mode schedule providing the event times and mode sequence.
    * @param [in] targetTrajectories : The target trajectories to be tracked.
-   * @return Pointer to the generated data.
+   * @return Pointer to the data array with the generated data.
    */
-  data_ptr_t run(scalar_t alpha, const std::string& policyFilePath, scalar_t timeStep, size_t dataDecimation, size_t nSamples,
-                 const matrix_t& samplingCovariance, const SystemObservation& initialObservation, const ModeSchedule& modeSchedule,
-                 const TargetTrajectories& targetTrajectories);
+  const data_array_t* run(scalar_t alpha, const std::string& policyFilePath, scalar_t timeStep, size_t dataDecimation, size_t nSamples,
+                          const matrix_t& samplingCovariance, const SystemObservation& initialObservation, const ModeSchedule& modeSchedule,
+                          const TargetTrajectories& targetTrajectories);
 
  private:
   std::unique_ptr<MPC_BASE> mpcPtr_;
@@ -104,6 +104,7 @@ class MpcnetDataGeneration {
   std::unique_ptr<RolloutBase> rolloutPtr_;
   std::shared_ptr<MpcnetDefinitionBase> mpcnetDefinitionPtr_;
   std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr_;
+  data_array_t dataArray_;
 };
 
 }  // namespace mpcnet

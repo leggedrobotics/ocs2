@@ -85,9 +85,9 @@ void MpcnetRolloutManager::startDataGeneration(scalar_t alpha, const std::string
   // push tasks into pool
   for (int i = 0; i < initialObservations.size(); i++) {
     dataGenerationFtrs_.push_back(dataGenerationThreadPoolPtr_->run([=](int threadNumber) {
-      data_ptr_t result;
-      result = dataGenerationPtrs_[threadNumber]->run(alpha, policyFilePath, timeStep, dataDecimation, nSamples, samplingCovariance,
-                                                      initialObservations.at(i), modeSchedules.at(i), targetTrajectories.at(i));
+      const auto* result =
+          dataGenerationPtrs_[threadNumber]->run(alpha, policyFilePath, timeStep, dataDecimation, nSamples, samplingCovariance,
+                                                 initialObservations.at(i), modeSchedules.at(i), targetTrajectories.at(i));
       nDataGenerationTasksDone_++;
       // print thread and task number
       std::cerr << "Data generation thread " << threadNumber << " finished task " << nDataGenerationTasksDone_ << "\n";
@@ -130,7 +130,7 @@ data_array_t MpcnetRolloutManager::getGeneratedData() {
   }
 
   // get pointers to data
-  std::vector<data_ptr_t> dataPtrs;
+  std::vector<const data_array_t*> dataPtrs;
   for (int i = 0; i < dataGenerationFtrs_.size(); i++) {
     try {
       // get results from futures of the tasks
@@ -178,9 +178,8 @@ void MpcnetRolloutManager::startPolicyEvaluation(const std::string& policyFilePa
   // push tasks into pool
   for (int i = 0; i < initialObservations.size(); i++) {
     policyEvaluationFtrs_.push_back(policyEvaluationThreadPoolPtr_->run([=](int threadNumber) {
-      metrics_ptr_t result;
-      result = policyEvaluationPtrs_[threadNumber]->run(policyFilePath, timeStep, initialObservations.at(i), modeSchedules.at(i),
-                                                        targetTrajectories.at(i));
+      const auto result = policyEvaluationPtrs_[threadNumber]->run(policyFilePath, timeStep, initialObservations.at(i), modeSchedules.at(i),
+                                                                   targetTrajectories.at(i));
       nPolicyEvaluationTasksDone_++;
       // print thread and task number
       std::cerr << "Policy evaluation thread " << threadNumber << " finished task " << nPolicyEvaluationTasksDone_ << "\n";
@@ -222,23 +221,16 @@ metrics_array_t MpcnetRolloutManager::getComputedMetrics() {
     throw std::runtime_error("[MpcnetRolloutManager::getComputedMetrics] cannot get metrics when policy evaluation is not done.");
   }
 
-  // get pointers to metrics
-  std::vector<metrics_ptr_t> metricsPtrs;
+  // get metrics and fill metrics array
+  metrics_array_t metricsArray;
   for (int i = 0; i < policyEvaluationFtrs_.size(); i++) {
     try {
       // get results from futures of the tasks
-      metricsPtrs.push_back(policyEvaluationFtrs_[i].get());
+      metricsArray.push_back(policyEvaluationFtrs_[i].get());
     } catch (const std::exception& e) {
       // print error for exceptions
       std::cerr << "[MpcnetRolloutManager::getComputedMetrics] a standard exception was caught, with message: " << e.what() << "\n";
     }
-  }
-
-  // fill metrics array
-  metrics_array_t metricsArray;
-  metricsArray.reserve(metricsPtrs.size());
-  for (int i = 0; i < metricsPtrs.size(); i++) {
-    metricsArray.push_back((*metricsPtrs[i]));
   }
 
   // return metrics

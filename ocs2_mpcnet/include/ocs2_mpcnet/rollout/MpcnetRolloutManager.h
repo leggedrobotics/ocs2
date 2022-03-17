@@ -122,13 +122,13 @@ class MpcnetRolloutManager {
   std::atomic_int nDataGenerationTasksDone_;
   std::unique_ptr<ThreadPool> dataGenerationThreadPoolPtr_;
   std::vector<std::unique_ptr<MpcnetDataGeneration>> dataGenerationPtrs_;
-  std::vector<std::future<data_ptr_t>> dataGenerationFtrs_;
+  std::vector<std::future<const data_array_t*>> dataGenerationFtrs_;
   // policy evaluation variables
   size_t nPolicyEvaluationThreads_;
   std::atomic_int nPolicyEvaluationTasksDone_;
   std::unique_ptr<ThreadPool> policyEvaluationThreadPoolPtr_;
   std::vector<std::unique_ptr<MpcnetPolicyEvaluation>> policyEvaluationPtrs_;
-  std::vector<std::future<metrics_ptr_t>> policyEvaluationFtrs_;
+  std::vector<std::future<metrics_t>> policyEvaluationFtrs_;
 };
 
 }  // namespace mpcnet

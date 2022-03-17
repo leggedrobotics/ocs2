@@ -49,7 +49,6 @@ struct DataPoint {
 };
 using data_point_t = DataPoint;
 using data_array_t = std::vector<data_point_t>;
-using data_ptr_t = std::unique_ptr<data_array_t>;
 
 /**
  * Get a data point.

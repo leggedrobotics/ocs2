@@ -40,7 +40,6 @@ struct Metrics {
 };
 using metrics_t = Metrics;
 using metrics_array_t = std::vector<metrics_t>;
-using metrics_ptr_t = std::unique_ptr<metrics_t>;
 
 }  // namespace mpcnet
 }  // namespace ocs2

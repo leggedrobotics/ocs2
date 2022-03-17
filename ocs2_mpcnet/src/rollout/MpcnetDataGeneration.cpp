@@ -39,11 +39,12 @@ namespace mpcnet {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-data_ptr_t MpcnetDataGeneration::run(scalar_t alpha, const std::string& policyFilePath, scalar_t timeStep, size_t dataDecimation,
-                                     size_t nSamples, const matrix_t& samplingCovariance, const SystemObservation& initialObservation,
-                                     const ModeSchedule& modeSchedule, const TargetTrajectories& targetTrajectories) {
-  // declare data pointer
-  data_ptr_t dataPtr(new data_array_t);
+const data_array_t* MpcnetDataGeneration::run(scalar_t alpha, const std::string& policyFilePath, scalar_t timeStep, size_t dataDecimation,
+                                              size_t nSamples, const matrix_t& samplingCovariance,
+                                              const SystemObservation& initialObservation, const ModeSchedule& modeSchedule,
+                                              const TargetTrajectories& targetTrajectories) {
+  // clear data array
+  dataArray_.clear();
 
   // init time and state
   scalar_t time = initialObservation.time;
@@ -88,12 +89,12 @@ data_ptr_t MpcnetDataGeneration::run(scalar_t alpha, const std::string& policyFi
       if (iteration % dataDecimation == 0) {
         // get nominal data point
         const vector_t deviation = vector_t::Zero(primalSolution.stateTrajectory_.front().size());
-        dataPtr->push_back(getDataPoint(*mpcPtr_, *mpcnetDefinitionPtr_, deviation));
+        dataArray_.push_back(getDataPoint(*mpcPtr_, *mpcnetDefinitionPtr_, deviation));
 
         // get samples around nominal data point
         for (int i = 0; i < nSamples; i++) {
           const vector_t deviation = L * vector_t::NullaryExpr(primalSolution.stateTrajectory_.front().size(), standardNormalNullaryOp);
-          dataPtr->push_back(getDataPoint(*mpcPtr_, *mpcnetDefinitionPtr_, deviation));
+          dataArray_.push_back(getDataPoint(*mpcPtr_, *mpcnetDefinitionPtr_, deviation));
         }
       }
 
@@ -123,11 +124,11 @@ data_ptr_t MpcnetDataGeneration::run(scalar_t alpha, const std::string& policyFi
     // print error for exceptions
     std::cerr << "[MpcnetDataGeneration::run] a standard exception was caught, with message: " << e.what() << "\n";
     // this data generation run failed, clear data
-    dataPtr->clear();
+    dataArray_.clear();
   }
 
-  // return data pointer
-  return dataPtr;
+  // return pointer to the data array
+  return &dataArray_;
 }
 
 }  // namespace mpcnet

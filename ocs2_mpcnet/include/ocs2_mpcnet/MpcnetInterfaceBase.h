@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_mpcnet/rollout/MpcnetRolloutManager.h"
 
 namespace ocs2 {
+namespace mpcnet {
 
 /**
  *  Base class for all MPC-Net interfaces between C++ and Python.
@@ -86,4 +87,5 @@ class MpcnetInterfaceBase {
   std::unique_ptr<MpcnetRolloutManager> mpcnetRolloutManagerPtr_;
 };
 
+}  // namespace mpcnet
 }  // namespace ocs2

@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_mpcnet/rollout/MpcnetPolicyEvaluation.h"
 
 namespace ocs2 {
+namespace mpcnet {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -103,4 +104,5 @@ metrics_ptr_t MpcnetPolicyEvaluation::run(const std::string& policyFilePath, sca
   return metricsPtr;
 }
 
+}  // namespace mpcnet
 }  // namespace ocs2

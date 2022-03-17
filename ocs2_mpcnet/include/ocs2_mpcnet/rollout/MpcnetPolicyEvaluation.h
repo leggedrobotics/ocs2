@@ -41,6 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_mpcnet/rollout/MpcnetMetrics.h"
 
 namespace ocs2 {
+namespace mpcnet {
 
 /**
  *  A class for evaluating a policy for a system that is forward simulated with a learned controller.
@@ -99,4 +100,5 @@ class MpcnetPolicyEvaluation {
   std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr_;
 };
 
+}  // namespace mpcnet
 }  // namespace ocs2

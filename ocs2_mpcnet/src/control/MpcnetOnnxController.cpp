@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_mpcnet/control/MpcnetOnnxController.h"
 
 namespace ocs2 {
+namespace mpcnet {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -82,4 +83,5 @@ vector_t MpcnetOnnxController::computeInput(const scalar_t t, const vector_t& x)
   return mpcnetDefinitionPtr_->getInputTransformation(t, x) * input.cast<scalar_t>();
 }
 
+}  // namespace mpcnet
 }  // namespace ocs2

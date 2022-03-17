@@ -37,6 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_mpcnet/control/MpcnetControllerBase.h"
 
 namespace ocs2 {
+namespace mpcnet {
 
 /**
  * Convenience function for creating an environment for ONNX Runtime and getting a corresponding shared pointer.
@@ -106,4 +107,5 @@ class MpcnetOnnxController final : public MpcnetControllerBase {
   std::vector<std::vector<int64_t>> outputShapes_;
 };
 
+}  // namespace mpcnet
 }  // namespace ocs2

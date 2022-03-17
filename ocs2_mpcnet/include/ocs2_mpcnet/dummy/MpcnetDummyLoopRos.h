@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_mpcnet/control/MpcnetControllerBase.h"
 
 namespace ocs2 {
+namespace mpcnet {
 
 /**
  * Dummy loop to test a robot controlled by an MPC-Net policy.
@@ -107,4 +108,5 @@ class MpcnetDummyLoopRos {
   std::vector<std::shared_ptr<SolverSynchronizedModule>> synchronizedModulePtrs_;
 };
 
+}  // namespace mpcnet
 }  // namespace ocs2

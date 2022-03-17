@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_mpcnet/rollout/MpcnetPolicyEvaluation.h"
 
 namespace ocs2 {
+namespace mpcnet {
 
 /**
  *  A class to manage the data generation and policy evaluation rollouts for MPC-Net.
@@ -130,4 +131,5 @@ class MpcnetRolloutManager {
   std::vector<std::future<metrics_ptr_t>> policyEvaluationFtrs_;
 };
 
+}  // namespace mpcnet
 }  // namespace ocs2

@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ros_interfaces/common/RosMsgConversions.h>
 
 namespace ocs2 {
+namespace mpcnet {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -51,4 +52,5 @@ void MpcnetDummyObserverRos::update(const SystemObservation& observation, const 
   observationPublisher_.publish(observationMsg);
 }
 
+}  // namespace mpcnet
 }  // namespace ocs2

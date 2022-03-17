@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_mpcnet/MpcnetInterfaceBase.h"
 
 namespace ocs2 {
+namespace mpcnet {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -81,4 +82,5 @@ metrics_array_t MpcnetInterfaceBase::getComputedMetrics() {
   return mpcnetRolloutManagerPtr_->getComputedMetrics();
 }
 
+}  // namespace mpcnet
 }  // namespace ocs2

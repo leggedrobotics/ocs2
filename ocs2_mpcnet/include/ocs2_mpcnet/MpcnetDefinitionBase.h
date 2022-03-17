@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/reference/TargetTrajectories.h>
 
 namespace ocs2 {
+namespace mpcnet {
 
 /**
  * Base class for MPC-Net definitions.
@@ -87,4 +88,5 @@ class MpcnetDefinitionBase {
   virtual bool validState(const vector_t& x) = 0;
 };
 
+}  // namespace mpcnet
 }  // namespace ocs2

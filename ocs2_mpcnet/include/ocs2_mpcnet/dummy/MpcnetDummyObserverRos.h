@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ros_interfaces/mrt/DummyObserver.h>
 
 namespace ocs2 {
+namespace mpcnet {
 
 /**
  *  Dummy observer that publishes the current system observation that is required for some target command nodes.
@@ -64,4 +65,5 @@ class MpcnetDummyObserverRos : public DummyObserver {
   ros::Publisher observationPublisher_;
 };
 
+}  // namespace mpcnet
 }  // namespace ocs2

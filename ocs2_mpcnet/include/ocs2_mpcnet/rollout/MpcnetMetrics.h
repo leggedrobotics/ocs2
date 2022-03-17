@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 
 namespace ocs2 {
+namespace mpcnet {
 
 struct Metrics {
   scalar_t survivalTime = 0.0;
@@ -41,4 +42,5 @@ using metrics_t = Metrics;
 using metrics_array_t = std::vector<metrics_t>;
 using metrics_ptr_t = std::unique_ptr<metrics_t>;
 
+}  // namespace mpcnet
 }  // namespace ocs2

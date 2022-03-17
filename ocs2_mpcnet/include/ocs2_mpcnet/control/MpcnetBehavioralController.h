@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_mpcnet/control/MpcnetControllerBase.h"
 
 namespace ocs2 {
+namespace mpcnet {
 
 /**
  * A behavioral controller that computes the input based on a mixture of an optimal policy (e.g. implicitly found via MPC)
@@ -91,4 +92,5 @@ class MpcnetBehavioralController final : public ControllerBase {
   std::unique_ptr<MpcnetControllerBase> learnedControllerPtr_;
 };
 
+}  // namespace mpcnet
 }  // namespace ocs2

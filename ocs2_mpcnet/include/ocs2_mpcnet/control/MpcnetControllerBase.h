@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/control/ControllerBase.h>
 
 namespace ocs2 {
+namespace mpcnet {
 
 /**
  * The base class for all controllers that use a MPC-Net policy.
@@ -52,4 +53,5 @@ class MpcnetControllerBase : public ControllerBase {
   MpcnetControllerBase(const MpcnetControllerBase& other) = default;
 };
 
+}  // namespace mpcnet
 }  // namespace ocs2

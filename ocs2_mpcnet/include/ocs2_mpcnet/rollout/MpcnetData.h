@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_mpcnet/MpcnetDefinitionBase.h"
 
 namespace ocs2 {
+namespace mpcnet {
 
 struct DataPoint {
   size_t mode;
@@ -66,4 +67,5 @@ inline data_point_t getDataPoint(MPC_BASE* mpcPtr, MpcnetDefinitionBase* mpcnetD
   return dataPoint;
 }
 
+}  // namespace mpcnet
 }  // namespace ocs2

@@ -41,6 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_mpcnet/rollout/MpcnetData.h"
 
 namespace ocs2 {
+namespace mpcnet {
 
 /**
  *  A class for generating MPC data from a system that is forward simulated with a behavioral controller.
@@ -105,4 +106,5 @@ class MpcnetDataGeneration {
   std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr_;
 };
 
+}  // namespace mpcnet
 }  // namespace ocs2

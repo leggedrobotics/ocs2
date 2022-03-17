@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/Numerics.h>
 
 namespace ocs2 {
+namespace mpcnet {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -105,4 +106,5 @@ void MpcnetBehavioralController::concatenate(const ControllerBase* otherControll
   }
 }
 
+}  // namespace mpcnet
 }  // namespace ocs2

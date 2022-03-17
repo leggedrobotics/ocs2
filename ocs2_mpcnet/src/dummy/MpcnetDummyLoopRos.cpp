@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/ros.h>
 
 namespace ocs2 {
+namespace mpcnet {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -145,4 +146,5 @@ void MpcnetDummyLoopRos::preSolverRun(scalar_t time, const vector_t& state) {
   }
 }
 
+}  // namespace mpcnet
 }  // namespace ocs2

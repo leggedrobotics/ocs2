@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_mpcnet/control/MpcnetBehavioralController.h"
 
 namespace ocs2 {
+namespace mpcnet {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -129,4 +130,5 @@ data_ptr_t MpcnetDataGeneration::run(scalar_t alpha, const std::string& policyFi
   return dataPtr;
 }
 
+}  // namespace mpcnet
 }  // namespace ocs2

@@ -31,6 +31,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <onnxruntime/onnxruntime_cxx_api.h>
 
+#include <ocs2_oc/synchronized_module/ReferenceManagerInterface.h>
+
+#include "ocs2_mpcnet/MpcnetDefinitionBase.h"
 #include "ocs2_mpcnet/control/MpcnetControllerBase.h"
 
 namespace ocs2 {
@@ -57,59 +60,44 @@ inline std::shared_ptr<Ort::Env> createOnnxEnvironment() {
 class MpcnetOnnxController final : public MpcnetControllerBase {
  public:
   /**
-   * Constructor, does not load the model of the policy.
+   * Constructor.
+   * @note The class is not fully instantiated until calling loadPolicyModel().
    * @param [in] mpcnetDefinitionPtr : Pointer to the MPC-Net definitions.
    * @param [in] referenceManagerPtr : Pointer to the reference manager.
    * @param [in] onnxEnvironmentPtr : Pointer to the environment for ONNX Runtime.
    */
   MpcnetOnnxController(std::shared_ptr<MpcnetDefinitionBase> mpcnetDefinitionPtr,
                        std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr, std::shared_ptr<Ort::Env> onnxEnvironmentPtr)
-      : MpcnetControllerBase(mpcnetDefinitionPtr, referenceManagerPtr), onnxEnvironmentPtr_(onnxEnvironmentPtr) {}
+      : mpcnetDefinitionPtr_(mpcnetDefinitionPtr), referenceManagerPtr_(referenceManagerPtr), onnxEnvironmentPtr_(onnxEnvironmentPtr) {}
 
-  /**
-   * Constructor, initializes all members of the controller.
-   * @param [in] mpcnetDefinitionPtr : Pointer to the MPC-Net definitions.
-   * @param [in] referenceManagerPtr : Pointer to the reference manager.
-   * @param [in] environmentPtr : Pointer to the environment for ONNX Runtime.
-   * @param [in] policyFilePath : Path to the ONNX file with the model of the policy.
-   */
-  MpcnetOnnxController(std::shared_ptr<MpcnetDefinitionBase> mpcnetDefinitionPtr,
-                       std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr, std::shared_ptr<Ort::Env> onnxEnvironmentPtr,
-                       const std::string& policyFilePath)
-      : MpcnetOnnxController(mpcnetDefinitionPtr, referenceManagerPtr, onnxEnvironmentPtr) {
-    loadPolicyModel(policyFilePath);
-  }
-
-  /**
-   * Default destructor.
-   */
   ~MpcnetOnnxController() override = default;
+  MpcnetOnnxController* clone() const override { return new MpcnetOnnxController(*this); }
 
   void loadPolicyModel(const std::string& policyFilePath) override;
 
+  ControllerType getType() const override { return ControllerType::ONNX; }
   vector_t computeInput(const scalar_t t, const vector_t& x) override;
 
+  int size() const override { throw std::runtime_error("[MpcnetOnnxController::size] not implemented."); }
+  void clear() override { throw std::runtime_error("[MpcnetOnnxController::clear] not implemented."); }
+  bool empty() const override { throw std::runtime_error("[MpcnetOnnxController::empty] not implemented."); }
   void concatenate(const ControllerBase* otherController, int index, int length) override {
     throw std::runtime_error("[MpcnetOnnxController::concatenate] not implemented.");
   }
 
-  int size() const override { throw std::runtime_error("[MpcnetOnnxController::size] not implemented."); }
-
-  void clear() override { throw std::runtime_error("[MpcnetOnnxController::clear] not implemented."); }
-
-  bool empty() const override { throw std::runtime_error("[MpcnetOnnxController::empty] not implemented."); }
-
-  MpcnetOnnxController* clone() const override { return new MpcnetOnnxController(*this); }
-
  private:
   using tensor_element_t = float;
 
-  /**
-   * Copy constructor.
-   */
+  /** Copy constructor. */
   MpcnetOnnxController(const MpcnetOnnxController& other)
-      : MpcnetOnnxController(other.mpcnetDefinitionPtr_, other.referenceManagerPtr_, other.onnxEnvironmentPtr_, other.policyFilePath_) {}
+      : MpcnetOnnxController(other.mpcnetDefinitionPtr_, other.referenceManagerPtr_, other.onnxEnvironmentPtr_) {
+    if (!other.policyFilePath_.empty()) {
+      loadPolicyModel(other.policyFilePath_);
+    }
+  }
 
+  std::shared_ptr<MpcnetDefinitionBase> mpcnetDefinitionPtr_;
+  std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr_;
   std::shared_ptr<Ort::Env> onnxEnvironmentPtr_;
   std::string policyFilePath_;
   std::unique_ptr<Ort::Session> sessionPtr_;

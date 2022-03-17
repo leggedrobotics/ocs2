@@ -59,9 +59,14 @@ void MpcnetOnnxController::loadPolicyModel(const std::string& policyFilePath) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t MpcnetOnnxController::computeInput(const scalar_t t, const vector_t& x) {
+  if (sessionPtr_ == nullptr) {
+    throw std::runtime_error("[MpcnetOnnxController::computeInput] cannot compute input, since policy model is not loaded.");
+  }
   // create input tensor objects
-  Eigen::Matrix<tensor_element_t, Eigen::Dynamic, 1> time = getGeneralizedTime(t).cast<tensor_element_t>();
-  Eigen::Matrix<tensor_element_t, Eigen::Dynamic, 1> state = getRelativeState(t, x).cast<tensor_element_t>();
+  Eigen::Matrix<tensor_element_t, Eigen::Dynamic, 1> time =
+      mpcnetDefinitionPtr_->getGeneralizedTime(t, referenceManagerPtr_->getModeSchedule()).cast<tensor_element_t>();
+  Eigen::Matrix<tensor_element_t, Eigen::Dynamic, 1> state =
+      mpcnetDefinitionPtr_->getRelativeState(t, x, referenceManagerPtr_->getTargetTrajectories()).cast<tensor_element_t>();
   Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
   std::vector<Ort::Value> inputValues;
   inputValues.push_back(
@@ -74,7 +79,7 @@ vector_t MpcnetOnnxController::computeInput(const scalar_t t, const vector_t& x)
   // evaluate output tensor objects
   Eigen::Map<Eigen::Matrix<tensor_element_t, Eigen::Dynamic, 1>> input(outputValues[0].GetTensorMutableData<tensor_element_t>(),
                                                                        outputShapes_[0][1], outputShapes_[0][0]);
-  return getInputTransformation(t, x) * input.cast<scalar_t>();
+  return mpcnetDefinitionPtr_->getInputTransformation(t, x) * input.cast<scalar_t>();
 }
 
 }  // namespace ocs2

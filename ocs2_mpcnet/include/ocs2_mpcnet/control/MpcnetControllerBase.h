@@ -29,12 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <memory>
-
 #include <ocs2_core/control/ControllerBase.h>
-#include <ocs2_oc/synchronized_module/ReferenceManagerInterface.h>
-
-#include "ocs2_mpcnet/MpcnetDefinitionBase.h"
 
 namespace ocs2 {
 
@@ -43,19 +38,9 @@ namespace ocs2 {
  */
 class MpcnetControllerBase : public ControllerBase {
  public:
-  /**
-   * Constructor.
-   * @param [in] mpcnetDefinitionPtr : Pointer to the MPC-Net definitions.
-   * @param [in] referenceManagerPtr : Pointer to the reference manager.
-   */
-  MpcnetControllerBase(std::shared_ptr<MpcnetDefinitionBase> mpcnetDefinitionPtr,
-                       std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr)
-      : mpcnetDefinitionPtr_(mpcnetDefinitionPtr), referenceManagerPtr_(referenceManagerPtr) {}
-
-  /**
-   * Default destructor.
-   */
+  MpcnetControllerBase() = default;
   ~MpcnetControllerBase() override = default;
+  MpcnetControllerBase* clone() const override = 0;
 
   /**
    * Load the model of the policy.
@@ -63,43 +48,8 @@ class MpcnetControllerBase : public ControllerBase {
    */
   virtual void loadPolicyModel(const std::string& policyFilePath) = 0;
 
-  ControllerType getType() const override { return ControllerType::MPCNET; }
-
-  MpcnetControllerBase* clone() const override = 0;
-
  protected:
-  /**
-   * Copy constructor.
-   */
-  MpcnetControllerBase(const MpcnetControllerBase& other) : MpcnetControllerBase(other.mpcnetDefinitionPtr_, other.referenceManagerPtr_) {}
-
-  /**
-   * Get the generalized time.
-   * @param [in] t : Absolute time.
-   * @return Generalized time.
-   */
-  vector_t getGeneralizedTime(scalar_t t) { return mpcnetDefinitionPtr_->getGeneralizedTime(t, referenceManagerPtr_->getModeSchedule()); }
-
-  /**
-   * Get the relative state.
-   * @param [in] t : Absolute time.
-   * @param [in] x : Robot state.
-   * @return Relative state.
-   */
-  vector_t getRelativeState(scalar_t t, const vector_t& x) {
-    return mpcnetDefinitionPtr_->getRelativeState(t, x, referenceManagerPtr_->getTargetTrajectories());
-  }
-
-  /**
-   * Get the input transformation.
-   * @param[in] t : Absolute time.
-   * @param[in] x : Robot state.
-   * @return The input transformation.
-   */
-  matrix_t getInputTransformation(scalar_t t, const vector_t& x) { return mpcnetDefinitionPtr_->getInputTransformation(t, x); }
-
-  std::shared_ptr<MpcnetDefinitionBase> mpcnetDefinitionPtr_;
-  std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr_;
+  MpcnetControllerBase(const MpcnetControllerBase& other) = default;
 };
 
 }  // namespace ocs2

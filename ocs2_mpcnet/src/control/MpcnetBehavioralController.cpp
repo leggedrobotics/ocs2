@@ -39,19 +39,7 @@ vector_t MpcnetBehavioralController::computeInput(scalar_t t, const vector_t& x)
     return alpha_ * optimalControllerPtr_->computeInput(t, x) + (1 - alpha_) * learnedControllerPtr_->computeInput(t, x);
   } else {
     throw std::runtime_error(
-        "[MpcnetBehavioralController::computeInput] cannot return input, since optimal and/or learned controller not set.");
-  }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void MpcnetBehavioralController::concatenate(const ControllerBase* otherController, int index, int length) {
-  if (optimalControllerPtr_ != nullptr) {
-    optimalControllerPtr_->concatenate(otherController, index, length);
-  }
-  if (learnedControllerPtr_ != nullptr) {
-    learnedControllerPtr_->concatenate(otherController, index, length);
+        "[MpcnetBehavioralController::computeInput] cannot compute input, since optimal and/or learned controller not set.");
   }
 }
 
@@ -94,6 +82,18 @@ bool MpcnetBehavioralController::empty() const {
     return learnedControllerPtr_->empty();
   } else {
     return true;
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void MpcnetBehavioralController::concatenate(const ControllerBase* otherController, int index, int length) {
+  if (optimalControllerPtr_ != nullptr) {
+    optimalControllerPtr_->concatenate(otherController, index, length);
+  }
+  if (learnedControllerPtr_ != nullptr) {
+    learnedControllerPtr_->concatenate(otherController, index, length);
   }
 }
 

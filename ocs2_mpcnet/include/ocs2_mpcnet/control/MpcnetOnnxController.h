@@ -49,12 +49,10 @@ inline std::shared_ptr<Ort::Env> createOnnxEnvironment() {
 
 /**
  * A neural network controller using ONNX Runtime based on the Open Neural Network Exchange (ONNX) format.
- * The model of the policy computes u, p, U = model(t, x) with
+ * The model of the policy computes u = model(t, x) with
  * t: generalized time (1 x dimensionOfTime),
  * x: relative state (1 x dimensionOfState),
  * u: predicted input (1 x dimensionOfInput),
- * p: predicted expert weights (1 x numberOfExperts),
- * U: predicted expert inputs (1 x dimensionOfInput x numberOfExperts).
  * @note The additional first dimension with size 1 for the variables of the model comes from batch processing during training.
  */
 class MpcnetOnnxController final : public MpcnetControllerBase {
@@ -75,8 +73,8 @@ class MpcnetOnnxController final : public MpcnetControllerBase {
 
   void loadPolicyModel(const std::string& policyFilePath) override;
 
-  ControllerType getType() const override { return ControllerType::ONNX; }
   vector_t computeInput(const scalar_t t, const vector_t& x) override;
+  ControllerType getType() const override { return ControllerType::ONNX; }
 
   int size() const override { throw std::runtime_error("[MpcnetOnnxController::size] not implemented."); }
   void clear() override { throw std::runtime_error("[MpcnetOnnxController::clear] not implemented."); }
@@ -88,7 +86,6 @@ class MpcnetOnnxController final : public MpcnetControllerBase {
  private:
   using tensor_element_t = float;
 
-  /** Copy constructor. */
   MpcnetOnnxController(const MpcnetOnnxController& other)
       : MpcnetOnnxController(other.mpcnetDefinitionPtr_, other.referenceManagerPtr_, other.onnxEnvironmentPtr_) {
     if (!other.policyFilePath_.empty()) {

@@ -53,10 +53,8 @@ class MpcnetBehavioralController final : public ControllerBase {
   MpcnetBehavioralController(scalar_t alpha, const ControllerBase& optimalController, const MpcnetControllerBase& learnedController)
       : alpha_(alpha), optimalControllerPtr_(optimalController.clone()), learnedControllerPtr_(learnedController.clone()) {}
 
-  /**
-   * Default destructor.
-   */
   ~MpcnetBehavioralController() override = default;
+  MpcnetBehavioralController* clone() const override { return new MpcnetBehavioralController(*this); }
 
   /**
    * Set the mixture parameter.
@@ -77,23 +75,14 @@ class MpcnetBehavioralController final : public ControllerBase {
   void setLearnedController(const MpcnetControllerBase& learnedController) { learnedControllerPtr_.reset(learnedController.clone()); }
 
   vector_t computeInput(scalar_t t, const vector_t& x) override;
-
-  void concatenate(const ControllerBase* otherController, int index, int length) override;
-
-  int size() const override;
-
   ControllerType getType() const override { return ControllerType::BEHAVIORAL; }
 
+  int size() const override;
   void clear() override;
-
   bool empty() const override;
-
-  MpcnetBehavioralController* clone() const override { return new MpcnetBehavioralController(*this); }
+  void concatenate(const ControllerBase* otherController, int index, int length) override;
 
  private:
-  /**
-   * Copy constructor.
-   */
   MpcnetBehavioralController(const MpcnetBehavioralController& other)
       : MpcnetBehavioralController(other.alpha_, *other.optimalControllerPtr_, *other.learnedControllerPtr_) {}
 

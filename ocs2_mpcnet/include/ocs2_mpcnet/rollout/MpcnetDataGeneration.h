@@ -74,8 +74,8 @@ class MpcnetDataGeneration {
       : mpcPtr_(std::move(mpcPtr)),
         mpcnetPtr_(std::move(mpcnetPtr)),
         rolloutPtr_(std::move(rolloutPtr)),
-        mpcnetDefinitionPtr_(mpcnetDefinitionPtr),
-        referenceManagerPtr_(referenceManagerPtr) {}
+        mpcnetDefinitionPtr_(std::move(mpcnetDefinitionPtr)),
+        referenceManagerPtr_(std::move(referenceManagerPtr)) {}
 
   /**
    * Default destructor.

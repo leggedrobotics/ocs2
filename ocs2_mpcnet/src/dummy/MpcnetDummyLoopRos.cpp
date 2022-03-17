@@ -42,7 +42,7 @@ MpcnetDummyLoopRos::MpcnetDummyLoopRos(scalar_t controlFrequency, scalar_t rosFr
       rosFrequency_(rosFrequency),
       mpcnetPtr_(std::move(mpcnetPtr)),
       rolloutPtr_(std::move(rolloutPtr)),
-      rosReferenceManagerPtr_(rosReferenceManagerPtr) {}
+      rosReferenceManagerPtr_(std::move(rosReferenceManagerPtr)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

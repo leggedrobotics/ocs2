@@ -66,7 +66,9 @@ class MpcnetOnnxController final : public MpcnetControllerBase {
    */
   MpcnetOnnxController(std::shared_ptr<MpcnetDefinitionBase> mpcnetDefinitionPtr,
                        std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr, std::shared_ptr<Ort::Env> onnxEnvironmentPtr)
-      : mpcnetDefinitionPtr_(mpcnetDefinitionPtr), referenceManagerPtr_(referenceManagerPtr), onnxEnvironmentPtr_(onnxEnvironmentPtr) {}
+      : mpcnetDefinitionPtr_(std::move(mpcnetDefinitionPtr)),
+        referenceManagerPtr_(std::move(referenceManagerPtr)),
+        onnxEnvironmentPtr_(std::move(onnxEnvironmentPtr)) {}
 
   ~MpcnetOnnxController() override = default;
   MpcnetOnnxController* clone() const override { return new MpcnetOnnxController(*this); }

@@ -86,34 +86,13 @@ data_ptr_t MpcnetDataGeneration::run(scalar_t alpha, const std::string& policyFi
       // downsample the data signal by an integer factor
       if (iteration % dataDecimation == 0) {
         // get nominal data point
-        {
-          data_point_t dataPoint;
-          dataPoint.t = primalSolution.timeTrajectory_.front();
-          dataPoint.x = primalSolution.stateTrajectory_.front();
-          dataPoint.u = primalSolution.controllerPtr_->computeInput(dataPoint.t, dataPoint.x);
-          dataPoint.mode = primalSolution.modeSchedule_.modeAtTime(dataPoint.t);
-          dataPoint.generalizedTime = mpcnetDefinitionPtr_->getGeneralizedTime(dataPoint.t, referenceManagerPtr_->getModeSchedule());
-          dataPoint.relativeState =
-              mpcnetDefinitionPtr_->getRelativeState(dataPoint.t, dataPoint.x, referenceManagerPtr_->getTargetTrajectories());
-          dataPoint.inputTransformation = mpcnetDefinitionPtr_->getInputTransformation(dataPoint.t, dataPoint.x);
-          dataPoint.hamiltonian = mpcPtr_->getSolverPtr()->getHamiltonian(dataPoint.t, dataPoint.x, dataPoint.u);
-          dataPtr->push_back(std::move(dataPoint));
-        }
+        const vector_t deviation = vector_t::Zero(primalSolution.stateTrajectory_.front().size());
+        dataPtr->push_back(getDataPoint(mpcPtr_.get(), mpcnetDefinitionPtr_.get(), referenceManagerPtr_.get(), deviation));
 
         // get samples around nominal data point
         for (int i = 0; i < nSamples; i++) {
-          data_point_t dataPoint;
-          dataPoint.t = primalSolution.timeTrajectory_.front();
-          dataPoint.x = primalSolution.stateTrajectory_.front();
-          dataPoint.x.noalias() += L * vector_t::NullaryExpr(primalSolution.stateTrajectory_.front().size(), standardNormalNullaryOp);
-          dataPoint.u = primalSolution.controllerPtr_->computeInput(dataPoint.t, dataPoint.x);
-          dataPoint.mode = primalSolution.modeSchedule_.modeAtTime(dataPoint.t);
-          dataPoint.generalizedTime = mpcnetDefinitionPtr_->getGeneralizedTime(dataPoint.t, referenceManagerPtr_->getModeSchedule());
-          dataPoint.relativeState =
-              mpcnetDefinitionPtr_->getRelativeState(dataPoint.t, dataPoint.x, referenceManagerPtr_->getTargetTrajectories());
-          dataPoint.inputTransformation = mpcnetDefinitionPtr_->getInputTransformation(dataPoint.t, dataPoint.x);
-          dataPoint.hamiltonian = mpcPtr_->getSolverPtr()->getHamiltonian(dataPoint.t, dataPoint.x, dataPoint.u);
-          dataPtr->push_back(std::move(dataPoint));
+          const vector_t deviation = L * vector_t::NullaryExpr(primalSolution.stateTrajectory_.front().size(), standardNormalNullaryOp);
+          dataPtr->push_back(getDataPoint(mpcPtr_.get(), mpcnetDefinitionPtr_.get(), referenceManagerPtr_.get(), deviation));
         }
       }
 

@@ -30,6 +30,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
+#include <ocs2_mpc/MPC_BASE.h>
+#include <ocs2_oc/synchronized_module/ReferenceManagerInterface.h>
+
+#include "ocs2_mpcnet/MpcnetDefinitionBase.h"
 
 namespace ocs2 {
 
@@ -46,5 +50,20 @@ struct DataPoint {
 using data_point_t = DataPoint;
 using data_array_t = std::vector<data_point_t>;
 using data_ptr_t = std::unique_ptr<data_array_t>;
+
+inline data_point_t getDataPoint(MPC_BASE* mpcPtr, MpcnetDefinitionBase* mpcnetDefinitionPtr,
+                                 ReferenceManagerInterface* referenceManagerPtr, const vector_t& deviation) {
+  data_point_t dataPoint;
+  const auto primalSolution = mpcPtr->getSolverPtr()->primalSolution(mpcPtr->getSolverPtr()->getFinalTime());
+  dataPoint.t = primalSolution.timeTrajectory_.front();
+  dataPoint.x = primalSolution.stateTrajectory_.front() + deviation;
+  dataPoint.u = primalSolution.controllerPtr_->computeInput(dataPoint.t, dataPoint.x);
+  dataPoint.mode = primalSolution.modeSchedule_.modeAtTime(dataPoint.t);
+  dataPoint.generalizedTime = mpcnetDefinitionPtr->getGeneralizedTime(dataPoint.t, referenceManagerPtr->getModeSchedule());
+  dataPoint.relativeState = mpcnetDefinitionPtr->getRelativeState(dataPoint.t, dataPoint.x, referenceManagerPtr->getTargetTrajectories());
+  dataPoint.inputTransformation = mpcnetDefinitionPtr->getInputTransformation(dataPoint.t, dataPoint.x);
+  dataPoint.hamiltonian = mpcPtr->getSolverPtr()->getHamiltonian(dataPoint.t, dataPoint.x, dataPoint.u);
+  return dataPoint;
+}
 
 }  // namespace ocs2

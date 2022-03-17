@@ -52,18 +52,25 @@ using data_point_t = DataPoint;
 using data_array_t = std::vector<data_point_t>;
 using data_ptr_t = std::unique_ptr<data_array_t>;
 
-inline data_point_t getDataPoint(MPC_BASE* mpcPtr, MpcnetDefinitionBase* mpcnetDefinitionPtr,
-                                 ReferenceManagerInterface* referenceManagerPtr, const vector_t& deviation) {
+/**
+ * Get a data point.
+ * @param [in] mpc : The MPC with a pointer to the underlying solver.
+ * @param [in] mpcnetDefinition : The MPC-Net definitions.
+ * @param [in] deviation : The state deviation from the nominal state where to get the data point from.
+ * @return A data point.
+ */
+inline data_point_t getDataPoint(MPC_BASE& mpc, MpcnetDefinitionBase& mpcnetDefinition, const vector_t& deviation) {
   data_point_t dataPoint;
-  const auto primalSolution = mpcPtr->getSolverPtr()->primalSolution(mpcPtr->getSolverPtr()->getFinalTime());
+  const auto& referenceManager = mpc.getSolverPtr()->getReferenceManager();
+  const auto primalSolution = mpc.getSolverPtr()->primalSolution(mpc.getSolverPtr()->getFinalTime());
   dataPoint.t = primalSolution.timeTrajectory_.front();
   dataPoint.x = primalSolution.stateTrajectory_.front() + deviation;
   dataPoint.u = primalSolution.controllerPtr_->computeInput(dataPoint.t, dataPoint.x);
   dataPoint.mode = primalSolution.modeSchedule_.modeAtTime(dataPoint.t);
-  dataPoint.generalizedTime = mpcnetDefinitionPtr->getGeneralizedTime(dataPoint.t, referenceManagerPtr->getModeSchedule());
-  dataPoint.relativeState = mpcnetDefinitionPtr->getRelativeState(dataPoint.t, dataPoint.x, referenceManagerPtr->getTargetTrajectories());
-  dataPoint.inputTransformation = mpcnetDefinitionPtr->getInputTransformation(dataPoint.t, dataPoint.x);
-  dataPoint.hamiltonian = mpcPtr->getSolverPtr()->getHamiltonian(dataPoint.t, dataPoint.x, dataPoint.u);
+  dataPoint.generalizedTime = mpcnetDefinition.getGeneralizedTime(dataPoint.t, referenceManager.getModeSchedule());
+  dataPoint.relativeState = mpcnetDefinition.getRelativeState(dataPoint.t, dataPoint.x, referenceManager.getTargetTrajectories());
+  dataPoint.inputTransformation = mpcnetDefinition.getInputTransformation(dataPoint.t, dataPoint.x);
+  dataPoint.hamiltonian = mpc.getSolverPtr()->getHamiltonian(dataPoint.t, dataPoint.x, dataPoint.u);
   return dataPoint;
 }
 

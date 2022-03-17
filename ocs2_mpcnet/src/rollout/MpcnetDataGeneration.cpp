@@ -88,12 +88,12 @@ data_ptr_t MpcnetDataGeneration::run(scalar_t alpha, const std::string& policyFi
       if (iteration % dataDecimation == 0) {
         // get nominal data point
         const vector_t deviation = vector_t::Zero(primalSolution.stateTrajectory_.front().size());
-        dataPtr->push_back(getDataPoint(mpcPtr_.get(), mpcnetDefinitionPtr_.get(), referenceManagerPtr_.get(), deviation));
+        dataPtr->push_back(getDataPoint(*mpcPtr_, *mpcnetDefinitionPtr_, deviation));
 
         // get samples around nominal data point
         for (int i = 0; i < nSamples; i++) {
           const vector_t deviation = L * vector_t::NullaryExpr(primalSolution.stateTrajectory_.front().size(), standardNormalNullaryOp);
-          dataPtr->push_back(getDataPoint(mpcPtr_.get(), mpcnetDefinitionPtr_.get(), referenceManagerPtr_.get(), deviation));
+          dataPtr->push_back(getDataPoint(*mpcPtr_, *mpcnetDefinitionPtr_, deviation));
         }
       }
 

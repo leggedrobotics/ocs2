@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_mpcnet/control/MpcnetBehavioralController.h"
 
+#include <ocs2_core/misc/Numerics.h>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
@@ -36,7 +38,13 @@ namespace ocs2 {
 /******************************************************************************************************/
 vector_t MpcnetBehavioralController::computeInput(scalar_t t, const vector_t& x) {
   if (optimalControllerPtr_ != nullptr && learnedControllerPtr_ != nullptr) {
-    return alpha_ * optimalControllerPtr_->computeInput(t, x) + (1 - alpha_) * learnedControllerPtr_->computeInput(t, x);
+    if (numerics::almost_eq(alpha_, 0.0)) {
+      return learnedControllerPtr_->computeInput(t, x);
+    } else if (numerics::almost_eq(alpha_, 1.0)) {
+      return optimalControllerPtr_->computeInput(t, x);
+    } else {
+      return alpha_ * optimalControllerPtr_->computeInput(t, x) + (1 - alpha_) * learnedControllerPtr_->computeInput(t, x);
+    }
   } else {
     throw std::runtime_error(
         "[MpcnetBehavioralController::computeInput] cannot compute input, since optimal and/or learned controller not set.");

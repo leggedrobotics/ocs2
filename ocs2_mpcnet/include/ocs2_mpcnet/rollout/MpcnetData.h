@@ -31,7 +31,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_mpc/MPC_BASE.h>
-#include <ocs2_oc/synchronized_module/ReferenceManagerInterface.h>
 
 #include "ocs2_mpcnet/MpcnetDefinitionBase.h"
 

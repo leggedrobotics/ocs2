@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_mpcnet/MpcnetDefinitionBase.h"
 #include "ocs2_mpcnet/control/MpcnetControllerBase.h"
+#include "ocs2_mpcnet/rollout/MpcnetData.h"
 
 namespace ocs2 {
 
@@ -47,19 +48,6 @@ namespace ocs2 {
  */
 class MpcnetDataGeneration {
  public:
-  struct DataPoint {
-    size_t mode;
-    scalar_t t;
-    vector_t x;
-    vector_t u;
-    vector_t generalizedTime;
-    vector_t relativeState;
-    matrix_t inputTransformation;
-    ScalarFunctionQuadraticApproximation hamiltonian;
-  };
-  using DataArray = std::vector<DataPoint>;
-  using DataPtr = std::unique_ptr<DataArray>;
-
   /**
    * Constructor.
    * @param [in] mpcPtr : Pointer to the MPC solver to be used (this class takes ownership).
@@ -105,9 +93,9 @@ class MpcnetDataGeneration {
    * @param [in] targetTrajectories : The target trajectories to be tracked.
    * @return Pointer to the generated data.
    */
-  DataPtr run(scalar_t alpha, const std::string& policyFilePath, scalar_t timeStep, size_t dataDecimation, size_t nSamples,
-              const matrix_t& samplingCovariance, const SystemObservation& initialObservation, const ModeSchedule& modeSchedule,
-              const TargetTrajectories& targetTrajectories);
+  data_ptr_t run(scalar_t alpha, const std::string& policyFilePath, scalar_t timeStep, size_t dataDecimation, size_t nSamples,
+                 const matrix_t& samplingCovariance, const SystemObservation& initialObservation, const ModeSchedule& modeSchedule,
+                 const TargetTrajectories& targetTrajectories);
 
  private:
   std::unique_ptr<MPC_BASE> mpcPtr_;

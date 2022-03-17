@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_mpcnet/MpcnetDefinitionBase.h"
 #include "ocs2_mpcnet/control/MpcnetControllerBase.h"
+#include "ocs2_mpcnet/rollout/MpcnetMetrics.h"
 
 namespace ocs2 {
 
@@ -46,13 +47,6 @@ namespace ocs2 {
  */
 class MpcnetPolicyEvaluation {
  public:
-  struct Metrics {
-    scalar_t survivalTime = 0.0;
-    scalar_t incurredHamiltonian = 0.0;
-  };
-  using MetricsArray = std::vector<Metrics>;
-  using MetricsPtr = std::unique_ptr<Metrics>;
-
   /**
    * Constructor.
    * @param [in] mpcPtr: Pointer to the MPC solver to be used (this class takes ownership).
@@ -94,8 +88,8 @@ class MpcnetPolicyEvaluation {
    * @param [in] targetTrajectories : The target trajectories to be tracked.
    * @return Pointer to the computed metrics.
    */
-  MetricsPtr run(const std::string& policyFilePath, scalar_t timeStep, const SystemObservation& initialObservation,
-                 const ModeSchedule& modeSchedule, const TargetTrajectories& targetTrajectories);
+  metrics_ptr_t run(const std::string& policyFilePath, scalar_t timeStep, const SystemObservation& initialObservation,
+                    const ModeSchedule& modeSchedule, const TargetTrajectories& targetTrajectories);
 
  private:
   std::unique_ptr<MPC_BASE> mpcPtr_;

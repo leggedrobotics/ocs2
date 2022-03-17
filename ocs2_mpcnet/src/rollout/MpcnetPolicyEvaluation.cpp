@@ -34,12 +34,10 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MpcnetPolicyEvaluation::MetricsPtr MpcnetPolicyEvaluation::run(const std::string& policyFilePath, scalar_t timeStep,
-                                                               const SystemObservation& initialObservation,
-                                                               const ModeSchedule& modeSchedule,
-                                                               const TargetTrajectories& targetTrajectories) {
+metrics_ptr_t MpcnetPolicyEvaluation::run(const std::string& policyFilePath, scalar_t timeStep, const SystemObservation& initialObservation,
+                                          const ModeSchedule& modeSchedule, const TargetTrajectories& targetTrajectories) {
   // declare metrics pointer
-  MetricsPtr metricsPtr(new Metrics);
+  metrics_ptr_t metricsPtr(new metrics_t);
 
   // init time and state
   scalar_t time = initialObservation.time;

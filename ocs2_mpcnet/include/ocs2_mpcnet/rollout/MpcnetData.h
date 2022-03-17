@@ -27,8 +27,24 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_mpcnet/MpcnetPybindMacros.h>
+#pragma once
 
-#include "ocs2_mpcnet/MpcnetInterfaceBase.h"
+#include <ocs2_core/Types.h>
 
-CREATE_MPCNET_PYTHON_BINDINGS(MpcnetPybindings)
+namespace ocs2 {
+
+struct DataPoint {
+  size_t mode;
+  scalar_t t;
+  vector_t x;
+  vector_t u;
+  vector_t generalizedTime;
+  vector_t relativeState;
+  matrix_t inputTransformation;
+  ScalarFunctionQuadraticApproximation hamiltonian;
+};
+using data_point_t = DataPoint;
+using data_array_t = std::vector<data_point_t>;
+using data_ptr_t = std::unique_ptr<data_array_t>;
+
+}  // namespace ocs2

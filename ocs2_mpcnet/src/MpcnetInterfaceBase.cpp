@@ -53,7 +53,7 @@ bool MpcnetInterfaceBase::isDataGenerationDone() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MpcnetInterfaceBase::data_array_t MpcnetInterfaceBase::getGeneratedData() {
+data_array_t MpcnetInterfaceBase::getGeneratedData() {
   return mpcnetRolloutManagerPtr_->getGeneratedData();
 }
 
@@ -77,7 +77,7 @@ bool MpcnetInterfaceBase::isPolicyEvaluationDone() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MpcnetInterfaceBase::metrics_array_t MpcnetInterfaceBase::getComputedMetrics() {
+metrics_array_t MpcnetInterfaceBase::getComputedMetrics() {
   return mpcnetRolloutManagerPtr_->getComputedMetrics();
 }
 

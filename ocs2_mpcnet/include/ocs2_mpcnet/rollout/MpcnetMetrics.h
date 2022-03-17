@@ -27,8 +27,18 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_mpcnet/MpcnetPybindMacros.h>
+#pragma once
 
-#include "ocs2_mpcnet/MpcnetInterfaceBase.h"
+#include <ocs2_core/Types.h>
 
-CREATE_MPCNET_PYTHON_BINDINGS(MpcnetPybindings)
+namespace ocs2 {
+
+struct Metrics {
+  scalar_t survivalTime = 0.0;
+  scalar_t incurredHamiltonian = 0.0;
+};
+using metrics_t = Metrics;
+using metrics_array_t = std::vector<metrics_t>;
+using metrics_ptr_t = std::unique_ptr<metrics_t>;
+
+}  // namespace ocs2

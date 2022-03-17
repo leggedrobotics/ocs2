@@ -36,12 +36,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_python_interface/PybindMacros.h>
 
+#include "ocs2_mpcnet/rollout/MpcnetData.h"
+#include "ocs2_mpcnet/rollout/MpcnetMetrics.h"
+
 using namespace pybind11::literals;
 
 /**
  * Convenience macro to bind general MPC-Net functionalities and other classes with all required vectors.
  */
-#define CREATE_MPCNET_PYTHON_BINDINGS(MPCNET_INTERFACE, LIB_NAME)                                           \
+#define CREATE_MPCNET_PYTHON_BINDINGS(LIB_NAME)                                                             \
   /* make vector types opaque so they are not converted to python lists */                                  \
   PYBIND11_MAKE_OPAQUE(ocs2::size_array_t)                                                                  \
   PYBIND11_MAKE_OPAQUE(ocs2::scalar_array_t)                                                                \
@@ -50,8 +53,8 @@ using namespace pybind11::literals;
   PYBIND11_MAKE_OPAQUE(std::vector<ocs2::SystemObservation>)                                                \
   PYBIND11_MAKE_OPAQUE(std::vector<ocs2::ModeSchedule>)                                                     \
   PYBIND11_MAKE_OPAQUE(std::vector<ocs2::TargetTrajectories>)                                               \
-  PYBIND11_MAKE_OPAQUE(MPCNET_INTERFACE::data_array_t)                                                      \
-  PYBIND11_MAKE_OPAQUE(MPCNET_INTERFACE::metrics_array_t)                                                   \
+  PYBIND11_MAKE_OPAQUE(ocs2::data_array_t)                                                                  \
+  PYBIND11_MAKE_OPAQUE(ocs2::metrics_array_t)                                                               \
   /* create a python module */                                                                              \
   PYBIND11_MODULE(LIB_NAME, m) {                                                                            \
     /* bind vector types so they can be used natively in python */                                          \
@@ -62,8 +65,8 @@ using namespace pybind11::literals;
     VECTOR_TYPE_BINDING(std::vector<ocs2::SystemObservation>, "SystemObservationArray")                     \
     VECTOR_TYPE_BINDING(std::vector<ocs2::ModeSchedule>, "ModeScheduleArray")                               \
     VECTOR_TYPE_BINDING(std::vector<ocs2::TargetTrajectories>, "TargetTrajectoriesArray")                   \
-    VECTOR_TYPE_BINDING(MPCNET_INTERFACE::data_array_t, "DataArray")                                        \
-    VECTOR_TYPE_BINDING(MPCNET_INTERFACE::metrics_array_t, "MetricsArray")                                  \
+    VECTOR_TYPE_BINDING(ocs2::data_array_t, "DataArray")                                                    \
+    VECTOR_TYPE_BINDING(ocs2::metrics_array_t, "MetricsArray")                                              \
     /* bind approximation classes */                                                                        \
     pybind11::class_<ocs2::ScalarFunctionQuadraticApproximation>(m, "ScalarFunctionQuadraticApproximation") \
         .def_readwrite("f", &ocs2::ScalarFunctionQuadraticApproximation::f)                                 \
@@ -91,21 +94,21 @@ using namespace pybind11::literals;
         .def_readwrite("state_trajectory", &ocs2::TargetTrajectories::stateTrajectory)                      \
         .def_readwrite("input_trajectory", &ocs2::TargetTrajectories::inputTrajectory);                     \
     /* bind data point struct */                                                                            \
-    pybind11::class_<MPCNET_INTERFACE::data_point_t>(m, "DataPoint")                                        \
+    pybind11::class_<ocs2::data_point_t>(m, "DataPoint")                                                    \
         .def(pybind11::init<>())                                                                            \
-        .def_readwrite("mode", &MPCNET_INTERFACE::data_point_t::mode)                                       \
-        .def_readwrite("t", &MPCNET_INTERFACE::data_point_t::t)                                             \
-        .def_readwrite("x", &MPCNET_INTERFACE::data_point_t::x)                                             \
-        .def_readwrite("u", &MPCNET_INTERFACE::data_point_t::u)                                             \
-        .def_readwrite("generalized_time", &MPCNET_INTERFACE::data_point_t::generalizedTime)                \
-        .def_readwrite("relative_state", &MPCNET_INTERFACE::data_point_t::relativeState)                    \
-        .def_readwrite("input_transformation", &MPCNET_INTERFACE::data_point_t::inputTransformation)        \
-        .def_readwrite("hamiltonian", &MPCNET_INTERFACE::data_point_t::hamiltonian);                        \
+        .def_readwrite("mode", &ocs2::data_point_t::mode)                                                   \
+        .def_readwrite("t", &ocs2::data_point_t::t)                                                         \
+        .def_readwrite("x", &ocs2::data_point_t::x)                                                         \
+        .def_readwrite("u", &ocs2::data_point_t::u)                                                         \
+        .def_readwrite("generalized_time", &ocs2::data_point_t::generalizedTime)                            \
+        .def_readwrite("relative_state", &ocs2::data_point_t::relativeState)                                \
+        .def_readwrite("input_transformation", &ocs2::data_point_t::inputTransformation)                    \
+        .def_readwrite("hamiltonian", &ocs2::data_point_t::hamiltonian);                                    \
     /* bind metrics struct */                                                                               \
-    pybind11::class_<MPCNET_INTERFACE::metrics_t>(m, "Metrics")                                             \
+    pybind11::class_<ocs2::metrics_t>(m, "Metrics")                                                         \
         .def(pybind11::init<>())                                                                            \
-        .def_readwrite("survival_time", &MPCNET_INTERFACE::metrics_t::survivalTime)                         \
-        .def_readwrite("incurred_hamiltonian", &MPCNET_INTERFACE::metrics_t::incurredHamiltonian);          \
+        .def_readwrite("survival_time", &ocs2::metrics_t::survivalTime)                                     \
+        .def_readwrite("incurred_hamiltonian", &ocs2::metrics_t::incurredHamiltonian);                      \
   }
 
 /**

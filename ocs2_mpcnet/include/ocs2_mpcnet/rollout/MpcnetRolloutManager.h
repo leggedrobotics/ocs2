@@ -41,13 +41,6 @@ namespace ocs2 {
  */
 class MpcnetRolloutManager {
  public:
-  using data_point_t = MpcnetDataGeneration::DataPoint;
-  using data_array_t = MpcnetDataGeneration::DataArray;
-  using data_ptr_t = MpcnetDataGeneration::DataPtr;
-  using metrics_t = MpcnetPolicyEvaluation::Metrics;
-  using metrics_array_t = MpcnetPolicyEvaluation::MetricsArray;
-  using metrics_ptr_t = MpcnetPolicyEvaluation::MetricsPtr;
-
   /**
    * Constructor.
    * @note The first nDataGenerationThreads pointers will be used for the data generation and the next nPolicyEvaluationThreads pointers for

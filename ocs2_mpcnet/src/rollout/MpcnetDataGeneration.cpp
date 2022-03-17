@@ -38,12 +38,11 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MpcnetDataGeneration::DataPtr MpcnetDataGeneration::run(scalar_t alpha, const std::string& policyFilePath, scalar_t timeStep,
-                                                        size_t dataDecimation, size_t nSamples, const matrix_t& samplingCovariance,
-                                                        const SystemObservation& initialObservation, const ModeSchedule& modeSchedule,
-                                                        const TargetTrajectories& targetTrajectories) {
+data_ptr_t MpcnetDataGeneration::run(scalar_t alpha, const std::string& policyFilePath, scalar_t timeStep, size_t dataDecimation,
+                                     size_t nSamples, const matrix_t& samplingCovariance, const SystemObservation& initialObservation,
+                                     const ModeSchedule& modeSchedule, const TargetTrajectories& targetTrajectories) {
   // declare data pointer
-  DataPtr dataPtr(new DataArray);
+  data_ptr_t dataPtr(new data_array_t);
 
   // init time and state
   scalar_t time = initialObservation.time;
@@ -88,7 +87,7 @@ MpcnetDataGeneration::DataPtr MpcnetDataGeneration::run(scalar_t alpha, const st
       if (iteration % dataDecimation == 0) {
         // get nominal data point
         {
-          DataPoint dataPoint;
+          data_point_t dataPoint;
           dataPoint.t = primalSolution.timeTrajectory_.front();
           dataPoint.x = primalSolution.stateTrajectory_.front();
           dataPoint.u = primalSolution.controllerPtr_->computeInput(dataPoint.t, dataPoint.x);
@@ -103,7 +102,7 @@ MpcnetDataGeneration::DataPtr MpcnetDataGeneration::run(scalar_t alpha, const st
 
         // get samples around nominal data point
         for (int i = 0; i < nSamples; i++) {
-          DataPoint dataPoint;
+          data_point_t dataPoint;
           dataPoint.t = primalSolution.timeTrajectory_.front();
           dataPoint.x = primalSolution.stateTrajectory_.front();
           dataPoint.x.noalias() += L * vector_t::NullaryExpr(primalSolution.stateTrajectory_.front().size(), standardNormalNullaryOp);

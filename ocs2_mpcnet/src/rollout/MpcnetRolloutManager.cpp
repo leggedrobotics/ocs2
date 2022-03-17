@@ -120,7 +120,7 @@ bool MpcnetRolloutManager::isDataGenerationDone() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MpcnetRolloutManager::data_array_t MpcnetRolloutManager::getGeneratedData() {
+data_array_t MpcnetRolloutManager::getGeneratedData() {
   if (nDataGenerationThreads_ <= 0) {
     throw std::runtime_error("[MpcnetRolloutManager::getGeneratedData] cannot work without at least one data generation thread.");
   }
@@ -213,7 +213,7 @@ bool MpcnetRolloutManager::isPolicyEvaluationDone() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MpcnetRolloutManager::metrics_array_t MpcnetRolloutManager::getComputedMetrics() {
+metrics_array_t MpcnetRolloutManager::getComputedMetrics() {
   if (nPolicyEvaluationThreads_ <= 0) {
     throw std::runtime_error("[MpcnetRolloutManager::getComputedMetrics] cannot work without at least one policy evaluation thread.");
   }

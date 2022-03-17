@@ -29,8 +29,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/thread_support/ThreadPool.h>
-
 #include "ocs2_mpcnet/rollout/MpcnetRolloutManager.h"
 
 namespace ocs2 {
@@ -39,14 +37,6 @@ namespace ocs2 {
  *  Base class for all MPC-Net interfaces between C++ and Python.
  */
 class MpcnetInterfaceBase {
- public:
-  using data_point_t = MpcnetRolloutManager::data_point_t;
-  using data_array_t = MpcnetRolloutManager::data_array_t;
-  using data_ptr_t = MpcnetRolloutManager::data_ptr_t;
-  using metrics_t = MpcnetRolloutManager::metrics_t;
-  using metrics_array_t = MpcnetRolloutManager::metrics_array_t;
-  using metrics_ptr_t = MpcnetRolloutManager::metrics_ptr_t;
-
  public:
   /**
    * Default destructor.

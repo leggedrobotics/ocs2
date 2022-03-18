@@ -114,21 +114,21 @@ using namespace pybind11::literals;
 /**
  * Convenience macro to bind robot MPC-Net interface.
  */
-#define CREATE_ROBOT_MPCNET_PYTHON_BINDINGS(MPCNET_INTERFACE, LIB_NAME)                                                                    \
-  /* create a python module */                                                                                                             \
-  PYBIND11_MODULE(LIB_NAME, m) {                                                                                                           \
-    /* import the general MPC-Net module */                                                                                                \
-    pybind11::module::import("ocs2_mpcnet.MpcnetPybindings");                                                                              \
-    /* bind actual MPC-Net interface for specific robot */                                                                                 \
-    pybind11::class_<MPCNET_INTERFACE>(m, "MpcnetInterface")                                                                               \
-        .def(pybind11::init<size_t, size_t, bool>())                                                                                       \
-        .def("startDataGeneration", &MPCNET_INTERFACE::startDataGeneration, "alpha"_a, "policyFilePath"_a, "timeStep"_a,                   \
-             "dataDecimation"_a, "nSamples"_a, "samplingCovariance"_a.noconvert(), "initialObservations"_a, "modeSchedules"_a,             \
-             "targetTrajectories"_a)                                                                                                       \
-        .def("isDataGenerationDone", &MPCNET_INTERFACE::isDataGenerationDone)                                                              \
-        .def("getGeneratedData", &MPCNET_INTERFACE::getGeneratedData)                                                                      \
-        .def("startPolicyEvaluation", &MPCNET_INTERFACE::startPolicyEvaluation, "policyFilePath"_a, "timeStep"_a, "initialObservations"_a, \
-             "modeSchedules"_a, "targetTrajectories"_a)                                                                                    \
-        .def("isPolicyEvaluationDone", &MPCNET_INTERFACE::isPolicyEvaluationDone)                                                          \
-        .def("getComputedMetrics", &MPCNET_INTERFACE::getComputedMetrics);                                                                 \
+#define CREATE_ROBOT_MPCNET_PYTHON_BINDINGS(MPCNET_INTERFACE, LIB_NAME)                                                        \
+  /* create a python module */                                                                                                 \
+  PYBIND11_MODULE(LIB_NAME, m) {                                                                                               \
+    /* import the general MPC-Net module */                                                                                    \
+    pybind11::module::import("ocs2_mpcnet.MpcnetPybindings");                                                                  \
+    /* bind actual MPC-Net interface for specific robot */                                                                     \
+    pybind11::class_<MPCNET_INTERFACE>(m, "MpcnetInterface")                                                                   \
+        .def(pybind11::init<size_t, size_t, bool>())                                                                           \
+        .def("startDataGeneration", &MPCNET_INTERFACE::startDataGeneration, "alpha"_a, "policyFilePath"_a, "timeStep"_a,       \
+             "dataDecimation"_a, "nSamples"_a, "samplingCovariance"_a.noconvert(), "initialObservations"_a, "modeSchedules"_a, \
+             "targetTrajectories"_a)                                                                                           \
+        .def("isDataGenerationDone", &MPCNET_INTERFACE::isDataGenerationDone)                                                  \
+        .def("getGeneratedData", &MPCNET_INTERFACE::getGeneratedData)                                                          \
+        .def("startPolicyEvaluation", &MPCNET_INTERFACE::startPolicyEvaluation, "alpha"_a, "policyFilePath"_a, "timeStep"_a,   \
+             "initialObservations"_a, "modeSchedules"_a, "targetTrajectories"_a)                                               \
+        .def("isPolicyEvaluationDone", &MPCNET_INTERFACE::isPolicyEvaluationDone)                                              \
+        .def("getComputedMetrics", &MPCNET_INTERFACE::getComputedMetrics);                                                     \
   }

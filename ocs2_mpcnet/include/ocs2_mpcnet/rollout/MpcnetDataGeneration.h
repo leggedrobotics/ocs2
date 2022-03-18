@@ -29,47 +29,31 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/reference/ModeSchedule.h>
-#include <ocs2_core/reference/TargetTrajectories.h>
-#include <ocs2_mpc/MPC_BASE.h>
-#include <ocs2_mpc/SystemObservation.h>
-#include <ocs2_oc/rollout/RolloutBase.h>
-#include <ocs2_oc/synchronized_module/ReferenceManagerInterface.h>
-
-#include "ocs2_mpcnet/MpcnetDefinitionBase.h"
-#include "ocs2_mpcnet/control/MpcnetControllerBase.h"
 #include "ocs2_mpcnet/rollout/MpcnetData.h"
+#include "ocs2_mpcnet/rollout/MpcnetRolloutBase.h"
 
 namespace ocs2 {
 namespace mpcnet {
 
 /**
- *  A class for generating MPC data from a system that is forward simulated with a behavioral controller.
- *  The behavioral policy is a mixture of an MPC policy and an MPC-Net policy (e.g. a neural network).
+ *  A class for generating data from a system that is forward simulated with a behavioral controller.
+ *  @note Usually the behavioral controller moves from the MPC policy to the MPC-Net policy throughout the training process.
  */
-class MpcnetDataGeneration {
+class MpcnetDataGeneration final : public MpcnetRolloutBase {
  public:
   /**
-   * Constructor.
-   * @param [in] mpcPtr : Pointer to the MPC solver to be used (this class takes ownership).
-   * @param [in] mpcnetPtr : Pointer to the MPC-Net policy to be used (this class takes ownership).
-   * @param [in] rolloutPtr : Pointer to the rollout to be used (this class takes ownership).
-   * @param [in] mpcnetDefinitionPtr : Pointer to the MPC-Net definitions to be used (shared ownership).
-   * @param [in] referenceManagerPtr : Pointer to the reference manager to be used (shared ownership).
+   * @see MpcnetRolloutBase::MpcnetRolloutBase()
    */
   MpcnetDataGeneration(std::unique_ptr<MPC_BASE> mpcPtr, std::unique_ptr<MpcnetControllerBase> mpcnetPtr,
                        std::unique_ptr<RolloutBase> rolloutPtr, std::shared_ptr<MpcnetDefinitionBase> mpcnetDefinitionPtr,
                        std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr)
-      : mpcPtr_(std::move(mpcPtr)),
-        mpcnetPtr_(std::move(mpcnetPtr)),
-        rolloutPtr_(std::move(rolloutPtr)),
-        mpcnetDefinitionPtr_(std::move(mpcnetDefinitionPtr)),
-        referenceManagerPtr_(std::move(referenceManagerPtr)) {}
+      : MpcnetRolloutBase(std::move(mpcPtr), std::move(mpcnetPtr), std::move(rolloutPtr), std::move(mpcnetDefinitionPtr),
+                          std::move(referenceManagerPtr)) {}
 
   /**
    * Default destructor.
    */
-  virtual ~MpcnetDataGeneration() = default;
+  ~MpcnetDataGeneration() override = default;
 
   /**
    * Deleted copy constructor.
@@ -99,11 +83,6 @@ class MpcnetDataGeneration {
                           const TargetTrajectories& targetTrajectories);
 
  private:
-  std::unique_ptr<MPC_BASE> mpcPtr_;
-  std::unique_ptr<MpcnetControllerBase> mpcnetPtr_;
-  std::unique_ptr<RolloutBase> rolloutPtr_;
-  std::shared_ptr<MpcnetDefinitionBase> mpcnetDefinitionPtr_;
-  std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr_;
   data_array_t dataArray_;
 };
 

@@ -49,6 +49,7 @@ add_library(${PROJECT_NAME}
   src/dummy/MpcnetDummyObserverRos.cpp
   src/rollout/MpcnetDataGeneration.cpp
   src/rollout/MpcnetPolicyEvaluation.cpp
+  src/rollout/MpcnetRolloutBase.cpp
   src/rollout/MpcnetRolloutManager.cpp
   src/MpcnetInterfaceBase.cpp
 )

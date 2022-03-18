@@ -163,7 +163,7 @@ data_array_t MpcnetRolloutManager::getGeneratedData() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MpcnetRolloutManager::startPolicyEvaluation(const std::string& policyFilePath, scalar_t timeStep,
+void MpcnetRolloutManager::startPolicyEvaluation(scalar_t alpha, const std::string& policyFilePath, scalar_t timeStep,
                                                  const std::vector<SystemObservation>& initialObservations,
                                                  const std::vector<ModeSchedule>& modeSchedules,
                                                  const std::vector<TargetTrajectories>& targetTrajectories) {
@@ -178,8 +178,8 @@ void MpcnetRolloutManager::startPolicyEvaluation(const std::string& policyFilePa
   // push tasks into pool
   for (int i = 0; i < initialObservations.size(); i++) {
     policyEvaluationFtrs_.push_back(policyEvaluationThreadPoolPtr_->run([=](int threadNumber) {
-      const auto result = policyEvaluationPtrs_[threadNumber]->run(policyFilePath, timeStep, initialObservations.at(i), modeSchedules.at(i),
-                                                                   targetTrajectories.at(i));
+      const auto result = policyEvaluationPtrs_[threadNumber]->run(alpha, policyFilePath, timeStep, initialObservations.at(i),
+                                                                   modeSchedules.at(i), targetTrajectories.at(i));
       nPolicyEvaluationTasksDone_++;
       // print thread and task number
       std::cerr << "Policy evaluation thread " << threadNumber << " finished task " << nPolicyEvaluationTasksDone_ << "\n";

@@ -46,27 +46,8 @@ const data_array_t* MpcnetDataGeneration::run(scalar_t alpha, const std::string&
   // clear data array
   dataArray_.clear();
 
-  // init time and state
-  scalar_t time = initialObservation.time;
-  vector_t state = initialObservation.state;
-
-  // reset mpc
-  mpcPtr_->reset();
-
-  // reset rollout, i.e. reset the internal simulator state (e.g. relevant for RaiSim)
-  rolloutPtr_->resetRollout();
-
-  // prepare learned controller
-  mpcnetPtr_->loadPolicyModel(policyFilePath);
-
-  // update the reference manager
-  referenceManagerPtr_->setModeSchedule(modeSchedule);
-  referenceManagerPtr_->setTargetTrajectories(targetTrajectories);
-
-  // set up behavioral controller with mixture parameter alpha and learned controller
-  std::unique_ptr<MpcnetBehavioralController> behavioralControllerPtr;
-  behavioralControllerPtr->setAlpha(alpha);
-  behavioralControllerPtr->setLearnedController(*mpcnetPtr_);
+  // init system
+  init(alpha, policyFilePath, initialObservation, modeSchedule, targetTrajectories);
 
   // set up scalar standard normal generator and compute Cholesky decomposition of covariance matrix
   std::random_device randomDevice;
@@ -78,47 +59,25 @@ const data_array_t* MpcnetDataGeneration::run(scalar_t alpha, const std::string&
   // run data generation
   int iteration = 0;
   try {
-    while (time <= targetTrajectories.timeTrajectory.back()) {
-      // run mpc and get solution
-      if (!mpcPtr_->run(time, state)) {
-        throw std::runtime_error("[MpcnetDataGeneration::run] main routine of MPC returned false.");
-      }
-      const auto primalSolution = mpcPtr_->getSolverPtr()->primalSolution(mpcPtr_->getSolverPtr()->getFinalTime());
+    while (systemObservation_.time <= targetTrajectories.timeTrajectory.back()) {
+      // step system
+      step(timeStep);
 
       // downsample the data signal by an integer factor
       if (iteration % dataDecimation == 0) {
         // get nominal data point
-        const vector_t deviation = vector_t::Zero(primalSolution.stateTrajectory_.front().size());
+        const vector_t deviation = vector_t::Zero(primalSolution_.stateTrajectory_.front().size());
         dataArray_.push_back(getDataPoint(*mpcPtr_, *mpcnetDefinitionPtr_, deviation));
 
         // get samples around nominal data point
         for (int i = 0; i < nSamples; i++) {
-          const vector_t deviation = L * vector_t::NullaryExpr(primalSolution.stateTrajectory_.front().size(), standardNormalNullaryOp);
+          const vector_t deviation = L * vector_t::NullaryExpr(primalSolution_.stateTrajectory_.front().size(), standardNormalNullaryOp);
           dataArray_.push_back(getDataPoint(*mpcPtr_, *mpcnetDefinitionPtr_, deviation));
         }
       }
 
-      // update behavioral controller with MPC controller
-      behavioralControllerPtr->setOptimalController(*primalSolution.controllerPtr_);
-
-      // forward simulate system with behavioral controller
-      scalar_array_t timeTrajectory;
-      size_array_t postEventIndicesStock;
-      vector_array_t stateTrajectory;
-      vector_array_t inputTrajectory;
-      rolloutPtr_->run(primalSolution.timeTrajectory_.front(), primalSolution.stateTrajectory_.front(),
-                       primalSolution.timeTrajectory_.front() + timeStep, behavioralControllerPtr.get(),
-                       primalSolution.modeSchedule_.eventTimes, timeTrajectory, postEventIndicesStock, stateTrajectory, inputTrajectory);
-
-      // update time, state and iteration
-      time = timeTrajectory.back();
-      state = stateTrajectory.back();
+      // update iteration
       ++iteration;
-
-      // check if forward simulated system diverged
-      if (!mpcnetDefinitionPtr_->validState(state)) {
-        throw std::runtime_error("[MpcnetDataGeneration::run] state is not valid.");
-      }
     }
   } catch (const std::exception& e) {
     // print error for exceptions

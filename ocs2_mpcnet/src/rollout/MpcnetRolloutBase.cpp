@@ -37,8 +37,8 @@ namespace mpcnet {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MpcnetRolloutBase::init(scalar_t alpha, const std::string& policyFilePath, const SystemObservation& initialObservation,
-                             const ModeSchedule& modeSchedule, const TargetTrajectories& targetTrajectories) {
+void MpcnetRolloutBase::set(scalar_t alpha, const std::string& policyFilePath, const SystemObservation& initialObservation,
+                            const ModeSchedule& modeSchedule, const TargetTrajectories& targetTrajectories) {
   // init system observation
   systemObservation_ = initialObservation;
 

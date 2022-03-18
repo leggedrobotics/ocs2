@@ -82,16 +82,17 @@ class MpcnetRolloutBase {
    */
   MpcnetRolloutBase& operator=(const MpcnetRolloutBase&) = delete;
 
+ protected:
   /**
-   * Initialize the system.
+   * (Re)set system components.
    * @param [in] alpha : The mixture parameter for the behavioral controller.
    * @param [in] policyFilePath : The path to the file with the learned policy for the controller.
    * @param [in] initialObservation : The initial system observation to start from (time and state required).
    * @param [in] modeSchedule : The mode schedule providing the event times and mode sequence.
    * @param [in] targetTrajectories : The target trajectories to be tracked.
    */
-  void init(scalar_t alpha, const std::string& policyFilePath, const SystemObservation& initialObservation,
-            const ModeSchedule& modeSchedule, const TargetTrajectories& targetTrajectories);
+  void set(scalar_t alpha, const std::string& policyFilePath, const SystemObservation& initialObservation, const ModeSchedule& modeSchedule,
+           const TargetTrajectories& targetTrajectories);
 
   /**
    * Simulate the system one step forward.
@@ -99,15 +100,16 @@ class MpcnetRolloutBase {
    */
   void step(scalar_t timeStep);
 
- protected:
   std::unique_ptr<MPC_BASE> mpcPtr_;
-  std::unique_ptr<MpcnetControllerBase> mpcnetPtr_;
-  std::unique_ptr<RolloutBase> rolloutPtr_;
   std::shared_ptr<MpcnetDefinitionBase> mpcnetDefinitionPtr_;
-  std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr_;
   std::unique_ptr<MpcnetBehavioralController> behavioralControllerPtr_;
   SystemObservation systemObservation_;
   PrimalSolution primalSolution_;
+
+ private:
+  std::unique_ptr<MpcnetControllerBase> mpcnetPtr_;
+  std::unique_ptr<RolloutBase> rolloutPtr_;
+  std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr_;
 };
 
 }  // namespace mpcnet

@@ -41,8 +41,8 @@ metrics_t MpcnetPolicyEvaluation::run(scalar_t alpha, const std::string& policyF
   // declare metrics
   metrics_t metrics;
 
-  // init system
-  init(alpha, policyFilePath, initialObservation, modeSchedule, targetTrajectories);
+  // set system
+  set(alpha, policyFilePath, initialObservation, modeSchedule, targetTrajectories);
 
   // run policy evaluation
   try {

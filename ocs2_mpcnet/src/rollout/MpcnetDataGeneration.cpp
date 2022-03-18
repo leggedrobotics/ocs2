@@ -46,8 +46,8 @@ const data_array_t* MpcnetDataGeneration::run(scalar_t alpha, const std::string&
   // clear data array
   dataArray_.clear();
 
-  // init system
-  init(alpha, policyFilePath, initialObservation, modeSchedule, targetTrajectories);
+  // set system
+  set(alpha, policyFilePath, initialObservation, modeSchedule, targetTrajectories);
 
   // set up scalar standard normal generator and compute Cholesky decomposition of covariance matrix
   std::random_device randomDevice;

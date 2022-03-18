@@ -42,7 +42,12 @@ namespace mpcnet {
 class MpcnetPolicyEvaluation final : public MpcnetRolloutBase {
  public:
   /**
-   * @see MpcnetRolloutBase::MpcnetRolloutBase()
+   * Constructor.
+   * @param [in] mpcPtr : Pointer to the MPC solver to be used (this class takes ownership).
+   * @param [in] mpcnetPtr : Pointer to the MPC-Net policy to be used (this class takes ownership).
+   * @param [in] rolloutPtr : Pointer to the rollout to be used (this class takes ownership).
+   * @param [in] mpcnetDefinitionPtr : Pointer to the MPC-Net definitions to be used (shared ownership).
+   * @param [in] referenceManagerPtr : Pointer to the reference manager to be used (shared ownership).
    */
   MpcnetPolicyEvaluation(std::unique_ptr<MPC_BASE> mpcPtr, std::unique_ptr<MpcnetControllerBase> mpcnetPtr,
                          std::unique_ptr<RolloutBase> rolloutPtr, std::shared_ptr<MpcnetDefinitionBase> mpcnetDefinitionPtr,

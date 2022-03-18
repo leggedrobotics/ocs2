@@ -84,7 +84,7 @@ void MpcnetRolloutManager::startDataGeneration(scalar_t alpha, const std::string
 
   // push tasks into pool
   for (int i = 0; i < initialObservations.size(); i++) {
-    dataGenerationFtrs_.push_back(dataGenerationThreadPoolPtr_->run([=](int threadNumber) {
+    dataGenerationFtrs_.push_back(dataGenerationThreadPoolPtr_->run([&](int threadNumber) {
       const auto* result =
           dataGenerationPtrs_[threadNumber]->run(alpha, policyFilePath, timeStep, dataDecimation, nSamples, samplingCovariance,
                                                  initialObservations.at(i), modeSchedules.at(i), targetTrajectories.at(i));
@@ -121,7 +121,7 @@ bool MpcnetRolloutManager::isDataGenerationDone() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-data_array_t MpcnetRolloutManager::getGeneratedData() {
+const data_array_t& MpcnetRolloutManager::getGeneratedData() {
   if (nDataGenerationThreads_ <= 0) {
     throw std::runtime_error("[MpcnetRolloutManager::getGeneratedData] cannot work without at least one data generation thread.");
   }
@@ -129,12 +129,16 @@ data_array_t MpcnetRolloutManager::getGeneratedData() {
     throw std::runtime_error("[MpcnetRolloutManager::getGeneratedData] cannot get data when data generation is not done.");
   }
 
+  // clear data array
+  dataArray_.clear();
+
   // get pointers to data
   std::vector<const data_array_t*> dataPtrs;
-  for (int i = 0; i < dataGenerationFtrs_.size(); i++) {
+  dataPtrs.reserve(dataGenerationFtrs_.size());
+  for (auto& dataGenerationFtr : dataGenerationFtrs_) {
     try {
       // get results from futures of the tasks
-      dataPtrs.push_back(dataGenerationFtrs_[i].get());
+      dataPtrs.push_back(dataGenerationFtr.get());
     } catch (const std::exception& e) {
       // print error for exceptions
       std::cerr << "[MpcnetRolloutManager::getGeneratedData] a standard exception was caught, with message: " << e.what() << "\n";
@@ -148,16 +152,13 @@ data_array_t MpcnetRolloutManager::getGeneratedData() {
   }
 
   // fill data array
-  data_array_t dataArray;
-  dataArray.reserve(nDataPoints);
-  for (int i = 0; i < dataPtrs.size(); i++) {
-    for (int j = 0; j < dataPtrs[i]->size(); j++) {
-      dataArray.push_back((*dataPtrs[i])[j]);
-    }
+  dataArray_.reserve(nDataPoints);
+  for (const auto dataPtr : dataPtrs) {
+    dataArray_.insert(dataArray_.end(), dataPtr->begin(), dataPtr->end());
   }
 
-  // return data
-  return dataArray;
+  // return data array
+  return dataArray_;
 }
 
 /******************************************************************************************************/
@@ -177,7 +178,7 @@ void MpcnetRolloutManager::startPolicyEvaluation(scalar_t alpha, const std::stri
 
   // push tasks into pool
   for (int i = 0; i < initialObservations.size(); i++) {
-    policyEvaluationFtrs_.push_back(policyEvaluationThreadPoolPtr_->run([=](int threadNumber) {
+    policyEvaluationFtrs_.push_back(policyEvaluationThreadPoolPtr_->run([&](int threadNumber) {
       const auto result = policyEvaluationPtrs_[threadNumber]->run(alpha, policyFilePath, timeStep, initialObservations.at(i),
                                                                    modeSchedules.at(i), targetTrajectories.at(i));
       nPolicyEvaluationTasksDone_++;
@@ -223,17 +224,18 @@ metrics_array_t MpcnetRolloutManager::getComputedMetrics() {
 
   // get metrics and fill metrics array
   metrics_array_t metricsArray;
-  for (int i = 0; i < policyEvaluationFtrs_.size(); i++) {
+  metricsArray.reserve(policyEvaluationFtrs_.size());
+  for (auto& policyEvaluationFtr : policyEvaluationFtrs_) {
     try {
       // get results from futures of the tasks
-      metricsArray.push_back(policyEvaluationFtrs_[i].get());
+      metricsArray.push_back(policyEvaluationFtr.get());
     } catch (const std::exception& e) {
       // print error for exceptions
       std::cerr << "[MpcnetRolloutManager::getComputedMetrics] a standard exception was caught, with message: " << e.what() << "\n";
     }
   }
 
-  // return metrics
+  // return metrics array
   return metricsArray;
 }
 

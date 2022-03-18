@@ -90,7 +90,7 @@ class MpcnetRolloutManager {
    * Get the data generated from the data generation rollout.
    * @return The generated data.
    */
-  data_array_t getGeneratedData();
+  const data_array_t& getGeneratedData();
 
   /**
    * Starts the policy evaluation forward simulated by a behavioral controller.
@@ -124,6 +124,7 @@ class MpcnetRolloutManager {
   std::unique_ptr<ThreadPool> dataGenerationThreadPoolPtr_;
   std::vector<std::unique_ptr<MpcnetDataGeneration>> dataGenerationPtrs_;
   std::vector<std::future<const data_array_t*>> dataGenerationFtrs_;
+  data_array_t dataArray_;
   // policy evaluation variables
   size_t nPolicyEvaluationThreads_;
   std::atomic_int nPolicyEvaluationTasksDone_;

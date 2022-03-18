@@ -93,14 +93,15 @@ class MpcnetRolloutManager {
   data_array_t getGeneratedData();
 
   /**
-   * Starts the policy evaluation forward simulated by a learned controller.
-   * @param [in] policyFilePath : The path to the file with the learned policy for the learned controller.
-   * @param [in] timeStep : The time step for the forward simulation of the system with the learned controller.
+   * Starts the policy evaluation forward simulated by a behavioral controller.
+   * @param [in] alpha : The mixture parameter for the behavioral controller.
+   * @param [in] policyFilePath : The path to the file with the learned policy for the behavioral controller.
+   * @param [in] timeStep : The time step for the forward simulation of the system with the behavioral controller.
    * @param [in] initialObservations : The initial system observations to start from (time and state required).
    * @param [in] modeSchedules : The mode schedules providing the event times and mode sequence.
    * @param [in] targetTrajectories : The target trajectories to be tracked.
    */
-  void startPolicyEvaluation(const std::string& policyFilePath, scalar_t timeStep,
+  void startPolicyEvaluation(scalar_t alpha, const std::string& policyFilePath, scalar_t timeStep,
                              const std::vector<SystemObservation>& initialObservations, const std::vector<ModeSchedule>& modeSchedules,
                              const std::vector<TargetTrajectories>& targetTrajectories);
 

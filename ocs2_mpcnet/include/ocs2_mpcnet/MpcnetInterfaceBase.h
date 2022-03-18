@@ -64,7 +64,7 @@ class MpcnetInterfaceBase {
   /**
    * @see MpcnetRolloutManager::startPolicyEvaluation()
    */
-  void startPolicyEvaluation(const std::string& policyFilePath, scalar_t timeStep,
+  void startPolicyEvaluation(scalar_t alpha, const std::string& policyFilePath, scalar_t timeStep,
                              const std::vector<SystemObservation>& initialObservations, const std::vector<ModeSchedule>& modeSchedules,
                              const std::vector<TargetTrajectories>& targetTrajectories);
 

@@ -35,60 +35,26 @@ namespace mpcnet {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-metrics_t MpcnetPolicyEvaluation::run(const std::string& policyFilePath, scalar_t timeStep, const SystemObservation& initialObservation,
-                                      const ModeSchedule& modeSchedule, const TargetTrajectories& targetTrajectories) {
+metrics_t MpcnetPolicyEvaluation::run(scalar_t alpha, const std::string& policyFilePath, scalar_t timeStep,
+                                      const SystemObservation& initialObservation, const ModeSchedule& modeSchedule,
+                                      const TargetTrajectories& targetTrajectories) {
   // declare metrics
   metrics_t metrics;
 
-  // init time and state
-  scalar_t time = initialObservation.time;
-  vector_t state = initialObservation.state;
-
-  // reset mpc
-  mpcPtr_->reset();
-
-  // reset rollout, i.e. reset the internal simulator state (e.g. relevant for RaiSim)
-  rolloutPtr_->resetRollout();
-
-  // prepare learned controller
-  mpcnetPtr_->loadPolicyModel(policyFilePath);
-
-  // update the reference manager
-  referenceManagerPtr_->setModeSchedule(modeSchedule);
-  referenceManagerPtr_->setTargetTrajectories(targetTrajectories);
+  // set system
+  set(alpha, policyFilePath, initialObservation, modeSchedule, targetTrajectories);
 
   // run policy evaluation
-  int iteration = 0;
   try {
-    while (time <= targetTrajectories.timeTrajectory.back()) {
-      // run mpc and get solution
-      if (!mpcPtr_->run(time, state)) {
-        throw std::runtime_error("[MpcnetPolicyEvaluation::run] main routine of MPC returned false.");
-      }
-      const auto primalSolution = mpcPtr_->getSolverPtr()->primalSolution(mpcPtr_->getSolverPtr()->getFinalTime());
+    while (systemObservation_.time <= targetTrajectories.timeTrajectory.back()) {
+      // step system
+      step(timeStep);
 
       // incurred quantities
-      vector_t input = mpcnetPtr_->computeInput(time, state);
+      const scalar_t time = primalSolution_.timeTrajectory_.front();
+      const vector_t state = primalSolution_.stateTrajectory_.front();
+      const vector_t input = behavioralControllerPtr_->computeInput(time, state);
       metrics.incurredHamiltonian += mpcPtr_->getSolverPtr()->getHamiltonian(time, state, input).f * timeStep;
-
-      // forward simulate system with learned controller
-      scalar_array_t timeTrajectory;
-      size_array_t postEventIndicesStock;
-      vector_array_t stateTrajectory;
-      vector_array_t inputTrajectory;
-      rolloutPtr_->run(primalSolution.timeTrajectory_.front(), primalSolution.stateTrajectory_.front(),
-                       primalSolution.timeTrajectory_.front() + timeStep, mpcnetPtr_.get(), primalSolution.modeSchedule_.eventTimes,
-                       timeTrajectory, postEventIndicesStock, stateTrajectory, inputTrajectory);
-
-      // update time, state and iteration
-      time = timeTrajectory.back();
-      state = stateTrajectory.back();
-      ++iteration;
-
-      // check if forward simulated system diverged
-      if (!mpcnetDefinitionPtr_->validState(state)) {
-        throw std::runtime_error("[MpcnetPolicyEvaluation::run] state is not valid.");
-      }
     }
   } catch (const std::exception& e) {
     // print error for exceptions
@@ -98,7 +64,7 @@ metrics_t MpcnetPolicyEvaluation::run(const std::string& policyFilePath, scalar_
   }
 
   // report survival time
-  metrics.survivalTime = time;
+  metrics.survivalTime = systemObservation_.time;
 
   // return metrics
   return metrics;

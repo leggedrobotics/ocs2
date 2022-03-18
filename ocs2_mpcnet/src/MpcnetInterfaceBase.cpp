@@ -61,11 +61,11 @@ data_array_t MpcnetInterfaceBase::getGeneratedData() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MpcnetInterfaceBase::startPolicyEvaluation(const std::string& policyFilePath, scalar_t timeStep,
+void MpcnetInterfaceBase::startPolicyEvaluation(scalar_t alpha, const std::string& policyFilePath, scalar_t timeStep,
                                                 const std::vector<SystemObservation>& initialObservations,
                                                 const std::vector<ModeSchedule>& modeSchedules,
                                                 const std::vector<TargetTrajectories>& targetTrajectories) {
-  mpcnetRolloutManagerPtr_->startPolicyEvaluation(policyFilePath, timeStep, initialObservations, modeSchedules, targetTrajectories);
+  mpcnetRolloutManagerPtr_->startPolicyEvaluation(alpha, policyFilePath, timeStep, initialObservations, modeSchedules, targetTrajectories);
 }
 
 /******************************************************************************************************/

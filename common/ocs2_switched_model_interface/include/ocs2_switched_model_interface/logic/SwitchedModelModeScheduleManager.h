@@ -35,13 +35,6 @@ class SwitchedModelModeScheduleManager : public ocs2::ReferenceManager {
     inverseKinematicsFunction_ = inverseKinematicsFunction;
   }
 
-  // Write-able access to dynamics parameters
-  ocs2::Synchronized<ComKinoSystemDynamicsParameters<scalar_t>>& getDynamicsParameters() { return newDynamicsParameters_; }
-  const ocs2::Synchronized<ComKinoSystemDynamicsParameters<scalar_t>>& getDynamicsParameters() const { return newDynamicsParameters_; }
-
-  // Read-only access to active dynamics parameters (Not thread safe while MPC is running!)
-  const ComKinoSystemDynamicsParameters<scalar_t>& getActiveDynamicsParameters() const { return activeDynamicsParameters_; }
-
  private:
   void modifyReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState, ocs2::TargetTrajectories& targetTrajectories,
                         ocs2::ModeSchedule& modeSchedule) override;
@@ -50,11 +43,6 @@ class SwitchedModelModeScheduleManager : public ocs2::ReferenceManager {
   std::unique_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr_;
   ocs2::Synchronized<TerrainModel> terrainModel_;
   inverse_kinematics_function_t inverseKinematicsFunction_;
-
-  //! Parameters active in the current MPC optimization
-  ComKinoSystemDynamicsParameters<scalar_t> activeDynamicsParameters_;
-  //! Updated externally, becomes active in next MPC iteration
-  ocs2::Synchronized<ComKinoSystemDynamicsParameters<scalar_t>> newDynamicsParameters_;
 };
 
 }  // namespace switched_model

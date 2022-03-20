@@ -38,10 +38,13 @@ base_coordinate_s_t<SCALAR_T> computeExternalForcesInBaseFrame(const KinematicsM
 }  // namespace
 
 ComKinoSystemDynamicsAd::ComKinoSystemDynamicsAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
-                                                 const SwitchedModelModeScheduleManager& modeScheduleManager, ModelSettings settings)
+                                                 const SwitchedModelModeScheduleManager& modeScheduleManager,
+                                                 const DynamicsParametersSynchronizedModule& dynamicsParametersModule,
+                                                 ModelSettings settings)
     : adKinematicModelPtr_(adKinematicModel.clone()),
       adComModelPtr_(adComModel.clone()),
       modeScheduleManagerPtr_(&modeScheduleManager),
+      dynamicsParametersModulePtr_(&dynamicsParametersModule),
       settings_(settings) {
   std::string libName = "anymal_dynamics";
   std::string libFolder = "/tmp/ocs2";
@@ -54,6 +57,7 @@ ComKinoSystemDynamicsAd::ComKinoSystemDynamicsAd(const ComKinoSystemDynamicsAd& 
       adKinematicModelPtr_(rhs.adKinematicModelPtr_->clone()),
       adComModelPtr_(rhs.adComModelPtr_->clone()),
       modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_),
+      dynamicsParametersModulePtr_(rhs.dynamicsParametersModulePtr_),
       settings_(rhs.settings_) {}
 
 ComKinoSystemDynamicsAd* ComKinoSystemDynamicsAd::clone() const {

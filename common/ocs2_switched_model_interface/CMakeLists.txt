@@ -74,6 +74,7 @@ add_library(${PROJECT_NAME}
 	src/logic/GaitSchedule.cpp
 	src/logic/ModeSequenceTemplate.cpp
 	src/logic/SingleLegLogic.cpp
+	src/logic/DynamicsParametersSynchronizedModule.cpp
 	src/logic/SwitchedModelModeScheduleManager.cpp
 	src/ros_msg_conversions/RosMsgConversions.cpp
 	src/terrain/PlanarTerrainModel.cpp

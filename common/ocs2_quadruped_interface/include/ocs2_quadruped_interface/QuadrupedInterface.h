@@ -18,6 +18,7 @@
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
 #include <ocs2_switched_model_interface/cost/MotionTrackingCost.h>
 
+#include <ocs2_switched_model_interface/logic/DynamicsParametersSynchronizedModule.h>
 #include <ocs2_switched_model_interface/logic/SwitchedModelModeScheduleManager.h>
 
 namespace switched_model {
@@ -64,6 +65,11 @@ class QuadrupedInterface : public ocs2::RobotInterface {
 
   /** Gets the mode schedule manager */
   std::shared_ptr<ocs2::ReferenceManagerInterface> getReferenceManagerPtr() const override { return modeScheduleManagerPtr_; }
+
+  /** Gets the dynamics parameter module*/
+  std::shared_ptr<DynamicsParametersSynchronizedModule> getDynamicsParametersSynchronizedModulePtr() const {
+    return dynamicsParametersSynchronizedModulePtr_;
+  }
 
   const ocs2::OptimalControlProblem& getOptimalControlProblem() const override { return *problemPtr_; }
 
@@ -121,6 +127,7 @@ class QuadrupedInterface : public ocs2::RobotInterface {
   std::unique_ptr<com_model_t> comModelPtr_;
   std::unique_ptr<ad_com_model_t> adComModelPtr_;
   std::shared_ptr<SwitchedModelModeScheduleManager> modeScheduleManagerPtr_;
+  std::shared_ptr<DynamicsParametersSynchronizedModule> dynamicsParametersSynchronizedModulePtr_;
 };
 
 /** Load the general quadruped settings from file. */

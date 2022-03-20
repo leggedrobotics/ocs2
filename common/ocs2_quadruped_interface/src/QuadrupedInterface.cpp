@@ -47,6 +47,8 @@ QuadrupedInterface::QuadrupedInterface(const kinematic_model_t& kinematicModel, 
   // Mode schedule manager
   modeScheduleManagerPtr_ = std::make_shared<SwitchedModelModeScheduleManager>(std::move(gaitSchedule), std::move(swingTrajectoryPlanner),
                                                                                std::move(terrainModel));
+  // Dynamics parameter module
+  dynamicsParametersSynchronizedModulePtr_ = std::make_shared<DynamicsParametersSynchronizedModule>();
 }
 
 std::unique_ptr<ocs2::PreComputation> QuadrupedInterface::createPrecomputation() const {
@@ -90,7 +92,8 @@ std::unique_ptr<ocs2::StateInputCost> QuadrupedInterface::createTorqueLimitsSoft
 
 std::unique_ptr<ocs2::SystemDynamicsBase> QuadrupedInterface::createDynamics() const {
   return std::unique_ptr<ocs2::SystemDynamicsBase>(
-      new ComKinoSystemDynamicsAd(getKinematicModelAd(), getComModelAd(), *getSwitchedModelModeScheduleManagerPtr(), modelSettings()));
+      new ComKinoSystemDynamicsAd(getKinematicModelAd(), getComModelAd(), *getSwitchedModelModeScheduleManagerPtr(),
+                                  *getDynamicsParametersSynchronizedModulePtr(), modelSettings()));
 }
 
 std::unique_ptr<ocs2::StateInputConstraint> QuadrupedInterface::createZeroForceConstraint(size_t leg) const {

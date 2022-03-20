@@ -7,6 +7,7 @@
 #include "ocs2_switched_model_interface/core/ModelSettings.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/dynamics/ComKinoDynamicsParameters.h"
+#include "ocs2_switched_model_interface/logic/DynamicsParametersSynchronizedModule.h"
 #include "ocs2_switched_model_interface/logic/SwitchedModelModeScheduleManager.h"
 
 namespace switched_model {
@@ -21,7 +22,8 @@ class ComKinoSystemDynamicsAd : public ocs2::SystemDynamicsBaseAD {
   using ad_parameters_t = ComKinoSystemDynamicsParameters<ad_scalar_t>;
 
   explicit ComKinoSystemDynamicsAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
-                                   const SwitchedModelModeScheduleManager& modeScheduleManager, ModelSettings settings);
+                                   const SwitchedModelModeScheduleManager& modeScheduleManager,
+                                   const DynamicsParametersSynchronizedModule& dynamicsParametersModule, ModelSettings settings);
 
   ComKinoSystemDynamicsAd(const ComKinoSystemDynamicsAd& rhs);
 
@@ -33,7 +35,7 @@ class ComKinoSystemDynamicsAd : public ocs2::SystemDynamicsBaseAD {
                                   const ocs2::ad_vector_t& parameters) const override;
 
   ocs2::vector_t getFlowMapParameters(scalar_t time) const override {
-    return modeScheduleManagerPtr_->getActiveDynamicsParameters().asVector();
+    return dynamicsParametersModulePtr_->getActiveDynamicsParameters().asVector();
   }
 
   size_t getNumFlowMapParameters() const override { return parameters_t::getNumParameters(); }
@@ -54,6 +56,7 @@ class ComKinoSystemDynamicsAd : public ocs2::SystemDynamicsBaseAD {
   std::unique_ptr<ad_kinematic_model_t> adKinematicModelPtr_;
   std::unique_ptr<ad_com_model_t> adComModelPtr_;
   const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
+  const DynamicsParametersSynchronizedModule* dynamicsParametersModulePtr_;
   ModelSettings settings_;
 };
 

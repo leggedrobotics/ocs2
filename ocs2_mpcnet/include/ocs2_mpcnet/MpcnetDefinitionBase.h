@@ -41,6 +41,11 @@ namespace mpcnet {
 class MpcnetDefinitionBase {
  public:
   /**
+   * Default constructor.
+   */
+  MpcnetDefinitionBase() = default;
+
+  /**
    * Default destructor.
    */
   virtual ~MpcnetDefinitionBase() = default;

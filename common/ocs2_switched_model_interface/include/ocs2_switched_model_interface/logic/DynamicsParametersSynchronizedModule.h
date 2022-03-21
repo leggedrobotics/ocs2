@@ -1,7 +1,6 @@
 #pragma once
 
 #include <ocs2_core/thread_support/Synchronized.h>
-#include <ocs2_oc/synchronized_module/ReferenceManagerInterface.h>
 #include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 
 #include "ocs2_switched_model_interface/dynamics/ComKinoDynamicsParameters.h"

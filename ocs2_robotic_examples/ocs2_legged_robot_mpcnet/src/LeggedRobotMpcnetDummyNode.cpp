@@ -78,10 +78,11 @@ int main(int argc, char** argv) {
   rosReferenceManagerPtr->subscribe(nodeHandle);
 
   // policy (MPC-Net controller)
-  auto onnxEnvironmentPtr = createOnnxEnvironment();
-  std::shared_ptr<MpcnetDefinitionBase> mpcnetDefinitionPtr(new LeggedRobotMpcnetDefinition(leggedRobotInterface.getInitialState()));
-  std::unique_ptr<MpcnetControllerBase> mpcnetControllerPtr(
-      new MpcnetOnnxController(mpcnetDefinitionPtr, rosReferenceManagerPtr, onnxEnvironmentPtr));
+  auto onnxEnvironmentPtr = ocs2::mpcnet::createOnnxEnvironment();
+  std::shared_ptr<ocs2::mpcnet::MpcnetDefinitionBase> mpcnetDefinitionPtr(
+      new LeggedRobotMpcnetDefinition(leggedRobotInterface.getInitialState()));
+  std::unique_ptr<ocs2::mpcnet::MpcnetControllerBase> mpcnetControllerPtr(
+      new ocs2::mpcnet::MpcnetOnnxController(mpcnetDefinitionPtr, rosReferenceManagerPtr, onnxEnvironmentPtr));
   mpcnetControllerPtr->loadPolicyModel(policyFile);
 
   // rollout
@@ -121,7 +122,8 @@ int main(int argc, char** argv) {
   }
 
   // observer
-  std::shared_ptr<MpcnetDummyObserverRos> mpcnetDummyObserverRosPtr(new MpcnetDummyObserverRos(nodeHandle, robotName));
+  std::shared_ptr<ocs2::mpcnet::MpcnetDummyObserverRos> mpcnetDummyObserverRosPtr(
+      new ocs2::mpcnet::MpcnetDummyObserverRos(nodeHandle, robotName));
 
   // visualization
   CentroidalModelPinocchioMapping pinocchioMapping(leggedRobotInterface.getCentroidalModelInfo());
@@ -140,8 +142,8 @@ int main(int argc, char** argv) {
   // MPC-Net dummy loop ROS
   scalar_t controlFrequency = leggedRobotInterface.mpcSettings().mrtDesiredFrequency_;
   scalar_t rosFrequency = leggedRobotInterface.mpcSettings().mpcDesiredFrequency_;
-  MpcnetDummyLoopRos mpcnetDummyLoopRos(controlFrequency, rosFrequency, std::move(mpcnetControllerPtr), std::move(rolloutPtr),
-                                        rosReferenceManagerPtr);
+  ocs2::mpcnet::MpcnetDummyLoopRos mpcnetDummyLoopRos(controlFrequency, rosFrequency, std::move(mpcnetControllerPtr), std::move(rolloutPtr),
+                                                      rosReferenceManagerPtr);
   mpcnetDummyLoopRos.addObserver(mpcnetDummyObserverRosPtr);
   mpcnetDummyLoopRos.addObserver(leggedRobotVisualizerPtr);
   mpcnetDummyLoopRos.addSynchronizedModule(gaitReceiverPtr);

@@ -29,17 +29,26 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "ocs2_mpcnet/rollout/MpcnetMetrics.h"
-#include "ocs2_mpcnet/rollout/MpcnetRolloutBase.h"
+#include <ocs2_core/reference/ModeSchedule.h>
+#include <ocs2_core/reference/TargetTrajectories.h>
+#include <ocs2_mpc/MPC_BASE.h>
+#include <ocs2_mpc/SystemObservation.h>
+#include <ocs2_oc/oc_data/PrimalSolution.h>
+#include <ocs2_oc/rollout/RolloutBase.h>
+#include <ocs2_oc/synchronized_module/ReferenceManagerInterface.h>
+
+#include "ocs2_mpcnet/MpcnetDefinitionBase.h"
+#include "ocs2_mpcnet/control/MpcnetBehavioralController.h"
+#include "ocs2_mpcnet/control/MpcnetControllerBase.h"
 
 namespace ocs2 {
 namespace mpcnet {
 
 /**
- *  A class for evaluating a policy for a system that is forward simulated with a behavioral controller.
- *  @note Usually the behavioral controller is evaluated for the MPC-Net policy (alpha = 0).
+ *  The base class for doing rollouts for a system that is forward simulated with a behavioral controller.
+ *  The behavioral policy is a mixture of an MPC policy and an MPC-Net policy (e.g. a neural network).
  */
-class MpcnetPolicyEvaluation final : public MpcnetRolloutBase {
+class MpcnetRolloutBase {
  public:
   /**
    * Constructor.
@@ -49,39 +58,58 @@ class MpcnetPolicyEvaluation final : public MpcnetRolloutBase {
    * @param [in] mpcnetDefinitionPtr : Pointer to the MPC-Net definitions to be used (shared ownership).
    * @param [in] referenceManagerPtr : Pointer to the reference manager to be used (shared ownership).
    */
-  MpcnetPolicyEvaluation(std::unique_ptr<MPC_BASE> mpcPtr, std::unique_ptr<MpcnetControllerBase> mpcnetPtr,
-                         std::unique_ptr<RolloutBase> rolloutPtr, std::shared_ptr<MpcnetDefinitionBase> mpcnetDefinitionPtr,
-                         std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr)
-      : MpcnetRolloutBase(std::move(mpcPtr), std::move(mpcnetPtr), std::move(rolloutPtr), std::move(mpcnetDefinitionPtr),
-                          std::move(referenceManagerPtr)) {}
+  MpcnetRolloutBase(std::unique_ptr<MPC_BASE> mpcPtr, std::unique_ptr<MpcnetControllerBase> mpcnetPtr,
+                    std::unique_ptr<RolloutBase> rolloutPtr, std::shared_ptr<MpcnetDefinitionBase> mpcnetDefinitionPtr,
+                    std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr)
+      : mpcPtr_(std::move(mpcPtr)),
+        mpcnetPtr_(std::move(mpcnetPtr)),
+        rolloutPtr_(std::move(rolloutPtr)),
+        mpcnetDefinitionPtr_(std::move(mpcnetDefinitionPtr)),
+        referenceManagerPtr_(std::move(referenceManagerPtr)) {}
 
   /**
    * Default destructor.
    */
-  ~MpcnetPolicyEvaluation() override = default;
+  virtual ~MpcnetRolloutBase() = default;
 
   /**
    * Deleted copy constructor.
    */
-  MpcnetPolicyEvaluation(const MpcnetPolicyEvaluation&) = delete;
+  MpcnetRolloutBase(const MpcnetRolloutBase&) = delete;
 
   /**
    * Deleted copy assignment.
    */
-  MpcnetPolicyEvaluation& operator=(const MpcnetPolicyEvaluation&) = delete;
+  MpcnetRolloutBase& operator=(const MpcnetRolloutBase&) = delete;
 
+ protected:
   /**
-   * Run the policy evaluation.
+   * (Re)set system components.
    * @param [in] alpha : The mixture parameter for the behavioral controller.
-   * @param [in] policyFilePath : The path to the file with the learned policy for the behavioral controller.
-   * @param [in] timeStep : The time step for the forward simulation of the system with the behavioral controller.
+   * @param [in] policyFilePath : The path to the file with the learned policy for the controller.
    * @param [in] initialObservation : The initial system observation to start from (time and state required).
    * @param [in] modeSchedule : The mode schedule providing the event times and mode sequence.
    * @param [in] targetTrajectories : The target trajectories to be tracked.
-   * @return The computed metrics.
    */
-  metrics_t run(scalar_t alpha, const std::string& policyFilePath, scalar_t timeStep, const SystemObservation& initialObservation,
-                const ModeSchedule& modeSchedule, const TargetTrajectories& targetTrajectories);
+  void set(scalar_t alpha, const std::string& policyFilePath, const SystemObservation& initialObservation, const ModeSchedule& modeSchedule,
+           const TargetTrajectories& targetTrajectories);
+
+  /**
+   * Simulate the system one step forward.
+   * @param [in] timeStep : The time step for the forward simulation of the system with the behavioral controller.
+   */
+  void step(scalar_t timeStep);
+
+  std::unique_ptr<MPC_BASE> mpcPtr_;
+  std::shared_ptr<MpcnetDefinitionBase> mpcnetDefinitionPtr_;
+  std::unique_ptr<MpcnetBehavioralController> behavioralControllerPtr_;
+  SystemObservation systemObservation_;
+  PrimalSolution primalSolution_;
+
+ private:
+  std::unique_ptr<MpcnetControllerBase> mpcnetPtr_;
+  std::unique_ptr<RolloutBase> rolloutPtr_;
+  std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr_;
 };
 
 }  // namespace mpcnet

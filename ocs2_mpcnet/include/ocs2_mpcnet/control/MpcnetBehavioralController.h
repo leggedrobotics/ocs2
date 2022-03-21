@@ -54,6 +54,7 @@ class MpcnetBehavioralController final : public ControllerBase {
   MpcnetBehavioralController(scalar_t alpha, const ControllerBase& optimalController, const MpcnetControllerBase& learnedController)
       : alpha_(alpha), optimalControllerPtr_(optimalController.clone()), learnedControllerPtr_(learnedController.clone()) {}
 
+  MpcnetBehavioralController() = default;
   ~MpcnetBehavioralController() override = default;
   MpcnetBehavioralController* clone() const override { return new MpcnetBehavioralController(*this); }
 

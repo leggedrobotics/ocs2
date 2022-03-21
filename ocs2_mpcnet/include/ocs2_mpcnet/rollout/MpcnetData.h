@@ -29,63 +29,48 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "ocs2_mpcnet/rollout/MpcnetRolloutManager.h"
+#include <ocs2_core/Types.h>
+#include <ocs2_mpc/MPC_BASE.h>
+
+#include "ocs2_mpcnet/MpcnetDefinitionBase.h"
 
 namespace ocs2 {
 namespace mpcnet {
 
-/**
- *  Base class for all MPC-Net interfaces between C++ and Python.
- */
-class MpcnetInterfaceBase {
- public:
-  /**
-   * Default destructor.
-   */
-  virtual ~MpcnetInterfaceBase() = default;
-
-  /**
-   * @see MpcnetRolloutManager::startDataGeneration()
-   */
-  void startDataGeneration(scalar_t alpha, const std::string& policyFilePath, scalar_t timeStep, size_t dataDecimation, size_t nSamples,
-                           const matrix_t& samplingCovariance, const std::vector<SystemObservation>& initialObservations,
-                           const std::vector<ModeSchedule>& modeSchedules, const std::vector<TargetTrajectories>& targetTrajectories);
-
-  /**
-   * @see MpcnetRolloutManager::isDataGenerationDone()
-   */
-  bool isDataGenerationDone();
-
-  /**
-   * @see MpcnetRolloutManager::getGeneratedData()
-   */
-  data_array_t getGeneratedData();
-
-  /**
-   * @see MpcnetRolloutManager::startPolicyEvaluation()
-   */
-  void startPolicyEvaluation(scalar_t alpha, const std::string& policyFilePath, scalar_t timeStep,
-                             const std::vector<SystemObservation>& initialObservations, const std::vector<ModeSchedule>& modeSchedules,
-                             const std::vector<TargetTrajectories>& targetTrajectories);
-
-  /**
-   * @see MpcnetRolloutManager::isPolicyEvaluationDone()
-   */
-  bool isPolicyEvaluationDone();
-
-  /**
-   * @see MpcnetRolloutManager::getComputedMetrics()
-   */
-  metrics_array_t getComputedMetrics();
-
- protected:
-  /**
-   * Default constructor.
-   */
-  MpcnetInterfaceBase() = default;
-
-  std::unique_ptr<MpcnetRolloutManager> mpcnetRolloutManagerPtr_;
+struct DataPoint {
+  size_t mode;
+  scalar_t t;
+  vector_t x;
+  vector_t u;
+  vector_t generalizedTime;
+  vector_t relativeState;
+  matrix_t inputTransformation;
+  ScalarFunctionQuadraticApproximation hamiltonian;
 };
+using data_point_t = DataPoint;
+using data_array_t = std::vector<data_point_t>;
+
+/**
+ * Get a data point.
+ * @param [in] mpc : The MPC with a pointer to the underlying solver.
+ * @param [in] mpcnetDefinition : The MPC-Net definitions.
+ * @param [in] deviation : The state deviation from the nominal state where to get the data point from.
+ * @return A data point.
+ */
+inline data_point_t getDataPoint(MPC_BASE& mpc, MpcnetDefinitionBase& mpcnetDefinition, const vector_t& deviation) {
+  data_point_t dataPoint;
+  const auto& referenceManager = mpc.getSolverPtr()->getReferenceManager();
+  const auto primalSolution = mpc.getSolverPtr()->primalSolution(mpc.getSolverPtr()->getFinalTime());
+  dataPoint.t = primalSolution.timeTrajectory_.front();
+  dataPoint.x = primalSolution.stateTrajectory_.front() + deviation;
+  dataPoint.u = primalSolution.controllerPtr_->computeInput(dataPoint.t, dataPoint.x);
+  dataPoint.mode = primalSolution.modeSchedule_.modeAtTime(dataPoint.t);
+  dataPoint.generalizedTime = mpcnetDefinition.getGeneralizedTime(dataPoint.t, referenceManager.getModeSchedule());
+  dataPoint.relativeState = mpcnetDefinition.getRelativeState(dataPoint.t, dataPoint.x, referenceManager.getTargetTrajectories());
+  dataPoint.inputTransformation = mpcnetDefinition.getInputTransformation(dataPoint.t, dataPoint.x);
+  dataPoint.hamiltonian = mpc.getSolverPtr()->getHamiltonian(dataPoint.t, dataPoint.x, dataPoint.u);
+  return dataPoint;
+}
 
 }  // namespace mpcnet
 }  // namespace ocs2

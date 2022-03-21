@@ -29,63 +29,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "ocs2_mpcnet/rollout/MpcnetRolloutManager.h"
+#include <ocs2_core/Types.h>
 
 namespace ocs2 {
 namespace mpcnet {
 
-/**
- *  Base class for all MPC-Net interfaces between C++ and Python.
- */
-class MpcnetInterfaceBase {
- public:
-  /**
-   * Default destructor.
-   */
-  virtual ~MpcnetInterfaceBase() = default;
-
-  /**
-   * @see MpcnetRolloutManager::startDataGeneration()
-   */
-  void startDataGeneration(scalar_t alpha, const std::string& policyFilePath, scalar_t timeStep, size_t dataDecimation, size_t nSamples,
-                           const matrix_t& samplingCovariance, const std::vector<SystemObservation>& initialObservations,
-                           const std::vector<ModeSchedule>& modeSchedules, const std::vector<TargetTrajectories>& targetTrajectories);
-
-  /**
-   * @see MpcnetRolloutManager::isDataGenerationDone()
-   */
-  bool isDataGenerationDone();
-
-  /**
-   * @see MpcnetRolloutManager::getGeneratedData()
-   */
-  data_array_t getGeneratedData();
-
-  /**
-   * @see MpcnetRolloutManager::startPolicyEvaluation()
-   */
-  void startPolicyEvaluation(scalar_t alpha, const std::string& policyFilePath, scalar_t timeStep,
-                             const std::vector<SystemObservation>& initialObservations, const std::vector<ModeSchedule>& modeSchedules,
-                             const std::vector<TargetTrajectories>& targetTrajectories);
-
-  /**
-   * @see MpcnetRolloutManager::isPolicyEvaluationDone()
-   */
-  bool isPolicyEvaluationDone();
-
-  /**
-   * @see MpcnetRolloutManager::getComputedMetrics()
-   */
-  metrics_array_t getComputedMetrics();
-
- protected:
-  /**
-   * Default constructor.
-   */
-  MpcnetInterfaceBase() = default;
-
-  std::unique_ptr<MpcnetRolloutManager> mpcnetRolloutManagerPtr_;
+struct Metrics {
+  scalar_t survivalTime = 0.0;
+  scalar_t incurredHamiltonian = 0.0;
 };
+using metrics_t = Metrics;
+using metrics_array_t = std::vector<metrics_t>;
 
 }  // namespace mpcnet
 }  // namespace ocs2

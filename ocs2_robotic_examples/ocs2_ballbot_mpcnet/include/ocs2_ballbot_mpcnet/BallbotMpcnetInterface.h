@@ -38,7 +38,7 @@ namespace ballbot {
 /**
  *  Ballbot MPC-Net interface between C++ and Python.
  */
-class BallbotMpcnetInterface : public MpcnetInterfaceBase {
+class BallbotMpcnetInterface : public ocs2::mpcnet::MpcnetInterfaceBase {
  public:
   /**
    * Constructor.

@@ -99,7 +99,7 @@ learning_iterations = 10000
 optimizer = torch.optim.Adam(policy.parameters(), lr=learning_rate)
 
 
-def start_data_generation(alpha, policy):
+def start_data_generation(policy, alpha=1.0):
     policy_file_path = "/tmp/data_generation_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".onnx"
     torch.onnx.export(model=policy, args=dummy_input, f=policy_file_path)
     initial_observations, mode_schedules, target_trajectories = helper.get_tasks(data_generation_n_tasks, data_generation_duration)
@@ -108,18 +108,18 @@ def start_data_generation(alpha, policy):
                                          initial_observations, mode_schedules, target_trajectories)
 
 
-def start_policy_evaluation(policy):
+def start_policy_evaluation(policy, alpha=0.0):
     policy_file_path = "/tmp/policy_evaluation_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".onnx"
     torch.onnx.export(model=policy, args=dummy_input, f=policy_file_path)
     initial_observations, mode_schedules, target_trajectories = helper.get_tasks(policy_evaluation_n_tasks, policy_evaluation_duration)
-    mpcnet_interface.startPolicyEvaluation(policy_file_path, policy_evaluation_time_step,
+    mpcnet_interface.startPolicyEvaluation(alpha, policy_file_path, policy_evaluation_time_step,
                                            initial_observations, mode_schedules, target_trajectories)
 
 
 try:
     print("==============\nWaiting for first data.\n==============")
-    start_data_generation(alpha=1.0, policy=policy)
-    start_policy_evaluation(policy=policy)
+    start_data_generation(policy)
+    start_policy_evaluation(policy)
     while not mpcnet_interface.isDataGenerationDone():
         time.sleep(1.0)
 
@@ -140,7 +140,7 @@ try:
             writer.add_scalar('data/total_data_points', len(memory), iteration)
             print("iteration", iteration, "received data points", len(data), "requesting with alpha", alpha)
             # start new data generation
-            start_data_generation(alpha=alpha, policy=policy)
+            start_data_generation(policy, alpha)
 
         # policy evaluation
         if mpcnet_interface.isPolicyEvaluationDone():
@@ -153,7 +153,7 @@ try:
             writer.add_scalar('metric/incurred_hamiltonian', incurred_hamiltonian, iteration)
             print("iteration", iteration, "received metrics:", "incurred_hamiltonian", incurred_hamiltonian, "survival_time", survival_time)
             # start new policy evaluation
-            start_policy_evaluation(policy=policy)
+            start_policy_evaluation(policy)
 
         # intermediate policies
         if (iteration % 1000 == 0) and (iteration > 0):

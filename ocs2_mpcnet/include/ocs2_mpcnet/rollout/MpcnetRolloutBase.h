@@ -65,7 +65,8 @@ class MpcnetRolloutBase {
         mpcnetPtr_(std::move(mpcnetPtr)),
         rolloutPtr_(std::move(rolloutPtr)),
         mpcnetDefinitionPtr_(std::move(mpcnetDefinitionPtr)),
-        referenceManagerPtr_(std::move(referenceManagerPtr)) {}
+        referenceManagerPtr_(std::move(referenceManagerPtr)),
+        behavioralControllerPtr_(new MpcnetBehavioralController()) {}
 
   /**
    * Default destructor.

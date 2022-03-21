@@ -84,7 +84,7 @@ void MpcnetRolloutManager::startDataGeneration(scalar_t alpha, const std::string
 
   // push tasks into pool
   for (int i = 0; i < initialObservations.size(); i++) {
-    dataGenerationFtrs_.push_back(dataGenerationThreadPoolPtr_->run([&](int threadNumber) {
+    dataGenerationFtrs_.push_back(dataGenerationThreadPoolPtr_->run([=](int threadNumber) {
       const auto* result =
           dataGenerationPtrs_[threadNumber]->run(alpha, policyFilePath, timeStep, dataDecimation, nSamples, samplingCovariance,
                                                  initialObservations.at(i), modeSchedules.at(i), targetTrajectories.at(i));
@@ -178,7 +178,7 @@ void MpcnetRolloutManager::startPolicyEvaluation(scalar_t alpha, const std::stri
 
   // push tasks into pool
   for (int i = 0; i < initialObservations.size(); i++) {
-    policyEvaluationFtrs_.push_back(policyEvaluationThreadPoolPtr_->run([&](int threadNumber) {
+    policyEvaluationFtrs_.push_back(policyEvaluationThreadPoolPtr_->run([=](int threadNumber) {
       const auto result = policyEvaluationPtrs_[threadNumber]->run(alpha, policyFilePath, timeStep, initialObservations.at(i),
                                                                    modeSchedules.at(i), targetTrajectories.at(i));
       nPolicyEvaluationTasksDone_++;

@@ -55,7 +55,6 @@ class ComKinoSystemDynamicsAd : public ocs2::SystemDynamicsBaseAD {
  private:
   std::unique_ptr<ad_kinematic_model_t> adKinematicModelPtr_;
   std::unique_ptr<ad_com_model_t> adComModelPtr_;
-  const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
   const DynamicsParametersSynchronizedModule* dynamicsParametersModulePtr_;
   ModelSettings settings_;
 };

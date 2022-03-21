@@ -30,8 +30,17 @@
 import torch
 import numpy as np
 
-from ocs2_mpcnet import size_array, scalar_array, vector_array, SystemObservation, SystemObservationArray,\
-    ModeSchedule, ModeScheduleArray, TargetTrajectories, TargetTrajectoriesArray
+from ocs2_mpcnet import (
+    size_array,
+    scalar_array,
+    vector_array,
+    SystemObservation,
+    SystemObservationArray,
+    ModeSchedule,
+    ModeScheduleArray,
+    TargetTrajectories,
+    TargetTrajectoriesArray,
+)
 
 
 def bdot(bv1, bv2):
@@ -119,7 +128,9 @@ def get_event_times_and_mode_sequence(default_mode, duration, event_times_templa
     event_times = np.array([0.0], dtype=np.float64)
     mode_sequence = np.array([default_mode], dtype=np.uintp)
     for _ in range(num_gait_cycles):
-        event_times = np.append(event_times, event_times[-1] * np.ones(len(event_times_template)) + event_times_template)
+        event_times = np.append(
+            event_times, event_times[-1] * np.ones(len(event_times_template)) + event_times_template
+        )
         mode_sequence = np.append(mode_sequence, mode_sequence_template)
     mode_sequence = np.append(mode_sequence, np.array([default_mode], dtype=np.uintp))
     return event_times, mode_sequence

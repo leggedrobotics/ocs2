@@ -48,7 +48,14 @@ class Hamiltonian:
         else:
             dx = torch.sub(x_inquiry, x_nominal)
             du = torch.sub(u_inquiry, u_nominal)
-            return 0.5 * torch.dot(dx, torch.mv(dHdxx, dx)) + torch.dot(du, torch.mv(dHdux, dx)) + 0.5 * torch.dot(du, torch.mv(dHduu, du)) + torch.dot(dHdx, dx) + torch.dot(dHdu, du) + H
+            return (
+                0.5 * torch.dot(dx, torch.mv(dHdxx, dx))
+                + torch.dot(du, torch.mv(dHdux, dx))
+                + 0.5 * torch.dot(du, torch.mv(dHduu, du))
+                + torch.dot(dHdx, dx)
+                + torch.dot(dHdu, du)
+                + H
+            )
 
     @staticmethod
     def compute_batch(x_inquiry, x_nominal, u_inquiry, u_nominal, dHdxx, dHdux, dHduu, dHdx, dHdu, H):
@@ -61,7 +68,14 @@ class Hamiltonian:
         else:
             dx = torch.sub(x_inquiry, x_nominal)
             du = torch.sub(u_inquiry, u_nominal)
-            return 0.5 * bdot(dx, bmv(dHdxx, dx)) + bdot(du, bmv(dHdux, dx)) + 0.5 * bdot(du, bmv(dHduu, du)) + bdot(dHdx, dx) + bdot(dHdu, du) + H
+            return (
+                0.5 * bdot(dx, bmv(dHdxx, dx))
+                + bdot(du, bmv(dHdux, dx))
+                + 0.5 * bdot(du, bmv(dHduu, du))
+                + bdot(dHdx, dx)
+                + bdot(dHdu, du)
+                + H
+            )
 
 
 class BehavioralCloning:
@@ -91,7 +105,7 @@ class CrossEntropy:
         self.epsilon = epsilon
 
     def compute_sample(self, p_target, p_predicted):
-        return - torch.dot(p_target, torch.log(p_predicted + self.epsilon))
+        return -torch.dot(p_target, torch.log(p_predicted + self.epsilon))
 
     def compute_batch(self, p_target, p_predicted):
-        return - bdot(p_target, torch.log(p_predicted + self.epsilon))
+        return -bdot(p_target, torch.log(p_predicted + self.epsilon))

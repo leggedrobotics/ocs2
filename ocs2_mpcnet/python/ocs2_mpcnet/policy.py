@@ -34,19 +34,17 @@ from ocs2_mpcnet.helper import bmv
 
 
 class Policy(torch.nn.Module):
-
     def __init__(self, dim_in, dim_out):
         super().__init__()
-        self.name = 'Policy'
+        self.name = "Policy"
         self.dim_in = dim_in
         self.dim_out = dim_out
 
 
 class LinearPolicy(Policy):
-
     def __init__(self, dim_t, dim_x, dim_u):
         super().__init__(dim_t + dim_x, dim_u)
-        self.name = 'LinearPolicy'
+        self.name = "LinearPolicy"
         self.linear = torch.nn.Linear(self.dim_in, self.dim_out)
 
     def forward(self, t, x):
@@ -55,10 +53,9 @@ class LinearPolicy(Policy):
 
 
 class NonlinearPolicy(Policy):
-
     def __init__(self, dim_t, dim_x, dim_u):
         super().__init__(dim_t + dim_x, dim_u)
-        self.name = 'NonlinearPolicy'
+        self.name = "NonlinearPolicy"
         self.dim_hidden = int((self.dim_in + dim_u) / 2)
         self.linear1 = torch.nn.Linear(self.dim_in, self.dim_hidden)
         self.activation = torch.nn.Tanh()
@@ -71,16 +68,12 @@ class NonlinearPolicy(Policy):
 
 
 class MixtureOfLinearExpertsPolicy(Policy):
-
     def __init__(self, dim_t, dim_x, dim_u, num_experts):
         super().__init__(dim_t + dim_x, dim_u)
-        self.name = 'MixtureOfLinearExpertsPolicy'
+        self.name = "MixtureOfLinearExpertsPolicy"
         self.num_experts = num_experts
         # gating
-        self.gating_net = torch.nn.Sequential(
-            torch.nn.Linear(self.dim_in, self.num_experts),
-            torch.nn.Softmax(dim=1)
-        )
+        self.gating_net = torch.nn.Sequential(torch.nn.Linear(self.dim_in, self.num_experts), torch.nn.Softmax(dim=1))
         # experts
         self.expert_nets = torch.nn.ModuleList(
             [LinearExpert(i, self.dim_in, self.dim_out) for i in range(self.num_experts)]
@@ -94,10 +87,9 @@ class MixtureOfLinearExpertsPolicy(Policy):
 
 
 class MixtureOfNonlinearExpertsPolicy(Policy):
-
     def __init__(self, dim_t, dim_x, dim_u, num_experts):
         super().__init__(dim_t + dim_x, dim_u)
-        self.name = 'MixtureOfNonlinearExpertsPolicy'
+        self.name = "MixtureOfNonlinearExpertsPolicy"
         self.num_experts = num_experts
         self.dim_hidden_expert = int((self.dim_in + dim_u) / 2)
         self.dim_hidden_gating = int((self.dim_in + num_experts) / 2)
@@ -106,7 +98,7 @@ class MixtureOfNonlinearExpertsPolicy(Policy):
             torch.nn.Linear(self.dim_in, self.dim_hidden_gating),
             torch.nn.Tanh(),
             torch.nn.Linear(self.dim_hidden_gating, self.num_experts),
-            torch.nn.Softmax(dim=1)
+            torch.nn.Softmax(dim=1),
         )
         # experts
         self.expert_nets = torch.nn.ModuleList(
@@ -121,10 +113,9 @@ class MixtureOfNonlinearExpertsPolicy(Policy):
 
 
 class LinearExpert(torch.nn.Module):
-
     def __init__(self, id, dim_in, dim_out):
         super().__init__()
-        self.name = 'LinearExpert' + str(id)
+        self.name = "LinearExpert" + str(id)
         self.dim_in = dim_in
         self.dim_out = dim_out
         self.linear = torch.nn.Linear(self.dim_in, self.dim_out)
@@ -134,10 +125,9 @@ class LinearExpert(torch.nn.Module):
 
 
 class NonlinearExpert(torch.nn.Module):
-
     def __init__(self, id, dim_in, dim_hidden, dim_out):
         super().__init__()
-        self.name = 'NonlinearExpert' + str(id)
+        self.name = "NonlinearExpert" + str(id)
         self.dim_in = dim_in
         self.dim_hidden = dim_hidden
         self.dim_out = dim_out

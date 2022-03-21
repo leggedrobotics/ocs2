@@ -52,8 +52,14 @@ data_generation_n_threads = 2
 data_generation_n_tasks = 10
 data_generation_n_samples = 2
 data_generation_sampling_covariance = np.zeros((config.STATE_DIM, config.STATE_DIM), order='F')
-for i in range(config.STATE_DIM):
-    data_generation_sampling_covariance[i, i] = 0.01
+for i in range(0, 2):
+    data_generation_sampling_covariance[i, i] = 0.01 ** 2  # position
+for i in range(2, 5):
+    data_generation_sampling_covariance[i, i] = (1.0 * np.pi / 180.0) ** 2  # orientation
+for i in range(5, 7):
+    data_generation_sampling_covariance[i, i] = 0.05 ** 2  # linear velocity
+for i in range(7, 10):
+    data_generation_sampling_covariance[i, i] = (5.0 * np.pi / 180.0) ** 2  # angular velocity
 
 # settings for computing metrics by applying learned policy
 policy_evaluation_time_step = 0.1

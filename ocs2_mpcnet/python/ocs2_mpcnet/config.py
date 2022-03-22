@@ -27,6 +27,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###############################################################################
 
+"""Configuration variables.
+
+Sets general configuration variables.
+"""
+
 import torch
 
 # data type for tensor elements

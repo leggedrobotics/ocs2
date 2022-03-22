@@ -27,13 +27,54 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###############################################################################
 
+"""Memory classes.
+
+Provides classes for storing data in memory.
+"""
+
 import torch
 
 from ocs2_mpcnet import config
 
 
 class CircularMemory:
+    """Circular memory.
+
+    Stores data in a circular memory that overwrites old data if the size of the memory reaches its capacity.
+
+    Attributes:
+        capacity: An integer defining the capacity of the memory.
+        size: An integer giving the current size of the memory.
+        position: An integer giving the current position in the memory.
+        t: A (C) tensor for the times.
+        x: A (C,X) tensor for the observed states.
+        u: A (C,U) tensor for the optimal inputs.
+        p: A (C,P) tensor for the observed discrete probability distributions of the modes.
+        generalized_time: A (C,T) tensor for the generalized times.
+        relative_state: A (C,X) tensor for the relative states.
+        input_transformation: A (C,U,U) tensor for the input transformations.
+        dHdxx: A (C,X,X) tensor for the state-state Hessians of the Hamiltonian approximations.
+        dHdux: A (C,U,X) tensor for the input-state Hessians of the Hamiltonian approximations.
+        dHduu: A (C,U,U) tensor for the input-input Hessians of the Hamiltonian approximations.
+        dHdx: A (C,X) tensor for the state gradients of the Hamiltonian approximations.
+        dHdu: A (C,U) tensor for the input gradients of the Hamiltonian approximations.
+        H: A (C) tensor for the Hamiltonians at the development/expansion points.
+    """
+
     def __init__(self, capacity, time_dimension, state_dimension, input_dimension, expert_number=1):
+        """Initializes the CircularMemory class.
+
+        Initializes the BehavioralCloning class by setting fixed attributes, initializing variable attributes and
+        pre-allocating memory.
+
+        Args:
+            capacity: An integer defining the capacity, i.e. maximum size, C of the memory.
+            time_dimension: An integer defining the dimension T of the generalized time.
+            state_dimension: An integer defining the dimension X of the state and relative state.
+            input_dimension: An integer defining the dimension U of the input.
+            expert_number: An integer defining the number of experts E equal to the number of individually identifiable
+              items P in the sample space of the discrete probability distributions of the modes.
+        """
         # init variables
         self.capacity = capacity
         self.size = 0
@@ -56,8 +97,22 @@ class CircularMemory:
         self.H = torch.zeros(capacity, device=config.device, dtype=config.dtype)
 
     def push(self, t, x, u, p, generalized_time, relative_state, input_transformation, hamiltonian):
+        """Pushes data into the circular memory.
+
+        Pushes one data sample into the circular memory.
+
+        Args:
+            t: A float with the time.
+            x: A NumPy array of shape (X) with the observed state.
+            u: A NumPy array of shape (U) with the optimal input.
+            p: A NumPy array of shape (P) tensor for the observed discrete probability distributions of the modes.
+            generalized_time: A NumPy array of shape (T) with the generalized times.
+            relative_state: A NumPy array of shape (X) with the relative states.
+            input_transformation: A NumPy array of shape (U,U) with the input transformations.
+            hamiltonian: An OCS2 scalar function quadratic approximation representing the Hamiltonian around x and u.
+        """
         # push data into memory
-        # note: - torch.as_tensor: no copy as data is an ndarray of the corresponding dtype and the device is the cpu
+        # note: - torch.as_tensor: no copy as data is a ndarray of the corresponding dtype and the device is the cpu
         #       - torch.Tensor.copy_: copy performed together with potential dtype and device change
         self.t[self.position].copy_(torch.as_tensor(t, dtype=None, device=torch.device("cpu")))
         self.x[self.position].copy_(torch.as_tensor(x, dtype=None, device=torch.device("cpu")))
@@ -83,6 +138,29 @@ class CircularMemory:
         self.position = (self.position + 1) % self.capacity
 
     def sample(self, batch_size):
+        """Samples data from the circular memory.
+
+        Samples a batch of data from the circular memory.
+
+        Args:
+            batch_size: An integer defining the batch size B.
+
+        Returns:
+            A tuple containing the sampled batch of data.
+            - t_batch: A (B) tensor with the times.
+            - x_batch: A (B,X) tensor with the observed states.
+            - u_batch: A (B,U) tensor with the optimal inputs.
+            - p_batch: A (B,P) tensor with the observed discrete probability distributions of the modes.
+            - generalized_time_batch: A (B,T) tensor with the generalized times.
+            - relative_state_batch: A (B,X) tensor with the relative states.
+            - input_transformation_batch: A (B,U,U) tensor with the input transformation matrices.
+            - dHdxx_batch: A (B,X,X) tensor with the state-state Hessians of the Hamiltonian approximations.
+            - dHdux_batch: A (B,U,X) tensor with the input-state Hessians of the Hamiltonian approximations.
+            - dHduu_batch: A (B,U,U) tensor with the input-input Hessians of the Hamiltonian approximations.
+            - dHdx_batch: A (B,X) tensor with the state gradients of the Hamiltonian approximations.
+            - dHdu_batch: A (B,U) tensor with the input gradients of the Hamiltonian approximations.
+            - H_batch: A (B) tensor with the Hamiltonians at the development/expansion points.
+        """
         indices = torch.randint(0, self.size, (batch_size,), device=config.device)
         t_batch = self.t[indices]
         x_batch = self.x[indices]
@@ -114,4 +192,11 @@ class CircularMemory:
         )
 
     def __len__(self):
+        """The length of the memory.
+
+        Return the length of the memory given by the current size.
+
+        Returns:
+            An integer describing the length of the memory.
+        """
         return self.size

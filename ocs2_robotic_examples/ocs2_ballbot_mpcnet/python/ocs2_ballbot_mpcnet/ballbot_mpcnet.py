@@ -176,9 +176,8 @@ try:
             # clear the gradients
             optimizer.zero_grad()
             # prediction
-            u_predicted, p_predicted, U_predicted = policy(generalized_time, relative_state)
+            u_predicted = policy(generalized_time, relative_state)
             u_predicted = bmv(input_transformation, u_predicted)
-            U_predicted = bmm(input_transformation, U_predicted)
             # compute the empirical loss
             empirical_loss = loss.compute_batch(x, x, u_predicted, u, dHdxx, dHdux, dHduu, dHdx, dHdu, H).sum() / batch_size
             # compute the gradients

@@ -224,8 +224,8 @@ class MixtureOfNonlinearExpertsPolicy(Policy):
         super().__init__(dim_t + dim_x, dim_u)
         self.name = "MixtureOfNonlinearExpertsPolicy"
         self.num_experts = num_experts
-        self.dim_hidden_expert = int((self.dim_in + dim_u) / 2)
         self.dim_hidden_gating = int((self.dim_in + num_experts) / 2)
+        self.dim_hidden_expert = int((self.dim_in + dim_u) / 2)
         # gating
         self.gating_net = torch.nn.Sequential(
             torch.nn.Linear(self.dim_in, self.dim_hidden_gating),
@@ -268,18 +268,18 @@ class LinearExpert(torch.nn.Module):
         dim_out: An integer defining the output dimension of the expert.
         linear: The linear neural network layer.
     """
-    def __init__(self, id, dim_in, dim_out):
+    def __init__(self, index, dim_in, dim_out):
         """Initializes the LinearExpert class.
 
         Initializes the LinearExpert class by setting fixed and variable attributes.
 
         Args:
-            id: An integer with the index of the expert.
+            index: An integer with the index of the expert.
             dim_in: An integer defining the input dimension of the expert.
             dim_out: An integer defining the output dimension of the expert.
         """
         super().__init__()
-        self.name = "LinearExpert" + str(id)
+        self.name = "LinearExpert" + str(index)
         self.dim_in = dim_in
         self.dim_out = dim_out
         self.linear = torch.nn.Linear(self.dim_in, self.dim_out)
@@ -312,19 +312,19 @@ class NonlinearExpert(torch.nn.Module):
         activation: The activation to get the hidden layer.
         linear2: The second linear neural network layer.
     """
-    def __init__(self, id, dim_in, dim_hidden, dim_out):
+    def __init__(self, index, dim_in, dim_hidden, dim_out):
         """Initializes the NonlinearExpert class.
 
         Initializes the NonlinearExpert class by setting fixed and variable attributes.
 
         Args:
-            id: An integer with the index of the expert.
+            index: An integer with the index of the expert.
             dim_in: An integer defining the input dimension of the expert.
             dim_hidden: An integer defining the dimension of the hidden layer.
             dim_out: An integer defining the output dimension of the expert.
         """
         super().__init__()
-        self.name = "NonlinearExpert" + str(id)
+        self.name = "NonlinearExpert" + str(index)
         self.dim_in = dim_in
         self.dim_hidden = dim_hidden
         self.dim_out = dim_out

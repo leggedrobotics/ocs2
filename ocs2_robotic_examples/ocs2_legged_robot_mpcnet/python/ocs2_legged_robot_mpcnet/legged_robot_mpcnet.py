@@ -87,7 +87,7 @@ os.makedirs(name="policies/" + folder)
 epsilon = 1e-8  # epsilon to improve numerical stability of logs and denominators
 my_lambda = 10.0  # parameter to control the relative importance of both loss types
 experts_loss = ExpertsLoss()
-gating_loss = GatingLoss(torch.tensor(epsilon, device=config.device, dtype=config.dtype))
+gating_loss = GatingLoss(epsilon)
 
 # memory
 memory_capacity = 500000
@@ -192,9 +192,8 @@ try:
             # clear the gradients
             optimizer.zero_grad()
             # prediction
-            u_predicted, p_predicted, U_predicted = policy(generalized_time, relative_state)
+            u_predicted, p_predicted = policy(generalized_time, relative_state)
             u_predicted = bmv(input_transformation, u_predicted)
-            U_predicted = bmm(input_transformation, U_predicted)
             # compute the empirical loss
             empirical_experts_loss = experts_loss.compute_batch(x, x, u_predicted, u, dHdxx, dHdux, dHduu, dHdx, dHdu, H).sum() / batch_size
             empirical_gating_loss = gating_loss.compute_batch(p, p_predicted).sum() / batch_size

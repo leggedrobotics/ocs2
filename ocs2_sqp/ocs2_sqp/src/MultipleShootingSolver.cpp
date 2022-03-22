@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/control/LinearController.h>
-#include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenalty.h>
+#include <ocs2_core/penalties/penalties/RelaxedBarrierPenalty.h>
 
 #include "ocs2_sqp/MultipleShootingInitialization.h"
 #include "ocs2_sqp/MultipleShootingTranscription.h"
@@ -147,8 +147,7 @@ const std::vector<PerformanceIndex>& MultipleShootingSolver::getIterationsLog() 
   }
 }
 
-void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime,
-                                     const scalar_array_t& partitioningTimes) {
+void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
   if (settings_.printSolverStatus || settings_.printLinesearch) {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
     std::cerr << "\n+++++++++++++ SQP solver is initialized ++++++++++++++";
@@ -422,7 +421,6 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
         const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
         auto result =
             multiple_shooting::setupIntermediateNode(ocpDefinition, sensitivityDiscretizer_, projection, ti, dt, x[i], x[i + 1], u[i]);
-
         workerPerformance += result.performance;
         dynamics_[i] = std::move(result.dynamics);
         cost_[i] = std::move(result.cost);
@@ -447,11 +445,11 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
   runParallel(std::move(parallelTask));
 
   // Account for init state in performance
-  performance.front().stateEqConstraintISE += (initState - x.front()).squaredNorm();
+  performance.front().dynamicsViolationSSE += (initState - x.front()).squaredNorm();
 
   // Sum performance of the threads
   PerformanceIndex totalPerformance = std::accumulate(std::next(performance.begin()), performance.end(), performance.front());
-  totalPerformance.merit = totalPerformance.totalCost + totalPerformance.inequalityConstraintPenalty;
+  totalPerformance.merit = totalPerformance.cost + totalPerformance.equalityLagrangian + totalPerformance.inequalityLagrangian;
   return totalPerformance;
 }
 
@@ -493,11 +491,11 @@ PerformanceIndex MultipleShootingSolver::computePerformance(const std::vector<An
   runParallel(std::move(parallelTask));
 
   // Account for init state in performance
-  performance.front().stateEqConstraintISE += (initState - x.front()).squaredNorm();
+  performance.front().dynamicsViolationSSE += (initState - x.front()).squaredNorm();
 
   // Sum performance of the threads
   PerformanceIndex totalPerformance = std::accumulate(std::next(performance.begin()), performance.end(), performance.front());
-  totalPerformance.merit = totalPerformance.totalCost + totalPerformance.inequalityConstraintPenalty;
+  totalPerformance.merit = totalPerformance.cost + totalPerformance.equalityLagrangian + totalPerformance.inequalityLagrangian;
   return totalPerformance;
 }
 
@@ -510,7 +508,7 @@ scalar_t MultipleShootingSolver::trajectoryNorm(const vector_array_t& v) {
 }
 
 scalar_t MultipleShootingSolver::totalConstraintViolation(const PerformanceIndex& performance) const {
-  return std::sqrt(performance.stateEqConstraintISE + performance.stateInputEqConstraintISE + performance.inequalityConstraintISE);
+  return std::sqrt(performance.dynamicsViolationSSE + performance.equalityConstraintsSSE);
 }
 
 multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIndex& baseline,
@@ -525,10 +523,7 @@ multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIn
   if (settings_.printLinesearch) {
     std::cerr << std::setprecision(9) << std::fixed;
     std::cerr << "\n=== Linesearch ===\n";
-    std::cerr << "Baseline:\n";
-    std::cerr << "\tMerit: " << baseline.merit << "\t DynamicsISE: " << baseline.stateEqConstraintISE
-              << "\t StateInputISE: " << baseline.stateInputEqConstraintISE << "\t IneqISE: " << baseline.inequalityConstraintISE
-              << "\t Penalty: " << baseline.inequalityConstraintPenalty << "\n";
+    std::cerr << "Baseline:\n" << baseline << "\n";
   }
 
   // Some settings and shorthands
@@ -541,7 +536,7 @@ multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIn
   const scalar_t armijoFactor = settings_.armijoFactor;
   const auto& dx = subproblemSolution.deltaXSol;
   const auto& du = subproblemSolution.deltaUSol;
-  const scalar_t armijoDescentMetric = subproblemSolution.armijoDescentMetric;
+  const auto& armijoDescentMetric = subproblemSolution.armijoDescentMetric;
 
   const scalar_t baselineConstraintViolation = totalConstraintViolation(baseline);
 
@@ -592,10 +587,7 @@ multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIn
       std::cerr << "Stepsize: " << alpha << " Type: " << toString(stepInfo.stepType)
                 << (stepAccepted ? std::string{" (Accepted)"} : std::string{" (Rejected)"}) << "\n";
       std::cerr << "|dx| = " << alpha * deltaXnorm << "\t|du| = " << alpha * deltaUnorm << "\n";
-      std::cerr << "\tMerit: " << performanceNew.merit << "\t DynamicsISE: " << performanceNew.stateEqConstraintISE
-                << "\t StateInputISE: " << performanceNew.stateInputEqConstraintISE
-                << "\t IneqISE: " << performanceNew.inequalityConstraintISE << "\t Penalty: " << performanceNew.inequalityConstraintPenalty
-                << "\n";
+      std::cerr << performanceNew << "\n";
     }
 
     if (stepAccepted) {  // Return if step accepted

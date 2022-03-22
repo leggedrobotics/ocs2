@@ -219,6 +219,7 @@ ControllerType LinearController::getType() const {
 void LinearController::clear() {
   timeStamp_.clear();
   biasArray_.clear();
+  deltaBiasArray_.clear();
   gainArray_.clear();
 }
 

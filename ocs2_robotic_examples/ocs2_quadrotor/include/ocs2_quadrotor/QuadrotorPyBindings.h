@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_mpc/MPC_DDP.h>
+#include <ocs2_ddp/GaussNewtonDDP_MPC.h>
 #include <ocs2_python_interface/PythonInterface.h>
 
 #include "ocs2_quadrotor/QuadrotorInterface.h"
@@ -59,9 +59,9 @@ class QuadrotorPyBindings final : public PythonInterface {
     QuadrotorInterface quadrotorInterface(taskFile, libraryFolder);
 
     // MPC
-    std::unique_ptr<MPC_DDP> mpcPtr(new MPC_DDP(quadrotorInterface.mpcSettings(), quadrotorInterface.ddpSettings(),
-                                                quadrotorInterface.getRollout(), quadrotorInterface.getOptimalControlProblem(),
-                                                quadrotorInterface.getInitializer()));
+    std::unique_ptr<GaussNewtonDDP_MPC> mpcPtr(
+        new GaussNewtonDDP_MPC(quadrotorInterface.mpcSettings(), quadrotorInterface.ddpSettings(), quadrotorInterface.getRollout(),
+                               quadrotorInterface.getOptimalControlProblem(), quadrotorInterface.getInitializer()));
     mpcPtr->getSolverPtr()->setReferenceManager(quadrotorInterface.getReferenceManagerPtr());
 
     // Python interface

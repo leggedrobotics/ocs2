@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 
+#include <ocs2_core/misc/LinearAlgebra.h>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
@@ -48,6 +50,19 @@ ScalarFunctionQuadraticApproximation& ScalarFunctionQuadraticApproximation::oper
   dfdxx += rhs.dfdxx;
   dfdux += rhs.dfdux;
   dfduu += rhs.dfduu;
+  return *this;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ScalarFunctionQuadraticApproximation& ScalarFunctionQuadraticApproximation::operator*=(scalar_t scalar) {
+  f *= scalar;
+  dfdx *= scalar;
+  dfdu *= scalar;
+  dfdxx *= scalar;
+  dfdux *= scalar;
+  dfduu *= scalar;
   return *this;
 }
 
@@ -83,6 +98,102 @@ ScalarFunctionQuadraticApproximation ScalarFunctionQuadraticApproximation::Zero(
   ScalarFunctionQuadraticApproximation f;
   f.setZero(nx, nu);
   return f;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::string checkBeingPSD(const matrix_t& data, const std::string& dataName) {
+  if (data.size() == 0) {
+    return std::string{};
+  }
+
+  std::stringstream errorDescription;
+
+  // check if it has valid values
+  if (!data.allFinite()) {
+    errorDescription << dataName << " is not finite.\n";
+  }
+
+  // check for being square
+  if (data.rows() != data.cols()) {
+    errorDescription << dataName << " is not a square matrix.\n";
+
+  } else {
+    // check for being self-adjoint
+    if (!data.isApprox(data.transpose(), 1e-6)) {
+      errorDescription << dataName << " is not self-adjoint.\n";
+    }
+
+    // check for being psd
+    const auto minEigenvalue = LinearAlgebra::symmetricEigenvalues(data).minCoeff();
+    if (minEigenvalue < -Eigen::NumTraits<scalar_t>::epsilon()) {
+      errorDescription << dataName << " is not PSD. It's smallest eigenvalue is " + std::to_string(minEigenvalue) + ".\n";
+    }
+  }
+
+  return errorDescription.str();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::string checkBeingPSD(const ScalarFunctionQuadraticApproximation& data, const std::string& dataName) {
+  std::stringstream errorDescription;
+
+  // check if they are valid values
+  if (data.f != data.f) {
+    errorDescription << dataName << " is not finite.\n";
+  }
+  if (data.dfdx.size() > 0 && !data.dfdx.allFinite()) {
+    errorDescription << dataName << " first derivative w.r.t. state is not finite.\n";
+  }
+  if (data.dfdu.size() > 0 && !data.dfdu.allFinite()) {
+    errorDescription << dataName << " first derivative w.r.t. input is not finite.\n";
+  }
+  if (data.dfdux.size() > 0 && !data.dfdux.allFinite()) {
+    errorDescription << dataName << " second derivative w.r.t. input-state is not finite.\n";
+  }
+
+  // check for being psd
+  errorDescription << checkBeingPSD(data.dfdxx, dataName + " second derivative w.r.t. state");
+  errorDescription << checkBeingPSD(data.dfduu, dataName + " second derivative w.r.t. input");
+
+  return errorDescription.str();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::string checkSize(int stateDim, int inputDim, const ScalarFunctionQuadraticApproximation& data, const std::string& dataName) {
+  std::stringstream errorDescription;
+
+  if (data.dfdx.size() != stateDim) {
+    errorDescription << dataName << ".dfdx.size() != " << stateDim << "\n";
+  }
+  if (data.dfdxx.rows() != stateDim) {
+    errorDescription << dataName << ".dfdxx.rows() != " << stateDim << "\n";
+  }
+  if (data.dfdxx.cols() != stateDim) {
+    errorDescription << dataName << ".dfdxx.cols() != " << stateDim << "\n";
+  }
+  if (data.dfdu.size() != inputDim) {
+    errorDescription << dataName << ".dfdu.size() != " << inputDim << "\n";
+  }
+  if (data.dfduu.rows() != inputDim) {
+    errorDescription << dataName << ".dfduu.rows() != " << inputDim << "\n";
+  }
+  if (data.dfduu.cols() != inputDim) {
+    errorDescription << dataName << ".dfduu.cols() != " << inputDim << "\n";
+  }
+  if (data.dfdux.rows() != inputDim) {
+    errorDescription << dataName << ".dfdux.rows() != " << inputDim << "\n";
+  }
+  if (data.dfdux.cols() != stateDim) {
+    errorDescription << dataName << ".dfdux.cols() != " << stateDim << "\n";
+  }
+
+  return errorDescription.str();
 }
 
 /******************************************************************************************************/
@@ -142,6 +253,32 @@ std::ostream& operator<<(std::ostream& out, const VectorFunctionLinearApproximat
   out << "dfdx:\n" << f.dfdx << '\n';
   out << "dfdu:\n" << f.dfdu << '\n';
   return out;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::string checkSize(int vectorDim, int stateDim, int inputDim, const VectorFunctionLinearApproximation& data,
+                      const std::string& dataName) {
+  std::stringstream errorDescription;
+
+  if (data.f.size() != vectorDim) {
+    errorDescription << dataName << ".f.size() != " << vectorDim << "\n";
+  }
+  if (vectorDim > 0 && data.dfdx.rows() != vectorDim) {
+    errorDescription << dataName << ".dfdx.rows() != " << vectorDim << "\n";
+  }
+  if (vectorDim > 0 && data.dfdx.cols() != stateDim) {
+    errorDescription << dataName << ".dfdx.cols() != " << stateDim << "\n";
+  }
+  if (vectorDim > 0 && data.dfdu.rows() != vectorDim) {
+    errorDescription << dataName << ".dfdu.rows() != " << vectorDim << "\n";
+  }
+  if (vectorDim > 0 && data.dfdu.cols() != inputDim) {
+    errorDescription << dataName << ".dfdu.cols() != " << inputDim << "\n";
+  }
+
+  return errorDescription.str();
 }
 
 /******************************************************************************************************/

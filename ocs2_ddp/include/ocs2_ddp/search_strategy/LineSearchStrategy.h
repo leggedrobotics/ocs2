@@ -34,17 +34,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
-#include <ocs2_core/model_data/ModelData.h>
-#include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
 #include <ocs2_core/thread_support/ThreadPool.h>
+
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
-#include <ocs2_oc/oc_solver/PerformanceIndex.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
 
-#include "SearchStrategyBase.h"
-#include "StrategySettings.h"
+#include "ocs2_ddp/search_strategy/SearchStrategyBase.h"
+#include "ocs2_ddp/search_strategy/StrategySettings.h"
 
 namespace ocs2 {
 
@@ -62,13 +59,12 @@ class LineSearchStrategy final : public SearchStrategyBase {
    * @param [in] threadPoolRef: A reference to the thread pool instance.
    * @param [in] rolloutRefStock: An array of references to the rollout.
    * @param [in] optimalControlProblemRef: An array of references to the optimal control problem.
-   * @param [in] ineqConstrPenaltyRef: A reference to the inequality constraints penalty.
    * @param [in] meritFunc: the merit function which gets the PerformanceIndex and returns the merit function value.
    */
   LineSearchStrategy(search_strategy::Settings baseSettings, line_search::Settings settings, ThreadPool& threadPoolRef,
                      std::vector<std::reference_wrapper<RolloutBase>> rolloutRefStock,
                      std::vector<std::reference_wrapper<OptimalControlProblem>> optimalControlProblemRef,
-                     SoftConstraintPenalty& ineqConstrPenaltyRef, std::function<scalar_t(const PerformanceIndex&)> meritFunc);
+                     std::function<scalar_t(const PerformanceIndex&)> meritFunc);
 
   /**
    * Default destructor.
@@ -80,11 +76,8 @@ class LineSearchStrategy final : public SearchStrategyBase {
 
   void reset() override {}
 
-  bool run(scalar_t expectedCost, const ModeSchedule& modeSchedule, std::vector<LinearController>& controllersStock,
-           PerformanceIndex& performanceIndex, scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
-           vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
-           std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock, std::vector<std::vector<ModelData>>& modelDataEventTimesStock,
-           scalar_t& avgTimeStepFP) override;
+  bool run(const std::pair<scalar_t, scalar_t>& timePeriod, const vector_t& initState, const scalar_t expectedCost,
+           const LinearController& unoptimizedController, const ModeSchedule& modeSchedule, search_strategy::SolutionRef solution) override;
 
   std::pair<bool, std::string> checkConvergence(bool unreliableControllerIncrement, const PerformanceIndex& previousPerformanceIndex,
                                                 const PerformanceIndex& currentPerformanceIndex) const override;
@@ -95,49 +88,51 @@ class LineSearchStrategy final : public SearchStrategyBase {
   matrix_t augmentHamiltonianHessian(const ModelData& /*modelData*/, const matrix_t& Hm) const override { return Hm; }
 
  private:
+  struct LineSearchInputRef {
+    const std::pair<scalar_t, scalar_t>* timePeriodPtr;
+    const vector_t* initStatePtr;
+    const LinearController* unoptimizedControllerPtr;
+    const ModeSchedule* modeSchedulePtr;
+  };
+
+  /** number of line search iterations (the if statements order is important) */
+  size_t maxNumOfSearches() const;
+
+  /** Computes the solution on a thread and a given stepLength  */
+  void computeSolution(size_t taskId, scalar_t stepLength, search_strategy::Solution& solution);
+
   /**
    * Defines line search task on a thread with various learning rates and choose the largest acceptable step-size.
    * The class computes the nominal controller and the nominal trajectories as well the corresponding performance indices.
    */
-  void lineSearchTask();
+  void lineSearchTask(const size_t taskId);
 
   /** Prints to output. */
   void printString(const std::string& text) const;
 
-  struct LineSearchModule {
-    scalar_t baselineMerit = 0.0;           // the merit of the rollout for zero learning rate
-    scalar_t initControllerUpdateIS = 0.0;  // integral of the squared (IS) norm of the controller update.
-    const ModeSchedule* modeSchedulePtr;
-    std::vector<LinearController> initControllersStock;
-
-    std::atomic_size_t alphaExpNext{0};
-    std::vector<bool> alphaProcessed;
-    std::mutex lineSearchResultMutex;
-
-    std::atomic<scalar_t> stepLengthStar{0.0};
-    PerformanceIndex* performanceIndexPtrStar;
-    std::vector<LinearController>* controllersStockPtrStar;
-    scalar_array2_t* timeTrajectoriesStockPtrStar;
-    size_array2_t* postEventIndicesStockPtrStar;
-    vector_array2_t* stateTrajectoriesStockPtrStar;
-    vector_array2_t* inputTrajectoriesStockPtrStar;
-    std::vector<std::vector<ModelData>>* modelDataTrajectoriesStockPtrStar;
-    std::vector<std::vector<ModelData>>* modelDataEventTimesStockPtrStar;
-  };
-
-  line_search::Settings settings_;
-  LineSearchModule lineSearchModule_;
-
+  const line_search::Settings settings_;
   ThreadPool& threadPoolRef_;
-  std::atomic_size_t nextTaskId_{0};
-  mutable std::mutex outputDisplayGuardMutex_;
-
+  std::vector<search_strategy::Solution> workersSolution_;
   std::vector<std::reference_wrapper<RolloutBase>> rolloutRefStock_;
   std::vector<std::reference_wrapper<OptimalControlProblem>> optimalControlProblemRefStock_;
-  SoftConstraintPenalty& ineqConstrPenaltyRef_;
   std::function<scalar_t(PerformanceIndex)> meritFunc_;
 
-  std::atomic<scalar_t> avgTimeStepFP_{0.0};
+  // input
+  LineSearchInputRef lineSearchInputRef_;
+  // output
+  std::atomic<scalar_t> bestStepSize_{0.0};
+  search_strategy::SolutionRef* bestSolutionRef_;
+
+  // convergence check
+  scalar_t baselineMerit_ = 0.0;                  // the merit of the rollout for zero learning rate
+  scalar_t unoptimizedControllerUpdateIS_ = 0.0;  // integral of the squared (IS) norm of the controller update.
+
+  // threading
+  std::atomic_size_t nextTaskId_{0};
+  std::atomic_size_t alphaExpNext_{0};
+  std::vector<bool> alphaProcessed_;
+  std::mutex lineSearchResultMutex_;
+  mutable std::mutex outputDisplayGuardMutex_;
 };
 
 }  // namespace ocs2

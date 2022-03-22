@@ -60,7 +60,6 @@ class GDDP_Settings {
         maxLearningRateNLP_(1.0),
         minEventTimeDifference_(0.0),
         nThreads_(4),
-        useNominalTimeForBackwardPass_(false),
         riccatiIntegratorType_(IntegratorType::ODE45),
         absTolODE_(1e-9),
         relTolODE_(1e-6),
@@ -122,8 +121,6 @@ class GDDP_Settings {
   /** Number of threads used in the multi-threading scheme. */
   size_t nThreads_;
 
-  /** If true, GDDP solves the backward path over the nominal time trajectory. */
-  bool useNominalTimeForBackwardPass_;
   /** Riccati integrator type. */
   IntegratorType riccatiIntegratorType_;
   /** This value determines the absolute tolerance error for ode solvers. */
@@ -158,7 +155,6 @@ inline void GDDP_Settings::loadSettings(const std::string& filename, const std::
   loadData::loadPtreeValue(pt, maxLearningRateNLP_, fieldName + ".maxLearningRateNLP", verbose);
   loadData::loadPtreeValue(pt, minEventTimeDifference_, fieldName + ".minEventTimeDifference", verbose);
   loadData::loadPtreeValue(pt, nThreads_, fieldName + ".nThreads", verbose);
-  loadData::loadPtreeValue(pt, useNominalTimeForBackwardPass_, fieldName + ".useNominalTimeForBackwardPass", verbose);
 
   std::string integratorName = integrator_type::toString(riccatiIntegratorType_);  // keep default
   loadData::loadPtreeValue(pt, integratorName, fieldName + ".RiccatiIntegratorType", verbose);

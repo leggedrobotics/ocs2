@@ -44,11 +44,11 @@ SystemDynamicsBaseAD::SystemDynamicsBaseAD(const SystemDynamicsBaseAD& rhs)
       flowMapADInterfacePtr_(new CppAdInterface(*rhs.flowMapADInterfacePtr_)),
       jumpMapADInterfacePtr_(new CppAdInterface(*rhs.jumpMapADInterfacePtr_)),
       guardSurfacesADInterfacePtr_(new CppAdInterface(*rhs.guardSurfacesADInterfacePtr_)),
-      tapedTimeStateInput_(rhs.tapedTimeStateInput_),
-      tapedTimeState_(rhs.tapedTimeState_),
-      flowJacobian_(rhs.flowJacobian_),
-      jumpJacobian_(rhs.jumpJacobian_),
-      guardJacobian_(rhs.guardJacobian_) {}
+      tapedTimeStateInput_(rhs.tapedTimeStateInput_.size()),
+      tapedTimeState_(rhs.tapedTimeState_.size()),
+      flowJacobian_(rhs.flowJacobian_.rows(), rhs.flowJacobian_.cols()),
+      jumpJacobian_(rhs.jumpJacobian_.rows(), rhs.jumpJacobian_.cols()),
+      guardJacobian_(rhs.guardJacobian_.rows(), rhs.guardJacobian_.cols()) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

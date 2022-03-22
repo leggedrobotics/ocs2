@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
+#include <ocs2_core/integration/SensitivityIntegrator.h>
 
 #include "GaussNewtonDDP.h"
 #include "riccati_equations/DiscreteTimeRiccatiEquations.h"
@@ -41,7 +42,6 @@ namespace ocs2 {
  */
 class ILQR : public GaussNewtonDDP {
  public:
-  using BASE = GaussNewtonDDP;
   /**
    * Constructor
    *
@@ -59,38 +59,39 @@ class ILQR : public GaussNewtonDDP {
   ~ILQR() override = default;
 
  protected:
-  void setupOptimizer(size_t numPartitions) override;
+  scalar_t solveSequentialRiccatiEquations(const ScalarFunctionQuadraticApproximation& finalValueFunction) override;
 
-  scalar_t solveSequentialRiccatiEquations(const matrix_t& SmFinal, const vector_t& SvFinal, const scalar_t& sFinal) override;
+  void riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& partitionInterval,
+                              const ScalarFunctionQuadraticApproximation& finalValueFunction) override;
 
-  void riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const matrix_t& SmFinal, const vector_t& SvFinal,
-                              const scalar_t& sFinal) override;
-
-  void calculateController() override;
-
-  void calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) override;
+  void calculateControllerWorker(size_t timeIndex, const PrimalDataContainer& primalData, const DualDataContainer& dualData,
+                                 LinearController& dstController) override;
 
   matrix_t computeHamiltonianHessian(const ModelData& modelData, const matrix_t& Sm) const override;
 
-  void approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
-                                 const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
-                                 std::vector<ModelData>& modelDataTrajectory) override;
+  void approximateIntermediateLQ(PrimalDataContainer& primalData) override;
 
   /**
    * Calculates the discrete-time LQ approximation from the continuous-time LQ approximation.
    *
-   * @param [in] workerIndex: Working agent index.
-   * @param [in] continuousTimeModelData: Time partition index.
-   * @param [out] modelData: Time index in the partition.
+   * @param [in] system: system dynamic.
+   * @param [in] time: time t_k.
+   * @param [in] state: state x_k.
+   * @param [in] input: input u_k.
+   * @param [in] timeStep: Time step between the x_{k} and x_{k+1}.
+   * @param [in] continuousTimeModelData: continuous time model data.
+   * @param [out] modelData: Discretized mode data.
    */
-  void discreteLQWorker(size_t workerIndex, scalar_t timeStep, const ModelData& continuousTimeModelData, ModelData& modelData);
+  void discreteLQWorker(SystemDynamicsBase& system, scalar_t time, const vector_t& state, const vector_t& input, scalar_t timeStep,
+                        const ModelData& continuousTimeModelData, ModelData& modelData);
 
   /****************
    *** Variables **
    ****************/
-  matrix_array2_t projectedKmTrajectoryStock_;  // projected feedback
-  vector_array2_t projectedLvTrajectoryStock_;  // projected feedforward
+  matrix_array_t projectedKmTrajectoryStock_;  // projected feedback
+  vector_array_t projectedLvTrajectoryStock_;  // projected feedforward
 
+  DynamicsSensitivityDiscretizer sensitivityDiscretizer_;
   std::vector<std::unique_ptr<DiscreteTimeRiccatiEquations>> riccatiEquationsPtrStock_;
 };
 

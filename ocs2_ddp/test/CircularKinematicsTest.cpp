@@ -46,24 +46,11 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
  protected:
   static constexpr size_t STATE_DIM = 2;
   static constexpr size_t INPUT_DIM = 2;
+  static constexpr ocs2::scalar_t timeStep = 0.01;
   static constexpr ocs2::scalar_t expectedCost = 0.1;
   static constexpr ocs2::scalar_t expectedStateInputEqConstraintISE = 0.0;
 
   CircularKinematicsTest() {
-    // rollout settings
-    const auto rolloutSettings = []() {
-      ocs2::rollout::Settings rolloutSettings;
-      rolloutSettings.absTolODE = 1e-9;
-      rolloutSettings.relTolODE = 1e-7;
-      rolloutSettings.timeStep = 1e-3;
-      rolloutSettings.maxNumStepsPerSecond = 10000;
-      return rolloutSettings;
-    }();
-
-    // dynamics and rollout
-    ocs2::CircularKinematicsSystem systemDynamics;
-    rolloutPtr.reset(new ocs2::TimeTriggeredRollout(systemDynamics, rolloutSettings));
-
     // optimal control problem
     boost::filesystem::path filePath(__FILE__);
     const std::string libraryFolder = filePath.parent_path().generic_string() + "/ddp_test_generated";
@@ -77,6 +64,27 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
 
   size_t getNumThreads() { return std::get<1>(GetParam()); }
 
+  ocs2::rollout::Settings rolloutSettings(ocs2::ddp::Algorithm algorithmType) const {
+    ocs2::rollout::Settings rolloutSettings;
+    rolloutSettings.absTolODE = 1e-9;
+    rolloutSettings.relTolODE = 1e-7;
+    rolloutSettings.timeStep = timeStep;
+    rolloutSettings.maxNumStepsPerSecond = 10000;
+
+    switch (algorithmType) {
+      case ocs2::ddp::Algorithm::SLQ:
+        rolloutSettings.integratorType = ocs2::IntegratorType::ODE45;
+        break;
+      case ocs2::ddp::Algorithm::ILQR:
+        rolloutSettings.integratorType = ocs2::IntegratorType::RK4;
+        break;
+      default:
+        throw std::runtime_error("Not supported Algorithm!");
+    }
+
+    return rolloutSettings;
+  };
+
   ocs2::ddp::Settings getSettings(ocs2::ddp::Algorithm algorithmType, size_t numThreads, ocs2::search_strategy::Type strategy,
                                   bool display = false) const {
     ocs2::ddp::Settings ddpSettings;
@@ -89,14 +97,23 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
     ddpSettings.absTolODE_ = 1e-9;
     ddpSettings.relTolODE_ = 1e-7;
     ddpSettings.maxNumStepsPerSecond_ = 10000;
-    ddpSettings.backwardPassIntegratorType_ = ocs2::IntegratorType::ODE45;
+    ddpSettings.timeStep_ = timeStep;
+    switch (algorithmType) {
+      case ocs2::ddp::Algorithm::SLQ:
+        ddpSettings.backwardPassIntegratorType_ = ocs2::IntegratorType::ODE45;
+        break;
+      case ocs2::ddp::Algorithm::ILQR:
+        ddpSettings.backwardPassIntegratorType_ = ocs2::IntegratorType::RK4;
+        break;
+      default:
+        throw std::runtime_error("Not supported Algorithm!");
+    }
     ddpSettings.maxNumIterations_ = 150;
     ddpSettings.minRelCost_ = 1e-3;
     ddpSettings.constraintTolerance_ = 1e-5;
     ddpSettings.constraintPenaltyInitialValue_ = 2.0;
     ddpSettings.constraintPenaltyIncreaseRate_ = 1.5;
     ddpSettings.preComputeRiccatiTerms_ = false;
-    ddpSettings.useNominalTimeForBackwardPass_ = true;
     ddpSettings.strategy_ = strategy;
     ddpSettings.lineSearch_.minStepLength_ = 0.01;
     ddpSettings.lineSearch_.hessianCorrectionStrategy_ = ocs2::hessian_correction::Strategy::CHOLESKY_MODIFICATION;
@@ -115,23 +132,22 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
 
   void performanceIndexTest(const ocs2::ddp::Settings& ddpSettings, const ocs2::PerformanceIndex& performanceIndex) const {
     const auto testName = getTestName(ddpSettings);
-    EXPECT_LT(performanceIndex.totalCost - expectedCost, 0.0) << "MESSAGE: " << testName << ": failed in the total cost test!";
-    EXPECT_LT(fabs(performanceIndex.stateInputEqConstraintISE - expectedStateInputEqConstraintISE), 10 * ddpSettings.constraintTolerance_)
+    EXPECT_LT(performanceIndex.cost - expectedCost, 0.0) << "MESSAGE: " << testName << ": failed in the cost test!";
+    EXPECT_LT(fabs(performanceIndex.equalityConstraintsSSE - expectedStateInputEqConstraintISE), 10 * ddpSettings.constraintTolerance_)
         << "MESSAGE: " << testName << ": failed in state-input equality constraint ISE test!";
   }
 
   const ocs2::scalar_t startTime = 0.0;
   const ocs2::scalar_t finalTime = 10.0;
   const ocs2::vector_t initState = (ocs2::vector_t(STATE_DIM) << 1.0, 0.0).finished();  // radius 1.0
-  const ocs2::scalar_array_t partitioningTimes{startTime, (startTime + finalTime) / 2.0, finalTime};
 
-  std::unique_ptr<ocs2::TimeTriggeredRollout> rolloutPtr;
   ocs2::OptimalControlProblem problem;
   std::unique_ptr<ocs2::Initializer> initializerPtr;
 };
 
 constexpr size_t CircularKinematicsTest::STATE_DIM;
 constexpr size_t CircularKinematicsTest::INPUT_DIM;
+constexpr ocs2::scalar_t CircularKinematicsTest::timeStep;
 constexpr ocs2::scalar_t CircularKinematicsTest::expectedCost;
 constexpr ocs2::scalar_t CircularKinematicsTest::expectedStateInputEqConstraintISE;
 
@@ -139,18 +155,24 @@ constexpr ocs2::scalar_t CircularKinematicsTest::expectedStateInputEqConstraintI
 /******************************************************************************************************/
 /******************************************************************************************************/
 TEST_P(CircularKinematicsTest, SLQ) {
+  const auto algorithm = ocs2::ddp::Algorithm::SLQ;
+
   // ddp settings
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, getNumThreads(), getSearchStrategy());
+  const auto ddpSettings = getSettings(algorithm, getNumThreads(), getSearchStrategy());
+
+  // dynamics and rollout
+  const ocs2::CircularKinematicsSystem systemDynamics;
+  const ocs2::TimeTriggeredRollout rollout(systemDynamics, rolloutSettings(algorithm));
 
   // instantiate
-  ocs2::SLQ ddp(ddpSettings, *rolloutPtr, problem, *initializerPtr);
+  ocs2::SLQ ddp(ddpSettings, rollout, problem, *initializerPtr);
 
   if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
     std::cerr << "\n" << getTestName(ddpSettings) << "\n";
   }
 
   // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  ddp.run(startTime, initState, finalTime);
   // get performance index
   const auto performanceIndex = ddp.getPerformanceIndeces();
 
@@ -162,18 +184,24 @@ TEST_P(CircularKinematicsTest, SLQ) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 TEST_P(CircularKinematicsTest, ILQR) {
+  const auto algorithm = ocs2::ddp::Algorithm::ILQR;
+
   // ddp settings
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, getNumThreads(), getSearchStrategy());
+  const auto ddpSettings = getSettings(algorithm, getNumThreads(), getSearchStrategy());
+
+  // dynamics and rollout
+  const ocs2::CircularKinematicsSystem systemDynamics;
+  const ocs2::TimeTriggeredRollout rollout(systemDynamics, rolloutSettings(algorithm));
 
   // instantiate
-  ocs2::ILQR ddp(ddpSettings, *rolloutPtr, problem, *initializerPtr);
+  ocs2::ILQR ddp(ddpSettings, rollout, problem, *initializerPtr);
 
   if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
     std::cerr << "\n" << getTestName(ddpSettings) << "\n";
   }
 
   // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  ddp.run(startTime, initState, finalTime);
   // get performance index
   const auto performanceIndex = ddp.getPerformanceIndeces();
 

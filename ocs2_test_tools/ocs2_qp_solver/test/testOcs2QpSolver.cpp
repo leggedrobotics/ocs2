@@ -83,8 +83,7 @@ class Ocs2QpSolverTest : public testing::Test {
     constrainedProblem.finalEqualityConstraintPtr->add(
         "equality", ocs2::getOcs2StateOnlyConstraints(ocs2::getRandomConstraints(STATE_DIM, 0, numFinalStateOnlyConstraints)));
 
-    targetTrajectories =
-        ocs2::TargetTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
+    targetTrajectories = ocs2::TargetTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
     constrainedProblem.targetTrajectoriesPtr = &targetTrajectories;
     unconstrainedProblem.targetTrajectoriesPtr = &targetTrajectories;
 

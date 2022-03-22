@@ -72,14 +72,14 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>10</subscriber_queue_size>
-                            <title>Total Rollout Cost</title>
+                            <title>Rollout Cost</title>
                         </curve_0>
                     </curves>
                     <legend>
                         <visible>false</visible>
                     </legend>
                     <plot_rate>30</plot_rate>
-                    <title>Total Rollout Merit</title>
+                    <title>Rollout Merit</title>
                 </column_0>
                 <column_1>
                     <axes>
@@ -113,7 +113,7 @@
                                     <type>ocs2_msgs/mpc_performance_indices</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>totalCost</field>
+                                    <field>cost</field>
                                     <field_type>0</field_type>
                                     <scale>
                                         <absolute_maximum>1000</absolute_maximum>
@@ -146,14 +146,14 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>10</subscriber_queue_size>
-                            <title>Total Rollout Cost</title>
+                            <title>Rollout Cost</title>
                         </curve_0>
                     </curves>
                     <legend>
                         <visible>false</visible>
                     </legend>
                     <plot_rate>30</plot_rate>
-                    <title>Total Rollout Cost</title>
+                    <title>Rollout Cost</title>
                 </column_1>
             </row_0>
             <row_1>
@@ -189,7 +189,7 @@
                                     <type>ocs2_msgs/mpc_performance_indices</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>inequalityConstraintISE</field>
+                                    <field>equalityConstraintsSSE</field>
                                     <field_type>0</field_type>
                                     <scale>
                                         <absolute_maximum>1000</absolute_maximum>
@@ -222,14 +222,14 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>10</subscriber_queue_size>
-                            <title>Intermediate Constraint</title>
+                            <title>Equality Constraint Violation SSE</title>
                         </curve_0>
                     </curves>
                     <legend>
-                        <visible>true</visible>
+                        <visible>false</visible>
                     </legend>
                     <plot_rate>30</plot_rate>
-                    <title>Inequality Constraint Violation ISE</title>
+                    <title>Equality Constraint Violation SSE</title>
                 </column_0>
                 <column_1>
                     <axes>
@@ -263,7 +263,7 @@
                                     <type>ocs2_msgs/mpc_performance_indices</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>inequalityConstraintPenalty</field>
+                                    <field>dynamicsViolationSSE</field>
                                     <field_type>0</field_type>
                                     <scale>
                                         <absolute_maximum>1000</absolute_maximum>
@@ -296,14 +296,14 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>10</subscriber_queue_size>
-                            <title>Intermediate Constraint</title>
+                            <title>System Dynamics Violation SSE</title>
                         </curve_0>
                     </curves>
                     <legend>
-                        <visible>true</visible>
+                        <visible>false</visible>
                     </legend>
                     <plot_rate>30</plot_rate>
-                    <title>Inequality Constraint Penalty</title>
+                    <title>System Dynamics Violation SSE</title>
                 </column_1>
             </row_1>
             <row_2>
@@ -339,7 +339,7 @@
                                     <type>ocs2_msgs/mpc_performance_indices</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>stateEqConstraintISE</field>
+                                    <field>equalityLagrangian</field>
                                     <field_type>0</field_type>
                                     <scale>
                                         <absolute_maximum>1000</absolute_maximum>
@@ -372,116 +372,14 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>10</subscriber_queue_size>
-                            <title>Intermediate State Constraint</title>
+                            <title>Equality Lagrangian</title>
                         </curve_0>
-                        <curve_1>
-                            <axes>
-                                <x_axis>
-                                    <field>initTime</field>
-                                    <field_type>0</field_type>
-                                    <scale>
-                                        <absolute_maximum>1000</absolute_maximum>
-                                        <absolute_minimum>0</absolute_minimum>
-                                        <relative_maximum>0</relative_maximum>
-                                        <relative_minimum>-1000</relative_minimum>
-                                        <type>0</type>
-                                    </scale>
-                                    <topic>/mpc_performance_indices</topic>
-                                    <type>ocs2_msgs/mpc_performance_indices</type>
-                                </x_axis>
-                                <y_axis>
-                                    <field>stateEqFinalConstraintSSE</field>
-                                    <field_type>0</field_type>
-                                    <scale>
-                                        <absolute_maximum>1000</absolute_maximum>
-                                        <absolute_minimum>0</absolute_minimum>
-                                        <relative_maximum>0</relative_maximum>
-                                        <relative_minimum>-1000</relative_minimum>
-                                        <type>0</type>
-                                    </scale>
-                                    <topic>/mpc_performance_indices</topic>
-                                    <type>ocs2_msgs/mpc_performance_indices</type>
-                                </y_axis>
-                            </axes>
-                            <color>
-                                <custom_color>#ad7fa8</custom_color>
-                                <type>1</type>
-                            </color>
-                            <data>
-                                <circular_buffer_capacity>1000</circular_buffer_capacity>
-                                <time_frame_length>10</time_frame_length>
-                                <type>0</type>
-                            </data>
-                            <style>
-                                <lines_interpolate>false</lines_interpolate>
-                                <pen_style>1</pen_style>
-                                <pen_width>2</pen_width>
-                                <render_antialias>false</render_antialias>
-                                <steps_invert>false</steps_invert>
-                                <sticks_baseline>0</sticks_baseline>
-                                <sticks_orientation>2</sticks_orientation>
-                                <type>0</type>
-                            </style>
-                            <subscriber_queue_size>10</subscriber_queue_size>
-                            <title>Final State Constraint</title>
-                        </curve_1>
-                        <curve_2>
-                            <axes>
-                                <x_axis>
-                                    <field>initTime</field>
-                                    <field_type>0</field_type>
-                                    <scale>
-                                        <absolute_maximum>1000</absolute_maximum>
-                                        <absolute_minimum>0</absolute_minimum>
-                                        <relative_maximum>0</relative_maximum>
-                                        <relative_minimum>-1000</relative_minimum>
-                                        <type>0</type>
-                                    </scale>
-                                    <topic>/mpc_performance_indices</topic>
-                                    <type>ocs2_msgs/mpc_performance_indices</type>
-                                </x_axis>
-                                <y_axis>
-                                    <field>stateInputEqConstraintISE</field>
-                                    <field_type>0</field_type>
-                                    <scale>
-                                        <absolute_maximum>1000</absolute_maximum>
-                                        <absolute_minimum>0</absolute_minimum>
-                                        <relative_maximum>0</relative_maximum>
-                                        <relative_minimum>-1000</relative_minimum>
-                                        <type>0</type>
-                                    </scale>
-                                    <topic>/mpc_performance_indices</topic>
-                                    <type>ocs2_msgs/mpc_performance_indices</type>
-                                </y_axis>
-                            </axes>
-                            <color>
-                                <custom_color>#8ae234</custom_color>
-                                <type>1</type>
-                            </color>
-                            <data>
-                                <circular_buffer_capacity>1000</circular_buffer_capacity>
-                                <time_frame_length>10</time_frame_length>
-                                <type>0</type>
-                            </data>
-                            <style>
-                                <lines_interpolate>false</lines_interpolate>
-                                <pen_style>1</pen_style>
-                                <pen_width>2</pen_width>
-                                <render_antialias>false</render_antialias>
-                                <steps_invert>false</steps_invert>
-                                <sticks_baseline>0</sticks_baseline>
-                                <sticks_orientation>2</sticks_orientation>
-                                <type>0</type>
-                            </style>
-                            <subscriber_queue_size>10</subscriber_queue_size>
-                            <title>Intermediate State-Input Constraint</title>
-                        </curve_2>
                     </curves>
                     <legend>
-                        <visible>true</visible>
+                        <visible>false</visible>
                     </legend>
                     <plot_rate>30</plot_rate>
-                    <title>Equality Constraint Violation ISE/SSE</title>
+                    <title>Equality Lagrangian</title>
                 </column_0>
                 <column_1>
                     <axes>
@@ -515,7 +413,7 @@
                                     <type>ocs2_msgs/mpc_performance_indices</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>stateEqConstraintPenalty</field>
+                                    <field>inequalityLagrangian</field>
                                     <field_type>0</field_type>
                                     <scale>
                                         <absolute_maximum>1000</absolute_maximum>
@@ -548,65 +446,14 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>10</subscriber_queue_size>
-                            <title>Intermediate State Constraint</title>
+                            <title>Inequality Lagrangian</title>
                         </curve_0>
-                        <curve_1>
-                            <axes>
-                                <x_axis>
-                                    <field>initTime</field>
-                                    <field_type>0</field_type>
-                                    <scale>
-                                        <absolute_maximum>1000</absolute_maximum>
-                                        <absolute_minimum>0</absolute_minimum>
-                                        <relative_maximum>0</relative_maximum>
-                                        <relative_minimum>-1000</relative_minimum>
-                                        <type>0</type>
-                                    </scale>
-                                    <topic>/mpc_performance_indices</topic>
-                                    <type>ocs2_msgs/mpc_performance_indices</type>
-                                </x_axis>
-                                <y_axis>
-                                    <field>stateEqFinalConstraintPenalty</field>
-                                    <field_type>0</field_type>
-                                    <scale>
-                                        <absolute_maximum>1000</absolute_maximum>
-                                        <absolute_minimum>0</absolute_minimum>
-                                        <relative_maximum>0</relative_maximum>
-                                        <relative_minimum>-1000</relative_minimum>
-                                        <type>0</type>
-                                    </scale>
-                                    <topic>/mpc_performance_indices</topic>
-                                    <type>ocs2_msgs/mpc_performance_indices</type>
-                                </y_axis>
-                            </axes>
-                            <color>
-                                <custom_color>#ad7fa8</custom_color>
-                                <type>1</type>
-                            </color>
-                            <data>
-                                <circular_buffer_capacity>1000</circular_buffer_capacity>
-                                <time_frame_length>10</time_frame_length>
-                                <type>0</type>
-                            </data>
-                            <style>
-                                <lines_interpolate>false</lines_interpolate>
-                                <pen_style>1</pen_style>
-                                <pen_width>2</pen_width>
-                                <render_antialias>false</render_antialias>
-                                <steps_invert>false</steps_invert>
-                                <sticks_baseline>0</sticks_baseline>
-                                <sticks_orientation>2</sticks_orientation>
-                                <type>0</type>
-                            </style>
-                            <subscriber_queue_size>10</subscriber_queue_size>
-                            <title>Final State Constraint</title>
-                        </curve_1>
                     </curves>
                     <legend>
-                        <visible>true</visible>
+                        <visible>false</visible>
                     </legend>
                     <plot_rate>30</plot_rate>
-                    <title>Equality Constraint Penalty</title>
+                    <title>Inequality Lagrangian</title>
                 </column_1>
             </row_2>
         </plots>

@@ -40,17 +40,17 @@ namespace ocs2 {
 static inline std::tuple<matrix_t, vector_t, scalar_t> riccatiTransversalityConditions(const ModelData& jumpModelData, const matrix_t& Sm,
                                                                                        const vector_t& Sv, scalar_t s) {
   // Sm
-  const matrix_t SmTransAm = Sm.transpose() * jumpModelData.dynamics_.dfdx;
-  matrix_t SmPreEvent = jumpModelData.cost_.dfdxx;
-  SmPreEvent.noalias() += SmTransAm.transpose() * jumpModelData.dynamics_.dfdx;
+  const matrix_t SmTransAm = Sm.transpose() * jumpModelData.dynamics.dfdx;
+  matrix_t SmPreEvent = jumpModelData.cost.dfdxx;
+  SmPreEvent.noalias() += SmTransAm.transpose() * jumpModelData.dynamics.dfdx;
 
   // Sv
-  const vector_t SmHv = Sm * jumpModelData.dynamicsBias_;
-  vector_t SvPreEvent = jumpModelData.cost_.dfdx;
-  SvPreEvent.noalias() += jumpModelData.dynamics_.dfdx.transpose() * (Sv + SmHv);
+  const vector_t SmHv = Sm * jumpModelData.dynamicsBias;
+  vector_t SvPreEvent = jumpModelData.cost.dfdx;
+  SvPreEvent.noalias() += jumpModelData.dynamics.dfdx.transpose() * (Sv + SmHv);
 
   // s
-  const scalar_t sPreEvent = s + jumpModelData.cost_.f + jumpModelData.dynamicsBias_.dot(Sv + 0.5 * SmHv);
+  const scalar_t sPreEvent = s + jumpModelData.cost.f + jumpModelData.dynamicsBias.dot(Sv + 0.5 * SmHv);
 
   return {SmPreEvent, SvPreEvent, sPreEvent};
 }

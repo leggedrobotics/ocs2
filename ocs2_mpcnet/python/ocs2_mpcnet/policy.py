@@ -48,6 +48,7 @@ class LinearPolicy(torch.nn.Module):
         dim_out: An integer defining the output dimension of the policy.
         linear: The linear neural network layer.
     """
+
     def __init__(self, dim_t, dim_x, dim_u):
         """Initializes the LinearPolicy class.
 
@@ -93,6 +94,7 @@ class NonlinearPolicy(torch.nn.Module):
         activation: The activation to get the hidden layer.
         linear2: The second linear neural network layer.
     """
+
     def __init__(self, dim_t, dim_x, dim_u):
         """Initializes the NonlinearPolicy class.
 
@@ -140,6 +142,7 @@ class MixtureOfLinearExpertsPolicy(torch.nn.Module):
         gating_net: The gating network.
         expert_nets: The expert networks.
     """
+
     def __init__(self, dim_t, dim_x, dim_u, num_experts):
         """Initializes the MixtureOfLinearExpertsPolicy class.
 
@@ -198,6 +201,7 @@ class MixtureOfNonlinearExpertsPolicy(torch.nn.Module):
         gating_net: The gating network.
         expert_nets: The expert networks.
     """
+
     def __init__(self, dim_t, dim_x, dim_u, num_experts):
         """Initializes the MixtureOfNonlinearExpertsPolicy class.
 
@@ -259,6 +263,7 @@ class LinearExpert(torch.nn.Module):
         dim_out: An integer defining the output dimension of the expert.
         linear: The linear neural network layer.
     """
+
     def __init__(self, index, dim_in, dim_out):
         """Initializes the LinearExpert class.
 
@@ -303,6 +308,7 @@ class NonlinearExpert(torch.nn.Module):
         activation: The activation to get the hidden layer.
         linear2: The second linear neural network layer.
     """
+
     def __init__(self, index, dim_in, dim_hidden, dim_out):
         """Initializes the NonlinearExpert class.
 

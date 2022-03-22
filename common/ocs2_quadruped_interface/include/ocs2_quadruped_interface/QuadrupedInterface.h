@@ -98,7 +98,12 @@ class QuadrupedInterface : public ocs2::RobotInterface {
   virtual const ocs2::RolloutBase& getRollout() const = 0;
 
   /** Gets the solver synchronized modules */
-  virtual const synchronized_module_ptr_array_t& getSynchronizedModules() const = 0;
+  const synchronized_module_ptr_array_t& getSynchronizedModules() const { return solverModules_; };
+
+  /** Append solver sync module to solverModules_*/
+  void appendToSynchronizedModules(std::shared_ptr<synchronized_module_t> synchronizedModule) {
+    solverModules_.push_back(std::move(synchronizedModule));
+  };
 
   /** Cost approximation at the nominal state and input*/
   virtual const ScalarFunctionQuadraticApproximation& nominalCostApproximation() const = 0;
@@ -126,6 +131,7 @@ class QuadrupedInterface : public ocs2::RobotInterface {
   std::unique_ptr<ad_kinematic_model_t> adKinematicModelPtr_;
   std::unique_ptr<com_model_t> comModelPtr_;
   std::unique_ptr<ad_com_model_t> adComModelPtr_;
+  synchronized_module_ptr_array_t solverModules_;
   std::shared_ptr<SwitchedModelModeScheduleManager> modeScheduleManagerPtr_;
   std::shared_ptr<DynamicsParametersSynchronizedModule> dynamicsParametersSynchronizedModulePtr_;
 };

@@ -49,6 +49,7 @@ QuadrupedInterface::QuadrupedInterface(const kinematic_model_t& kinematicModel, 
                                                                                std::move(terrainModel));
   // Dynamics parameter module
   dynamicsParametersSynchronizedModulePtr_ = std::make_shared<DynamicsParametersSynchronizedModule>();
+  appendToSynchronizedModules(dynamicsParametersSynchronizedModulePtr_);
 }
 
 std::unique_ptr<ocs2::PreComputation> QuadrupedInterface::createPrecomputation() const {

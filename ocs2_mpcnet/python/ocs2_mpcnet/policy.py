@@ -48,8 +48,7 @@ class LinearPolicy(Policy):
         self.linear = torch.nn.Linear(self.dim_in, self.dim_out)
 
     def forward(self, t, x):
-        u = self.linear(torch.cat((t, x), dim=1))
-        return u, torch.ones(len(u), 1, device=config.device, dtype=config.dtype), u.unsqueeze(dim=2)
+        return self.linear(torch.cat((t, x), dim=1))
 
 
 class NonlinearPolicy(Policy):
@@ -62,9 +61,7 @@ class NonlinearPolicy(Policy):
         self.linear2 = torch.nn.Linear(self.dim_hidden, self.dim_out)
 
     def forward(self, t, x):
-        z = self.activation(self.linear1(torch.cat((t, x), dim=1)))
-        u = self.linear2(z)
-        return u, torch.ones(len(u), 1, device=config.device, dtype=config.dtype), u.unsqueeze(dim=2)
+        return self.linear2(self.activation(self.linear1(torch.cat((t, x), dim=1))))
 
 
 class MixtureOfLinearExpertsPolicy(Policy):
@@ -83,7 +80,7 @@ class MixtureOfLinearExpertsPolicy(Policy):
         p = self.gating_net(torch.cat((t, x), dim=1))
         U = torch.stack([self.expert_nets[i](torch.cat((t, x), dim=1)) for i in range(self.num_experts)], dim=2)
         u = bmv(U, p)
-        return u, p, U
+        return u, p
 
 
 class MixtureOfNonlinearExpertsPolicy(Policy):
@@ -109,7 +106,7 @@ class MixtureOfNonlinearExpertsPolicy(Policy):
         p = self.gating_net(torch.cat((t, x), dim=1))
         U = torch.stack([self.expert_nets[i](torch.cat((t, x), dim=1)) for i in range(self.num_experts)], dim=2)
         u = bmv(U, p)
-        return u, p, U
+        return u, p
 
 
 class LinearExpert(torch.nn.Module):

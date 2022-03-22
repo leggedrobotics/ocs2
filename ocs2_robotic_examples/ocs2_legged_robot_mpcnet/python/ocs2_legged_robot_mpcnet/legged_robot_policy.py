@@ -37,7 +37,6 @@ from ocs2_legged_robot_mpcnet import legged_robot_config as config
 
 input_scaling = torch.tensor(config.input_scaling, device=config.device, dtype=config.dtype).diag().unsqueeze(dim=0)
 input_bias = torch.tensor(config.input_bias, device=config.device, dtype=config.dtype).unsqueeze(dim=0)
-input_bias_stacked = torch.stack([input_bias for i in range(config.EXPERT_NUM)], dim=2)
 
 
 def u_transform(u):

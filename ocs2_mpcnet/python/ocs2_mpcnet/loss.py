@@ -29,6 +29,7 @@
 
 import torch
 
+from ocs2_mpcnet_core import config
 from ocs2_mpcnet.helper import bdot, bmv
 
 
@@ -83,13 +84,13 @@ class BehavioralCloning:
     # Uses a simple quadratic function as loss
     # BC(u) = du' R du
 
-    def __init__(self, R, batch_size):
-        self.R = R
-        self.R_batch = torch.stack([R for i in range(batch_size)])
+    def __init__(self, R):
+        self.R_sample = torch.tensor(R, device=config.device, dtype=config.dtype)
+        self.R_batch = self.R_sample.unsqueeze(dim=0)
 
     def compute_sample(self, u_predicted, u_target):
         du = torch.sub(u_predicted, u_target)
-        return torch.dot(du, torch.mv(self.R, du))
+        return torch.dot(du, torch.mv(self.R_sample, du))
 
     def compute_batch(self, u_predicted, u_target):
         du = torch.sub(u_predicted, u_target)
@@ -102,7 +103,7 @@ class CrossEntropy:
     # CE(p_target, p_predicted) = - sum(p_target * log(p_predicted))
 
     def __init__(self, epsilon):
-        self.epsilon = epsilon
+        self.epsilon = torch.tensor(epsilon, device=config.device, dtype=config.dtype)
 
     def compute_sample(self, p_target, p_predicted):
         return -torch.dot(p_target, torch.log(p_predicted + self.epsilon))

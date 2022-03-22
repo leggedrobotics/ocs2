@@ -44,10 +44,6 @@ def u_transform(u):
     return bmv(input_scaling, u) + input_bias
 
 
-def U_transform(U):
-    return bmm(input_scaling, U) + input_bias_stacked
-
-
 class LeggedRobotLinearPolicy(policy.LinearPolicy):
 
     def __init__(self, dim_t, dim_x, dim_u):
@@ -55,8 +51,8 @@ class LeggedRobotLinearPolicy(policy.LinearPolicy):
         self.name = 'LeggedRobotLinearPolicy'
 
     def forward(self, t, x):
-        u, p, U = super().forward(t, x)
-        return u_transform(u), p, U_transform(U)
+        u = super().forward(t, x)
+        return u_transform(u)
 
 
 class LeggedRobotNonlinearPolicy(policy.NonlinearPolicy):
@@ -66,8 +62,8 @@ class LeggedRobotNonlinearPolicy(policy.NonlinearPolicy):
         self.name = 'LeggedRobotNonlinearPolicy'
 
     def forward(self, t, x):
-        u, p, U = super().forward(t, x)
-        return u_transform(u), p, U_transform(U)
+        u = super().forward(t, x)
+        return u_transform(u)
 
 
 class LeggedRobotMixtureOfLinearExpertsPolicy(policy.MixtureOfLinearExpertsPolicy):
@@ -77,8 +73,8 @@ class LeggedRobotMixtureOfLinearExpertsPolicy(policy.MixtureOfLinearExpertsPolic
         self.name = 'LeggedRobotMixtureOfLinearExpertsPolicy'
 
     def forward(self, t, x):
-        u, p, U = super().forward(t, x)
-        return u_transform(u), p, U_transform(U)
+        u, p = super().forward(t, x)
+        return u_transform(u), p
 
 
 class LeggedRobotMixtureOfNonlinearExpertsPolicy(policy.MixtureOfNonlinearExpertsPolicy):
@@ -88,5 +84,5 @@ class LeggedRobotMixtureOfNonlinearExpertsPolicy(policy.MixtureOfNonlinearExpert
         self.name = 'LeggedRobotMixtureOfNonlinearExpertsPolicy'
 
     def forward(self, t, x):
-        u, p, U = super().forward(t, x)
-        return u_transform(u), p, U_transform(U)
+        u, p = super().forward(t, x)
+        return u_transform(u), p

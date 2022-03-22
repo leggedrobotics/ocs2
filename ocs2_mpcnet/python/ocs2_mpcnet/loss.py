@@ -35,7 +35,7 @@ the gating network of a mixture of experts network. Additionally, a simple behav
 
 import torch
 
-from ocs2_mpcnet_core import config
+from ocs2_mpcnet import config
 from ocs2_mpcnet.helper import bdot, bmv
 
 

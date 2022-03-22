@@ -34,42 +34,18 @@ Provides classes for different neural network policies.
 
 import torch
 
-from ocs2_mpcnet import config
 from ocs2_mpcnet.helper import bmv
 
 
-class Policy(torch.nn.Module):
-    """Policy.
-
-    Base class for all neural network policies.
-
-    Attributes:
-        name: A string with the name of the policy.
-        dim_in: An integer defining the input dimension of the policy.
-        dim_out: An integer defining the output dimension of the policy.
-    """
-    def __init__(self, dim_in, dim_out):
-        """Initializes the Policy class.
-
-        Initializes the Policy class by setting fixed attributes.
-
-        Args:
-            dim_in: An integer defining the input dimension of the policy.
-            dim_out: An integer defining the output dimension of the policy.
-        """
-        super().__init__()
-        self.name = "Policy"
-        self.dim_in = dim_in
-        self.dim_out = dim_out
-
-
-class LinearPolicy(Policy):
+class LinearPolicy(torch.nn.Module):
     """Linear policy.
 
     Class for a simple linear neural network policy.
 
     Attributes:
         name: A string with the name of the policy.
+        dim_in: An integer defining the input dimension of the policy.
+        dim_out: An integer defining the output dimension of the policy.
         linear: The linear neural network layer.
     """
     def __init__(self, dim_t, dim_x, dim_u):
@@ -82,8 +58,10 @@ class LinearPolicy(Policy):
             dim_x: An integer defining the relative state dimension.
             dim_u: An integer defining the control input dimension.
         """
-        super().__init__(dim_t + dim_x, dim_u)
+        super().__init__()
         self.name = "LinearPolicy"
+        self.dim_in = dim_t + dim_x
+        self.dim_out = dim_u
         self.linear = torch.nn.Linear(self.dim_in, self.dim_out)
 
     def forward(self, t, x):
@@ -101,14 +79,16 @@ class LinearPolicy(Policy):
         return self.linear(torch.cat((t, x), dim=1))
 
 
-class NonlinearPolicy(Policy):
+class NonlinearPolicy(torch.nn.Module):
     """Nonlinear policy.
 
     Class for a simple nonlinear neural network policy, where the hidden layer is the mean of the input and output layer.
 
     Attributes:
         name: A string with the name of the policy.
+        dim_in: An integer defining the input dimension of the policy.
         dim_hidden: An integer defining the dimension of the hidden layer.
+        dim_out: An integer defining the output dimension of the policy.
         linear1: The first linear neural network layer.
         activation: The activation to get the hidden layer.
         linear2: The second linear neural network layer.
@@ -123,9 +103,11 @@ class NonlinearPolicy(Policy):
             dim_x: An integer defining the relative state dimension.
             dim_u: An integer defining the control input dimension.
         """
-        super().__init__(dim_t + dim_x, dim_u)
+        super().__init__()
         self.name = "NonlinearPolicy"
-        self.dim_hidden = int((self.dim_in + dim_u) / 2)
+        self.dim_in = dim_t + dim_x
+        self.dim_hidden = int((dim_t + dim_x + dim_u) / 2)
+        self.dim_out = dim_u
         self.linear1 = torch.nn.Linear(self.dim_in, self.dim_hidden)
         self.activation = torch.nn.Tanh()
         self.linear2 = torch.nn.Linear(self.dim_hidden, self.dim_out)
@@ -145,13 +127,15 @@ class NonlinearPolicy(Policy):
         return self.linear2(self.activation(self.linear1(torch.cat((t, x), dim=1))))
 
 
-class MixtureOfLinearExpertsPolicy(Policy):
+class MixtureOfLinearExpertsPolicy(torch.nn.Module):
     """Mixture of linear experts policy.
 
     Class for a mixture of experts neural network with linear experts.
 
     Attributes:
         name: A string with the name of the policy.
+        dim_in: An integer defining the input dimension of the policy.
+        dim_out: An integer defining the output dimension of the policy.
         num_experts: An integer defining the number of experts.
         gating_net: The gating network.
         expert_nets: The expert networks.
@@ -167,8 +151,10 @@ class MixtureOfLinearExpertsPolicy(Policy):
             dim_u: An integer defining the control input dimension.
             num_experts: An integer defining the number of experts.
         """
-        super().__init__(dim_t + dim_x, dim_u)
+        super().__init__()
         self.name = "MixtureOfLinearExpertsPolicy"
+        self.dim_in = dim_t + dim_x
+        self.dim_out = dim_u
         self.num_experts = num_experts
         # gating
         self.gating_net = torch.nn.Sequential(torch.nn.Linear(self.dim_in, self.num_experts), torch.nn.Softmax(dim=1))
@@ -196,7 +182,7 @@ class MixtureOfLinearExpertsPolicy(Policy):
         return u, p
 
 
-class MixtureOfNonlinearExpertsPolicy(Policy):
+class MixtureOfNonlinearExpertsPolicy(torch.nn.Module):
     """Mixture of nonlinear experts policy.
 
     Class for a mixture of experts neural network with nonlinear experts, where the hidden layer is the mean of the
@@ -204,9 +190,11 @@ class MixtureOfNonlinearExpertsPolicy(Policy):
 
     Attributes:
         name: A string with the name of the policy.
-        num_experts: An integer defining the number of experts.
+        dim_in: An integer defining the input dimension of the policy.
         dim_hidden_gating: An integer defining the dimension of the hidden layer for the gating network.
         dim_hidden_expert: An integer defining the dimension of the hidden layer for the expert networks.
+        dim_out: An integer defining the output dimension of the policy.
+        num_experts: An integer defining the number of experts.
         gating_net: The gating network.
         expert_nets: The expert networks.
     """
@@ -221,11 +209,14 @@ class MixtureOfNonlinearExpertsPolicy(Policy):
             dim_u: An integer defining the control input dimension.
             num_experts: An integer defining the number of experts.
         """
-        super().__init__(dim_t + dim_x, dim_u)
+        super().__init__()
         self.name = "MixtureOfNonlinearExpertsPolicy"
+        self.dim_in = dim_t + dim_x
+        self.dim_hidden_gating = int((dim_t + dim_x + num_experts) / 2)
+        self.dim_hidden_expert = int((dim_t + dim_x + dim_u) / 2)
+        self.dim_out = dim_u
         self.num_experts = num_experts
-        self.dim_hidden_gating = int((self.dim_in + num_experts) / 2)
-        self.dim_hidden_expert = int((self.dim_in + dim_u) / 2)
+
         # gating
         self.gating_net = torch.nn.Sequential(
             torch.nn.Linear(self.dim_in, self.dim_hidden_gating),

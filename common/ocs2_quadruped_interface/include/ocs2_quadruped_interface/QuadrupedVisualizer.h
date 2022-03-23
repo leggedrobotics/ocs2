@@ -27,7 +27,7 @@ class QuadrupedVisualizer : public ocs2::DummyObserver {
   scalar_t footMarkerDiameter_ = 0.03;        // Size of the spheres at the feet
   scalar_t footAlphaWhenLifted_ = 0.3;        // Alpha value when a foot is lifted.
   scalar_t forceScale_ = 1000.0;              // Vector scale in N/m
-  scalar_t velScale_ = 5.0;                   // Vector scale in m/s
+  scalar_t velScale_ = 20.0;                  // Vector scale in m/s
   scalar_t copMarkerDiameter_ = 0.03;         // Size of the sphere at the center of pressure
   scalar_t supportPolygonLineWidth_ = 0.005;  // LineThickness for the support polygon
   scalar_t trajectoryLineWidth_ = 0.01;       // LineThickness for trajectories

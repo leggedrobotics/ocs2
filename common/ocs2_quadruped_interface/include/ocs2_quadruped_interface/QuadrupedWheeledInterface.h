@@ -26,8 +26,6 @@ class QuadrupedWheeledInterface : public QuadrupedInterface {
 
   const time_triggered_rollout_t& getRollout() const override { return *timeTriggeredRolloutPtr_; };
 
-  const synchronized_module_ptr_array_t& getSynchronizedModules() const override { return solverModules_; };
-
   const initializer_t& getInitializer() const override { return *initializerPtr_; }
 
   const ScalarFunctionQuadraticApproximation& nominalCostApproximation() const override { return nominalCostApproximation_; }
@@ -35,7 +33,6 @@ class QuadrupedWheeledInterface : public QuadrupedInterface {
  private:
   std::unique_ptr<initializer_t> initializerPtr_;
   std::unique_ptr<time_triggered_rollout_t> timeTriggeredRolloutPtr_;
-  synchronized_module_ptr_array_t solverModules_;
   ScalarFunctionQuadraticApproximation nominalCostApproximation_;
 };
 

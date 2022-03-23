@@ -15,6 +15,7 @@ std::unique_ptr<ocs2::MPC_BASE> getDdpMpc(const QuadrupedLoopshapingInterface& q
                                                                       quadrupedInterface.getOptimalControlProblem(),
                                                                       quadrupedInterface.getInitializer()));
   mpcPtr->getSolverPtr()->setReferenceManager(quadrupedInterface.getReferenceManagerPtr());
+  mpcPtr->getSolverPtr()->setSynchronizedModules({quadrupedInterface.getLoopshapingSynchronizedModule()});
   return mpcPtr;
 }
 
@@ -23,6 +24,7 @@ std::unique_ptr<ocs2::MPC_BASE> getSqpMpc(const QuadrupedLoopshapingInterface& q
   std::unique_ptr<ocs2::MPC_BASE> mpcPtr(new ocs2::MultipleShootingMpc(
       mpcSettings, sqpSettings, quadrupedInterface.getOptimalControlProblem(), quadrupedInterface.getInitializer()));
   mpcPtr->getSolverPtr()->setReferenceManager(quadrupedInterface.getReferenceManagerPtr());
+  mpcPtr->getSolverPtr()->setSynchronizedModules({quadrupedInterface.getLoopshapingSynchronizedModule()});
   return mpcPtr;
 }
 

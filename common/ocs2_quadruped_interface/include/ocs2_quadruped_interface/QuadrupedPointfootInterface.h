@@ -25,8 +25,6 @@ class QuadrupedPointfootInterface : public QuadrupedInterface {
 
   const ocs2::TimeTriggeredRollout& getRollout() const override { return *timeTriggeredRolloutPtr_; };
 
-  const synchronized_module_ptr_array_t& getSynchronizedModules() const override { return solverModules_; };
-
   const ComKinoInitializer& getInitializer() const override { return *initializerPtr_; }
 
   const ScalarFunctionQuadraticApproximation& nominalCostApproximation() const override { return nominalCostApproximation_; }
@@ -34,7 +32,6 @@ class QuadrupedPointfootInterface : public QuadrupedInterface {
  private:
   std::unique_ptr<ComKinoInitializer> initializerPtr_;
   std::unique_ptr<ocs2::TimeTriggeredRollout> timeTriggeredRolloutPtr_;
-  synchronized_module_ptr_array_t solverModules_;
   ScalarFunctionQuadraticApproximation nominalCostApproximation_;
 };
 

@@ -507,10 +507,6 @@ scalar_t MultipleShootingSolver::trajectoryNorm(const vector_array_t& v) {
   return std::sqrt(norm);
 }
 
-scalar_t MultipleShootingSolver::totalConstraintViolation(const PerformanceIndex& performance) const {
-  return std::sqrt(performance.dynamicsViolationSSE + performance.equalityConstraintsSSE);
-}
-
 multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIndex& baseline,
                                                              const std::vector<AnnotatedTime>& timeDiscretization,
                                                              const vector_t& initState, const OcpSubproblemSolution& subproblemSolution,
@@ -538,7 +534,12 @@ multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIn
   const auto& du = subproblemSolution.deltaUSol;
   const auto& armijoDescentMetric = subproblemSolution.armijoDescentMetric;
 
-  const scalar_t baselineConstraintViolation = totalConstraintViolation(baseline);
+  // Total Constraint violation function
+  auto constraintViolation = [](const PerformanceIndex& performance) -> scalar_t {
+    return std::sqrt(performance.dynamicsViolationSSE + performance.equalityConstraintsSSE);
+  };
+
+  const scalar_t baselineConstraintViolation = constraintViolation(baseline);
 
   // Update norm
   const scalar_t deltaUnorm = trajectoryNorm(du);
@@ -563,7 +564,7 @@ multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIn
 
     // Compute cost and constraints
     const PerformanceIndex performanceNew = computePerformance(timeDiscretization, initState, xNew, uNew);
-    const scalar_t newConstraintViolation = totalConstraintViolation(performanceNew);
+    const scalar_t newConstraintViolation = constraintViolation(performanceNew);
 
     // Step acceptance and record step type
     const bool stepAccepted = [&]() {

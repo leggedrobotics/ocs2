@@ -8,7 +8,7 @@
 #include "ocs2_switched_model_interface/cost/FrictionConeCost.h"
 
 #include <ocs2_core/misc/LinearAlgebra.h>
-#include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenalty.h>
+#include <ocs2_core/penalties/Penalties.h>
 
 using namespace switched_model;
 

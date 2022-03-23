@@ -7,7 +7,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Catkin packages we depend on
 set(CATKIN_PACKAGE_DEPENDENCIES
   roslib
-  ocs2_raisim
+  ocs2_raisim_core
   ocs2_raisim_ros
   ocs2_quadruped_interface
   ocs2_anymal_models

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <ocs2_quadruped_interface/QuadrupedInterface.h>
-#include <ocs2_raisim/RaisimRolloutSettings.h>
+#include <ocs2_raisim_core/RaisimRolloutSettings.h>
 #include <ocs2_switched_model_interface/core/WholebodyDynamics.h>
 #include <ros/node_handle.h>
 

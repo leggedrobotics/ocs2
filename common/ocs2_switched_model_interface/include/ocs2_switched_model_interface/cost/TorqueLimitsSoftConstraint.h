@@ -5,7 +5,7 @@
 #pragma once
 
 #include <ocs2_core/cost/StateInputCost.h>
-#include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenalty.h>
+#include <ocs2_core/penalties/Penalties.h>
 
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 

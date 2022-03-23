@@ -17,7 +17,7 @@
   <build_depend>cmake_clang_tools</build_depend>
 
   <depend>roslib</depend>
-  <depend>ocs2_raisim</depend>
+  <depend>ocs2_raisim_core</depend>
   <depend>ocs2_raisim_ros</depend>
   <depend>ocs2_quadruped_interface</depend>
   <depend>ocs2_anymal_models</depend>

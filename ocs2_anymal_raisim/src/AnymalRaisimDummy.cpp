@@ -2,7 +2,7 @@
 #include <ocs2_anymal_raisim/AnymalRaisimDummy.h>
 
 #include <ocs2_quadruped_interface/QuadrupedDummyNode.h>
-#include <ocs2_raisim/RaisimRollout.h>
+#include <ocs2_raisim_core/RaisimRollout.h>
 #include <ocs2_raisim_ros/RaisimHeightmapRosConverter.h>
 #include <ocs2_switched_model_interface/core/SwitchedModelStateEstimator.h>
 

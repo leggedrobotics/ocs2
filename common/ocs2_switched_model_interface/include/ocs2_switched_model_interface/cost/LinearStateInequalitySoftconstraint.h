@@ -6,7 +6,7 @@
 
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
 
-#include <ocs2_core/soft_constraint/penalties/PenaltyBase.h>
+#include <ocs2_core/penalties/penalties/PenaltyBase.h>
 
 namespace switched_model {
 /**

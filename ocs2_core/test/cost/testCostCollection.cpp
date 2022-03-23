@@ -46,9 +46,9 @@ class SimpleQuadraticCost final : public ocs2::StateInputCost {
     return 0.5 * x.dot(Q_ * x) + 0.5 * u.dot(R_ * u);
   }
 
-  ocs2::ScalarFunctionQuadraticApproximation getQuadraticApproximation(
-      ocs2::scalar_t t, const ocs2::vector_t& x, const ocs2::vector_t& u,
-      const ocs2::TargetTrajectories& targetTrajectories, const ocs2::PreComputation&) const override {
+  ocs2::ScalarFunctionQuadraticApproximation getQuadraticApproximation(ocs2::scalar_t t, const ocs2::vector_t& x, const ocs2::vector_t& u,
+                                                                       const ocs2::TargetTrajectories& targetTrajectories,
+                                                                       const ocs2::PreComputation&) const override {
     ocs2::ScalarFunctionQuadraticApproximation quadraticApproximation;
     quadraticApproximation.f = 0.5 * x.dot(Q_ * x) + 0.5 * u.dot(R_ * u);
     quadraticApproximation.dfdx = Q_ * x;
@@ -161,14 +161,14 @@ class SimpleQuadraticFinalCost final : public ocs2::StateCost {
 
   SimpleQuadraticFinalCost* clone() const override { return new SimpleQuadraticFinalCost(*this); }
 
-  ocs2::scalar_t getValue(ocs2::scalar_t t, const ocs2::vector_t& x,
-                          const ocs2::TargetTrajectories& targetTrajectories, const ocs2::PreComputation&) const override {
+  ocs2::scalar_t getValue(ocs2::scalar_t t, const ocs2::vector_t& x, const ocs2::TargetTrajectories& targetTrajectories,
+                          const ocs2::PreComputation&) const override {
     return 0.5 * x.dot(Q_ * x);
   }
 
-  ocs2::ScalarFunctionQuadraticApproximation getQuadraticApproximation(
-      ocs2::scalar_t t, const ocs2::vector_t& x, const ocs2::TargetTrajectories& targetTrajectories,
-      const ocs2::PreComputation&) const override {
+  ocs2::ScalarFunctionQuadraticApproximation getQuadraticApproximation(ocs2::scalar_t t, const ocs2::vector_t& x,
+                                                                       const ocs2::TargetTrajectories& targetTrajectories,
+                                                                       const ocs2::PreComputation&) const override {
     ocs2::ScalarFunctionQuadraticApproximation quadraticApproximation;
     quadraticApproximation.f = 0.5 * x.dot(Q_ * x);
     quadraticApproximation.dfdx = Q_ * x;

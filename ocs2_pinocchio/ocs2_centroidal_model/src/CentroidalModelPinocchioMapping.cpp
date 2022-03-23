@@ -150,7 +150,9 @@ auto CentroidalModelPinocchioMappingTpl<SCALAR>::getOcs2Jacobian(const vector_t&
       floatingBaseVelocitiesDerivativeState.middleCols(6, 6).noalias() = -Ab_inv * dhdq.leftCols(6);
       break;
     }
-    default: { throw std::runtime_error("The chosen centroidal model type is not supported."); }
+    default: {
+      throw std::runtime_error("The chosen centroidal model type is not supported.");
+    }
   }
 
   matrix_t dvdx = matrix_t::Zero(info.generalizedCoordinatesNum, info.stateDim);

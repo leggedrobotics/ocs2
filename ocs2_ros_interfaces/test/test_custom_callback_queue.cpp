@@ -29,29 +29,27 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <thread>
 
+#include <ros/callback_queue.h>
 #include <ros/ros.h>
 #include "std_msgs/String.h"
-#include <ros/callback_queue.h>
 
 // Global queue: will be available as a member variable
 ros::CallbackQueue my_queue;
 
-void chatterCallback(const std_msgs::String::ConstPtr& msg)
-{
+void chatterCallback(const std_msgs::String::ConstPtr& msg) {
   printf("I heard: [%s]\n", msg->data.c_str());
 }
 
-void subscriberWorker()
-{
+void subscriberWorker() {
   ros::Rate loop_rate(30);
-  while (ros::ok()){
+  while (ros::ok()) {
     std::cout << "Check for new messages" << std::endl;
     my_queue.callOne();
     loop_rate.sleep();
   }
 }
 
-int main( int argc, char* argv[] ){
+int main(int argc, char* argv[]) {
   ros::init(argc, argv, "my_node");
 
   // Publisher
@@ -71,8 +69,7 @@ int main( int argc, char* argv[] ){
   ros::Rate loop_rate(10);
 
   int count = 0;
-  while (ros::ok())
-  {
+  while (ros::ok()) {
     std_msgs::String msg;
     std::stringstream ss;
     ss << "hello world " << count;
@@ -85,7 +82,9 @@ int main( int argc, char* argv[] ){
     ++count;
   }
 
-  if (subscriberThread.joinable()) { subscriberThread.join(); };
+  if (subscriberThread.joinable()) {
+    subscriberThread.join();
+  };
 
   return 0;
 }

@@ -45,18 +45,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ddp/ILQR.h>
 #include <ocs2_ddp/SLQ.h>
 
-enum class Partitioning { SINGLE, MULTI };
+enum class NumThreads { SINGLE, MULTI };
 enum class Constraining { CONSTARINED, UNCONSTRAINED };
 
-class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Type, Constraining, Partitioning>> {
+class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Type, Constraining, NumThreads>> {
  protected:
   static constexpr size_t N = 50;
   static constexpr size_t STATE_DIM = 3;
   static constexpr size_t INPUT_DIM = 2;
-  static constexpr ocs2::scalar_t solutionPrecision = 2e-3;
+  static constexpr ocs2::scalar_t solutionPrecision = 5e-3;
   static constexpr size_t numStateInputConstraints = 2;
-  static constexpr size_t numStateOnlyConstraints = 0;
-  static constexpr size_t numFinalStateOnlyConstraints = 0;
 
   DDPCorrectness() {
     srand(0);
@@ -76,7 +74,8 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
     ocs2::vector_array_t inputTrajectoryTemp(N);
     std::copy(nominalTrajectory.inputTrajectory.begin(), nominalTrajectory.inputTrajectory.end(), inputTrajectoryTemp.begin());
     inputTrajectoryTemp.push_back(inputTrajectoryTemp.back());
-    operatingPointsPtr.reset(new ocs2::OperatingPoints(nominalTrajectory.timeTrajectory, nominalTrajectory.stateTrajectory, inputTrajectoryTemp));
+    operatingPointsPtr.reset(
+        new ocs2::OperatingPoints(nominalTrajectory.timeTrajectory, nominalTrajectory.stateTrajectory, inputTrajectoryTemp));
 
     // rollout settings
     const ocs2::rollout::Settings rolloutSettings = []() {
@@ -96,10 +95,6 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
   }
 
   bool createFeasibleRandomProblem() {
-    static_assert(numStateInputConstraints + numStateOnlyConstraints <= INPUT_DIM,
-                  "The number of constraints must be less or equal to INPUT_DIM");
-    static_assert(numFinalStateOnlyConstraints <= STATE_DIM, "The number of final constraints must be less or equal to STATE_DIM");
-
     // dynamics
     systemPtr = ocs2::getOcs2Dynamics(ocs2::getRandomDynamics(STATE_DIM, INPUT_DIM));
     problemPtr.reset(new ocs2::OptimalControlProblem);
@@ -108,17 +103,12 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
     // cost
     problemPtr->costPtr->add("cost", ocs2::getOcs2Cost(ocs2::getRandomCost(STATE_DIM, INPUT_DIM)));
     problemPtr->finalCostPtr->add("finalCost", ocs2::getOcs2StateCost(ocs2::getRandomCost(STATE_DIM, 0)));
-    targetTrajectories =
-        ocs2::TargetTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
+    targetTrajectories = ocs2::TargetTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
 
     // constraint
     if (std::get<1>(GetParam()) == Constraining::CONSTARINED) {
       problemPtr->equalityConstraintPtr->add(
           "equality", ocs2::getOcs2Constraints(ocs2::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateInputConstraints)));
-      problemPtr->stateEqualityConstraintPtr->add(
-          "stateEquality", ocs2::getOcs2StateOnlyConstraints(ocs2::getRandomConstraints(STATE_DIM, 0, numStateOnlyConstraints)));
-      problemPtr->finalEqualityConstraintPtr->add(
-          "finalEquality", ocs2::getOcs2StateOnlyConstraints(ocs2::getRandomConstraints(STATE_DIM, 0, numFinalStateOnlyConstraints)));
     }
 
     // system operating points
@@ -173,16 +163,16 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
 
   ocs2::search_strategy::Type getSearchStrategy() { return std::get<0>(GetParam()); }
 
-  ocs2::scalar_array_t getPartitioningTimes() {
-    const auto partitioning = std::get<2>(GetParam());
-    if (partitioning == Partitioning::SINGLE) {
-      return {startTime, finalTime};
+  size_t getNumThreads() const {
+    const auto n = std::get<2>(GetParam());
+    if (n == NumThreads::SINGLE) {
+      return 1;
     } else {
-      return {startTime, (startTime + finalTime) / 2.0, finalTime};
+      return 2;
     }
   }
 
-  ocs2::ddp::Settings getSettings(ocs2::ddp::Algorithm algorithmType, size_t numPartitions, ocs2::search_strategy::Type strategy,
+  ocs2::ddp::Settings getSettings(ocs2::ddp::Algorithm algorithmType, size_t numThreads, ocs2::search_strategy::Type strategy,
                                   bool display = false) const {
     ocs2::ddp::Settings ddpSettings;
     ddpSettings.algorithm_ = algorithmType;
@@ -192,9 +182,8 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
     ddpSettings.relTolODE_ = 1e-7;
     ddpSettings.maxNumStepsPerSecond_ = 10000;
     ddpSettings.minRelCost_ = 1e-3;
-    ddpSettings.useNominalTimeForBackwardPass_ = false;
-    ddpSettings.nThreads_ = numPartitions;
-    ddpSettings.maxNumIterations_ = 2 + (numPartitions - 1);  // need an extra iteration for each added time partition
+    ddpSettings.nThreads_ = numThreads;
+    ddpSettings.maxNumIterations_ = 2 + (numThreads - 1);  // need an extra iteration for each added time partition
     ddpSettings.strategy_ = strategy;
     ddpSettings.lineSearch_.minStepLength_ = 1e-4;
     return ddpSettings;
@@ -225,7 +214,7 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
   void correctnessTest(const ocs2::ddp::Settings& ddpSettings, const ocs2::PerformanceIndex& performanceIndex,
                        const ocs2::PrimalSolution& ddpSolution) const {
     const auto testName = getTestName(ddpSettings);
-    EXPECT_LT(fabs(performanceIndex.totalCost - qpCost), 10 * ddpSettings.minRelCost_)
+    EXPECT_LT(fabs(performanceIndex.cost - qpCost), 10 * ddpSettings.minRelCost_)
         << "MESSAGE: " << testName << ": failed in the optimal cost test!";
     EXPECT_LT(relError(ddpSolution.stateTrajectory_.back(), qpSolution.stateTrajectory.back()), solutionPrecision)
         << "MESSAGE: " << testName << ": failed in the optimal final state test!";
@@ -254,23 +243,20 @@ constexpr size_t DDPCorrectness::N;
 constexpr size_t DDPCorrectness::STATE_DIM;
 constexpr size_t DDPCorrectness::INPUT_DIM;
 constexpr size_t DDPCorrectness::numStateInputConstraints;
-constexpr size_t DDPCorrectness::numStateOnlyConstraints;
-constexpr size_t DDPCorrectness::numFinalStateOnlyConstraints;
 constexpr ocs2::scalar_t DDPCorrectness::solutionPrecision;
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_P(DDPCorrectness, DISABLED_TestSLQ) {
+TEST_P(DDPCorrectness, TestSLQ) {
   // settings
-  ocs2::scalar_array_t partitioningTimes = getPartitioningTimes();
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, partitioningTimes.size() - 1, getSearchStrategy());
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, getNumThreads(), getSearchStrategy());
 
   // ddp
   ocs2::SLQ ddp(ddpSettings, *rolloutPtr, *problemPtr, *operatingPointsPtr);
 
   ddp.getReferenceManager().setTargetTrajectories(targetTrajectories);
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  ddp.run(startTime, initState, finalTime);
   const auto performanceIndex = ddp.getPerformanceIndeces();
   const auto solution = ddp.primalSolution(finalTime);
 
@@ -282,14 +268,13 @@ TEST_P(DDPCorrectness, DISABLED_TestSLQ) {
 /******************************************************************************************************/
 TEST_P(DDPCorrectness, TestILQR) {
   // settings
-  ocs2::scalar_array_t partitioningTimes = getPartitioningTimes();
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, partitioningTimes.size() - 1, getSearchStrategy());
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, getNumThreads(), getSearchStrategy());
 
   // ddp
   ocs2::ILQR ddp(ddpSettings, *rolloutPtr, *problemPtr, *operatingPointsPtr);
 
   ddp.getReferenceManager().setTargetTrajectories(targetTrajectories);
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  ddp.run(startTime, initState, finalTime);
   const auto performanceIndex = ddp.getPerformanceIndeces();
   const auto solution = ddp.primalSolution(finalTime);
 
@@ -305,13 +290,16 @@ std::string testName(const testing::TestParamInfo<DDPCorrectness::ParamType>& in
   name += ocs2::search_strategy::toString(std::get<0>(info.param)) + "__";
   name += std::get<1>(info.param) == Constraining::CONSTARINED ? "CONSTARINED" : "UNCONSTRAINED";
   name += "__";
-  name += std::get<2>(info.param) == Partitioning::SINGLE ? "SINGLE_PARTITION" : "MULTI_PARTITION";
+  name += std::get<2>(info.param) == NumThreads::SINGLE ? "SINGLE_THREAD" : "MULTI_THREAD";
   return name;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 INSTANTIATE_TEST_CASE_P(DDPCorrectnessTestCase, DDPCorrectness,
                         testing::Combine(testing::ValuesIn({ocs2::search_strategy::Type::LINE_SEARCH,
                                                             ocs2::search_strategy::Type::LEVENBERG_MARQUARDT}),
                                          testing::ValuesIn({Constraining::CONSTARINED, Constraining::UNCONSTRAINED}),
-                                         testing::ValuesIn({Partitioning::SINGLE, Partitioning::MULTI})),
+                                         testing::ValuesIn({NumThreads::SINGLE, NumThreads::MULTI})),
                         testName);

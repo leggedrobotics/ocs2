@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ocs2_raisim_core</name>
+  <version>0.0.1</version>
+  <description>The ocs2_raisim_core package</description>
+
+  <maintainer email="farbod.farshidian@gmail.com">Farbod Farshidian</maintainer>
+  <maintainer email="jcarius@ethz.ch">Jan Carius</maintainer>
+  <maintainer email="rgrandia@ethz.ch">Ruben Grandia</maintainer>
+
+  <license>BSD</license>
+
+  <author email="jcarius@ethz.ch">Jan Carius</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>cmake_modules</build_depend>
+  <build_depend>cmake_clang_tools</build_depend>
+
+  <depend>ocs2_core</depend>
+  <depend>ocs2_oc</depend>
+
+</package>

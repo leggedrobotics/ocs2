@@ -44,15 +44,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * Declares an access function of name FIELD such as time, dynamics, dynamicsBias, ...
  * For example the signature of function for dynamics is:
  * const vector_t& dynamics(const std::vector<ocs2::ModelData>& vec, size_t n) {
- *   return vec[n].dynamic_;
+ *   return vec[n].dynamics;
  * }
  */
 #define CREATE_INTERPOLATION_ACCESS_FUNCTION(FIELD) \
-  inline auto FIELD(const std::vector<ocs2::ModelData>& vec, size_t ind)->const decltype(vec[ind].FIELD##_)& { return vec[ind].FIELD##_; }
+  inline auto FIELD(const std::vector<ocs2::ModelData>& vec, size_t ind)->const decltype(vec[ind].FIELD)& { return vec[ind].FIELD; }
 
-#define CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(FIELD, SUBFIELD)                                                               \
-  inline auto FIELD##_##SUBFIELD(const std::vector<ocs2::ModelData>& vec, size_t ind)->const decltype(vec[ind].FIELD##_.SUBFIELD)& { \
-    return vec[ind].FIELD##_.SUBFIELD;                                                                                               \
+#define CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(FIELD, SUBFIELD)                                                            \
+  inline auto FIELD##_##SUBFIELD(const std::vector<ocs2::ModelData>& vec, size_t ind)->const decltype(vec[ind].FIELD.SUBFIELD)& { \
+    return vec[ind].FIELD.SUBFIELD;                                                                                               \
   }
 
 namespace ocs2 {
@@ -62,32 +62,32 @@ namespace model_data {
  * Access method for different subfields of the ModelData.
  */
 
-// time
+// Time
 CREATE_INTERPOLATION_ACCESS_FUNCTION(time)
 
-// dynamics
-CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(dynamics, f)
+// Dynamics
 CREATE_INTERPOLATION_ACCESS_FUNCTION(dynamicsBias)
+CREATE_INTERPOLATION_ACCESS_FUNCTION(dynamicsCovariance)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(dynamics, f)
 CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(dynamics, dfdx)
 CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(dynamics, dfdu)
-CREATE_INTERPOLATION_ACCESS_FUNCTION(dynamicsCovariance)
 
-// cost
+// Cost
 CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(cost, f)
 CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(cost, dfdx)
-CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(cost, dfdu)
 CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(cost, dfdxx)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(cost, dfdu)
 CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(cost, dfduu)
 CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(cost, dfdux)
 
-// state equality constraints
-CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(stateEqConstr, f)
-CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(stateEqConstr, dfdx)
+// State equality constraints
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(stateEqConstraint, f)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(stateEqConstraint, dfdx)
 
-// state-input equality constraints
-CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(stateInputEqConstr, f)
-CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(stateInputEqConstr, dfdx)
-CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(stateInputEqConstr, dfdu)
+// State-input equality constraints
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(stateInputEqConstraint, f)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(stateInputEqConstraint, dfdx)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(stateInputEqConstraint, dfdu)
 
 }  // namespace model_data
 }  // namespace ocs2

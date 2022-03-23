@@ -46,16 +46,16 @@ std::ostream& operator<<(std::ostream& stream, const LogEntry& logEntry) {
           << logEntry.solveQpTime << delim
           << logEntry.linesearchTime << delim
           << logEntry.baselinePerformanceIndex.merit << delim
-          << logEntry.baselinePerformanceIndex.stateEqConstraintISE << delim
-          << logEntry.baselinePerformanceIndex.stateInputEqConstraintISE << delim
+          << logEntry.baselinePerformanceIndex.dynamicsViolationSSE << delim
+          << logEntry.baselinePerformanceIndex.equalityConstraintsSSE << delim
           << logEntry.totalConstraintViolationBaseline << delim
           << logEntry.stepInfo.stepSize << delim
           << toString(logEntry.stepInfo.stepType) << delim
           << logEntry.stepInfo.dx_norm << delim
           << logEntry.stepInfo.du_norm << delim
           << logEntry.stepInfo.performanceAfterStep.merit << delim
-          << logEntry.stepInfo.performanceAfterStep.stateEqConstraintISE << delim
-          << logEntry.stepInfo.performanceAfterStep.stateInputEqConstraintISE << delim
+          << logEntry.stepInfo.performanceAfterStep.dynamicsViolationSSE << delim
+          << logEntry.stepInfo.performanceAfterStep.equalityConstraintsSSE << delim
           << logEntry.stepInfo.totalConstraintViolationAfterStep << delim
           << toString(logEntry.convergence) << lineEnd;
   // clang-format on
@@ -74,16 +74,16 @@ std::string logHeader() {
           << "solveQpTime" << delim
           << "linesearchTime" << delim
           << "baselinePerformanceIndex/merit" << delim
-          << "baselinePerformanceIndex/stateEqConstraintISE" << delim
-          << "baselinePerformanceIndex/stateInputEqConstraintISE" << delim
+          << "baselinePerformanceIndex/dynamicsViolationSSE" << delim
+          << "baselinePerformanceIndex/equalityConstraintsSSE" << delim
           << "totalConstraintViolationBaseline" << delim
           << "stepSize" << delim
           << "stepType" << delim
           << "dxNorm" << delim
           << "duNorm" << delim
           << "performanceAfterStep/merit" << delim
-          << "performanceAfterStep/stateEqConstraintISE" << delim
-          << "performanceAfterStep/stateInputEqConstraintISE" << delim
+          << "performanceAfterStep/dynamicsViolationSSE" << delim
+          << "performanceAfterStep/equalityConstraintsSSE" << delim
           << "totalConstraintViolationAfterStep" << delim
           << "convergence" << lineEnd;
   // clang-format on

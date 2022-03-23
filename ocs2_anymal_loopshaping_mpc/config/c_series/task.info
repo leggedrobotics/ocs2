@@ -137,11 +137,11 @@ ddp
 {
   algorithm                       SLQ
 
-  nThreads                        3
+  nThreads                        4
   threadPriority                  50
 
-  maxNumIterations                10
-  minRelCost                      0.1
+  maxNumIterations                1
+  minRelCost                      1e-1
   constraintTolerance             5e-3
 
   displayInfo                     false
@@ -153,20 +153,15 @@ ddp
   AbsTolODE                       1e-5
   RelTolODE                       1e-3
   maxNumStepsPerSecond            10000
-  timeStep                        1e-2
+  timeStep                        0.015
   backwardPassIntegratorType      ODE45
 
-  constraintPenaltyInitialValue   2.0
+  constraintPenaltyInitialValue   20.0
   constraintPenaltyIncreaseRate   2.0
-  inequalityConstraintMu          0.1
-  inequalityConstraintDelta       5.0
 
   preComputeRiccatiTerms          true
-  useNominalTimeForBackwardPass   true
 
   useFeedbackPolicy               true
-
-  riskSensitiveCoeff              0.0
 
   strategy                        LINE_SEARCH
   lineSearch
@@ -183,28 +178,19 @@ rollout
 {
   AbsTolODE                     1e-5
   RelTolODE                     1e-3
-  timeStep                      1e-2
-  maxNumStepsPerSecond          50000
+  timeStep                      0.015
+  integratorType                ODE45
+  maxNumStepsPerSecond          10000
   checkNumericalStability       false
 }
 
 mpc
 {
   timeHorizon                     1.0
-  numPartitions                   2
-
-  runtimeMaxNumIterations         1
-  initMaxNumIterations            1
-
-  runtimeMinStepLength            1e-2
-  runtimeMaxStepLength            1.0
-  initMinStepLength               1e-2
-  initMaxStepLength               1.0
-
-  debugPrint                      false
+  solutionTimeWindow              -1  ; [s]
   coldStart                       false
 
-  solutionTimeWindow              -1  ; [s]
+  debugPrint                      false
 
   mpcDesiredFrequency             20  ; [Hz]
   mrtDesiredFrequency             400 ; [Hz]

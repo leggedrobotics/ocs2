@@ -1,6 +1,6 @@
 #include "ocs2_anymal_mpc/AnymalPyBindings.h"
 
-#include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenalty.h>
+#include <ocs2_core/penalties/Penalties.h>
 #include <ocs2_ddp/DDP_Settings.h>
 #include <ocs2_mpc/MPC_Settings.h>
 #include <ocs2_quadruped_interface/QuadrupedMpc.h>
@@ -19,8 +19,8 @@ AnymalPyBindings::AnymalPyBindings(const std::string& taskFile, const std::strin
 
   init(*anymalInterface, std::move(mpcPtr));
 
-  penalty_.reset(new ocs2::RelaxedBarrierPenalty(
-      ocs2::RelaxedBarrierPenalty::Config(ddpSettings.inequalityConstraintMu_, ddpSettings.inequalityConstraintDelta_)));
+  penalty_.reset(new ocs2::RelaxedBarrierPenalty(ocs2::RelaxedBarrierPenalty::Config(anymalInterface->modelSettings().muFrictionCone_,
+                                                                                     anymalInterface->modelSettings().deltaFrictionCone_)));
 }
 
 void AnymalPyBindings::visualizeTrajectory(const ocs2::scalar_array_t& t, const ocs2::vector_array_t& x, const ocs2::vector_array_t& u,

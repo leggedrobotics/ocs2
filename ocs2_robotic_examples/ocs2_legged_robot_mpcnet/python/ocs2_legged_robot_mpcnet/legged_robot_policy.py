@@ -44,10 +44,9 @@ def u_transform(u):
 
 
 class LeggedRobotLinearPolicy(policy.LinearPolicy):
-
     def __init__(self, dim_t, dim_x, dim_u):
         super().__init__(dim_t, dim_x, dim_u)
-        self.name = 'LeggedRobotLinearPolicy'
+        self.name = "LeggedRobotLinearPolicy"
 
     def forward(self, t, x):
         u = super().forward(t, x)
@@ -55,10 +54,9 @@ class LeggedRobotLinearPolicy(policy.LinearPolicy):
 
 
 class LeggedRobotNonlinearPolicy(policy.NonlinearPolicy):
-
     def __init__(self, dim_t, dim_x, dim_u):
         super().__init__(dim_t, dim_x, dim_u)
-        self.name = 'LeggedRobotNonlinearPolicy'
+        self.name = "LeggedRobotNonlinearPolicy"
 
     def forward(self, t, x):
         u = super().forward(t, x)
@@ -66,10 +64,9 @@ class LeggedRobotNonlinearPolicy(policy.NonlinearPolicy):
 
 
 class LeggedRobotMixtureOfLinearExpertsPolicy(policy.MixtureOfLinearExpertsPolicy):
-
     def __init__(self, dim_t, dim_x, dim_u, num_experts):
         super().__init__(dim_t, dim_x, dim_u, num_experts)
-        self.name = 'LeggedRobotMixtureOfLinearExpertsPolicy'
+        self.name = "LeggedRobotMixtureOfLinearExpertsPolicy"
 
     def forward(self, t, x):
         u, p = super().forward(t, x)
@@ -77,10 +74,9 @@ class LeggedRobotMixtureOfLinearExpertsPolicy(policy.MixtureOfLinearExpertsPolic
 
 
 class LeggedRobotMixtureOfNonlinearExpertsPolicy(policy.MixtureOfNonlinearExpertsPolicy):
-
     def __init__(self, dim_t, dim_x, dim_u, num_experts):
         super().__init__(dim_t, dim_x, dim_u, num_experts)
-        self.name = 'LeggedRobotMixtureOfNonlinearExpertsPolicy'
+        self.name = "LeggedRobotMixtureOfNonlinearExpertsPolicy"
 
     def forward(self, t, x):
         u, p = super().forward(t, x)

@@ -121,23 +121,35 @@ def get_tasks(n_tasks, duration, choices):
     target_trajectories = helper.get_target_trajectories_array(n_tasks)
     for i in range(n_tasks):
         if choices[i] == "stance":
-            initial_observations[i] = helper.get_system_observation(15, 0.0, get_random_initial_state_stance(), np.zeros(config.INPUT_DIM))
+            initial_observations[i] = helper.get_system_observation(
+                15, 0.0, get_random_initial_state_stance(), np.zeros(config.INPUT_DIM)
+            )
             mode_schedules[i] = helper.get_mode_schedule(*get_stance(duration))
-            target_trajectories[i] = helper.get_target_trajectories(duration * np.ones((1, 1)),
-                                                                    get_random_target_state_stance().reshape((1, config.STATE_DIM)),
-                                                                    np.zeros((1, config.INPUT_DIM)))
+            target_trajectories[i] = helper.get_target_trajectories(
+                duration * np.ones((1, 1)),
+                get_random_target_state_stance().reshape((1, config.STATE_DIM)),
+                np.zeros((1, config.INPUT_DIM)),
+            )
         elif choices[i] == "trot_1":
-            initial_observations[i] = helper.get_system_observation(15, 0.0, get_random_initial_state_trot(), np.zeros(config.INPUT_DIM))
+            initial_observations[i] = helper.get_system_observation(
+                15, 0.0, get_random_initial_state_trot(), np.zeros(config.INPUT_DIM)
+            )
             mode_schedules[i] = helper.get_mode_schedule(*get_trot_1(duration))
-            target_trajectories[i] = helper.get_target_trajectories(duration * np.ones((1, 1)),
-                                                                    get_random_target_state_trot().reshape((1, config.STATE_DIM)),
-                                                                    np.zeros((1, config.INPUT_DIM)))
+            target_trajectories[i] = helper.get_target_trajectories(
+                duration * np.ones((1, 1)),
+                get_random_target_state_trot().reshape((1, config.STATE_DIM)),
+                np.zeros((1, config.INPUT_DIM)),
+            )
         elif choices[i] == "trot_2":
-            initial_observations[i] = helper.get_system_observation(15, 0.0, get_random_initial_state_trot(), np.zeros(config.INPUT_DIM))
+            initial_observations[i] = helper.get_system_observation(
+                15, 0.0, get_random_initial_state_trot(), np.zeros(config.INPUT_DIM)
+            )
             mode_schedules[i] = helper.get_mode_schedule(*get_trot_2(duration))
-            target_trajectories[i] = helper.get_target_trajectories(duration * np.ones((1, 1)),
-                                                                    get_random_target_state_trot().reshape((1, config.STATE_DIM)),
-                                                                    np.zeros((1, config.INPUT_DIM)))
+            target_trajectories[i] = helper.get_target_trajectories(
+                duration * np.ones((1, 1)),
+                get_random_target_state_trot().reshape((1, config.STATE_DIM)),
+                np.zeros((1, config.INPUT_DIM)),
+            )
     return initial_observations, mode_schedules, target_trajectories
 
 

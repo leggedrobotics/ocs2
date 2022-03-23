@@ -52,3 +52,12 @@ TEST(testLoadMotions, loadAnimatedmotion) {
 
   ASSERT_TRUE(isValidGait(gait));
 }
+
+TEST(testLoadMotions, loadAnimatedCartesianMotion) {
+  const auto file = getAbsolutePathToConfigurationFile("data/cartesianMotion.txt");
+  const auto csvData = readCsv(file);
+  const auto result = readCartesianMotion(csvData);
+  const auto& gait = result.second;
+
+  ASSERT_TRUE(isValidGait(gait));
+}

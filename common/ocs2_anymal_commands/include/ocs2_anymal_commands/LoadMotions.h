@@ -42,8 +42,23 @@ CsvData readCsv(const std::string& fileName);
  * @param dt : approximate sampling interval. Reference points closer than this dt will be dropped. Set to negative to load all points.
  * @return reference motion and gait
  */
-std::pair<ocs2::TargetTrajectories, Gait> readMotion(const CsvData& fileName, scalar_t dt = -1.0);
+std::pair<ocs2::TargetTrajectories, Gait> readMotion(const CsvData& csvData, scalar_t dt = -1.0);
 
 void verifyHeader(const std::vector<std::string>& provided);
+
+/**
+ * Convert csv data into a cartesian motion reference and gait
+ *
+ * Expects the following header:
+ *
+ * @param fileName : absolute path of the file
+ * @param dt : approximate sampling interval. Reference points closer than this dt will be dropped. Set to negative to load all points.
+ * @return reference motion and gait
+ */
+std::pair<ocs2::TargetTrajectories, Gait> readCartesianMotion(const CsvData& csvData, scalar_t dt = -1.0);
+
+void verifyCartesianHeader(const std::vector<std::string>& provided);
+
+void verifyHeaderImpl(const std::vector<std::string>& expected, const std::vector<std::string>& provided);
 
 }  // namespace switched_model

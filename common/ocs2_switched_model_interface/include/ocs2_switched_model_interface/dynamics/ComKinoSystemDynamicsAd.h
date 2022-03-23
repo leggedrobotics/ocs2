@@ -22,7 +22,6 @@ class ComKinoSystemDynamicsAd : public ocs2::SystemDynamicsBaseAD {
   using ad_parameters_t = ComKinoSystemDynamicsParameters<ad_scalar_t>;
 
   explicit ComKinoSystemDynamicsAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
-                                   const SwitchedModelModeScheduleManager& modeScheduleManager,
                                    const DynamicsParametersSynchronizedModule& dynamicsParametersModule, ModelSettings settings);
 
   ComKinoSystemDynamicsAd(const ComKinoSystemDynamicsAd& rhs);

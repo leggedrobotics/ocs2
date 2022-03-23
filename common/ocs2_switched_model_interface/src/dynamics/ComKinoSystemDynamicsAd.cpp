@@ -38,7 +38,6 @@ base_coordinate_s_t<SCALAR_T> computeExternalForcesInBaseFrame(const KinematicsM
 }  // namespace
 
 ComKinoSystemDynamicsAd::ComKinoSystemDynamicsAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
-                                                 const SwitchedModelModeScheduleManager& modeScheduleManager,
                                                  const DynamicsParametersSynchronizedModule& dynamicsParametersModule,
                                                  ModelSettings settings)
     : adKinematicModelPtr_(adKinematicModel.clone()),

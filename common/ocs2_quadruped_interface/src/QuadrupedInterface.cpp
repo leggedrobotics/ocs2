@@ -93,8 +93,7 @@ std::unique_ptr<ocs2::StateInputCost> QuadrupedInterface::createTorqueLimitsSoft
 
 std::unique_ptr<ocs2::SystemDynamicsBase> QuadrupedInterface::createDynamics() const {
   return std::unique_ptr<ocs2::SystemDynamicsBase>(
-      new ComKinoSystemDynamicsAd(getKinematicModelAd(), getComModelAd(), *getSwitchedModelModeScheduleManagerPtr(),
-                                  *getDynamicsParametersSynchronizedModulePtr(), modelSettings()));
+      new ComKinoSystemDynamicsAd(getKinematicModelAd(), getComModelAd(), *getDynamicsParametersSynchronizedModulePtr(), modelSettings()));
 }
 
 std::unique_ptr<ocs2::StateInputConstraint> QuadrupedInterface::createZeroForceConstraint(size_t leg) const {

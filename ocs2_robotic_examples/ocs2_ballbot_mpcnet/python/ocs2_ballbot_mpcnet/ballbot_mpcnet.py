@@ -27,6 +27,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###############################################################################
 
+"""Ballbot MPC-Net.
+
+Main script for training an MPC-Net policy for ballbot.
+"""
+
 import os
 import time
 import datetime

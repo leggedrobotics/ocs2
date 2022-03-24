@@ -27,6 +27,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###############################################################################
 
+"""Ballbot configuration variables.
+
+Sets robot-specific configuration variables for ballbot.
+"""
+
 from ocs2_mpcnet import config
 
 #

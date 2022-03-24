@@ -27,6 +27,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###############################################################################
 
+"""Legged robot configuration variables.
+
+Sets robot-specific configuration variables for legged robot.
+"""
+
 from ocs2_mpcnet import config
 
 #

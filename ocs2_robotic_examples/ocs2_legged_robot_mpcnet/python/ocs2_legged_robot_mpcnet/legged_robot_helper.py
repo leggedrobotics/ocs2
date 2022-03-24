@@ -27,6 +27,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###############################################################################
 
+"""Legged robot helper functions.
+
+Provides robot-specific helper functions for legged robot.
+"""
+
 import numpy as np
 
 from ocs2_mpcnet import helper
@@ -34,14 +39,33 @@ from ocs2_legged_robot_mpcnet import legged_robot_config as config
 
 
 def get_stance(duration):
-    # contact schedule: STANCE
-    # swing schedule: -
+    """Get the stance gait.
+
+    Creates the stance event times and mode sequence for a certain time duration:
+        - contact schedule: STANCE
+        - swing schedule: -
+
+    Args:
+        duration: The duration of the mode schedule given by a float.
+
+    Returns:
+        A tuple containing the components of the mode schedule.
+            - event_times: The event times given by a NumPy array of shape (K-1) containing floats.
+            - mode_sequence: The mode sequence given by a NumPy array of shape (K) containing integers.
+    """
     event_times_template = np.array([1.0], dtype=np.float64)
     mode_sequence_template = np.array([15], dtype=np.uintp)
     return helper.get_event_times_and_mode_sequence(15, duration, event_times_template, mode_sequence_template)
 
 
 def get_random_initial_state_stance():
+    """Get a random initial state for stance.
+
+    Samples a random initial state for the robot in the stance gait.
+
+    Returns:
+        x: A random initial state given by a NumPy array of shape (X) containing floats.
+    """
     max_normalized_linear_momentum_x = 0.1
     max_normalized_linear_momentum_y = 0.1
     max_normalized_linear_momentum_z = 0.1
@@ -59,6 +83,13 @@ def get_random_initial_state_stance():
 
 
 def get_random_target_state_stance():
+    """Get a random target state for stance.
+
+    Samples a random target state for the robot in the stance gait.
+
+    Returns:
+        x: A random target state given by a NumPy array of shape (X) containing floats.
+    """
     max_position_z = 0.075
     max_orientation_z = 25.0 * np.pi / 180.0
     max_orientation_y = 15.0 * np.pi / 180.0
@@ -72,22 +103,53 @@ def get_random_target_state_stance():
 
 
 def get_trot_1(duration):
-    # contact schedule: LF_RH, RF_LH
-    # swing schedule: RF_LH, LF_RH
+    """Get the first trot gait.
+
+    Creates the first trot event times and mode sequence for a certain time duration:
+        - contact schedule: LF_RH, RF_LH
+        - swing schedule: RF_LH, LF_RH
+
+    Args:
+        duration: The duration of the mode schedule given by a float.
+
+    Returns:
+        A tuple containing the components of the mode schedule.
+            - event_times: The event times given by a NumPy array of shape (K-1) containing floats.
+            - mode_sequence: The mode sequence given by a NumPy array of shape (K) containing integers.
+    """
     event_times_template = np.array([0.35, 0.7], dtype=np.float64)
     mode_sequence_template = np.array([9, 6], dtype=np.uintp)
     return helper.get_event_times_and_mode_sequence(15, duration, event_times_template, mode_sequence_template)
 
 
 def get_trot_2(duration):
-    # contact schedule: RF_LH, LF_RH
-    # swing schedule: LF_RH, RF_LH
+    """Get the second trot gait.
+
+    Creates the second trot event times and mode sequence for a certain time duration:
+        - contact schedule: RF_LH, LF_RH
+        - swing schedule: LF_RH, RF_LH
+
+    Args:
+        duration: The duration of the mode schedule given by a float.
+
+    Returns:
+        A tuple containing the components of the mode schedule.
+            - event_times: The event times given by a NumPy array of shape (K-1) containing floats.
+            - mode_sequence: The mode sequence given by a NumPy array of shape (K) containing integers.
+    """
     event_times_template = np.array([0.35, 0.7], dtype=np.float64)
     mode_sequence_template = np.array([6, 9], dtype=np.uintp)
     return helper.get_event_times_and_mode_sequence(15, duration, event_times_template, mode_sequence_template)
 
 
 def get_random_initial_state_trot():
+    """Get a random initial state for trot.
+
+    Samples a random initial state for the robot in a trot gait.
+
+    Returns:
+        x: A random initial state given by a NumPy array of shape (X) containing floats.
+    """
     max_normalized_linear_momentum_x = 0.5
     max_normalized_linear_momentum_y = 0.25
     max_normalized_linear_momentum_z = 0.25
@@ -105,6 +167,13 @@ def get_random_initial_state_trot():
 
 
 def get_random_target_state_trot():
+    """Get a random target state for trot.
+
+    Samples a random target state for the robot in a trot gait.
+
+    Returns:
+        x: A random target state given by a NumPy array of shape (X) containing floats.
+    """
     max_position_x = 0.3
     max_position_y = 0.15
     max_orientation_z = 30.0 * np.pi / 180.0
@@ -116,6 +185,21 @@ def get_random_target_state_trot():
 
 
 def get_tasks(n_tasks, duration, choices):
+    """Get tasks.
+
+    Get a random set of task that should be executed by the data generation or policy evaluation.
+
+    Args:
+        n_tasks: Number of tasks given by an integer.
+        duration: Duration of each task given by a float.
+        choices: Different gaits for the tasks given by a list containing strings with the gait names.
+
+    Returns:
+        A tuple containing the components of the task.
+            - initial_observations: The initial observations given by an OCS2 system observation array.
+            - mode_schedules: The desired mode schedules given by an OCS2 mode schedule array.
+            - target_trajectories: The desired target trajectories given by an OCS2 target trajectories array.
+    """
     initial_observations = helper.get_system_observation_array(n_tasks)
     mode_schedules = helper.get_mode_schedule_array(n_tasks)
     target_trajectories = helper.get_target_trajectories_array(n_tasks)
@@ -154,6 +238,17 @@ def get_tasks(n_tasks, duration, choices):
 
 
 def get_one_hot(mode):
+    """Get one hot encoding of mode.
+
+    Get a one hot encoding of a mode represented by a discrete probability distribution, where the sample space is the
+    set of P individually identified items given by the set of E individually identified experts.
+
+    Args:
+        mode: The mode of the system given by an integer.
+
+    Returns:
+        p: Discrete probability distribution given by a NumPy array of shape (P) containing floats.
+    """
     one_hot = np.zeros(config.EXPERT_NUM)
     one_hot[config.expert_for_mode[mode]] = 1.0
     return one_hot

@@ -27,6 +27,14 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###############################################################################
 
+"""Legged robot policy classes.
+
+Provides robot-specific classes for different neural network policies for legged robot.
+
+Todo:
+    * Delete this file as part of refactoring, as it will be become obsolete.
+"""
+
 import torch
 
 from ocs2_mpcnet import policy
@@ -40,6 +48,16 @@ input_bias = torch.tensor(config.input_bias, device=config.device, dtype=config.
 
 
 def u_transform(u):
+    """Control input transformation.
+
+    Transforms the predicted control input by scaling and adding a bias.
+
+    Args:
+        u: A (B,U) tensor with the predicted control inputs.
+
+    Returns:
+        u: A (B,U) tensor with the transformed control inputs.
+    """
     return bmv(input_scaling, u) + input_bias
 
 

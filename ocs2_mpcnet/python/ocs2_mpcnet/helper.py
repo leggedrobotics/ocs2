@@ -268,7 +268,9 @@ def get_event_times_and_mode_sequence(default_mode, duration, event_times_templa
         mode_sequence_template: The mode sequence template given by a NumPy array of shape (T) containing integers.
 
     Returns:
-        The event times and mode sequence given by NumPy arrays.
+        A tuple containing the components of the mode schedule.
+            - event_times: The event times given by a NumPy array of shape (K-1) containing floats.
+            - mode_sequence: The mode sequence given by a NumPy array of shape (K) containing integers.
     """
     gait_cycle_duration = event_times_template[-1]
     num_gait_cycles = int(np.floor(duration / gait_cycle_duration))

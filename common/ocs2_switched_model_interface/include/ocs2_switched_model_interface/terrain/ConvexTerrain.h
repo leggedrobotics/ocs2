@@ -68,7 +68,7 @@ inline std::pair<scalar_t, vector2_t> projectToConvex2dPolygonBoundary(const std
   return {dist, image};
 }
 
-inline vector3_t projectToConvexPolygon(const ConvexTerrain& convexTerrain, const vector3_t& p) {
+inline vector3_t projectToConvex3dPolygon(const ConvexTerrain& convexTerrain, const vector3_t& p) {
   const vector3_t local_p = positionInTerrainFrameFromPositionInWorld(p, convexTerrain.plane);
   const vector2_t local_2d_p(local_p.x(), local_p.y());
 

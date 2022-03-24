@@ -70,6 +70,9 @@ class FootPhase {
   virtual const FootTangentialConstraintMatrix* getFootTangentialConstraintInWorldFrame() const { return nullptr; };
 
   virtual scalar_t getMinimumFootClearance(scalar_t time) const { return 0.0; };
+
+  /** Returns a pointer to the convex polygon representation of the steppable terrain.  */
+  virtual const ConvexTerrain* getConvexTerrain() const { return nullptr; }
 };
 
 /**
@@ -91,6 +94,7 @@ class StancePhase final : public FootPhase {
   vector3_t getAccelerationInWorld(scalar_t time) const override;
   FootNormalConstraintMatrix getFootNormalConstraintInWorldFrame(scalar_t time) const override;
   const FootTangentialConstraintMatrix* getFootTangentialConstraintInWorldFrame() const override;
+  const ConvexTerrain* getConvexTerrain() const override { return &stanceTerrain_; }
 
  private:
   ConvexTerrain stanceTerrain_;

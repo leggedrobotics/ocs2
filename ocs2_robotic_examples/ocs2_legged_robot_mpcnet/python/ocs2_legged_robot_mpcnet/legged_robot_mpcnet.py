@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 ###############################################################################
 # Copyright (c) 2022, Farbod Farshidian. All rights reserved.
 #

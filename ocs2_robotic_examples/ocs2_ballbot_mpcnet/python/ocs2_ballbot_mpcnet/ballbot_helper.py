@@ -27,6 +27,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###############################################################################
 
+"""Ballbot helper functions.
+
+Provides robot-specific helper functions for ballbot.
+"""
+
 import numpy as np
 
 from ocs2_mpcnet import helper
@@ -34,14 +39,31 @@ from ocs2_ballbot_mpcnet import ballbot_config as config
 
 
 def get_default_event_times_and_mode_sequence(duration):
-    # contact schedule: -
-    # swing schedule: -
+    """Get the event times and mode sequence describing the default mode schedule.
+
+    Creates the default event times and mode sequence for a certain time duration.
+
+    Args:
+        duration: The duration of the mode schedule given by a float.
+
+    Returns:
+        A tuple containing the components of the mode schedule.
+            - event_times: The event times given by a NumPy array of shape (K-1) containing floats.
+            - mode_sequence: The mode sequence given by a NumPy array of shape (K) containing integers.
+    """
     event_times_template = np.array([1.0], dtype=np.float64)
     mode_sequence_template = np.array([0], dtype=np.uintp)
     return helper.get_event_times_and_mode_sequence(0, duration, event_times_template, mode_sequence_template)
 
 
 def get_random_initial_state():
+    """Get a random initial state.
+
+    Samples a random initial state for the robot.
+
+    Returns:
+        x: A random initial state given by a NumPy array of shape (X) containing floats.
+    """
     max_linear_velocity_x = 0.5
     max_linear_velocity_y = 0.5
     max_euler_angle_derivative_z = 45.0 * np.pi / 180.0
@@ -57,6 +79,13 @@ def get_random_initial_state():
 
 
 def get_random_target_state():
+    """Get a random target state.
+
+    Samples a random target state for the robot.
+
+    Returns:
+        x: A random target state given by a NumPy array of shape (X) containing floats.
+    """
     max_position_x = 1.0
     max_position_y = 1.0
     max_orientation_z = 45.0 * np.pi / 180.0
@@ -68,13 +97,31 @@ def get_random_target_state():
 
 
 def get_tasks(n_tasks, duration):
+    """Get tasks.
+
+    Get a random set of task that should be executed by the data generation or policy evaluation.
+
+    Args:
+        n_tasks: Number of tasks given by an integer.
+        duration: Duration of each task given by a float.
+
+    Returns:
+        A tuple containing the components of the task.
+            - initial_observations: The initial observations given by an OCS2 system observation array.
+            - mode_schedules: The desired mode schedules given by an OCS2 mode schedule array.
+            - target_trajectories: The desired target trajectories given by an OCS2 target trajectories array.
+    """
     initial_observations = helper.get_system_observation_array(n_tasks)
     mode_schedules = helper.get_mode_schedule_array(n_tasks)
     target_trajectories = helper.get_target_trajectories_array(n_tasks)
     for i in range(n_tasks):
-        initial_observations[i] = helper.get_system_observation(0, 0.0, get_random_initial_state(), np.zeros(config.INPUT_DIM))
+        initial_observations[i] = helper.get_system_observation(
+            0, 0.0, get_random_initial_state(), np.zeros(config.INPUT_DIM)
+        )
         mode_schedules[i] = helper.get_mode_schedule(*get_default_event_times_and_mode_sequence(duration))
-        target_trajectories[i] = helper.get_target_trajectories(duration * np.ones((1, 1)),
-                                                                get_random_target_state().reshape((1, config.STATE_DIM)),
-                                                                np.zeros((1, config.INPUT_DIM)))
+        target_trajectories[i] = helper.get_target_trajectories(
+            duration * np.ones((1, 1)),
+            get_random_target_state().reshape((1, config.STATE_DIM)),
+            np.zeros((1, config.INPUT_DIM)),
+        )
     return initial_observations, mode_schedules, target_trajectories

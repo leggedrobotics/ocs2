@@ -43,16 +43,16 @@ namespace ballbot {
 
 BallbotMpcnetInterface::BallbotMpcnetInterface(size_t nDataGenerationThreads, size_t nPolicyEvaluationThreads, bool raisim) {
   // create ONNX environment
-  auto onnxEnvironmentPtr = createOnnxEnvironment();
+  auto onnxEnvironmentPtr = ocs2::mpcnet::createOnnxEnvironment();
   // path to config file
   std::string taskFile = ros::package::getPath("ocs2_ballbot") + "/config/mpc/task.info";
   // path to save auto-generated libraries
   std::string libraryFolder = ros::package::getPath("ocs2_ballbot") + "/auto_generated";
   // set up MPC-Net rollout manager for data generation and policy evaluation
   std::vector<std::unique_ptr<MPC_BASE>> mpcPtrs;
-  std::vector<std::unique_ptr<MpcnetControllerBase>> mpcnetPtrs;
+  std::vector<std::unique_ptr<ocs2::mpcnet::MpcnetControllerBase>> mpcnetPtrs;
   std::vector<std::unique_ptr<RolloutBase>> rolloutPtrs;
-  std::vector<std::shared_ptr<MpcnetDefinitionBase>> mpcnetDefinitionPtrs;
+  std::vector<std::shared_ptr<ocs2::mpcnet::MpcnetDefinitionBase>> mpcnetDefinitionPtrs;
   std::vector<std::shared_ptr<ReferenceManagerInterface>> referenceManagerPtrs;
   mpcPtrs.reserve(nDataGenerationThreads + nPolicyEvaluationThreads);
   mpcnetPtrs.reserve(nDataGenerationThreads + nPolicyEvaluationThreads);
@@ -61,21 +61,21 @@ BallbotMpcnetInterface::BallbotMpcnetInterface(size_t nDataGenerationThreads, si
   referenceManagerPtrs.reserve(nDataGenerationThreads + nPolicyEvaluationThreads);
   for (int i = 0; i < (nDataGenerationThreads + nPolicyEvaluationThreads); i++) {
     BallbotInterface ballbotInterface(taskFile, libraryFolder);
-    std::shared_ptr<MpcnetDefinitionBase> mpcnetDefinitionPtr(new BallbotMpcnetDefinition());
+    std::shared_ptr<ocs2::mpcnet::MpcnetDefinitionBase> mpcnetDefinitionPtr(new BallbotMpcnetDefinition());
     mpcPtrs.push_back(getMpc(ballbotInterface));
-    mpcnetPtrs.push_back(std::unique_ptr<MpcnetControllerBase>(
-        new MpcnetOnnxController(mpcnetDefinitionPtr, ballbotInterface.getReferenceManagerPtr(), onnxEnvironmentPtr)));
+    mpcnetPtrs.push_back(std::unique_ptr<ocs2::mpcnet::MpcnetControllerBase>(
+        new ocs2::mpcnet::MpcnetOnnxController(mpcnetDefinitionPtr, ballbotInterface.getReferenceManagerPtr(), onnxEnvironmentPtr)));
     if (raisim) {
-      throw std::runtime_error("BallbotMpcnetInterface::BallbotMpcnetInterface RaiSim rollout not yet implemented for ballbot.");
+      throw std::runtime_error("[BallbotMpcnetInterface::BallbotMpcnetInterface] raisim rollout not yet implemented for ballbot.");
     } else {
       rolloutPtrs.push_back(std::unique_ptr<RolloutBase>(ballbotInterface.getRollout().clone()));
     }
     mpcnetDefinitionPtrs.push_back(mpcnetDefinitionPtr);
     referenceManagerPtrs.push_back(ballbotInterface.getReferenceManagerPtr());
   }
-  mpcnetRolloutManagerPtr_.reset(new MpcnetRolloutManager(nDataGenerationThreads, nPolicyEvaluationThreads, std::move(mpcPtrs),
-                                                          std::move(mpcnetPtrs), std::move(rolloutPtrs), mpcnetDefinitionPtrs,
-                                                          referenceManagerPtrs));
+  mpcnetRolloutManagerPtr_.reset(new ocs2::mpcnet::MpcnetRolloutManager(nDataGenerationThreads, nPolicyEvaluationThreads,
+                                                                        std::move(mpcPtrs), std::move(mpcnetPtrs), std::move(rolloutPtrs),
+                                                                        mpcnetDefinitionPtrs, referenceManagerPtrs));
 }
 
 /******************************************************************************************************/

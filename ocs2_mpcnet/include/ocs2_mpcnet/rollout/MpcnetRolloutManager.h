@@ -1,3 +1,32 @@
+/******************************************************************************
+Copyright (c) 2022, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+ * Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
+
 #pragma once
 
 #include <ocs2_core/thread_support/ThreadPool.h>
@@ -6,19 +35,13 @@
 #include "ocs2_mpcnet/rollout/MpcnetPolicyEvaluation.h"
 
 namespace ocs2 {
+namespace mpcnet {
 
 /**
  *  A class to manage the data generation and policy evaluation rollouts for MPC-Net.
  */
 class MpcnetRolloutManager {
  public:
-  using data_point_t = MpcnetDataGeneration::DataPoint;
-  using data_array_t = MpcnetDataGeneration::DataArray;
-  using data_ptr_t = MpcnetDataGeneration::DataPtr;
-  using metrics_t = MpcnetPolicyEvaluation::Metrics;
-  using metrics_array_t = MpcnetPolicyEvaluation::MetricsArray;
-  using metrics_ptr_t = MpcnetPolicyEvaluation::MetricsPtr;
-
   /**
    * Constructor.
    * @note The first nDataGenerationThreads pointers will be used for the data generation and the next nPolicyEvaluationThreads pointers for
@@ -67,17 +90,18 @@ class MpcnetRolloutManager {
    * Get the data generated from the data generation rollout.
    * @return The generated data.
    */
-  data_array_t getGeneratedData();
+  const data_array_t& getGeneratedData();
 
   /**
-   * Starts the policy evaluation forward simulated by a learned controller.
-   * @param [in] policyFilePath : The path to the file with the learned policy for the learned controller.
-   * @param [in] timeStep : The time step for the forward simulation of the system with the learned controller.
+   * Starts the policy evaluation forward simulated by a behavioral controller.
+   * @param [in] alpha : The mixture parameter for the behavioral controller.
+   * @param [in] policyFilePath : The path to the file with the learned policy for the behavioral controller.
+   * @param [in] timeStep : The time step for the forward simulation of the system with the behavioral controller.
    * @param [in] initialObservations : The initial system observations to start from (time and state required).
    * @param [in] modeSchedules : The mode schedules providing the event times and mode sequence.
    * @param [in] targetTrajectories : The target trajectories to be tracked.
    */
-  void startPolicyEvaluation(const std::string& policyFilePath, scalar_t timeStep,
+  void startPolicyEvaluation(scalar_t alpha, const std::string& policyFilePath, scalar_t timeStep,
                              const std::vector<SystemObservation>& initialObservations, const std::vector<ModeSchedule>& modeSchedules,
                              const std::vector<TargetTrajectories>& targetTrajectories);
 
@@ -99,13 +123,15 @@ class MpcnetRolloutManager {
   std::atomic_int nDataGenerationTasksDone_;
   std::unique_ptr<ThreadPool> dataGenerationThreadPoolPtr_;
   std::vector<std::unique_ptr<MpcnetDataGeneration>> dataGenerationPtrs_;
-  std::vector<std::future<data_ptr_t>> dataGenerationFtrs_;
+  std::vector<std::future<const data_array_t*>> dataGenerationFtrs_;
+  data_array_t dataArray_;
   // policy evaluation variables
   size_t nPolicyEvaluationThreads_;
   std::atomic_int nPolicyEvaluationTasksDone_;
   std::unique_ptr<ThreadPool> policyEvaluationThreadPoolPtr_;
   std::vector<std::unique_ptr<MpcnetPolicyEvaluation>> policyEvaluationPtrs_;
-  std::vector<std::future<metrics_ptr_t>> policyEvaluationFtrs_;
+  std::vector<std::future<metrics_t>> policyEvaluationFtrs_;
 };
 
+}  // namespace mpcnet
 }  // namespace ocs2

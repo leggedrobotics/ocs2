@@ -1,3 +1,32 @@
+/******************************************************************************
+Copyright (c) 2022, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+ * Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
+
 #pragma once
 
 #include <pybind11/eigen.h>
@@ -7,12 +36,15 @@
 #include <ocs2_core/Types.h>
 #include <ocs2_python_interface/PybindMacros.h>
 
+#include "ocs2_mpcnet/rollout/MpcnetData.h"
+#include "ocs2_mpcnet/rollout/MpcnetMetrics.h"
+
 using namespace pybind11::literals;
 
 /**
  * Convenience macro to bind general MPC-Net functionalities and other classes with all required vectors.
  */
-#define CREATE_MPCNET_PYTHON_BINDINGS(MPCNET_INTERFACE, LIB_NAME)                                           \
+#define CREATE_MPCNET_PYTHON_BINDINGS(LIB_NAME)                                                             \
   /* make vector types opaque so they are not converted to python lists */                                  \
   PYBIND11_MAKE_OPAQUE(ocs2::size_array_t)                                                                  \
   PYBIND11_MAKE_OPAQUE(ocs2::scalar_array_t)                                                                \
@@ -21,8 +53,8 @@ using namespace pybind11::literals;
   PYBIND11_MAKE_OPAQUE(std::vector<ocs2::SystemObservation>)                                                \
   PYBIND11_MAKE_OPAQUE(std::vector<ocs2::ModeSchedule>)                                                     \
   PYBIND11_MAKE_OPAQUE(std::vector<ocs2::TargetTrajectories>)                                               \
-  PYBIND11_MAKE_OPAQUE(MPCNET_INTERFACE::data_array_t)                                                      \
-  PYBIND11_MAKE_OPAQUE(MPCNET_INTERFACE::metrics_array_t)                                                   \
+  PYBIND11_MAKE_OPAQUE(ocs2::mpcnet::data_array_t)                                                          \
+  PYBIND11_MAKE_OPAQUE(ocs2::mpcnet::metrics_array_t)                                                       \
   /* create a python module */                                                                              \
   PYBIND11_MODULE(LIB_NAME, m) {                                                                            \
     /* bind vector types so they can be used natively in python */                                          \
@@ -33,8 +65,8 @@ using namespace pybind11::literals;
     VECTOR_TYPE_BINDING(std::vector<ocs2::SystemObservation>, "SystemObservationArray")                     \
     VECTOR_TYPE_BINDING(std::vector<ocs2::ModeSchedule>, "ModeScheduleArray")                               \
     VECTOR_TYPE_BINDING(std::vector<ocs2::TargetTrajectories>, "TargetTrajectoriesArray")                   \
-    VECTOR_TYPE_BINDING(MPCNET_INTERFACE::data_array_t, "DataArray")                                        \
-    VECTOR_TYPE_BINDING(MPCNET_INTERFACE::metrics_array_t, "MetricsArray")                                  \
+    VECTOR_TYPE_BINDING(ocs2::mpcnet::data_array_t, "DataArray")                                            \
+    VECTOR_TYPE_BINDING(ocs2::mpcnet::metrics_array_t, "MetricsArray")                                      \
     /* bind approximation classes */                                                                        \
     pybind11::class_<ocs2::ScalarFunctionQuadraticApproximation>(m, "ScalarFunctionQuadraticApproximation") \
         .def_readwrite("f", &ocs2::ScalarFunctionQuadraticApproximation::f)                                 \
@@ -62,41 +94,41 @@ using namespace pybind11::literals;
         .def_readwrite("state_trajectory", &ocs2::TargetTrajectories::stateTrajectory)                      \
         .def_readwrite("input_trajectory", &ocs2::TargetTrajectories::inputTrajectory);                     \
     /* bind data point struct */                                                                            \
-    pybind11::class_<MPCNET_INTERFACE::data_point_t>(m, "DataPoint")                                        \
+    pybind11::class_<ocs2::mpcnet::data_point_t>(m, "DataPoint")                                            \
         .def(pybind11::init<>())                                                                            \
-        .def_readwrite("t", &MPCNET_INTERFACE::data_point_t::t)                                             \
-        .def_readwrite("x", &MPCNET_INTERFACE::data_point_t::x)                                             \
-        .def_readwrite("u", &MPCNET_INTERFACE::data_point_t::u)                                             \
-        .def_readwrite("mode", &MPCNET_INTERFACE::data_point_t::mode)                                       \
-        .def_readwrite("generalized_time", &MPCNET_INTERFACE::data_point_t::generalizedTime)                \
-        .def_readwrite("relative_state", &MPCNET_INTERFACE::data_point_t::relativeState)                    \
-        .def_readwrite("input_transformation", &MPCNET_INTERFACE::data_point_t::inputTransformation)        \
-        .def_readwrite("hamiltonian", &MPCNET_INTERFACE::data_point_t::hamiltonian);                        \
+        .def_readwrite("mode", &ocs2::mpcnet::data_point_t::mode)                                           \
+        .def_readwrite("t", &ocs2::mpcnet::data_point_t::t)                                                 \
+        .def_readwrite("x", &ocs2::mpcnet::data_point_t::x)                                                 \
+        .def_readwrite("u", &ocs2::mpcnet::data_point_t::u)                                                 \
+        .def_readwrite("generalized_time", &ocs2::mpcnet::data_point_t::generalizedTime)                    \
+        .def_readwrite("relative_state", &ocs2::mpcnet::data_point_t::relativeState)                        \
+        .def_readwrite("input_transformation", &ocs2::mpcnet::data_point_t::inputTransformation)            \
+        .def_readwrite("hamiltonian", &ocs2::mpcnet::data_point_t::hamiltonian);                            \
     /* bind metrics struct */                                                                               \
-    pybind11::class_<MPCNET_INTERFACE::metrics_t>(m, "Metrics")                                             \
+    pybind11::class_<ocs2::mpcnet::metrics_t>(m, "Metrics")                                                 \
         .def(pybind11::init<>())                                                                            \
-        .def_readwrite("survival_time", &MPCNET_INTERFACE::metrics_t::survivalTime)                         \
-        .def_readwrite("incurred_hamiltonian", &MPCNET_INTERFACE::metrics_t::incurredHamiltonian);          \
+        .def_readwrite("survival_time", &ocs2::mpcnet::metrics_t::survivalTime)                             \
+        .def_readwrite("incurred_hamiltonian", &ocs2::mpcnet::metrics_t::incurredHamiltonian);              \
   }
 
 /**
  * Convenience macro to bind robot MPC-Net interface.
  */
-#define CREATE_ROBOT_MPCNET_PYTHON_BINDINGS(MPCNET_INTERFACE, LIB_NAME)                                                                    \
-  /* create a python module */                                                                                                             \
-  PYBIND11_MODULE(LIB_NAME, m) {                                                                                                           \
-    /* import the general MPC-Net module */                                                                                                \
-    pybind11::module::import("ocs2_mpcnet.MpcnetPybindings");                                                                              \
-    /* bind actual MPC-Net interface for specific robot */                                                                                 \
-    pybind11::class_<MPCNET_INTERFACE>(m, "MpcnetInterface")                                                                               \
-        .def(pybind11::init<size_t, size_t, bool>())                                                                                       \
-        .def("startDataGeneration", &MPCNET_INTERFACE::startDataGeneration, "alpha"_a, "policyFilePath"_a, "timeStep"_a,                   \
-             "dataDecimation"_a, "nSamples"_a, "samplingCovariance"_a.noconvert(), "initialObservations"_a, "modeSchedules"_a,             \
-             "targetTrajectories"_a)                                                                                                       \
-        .def("isDataGenerationDone", &MPCNET_INTERFACE::isDataGenerationDone)                                                              \
-        .def("getGeneratedData", &MPCNET_INTERFACE::getGeneratedData)                                                                      \
-        .def("startPolicyEvaluation", &MPCNET_INTERFACE::startPolicyEvaluation, "policyFilePath"_a, "timeStep"_a, "initialObservations"_a, \
-             "modeSchedules"_a, "targetTrajectories"_a)                                                                                    \
-        .def("isPolicyEvaluationDone", &MPCNET_INTERFACE::isPolicyEvaluationDone)                                                          \
-        .def("getComputedMetrics", &MPCNET_INTERFACE::getComputedMetrics);                                                                 \
+#define CREATE_ROBOT_MPCNET_PYTHON_BINDINGS(MPCNET_INTERFACE, LIB_NAME)                                                        \
+  /* create a python module */                                                                                                 \
+  PYBIND11_MODULE(LIB_NAME, m) {                                                                                               \
+    /* import the general MPC-Net module */                                                                                    \
+    pybind11::module::import("ocs2_mpcnet.MpcnetPybindings");                                                                  \
+    /* bind actual MPC-Net interface for specific robot */                                                                     \
+    pybind11::class_<MPCNET_INTERFACE>(m, "MpcnetInterface")                                                                   \
+        .def(pybind11::init<size_t, size_t, bool>())                                                                           \
+        .def("startDataGeneration", &MPCNET_INTERFACE::startDataGeneration, "alpha"_a, "policyFilePath"_a, "timeStep"_a,       \
+             "dataDecimation"_a, "nSamples"_a, "samplingCovariance"_a.noconvert(), "initialObservations"_a, "modeSchedules"_a, \
+             "targetTrajectories"_a)                                                                                           \
+        .def("isDataGenerationDone", &MPCNET_INTERFACE::isDataGenerationDone)                                                  \
+        .def("getGeneratedData", &MPCNET_INTERFACE::getGeneratedData)                                                          \
+        .def("startPolicyEvaluation", &MPCNET_INTERFACE::startPolicyEvaluation, "alpha"_a, "policyFilePath"_a, "timeStep"_a,   \
+             "initialObservations"_a, "modeSchedules"_a, "targetTrajectories"_a)                                               \
+        .def("isPolicyEvaluationDone", &MPCNET_INTERFACE::isPolicyEvaluationDone)                                              \
+        .def("getComputedMetrics", &MPCNET_INTERFACE::getComputedMetrics);                                                     \
   }

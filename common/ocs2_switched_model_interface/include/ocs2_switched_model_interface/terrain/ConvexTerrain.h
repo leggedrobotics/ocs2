@@ -31,6 +31,12 @@ inline int getPreviousVertex(int i, size_t N) {
   return (i > 0) ? (i - 1) : (N - 1);  // previous point with wrap around
 }
 
+/**
+ * Projects a 2D point into boundary of a 2D convex polygon.
+ * @param [in] boundary: The vertices of the polygon in clockwise or counter-clockwise order.
+ * @param [in] p: The 2D point.
+ * @return A pair of signed distance to the boundary (negative inside, positive outside) and the projected point.
+ */
 inline std::pair<scalar_t, vector2_t> projectToConvex2dPolygonBoundary(const std::vector<vector2_t>& boundary, const vector2_t& p) {
   vector2_t image = p;
   scalar_t dist2 = std::numeric_limits<scalar_t>::max();
@@ -68,6 +74,12 @@ inline std::pair<scalar_t, vector2_t> projectToConvex2dPolygonBoundary(const std
   return {dist, image};
 }
 
+/**
+ * Projects a 3D point onto a 3D convex polygon.
+ * @param [in] convexTerrain: The 3D convex polygon.
+ * @param [in] p: The 3D point.
+ * @return The projected point.
+ */
 inline vector3_t projectToConvex3dPolygon(const ConvexTerrain& convexTerrain, const vector3_t& p) {
   const vector3_t local_p = positionInTerrainFrameFromPositionInWorld(p, convexTerrain.plane);
   const vector2_t local_2d_p(local_p.x(), local_p.y());

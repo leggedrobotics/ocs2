@@ -91,13 +91,13 @@ matrix_t LeggedRobotMpcnetDefinition::getInputTransformation(scalar_t t, const v
 bool LeggedRobotMpcnetDefinition::validState(const vector_t& x) {
   vector_t deviation = x - defaultState_;
   if (std::abs(deviation[8]) > 0.2) {
-    std::cerr << "LeggedRobotMpcnetDefinition::validState Height diverged: " << x[8] << std::endl;
+    std::cerr << "[LeggedRobotMpcnetDefinition::validState] height diverged: " << x[8] << "\n";
     return false;
   } else if (std::abs(deviation[10]) > 30.0 * M_PI / 180.0) {
-    std::cerr << "LeggedRobotMpcnetDefinition::validState Pitch diverged: " << x[10] << std::endl;
+    std::cerr << "[LeggedRobotMpcnetDefinition::validState] pitch diverged: " << x[10] << "\n";
     return false;
   } else if (std::abs(deviation[11]) > 30.0 * M_PI / 180.0) {
-    std::cerr << "LeggedRobotMpcnetDefinition::validState Roll diverged: " << x[11] << std::endl;
+    std::cerr << "[LeggedRobotMpcnetDefinition::validState] roll diverged: " << x[11] << "\n";
     return false;
   } else {
     return true;

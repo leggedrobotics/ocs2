@@ -2,6 +2,7 @@
 ####### requirements.txt #######
 #
 ###### Requirements without version specifiers ######
+black
 numpy
 tensorboard
 torch

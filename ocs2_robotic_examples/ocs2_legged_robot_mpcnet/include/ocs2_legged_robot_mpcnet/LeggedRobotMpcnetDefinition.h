@@ -37,7 +37,7 @@ namespace legged_robot {
 /**
  * MPC-Net definitions for legged robot.
  */
-class LeggedRobotMpcnetDefinition : public MpcnetDefinitionBase {
+class LeggedRobotMpcnetDefinition : public ocs2::mpcnet::MpcnetDefinitionBase {
  public:
   /**
    * Constructor.

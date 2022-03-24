@@ -39,7 +39,7 @@ namespace legged_robot {
 /**
  *  Legged robot MPC-Net interface between C++ and Python.
  */
-class LeggedRobotMpcnetInterface : public MpcnetInterfaceBase {
+class LeggedRobotMpcnetInterface : public ocs2::mpcnet::MpcnetInterfaceBase {
  public:
   /**
    * Constructor.

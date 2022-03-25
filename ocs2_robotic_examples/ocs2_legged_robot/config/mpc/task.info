@@ -77,7 +77,7 @@ ddp
 
   preComputeRiccatiTerms          true
 
-  useFeedbackPolicy               true
+  useFeedbackPolicy               false
 
   strategy                        LINE_SEARCH
   lineSearch

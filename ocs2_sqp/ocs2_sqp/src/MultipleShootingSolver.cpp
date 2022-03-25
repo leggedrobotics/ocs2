@@ -534,9 +534,9 @@ multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIn
   const scalar_t g_max = settings_.g_max;
   const scalar_t g_min = settings_.g_min;
   const scalar_t armijoFactor = settings_.armijoFactor;
+  const scalar_t armijoDescentMetric = subproblemSolution.armijoDescentMetric;
   const auto& dx = subproblemSolution.deltaXSol;
   const auto& du = subproblemSolution.deltaUSol;
-  const scalar_t armijoDescentMetric = subproblemSolution.armijoDescentMetric;
 
   const scalar_t baselineConstraintViolation = totalConstraintViolation(baseline);
 

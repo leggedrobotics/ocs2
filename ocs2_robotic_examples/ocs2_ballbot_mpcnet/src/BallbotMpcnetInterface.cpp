@@ -82,11 +82,27 @@ BallbotMpcnetInterface::BallbotMpcnetInterface(size_t nDataGenerationThreads, si
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::unique_ptr<MPC_BASE> BallbotMpcnetInterface::getMpc(BallbotInterface& ballbotInterface) {
-  // ensure only one thread per MPC instance
-  auto ddpSettings = ballbotInterface.ddpSettings();
-  ddpSettings.nThreads_ = 1;
+  // ensure MPC and DDP settings are as needed for MPC-Net
+  const auto mpcSettings = [&]() {
+    auto settings = ballbotInterface.mpcSettings();
+    settings.debugPrint_ = false;
+    settings.coldStart_ = false;
+    return settings;
+  }();
+  const auto ddpSettings = [&]() {
+    auto settings = ballbotInterface.ddpSettings();
+    settings.algorithm_ = ocs2::ddp::Algorithm::SLQ;
+    settings.nThreads_ = 1;
+    settings.displayInfo_ = false;
+    settings.displayShortSummary_ = false;
+    settings.checkNumericalStability_ = false;
+    settings.debugPrintRollout_ = false;
+    settings.debugCaching_ = false;
+    settings.useFeedbackPolicy_ = true;
+    return settings;
+  }();
   // create one MPC instance
-  std::unique_ptr<MPC_BASE> mpcPtr(new GaussNewtonDDP_MPC(ballbotInterface.mpcSettings(), ddpSettings, ballbotInterface.getRollout(),
+  std::unique_ptr<MPC_BASE> mpcPtr(new GaussNewtonDDP_MPC(mpcSettings, ddpSettings, ballbotInterface.getRollout(),
                                                           ballbotInterface.getOptimalControlProblem(), ballbotInterface.getInitializer()));
   mpcPtr->getSolverPtr()->setReferenceManager(ballbotInterface.getReferenceManagerPtr());
   return mpcPtr;

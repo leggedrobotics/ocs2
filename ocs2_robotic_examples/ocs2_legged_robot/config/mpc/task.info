@@ -51,7 +51,7 @@ ddp
 {
   algorithm                       SLQ
 
-  nThreads                        1
+  nThreads                        3
   threadPriority                  50
 
   maxNumIterations                1

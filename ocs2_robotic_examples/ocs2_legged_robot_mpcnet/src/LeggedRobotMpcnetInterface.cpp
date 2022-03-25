@@ -107,8 +107,12 @@ LeggedRobotMpcnetInterface::LeggedRobotMpcnetInterface(size_t nDataGenerationThr
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::unique_ptr<MPC_BASE> LeggedRobotMpcnetInterface::getMpc(LeggedRobotInterface& leggedRobotInterface) {
+  // ensure only one thread per MPC instance
+  auto ddpSettings = leggedRobotInterface.ddpSettings();
+  ddpSettings.nThreads_ = 1;
+  // create one MPC instance
   std::unique_ptr<MPC_BASE> mpcPtr(
-      new GaussNewtonDDP_MPC(leggedRobotInterface.mpcSettings(), leggedRobotInterface.ddpSettings(), leggedRobotInterface.getRollout(),
+      new GaussNewtonDDP_MPC(leggedRobotInterface.mpcSettings(), ddpSettings, leggedRobotInterface.getRollout(),
                              leggedRobotInterface.getOptimalControlProblem(), leggedRobotInterface.getInitializer()));
   mpcPtr->getSolverPtr()->setReferenceManager(leggedRobotInterface.getReferenceManagerPtr());
   return mpcPtr;

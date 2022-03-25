@@ -51,8 +51,8 @@ int main(int argc, char** argv) {
   if (programArgs.size() <= 2) {
     throw std::runtime_error("No task name and policy file path specified. Aborting.");
   }
-  std::string taskFileFolderName = std::string(programArgs[1]);
-  std::string policyFilePath = std::string(programArgs[2]);
+  const std::string taskFileFolderName = std::string(programArgs[1]);
+  const std::string policyFilePath = std::string(programArgs[2]);
 
   // initialize ros node
   ros::init(argc, argv, robotName + "_mpcnet_dummy");
@@ -69,7 +69,7 @@ int main(int argc, char** argv) {
 
   // policy (MPC-Net controller)
   auto onnxEnvironmentPtr = ocs2::mpcnet::createOnnxEnvironment();
-  std::shared_ptr<ocs2::mpcnet::MpcnetDefinitionBase> mpcnetDefinitionPtr(new BallbotMpcnetDefinition());
+  std::shared_ptr<ocs2::mpcnet::MpcnetDefinitionBase> mpcnetDefinitionPtr(new BallbotMpcnetDefinition);
   std::unique_ptr<ocs2::mpcnet::MpcnetControllerBase> mpcnetControllerPtr(
       new ocs2::mpcnet::MpcnetOnnxController(mpcnetDefinitionPtr, rosReferenceManagerPtr, onnxEnvironmentPtr));
   mpcnetControllerPtr->loadPolicyModel(policyFilePath);
@@ -85,8 +85,8 @@ int main(int argc, char** argv) {
   std::shared_ptr<BallbotDummyVisualization> ballbotDummyVisualization(new BallbotDummyVisualization(nodeHandle));
 
   // MPC-Net dummy loop ROS
-  scalar_t controlFrequency = ballbotInterface.mpcSettings().mrtDesiredFrequency_;
-  scalar_t rosFrequency = ballbotInterface.mpcSettings().mpcDesiredFrequency_;
+  const scalar_t controlFrequency = ballbotInterface.mpcSettings().mrtDesiredFrequency_;
+  const scalar_t rosFrequency = ballbotInterface.mpcSettings().mpcDesiredFrequency_;
   ocs2::mpcnet::MpcnetDummyLoopRos mpcnetDummyLoopRos(controlFrequency, rosFrequency, std::move(mpcnetControllerPtr), std::move(rolloutPtr),
                                                       rosReferenceManagerPtr);
   mpcnetDummyLoopRos.addObserver(mpcnetDummyObserverRosPtr);
@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
   systemObservation.input = vector_t::Zero(ocs2::ballbot::INPUT_DIM);
 
   // initial target trajectories
-  TargetTrajectories targetTrajectories({systemObservation.time}, {systemObservation.state}, {systemObservation.input});
+  const TargetTrajectories targetTrajectories({systemObservation.time}, {systemObservation.state}, {systemObservation.input});
 
   // run MPC-Net dummy loop ROS
   mpcnetDummyLoopRos.run(systemObservation, targetTrajectories);

@@ -45,9 +45,9 @@ BallbotMpcnetInterface::BallbotMpcnetInterface(size_t nDataGenerationThreads, si
   // create ONNX environment
   auto onnxEnvironmentPtr = ocs2::mpcnet::createOnnxEnvironment();
   // path to config file
-  std::string taskFile = ros::package::getPath("ocs2_ballbot") + "/config/mpc/task.info";
+  const std::string taskFile = ros::package::getPath("ocs2_ballbot") + "/config/mpc/task.info";
   // path to save auto-generated libraries
-  std::string libraryFolder = ros::package::getPath("ocs2_ballbot") + "/auto_generated";
+  const std::string libraryFolder = ros::package::getPath("ocs2_ballbot") + "/auto_generated";
   // set up MPC-Net rollout manager for data generation and policy evaluation
   std::vector<std::unique_ptr<MPC_BASE>> mpcPtrs;
   std::vector<std::unique_ptr<ocs2::mpcnet::MpcnetControllerBase>> mpcnetPtrs;
@@ -61,7 +61,7 @@ BallbotMpcnetInterface::BallbotMpcnetInterface(size_t nDataGenerationThreads, si
   referenceManagerPtrs.reserve(nDataGenerationThreads + nPolicyEvaluationThreads);
   for (int i = 0; i < (nDataGenerationThreads + nPolicyEvaluationThreads); i++) {
     BallbotInterface ballbotInterface(taskFile, libraryFolder);
-    std::shared_ptr<ocs2::mpcnet::MpcnetDefinitionBase> mpcnetDefinitionPtr(new BallbotMpcnetDefinition());
+    std::shared_ptr<ocs2::mpcnet::MpcnetDefinitionBase> mpcnetDefinitionPtr(new BallbotMpcnetDefinition);
     mpcPtrs.push_back(getMpc(ballbotInterface));
     mpcnetPtrs.push_back(std::unique_ptr<ocs2::mpcnet::MpcnetControllerBase>(
         new ocs2::mpcnet::MpcnetOnnxController(mpcnetDefinitionPtr, ballbotInterface.getReferenceManagerPtr(), onnxEnvironmentPtr)));

@@ -37,7 +37,7 @@ namespace ballbot {
 /**
  * MPC-Net definitions for ballbot.
  */
-class BallbotMpcnetDefinition : public ocs2::mpcnet::MpcnetDefinitionBase {
+class BallbotMpcnetDefinition final : public ocs2::mpcnet::MpcnetDefinitionBase {
  public:
   /**
    * Default constructor.

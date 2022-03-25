@@ -38,7 +38,7 @@ namespace ballbot {
 /**
  *  Ballbot MPC-Net interface between C++ and Python.
  */
-class BallbotMpcnetInterface : public ocs2::mpcnet::MpcnetInterfaceBase {
+class BallbotMpcnetInterface final : public ocs2::mpcnet::MpcnetInterfaceBase {
  public:
   /**
    * Constructor.
@@ -51,7 +51,7 @@ class BallbotMpcnetInterface : public ocs2::mpcnet::MpcnetInterfaceBase {
   /**
    * Default destructor.
    */
-  virtual ~BallbotMpcnetInterface() = default;
+  ~BallbotMpcnetInterface() override = default;
 
  private:
   /**

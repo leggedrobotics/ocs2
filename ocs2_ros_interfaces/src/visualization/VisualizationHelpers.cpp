@@ -127,9 +127,10 @@ visualization_msgs::Marker getArrowAtPointMsg(const Eigen::Vector3d& vec, const 
 visualization_msgs::Marker getArrowBetweenPointsMsg(const Eigen::Vector3d& start, const Eigen::Vector3d& end, Color color) {
   visualization_msgs::Marker arrow;
   arrow.type = visualization_msgs::Marker::ARROW;
-  arrow.scale.x = 0.01;                           // shaft diameter
-  arrow.scale.y = 0.02;                           // arrow-head diameter
-  arrow.scale.z = 0.06;                           // arrow-head length
+  arrow.scale.x = 0.01;  // shaft diameter
+  arrow.scale.y = 0.02;  // arrow-head diameter
+  arrow.scale.z = 0.06;  // arrow-head length
+  arrow.points.reserve(2);
   arrow.points.emplace_back(getPointMsg(start));  // start point
   arrow.points.emplace_back(getPointMsg(end));    // end point
   arrow.color = getColor(color);

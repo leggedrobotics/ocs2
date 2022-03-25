@@ -289,7 +289,7 @@ MultipleShootingSolver::OcpSubproblemSolution MultipleShootingSolver::getOCPSolu
 
 void MultipleShootingSolver::setPrimalSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& x, vector_array_t&& u) {
   // Clear old solution
-  primalSolution_ = PrimalSolution();
+  primalSolution_.clear();
 
   // Correct for missing inputs at PreEvents
   for (int i = 0; i < time.size(); ++i) {
@@ -328,12 +328,16 @@ void MultipleShootingSolver::setPrimalSolution(const std::vector<AnnotatedTime>&
     controllerGain.push_back(controllerGain.back());
   }
 
-  // Construct nominal state and inputs
+  // Construct nominal time, state and input trajectories
   primalSolution_.stateTrajectory_ = std::move(x);
   u.push_back(u.back());  // Repeat last input to make equal length vectors
   primalSolution_.inputTrajectory_ = std::move(u);
-  for (const auto& t : time) {
-    primalSolution_.timeTrajectory_.push_back(t.time);
+  primalSolution_.timeTrajectory_.reserve(time.size());
+  for (size_t i = 0; i < time.size(); i++) {
+    primalSolution_.timeTrajectory_.push_back(time[i].time);
+    if (time[i].event == AnnotatedTime::Event::PreEvent) {
+      primalSolution_.postEventIndices_.push_back(i + 1);
+    }
   }
   primalSolution_.modeSchedule_ = this->getReferenceManager().getModeSchedule();
 

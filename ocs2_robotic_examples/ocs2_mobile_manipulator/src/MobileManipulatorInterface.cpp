@@ -372,10 +372,9 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getJointPositionLimitCons
 
   std::unique_ptr<StateConstraint> constraint(new JointPositionLimits(armStateDim));
 
-  std::unique_ptr<PenaltyBase> barrierFunction;
   std::vector<std::unique_ptr<PenaltyBase>> penaltyArray(armStateDim);
   for (int i = 0; i < armStateDim; i++) {
-    barrierFunction.reset(new RelaxedBarrierPenalty({mu, delta}));
+    std::unique_ptr<PenaltyBase> barrierFunction(new RelaxedBarrierPenalty({mu, delta}));
     penaltyArray[i].reset(new DoubleSidedPenalty(lowerBound(i), upperBound(i), std::move(barrierFunction)));
   }
 
@@ -427,10 +426,9 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointVelocityLimi
 
   std::unique_ptr<StateInputConstraint> constraint(new JointVelocityLimits(manipulatorModelInfo_.inputDim));
 
-  std::unique_ptr<PenaltyBase> barrierFunction;
   std::vector<std::unique_ptr<PenaltyBase>> penaltyArray(manipulatorModelInfo_.inputDim);
   for (int i = 0; i < manipulatorModelInfo_.inputDim; i++) {
-    barrierFunction.reset(new RelaxedBarrierPenalty({mu, delta}));
+    std::unique_ptr<PenaltyBase> barrierFunction(new RelaxedBarrierPenalty({mu, delta}));
     penaltyArray[i].reset(new DoubleSidedPenalty(lowerBound(i), upperBound(i), std::move(barrierFunction)));
   }
 

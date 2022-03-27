@@ -16,7 +16,7 @@ vector3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::legRootInOriginFrame(size_t
                                                                           const base_coordinate_s_t<SCALAR_T>& basePose) const {
   const vector3_s_t<SCALAR_T> o_basePosition = getPositionInOrigin(basePose);
 
-  const vector3_s_t<SCALAR_T> b_baseTolegRoot = baseTolegRootInBaseFrame(footIndex);
+  const vector3_s_t<SCALAR_T> b_baseTolegRoot = baseToLegRootInBaseFrame(footIndex);
   const vector3_s_t<SCALAR_T> o_baseTolegRoot = rotateVectorBaseToOrigin<SCALAR_T>(b_baseTolegRoot, getOrientation(basePose));
   return o_baseTolegRoot + o_basePosition;
 }
@@ -35,7 +35,7 @@ matrix3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::orientationLegRootToOriginF
 template <typename SCALAR_T>
 vector3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::legRootVelocityInBaseFrame(
     size_t footIndex, const base_coordinate_s_t<SCALAR_T>& baseTwistInBaseFrame) const {
-  const auto b_baseTolegRoot = baseTolegRootInBaseFrame(footIndex);
+  const auto b_baseTolegRoot = baseToLegRootInBaseFrame(footIndex);
   return getLinearVelocity(baseTwistInBaseFrame) + getAngularVelocity(baseTwistInBaseFrame).cross(b_baseTolegRoot);
 }
 

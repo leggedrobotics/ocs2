@@ -13,6 +13,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>ocs2_switched_model_interface</depend>
+  <depend>ocs2_pinocchio_interface</depend>
   <depend>ocs2_robotic_tools</depend>
   <exec_depend>rosparam_tools</exec_depend>
   <exec_depend>anymal_b</exec_depend>

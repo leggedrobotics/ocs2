@@ -31,7 +31,7 @@ class AnymalWheelsKinematics final : public switched_model::KinematicsModelBase<
 
   AnymalWheelsKinematics<SCALAR_T>* clone() const override;
 
-  switched_model::vector3_s_t<SCALAR_T> baseTolegRootInBaseFrame(size_t footIndex) const override;
+  switched_model::vector3_s_t<SCALAR_T> baseToLegRootInBaseFrame(size_t footIndex) const override;
 
   switched_model::vector3_s_t<SCALAR_T> positionBaseToWheelAxisInBaseFrame(
       size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const;

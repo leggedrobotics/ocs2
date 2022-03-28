@@ -23,8 +23,8 @@ MPC-Net has been implemented for the following :ref:`Robotic Examples <doxid-ocs
 ============= ================ ================= ======== =============
 Robot         Recom. CPU Cores Recom. GPU Memory RaiSim   Training Time
 ============= ================ ================= ======== =============
-ballbot       4                2 GB              No       1 min
-legged_robot  12               8 GB              Yes / No 8 min
+ballbot       4                2 GB              No       0m 20s
+legged_robot  12               8 GB              Yes / No 7m 40s
 ============= ================ ================= ======== =============
 
 Setup

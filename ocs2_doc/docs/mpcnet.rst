@@ -11,8 +11,8 @@ MPC-Net can be used to clone a model predictive controller into a neural network
 Therefore, MPC-Net is a useful proxy for MPC in computationally demanding applications that do not require the most exact solution.
 
 The multi-threaded data generation and policy evaluation run asynchronously with the policy training.
-The data generation and policy evaluation are implemented in C++ and run on CPU, while the policy training is implemented in Python an runs on GPU.
-The control Hamiltonian is represented by a linear quadratic approximation.
+The data generation and policy evaluation are implemented in C++ and run on CPU, while the policy training is implemented in Python and runs on GPU.
+The control Hamiltonian is represented by a linear-quadratic approximation.
 Therefore, the training can run on GPU without callbacks to OCS2 C++ code running on CPU to evaluate the Hamiltonian, and one can exploit batch processing on GPU.
 
 Robots
@@ -20,21 +20,21 @@ Robots
 
 MPC-Net has been implemented for the following :ref:`Robotic Examples <doxid-ocs2_doc_robotic_examples>`:
 
-============= ================ ============== ======== =============
-Robot         Recom. CPU Cores Recom. GPU RAM RaiSim   Training Time
-============= ================ ============== ======== =============
-ballbot       4                2 GB           No       1 min
-legged_robot  12               8 GB           Yes / No 8 min
-============= ================ ============== ======== =============
+============= ================ ================= ======== =============
+Robot         Recom. CPU Cores Recom. GPU Memory RaiSim   Training Time
+============= ================ ================= ======== =============
+ballbot       4                2 GB              No       1 min
+legged_robot  12               8 GB              Yes / No 8 min
+============= ================ ================= ======== =============
 
 Setup
 ~~~~~
 
 Make sure to follow the :ref:`Installation <doxid-ocs2_doc_installation>` page.
 Follow all the instructions for the dependencies.
-Regarding the optional dependencies, make sure to follow the instruction for ONNX Runtime as well as the virtual environment, and optionally set up RaiSim.
+Regarding the optional dependencies, make sure to follow the instruction for ONNX Runtime and the virtual environment, optionally set up RaiSim.
 
-To build all MPC-Net packages, build the metapackage:
+To build all MPC-Net packages, build the meta package:
 
 .. code-block:: bash
 
@@ -68,7 +68,7 @@ To monitor the training progress with Tensorboard, run:
     source ~/venvs/mpcnet/bin/activate
     tensorboard --logdir=runs
 
-If you use RaiSim, you can visualize the data generation and policy evaluation runs with RaiSim Unity, where pre-built executables are provided in the :code:`~/git/raisimLib/raisimUnity` folder. For example, on Linux run:
+If you use RaiSim, you can visualize the data generation and policy evaluation rollouts with RaiSim Unity, where pre-built executables are provided in the :code:`~/git/raisimLib/raisimUnity` folder. For example, on Linux run:
 
 .. code-block:: bash
 
@@ -96,7 +96,7 @@ To deploy a new policy stored in the robot-specific package's :code:`./python/oc
 How to Set Up a New Robot
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Setting up MPC-Net for a new robot is relatively easy, as the **ocs2_mpcnet_core** package takes care of the data generation as well as policy evaluation rollouts and implements important learning components, such as the memory, policy and loss function.
+Setting up MPC-Net for a new robot is relatively easy, as the **ocs2_mpcnet_core** package takes care of the data generation as well as policy evaluation rollouts and implements important learning components, such as the memory, policy, and loss function.
 
 This section assumes that you already have the packages for the robot-specific MPC implementation:
 
@@ -108,7 +108,7 @@ For the actual **ocs2_<robot>_mpcnet** package, follow the structure of existing
 The most important classes/files that have to be implemented are:
 
 * **<Robot>MpcnetDefinition**: Defines how OCS2 state variables are transformed to the policy observations. and how policy actions are transformed to OCS2 control inputs.
-* **<Robot>MpcnetInterface**: Provides the interface between C++ and Python allowing to exchange data and policies.
+* **<Robot>MpcnetInterface**: Provides the interface between C++ and Python, allowing to exchange data and policies.
 * **<robot>_mpcnet.py**: Implements the main training script.
 
 References

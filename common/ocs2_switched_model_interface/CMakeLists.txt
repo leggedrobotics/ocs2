@@ -185,3 +185,11 @@ target_link_libraries(test_${PROJECT_NAME}_terrain
 	${PROJECT_NAME}
 	gtest_main
 )
+
+catkin_add_gtest(test_${PROJECT_NAME}_convexTerrain
+	test/terrain/testConvexTerrain.cpp
+)
+target_link_libraries(test_${PROJECT_NAME}_convexTerrain
+	${PROJECT_NAME}
+	gtest_main
+)

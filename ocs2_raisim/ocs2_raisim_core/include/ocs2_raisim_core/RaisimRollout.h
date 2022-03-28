@@ -85,7 +85,7 @@ class RaisimRollout final : public RolloutBase {
   RaisimRollout(const RaisimRollout& other);
 
   //! Destructor
-  ~RaisimRollout();
+  ~RaisimRollout() override;
 
   void resetRollout() override { raisimRolloutSettings_.setSimulatorStateOnRolloutRunOnce_ = true; }
 

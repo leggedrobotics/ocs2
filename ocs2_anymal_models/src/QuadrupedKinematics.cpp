@@ -1,4 +1,4 @@
-#include "ocs2_anymal_models/AnymalKinematics.h"
+#include "ocs2_anymal_models/QuadrupedKinematics.h"
 
 // Pinocchio
 #include <pinocchio/multibody/data.hpp>
@@ -20,7 +20,7 @@ namespace anymal {
 namespace tpl {
 
 template <typename SCALAR_T>
-AnymalKinematics<SCALAR_T>::AnymalKinematics(const std::string& urdfFile) : mapFeetOrderOcs2ToPinocchio_{0, 2, 1, 3} {
+QuadrupedKinematics<SCALAR_T>::QuadrupedKinematics(const std::string& urdfFile) : mapFeetOrderOcs2ToPinocchio_{0, 2, 1, 3} {
   // check that urdf file exists
   boost::filesystem::path urdfFilePath(urdfFile);
   if (boost::filesystem::exists(urdfFilePath)) {
@@ -36,7 +36,7 @@ AnymalKinematics<SCALAR_T>::AnymalKinematics(const std::string& urdfFile) : mapF
     if (model.existFrame(name)) {
       mapFrameIndexToId_[footIndex].setId(frameIndex, model.getFrameId(name));
     } else {
-      throw std::runtime_error("[AnymalKinematics] Frame " + name + " does not exist.");
+      throw std::runtime_error("[QuadrupedKinematics] Frame " + name + " does not exist.");
     }
   };
   for (std::size_t i = 0; i < switched_model::NUM_CONTACT_POINTS; ++i) {
@@ -46,12 +46,12 @@ AnymalKinematics<SCALAR_T>::AnymalKinematics(const std::string& urdfFile) : mapF
   }
 }
 // template <typename SCALAR_T>
-// AnymalKinematics<SCALAR_T>* AnymalKinematics<SCALAR_T>::clone() const {
-//   return new AnymalKinematics<SCALAR_T>(*this);
+// QuadrupedKinematics<SCALAR_T>* QuadrupedKinematics<SCALAR_T>::clone() const {
+//   return new QuadrupedKinematics<SCALAR_T>(*this);
 // }
 
 template <typename SCALAR_T>
-auto AnymalKinematics<SCALAR_T>::createPinocchioInterface(const std::string& urdfFile) -> PinocchioInterface {
+auto QuadrupedKinematics<SCALAR_T>::createPinocchioInterface(const std::string& urdfFile) -> PinocchioInterface {
   // parse the URDF
   const auto urdfTreePtr = ::urdf::parseURDFFile(urdfFile);
   pinocchio::ModelTpl<SCALAR_T> model;
@@ -60,7 +60,7 @@ auto AnymalKinematics<SCALAR_T>::createPinocchioInterface(const std::string& urd
 }
 
 template <typename SCALAR_T>
-switched_model::vector3_s_t<SCALAR_T> AnymalKinematics<SCALAR_T>::baseToLegRootInBaseFrame(size_t footIndex) const {
+switched_model::vector3_s_t<SCALAR_T> QuadrupedKinematics<SCALAR_T>::baseToLegRootInBaseFrame(size_t footIndex) const {
   switched_model::joint_coordinate_s_t<SCALAR_T> zeroConfiguration;
   zeroConfiguration.setZero();
   pinocchio::FrameIndex frameId = mapFrameIndexToId_[footIndex].getId(FrameIndex::HAA);
@@ -68,7 +68,7 @@ switched_model::vector3_s_t<SCALAR_T> AnymalKinematics<SCALAR_T>::baseToLegRootI
 }
 
 template <typename SCALAR_T>
-switched_model::vector3_s_t<SCALAR_T> AnymalKinematics<SCALAR_T>::positionBaseToFootInBaseFrame(
+switched_model::vector3_s_t<SCALAR_T> QuadrupedKinematics<SCALAR_T>::positionBaseToFootInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
   pinocchio::FrameIndex frameId = mapFrameIndexToId_[footIndex].getId(FrameIndex::FOOT);
   switched_model::joint_coordinate_s_t<SCALAR_T> pinocchioJointPositions = mapJointConfigurationOcs2ToPinocchio(jointPositions);
@@ -76,7 +76,7 @@ switched_model::vector3_s_t<SCALAR_T> AnymalKinematics<SCALAR_T>::positionBaseTo
 }
 
 template <typename SCALAR_T>
-auto AnymalKinematics<SCALAR_T>::baseToFootJacobianBlockInBaseFrame(
+auto QuadrupedKinematics<SCALAR_T>::baseToFootJacobianBlockInBaseFrame(
     std::size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const -> joint_jacobian_block_t {
   auto& data = pinocchioInterfacePtr_->getData();
   const auto& model = pinocchioInterfacePtr_->getModel();
@@ -96,7 +96,7 @@ auto AnymalKinematics<SCALAR_T>::baseToFootJacobianBlockInBaseFrame(
 }
 
 template <typename SCALAR_T>
-switched_model::matrix3_s_t<SCALAR_T> AnymalKinematics<SCALAR_T>::footOrientationInBaseFrame(
+switched_model::matrix3_s_t<SCALAR_T> QuadrupedKinematics<SCALAR_T>::footOrientationInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
   pinocchio::FrameIndex frameId = mapFrameIndexToId_[footIndex].getId(FrameIndex::FOOT);
   switched_model::joint_coordinate_s_t<SCALAR_T> pinocchioJointPositions = mapJointConfigurationOcs2ToPinocchio(jointPositions);
@@ -104,7 +104,7 @@ switched_model::matrix3_s_t<SCALAR_T> AnymalKinematics<SCALAR_T>::footOrientatio
 }
 
 template <typename SCALAR_T>
-auto AnymalKinematics<SCALAR_T>::collisionSpheresInBaseFrame(const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const
+auto QuadrupedKinematics<SCALAR_T>::collisionSpheresInBaseFrame(const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const
     -> std::vector<CollisionSphere> {
   auto& data = pinocchioInterfacePtr_->getData();
   const auto& model = pinocchioInterfacePtr_->getModel();
@@ -125,7 +125,7 @@ auto AnymalKinematics<SCALAR_T>::collisionSpheresInBaseFrame(const switched_mode
 }
 
 template <typename SCALAR_T>
-switched_model::joint_coordinate_s_t<SCALAR_T> AnymalKinematics<SCALAR_T>::mapJointConfigurationOcs2ToPinocchio(
+switched_model::joint_coordinate_s_t<SCALAR_T> QuadrupedKinematics<SCALAR_T>::mapJointConfigurationOcs2ToPinocchio(
     const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
   switched_model::joint_coordinate_s_t<SCALAR_T> pinocchioJointPositions;
   // OCS2 LF
@@ -141,7 +141,7 @@ switched_model::joint_coordinate_s_t<SCALAR_T> AnymalKinematics<SCALAR_T>::mapJo
 }
 
 template <typename SCALAR_T>
-switched_model::vector3_s_t<SCALAR_T> AnymalKinematics<SCALAR_T>::relativeTranslationInBaseFrame(
+switched_model::vector3_s_t<SCALAR_T> QuadrupedKinematics<SCALAR_T>::relativeTranslationInBaseFrame(
     const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions, const pinocchio::FrameIndex frame) const {
   auto& data = pinocchioInterfacePtr_->getData();
   const auto& model = pinocchioInterfacePtr_->getModel();
@@ -151,7 +151,7 @@ switched_model::vector3_s_t<SCALAR_T> AnymalKinematics<SCALAR_T>::relativeTransl
 }
 
 template <typename SCALAR_T>
-switched_model::matrix3_s_t<SCALAR_T> AnymalKinematics<SCALAR_T>::relativeOrientationInBaseFrame(
+switched_model::matrix3_s_t<SCALAR_T> QuadrupedKinematics<SCALAR_T>::relativeOrientationInBaseFrame(
     const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions, const pinocchio::FrameIndex frame) const {
   auto& data = pinocchioInterfacePtr_->getData();
   const auto& model = pinocchioInterfacePtr_->getModel();
@@ -164,5 +164,5 @@ switched_model::matrix3_s_t<SCALAR_T> AnymalKinematics<SCALAR_T>::relativeOrient
 }  // namespace anymal
 
 // Explicit instantiation
-template class anymal::tpl::AnymalKinematics<ocs2::scalar_t>;
-// template class anymal::tpl::AnymalKinematics<ocs2::ad_scalar_t>;
+template class anymal::tpl::QuadrupedKinematics<ocs2::scalar_t>;
+// template class anymal::tpl::QuadrupedKinematics<ocs2::ad_scalar_t>;

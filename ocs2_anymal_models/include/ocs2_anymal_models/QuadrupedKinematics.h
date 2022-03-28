@@ -4,8 +4,6 @@
 
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
-#include <pinocchio/multibody/fwd.hpp>
-
 #include <array>
 #include <string>
 #include <vector>
@@ -14,7 +12,7 @@ namespace anymal {
 namespace tpl {
 
 template <typename SCALAR_T>
-class AnymalKinematics final : public switched_model::KinematicsModelBase<SCALAR_T> {
+class QuadrupedKinematics final : public switched_model::KinematicsModelBase<SCALAR_T> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -30,14 +28,14 @@ class AnymalKinematics final : public switched_model::KinematicsModelBase<SCALAR
   struct FrameIndexMap {
     std::array<std::size_t, static_cast<std::size_t>(FrameIndex::FRAME_INDEX_SIZE)> indexMap;
     void setId(FrameIndex i, std::size_t ind) { indexMap.at(static_cast<std::size_t>(i)) = ind; }
-    pinocchio::FrameIndex getId(FrameIndex i) const { return indexMap.at(static_cast<std::size_t>(i)); }
+    std::size_t getId(FrameIndex i) const { return indexMap.at(static_cast<std::size_t>(i)); }
   };
 
-  AnymalKinematics(const std::string& urdfFile);
-  AnymalKinematics(const AnymalKinematics&) = delete;
-  ~AnymalKinematics() = default;
+  QuadrupedKinematics(const std::string& urdfFile);
+  QuadrupedKinematics(const QuadrupedKinematics&) = delete;
+  ~QuadrupedKinematics() = default;
 
-  AnymalKinematics<SCALAR_T>* clone() const override { return nullptr; };
+  QuadrupedKinematics<SCALAR_T>* clone() const override { return nullptr; };
 
   switched_model::vector3_s_t<SCALAR_T> baseToLegRootInBaseFrame(size_t footIndex) const override;
 
@@ -59,9 +57,9 @@ class AnymalKinematics final : public switched_model::KinematicsModelBase<SCALAR
  private:
   PinocchioInterface createPinocchioInterface(const std::string& urdfFile);
   switched_model::vector3_s_t<SCALAR_T> relativeTranslationInBaseFrame(const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions,
-                                                                       const pinocchio::FrameIndex frame) const;
+                                                                       const std::size_t frame) const;
   switched_model::matrix3_s_t<SCALAR_T> relativeOrientationInBaseFrame(const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions,
-                                                                       const pinocchio::FrameIndex frame) const;
+                                                                       const std::size_t frame) const;
 
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
 
@@ -77,13 +75,13 @@ class AnymalKinematics final : public switched_model::KinematicsModelBase<SCALAR
 
 }  // namespace tpl
 
-using AnymalKinematics = tpl::AnymalKinematics<ocs2::scalar_t>;
-using AnymalKinematicsAd = tpl::AnymalKinematics<ocs2::ad_scalar_t>;
+using QuadrupedKinematics = tpl::QuadrupedKinematics<ocs2::scalar_t>;
+using QuadrupedKinematicsAd = tpl::QuadrupedKinematics<ocs2::ad_scalar_t>;
 }  // namespace anymal
 
 /**
  *  Explicit instantiation, for instantiation additional types, include the implementation file instead of this one.
  */
 
-extern template class anymal::tpl::AnymalKinematics<ocs2::scalar_t>;
-// extern template class anymal::tpl::AnymalKinematics<ocs2::ad_scalar_t>;
+extern template class anymal::tpl::QuadrupedKinematics<ocs2::scalar_t>;
+// extern template class anymal::tpl::QuadrupedKinematics<ocs2::ad_scalar_t>;

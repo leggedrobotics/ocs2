@@ -47,7 +47,7 @@ inline std::pair<scalar_t, vector2_t> projectToConvex2dPolygonBoundary(const std
     }
   };
 
-  bool isInsize = true;
+  bool isInside = true;
   for (int i = 0; i < boundary.size(); i++) {
     const auto& p1 = boundary[i];
     const auto& p2 = boundary[getNextVertex(i, boundary.size())];
@@ -59,14 +59,14 @@ inline std::pair<scalar_t, vector2_t> projectToConvex2dPolygonBoundary(const std
       saveIfCloser(p2);
     } else if (r < 0.0) {
       saveIfCloser(p1);
-      isInsize = false;  // the point is outside since the angle is obtuse
+      isInside = false;  // the point is outside since the angle is obtuse
     } else {
       const vector2_t q = p1 + r * p12;
       saveIfCloser(q);
     }
   }  // end of i loop
 
-  return {(isInsize ? -dist2 : dist2), image};
+  return {(isInside ? -dist2 : dist2), image};
 }
 
 /**

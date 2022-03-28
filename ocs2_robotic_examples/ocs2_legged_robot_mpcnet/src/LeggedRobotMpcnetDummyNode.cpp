@@ -140,8 +140,8 @@ int main(int argc, char** argv) {
   }
 
   // MPC-Net dummy loop ROS
-  scalar_t controlFrequency = leggedRobotInterface.mpcSettings().mrtDesiredFrequency_;
-  scalar_t rosFrequency = leggedRobotInterface.mpcSettings().mpcDesiredFrequency_;
+  const scalar_t controlFrequency = leggedRobotInterface.mpcSettings().mrtDesiredFrequency_;
+  const scalar_t rosFrequency = leggedRobotInterface.mpcSettings().mpcDesiredFrequency_;
   ocs2::mpcnet::MpcnetDummyLoopRos mpcnetDummyLoopRos(controlFrequency, rosFrequency, std::move(mpcnetControllerPtr), std::move(rolloutPtr),
                                                       rosReferenceManagerPtr);
   mpcnetDummyLoopRos.addObserver(mpcnetDummyObserverRosPtr);
@@ -156,7 +156,7 @@ int main(int argc, char** argv) {
   systemObservation.input = vector_t::Zero(leggedRobotInterface.getCentroidalModelInfo().inputDim);
 
   // initial target trajectories
-  TargetTrajectories targetTrajectories({systemObservation.time}, {systemObservation.state}, {systemObservation.input});
+  const TargetTrajectories targetTrajectories({systemObservation.time}, {systemObservation.state}, {systemObservation.input});
 
   // run MPC-Net dummy loop ROS
   mpcnetDummyLoopRos.run(systemObservation, targetTrajectories);

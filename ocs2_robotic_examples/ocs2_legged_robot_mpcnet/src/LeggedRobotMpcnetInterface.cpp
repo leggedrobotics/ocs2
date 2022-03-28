@@ -47,11 +47,11 @@ LeggedRobotMpcnetInterface::LeggedRobotMpcnetInterface(size_t nDataGenerationThr
   // create ONNX environment
   auto onnxEnvironmentPtr = ocs2::mpcnet::createOnnxEnvironment();
   // paths to files
-  std::string taskFile = ros::package::getPath("ocs2_legged_robot") + "/config/mpc/task.info";
-  std::string urdfFile = ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/urdf/anymal.urdf";
-  std::string referenceFile = ros::package::getPath("ocs2_legged_robot") + "/config/command/reference.info";
-  std::string raisimFile = ros::package::getPath("ocs2_legged_robot_raisim") + "/config/raisim.info";
-  std::string resourcePath = ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/meshes";
+  const std::string taskFile = ros::package::getPath("ocs2_legged_robot") + "/config/mpc/task.info";
+  const std::string urdfFile = ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/urdf/anymal.urdf";
+  const std::string referenceFile = ros::package::getPath("ocs2_legged_robot") + "/config/command/reference.info";
+  const std::string raisimFile = ros::package::getPath("ocs2_legged_robot_raisim") + "/config/raisim.info";
+  const std::string resourcePath = ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/meshes";
   // set up MPC-Net rollout manager for data generation and policy evaluation
   std::vector<std::unique_ptr<MPC_BASE>> mpcPtrs;
   std::vector<std::unique_ptr<ocs2::mpcnet::MpcnetControllerBase>> mpcnetPtrs;

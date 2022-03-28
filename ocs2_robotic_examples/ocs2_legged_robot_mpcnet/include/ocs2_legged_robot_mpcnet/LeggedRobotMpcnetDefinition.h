@@ -37,7 +37,7 @@ namespace legged_robot {
 /**
  * MPC-Net definitions for legged robot.
  */
-class LeggedRobotMpcnetDefinition : public ocs2::mpcnet::MpcnetDefinitionBase {
+class LeggedRobotMpcnetDefinition final : public ocs2::mpcnet::MpcnetDefinitionBase {
  public:
   /**
    * Constructor.
@@ -71,7 +71,10 @@ class LeggedRobotMpcnetDefinition : public ocs2::mpcnet::MpcnetDefinitionBase {
   bool validState(const vector_t& x) override;
 
  private:
-  vector_t defaultState_;
+  const scalar_t allowedHeightDeviation_ = 0.2;
+  const scalar_t allowedPitchDeviation_ = 30.0 * M_PI / 180.0;
+  const scalar_t allowedRollDeviation_ = 30.0 * M_PI / 180.0;
+  const vector_t defaultState_;
 };
 
 }  // namespace legged_robot

@@ -99,7 +99,7 @@ experts_loss = ExpertsLoss()
 gating_loss = GatingLoss(epsilon)
 
 # memory
-memory_capacity = 500000
+memory_capacity = 400000
 memory = Memory(memory_capacity, config.TIME_DIM, config.STATE_DIM, config.INPUT_DIM, config.EXPERT_NUM)
 
 # policy

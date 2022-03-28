@@ -1,3 +1,32 @@
+/******************************************************************************
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+ * Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
+
 #pragma once
 
 #include <ocs2_core/reference/ModeSchedule.h>
@@ -21,66 +50,6 @@ struct SwingTiming {
   scalar_t start;
   scalar_t end;
 };
-
-inline scalar_t timingNaN() {
-  return std::numeric_limits<scalar_t>::quiet_NaN();
-}
-
-inline bool hasStartTime(const ContactTiming& timing) {
-  return !std::isnan(timing.start);
-}
-inline bool hasEndTime(const ContactTiming& timing) {
-  return !std::isnan(timing.end);
-}
-
-inline bool hasStartTime(const SwingTiming& timing) {
-  return !std::isnan(timing.start);
-}
-inline bool hasEndTime(const SwingTiming& timing) {
-  return !std::isnan(timing.end);
-}
-
-inline bool startsWithSwingPhase(const std::vector<ContactTiming>& timings) {
-  return timings.empty() || hasStartTime(timings.front());
-}
-inline bool startsWithContactPhase(const std::vector<ContactTiming>& timings) {
-  return !startsWithSwingPhase(timings);
-}
-inline bool endsWithSwingPhase(const std::vector<ContactTiming>& timings) {
-  return timings.empty() || hasEndTime(timings.back());
-}
-inline bool endsWithContactPhase(const std::vector<ContactTiming>& timings) {
-  return !endsWithSwingPhase(timings);
-}
-
-inline bool startsWithContactPhase(const std::vector<SwingTiming>& timings) {
-  return timings.empty() || hasStartTime(timings.front());
-}
-inline bool startsWithSwingPhase(const std::vector<SwingTiming>& timings) {
-  return !startsWithContactPhase(timings);
-}
-inline bool endsWithContactPhase(const std::vector<SwingTiming>& timings) {
-  return timings.empty() || hasEndTime(timings.back());
-}
-inline bool endsWithSwingPhase(const std::vector<SwingTiming>& timings) {
-  return !endsWithContactPhase(timings);
-}
-
-inline bool touchesDownAtLeastOnce(const std::vector<ContactTiming>& timings) {
-  return std::any_of(timings.begin(), timings.end(), [](const ContactTiming& timing) { return hasStartTime(timing); });
-}
-
-inline bool liftsOffAtLeastOnce(const std::vector<ContactTiming>& timings) {
-  return !timings.empty() && hasEndTime(timings.front());
-}
-
-inline bool touchesDownAtLeastOnce(const std::vector<SwingTiming>& timings) {
-  return !timings.empty() && hasEndTime(timings.front());
-}
-
-inline bool liftsOffAtLeastOnce(const std::vector<SwingTiming>& timings) {
-  return std::any_of(timings.begin(), timings.end(), [](const SwingTiming& timing) { return hasStartTime(timing); });
-}
 
 /**
  * @brief Get the contact phase for all legs.

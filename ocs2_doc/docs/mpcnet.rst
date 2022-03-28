@@ -93,6 +93,24 @@ To deploy a new policy stored in the robot-specific package's :code:`./python/oc
     source devel/setup.bash
     roslaunch ocs2_<robot>_mpcnet <robot>_mpcnet.launch policyFile:=<path>
 
+How to Set Up a New Robot
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Setting up MPC-Net for a new robot is relatively easy, as the **ocs2_mpcnet_core** package takes care of the data generation as well as policy evaluation rollouts and implements important learning components, such as the memory, policy and loss function.
+
+This section assumes that you already have the packages for the robot-specific MPC implementation:
+
+1. **ocs2_<robot>**: Provides the library with the robot-specific MPC implementation.
+2. **ocs2_<robot>_ros**:  Wraps around the MPC implementation with ROS to define ROS nodes.
+3. **ocs2_<robot>_raisim**:  (Optional) interface between the robot-specific MPC implementation and RaiSim.
+
+For the actual **ocs2_<robot>_mpcnet** package, follow the structure of existing robot-specific MPC-Net packages.
+The most important classes/files that have to be implemented are:
+
+* **<Robot>MpcnetDefinition**: Defines how OCS2 state variables are transformed to the policy observations. and how policy actions are transformed to OCS2 control inputs.
+* **<Robot>MpcnetInterface**: Provides the interface between C++ and Python allowing to exchange data and policies.
+* **<robot>_mpcnet.py**: Implements the main training script.
+
 References
 ~~~~~~~~~~
 

@@ -72,9 +72,12 @@ TEST(TestConvexTerrain, projectToConvex2dPolygonBoundary_valueTest) {
 
     const scalar_array_t insidePointDists{-std::abs(insidePoint.x() - 1.0), -std::abs(insidePoint.x() + 1.0),
                                           -std::abs(insidePoint.y() - 1.0), -std::abs(insidePoint.y() + 1.0)};
-
     const auto minDist = std::max_element(insidePointDists.cbegin(), insidePointDists.cend());
-    EXPECT_NEAR(projectToConvex2dPolygonBoundary(boundary, insidePoint).first, *minDist, 1e-9);
+
+    const auto distance2ImagePair = projectToConvex2dPolygonBoundary(boundary, insidePoint);
+    const auto computedDist = (distance2ImagePair.first > 0.0) ? std::sqrt(distance2ImagePair.first) : -std::sqrt(-distance2ImagePair.first);
+
+    EXPECT_NEAR(computedDist, *minDist, 1e-9);
   }
 }
 

@@ -34,7 +34,7 @@ inline int getPreviousVertex(int i, size_t N) {
  * Projects a 2D point into boundary of a 2D convex polygon.
  * @param [in] boundary: The vertices of the polygon in clockwise or counter-clockwise order.
  * @param [in] p: The 2D point.
- * @return A pair of signed distance to the boundary (negative inside, positive outside) and the projected point.
+ * @return A pair of signed squared distance to the boundary (negative inside, positive outside) and the projected point.
  */
 inline std::pair<scalar_t, vector2_t> projectToConvex2dPolygonBoundary(const std::vector<vector2_t>& boundary, const vector2_t& p) {
   vector2_t image = p;
@@ -57,20 +57,16 @@ inline std::pair<scalar_t, vector2_t> projectToConvex2dPolygonBoundary(const std
 
     if (r > 1.0) {
       saveIfCloser(p2);
-
     } else if (r < 0.0) {
       saveIfCloser(p1);
       isInsize = false;  // the point is outside since the angle is obtuse
-
     } else {
       const vector2_t q = p1 + r * p12;
       saveIfCloser(q);
     }
   }  // end of i loop
 
-  const scalar_t dist = isInsize ? -std::sqrt(dist2) : std::sqrt(dist2);
-
-  return {dist, image};
+  return {(isInsize ? -dist2 : dist2), image};
 }
 
 /**
@@ -83,15 +79,15 @@ inline vector3_t projectToConvex3dPolygon(const ConvexTerrain& convexTerrain, co
   const vector3_t local_p = positionInTerrainFrameFromPositionInWorld(p, convexTerrain.plane);
   const vector2_t local_2d_p(local_p.x(), local_p.y());
 
-  const auto distanceImagePair = projectToConvex2dPolygonBoundary(convexTerrain.boundary, local_2d_p);
+  const auto distance2ImagePair = projectToConvex2dPolygonBoundary(convexTerrain.boundary, local_2d_p);
 
   vector3_t local_q;
-  if (distanceImagePair.first <= 0.0) {
+  if (distance2ImagePair.first <= 0.0) {
     // the 2d local point is inside polygon
     local_q << local_2d_p, 0.0;
   } else {
     // the 2d local point is outside polygon
-    local_q << distanceImagePair.second, 0.0;
+    local_q << distance2ImagePair.second, 0.0;
   }
 
   return positionInWorldFrameFromPositionInTerrain(local_q, convexTerrain.plane);

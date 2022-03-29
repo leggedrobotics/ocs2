@@ -540,7 +540,7 @@ multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIn
     }();
 
     if (settings_.printLinesearch) {
-      std::cerr << "Stepsize: " << alpha << " Type: " << toString(stepInfo.stepType)
+      std::cerr << "Step size: " << alpha << ", Step Type: " << toString(stepInfo.stepType)
                 << (stepAccepted ? std::string{" (Accepted)"} : std::string{" (Rejected)"}) << "\n";
       std::cerr << "|dx| = " << alpha * deltaXnorm << "\t|du| = " << alpha * deltaUnorm << "\n";
       std::cerr << performanceNew << "\n";
@@ -561,6 +561,10 @@ multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIn
 
       // Detect too small step size during back-tracking to escape early. Prevents going all the way to alpha_min
       if (alpha * deltaXnorm < settings_.deltaTol && alpha * deltaUnorm < settings_.deltaTol) {
+        if (settings_.printLinesearch) {
+          std::cerr << "Exiting linesearch early due to too small primal steps |dx|: " << alpha * deltaXnorm
+                    << ", and or |du|: " << alpha * deltaUnorm << " are below deltaTol: " << settings_.deltaTol << "\n";
+        }
         break;
       }
     }
@@ -575,8 +579,7 @@ multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIn
   stepInfo.totalConstraintViolationAfterStep = baselineConstraintViolation;
 
   if (settings_.printLinesearch) {
-    std::cerr << "Stepsize: " << alpha << " Type: " << toString(stepInfo.stepType) << " (Linesearch terminated)"
-              << "\n";
+    std::cerr << "[Linesearch terminated] Step size: " << stepInfo.stepSize << ", Step Type: " << toString(stepInfo.stepType) << "\n";
   }
 
   return stepInfo;

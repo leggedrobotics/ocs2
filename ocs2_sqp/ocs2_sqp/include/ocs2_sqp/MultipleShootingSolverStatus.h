@@ -55,7 +55,7 @@ struct StepInfo {
 std::string toString(const StepInfo::StepType& stepType);
 
 /** Different types of convergence */
-enum class Convergence { FALSE, ITERATIONS, STEPSIZE, COST, PRIMAL };
+enum class Convergence { FALSE, ITERATIONS, STEPSIZE, METRICS, PRIMAL };
 
 std::string toString(const Convergence& convergence);
 

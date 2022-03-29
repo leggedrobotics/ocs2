@@ -477,6 +477,8 @@ multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIn
                                                              const std::vector<AnnotatedTime>& timeDiscretization,
                                                              const vector_t& initState, const OcpSubproblemSolution& subproblemSolution,
                                                              vector_array_t& x, vector_array_t& u) {
+  using StepType = multiple_shooting::StepInfo::StepType;
+
   /*
    * Filter linesearch based on:
    * "On the implementation of an interior-point filter line-search algorithm for large-scale nonlinear programming"
@@ -488,21 +490,12 @@ multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIn
     std::cerr << "Baseline:\n" << baseline << "\n";
   }
 
-  // Some settings and shorthands
-  using StepType = multiple_shooting::StepInfo::StepType;
-  const scalar_t alpha_decay = settings_.alpha_decay;
-  const scalar_t alpha_min = settings_.alpha_min;
-  const scalar_t gamma_c = settings_.gamma_c;
-  const scalar_t g_max = settings_.g_max;
-  const scalar_t g_min = settings_.g_min;
-  const scalar_t armijoFactor = settings_.armijoFactor;
-  const scalar_t armijoDescentMetric = subproblemSolution.armijoDescentMetric;
-  const auto& dx = subproblemSolution.deltaXSol;
-  const auto& du = subproblemSolution.deltaUSol;
-
+  // Baseline costs
   const scalar_t baselineConstraintViolation = totalConstraintViolation(baseline);
 
   // Update norm
+  const auto& dx = subproblemSolution.deltaXSol;
+  const auto& du = subproblemSolution.deltaUSol;
   const scalar_t deltaUnorm = trajectoryNorm(du);
   const scalar_t deltaXnorm = trajectoryNorm(dx);
 
@@ -529,19 +522,20 @@ multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIn
 
     // Step acceptance and record step type
     const bool stepAccepted = [&]() {
-      if (newConstraintViolation > g_max) {
+      if (newConstraintViolation > settings_.g_max) {
         // High constraint violation. Only accept decrease in constraints.
         stepInfo.stepType = StepType::CONSTRAINT;
-        return newConstraintViolation < ((1.0 - gamma_c) * baselineConstraintViolation);
-      } else if (newConstraintViolation < g_min && baselineConstraintViolation < g_min && armijoDescentMetric < 0.0) {
+        return newConstraintViolation < ((1.0 - settings_.gamma_c) * baselineConstraintViolation);
+      } else if (newConstraintViolation < settings_.g_min && baselineConstraintViolation < settings_.g_min &&
+                 subproblemSolution.armijoDescentMetric < 0.0) {
         // With low violation and having a descent direction, require the armijo condition.
         stepInfo.stepType = StepType::COST;
-        return performanceNew.merit < (baseline.merit + armijoFactor * alpha * armijoDescentMetric);
+        return performanceNew.merit < (baseline.merit + settings_.armijoFactor * alpha * subproblemSolution.armijoDescentMetric);
       } else {
         // Medium violation: either merit or constraints decrease (with small gamma_c mixing of old constraints)
         stepInfo.stepType = StepType::DUAL;
-        return performanceNew.merit < (baseline.merit - gamma_c * baselineConstraintViolation) ||
-               newConstraintViolation < ((1.0 - gamma_c) * baselineConstraintViolation);
+        return performanceNew.merit < (baseline.merit - settings_.gamma_c * baselineConstraintViolation) ||
+               newConstraintViolation < ((1.0 - settings_.gamma_c) * baselineConstraintViolation);
       }
     }();
 
@@ -563,14 +557,14 @@ multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIn
       stepInfo.totalConstraintViolationAfterStep = newConstraintViolation;
       return stepInfo;
     } else {  // Try smaller step
-      alpha *= alpha_decay;
+      alpha *= settings_.alpha_decay;
 
       // Detect too small step size during back-tracking to escape early. Prevents going all the way to alpha_min
       if (alpha * deltaXnorm < settings_.deltaTol && alpha * deltaUnorm < settings_.deltaTol) {
         break;
       }
     }
-  } while (alpha >= alpha_min);
+  } while (alpha >= settings_.alpha_min);
 
   // Alpha_min reached -> Don't take a step
   stepInfo.stepSize = 0.0;

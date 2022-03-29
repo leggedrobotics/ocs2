@@ -27,44 +27,43 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#pragma once
-
-#include <ocs2_mpc/MPC_BASE.h>
-
-#include <ocs2_sqp/MultipleShootingSolver.h>
+#include "ocs2_sqp/MultipleShootingSolverStatus.h"
 
 namespace ocs2 {
-class MultipleShootingMpc final : public MPC_BASE {
- public:
-  /**
-   * Constructor
-   *
-   * @param mpcSettings : settings for the mpc wrapping of the solver. Do not use this for maxIterations and stepsize, use multiple shooting
-   * settings directly.
-   * @param settings : settings for the multiple shooting solver.
-   * @param [in] optimalControlProblem: The optimal control problem formulation.
-   * @param [in] initializer: This class initializes the state-input for the time steps that no controller is available.
-   */
-  MultipleShootingMpc(mpc::Settings mpcSettings, multiple_shooting::Settings settings, const OptimalControlProblem& optimalControlProblem,
-                      const Initializer& initializer)
-      : MPC_BASE(std::move(mpcSettings)) {
-    solverPtr_.reset(new MultipleShootingSolver(std::move(settings), optimalControlProblem, initializer));
-  };
+namespace multiple_shooting {
 
-  ~MultipleShootingMpc() override = default;
-
-  MultipleShootingSolver* getSolverPtr() override { return solverPtr_.get(); }
-  const MultipleShootingSolver* getSolverPtr() const override { return solverPtr_.get(); }
-
- protected:
-  void calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override {
-    if (settings().coldStart_) {
-      solverPtr_->reset();
-    }
-    solverPtr_->run(initTime, initState, finalTime);
+std::string toString(const StepInfo::StepType& stepType) {
+  using StepType = StepInfo::StepType;
+  switch (stepType) {
+    case StepType::COST:
+      return "Cost";
+    case StepType::CONSTRAINT:
+      return "Constraint";
+    case StepType::DUAL:
+      return "Dual";
+    case StepType::ZERO:
+      return "Zero";
+    case StepType::UNKNOWN:
+    default:
+      return "Unknown";
   }
+}
 
- private:
-  std::unique_ptr<MultipleShootingSolver> solverPtr_;
-};
+std::string toString(const Convergence& convergence) {
+  switch (convergence) {
+    case Convergence::ITERATIONS:
+      return "Maximum number of iterations reached";
+    case Convergence::STEPSIZE:
+      return "Step size below minimum";
+    case Convergence::METRICS:
+      return "Cost decrease and constraint satisfaction below tolerance";
+    case Convergence::PRIMAL:
+      return "Primal update below tolerance";
+    case Convergence::FALSE:
+    default:
+      return "Not Converged";
+  }
+}
+
+}  // namespace multiple_shooting
 }  // namespace ocs2

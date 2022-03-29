@@ -597,7 +597,7 @@ multiple_shooting::Convergence MultipleShootingSolver::checkConvergence(int iter
   } else if (std::abs(stepInfo.performanceAfterStep.merit - baseline.merit) < settings_.costTol &&
              totalConstraintViolation(stepInfo.performanceAfterStep) < settings_.g_min) {
     // Converged because the change in merit is below the specified tolerance while the constraint violation is below the minimum
-    return Convergence::COST;
+    return Convergence::METRICS;
   } else if (stepInfo.dx_norm < settings_.deltaTol && stepInfo.du_norm < settings_.deltaTol) {
     // Converged because the change in primal variables is below the specified tolerance
     return Convergence::PRIMAL;

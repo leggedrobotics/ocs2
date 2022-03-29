@@ -55,8 +55,8 @@ std::string toString(const Convergence& convergence) {
       return "Maximum number of iterations reached";
     case Convergence::STEPSIZE:
       return "Step size below minimum";
-    case Convergence::COST:
-      return "Cost decrease below tolerance";
+    case Convergence::METRICS:
+      return "Cost decrease and constraint satisfaction below tolerance";
     case Convergence::PRIMAL:
       return "Primal update below tolerance";
     case Convergence::FALSE:

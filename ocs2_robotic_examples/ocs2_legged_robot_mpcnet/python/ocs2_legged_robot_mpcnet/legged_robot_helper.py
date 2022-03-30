@@ -33,12 +33,14 @@ Provides robot-specific helper functions for legged robot.
 """
 
 import numpy as np
+from typing import Tuple, List
 
 from ocs2_mpcnet import helper
+from ocs2_mpcnet import SystemObservationArray, ModeScheduleArray, TargetTrajectoriesArray
 from ocs2_legged_robot_mpcnet import legged_robot_config as config
 
 
-def get_stance(duration):
+def get_stance(duration: float) -> Tuple[np.ndarray, np.ndarray]:
     """Get the stance gait.
 
     Creates the stance event times and mode sequence for a certain time duration:
@@ -58,7 +60,7 @@ def get_stance(duration):
     return helper.get_event_times_and_mode_sequence(15, duration, event_times_template, mode_sequence_template)
 
 
-def get_random_initial_state_stance():
+def get_random_initial_state_stance() -> np.ndarray:
     """Get a random initial state for stance.
 
     Samples a random initial state for the robot in the stance gait.
@@ -82,7 +84,7 @@ def get_random_initial_state_stance():
     return np.array(config.DEFAULT_STATE) + random_deviation
 
 
-def get_random_target_state_stance():
+def get_random_target_state_stance() -> np.ndarray:
     """Get a random target state for stance.
 
     Samples a random target state for the robot in the stance gait.
@@ -102,7 +104,7 @@ def get_random_target_state_stance():
     return np.array(config.DEFAULT_STATE) + random_deviation
 
 
-def get_trot_1(duration):
+def get_trot_1(duration: float) -> Tuple[np.ndarray, np.ndarray]:
     """Get the first trot gait.
 
     Creates the first trot event times and mode sequence for a certain time duration:
@@ -122,7 +124,7 @@ def get_trot_1(duration):
     return helper.get_event_times_and_mode_sequence(15, duration, event_times_template, mode_sequence_template)
 
 
-def get_trot_2(duration):
+def get_trot_2(duration: float) -> Tuple[np.ndarray, np.ndarray]:
     """Get the second trot gait.
 
     Creates the second trot event times and mode sequence for a certain time duration:
@@ -142,7 +144,7 @@ def get_trot_2(duration):
     return helper.get_event_times_and_mode_sequence(15, duration, event_times_template, mode_sequence_template)
 
 
-def get_random_initial_state_trot():
+def get_random_initial_state_trot() -> np.ndarray:
     """Get a random initial state for trot.
 
     Samples a random initial state for the robot in a trot gait.
@@ -166,7 +168,7 @@ def get_random_initial_state_trot():
     return np.array(config.DEFAULT_STATE) + random_deviation
 
 
-def get_random_target_state_trot():
+def get_random_target_state_trot() -> np.ndarray:
     """Get a random target state for trot.
 
     Samples a random target state for the robot in a trot gait.
@@ -184,7 +186,9 @@ def get_random_target_state_trot():
     return np.array(config.DEFAULT_STATE) + random_deviation
 
 
-def get_tasks(n_tasks, duration, choices):
+def get_tasks(
+    n_tasks: int, duration: float, choices: List[str]
+) -> Tuple[SystemObservationArray, ModeScheduleArray, TargetTrajectoriesArray]:
     """Get tasks.
 
     Get a random set of task that should be executed by the data generation or policy evaluation.
@@ -237,7 +241,7 @@ def get_tasks(n_tasks, duration, choices):
     return initial_observations, mode_schedules, target_trajectories
 
 
-def get_one_hot(mode):
+def get_one_hot(mode: int) -> np.ndarray:
     """Get one hot encoding of mode.
 
     Get a one hot encoding of a mode represented by a discrete probability distribution, where the sample space is the

@@ -47,7 +47,7 @@ input_scaling = torch.tensor(config.INPUT_SCALING, device=config.DEVICE, dtype=c
 input_bias = torch.tensor(config.INPUT_BIAS, device=config.DEVICE, dtype=config.DTYPE).unsqueeze(dim=0)
 
 
-def u_transform(u):
+def u_transform(u: torch.Tensor) -> torch.Tensor:
     """Control input transformation.
 
     Transforms the predicted control input by scaling and adding a bias.

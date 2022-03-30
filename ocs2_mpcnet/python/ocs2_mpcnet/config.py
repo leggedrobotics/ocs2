@@ -35,7 +35,7 @@ Sets general configuration variables.
 import torch
 
 # data type for tensor elements
-dtype = torch.float
+DTYPE = torch.float
 
 # device on which tensors will be allocated
-device = torch.device("cpu")
+DEVICE = torch.device("cpu")

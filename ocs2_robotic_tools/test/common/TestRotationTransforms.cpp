@@ -157,6 +157,39 @@ TEST(RotationTransforms, rotationMatrixToAngleAxis) {
   }
 }
 
+TEST(RotationTransforms, rotationErrorSign) {
+  // This just tests the sign correctness of the error. Edge cases are tested in rotationMatrixToAngleAxis
+
+  // Pick random rotations
+  Quaternion_t lhsToWorld = Quaternion_t(0.1, 0.2, 0.3, 0.4).normalized();
+  Quaternion_t rhsToWorld = Quaternion_t(0.5, 0.6, 0.7, 0.8).normalized();
+
+  // Compute rotation error in world
+  const auto errorInWorld = rotationErrorInWorld(lhsToWorld.toRotationMatrix(), rhsToWorld.toRotationMatrix());
+  const AngleAxis_t errorAngleAxis(errorInWorld.norm(), errorInWorld.normalized());
+
+  // Test for correct composition of the error
+  // Error = lhs [-] rhs => lhs = error [+] rhs
+  // Comparing as rotation removes ambiguity between the two quaternions that represent the same rotation.
+  ASSERT_TRUE(lhsToWorld.toRotationMatrix().isApprox((errorAngleAxis * rhsToWorld).toRotationMatrix()));
+}
+
+TEST(RotationTransforms, rotationErrorGlobalvsLocal) {
+  // This just tests the frame conventions of the error. Edge cases are tested in rotationMatrixToAngleAxis
+
+  // Pick random rotations
+  Quaternion_t lhsToWorld = Quaternion_t(0.1, 0.2, 0.3, 0.4).normalized();
+  Quaternion_t rhsToWorld = Quaternion_t(0.5, 0.6, 0.7, 0.8).normalized();
+
+  // Compute independently in world and local frame
+  const auto errorInWorld = rotationErrorInWorld(lhsToWorld.toRotationMatrix(), rhsToWorld.toRotationMatrix());
+  const auto errorInLocal = rotationErrorInLocal(lhsToWorld.toRotationMatrix(), rhsToWorld.toRotationMatrix());
+
+  // Test for equality in world frame. Both lhs and rhs frames are valid for the local representation.
+  ASSERT_TRUE(errorInWorld.isApprox(lhsToWorld * errorInLocal));
+  ASSERT_TRUE(errorInWorld.isApprox(rhsToWorld * errorInLocal));
+}
+
 TEST(RotationTransforms, rotationErrorGradientDescent) {
   // Tests that the box minus rotation error has suitable gradients
   auto adFunction = [](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
@@ -198,20 +231,4 @@ TEST(RotationTransforms, rotationErrorGradientDescent) {
   eulerAngles = vector3_t::Random();
   eulerAnglesReference = vector3_t::Random();
   ASSERT_LT((gradientDescent(eulerAngles, eulerAnglesReference) - eulerAnglesReference).norm(), 1e-6);
-}
-
-TEST(RotationTransforms, rotationErrorGlobalvsLocal) {
-  // This just tests the frame conventions of the error. Edge cases are tested in rotationMatrixToAngleAxis
-
-  // Pick random rotations
-  Quaternion_t lhsToWorld = Quaternion_t(0.1, 0.2, 0.3, 0.4).normalized();
-  Quaternion_t rhsToWorld = Quaternion_t(0.5, 0.6, 0.7, 0.8).normalized();
-
-  // Compute independently in world and local frame
-  const auto errorInWorld = rotationErrorInWorld(lhsToWorld.toRotationMatrix(), rhsToWorld.toRotationMatrix());
-  const auto errorInLocal = rotationErrorInLocal(lhsToWorld.toRotationMatrix(), rhsToWorld.toRotationMatrix());
-
-  // Test for equality in world frame. Both lhs and rhs frames are valid for the local representation.
-  ASSERT_TRUE(errorInWorld.isApprox(lhsToWorld * errorInLocal));
-  ASSERT_TRUE(errorInWorld.isApprox(rhsToWorld * errorInLocal));
 }

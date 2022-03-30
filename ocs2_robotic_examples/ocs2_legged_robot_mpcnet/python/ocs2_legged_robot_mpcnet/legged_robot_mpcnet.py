@@ -65,7 +65,7 @@ for i in range(0, 3):
     data_generation_sampling_covariance[i, i] = 0.05**2  # normalized linear momentum
 for i in range(3, 6):
     data_generation_sampling_covariance[i, i] = (
-        config.normalized_inertia[i - 3] * 2.5 * np.pi / 180.0
+        config.NORMALIZED_INERTIA[i - 3] * 2.5 * np.pi / 180.0
     ) ** 2  # normalized angular momentum
 for i in range(6, 9):
     data_generation_sampling_covariance[i, i] = 0.01**2  # position
@@ -88,7 +88,7 @@ mpcnet_interface = MpcnetInterface(data_generation_n_threads, policy_evaluation_
 
 # logging
 description = "description"
-folder = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_" + config.name + "_" + description
+folder = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_" + config.NAME + "_" + description
 writer = SummaryWriter("runs/" + folder)
 os.makedirs(name="policies/" + folder)
 
@@ -104,12 +104,12 @@ memory = Memory(memory_capacity, config.TIME_DIM, config.STATE_DIM, config.INPUT
 
 # policy
 policy = Policy(config.TIME_DIM, config.STATE_DIM, config.INPUT_DIM, config.EXPERT_NUM)
-policy.to(config.device)
+policy.to(config.DEVICE)
 print("Initial policy parameters:")
 print(list(policy.named_parameters()))
 dummy_input = (
-    torch.randn(1, config.TIME_DIM, device=config.device, dtype=config.dtype),
-    torch.randn(1, config.STATE_DIM, device=config.device, dtype=config.dtype),
+    torch.randn(1, config.TIME_DIM, device=config.DEVICE, dtype=config.DTYPE),
+    torch.randn(1, config.STATE_DIM, device=config.DEVICE, dtype=config.DTYPE),
 )
 print("Saving initial policy.")
 save_path = "policies/" + folder + "/initial_policy"

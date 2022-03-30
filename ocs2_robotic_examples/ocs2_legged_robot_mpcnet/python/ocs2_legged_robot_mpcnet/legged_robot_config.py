@@ -39,17 +39,17 @@ from ocs2_mpcnet import config
 #
 
 # data type for tensor elements
-dtype = config.DTYPE
+DTYPE = config.DTYPE
 
 # device on which tensors will be allocated
-device = config.DEVICE
+DEVICE = config.DEVICE
 
 #
 # legged_robot_config
 #
 
 # name of the robot
-name = "legged_robot"
+NAME = "legged_robot"
 
 # (generalized) time dimension
 TIME_DIM = 12
@@ -64,7 +64,7 @@ INPUT_DIM = 24
 EXPERT_NUM = 3
 
 # default state
-default_state = [
+DEFAULT_STATE = [
     0.0,
     0.0,
     0.0,
@@ -92,7 +92,7 @@ default_state = [
 ]
 
 # input bias
-input_bias = [
+INPUT_BIAS = [
     0.0,
     0.0,
     127.861,
@@ -120,7 +120,7 @@ input_bias = [
 ]
 
 # input scaling
-input_scaling = [
+INPUT_SCALING = [
     100.0,
     100.0,
     100.0,
@@ -148,7 +148,7 @@ input_scaling = [
 ]
 
 # (diagonally dominant) nominal centroidal inertia normalized by robot mass
-normalized_inertia = [1.62079 / 52.1348, 4.83559 / 52.1348, 4.72382 / 52.1348]
+NORMALIZED_INERTIA = [1.62079 / 52.1348, 4.83559 / 52.1348, 4.72382 / 52.1348]
 
 # input cost for behavioral cloning
 R = [
@@ -179,7 +179,7 @@ R = [
 ]
 
 # dictionary for cheating
-expert_for_mode = dict([(i, None) for i in range(16)])
-expert_for_mode[15] = 0
-expert_for_mode[6] = 1
-expert_for_mode[9] = 2
+EXPERT_FOR_MODE = dict([(i, None) for i in range(16)])
+EXPERT_FOR_MODE[15] = 0  # stance
+EXPERT_FOR_MODE[6] = 1  # trot
+EXPERT_FOR_MODE[9] = 2  # trot

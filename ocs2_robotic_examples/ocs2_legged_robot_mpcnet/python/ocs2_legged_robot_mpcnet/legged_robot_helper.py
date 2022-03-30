@@ -69,9 +69,9 @@ def get_random_initial_state_stance():
     max_normalized_linear_momentum_x = 0.1
     max_normalized_linear_momentum_y = 0.1
     max_normalized_linear_momentum_z = 0.1
-    max_normalized_angular_momentum_x = config.normalized_inertia[0] * 30.0 * np.pi / 180.0
-    max_normalized_angular_momentum_y = config.normalized_inertia[1] * 30.0 * np.pi / 180.0
-    max_normalized_angular_momentum_z = config.normalized_inertia[2] * 30.0 * np.pi / 180.0
+    max_normalized_angular_momentum_x = config.NORMALIZED_INERTIA[0] * 30.0 * np.pi / 180.0
+    max_normalized_angular_momentum_y = config.NORMALIZED_INERTIA[1] * 30.0 * np.pi / 180.0
+    max_normalized_angular_momentum_z = config.NORMALIZED_INERTIA[2] * 30.0 * np.pi / 180.0
     random_deviation = np.zeros(config.STATE_DIM)
     random_deviation[0] = np.random.uniform(-max_normalized_linear_momentum_x, max_normalized_linear_momentum_x)
     random_deviation[1] = np.random.uniform(-max_normalized_linear_momentum_y, max_normalized_linear_momentum_y)
@@ -79,7 +79,7 @@ def get_random_initial_state_stance():
     random_deviation[3] = np.random.uniform(-max_normalized_angular_momentum_x, max_normalized_angular_momentum_x)
     random_deviation[4] = np.random.uniform(-max_normalized_angular_momentum_y, max_normalized_angular_momentum_y)
     random_deviation[5] = np.random.uniform(-max_normalized_angular_momentum_z, max_normalized_angular_momentum_z)
-    return np.array(config.default_state) + random_deviation
+    return np.array(config.DEFAULT_STATE) + random_deviation
 
 
 def get_random_target_state_stance():
@@ -99,7 +99,7 @@ def get_random_target_state_stance():
     random_deviation[9] = np.random.uniform(-max_orientation_z, max_orientation_z)
     random_deviation[10] = np.random.uniform(-max_orientation_y, max_orientation_y)
     random_deviation[11] = np.random.uniform(-max_orientation_x, max_orientation_x)
-    return np.array(config.default_state) + random_deviation
+    return np.array(config.DEFAULT_STATE) + random_deviation
 
 
 def get_trot_1(duration):
@@ -153,9 +153,9 @@ def get_random_initial_state_trot():
     max_normalized_linear_momentum_x = 0.5
     max_normalized_linear_momentum_y = 0.25
     max_normalized_linear_momentum_z = 0.25
-    max_normalized_angular_momentum_x = config.normalized_inertia[0] * 60.0 * np.pi / 180.0
-    max_normalized_angular_momentum_y = config.normalized_inertia[1] * 60.0 * np.pi / 180.0
-    max_normalized_angular_momentum_z = config.normalized_inertia[2] * 35.0 * np.pi / 180.0
+    max_normalized_angular_momentum_x = config.NORMALIZED_INERTIA[0] * 60.0 * np.pi / 180.0
+    max_normalized_angular_momentum_y = config.NORMALIZED_INERTIA[1] * 60.0 * np.pi / 180.0
+    max_normalized_angular_momentum_z = config.NORMALIZED_INERTIA[2] * 35.0 * np.pi / 180.0
     random_deviation = np.zeros(config.STATE_DIM)
     random_deviation[0] = np.random.uniform(-max_normalized_linear_momentum_x, max_normalized_linear_momentum_x)
     random_deviation[1] = np.random.uniform(-max_normalized_linear_momentum_y, max_normalized_linear_momentum_y)
@@ -163,7 +163,7 @@ def get_random_initial_state_trot():
     random_deviation[3] = np.random.uniform(-max_normalized_angular_momentum_x, max_normalized_angular_momentum_x)
     random_deviation[4] = np.random.uniform(-max_normalized_angular_momentum_y, max_normalized_angular_momentum_y)
     random_deviation[5] = np.random.uniform(-max_normalized_angular_momentum_z, max_normalized_angular_momentum_z)
-    return np.array(config.default_state) + random_deviation
+    return np.array(config.DEFAULT_STATE) + random_deviation
 
 
 def get_random_target_state_trot():
@@ -181,7 +181,7 @@ def get_random_target_state_trot():
     random_deviation[6] = np.random.uniform(-max_position_x, max_position_x)
     random_deviation[7] = np.random.uniform(-max_position_y, max_position_y)
     random_deviation[9] = np.random.uniform(-max_orientation_z, max_orientation_z)
-    return np.array(config.default_state) + random_deviation
+    return np.array(config.DEFAULT_STATE) + random_deviation
 
 
 def get_tasks(n_tasks, duration, choices):
@@ -250,5 +250,5 @@ def get_one_hot(mode):
         p: Discrete probability distribution given by a NumPy array of shape (P) containing floats.
     """
     one_hot = np.zeros(config.EXPERT_NUM)
-    one_hot[config.expert_for_mode[mode]] = 1.0
+    one_hot[config.EXPERT_FOR_MODE[mode]] = 1.0
     return one_hot

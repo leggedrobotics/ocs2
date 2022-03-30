@@ -80,21 +80,21 @@ class CircularMemory:
         self.size = 0
         self.position = 0
         # pre-allocate memory
-        self.t = torch.zeros(capacity, device=config.device, dtype=config.dtype)
-        self.x = torch.zeros(capacity, state_dimension, device=config.device, dtype=config.dtype)
-        self.u = torch.zeros(capacity, input_dimension, device=config.device, dtype=config.dtype)
-        self.p = torch.zeros(capacity, expert_number, device=config.device, dtype=config.dtype)
-        self.generalized_time = torch.zeros(capacity, time_dimension, device=config.device, dtype=config.dtype)
-        self.relative_state = torch.zeros(capacity, state_dimension, device=config.device, dtype=config.dtype)
+        self.t = torch.zeros(capacity, device=config.DEVICE, dtype=config.DTYPE)
+        self.x = torch.zeros(capacity, state_dimension, device=config.DEVICE, dtype=config.DTYPE)
+        self.u = torch.zeros(capacity, input_dimension, device=config.DEVICE, dtype=config.DTYPE)
+        self.p = torch.zeros(capacity, expert_number, device=config.DEVICE, dtype=config.DTYPE)
+        self.generalized_time = torch.zeros(capacity, time_dimension, device=config.DEVICE, dtype=config.DTYPE)
+        self.relative_state = torch.zeros(capacity, state_dimension, device=config.DEVICE, dtype=config.DTYPE)
         self.input_transformation = torch.zeros(
-            capacity, input_dimension, input_dimension, device=config.device, dtype=config.dtype
+            capacity, input_dimension, input_dimension, device=config.DEVICE, dtype=config.DTYPE
         )
-        self.dHdxx = torch.zeros(capacity, state_dimension, state_dimension, device=config.device, dtype=config.dtype)
-        self.dHdux = torch.zeros(capacity, input_dimension, state_dimension, device=config.device, dtype=config.dtype)
-        self.dHduu = torch.zeros(capacity, input_dimension, input_dimension, device=config.device, dtype=config.dtype)
-        self.dHdx = torch.zeros(capacity, state_dimension, device=config.device, dtype=config.dtype)
-        self.dHdu = torch.zeros(capacity, input_dimension, device=config.device, dtype=config.dtype)
-        self.H = torch.zeros(capacity, device=config.device, dtype=config.dtype)
+        self.dHdxx = torch.zeros(capacity, state_dimension, state_dimension, device=config.DEVICE, dtype=config.DTYPE)
+        self.dHdux = torch.zeros(capacity, input_dimension, state_dimension, device=config.DEVICE, dtype=config.DTYPE)
+        self.dHduu = torch.zeros(capacity, input_dimension, input_dimension, device=config.DEVICE, dtype=config.DTYPE)
+        self.dHdx = torch.zeros(capacity, state_dimension, device=config.DEVICE, dtype=config.DTYPE)
+        self.dHdu = torch.zeros(capacity, input_dimension, device=config.DEVICE, dtype=config.DTYPE)
+        self.H = torch.zeros(capacity, device=config.DEVICE, dtype=config.DTYPE)
 
     def push(self, t, x, u, p, generalized_time, relative_state, input_transformation, hamiltonian):
         """Pushes data into the circular memory.
@@ -161,7 +161,7 @@ class CircularMemory:
             - dHdu_batch: A (B,U) tensor with the input gradients of the Hamiltonian approximations.
             - H_batch: A (B) tensor with the Hamiltonians at the development/expansion points.
         """
-        indices = torch.randint(0, self.size, (batch_size,), device=config.device)
+        indices = torch.randint(0, self.size, (batch_size,), device=config.DEVICE)
         t_batch = self.t[indices]
         x_batch = self.x[indices]
         u_batch = self.u[indices]

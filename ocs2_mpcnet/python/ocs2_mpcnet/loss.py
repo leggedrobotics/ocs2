@@ -39,24 +39,29 @@ from ocs2_mpcnet import config
 from ocs2_mpcnet.helper import bdot, bmv
 
 
-class Hamiltonian:
-    """Hamiltonian loss.
+class HamiltonianLoss:
+    r"""Hamiltonian loss.
 
     Uses the linear quadratic approximation of the Hamiltonian as loss:
-        H(x,u) = 1/2 dx' dHdxx dx + du' dHdux dx + 1/2 du' dHduu du + dHdx' dx + dHdu' du + H,
+
+    .. math::
+
+        H(x,u) = \frac{1}{2} \delta x^T \partial H_{xx} \delta x +\delta u^T \partial H_{ux} \delta x + \frac{1}{2}
+        \delta u^T \partial H_{uu} \delta u + \partial H_{x}^T \delta x + \partial H_{u}^T \delta u + H,
+
     where the state x is of dimension X and the input u is of dimension U.
     """
 
     @staticmethod
     def compute_sample(x_inquiry, x_nominal, u_inquiry, u_nominal, dHdxx, dHdux, dHduu, dHdx, dHdu, H):
-        """Computes the Hamiltonian for one sample.
+        """Computes the Hamiltonian loss for one sample.
 
-        Computes the Hamiltonian for one sample using the provided linear quadratic approximation.
+        Computes the Hamiltonian loss for one sample using the provided linear quadratic approximation.
 
         Args:
-            x_inquiry: A (X) tensor with the state the Hamiltonian should be computed for.
+            x_inquiry: A (X) tensor with the state the Hamiltonian loss should be computed for.
             x_nominal: A (X) tensor with the state that was used as development/expansion point.
-            u_inquiry: A (U) tensor with the input the Hamiltonian should be computed for.
+            u_inquiry: A (U) tensor with the input the Hamiltonian loss should be computed for.
             u_nominal: A (U) tensor with the input that was used as development/expansion point.
             dHdxx: A (X,X) tensor with the state-state Hessian of the approximation.
             dHdux: A (U,X) tensor with the input-state Hessian of the approximation.
@@ -66,7 +71,7 @@ class Hamiltonian:
             H: A (1) tensor with the Hamiltonian at the development/expansion point.
 
         Returns:
-            A (1) tensor containing the computed Hamiltonian.
+            A (1) tensor containing the computed Hamiltonian loss.
         """
         if torch.equal(x_inquiry, x_nominal):
             du = torch.sub(u_inquiry, u_nominal)
@@ -88,14 +93,14 @@ class Hamiltonian:
 
     @staticmethod
     def compute_batch(x_inquiry, x_nominal, u_inquiry, u_nominal, dHdxx, dHdux, dHduu, dHdx, dHdu, H):
-        """Computes the Hamiltonians for a batch.
+        """Computes the Hamiltonian loss for a batch.
 
-        Computes the Hamiltonians for a batch of size B using the provided linear quadratic approximations.
+        Computes the Hamiltonian loss for a batch of size B using the provided linear quadratic approximations.
 
         Args:
-            x_inquiry: A (B,X) tensor with the states the Hamiltonians should be computed for.
+            x_inquiry: A (B,X) tensor with the states the Hamiltonian loss should be computed for.
             x_nominal: A (B,X) tensor with the states that were used as development/expansion points.
-            u_inquiry: A (B,U) tensor with the inputs the Hamiltonians should be computed for.
+            u_inquiry: A (B,U) tensor with the inputs the Hamiltonian loss should be computed for.
             u_nominal: A (B,U) tensor with the inputs that were used as development/expansion point.
             dHdxx: A (B,X,X) tensor with the state-state Hessians of the approximations.
             dHdux: A (B,U,X) tensor with the input-state Hessians of the approximations.
@@ -105,7 +110,7 @@ class Hamiltonian:
             H: A (B) tensor with the Hamiltonians at the development/expansion points.
 
         Returns:
-            A (B) tensor containing the computed Hamiltonians.
+            A (B) tensor containing the computed Hamiltonian losses.
         """
         if torch.equal(x_inquiry, x_nominal):
             du = torch.sub(u_inquiry, u_nominal)
@@ -126,11 +131,15 @@ class Hamiltonian:
             )
 
 
-class BehavioralCloning:
-    """Behavioral cloning loss.
+class BehavioralCloningLoss:
+    r"""Behavioral cloning loss.
 
     Uses a simple quadratic function as loss:
-        BC(u) = du' R du,
+
+    .. math::
+
+        BC(u) = \delta u^T R \, \delta u,
+
     where the input u is of dimension U.
 
     Attributes:
@@ -139,14 +148,14 @@ class BehavioralCloning:
     """
 
     def __init__(self, R):
-        """Initializes the BehavioralCloning class.
+        """Initializes the BehavioralCloningLoss class.
 
-        Initializes the BehavioralCloning class by setting fixed attributes.
+        Initializes the BehavioralCloningLoss class by setting fixed attributes.
 
         Args:
             R: A NumPy array of shape (U, U) with the input cost matrix.
         """
-        self.R_sample = torch.tensor(R, device=config.device, dtype=config.dtype)
+        self.R_sample = torch.tensor(R, device=config.DEVICE, dtype=config.DTYPE)
         self.R_batch = self.R_sample.unsqueeze(dim=0)
 
     def compute_sample(self, u_predicted, u_target):
@@ -180,11 +189,15 @@ class BehavioralCloning:
         return bdot(du, bmv(self.R_batch, du))
 
 
-class CrossEntropy:
-    """Cross entropy loss.
+class CrossEntropyLoss:
+    r"""Cross entropy loss.
 
     Uses the cross entropy between two discrete probability distributions as loss:
-        CE(p_target, p_predicted) = - sum(p_target * log(p_predicted)),
+
+    .. math::
+
+        CE(p_{target}, p_{predicted}) = - \sum_{i=1}^{P} (p_{target,i} \log(p_{predicted,i} + \varepsilon)),
+
     where the sample space is the set of P individually identified items.
 
     Attributes:
@@ -192,14 +205,14 @@ class CrossEntropy:
     """
 
     def __init__(self, epsilon):
-        """Initializes the CrossEntropy class.
+        """Initializes the CrossEntropyLoss class.
 
-        Initializes the CrossEntropy class by setting fixed attributes.
+        Initializes the CrossEntropyLoss class by setting fixed attributes.
 
         Args:
             epsilon: A float used to stabilize the logarithm.
         """
-        self.epsilon = torch.tensor(epsilon, device=config.device, dtype=config.dtype)
+        self.epsilon = torch.tensor(epsilon, device=config.DEVICE, dtype=config.DTYPE)
 
     def compute_sample(self, p_target, p_predicted):
         """Computes the cross entropy loss for one sample.

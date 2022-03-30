@@ -93,13 +93,13 @@ Optional Dependencies
 
     .. code-block:: bash
 
-        cd ~/Downloads
+        cd /tmp
         wget https://github.com/microsoft/onnxruntime/releases/download/v1.7.0/onnxruntime-linux-x64-1.7.0.tgz
         tar xf onnxruntime-linux-x64-1.7.0.tgz
         mkdir -p ~/.local/bin ~/.local/include/onnxruntime ~/.local/lib ~/.local/share/cmake/onnxruntime
-        rsync -a ~/Downloads/onnxruntime-linux-x64-1.7.0/include/ ~/.local/include/onnxruntime
-        rsync -a ~/Downloads/onnxruntime-linux-x64-1.7.0/lib/ ~/.local/lib
-        rsync -a ~/git/ocs2/ocs2_mpcnet/misc/onnxruntime/cmake/ ~/.local/share/cmake/onnxruntime
+        rsync -a /tmp/onnxruntime-linux-x64-1.7.0/include/ ~/.local/include/onnxruntime
+        rsync -a /tmp/onnxruntime-linux-x64-1.7.0/lib/ ~/.local/lib
+        rsync -a ~/git/ocs2/ocs2_mpcnet/ocs2_mpcnet_core/misc/onnxruntime/cmake/ ~/.local/share/cmake/onnxruntime
 
     We provide custom cmake config and version files to enable ``find_package(onnxruntime)`` without modifying ``LIBRARY_PATH`` and ``LD_LIBRARY_PATH``. Note that the last command above assumes that you cloned OCS2 into the folder ``git`` in your user's home directory.
 

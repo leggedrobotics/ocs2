@@ -39,17 +39,17 @@ from ocs2_mpcnet import config
 #
 
 # data type for tensor elements
-dtype = config.DTYPE
+DTYPE = config.DTYPE
 
 # device on which tensors will be allocated
-device = config.DEVICE
+DEVICE = config.DEVICE
 
 #
 # ballbot_config
 #
 
 # name of the robot
-name = "ballbot"
+NAME = "ballbot"
 
 # (generalized) time dimension
 TIME_DIM = 1

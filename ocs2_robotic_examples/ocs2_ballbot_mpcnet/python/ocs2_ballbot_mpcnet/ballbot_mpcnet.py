@@ -82,7 +82,7 @@ mpcnet_interface = MpcnetInterface(data_generation_n_threads, policy_evaluation_
 
 # logging
 description = "description"
-folder = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_" + config.name + "_" + description
+folder = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_" + config.NAME + "_" + description
 writer = SummaryWriter("runs/" + folder)
 os.makedirs(name="policies/" + folder)
 
@@ -95,12 +95,12 @@ memory = Memory(memory_capacity, config.TIME_DIM, config.STATE_DIM, config.INPUT
 
 # policy
 policy = Policy(config.TIME_DIM, config.STATE_DIM, config.INPUT_DIM)
-policy.to(config.device)
+policy.to(config.DEVICE)
 print("Initial policy parameters:")
 print(list(policy.named_parameters()))
 dummy_input = (
-    torch.randn(1, config.TIME_DIM, device=config.device, dtype=config.dtype),
-    torch.randn(1, config.STATE_DIM, device=config.device, dtype=config.dtype),
+    torch.randn(1, config.TIME_DIM, device=config.DEVICE, dtype=config.DTYPE),
+    torch.randn(1, config.STATE_DIM, device=config.DEVICE, dtype=config.DTYPE),
 )
 print("Saving initial policy.")
 save_path = "policies/" + folder + "/initial_policy"
@@ -165,7 +165,7 @@ try:
                     data[i].t,
                     data[i].x,
                     data[i].u,
-                    torch.ones(1, device=config.device, dtype=config.dtype),
+                    torch.ones(1, device=config.DEVICE, dtype=config.DTYPE),
                     data[i].generalizedTime,
                     data[i].relativeState,
                     data[i].inputTransformation,

@@ -32,10 +32,9 @@ class QuadrupedKinematics final : public switched_model::KinematicsModelBase<SCA
   };
 
   QuadrupedKinematics(const ocs2::PinocchioInterface& pinocchioInterface);
-  QuadrupedKinematics(const QuadrupedKinematics&) = delete;
   ~QuadrupedKinematics() = default;
 
-  QuadrupedKinematics<SCALAR_T>* clone() const override { return nullptr; };
+  QuadrupedKinematics<SCALAR_T>* clone() const override;
 
   switched_model::vector3_s_t<SCALAR_T> baseToLegRootInBaseFrame(size_t footIndex) const override;
 
@@ -55,6 +54,8 @@ class QuadrupedKinematics final : public switched_model::KinematicsModelBase<SCA
       const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
 
  private:
+  QuadrupedKinematics(const QuadrupedKinematics& rhs);
+
   template <typename T = SCALAR_T, typename std::enable_if<std::is_same<T, ocs2::ad_scalar_t>::value, bool>::type = true>
   PinocchioInterface castPinocchioInterface(const ocs2::PinocchioInterface& pinocchioInterface) {
     return pinocchioInterface.toCppAd();

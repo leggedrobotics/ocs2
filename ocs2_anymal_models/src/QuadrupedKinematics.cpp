@@ -39,10 +39,17 @@ QuadrupedKinematics<SCALAR_T>::QuadrupedKinematics(const ocs2::PinocchioInterfac
     checkAndSetIndex(i, FrameIndex::KFE, switched_model::feetNames[i] + "_KFE");
   }
 }
-// template <typename SCALAR_T>
-// QuadrupedKinematics<SCALAR_T>* QuadrupedKinematics<SCALAR_T>::clone() const {
-//   return new QuadrupedKinematics<SCALAR_T>(*this);
-// }
+
+template <typename SCALAR_T>
+QuadrupedKinematics<SCALAR_T>::QuadrupedKinematics(const QuadrupedKinematics& rhs)
+    : mapFrameIndexToId_(rhs.mapFrameIndexToId_), mapFeetOrderOcs2ToPinocchio_(rhs.mapFeetOrderOcs2ToPinocchio_) {
+  pinocchioInterfacePtr_.reset(new PinocchioInterface(*rhs.pinocchioInterfacePtr_));
+};
+
+template <typename SCALAR_T>
+QuadrupedKinematics<SCALAR_T>* QuadrupedKinematics<SCALAR_T>::clone() const {
+  return new QuadrupedKinematics<SCALAR_T>(*this);
+}
 
 template <typename SCALAR_T>
 switched_model::vector3_s_t<SCALAR_T> QuadrupedKinematics<SCALAR_T>::baseToLegRootInBaseFrame(size_t footIndex) const {

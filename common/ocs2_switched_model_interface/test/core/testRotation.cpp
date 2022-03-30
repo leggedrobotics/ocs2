@@ -85,23 +85,54 @@ TEST(testRotations, eulerRates) {
     const vector3_t eulerAngles = vector3_t::Random();
     const vector3_t angularVelocityInBase = vector3_t::Random();
 
-    const vector3_t eulerRate_check =
-        angularVelocitiesToEulerAngleDerivativesMatrix(eulerAngles) * angularVelocityInBase;
-    const vector3_t eulerRate =
-        angularVelocitiesToEulerAngleDerivatives(angularVelocityInBase, eulerAngles);
+    const vector3_t eulerRate_check = angularVelocitiesToEulerAngleDerivativesMatrix(eulerAngles) * angularVelocityInBase;
+    const vector3_t eulerRate = angularVelocitiesToEulerAngleDerivatives(angularVelocityInBase, eulerAngles);
     ASSERT_NEAR((eulerRate_check - eulerRate).norm(), 0, 1e-12);
   }
 }
 
-TEST(testRotations, rotationMatrixToAngleAxis) {
-  const ocs2::scalar_t vectol = 1e-6;
+//////  Rotation Error Tests
+TEST(testRotations, rotationError) {
+  // This just tests the sign correctness of the error. Edge cases are tested in rotationMatrixToAngleAxis
 
-  auto runTest = [=](const Eigen::AngleAxis<ocs2::scalar_t>& angleAxis) {
-    auto computedAngleAxis = rotationMatrixToAngleAxis<ocs2::scalar_t>(angleAxis.toRotationMatrix());
+  // Pick random rotations
+  Eigen::Quaternion<scalar_t> lhsToWorld = Eigen::Quaternion<scalar_t>(0.1, 0.2, 0.3, 0.4).normalized();
+  Eigen::Quaternion<scalar_t> rhsToWorld = Eigen::Quaternion<scalar_t>(0.5, 0.6, 0.7, 0.8).normalized();
+
+  // Compute rotation error in world
+  const auto errorInWorld = rotationErrorInWorld(lhsToWorld.toRotationMatrix(), rhsToWorld.toRotationMatrix());
+  const Eigen::AngleAxis<scalar_t> errorAngleAxis(errorInWorld.norm(), errorInWorld.normalized());
+
+  // Test for correct composition of the error
+  // Error = lhs [-] rhs => lhs = error [+] rhs
+  // Comparing as rotation removes ambiguity between the two quaternions that represent the same rotation.
+  ASSERT_TRUE(lhsToWorld.toRotationMatrix().isApprox((errorAngleAxis * rhsToWorld).toRotationMatrix()));
+}
+
+TEST(testRotations, rotationErrorGlobalvsLocal) {
+  // This just tests the frame conventions of the error. Edge cases are tested in rotationMatrixToAngleAxis
+
+  // Pick random rotations
+  Eigen::Quaternion<scalar_t> lhsToWorld = Eigen::Quaternion<scalar_t>(0.1, 0.2, 0.3, 0.4).normalized();
+  Eigen::Quaternion<scalar_t> rhsToWorld = Eigen::Quaternion<scalar_t>(0.5, 0.6, 0.7, 0.8).normalized();
+
+  // Compute independently in world and local frame
+  const auto errorInWorld = rotationErrorInWorld(lhsToWorld.toRotationMatrix(), rhsToWorld.toRotationMatrix());
+  const auto errorInLocal = rotationErrorInLocal(lhsToWorld.toRotationMatrix(), rhsToWorld.toRotationMatrix());
+
+  // Test for equality in world frame. Both lhs and rhs frames are valid for the local representation.
+  ASSERT_TRUE(errorInWorld.isApprox(lhsToWorld * errorInLocal));
+  ASSERT_TRUE(errorInWorld.isApprox(rhsToWorld * errorInLocal));
+}
+
+TEST(testRotations, rotationMatrixToAngleAxis) {
+  auto runTest = [](const Eigen::AngleAxis<scalar_t>& angleAxis) {
+    auto computedAngleAxis = rotationMatrixToAngleAxis<scalar_t>(angleAxis.toRotationMatrix());
+    const scalar_t vectol = 1e-6;
     return (computedAngleAxis - angleAxis.angle() * angleAxis.axis()).norm() < vectol;
   };
-  auto message = [=](const Eigen::AngleAxis<ocs2::scalar_t>& angleAxis) {
-    auto computedAngleAxis = rotationMatrixToAngleAxis<ocs2::scalar_t>(angleAxis.toRotationMatrix());
+  auto message = [](const Eigen::AngleAxis<scalar_t>& angleAxis) {
+    auto computedAngleAxis = rotationMatrixToAngleAxis<scalar_t>(angleAxis.toRotationMatrix());
     std::stringstream ss;
     ss << "Failed test for angle: " << angleAxis.angle() << ", axle: " << angleAxis.axis().transpose()
        << "\n computed: " << computedAngleAxis.transpose() << ", should be " << (angleAxis.angle() * angleAxis.axis()).transpose();
@@ -109,8 +140,8 @@ TEST(testRotations, rotationMatrixToAngleAxis) {
   };
 
   // Test edge cases
-  const ocs2::scalar_t smallAngle = 1e-12;
-  const ocs2::scalar_t smallAngle2 = 1e-6;
+  const scalar_t smallAngle = 1e-12;
+  const scalar_t smallAngle2 = 1e-6;
   const ocs2::scalar_array_t edgeCases = {0.0, smallAngle, smallAngle2, M_PI_2, M_PI - smallAngle2, M_PI - smallAngle, M_PI};
   const vector3_t rotationUnitVector = vector3_t{1.0, -1.0, 3.0}.normalized();
 
@@ -120,20 +151,19 @@ TEST(testRotations, rotationMatrixToAngleAxis) {
   }
 
   // Test range of angles
-  ocs2::scalar_t dAngle = 1e-4;
-  for (ocs2::scalar_t angle = 0.0; angle < M_PI; angle += dAngle) {
+  const scalar_t dAngle = 1e-4;
+  for (scalar_t angle = 0.0; angle < M_PI; angle += dAngle) {
     const vector3_t axis = vector3_t::Random().normalized();  // random axis
     EXPECT_TRUE(runTest({angle, axis})) << message({angle, axis});
     EXPECT_TRUE(runTest({angle, -axis})) << message({angle, -axis});
   }
 }
 
-TEST(testRotations, rotationErrorJacobian) {
+TEST(testRotations, rotationErrorGradientDescent) {
   auto adFunction = [](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
     vector3_ad_t eulerAngles = x.head<3>();
     vector3_ad_t eulerAnglesReference = p.head<3>();
-    y = rotationError(rotationMatrixOriginToBase(eulerAngles),
-                                      rotationMatrixOriginToBase(eulerAnglesReference));
+    y = rotationErrorInWorldEulerXYZ(eulerAngles, eulerAnglesReference);
   };
 
   ocs2::CppAdInterface adInterface(adFunction, 3, 3, "rotationErrorJacobianTest");
@@ -144,8 +174,7 @@ TEST(testRotations, rotationErrorJacobian) {
   ASSERT_LT((jacOrigin - matrix3_t::Identity()).norm(), 1e-6);
 
   // Check Jacobian at full rotation
-  matrix3_t jac2Pi =
-      adInterface.getJacobian(vector3_t::Zero(), vector3_t{0.0, 0.0, 2.0 * M_PI});
+  matrix3_t jac2Pi = adInterface.getJacobian(vector3_t::Zero(), vector3_t{0.0, 0.0, 2.0 * M_PI});
   ASSERT_LT((jac2Pi - matrix3_t::Identity()).norm(), 1e-6);
 
   auto gradientDescent = [&](const vector3_t& eulerAnglesStart, vector3_t eulerAnglesReference) {
@@ -153,7 +182,8 @@ TEST(testRotations, rotationErrorJacobian) {
     for (int i = 0; i < 1000; i++) {
       matrix3_t jac = adInterface.getJacobian(eulerAngles, eulerAnglesReference);
       vector3_t error = adInterface.getFunctionValue(eulerAngles, eulerAnglesReference);
-      eulerAngles = eulerAngles - 0.1 * jac.fullPivHouseholderQr().solve(error);
+      // Take step with fixed step size
+      eulerAngles -= 0.1 * jac.fullPivHouseholderQr().solve(error);
     }
     return eulerAngles;
   };

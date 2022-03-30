@@ -34,6 +34,7 @@ the gating network of a mixture of experts network. Additionally, a simple behav
 """
 
 import torch
+import numpy as np
 
 from ocs2_mpcnet import config
 from ocs2_mpcnet.helper import bdot, bmv
@@ -52,7 +53,19 @@ class HamiltonianLoss:
     where the state x is of dimension X and the input u is of dimension U.
     """
 
-    def __call__(self, x_query, x_nominal, u_query, u_nominal, dHdxx, dHdux, dHduu, dHdx, dHdu, H):
+    def __call__(
+        self,
+        x_query: torch.Tensor,
+        x_nominal: torch.Tensor,
+        u_query: torch.Tensor,
+        u_nominal: torch.Tensor,
+        dHdxx: torch.Tensor,
+        dHdux: torch.Tensor,
+        dHduu: torch.Tensor,
+        dHdx: torch.Tensor,
+        dHdu: torch.Tensor,
+        H: torch.Tensor,
+    ) -> torch.Tensor:
         """Computes the mean Hamiltonian loss.
 
         Computes the mean Hamiltonian loss for a batch of size B using the provided linear quadratic approximations.
@@ -75,7 +88,18 @@ class HamiltonianLoss:
         return torch.mean(self.compute(x_query, x_nominal, u_query, u_nominal, dHdxx, dHdux, dHduu, dHdx, dHdu, H))
 
     @staticmethod
-    def compute(x_query, x_nominal, u_query, u_nominal, dHdxx, dHdux, dHduu, dHdx, dHdu, H):
+    def compute(
+        x_query: torch.Tensor,
+        x_nominal: torch.Tensor,
+        u_query: torch.Tensor,
+        u_nominal: torch.Tensor,
+        dHdxx: torch.Tensor,
+        dHdux: torch.Tensor,
+        dHduu: torch.Tensor,
+        dHdx: torch.Tensor,
+        dHdu: torch.Tensor,
+        H: torch.Tensor,
+    ) -> torch.Tensor:
         """Computes the Hamiltonian losses for a batch.
 
         Computes the Hamiltonian losses for a batch of size B using the provided linear quadratic approximations.
@@ -129,7 +153,7 @@ class BehavioralCloningLoss:
         R: A (1,U,U) tensor with the input cost matrix.
     """
 
-    def __init__(self, R):
+    def __init__(self, R: np.ndarray) -> None:
         """Initializes the BehavioralCloningLoss class.
 
         Initializes the BehavioralCloningLoss class by setting fixed attributes.
@@ -139,7 +163,7 @@ class BehavioralCloningLoss:
         """
         self.R = torch.tensor(R, device=config.DEVICE, dtype=config.DTYPE).unsqueeze(dim=0)
 
-    def __call__(self, u_predicted, u_target):
+    def __call__(self, u_predicted: torch.Tensor, u_target: torch.Tensor) -> torch.Tensor:
         """Computes the mean behavioral cloning loss.
 
         Computes the mean behavioral cloning loss for a batch of size B using the cost matrix.
@@ -153,7 +177,7 @@ class BehavioralCloningLoss:
         """
         return torch.mean(self.compute(u_predicted, u_target))
 
-    def compute(self, u_predicted, u_target):
+    def compute(self, u_predicted: torch.Tensor, u_target: torch.Tensor) -> torch.Tensor:
         """Computes the behavioral cloning losses for a batch.
 
         Computes the behavioral cloning losses for a batch of size B using the cost matrix.
@@ -184,7 +208,7 @@ class CrossEntropyLoss:
         epsilon: A (1) tensor with a small epsilon used to stabilize the logarithm.
     """
 
-    def __init__(self, epsilon):
+    def __init__(self, epsilon: float) -> None:
         """Initializes the CrossEntropyLoss class.
 
         Initializes the CrossEntropyLoss class by setting fixed attributes.
@@ -194,7 +218,7 @@ class CrossEntropyLoss:
         """
         self.epsilon = torch.tensor(epsilon, device=config.DEVICE, dtype=config.DTYPE)
 
-    def __call__(self,  p_target, p_predicted):
+    def __call__(self, p_target: torch.Tensor, p_predicted: torch.Tensor) -> torch.Tensor:
         """Computes the mean cross entropy loss.
 
         Computes the mean cross entropy loss for a batch, where the logarithm is stabilized by a small epsilon.
@@ -208,7 +232,7 @@ class CrossEntropyLoss:
         """
         return torch.mean(self.compute(p_target, p_predicted))
 
-    def compute(self, p_target, p_predicted):
+    def compute(self, p_target: torch.Tensor, p_predicted: torch.Tensor) -> torch.Tensor:
         """Computes the cross entropy losses for a batch.
 
         Computes the cross entropy losses for a batch, where the logarithm is stabilized by a small epsilon.

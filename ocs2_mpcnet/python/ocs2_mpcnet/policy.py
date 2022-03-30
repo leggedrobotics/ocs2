@@ -33,6 +33,7 @@ Provides classes for different neural network policies.
 """
 
 import torch
+from typing import Tuple
 
 from ocs2_mpcnet.helper import bmv
 
@@ -49,7 +50,7 @@ class LinearPolicy(torch.nn.Module):
         linear: The linear neural network layer.
     """
 
-    def __init__(self, dim_t, dim_x, dim_u):
+    def __init__(self, dim_t: int, dim_x: int, dim_u: int) -> None:
         """Initializes the LinearPolicy class.
 
         Initializes the LinearPolicy class by setting fixed and variable attributes.
@@ -65,7 +66,7 @@ class LinearPolicy(torch.nn.Module):
         self.dim_out = dim_u
         self.linear = torch.nn.Linear(self.dim_in, self.dim_out)
 
-    def forward(self, t, x):
+    def forward(self, t: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
         """Forward method.
 
         Defines the computation performed at every call. Computes the output tensors from the input tensors.
@@ -95,7 +96,7 @@ class NonlinearPolicy(torch.nn.Module):
         linear2: The second linear neural network layer.
     """
 
-    def __init__(self, dim_t, dim_x, dim_u):
+    def __init__(self, dim_t: int, dim_x: int, dim_u: int) -> None:
         """Initializes the NonlinearPolicy class.
 
         Initializes the NonlinearPolicy class by setting fixed and variable attributes.
@@ -114,7 +115,7 @@ class NonlinearPolicy(torch.nn.Module):
         self.activation = torch.nn.Tanh()
         self.linear2 = torch.nn.Linear(self.dim_hidden, self.dim_out)
 
-    def forward(self, t, x):
+    def forward(self, t: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
         """Forward method.
 
         Defines the computation performed at every call. Computes the output tensors from the input tensors.
@@ -143,7 +144,7 @@ class MixtureOfLinearExpertsPolicy(torch.nn.Module):
         expert_nets: The expert networks.
     """
 
-    def __init__(self, dim_t, dim_x, dim_u, num_experts):
+    def __init__(self, dim_t: int, dim_x: int, dim_u: int, num_experts: int) -> None:
         """Initializes the MixtureOfLinearExpertsPolicy class.
 
         Initializes the MixtureOfLinearExpertsPolicy class by setting fixed and variable attributes.
@@ -166,7 +167,7 @@ class MixtureOfLinearExpertsPolicy(torch.nn.Module):
             [LinearExpert(i, self.dim_in, self.dim_out) for i in range(self.num_experts)]
         )
 
-    def forward(self, t, x):
+    def forward(self, t: torch.Tensor, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """Forward method.
 
         Defines the computation performed at every call. Computes the output tensors from the input tensors.
@@ -202,7 +203,7 @@ class MixtureOfNonlinearExpertsPolicy(torch.nn.Module):
         expert_nets: The expert networks.
     """
 
-    def __init__(self, dim_t, dim_x, dim_u, num_experts):
+    def __init__(self, dim_t: int, dim_x: int, dim_u: int, num_experts: int) -> None:
         """Initializes the MixtureOfNonlinearExpertsPolicy class.
 
         Initializes the MixtureOfNonlinearExpertsPolicy class by setting fixed and variable attributes.
@@ -233,7 +234,7 @@ class MixtureOfNonlinearExpertsPolicy(torch.nn.Module):
             [NonlinearExpert(i, self.dim_in, self.dim_hidden_expert, self.dim_out) for i in range(self.num_experts)]
         )
 
-    def forward(self, t, x):
+    def forward(self, t: torch.Tensor, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """Forward method.
 
         Defines the computation performed at every call. Computes the output tensors from the input tensors.
@@ -264,7 +265,7 @@ class LinearExpert(torch.nn.Module):
         linear: The linear neural network layer.
     """
 
-    def __init__(self, index, dim_in, dim_out):
+    def __init__(self, index: int, dim_in: int, dim_out: int) -> None:
         """Initializes the LinearExpert class.
 
         Initializes the LinearExpert class by setting fixed and variable attributes.
@@ -280,7 +281,7 @@ class LinearExpert(torch.nn.Module):
         self.dim_out = dim_out
         self.linear = torch.nn.Linear(self.dim_in, self.dim_out)
 
-    def forward(self, input):
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
         """Forward method.
 
         Defines the computation performed at every call. Computes the output tensors from the input tensors.
@@ -309,7 +310,7 @@ class NonlinearExpert(torch.nn.Module):
         linear2: The second linear neural network layer.
     """
 
-    def __init__(self, index, dim_in, dim_hidden, dim_out):
+    def __init__(self, index: int, dim_in: int, dim_hidden: int, dim_out: int) -> None:
         """Initializes the NonlinearExpert class.
 
         Initializes the NonlinearExpert class by setting fixed and variable attributes.
@@ -329,7 +330,7 @@ class NonlinearExpert(torch.nn.Module):
         self.activation = torch.nn.Tanh()
         self.linear2 = torch.nn.Linear(self.dim_hidden, self.dim_out)
 
-    def forward(self, input):
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
         """Forward method.
 
         Defines the computation performed at every call. Computes the output tensors from the input tensors.

@@ -33,8 +33,11 @@ Provides classes for storing data in memory.
 """
 
 import torch
+import numpy as np
+from typing import Tuple
 
 from ocs2_mpcnet import config
+from ocs2_mpcnet import ScalarFunctionQuadraticApproximation
 
 
 class CircularMemory:
@@ -61,7 +64,9 @@ class CircularMemory:
         H: A (C) tensor for the Hamiltonians at the development/expansion points.
     """
 
-    def __init__(self, capacity, time_dimension, state_dimension, input_dimension, expert_number=1):
+    def __init__(
+        self, capacity: int, time_dimension: int, state_dimension: int, input_dimension: int, expert_number: int = 1
+    ) -> None:
         """Initializes the CircularMemory class.
 
         Initializes the BehavioralCloning class by setting fixed attributes, initializing variable attributes and
@@ -96,7 +101,17 @@ class CircularMemory:
         self.dHdu = torch.zeros(capacity, input_dimension, device=config.DEVICE, dtype=config.DTYPE)
         self.H = torch.zeros(capacity, device=config.DEVICE, dtype=config.DTYPE)
 
-    def push(self, t, x, u, p, generalized_time, relative_state, input_transformation, hamiltonian):
+    def push(
+        self,
+        t: float,
+        x: np.ndarray,
+        u: np.ndarray,
+        p: np.ndarray,
+        generalized_time: np.ndarray,
+        relative_state: np.ndarray,
+        input_transformation: np.ndarray,
+        hamiltonian: ScalarFunctionQuadraticApproximation,
+    ) -> None:
         """Pushes data into the circular memory.
 
         Pushes one data sample into the circular memory.
@@ -137,7 +152,7 @@ class CircularMemory:
         self.size = min(self.size + 1, self.capacity)
         self.position = (self.position + 1) % self.capacity
 
-    def sample(self, batch_size):
+    def sample(self, batch_size: int) -> Tuple[torch.Tensor, ...]:
         """Samples data from the circular memory.
 
         Samples a batch of data from the circular memory.
@@ -191,7 +206,7 @@ class CircularMemory:
             H_batch,
         )
 
-    def __len__(self):
+    def __len__(self) -> int:
         """The length of the memory.
 
         Return the length of the memory given by the current size.

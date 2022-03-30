@@ -20,13 +20,13 @@ class QuadrupedKinematicsTest : public ::testing::Test {
   }
 
   QuadrupedKinematics pinocchioKinematics_;
-  AnymalCamelKinematics anymalCamel;
+  AnymalCamelKinematics robcogenKinematics_;
 };
 
 TEST_F(QuadrupedKinematicsTest, baseToLegRootInBaseFrame) {
   for (int i = 0; i < 4; i++) {
     switched_model::vector3_t pinocchio = pinocchioKinematics_.baseToLegRootInBaseFrame(i);
-    switched_model::vector3_t robcogen = anymalCamel.baseToLegRootInBaseFrame(i);
+    switched_model::vector3_t robcogen = robcogenKinematics_.baseToLegRootInBaseFrame(i);
     EXPECT_TRUE(pinocchio.isApprox(robcogen)) << "i: " << i << "\nPinocchio: " << pinocchio.transpose()
                                               << "\n\n RobCoGen: " << robcogen.transpose();
   }
@@ -38,7 +38,7 @@ TEST_F(QuadrupedKinematicsTest, baseToFootJacobianBlockInBaseFrame) {
 
   for (int i = 0; i < 4; i++) {
     ocs2::matrix_t pinocchio = pinocchioKinematics_.baseToFootJacobianBlockInBaseFrame(i, q);
-    ocs2::matrix_t robcogen = anymalCamel.baseToFootJacobianBlockInBaseFrame(i, q);
+    ocs2::matrix_t robcogen = robcogenKinematics_.baseToFootJacobianBlockInBaseFrame(i, q);
     EXPECT_TRUE(pinocchio.isApprox(robcogen)) << "i: " << i << "\nPinocchio:\n" << pinocchio << "\n\n RobCoGen:\n" << robcogen;
   }
 }
@@ -49,7 +49,7 @@ TEST_F(QuadrupedKinematicsTest, footOrientationInBaseFrame) {
 
   for (int i = 0; i < 4; i++) {
     ocs2::matrix_t pinocchio = pinocchioKinematics_.footOrientationInBaseFrame(i, q);
-    ocs2::matrix_t robcogen = anymalCamel.footOrientationInBaseFrame(i, q);
+    ocs2::matrix_t robcogen = robcogenKinematics_.footOrientationInBaseFrame(i, q);
     EXPECT_TRUE(pinocchio.isApprox(robcogen)) << "i: " << i << "\nPinocchio:\n" << pinocchio << "\n\n RobCoGen:\n" << robcogen;
   }
 }
@@ -60,7 +60,7 @@ TEST_F(QuadrupedKinematicsTest, collisionSpheresInBaseFrame) {
   // q << 0, 1.5, 0, 0, 1.53, 0, 0, 0, 0, 0, 1.59;
 
   auto pinocchio = pinocchioKinematics_.collisionSpheresInBaseFrame(q);
-  auto robcogen = anymalCamel.collisionSpheresInBaseFrame(q);
+  auto robcogen = robcogenKinematics_.collisionSpheresInBaseFrame(q);
   for (std::size_t i = 0; i < switched_model::NUM_CONTACT_POINTS; i++) {
     EXPECT_TRUE(pinocchio[i].position.isApprox(robcogen[i].position)) << "i: " << i << "\nPinocchio:\n"
                                                                       << pinocchio[i].position.transpose() << "\nRobCoGen:\n"

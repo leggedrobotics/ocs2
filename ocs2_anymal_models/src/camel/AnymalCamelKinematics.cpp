@@ -18,7 +18,7 @@ AnymalCamelKinematics<SCALAR_T>* AnymalCamelKinematics<SCALAR_T>::clone() const 
 }
 
 template <typename SCALAR_T>
-switched_model::vector3_s_t<SCALAR_T> AnymalCamelKinematics<SCALAR_T>::baseTolegRootInBaseFrame(size_t footIndex) const {
+switched_model::vector3_s_t<SCALAR_T> AnymalCamelKinematics<SCALAR_T>::baseToLegRootInBaseFrame(size_t footIndex) const {
   using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
 
   switch (footIndex) {

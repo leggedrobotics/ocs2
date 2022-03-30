@@ -5,6 +5,9 @@ project(ocs2_anymal_models)
 find_package(catkin REQUIRED COMPONENTS
     ocs2_switched_model_interface
     ocs2_robotic_tools
+    ocs2_pinocchio_interface
+    ocs2_robotic_assets
+    roslib
 )
 
 ## Eigen3
@@ -22,6 +25,9 @@ catkin_package(
   CATKIN_DEPENDS
     ocs2_switched_model_interface
     ocs2_robotic_tools
+    ocs2_pinocchio_interface
+    ocs2_robotic_assets
+    roslib
 #   DEPENDS
 )
 
@@ -37,6 +43,7 @@ include_directories(
 
 add_library(${PROJECT_NAME}
   src/AnymalModels.cpp
+  src/QuadrupedKinematics.cpp
   src/bear/AnymalBearCom.cpp
   src/bear/AnymalBearKinematics.cpp
   src/bear/WholebodyDynamicsBear.cpp
@@ -95,6 +102,15 @@ catkin_add_gtest(${PROJECT_NAME}_switched_model_test
   test/TestRobcogenHelpers.cpp
 )
 target_link_libraries(${PROJECT_NAME}_switched_model_test
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
+
+catkin_add_gtest(TestQuadrupedPinocchioKinematics
+  test/TestQuadrupedPinocchioKinematics.cpp
+)
+target_link_libraries(TestQuadrupedPinocchioKinematics
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   gtest_main

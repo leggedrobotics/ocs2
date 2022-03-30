@@ -33,12 +33,14 @@ Provides robot-specific helper functions for ballbot.
 """
 
 import numpy as np
+from typing import Tuple
 
 from ocs2_mpcnet import helper
+from ocs2_mpcnet import SystemObservationArray, ModeScheduleArray, TargetTrajectoriesArray
 from ocs2_ballbot_mpcnet import ballbot_config as config
 
 
-def get_default_event_times_and_mode_sequence(duration):
+def get_default_event_times_and_mode_sequence(duration: float) -> Tuple[np.ndarray, np.ndarray]:
     """Get the event times and mode sequence describing the default mode schedule.
 
     Creates the default event times and mode sequence for a certain time duration.
@@ -56,7 +58,7 @@ def get_default_event_times_and_mode_sequence(duration):
     return helper.get_event_times_and_mode_sequence(0, duration, event_times_template, mode_sequence_template)
 
 
-def get_random_initial_state():
+def get_random_initial_state() -> np.ndarray:
     """Get a random initial state.
 
     Samples a random initial state for the robot.
@@ -78,7 +80,7 @@ def get_random_initial_state():
     return random_state
 
 
-def get_random_target_state():
+def get_random_target_state() -> np.ndarray:
     """Get a random target state.
 
     Samples a random target state for the robot.
@@ -96,7 +98,9 @@ def get_random_target_state():
     return random_state
 
 
-def get_tasks(n_tasks, duration):
+def get_tasks(
+    n_tasks: int, duration: float
+) -> Tuple[SystemObservationArray, ModeScheduleArray, TargetTrajectoriesArray]:
     """Get tasks.
 
     Get a random set of task that should be executed by the data generation or policy evaluation.

@@ -74,10 +74,12 @@ auto QuadrupedKinematics<SCALAR_T>::baseToFootJacobianBlockInBaseFrame(
   pinocchio::computeFrameJacobian(model, data, pinocchioJointPositions, frameId, rf, J);
 
   // In Pinocchio, the first three coordinates of J represent linear part and the last three coordinates represent angular part. But it
-  // is the other way round in RobCoGen. Swap linear and angular parts to stick to the originally used RobCoGen's convention.
-  J.topRows(3).swap(J.bottomRows(3));
+  // is the other way round in OCS2. Swap linear and angular parts to stick to the originally used OCS2's convention.
+  joint_jacobian_block_t res;
+  res.template block<3, 3>(0, 0) = J.template block<3, 3>(3, mapFeetOrderOcs2ToPinocchio_[footIndex] * 3u);
+  res.template block<3, 3>(3, 0) = J.template block<3, 3>(0, mapFeetOrderOcs2ToPinocchio_[footIndex] * 3u);
 
-  return J.template block<6, 3>(0, mapFeetOrderOcs2ToPinocchio_[footIndex] * 3u);
+  return res;
 }
 
 template <typename SCALAR_T>

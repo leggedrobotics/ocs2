@@ -39,10 +39,10 @@ from ocs2_mpcnet import config
 #
 
 # data type for tensor elements
-dtype = config.dtype
+dtype = config.DTYPE
 
 # device on which tensors will be allocated
-device = config.device
+device = config.DEVICE
 
 #
 # legged_robot_config

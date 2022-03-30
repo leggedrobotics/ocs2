@@ -25,12 +25,6 @@ class QuadrupedKinematics final : public switched_model::KinematicsModelBase<SCA
 
   enum class FrameIndex : std::size_t { HAA = 0, FOOT, KFE, FRAME_INDEX_SIZE };
 
-  struct FrameIndexMap {
-    std::array<std::size_t, static_cast<std::size_t>(FrameIndex::FRAME_INDEX_SIZE)> indexMap;
-    void setId(FrameIndex i, std::size_t ind) { indexMap.at(static_cast<std::size_t>(i)) = ind; }
-    std::size_t getId(FrameIndex i) const { return indexMap.at(static_cast<std::size_t>(i)); }
-  };
-
   QuadrupedKinematics(const ocs2::PinocchioInterface& pinocchioInterface);
   ~QuadrupedKinematics() = default;
 
@@ -67,9 +61,15 @@ class QuadrupedKinematics final : public switched_model::KinematicsModelBase<SCA
   }
 
   switched_model::vector3_s_t<SCALAR_T> relativeTranslationInBaseFrame(const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions,
-                                                                       const std::size_t frame) const;
+                                                                       std::size_t frame) const;
   switched_model::matrix3_s_t<SCALAR_T> relativeOrientationInBaseFrame(const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions,
-                                                                       const std::size_t frame) const;
+                                                                       std::size_t frame) const;
+
+  struct FrameIndexMap {
+    std::array<std::size_t, static_cast<std::size_t>(FrameIndex::FRAME_INDEX_SIZE)> indexMap;
+    void setId(FrameIndex i, std::size_t ind) { indexMap.at(static_cast<std::size_t>(i)) = ind; }
+    std::size_t getId(FrameIndex i) const { return indexMap.at(static_cast<std::size_t>(i)); }
+  };
 
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
 
@@ -92,6 +92,5 @@ using QuadrupedKinematicsAd = tpl::QuadrupedKinematics<ocs2::ad_scalar_t>;
 /**
  *  Explicit instantiation, for instantiation additional types, include the implementation file instead of this one.
  */
-
 extern template class anymal::tpl::QuadrupedKinematics<ocs2::scalar_t>;
 extern template class anymal::tpl::QuadrupedKinematics<ocs2::ad_scalar_t>;

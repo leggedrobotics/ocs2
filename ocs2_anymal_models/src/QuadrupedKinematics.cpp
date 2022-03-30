@@ -9,21 +9,12 @@
 #include <pinocchio/algorithm/jacobian.hpp>
 #include <pinocchio/algorithm/kinematics.hpp>
 
-// Urdf
-#include <urdf_parser/urdf_parser.h>
-
-// Boost
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/path.hpp>
-
 namespace anymal {
 namespace tpl {
 
 template <typename SCALAR_T>
 QuadrupedKinematics<SCALAR_T>::QuadrupedKinematics(const ocs2::PinocchioInterface& pinocchioInterface)
-    : mapFeetOrderOcs2ToPinocchio_{0, 2, 1, 3} {
-  pinocchioInterfacePtr_.reset(new PinocchioInterface(castPinocchioInterface(pinocchioInterface)));
-
+    : mapFeetOrderOcs2ToPinocchio_{0, 2, 1, 3}, pinocchioInterfacePtr_(new PinocchioInterface(castPinocchioInterface(pinocchioInterface))) {
   // Frame index mapping
   auto checkAndSetIndex = [this](std::size_t footIndex, const FrameIndex frameIndex, const std::string& name) {
     const auto& model = pinocchioInterfacePtr_->getModel();
@@ -136,7 +127,7 @@ switched_model::joint_coordinate_s_t<SCALAR_T> QuadrupedKinematics<SCALAR_T>::ma
 
 template <typename SCALAR_T>
 switched_model::vector3_s_t<SCALAR_T> QuadrupedKinematics<SCALAR_T>::relativeTranslationInBaseFrame(
-    const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions, const pinocchio::FrameIndex frame) const {
+    const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions, pinocchio::FrameIndex frame) const {
   auto& data = pinocchioInterfacePtr_->getData();
   const auto& model = pinocchioInterfacePtr_->getModel();
   pinocchio::forwardKinematics(model, data, jointPositions);
@@ -146,7 +137,7 @@ switched_model::vector3_s_t<SCALAR_T> QuadrupedKinematics<SCALAR_T>::relativeTra
 
 template <typename SCALAR_T>
 switched_model::matrix3_s_t<SCALAR_T> QuadrupedKinematics<SCALAR_T>::relativeOrientationInBaseFrame(
-    const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions, const pinocchio::FrameIndex frame) const {
+    const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions, pinocchio::FrameIndex frame) const {
   auto& data = pinocchioInterfacePtr_->getData();
   const auto& model = pinocchioInterfacePtr_->getModel();
   pinocchio::forwardKinematics(model, data, jointPositions);

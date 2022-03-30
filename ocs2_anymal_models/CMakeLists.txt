@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
     ocs2_robotic_tools
     ocs2_pinocchio_interface
     ocs2_robotic_assets
+    roslib
 )
 
 ## Eigen3
@@ -26,6 +27,7 @@ catkin_package(
     ocs2_robotic_tools
     ocs2_pinocchio_interface
     ocs2_robotic_assets
+    roslib
 #   DEPENDS
 )
 

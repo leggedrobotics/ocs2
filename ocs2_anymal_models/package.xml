@@ -15,6 +15,7 @@
   <depend>ocs2_switched_model_interface</depend>
   <depend>ocs2_pinocchio_interface</depend>
   <depend>ocs2_robotic_tools</depend>
+  <depend>ocs2_robotic_assets</depend>
   <exec_depend>rosparam_tools</exec_depend>
   <exec_depend>anymal_b</exec_depend>
   <exec_depend>anymal_cerberus_rsl</exec_depend>

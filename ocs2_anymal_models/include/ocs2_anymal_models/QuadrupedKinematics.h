@@ -31,7 +31,7 @@ class QuadrupedKinematics final : public switched_model::KinematicsModelBase<SCA
     std::size_t getId(FrameIndex i) const { return indexMap.at(static_cast<std::size_t>(i)); }
   };
 
-  QuadrupedKinematics(const std::string& urdfFile);
+  QuadrupedKinematics(const ocs2::PinocchioInterface& pinocchioInterface);
   QuadrupedKinematics(const QuadrupedKinematics&) = delete;
   ~QuadrupedKinematics() = default;
 
@@ -55,7 +55,16 @@ class QuadrupedKinematics final : public switched_model::KinematicsModelBase<SCA
       const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
 
  private:
-  PinocchioInterface createPinocchioInterface(const std::string& urdfFile);
+  template <typename T = SCALAR_T, typename std::enable_if<std::is_same<T, ocs2::ad_scalar_t>::value, bool>::type = true>
+  PinocchioInterface castPinocchioInterface(const ocs2::PinocchioInterface& pinocchioInterface) {
+    return pinocchioInterface.toCppAd();
+  }
+
+  template <typename T = SCALAR_T, typename std::enable_if<!std::is_same<T, ocs2::ad_scalar_t>::value, bool>::type = true>
+  PinocchioInterface castPinocchioInterface(const ocs2::PinocchioInterface& pinocchioInterface) {
+    return pinocchioInterface;
+  }
+
   switched_model::vector3_s_t<SCALAR_T> relativeTranslationInBaseFrame(const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions,
                                                                        const std::size_t frame) const;
   switched_model::matrix3_s_t<SCALAR_T> relativeOrientationInBaseFrame(const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions,
@@ -84,4 +93,4 @@ using QuadrupedKinematicsAd = tpl::QuadrupedKinematics<ocs2::ad_scalar_t>;
  */
 
 extern template class anymal::tpl::QuadrupedKinematics<ocs2::scalar_t>;
-// extern template class anymal::tpl::QuadrupedKinematics<ocs2::ad_scalar_t>;
+extern template class anymal::tpl::QuadrupedKinematics<ocs2::ad_scalar_t>;

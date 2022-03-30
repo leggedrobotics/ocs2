@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
     ocs2_switched_model_interface
     ocs2_robotic_tools
     ocs2_pinocchio_interface
+    ocs2_robotic_assets
 )
 
 ## Eigen3
@@ -24,6 +25,7 @@ catkin_package(
     ocs2_switched_model_interface
     ocs2_robotic_tools
     ocs2_pinocchio_interface
+    ocs2_robotic_assets
 #   DEPENDS
 )
 

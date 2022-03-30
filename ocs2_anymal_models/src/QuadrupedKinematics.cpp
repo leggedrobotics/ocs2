@@ -20,15 +20,9 @@ namespace anymal {
 namespace tpl {
 
 template <typename SCALAR_T>
-QuadrupedKinematics<SCALAR_T>::QuadrupedKinematics(const std::string& urdfFile) : mapFeetOrderOcs2ToPinocchio_{0, 2, 1, 3} {
-  // check that urdf file exists
-  boost::filesystem::path urdfFilePath(urdfFile);
-  if (boost::filesystem::exists(urdfFilePath)) {
-    std::cerr << "[AnymalKinematicsInterface] Loading Pinocchio model from: " << urdfFilePath << std::endl;
-  } else {
-    throw std::invalid_argument("[AnymalKinematicsInterface] URDF file not found: " + urdfFilePath.string());
-  }
-  pinocchioInterfacePtr_.reset(new PinocchioInterface(createPinocchioInterface(urdfFile)));
+QuadrupedKinematics<SCALAR_T>::QuadrupedKinematics(const ocs2::PinocchioInterface& pinocchioInterface)
+    : mapFeetOrderOcs2ToPinocchio_{0, 2, 1, 3} {
+  pinocchioInterfacePtr_.reset(new PinocchioInterface(castPinocchioInterface(pinocchioInterface)));
 
   // Frame index mapping
   auto checkAndSetIndex = [this](std::size_t footIndex, const FrameIndex frameIndex, const std::string& name) {
@@ -49,15 +43,6 @@ QuadrupedKinematics<SCALAR_T>::QuadrupedKinematics(const std::string& urdfFile) 
 // QuadrupedKinematics<SCALAR_T>* QuadrupedKinematics<SCALAR_T>::clone() const {
 //   return new QuadrupedKinematics<SCALAR_T>(*this);
 // }
-
-template <typename SCALAR_T>
-auto QuadrupedKinematics<SCALAR_T>::createPinocchioInterface(const std::string& urdfFile) -> PinocchioInterface {
-  // parse the URDF
-  const auto urdfTreePtr = ::urdf::parseURDFFile(urdfFile);
-  pinocchio::ModelTpl<SCALAR_T> model;
-  pinocchio::urdf::buildModel(urdfTreePtr, model);
-  return PinocchioInterface(model, urdfTreePtr);
-}
 
 template <typename SCALAR_T>
 switched_model::vector3_s_t<SCALAR_T> QuadrupedKinematics<SCALAR_T>::baseToLegRootInBaseFrame(size_t footIndex) const {
@@ -165,4 +150,4 @@ switched_model::matrix3_s_t<SCALAR_T> QuadrupedKinematics<SCALAR_T>::relativeOri
 
 // Explicit instantiation
 template class anymal::tpl::QuadrupedKinematics<ocs2::scalar_t>;
-// template class anymal::tpl::QuadrupedKinematics<ocs2::ad_scalar_t>;
+template class anymal::tpl::QuadrupedKinematics<ocs2::ad_scalar_t>;

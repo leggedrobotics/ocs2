@@ -43,7 +43,7 @@ import numpy as np
 from torch.utils.tensorboard import SummaryWriter
 
 from ocs2_mpcnet.helper import bmv, bmm
-from ocs2_mpcnet.loss import Hamiltonian as Loss
+from ocs2_mpcnet.loss import HamiltonianLoss as Loss
 from ocs2_mpcnet.memory import CircularMemory as Memory
 from ocs2_mpcnet.policy import LinearPolicy as Policy
 
@@ -166,9 +166,9 @@ try:
                     data[i].x,
                     data[i].u,
                     torch.ones(1, device=config.device, dtype=config.dtype),
-                    data[i].generalized_time,
-                    data[i].relative_state,
-                    data[i].input_transformation,
+                    data[i].generalizedTime,
+                    data[i].relativeState,
+                    data[i].inputTransformation,
                     data[i].hamiltonian,
                 )
             # logging
@@ -182,8 +182,8 @@ try:
         if mpcnet_interface.isPolicyEvaluationDone():
             # get computed metrics
             metrics = mpcnet_interface.getComputedMetrics()
-            survival_time = np.mean([metrics[i].survival_time for i in range(len(metrics))])
-            incurred_hamiltonian = np.mean([metrics[i].incurred_hamiltonian for i in range(len(metrics))])
+            survival_time = np.mean([metrics[i].survivalTime for i in range(len(metrics))])
+            incurred_hamiltonian = np.mean([metrics[i].incurredHamiltonian for i in range(len(metrics))])
             # logging
             writer.add_scalar("metric/survival_time", survival_time, iteration)
             writer.add_scalar("metric/incurred_hamiltonian", incurred_hamiltonian, iteration)
@@ -231,9 +231,7 @@ try:
             u_predicted = policy(generalized_time, relative_state)
             u_predicted = bmv(input_transformation, u_predicted)
             # compute the empirical loss
-            empirical_loss = (
-                loss.compute_batch(x, x, u_predicted, u, dHdxx, dHdux, dHduu, dHdx, dHdu, H).sum() / batch_size
-            )
+            empirical_loss = loss(x, x, u_predicted, u, dHdxx, dHdux, dHduu, dHdx, dHdu, H)
             # compute the gradients
             empirical_loss.backward()
             # logging

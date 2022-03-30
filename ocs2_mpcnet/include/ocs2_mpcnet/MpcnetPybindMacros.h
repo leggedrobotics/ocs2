@@ -85,14 +85,14 @@ using namespace pybind11::literals;
     /* bind mode schedule struct */                                                                         \
     pybind11::class_<ocs2::ModeSchedule>(m, "ModeSchedule")                                                 \
         .def(pybind11::init<ocs2::scalar_array_t, ocs2::size_array_t>())                                    \
-        .def_readwrite("event_times", &ocs2::ModeSchedule::eventTimes)                                      \
-        .def_readwrite("mode_sequence", &ocs2::ModeSchedule::modeSequence);                                 \
+        .def_readwrite("eventTimes", &ocs2::ModeSchedule::eventTimes)                                       \
+        .def_readwrite("modeSequence", &ocs2::ModeSchedule::modeSequence);                                  \
     /* bind target trajectories class */                                                                    \
     pybind11::class_<ocs2::TargetTrajectories>(m, "TargetTrajectories")                                     \
         .def(pybind11::init<ocs2::scalar_array_t, ocs2::vector_array_t, ocs2::vector_array_t>())            \
-        .def_readwrite("time_trajectory", &ocs2::TargetTrajectories::timeTrajectory)                        \
-        .def_readwrite("state_trajectory", &ocs2::TargetTrajectories::stateTrajectory)                      \
-        .def_readwrite("input_trajectory", &ocs2::TargetTrajectories::inputTrajectory);                     \
+        .def_readwrite("timeTrajectory", &ocs2::TargetTrajectories::timeTrajectory)                         \
+        .def_readwrite("stateTrajectory", &ocs2::TargetTrajectories::stateTrajectory)                       \
+        .def_readwrite("inputTrajectory", &ocs2::TargetTrajectories::inputTrajectory);                      \
     /* bind data point struct */                                                                            \
     pybind11::class_<ocs2::mpcnet::data_point_t>(m, "DataPoint")                                            \
         .def(pybind11::init<>())                                                                            \
@@ -100,15 +100,15 @@ using namespace pybind11::literals;
         .def_readwrite("t", &ocs2::mpcnet::data_point_t::t)                                                 \
         .def_readwrite("x", &ocs2::mpcnet::data_point_t::x)                                                 \
         .def_readwrite("u", &ocs2::mpcnet::data_point_t::u)                                                 \
-        .def_readwrite("generalized_time", &ocs2::mpcnet::data_point_t::generalizedTime)                    \
-        .def_readwrite("relative_state", &ocs2::mpcnet::data_point_t::relativeState)                        \
-        .def_readwrite("input_transformation", &ocs2::mpcnet::data_point_t::inputTransformation)            \
+        .def_readwrite("generalizedTime", &ocs2::mpcnet::data_point_t::generalizedTime)                     \
+        .def_readwrite("relativeState", &ocs2::mpcnet::data_point_t::relativeState)                         \
+        .def_readwrite("inputTransformation", &ocs2::mpcnet::data_point_t::inputTransformation)             \
         .def_readwrite("hamiltonian", &ocs2::mpcnet::data_point_t::hamiltonian);                            \
     /* bind metrics struct */                                                                               \
     pybind11::class_<ocs2::mpcnet::metrics_t>(m, "Metrics")                                                 \
         .def(pybind11::init<>())                                                                            \
-        .def_readwrite("survival_time", &ocs2::mpcnet::metrics_t::survivalTime)                             \
-        .def_readwrite("incurred_hamiltonian", &ocs2::mpcnet::metrics_t::incurredHamiltonian);              \
+        .def_readwrite("survivalTime", &ocs2::mpcnet::metrics_t::survivalTime)                              \
+        .def_readwrite("incurredHamiltonian", &ocs2::mpcnet::metrics_t::incurredHamiltonian);               \
   }
 
 /**

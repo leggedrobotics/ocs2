@@ -33,8 +33,11 @@ Provides classes for storing data in memory.
 """
 
 import torch
+import numpy as np
+from typing import Tuple
 
 from ocs2_mpcnet import config
+from ocs2_mpcnet import ScalarFunctionQuadraticApproximation
 
 
 class CircularMemory:
@@ -61,7 +64,9 @@ class CircularMemory:
         H: A (C) tensor for the Hamiltonians at the development/expansion points.
     """
 
-    def __init__(self, capacity, time_dimension, state_dimension, input_dimension, expert_number=1):
+    def __init__(
+        self, capacity: int, time_dimension: int, state_dimension: int, input_dimension: int, expert_number: int = 1
+    ) -> None:
         """Initializes the CircularMemory class.
 
         Initializes the BehavioralCloning class by setting fixed attributes, initializing variable attributes and
@@ -80,23 +85,33 @@ class CircularMemory:
         self.size = 0
         self.position = 0
         # pre-allocate memory
-        self.t = torch.zeros(capacity, device=config.device, dtype=config.dtype)
-        self.x = torch.zeros(capacity, state_dimension, device=config.device, dtype=config.dtype)
-        self.u = torch.zeros(capacity, input_dimension, device=config.device, dtype=config.dtype)
-        self.p = torch.zeros(capacity, expert_number, device=config.device, dtype=config.dtype)
-        self.generalized_time = torch.zeros(capacity, time_dimension, device=config.device, dtype=config.dtype)
-        self.relative_state = torch.zeros(capacity, state_dimension, device=config.device, dtype=config.dtype)
+        self.t = torch.zeros(capacity, device=config.DEVICE, dtype=config.DTYPE)
+        self.x = torch.zeros(capacity, state_dimension, device=config.DEVICE, dtype=config.DTYPE)
+        self.u = torch.zeros(capacity, input_dimension, device=config.DEVICE, dtype=config.DTYPE)
+        self.p = torch.zeros(capacity, expert_number, device=config.DEVICE, dtype=config.DTYPE)
+        self.generalized_time = torch.zeros(capacity, time_dimension, device=config.DEVICE, dtype=config.DTYPE)
+        self.relative_state = torch.zeros(capacity, state_dimension, device=config.DEVICE, dtype=config.DTYPE)
         self.input_transformation = torch.zeros(
-            capacity, input_dimension, input_dimension, device=config.device, dtype=config.dtype
+            capacity, input_dimension, input_dimension, device=config.DEVICE, dtype=config.DTYPE
         )
-        self.dHdxx = torch.zeros(capacity, state_dimension, state_dimension, device=config.device, dtype=config.dtype)
-        self.dHdux = torch.zeros(capacity, input_dimension, state_dimension, device=config.device, dtype=config.dtype)
-        self.dHduu = torch.zeros(capacity, input_dimension, input_dimension, device=config.device, dtype=config.dtype)
-        self.dHdx = torch.zeros(capacity, state_dimension, device=config.device, dtype=config.dtype)
-        self.dHdu = torch.zeros(capacity, input_dimension, device=config.device, dtype=config.dtype)
-        self.H = torch.zeros(capacity, device=config.device, dtype=config.dtype)
+        self.dHdxx = torch.zeros(capacity, state_dimension, state_dimension, device=config.DEVICE, dtype=config.DTYPE)
+        self.dHdux = torch.zeros(capacity, input_dimension, state_dimension, device=config.DEVICE, dtype=config.DTYPE)
+        self.dHduu = torch.zeros(capacity, input_dimension, input_dimension, device=config.DEVICE, dtype=config.DTYPE)
+        self.dHdx = torch.zeros(capacity, state_dimension, device=config.DEVICE, dtype=config.DTYPE)
+        self.dHdu = torch.zeros(capacity, input_dimension, device=config.DEVICE, dtype=config.DTYPE)
+        self.H = torch.zeros(capacity, device=config.DEVICE, dtype=config.DTYPE)
 
-    def push(self, t, x, u, p, generalized_time, relative_state, input_transformation, hamiltonian):
+    def push(
+        self,
+        t: float,
+        x: np.ndarray,
+        u: np.ndarray,
+        p: np.ndarray,
+        generalized_time: np.ndarray,
+        relative_state: np.ndarray,
+        input_transformation: np.ndarray,
+        hamiltonian: ScalarFunctionQuadraticApproximation,
+    ) -> None:
         """Pushes data into the circular memory.
 
         Pushes one data sample into the circular memory.
@@ -137,7 +152,7 @@ class CircularMemory:
         self.size = min(self.size + 1, self.capacity)
         self.position = (self.position + 1) % self.capacity
 
-    def sample(self, batch_size):
+    def sample(self, batch_size: int) -> Tuple[torch.Tensor, ...]:
         """Samples data from the circular memory.
 
         Samples a batch of data from the circular memory.
@@ -161,7 +176,7 @@ class CircularMemory:
             - dHdu_batch: A (B,U) tensor with the input gradients of the Hamiltonian approximations.
             - H_batch: A (B) tensor with the Hamiltonians at the development/expansion points.
         """
-        indices = torch.randint(0, self.size, (batch_size,), device=config.device)
+        indices = torch.randint(0, self.size, (batch_size,), device=config.DEVICE)
         t_batch = self.t[indices]
         x_batch = self.x[indices]
         u_batch = self.u[indices]
@@ -191,7 +206,7 @@ class CircularMemory:
             H_batch,
         )
 
-    def __len__(self):
+    def __len__(self) -> int:
         """The length of the memory.
 
         Return the length of the memory given by the current size.

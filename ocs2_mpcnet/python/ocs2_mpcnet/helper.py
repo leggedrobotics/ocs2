@@ -34,6 +34,7 @@ Provides helper functions, such as convenience functions for batch-wise operatio
 
 import torch
 import numpy as np
+from typing import Tuple
 
 from ocs2_mpcnet import (
     size_array,
@@ -48,7 +49,7 @@ from ocs2_mpcnet import (
 )
 
 
-def bdot(bv1, bv2):
+def bdot(bv1: torch.Tensor, bv2: torch.Tensor) -> torch.Tensor:
     """Batch-wise dot product.
 
     Performs a batch-wise dot product between two batches of vectors with batch size B and dimension N. Supports
@@ -64,7 +65,7 @@ def bdot(bv1, bv2):
     return torch.sum(torch.mul(bv1, bv2), dim=1)
 
 
-def bmv(bm, bv):
+def bmv(bm: torch.Tensor, bv: torch.Tensor) -> torch.Tensor:
     """Batch-wise matrix-vector product.
 
     Performs a batch-wise matrix-vector product between a batch of MxN matrices and a batch of vectors of dimension N,
@@ -80,7 +81,7 @@ def bmv(bm, bv):
     return torch.matmul(bm, bv.unsqueeze(dim=2)).squeeze(dim=2)
 
 
-def bmm(bm1, bm2):
+def bmm(bm1: torch.Tensor, bm2: torch.Tensor) -> torch.Tensor:
     """Batch-wise matrix-matrix product.
 
     Performs a batch-wise matrix-matrix product between a batch of MxK matrices and a batch of KxN matrices, each with
@@ -96,7 +97,7 @@ def bmm(bm1, bm2):
     return torch.matmul(bm1, bm2)
 
 
-def get_size_array(data):
+def get_size_array(data: np.ndarray) -> size_array:
     """Get an OCS2 size array.
 
     Creates an OCS2 size array and fills it with integer data from a NumPy array.
@@ -114,7 +115,7 @@ def get_size_array(data):
     return my_size_array
 
 
-def get_scalar_array(data):
+def get_scalar_array(data: np.ndarray) -> scalar_array:
     """Get an OCS2 scalar array.
 
     Creates an OCS2 scalar array and fills it with float data from a NumPy array.
@@ -132,7 +133,7 @@ def get_scalar_array(data):
     return my_scalar_array
 
 
-def get_vector_array(data):
+def get_vector_array(data: np.ndarray) -> vector_array:
     """Get an OCS2 vector array.
 
     Creates an OCS2 vector array and fills it with float data from a NumPy array.
@@ -150,7 +151,7 @@ def get_vector_array(data):
     return my_vector_array
 
 
-def get_system_observation(mode, time, state, input):
+def get_system_observation(mode: int, time: float, state: np.ndarray, input: np.ndarray) -> SystemObservation:
     """Get an OCS2 system observation object.
 
     Creates an OCS2 system observation object and fills it with data.
@@ -172,7 +173,7 @@ def get_system_observation(mode, time, state, input):
     return system_observation
 
 
-def get_system_observation_array(length):
+def get_system_observation_array(length: int) -> SystemObservationArray:
     """Get an OCS2 system observation array.
 
     Creates an OCS2 system observation array but does not fill it with data.
@@ -188,7 +189,9 @@ def get_system_observation_array(length):
     return system_observation_array
 
 
-def get_target_trajectories(time_trajectory, state_trajectory, input_trajectory):
+def get_target_trajectories(
+    time_trajectory: np.ndarray, state_trajectory: np.ndarray, input_trajectory: np.ndarray
+) -> TargetTrajectories:
     """Get an OCS2 target trajectories object.
 
     Creates an OCS2 target trajectories object and fills it with data.
@@ -207,7 +210,7 @@ def get_target_trajectories(time_trajectory, state_trajectory, input_trajectory)
     return TargetTrajectories(time_trajectory_array, state_trajectory_array, input_trajectory_array)
 
 
-def get_target_trajectories_array(length):
+def get_target_trajectories_array(length: int) -> TargetTrajectoriesArray:
     """Get an OCS2 target trajectories array.
 
     Creates an OCS2 target trajectories array but does not fill it with data.
@@ -223,7 +226,7 @@ def get_target_trajectories_array(length):
     return target_trajectories_array
 
 
-def get_mode_schedule(event_times, mode_sequence):
+def get_mode_schedule(event_times: np.ndarray, mode_sequence: np.ndarray) -> ModeSchedule:
     """Get an OCS2 mode schedule object.
 
     Creates an OCS2 mode schedule object and fills it with data.
@@ -240,7 +243,7 @@ def get_mode_schedule(event_times, mode_sequence):
     return ModeSchedule(event_times_array, mode_sequence_array)
 
 
-def get_mode_schedule_array(length):
+def get_mode_schedule_array(length: int) -> ModeScheduleArray:
     """Get an OCS2 mode schedule array.
 
     Creates an OCS2 mode schedule array but does not fill it with data.
@@ -256,7 +259,9 @@ def get_mode_schedule_array(length):
     return mode_schedule_array
 
 
-def get_event_times_and_mode_sequence(default_mode, duration, event_times_template, mode_sequence_template):
+def get_event_times_and_mode_sequence(
+    default_mode: int, duration: float, event_times_template: np.ndarray, mode_sequence_template: np.ndarray
+) -> Tuple[np.ndarray, np.ndarray]:
     """Get the event times and mode sequence describing a mode schedule.
 
     Creates the event times and mode sequence for a certain time duration from a template (e.g. a gait).
@@ -268,7 +273,9 @@ def get_event_times_and_mode_sequence(default_mode, duration, event_times_templa
         mode_sequence_template: The mode sequence template given by a NumPy array of shape (T) containing integers.
 
     Returns:
-        The event times and mode sequence given by NumPy arrays.
+        A tuple containing the components of the mode schedule.
+            - event_times: The event times given by a NumPy array of shape (K-1) containing floats.
+            - mode_sequence: The mode sequence given by a NumPy array of shape (K) containing integers.
     """
     gait_cycle_duration = event_times_template[-1]
     num_gait_cycles = int(np.floor(duration / gait_cycle_duration))

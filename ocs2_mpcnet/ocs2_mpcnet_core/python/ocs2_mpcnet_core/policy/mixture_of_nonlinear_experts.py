@@ -41,8 +41,8 @@ from ocs2_mpcnet_core.helper import bmv
 class MixtureOfNonlinearExpertsPolicy(torch.nn.Module):
     """Mixture of nonlinear experts policy.
 
-    Class for a mixture of experts neural network policy with nonlinear experts, where the hidden layer is the mean of the
-    input and output layer.
+    Class for a mixture of experts neural network policy with nonlinear experts, where the hidden layer is the mean of
+    the input and output layer.
 
     Attributes:
         name: A string with the name of the policy.

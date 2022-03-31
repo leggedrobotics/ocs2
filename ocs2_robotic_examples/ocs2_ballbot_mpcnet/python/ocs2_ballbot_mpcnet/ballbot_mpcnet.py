@@ -43,9 +43,9 @@ import numpy as np
 from torch.utils.tensorboard import SummaryWriter
 
 from ocs2_mpcnet.helper import bmv, bmm
-from ocs2_mpcnet.loss import HamiltonianLoss as Loss
-from ocs2_mpcnet.memory import CircularMemory as Memory
-from ocs2_mpcnet.policy import LinearPolicy as Policy
+from ocs2_mpcnet.loss.hamiltonian import HamiltonianLoss as Loss
+from ocs2_mpcnet.memory.circular import CircularMemory as Memory
+from ocs2_mpcnet.policy.linear import LinearPolicy as Policy
 
 from ocs2_ballbot_mpcnet import ballbot_config as config
 from ocs2_ballbot_mpcnet import ballbot_helper as helper

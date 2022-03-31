@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2021, Farbod Farshidian. All rights reserved.
+Copyright (c) 2022, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,39 +29,52 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/thread_support/Synchronized.h>
-#include <ocs2_oc/synchronized_module/ReferenceManager.h>
-
-#include "ocs2_legged_robot/foot_planner/SwingTrajectoryPlanner.h"
-#include "ocs2_legged_robot/gait/GaitSchedule.h"
-#include "ocs2_legged_robot/gait/MotionPhaseDefinition.h"
+#include <ocs2_mpcnet_core/MpcnetDefinitionBase.h>
 
 namespace ocs2 {
 namespace legged_robot {
 
 /**
- * Manages the ModeSchedule and the TargetTrajectories for switched model.
+ * MPC-Net definitions for legged robot.
  */
-class SwitchedModelReferenceManager : public ReferenceManager {
+class LeggedRobotMpcnetDefinition final : public ocs2::mpcnet::MpcnetDefinitionBase {
  public:
-  SwitchedModelReferenceManager(std::shared_ptr<GaitSchedule> gaitSchedulePtr, std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr);
+  /**
+   * Constructor.
+   * @param [in] defaultState : Default state.
+   */
+  LeggedRobotMpcnetDefinition(const vector_t& defaultState) : defaultState_(defaultState) {}
 
-  ~SwitchedModelReferenceManager() override = default;
+  /**
+   * Default destructor.
+   */
+  ~LeggedRobotMpcnetDefinition() override = default;
 
-  void setModeSchedule(const ModeSchedule& modeSchedule) override;
+  /**
+   * @see MpcnetDefinitionBase::getGeneralizedTime
+   */
+  vector_t getGeneralizedTime(scalar_t t, const ModeSchedule& modeSchedule) override;
 
-  contact_flag_t getContactFlags(scalar_t time) const;
+  /**
+   * @see MpcnetDefinitionBase::getRelativeState
+   */
+  vector_t getRelativeState(scalar_t t, const vector_t& x, const TargetTrajectories& targetTrajectories) override;
 
-  const std::shared_ptr<GaitSchedule>& getGaitSchedule() { return gaitSchedulePtr_; }
+  /**
+   * @see MpcnetDefinitionBase::getInputTransformation
+   */
+  matrix_t getInputTransformation(scalar_t t, const vector_t& x) override;
 
-  const std::shared_ptr<SwingTrajectoryPlanner>& getSwingTrajectoryPlanner() { return swingTrajectoryPtr_; }
+  /**
+   * @see MpcnetDefinitionBase::validState
+   */
+  bool validState(const vector_t& x) override;
 
  private:
-  void modifyReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState, TargetTrajectories& targetTrajectories,
-                        ModeSchedule& modeSchedule) override;
-
-  std::shared_ptr<GaitSchedule> gaitSchedulePtr_;
-  std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr_;
+  const scalar_t allowedHeightDeviation_ = 0.2;
+  const scalar_t allowedPitchDeviation_ = 30.0 * M_PI / 180.0;
+  const scalar_t allowedRollDeviation_ = 30.0 * M_PI / 180.0;
+  const vector_t defaultState_;
 };
 
 }  // namespace legged_robot

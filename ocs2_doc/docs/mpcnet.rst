@@ -63,7 +63,7 @@ To train an MPC-Net policy, run:
 
 .. code-block:: bash
 
-    cd <path_to_git_repos>/ocs2/ocs2_mpcnet/ocs2_<robot>_mpcnet/python/ocs2_<robot>_mpcnet
+    cd <path_to_ocs2_repo>/ocs2_mpcnet/ocs2_<robot>_mpcnet/python/ocs2_<robot>_mpcnet
     source <path_to_catkin_ws>/devel/setup.bash
     source <path_to_venvs>/mpcnet/bin/activate
     python3 <robot>_mpcnet.py
@@ -78,7 +78,7 @@ To monitor the training progress with Tensorboard, run:
 
 .. code-block:: bash
 
-    cd <path_to_git_repos>/ocs2/ocs2_mpcnet/ocs2_<robot>_mpcnet/python/ocs2_<robot>_mpcnet
+    cd <path_to_ocs2_repo>/ocs2_mpcnet/ocs2_<robot>_mpcnet/python/ocs2_<robot>_mpcnet
     source <path_to_venvs>/mpcnet/bin/activate
     tensorboard --logdir=runs
 
@@ -87,11 +87,11 @@ To monitor the training progress with Tensorboard, run:
     source ~/venvs/mpcnet/bin/activate
     tensorboard --logdir=runs
 
-If you use RaiSim, you can visualize the data generation and policy evaluation rollouts with RaiSim Unity, where pre-built executables are provided in the :code:`<path_to_git_repos>/raisimLib/raisimUnity` folder. For example, on Linux run:
+If you use RaiSim, you can visualize the data generation and policy evaluation rollouts with RaiSim Unity, where pre-built executables are provided in RaiSim's :code:`raisimUnity` folder. For example, on Linux run:
 
 .. code-block:: bash
 
-    <path_to_git_repos>/raisimLib/raisimUnity/linux/raisimUnity.x86_64
+    <path_to_raisimLib_repo>/raisimUnity/linux/raisimUnity.x86_64
 
     # Example:
     ~/git/raisimLib/raisimUnity/linux/raisimUnity.x86_64

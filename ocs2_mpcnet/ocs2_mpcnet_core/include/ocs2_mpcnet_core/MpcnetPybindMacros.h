@@ -36,8 +36,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_python_interface/PybindMacros.h>
 
-#include "ocs2_mpcnet/rollout/MpcnetData.h"
-#include "ocs2_mpcnet/rollout/MpcnetMetrics.h"
+#include "ocs2_mpcnet_core/rollout/MpcnetData.h"
+#include "ocs2_mpcnet_core/rollout/MpcnetMetrics.h"
 
 using namespace pybind11::literals;
 

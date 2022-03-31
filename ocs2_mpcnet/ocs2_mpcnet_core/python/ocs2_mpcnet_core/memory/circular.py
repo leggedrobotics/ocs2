@@ -36,8 +36,8 @@ import torch
 import numpy as np
 from typing import Tuple
 
-from ocs2_mpcnet import config
-from ocs2_mpcnet import ScalarFunctionQuadraticApproximation
+from ocs2_mpcnet_core import config
+from ocs2_mpcnet_core import ScalarFunctionQuadraticApproximation
 
 
 class CircularMemory:

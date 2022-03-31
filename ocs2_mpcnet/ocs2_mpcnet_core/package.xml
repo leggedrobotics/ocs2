@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>ocs2_mpcnet</name>
+  <name>ocs2_mpcnet_core</name>
   <version>0.0.0</version>
-  <description>The ocs2_mpcnet package</description>
+  <description>The ocs2_mpcnet_core package</description>
 
   <author email="areske@ethz.ch">Alexander Reske</author>
 

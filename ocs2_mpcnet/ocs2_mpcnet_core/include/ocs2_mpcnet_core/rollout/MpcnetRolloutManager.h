@@ -31,8 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/thread_support/ThreadPool.h>
 
-#include "ocs2_mpcnet/rollout/MpcnetDataGeneration.h"
-#include "ocs2_mpcnet/rollout/MpcnetPolicyEvaluation.h"
+#include "ocs2_mpcnet_core/rollout/MpcnetDataGeneration.h"
+#include "ocs2_mpcnet_core/rollout/MpcnetPolicyEvaluation.h"
 
 namespace ocs2 {
 namespace mpcnet {

@@ -33,8 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_oc/synchronized_module/ReferenceManagerInterface.h>
 
-#include "ocs2_mpcnet/MpcnetDefinitionBase.h"
-#include "ocs2_mpcnet/control/MpcnetControllerBase.h"
+#include "ocs2_mpcnet_core/MpcnetDefinitionBase.h"
+#include "ocs2_mpcnet_core/control/MpcnetControllerBase.h"
 
 namespace ocs2 {
 namespace mpcnet {

@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ros_interfaces/mrt/DummyObserver.h>
 #include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
 
-#include "ocs2_mpcnet/control/MpcnetControllerBase.h"
+#include "ocs2_mpcnet_core/control/MpcnetControllerBase.h"
 
 namespace ocs2 {
 namespace mpcnet {

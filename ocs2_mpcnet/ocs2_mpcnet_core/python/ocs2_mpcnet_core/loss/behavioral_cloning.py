@@ -35,8 +35,8 @@ Provides a class that implements a simple behavioral cloning loss for benchmarki
 import torch
 import numpy as np
 
-from ocs2_mpcnet import config
-from ocs2_mpcnet.helper import bdot, bmv
+from ocs2_mpcnet_core import config
+from ocs2_mpcnet_core.helper import bdot, bmv
 
 
 class BehavioralCloningLoss:

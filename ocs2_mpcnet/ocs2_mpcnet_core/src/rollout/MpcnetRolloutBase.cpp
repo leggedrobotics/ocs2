@@ -27,9 +27,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_mpcnet/rollout/MpcnetRolloutBase.h"
+#include "ocs2_mpcnet_core/rollout/MpcnetRolloutBase.h"
 
-#include "ocs2_mpcnet/control/MpcnetBehavioralController.h"
+#include "ocs2_mpcnet_core/control/MpcnetBehavioralController.h"
 
 namespace ocs2 {
 namespace mpcnet {

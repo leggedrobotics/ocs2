@@ -34,7 +34,7 @@ Provides a class that implements the Hamiltonian loss for MPC-Net.
 
 import torch
 
-from ocs2_mpcnet.helper import bdot, bmv
+from ocs2_mpcnet_core.helper import bdot, bmv
 
 
 class HamiltonianLoss:

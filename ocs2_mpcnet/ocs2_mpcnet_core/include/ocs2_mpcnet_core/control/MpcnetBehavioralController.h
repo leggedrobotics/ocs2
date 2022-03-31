@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/control/ControllerBase.h>
 
-#include "ocs2_mpcnet/control/MpcnetControllerBase.h"
+#include "ocs2_mpcnet_core/control/MpcnetControllerBase.h"
 
 namespace ocs2 {
 namespace mpcnet {

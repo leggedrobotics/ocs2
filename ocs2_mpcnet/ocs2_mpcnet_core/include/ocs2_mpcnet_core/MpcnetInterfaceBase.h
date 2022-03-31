@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "ocs2_mpcnet/rollout/MpcnetRolloutManager.h"
+#include "ocs2_mpcnet_core/rollout/MpcnetRolloutManager.h"
 
 namespace ocs2 {
 namespace mpcnet {

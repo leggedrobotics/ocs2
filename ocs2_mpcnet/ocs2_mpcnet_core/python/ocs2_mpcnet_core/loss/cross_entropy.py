@@ -34,8 +34,8 @@ Provides a class that implements the cross entropy loss for training a gating ne
 
 import torch
 
-from ocs2_mpcnet import config
-from ocs2_mpcnet.helper import bdot, bmv
+from ocs2_mpcnet_core import config
+from ocs2_mpcnet_core.helper import bdot, bmv
 
 
 class CrossEntropyLoss:

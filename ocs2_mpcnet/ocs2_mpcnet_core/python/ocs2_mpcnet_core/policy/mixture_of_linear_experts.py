@@ -27,28 +27,25 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###############################################################################
 
-"""Mixture of nonlinear experts policy.
+"""Mixture of linear experts policy.
 
-Provides classes that implement a mixture of nonlinear experts policy.
+Provides classes that implement a mixture of linear experts policy.
 """
 
 import torch
 from typing import Tuple
 
-from ocs2_mpcnet.helper import bmv
+from ocs2_mpcnet_core.helper import bmv
 
 
-class MixtureOfNonlinearExpertsPolicy(torch.nn.Module):
-    """Mixture of nonlinear experts policy.
+class MixtureOfLinearExpertsPolicy(torch.nn.Module):
+    """Mixture of linear experts policy.
 
-    Class for a mixture of experts neural network with nonlinear experts, where the hidden layer is the mean of the
-    input and output layer.
+    Class for a mixture of experts neural network with linear experts.
 
     Attributes:
         name: A string with the name of the policy.
         dim_in: An integer defining the input dimension of the policy.
-        dim_hidden_gating: An integer defining the dimension of the hidden layer for the gating network.
-        dim_hidden_expert: An integer defining the dimension of the hidden layer for the expert networks.
         dim_out: An integer defining the output dimension of the policy.
         num_experts: An integer defining the number of experts.
         gating_net: The gating network.
@@ -56,9 +53,9 @@ class MixtureOfNonlinearExpertsPolicy(torch.nn.Module):
     """
 
     def __init__(self, dim_t: int, dim_x: int, dim_u: int, num_experts: int) -> None:
-        """Initializes the MixtureOfNonlinearExpertsPolicy class.
+        """Initializes the MixtureOfLinearExpertsPolicy class.
 
-        Initializes the MixtureOfNonlinearExpertsPolicy class by setting fixed and variable attributes.
+        Initializes the MixtureOfLinearExpertsPolicy class by setting fixed and variable attributes.
 
         Args:
             dim_t: An integer defining the generalized time dimension.
@@ -67,23 +64,15 @@ class MixtureOfNonlinearExpertsPolicy(torch.nn.Module):
             num_experts: An integer defining the number of experts.
         """
         super().__init__()
-        self.name = "MixtureOfNonlinearExpertsPolicy"
+        self.name = "MixtureOfLinearExpertsPolicy"
         self.dim_in = dim_t + dim_x
-        self.dim_hidden_gating = int((dim_t + dim_x + num_experts) / 2)
-        self.dim_hidden_expert = int((dim_t + dim_x + dim_u) / 2)
         self.dim_out = dim_u
         self.num_experts = num_experts
-
         # gating
-        self.gating_net = torch.nn.Sequential(
-            torch.nn.Linear(self.dim_in, self.dim_hidden_gating),
-            torch.nn.Tanh(),
-            torch.nn.Linear(self.dim_hidden_gating, self.num_experts),
-            torch.nn.Softmax(dim=1),
-        )
+        self.gating_net = torch.nn.Sequential(torch.nn.Linear(self.dim_in, self.num_experts), torch.nn.Softmax(dim=1))
         # experts
         self.expert_nets = torch.nn.ModuleList(
-            [NonlinearExpert(i, self.dim_in, self.dim_hidden_expert, self.dim_out) for i in range(self.num_experts)]
+            [LinearExpert(i, self.dim_in, self.dim_out) for i in range(self.num_experts)]
         )
 
     def forward(self, t: torch.Tensor, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -105,40 +94,33 @@ class MixtureOfNonlinearExpertsPolicy(torch.nn.Module):
         return u, p
 
 
-class NonlinearExpert(torch.nn.Module):
-    """Nonlinear expert.
+class LinearExpert(torch.nn.Module):
+    """Linear expert.
 
-    Class for a simple nonlinear neural network expert, where the hidden layer is the mean of the input and output layer.
+    Class for a simple linear neural network expert.
 
     Attributes:
         name: A string with the name of the expert.
         dim_in: An integer defining the input dimension of the expert.
-        dim_hidden: An integer defining the dimension of the hidden layer.
         dim_out: An integer defining the output dimension of the expert.
-        linear1: The first linear neural network layer.
-        activation: The activation to get the hidden layer.
-        linear2: The second linear neural network layer.
+        linear: The linear neural network layer.
     """
 
-    def __init__(self, index: int, dim_in: int, dim_hidden: int, dim_out: int) -> None:
-        """Initializes the NonlinearExpert class.
+    def __init__(self, index: int, dim_in: int, dim_out: int) -> None:
+        """Initializes the LinearExpert class.
 
-        Initializes the NonlinearExpert class by setting fixed and variable attributes.
+        Initializes the LinearExpert class by setting fixed and variable attributes.
 
         Args:
             index: An integer with the index of the expert.
             dim_in: An integer defining the input dimension of the expert.
-            dim_hidden: An integer defining the dimension of the hidden layer.
             dim_out: An integer defining the output dimension of the expert.
         """
         super().__init__()
-        self.name = "NonlinearExpert" + str(index)
+        self.name = "LinearExpert" + str(index)
         self.dim_in = dim_in
-        self.dim_hidden = dim_hidden
         self.dim_out = dim_out
-        self.linear1 = torch.nn.Linear(self.dim_in, self.dim_hidden)
-        self.activation = torch.nn.Tanh()
-        self.linear2 = torch.nn.Linear(self.dim_hidden, self.dim_out)
+        self.linear = torch.nn.Linear(self.dim_in, self.dim_out)
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         """Forward method.
@@ -151,4 +133,4 @@ class NonlinearExpert(torch.nn.Module):
         Returns:
             output: A (B,O) tensor with the outputs.
         """
-        return self.linear2(self.activation(self.linear1(input)))
+        return self.linear(input)

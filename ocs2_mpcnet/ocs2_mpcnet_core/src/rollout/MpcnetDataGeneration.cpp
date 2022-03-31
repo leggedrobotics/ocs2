@@ -27,11 +27,11 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_mpcnet/rollout/MpcnetDataGeneration.h"
+#include "ocs2_mpcnet_core/rollout/MpcnetDataGeneration.h"
 
 #include <random>
 
-#include "ocs2_mpcnet/control/MpcnetBehavioralController.h"
+#include "ocs2_mpcnet_core/control/MpcnetBehavioralController.h"
 
 namespace ocs2 {
 namespace mpcnet {

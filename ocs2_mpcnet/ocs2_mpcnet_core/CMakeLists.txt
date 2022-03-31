@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(ocs2_mpcnet)
+project(ocs2_mpcnet_core)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   pybind11_catkin
@@ -84,7 +84,7 @@ catkin_python_setup()
 #########################
 find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
-   message(STATUS "Run clang tooling for target ocs2_mpcnet")
+   message(STATUS "Run clang tooling for target ocs2_mpcnet_core")
    add_clang_tooling(
      TARGETS ${PROJECT_NAME}
      SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include

@@ -36,7 +36,7 @@ import torch
 import numpy as np
 from typing import Tuple
 
-from ocs2_mpcnet import (
+from ocs2_mpcnet_core import (
     size_array,
     scalar_array,
     vector_array,

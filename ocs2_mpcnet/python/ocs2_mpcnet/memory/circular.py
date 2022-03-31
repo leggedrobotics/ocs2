@@ -27,9 +27,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###############################################################################
 
-"""Memory classes.
+"""Circular memory.
 
-Provides classes for storing data in memory.
+Provides a class that implements a circular memory.
 """
 
 import torch

@@ -27,16 +27,13 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###############################################################################
 
-"""Loss classes.
+"""Hamiltonian loss.
 
-Provides classes with loss functions for MPC-Net, such as the Hamiltonian loss and the cross entropy loss for training
-the gating network of a mixture of experts network. Additionally, a simple behavioral cloning loss is implemented.
+Provides a class that implements the Hamiltonian loss for MPC-Net.
 """
 
 import torch
-import numpy as np
 
-from ocs2_mpcnet import config
 from ocs2_mpcnet.helper import bdot, bmv
 
 
@@ -136,112 +133,3 @@ class HamiltonianLoss:
                 + bdot(dHdu, du)
                 + H
             )
-
-
-class BehavioralCloningLoss:
-    r"""Behavioral cloning loss.
-
-    Uses a simple quadratic function as loss:
-
-    .. math::
-
-        BC(u) = \delta u^T R \, \delta u,
-
-    where the input u is of dimension U.
-
-    Attributes:
-        R: A (1,U,U) tensor with the input cost matrix.
-    """
-
-    def __init__(self, R: np.ndarray) -> None:
-        """Initializes the BehavioralCloningLoss class.
-
-        Initializes the BehavioralCloningLoss class by setting fixed attributes.
-
-        Args:
-            R: A NumPy array of shape (U, U) with the input cost matrix.
-        """
-        self.R = torch.tensor(R, device=config.DEVICE, dtype=config.DTYPE).unsqueeze(dim=0)
-
-    def __call__(self, u_predicted: torch.Tensor, u_target: torch.Tensor) -> torch.Tensor:
-        """Computes the mean behavioral cloning loss.
-
-        Computes the mean behavioral cloning loss for a batch of size B using the cost matrix.
-
-        Args:
-            u_predicted: A (B, U) tensor with the predicted inputs.
-            u_target: A (B, U) tensor with the target inputs.
-
-        Returns:
-            A (1) tensor containing the mean behavioral cloning loss.
-        """
-        return torch.mean(self.compute(u_predicted, u_target))
-
-    def compute(self, u_predicted: torch.Tensor, u_target: torch.Tensor) -> torch.Tensor:
-        """Computes the behavioral cloning losses for a batch.
-
-        Computes the behavioral cloning losses for a batch of size B using the cost matrix.
-
-        Args:
-            u_predicted: A (B, U) tensor with the predicted inputs.
-            u_target: A (B, U) tensor with the target inputs.
-
-        Returns:
-            A (B) tensor containing the behavioral cloning losses.
-        """
-        du = torch.sub(u_predicted, u_target)
-        return bdot(du, bmv(self.R, du))
-
-
-class CrossEntropyLoss:
-    r"""Cross entropy loss.
-
-    Uses the cross entropy between two discrete probability distributions as loss:
-
-    .. math::
-
-        CE(p_{target}, p_{predicted}) = - \sum_{i=1}^{P} (p_{target,i} \log(p_{predicted,i} + \varepsilon)),
-
-    where the sample space is the set of P individually identified items.
-
-    Attributes:
-        epsilon: A (1) tensor with a small epsilon used to stabilize the logarithm.
-    """
-
-    def __init__(self, epsilon: float) -> None:
-        """Initializes the CrossEntropyLoss class.
-
-        Initializes the CrossEntropyLoss class by setting fixed attributes.
-
-        Args:
-            epsilon: A float used to stabilize the logarithm.
-        """
-        self.epsilon = torch.tensor(epsilon, device=config.DEVICE, dtype=config.DTYPE)
-
-    def __call__(self, p_target: torch.Tensor, p_predicted: torch.Tensor) -> torch.Tensor:
-        """Computes the mean cross entropy loss.
-
-        Computes the mean cross entropy loss for a batch, where the logarithm is stabilized by a small epsilon.
-
-        Args:
-            p_target: A (B,P) tensor with the target discrete probability distributions.
-            p_predicted: A (B,P) tensor with the predicted discrete probability distributions.
-
-        Returns:
-            A (1) tensor containing the mean cross entropy loss.
-        """
-        return torch.mean(self.compute(p_target, p_predicted))
-
-    def compute(self, p_target: torch.Tensor, p_predicted: torch.Tensor) -> torch.Tensor:
-        """Computes the cross entropy losses for a batch.
-
-        Computes the cross entropy losses for a batch, where the logarithm is stabilized by a small epsilon.
-
-        Args:
-            p_target: A (B,P) tensor with the target discrete probability distributions.
-            p_predicted: A (B,P) tensor with the predicted discrete probability distributions.
-
-        Returns:
-            A (B) tensor containing the cross entropy losses.
-        """
-        return -bdot(p_target, torch.log(p_predicted + self.epsilon))

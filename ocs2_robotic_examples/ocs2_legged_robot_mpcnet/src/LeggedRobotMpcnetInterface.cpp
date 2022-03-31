@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/package.h>
 
 #include <ocs2_ddp/GaussNewtonDDP_MPC.h>
-#include <ocs2_mpcnet/control/MpcnetOnnxController.h>
+#include <ocs2_mpcnet_core/control/MpcnetOnnxController.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_oc/synchronized_module/ReferenceManager.h>
 #include <ocs2_raisim_core/RaisimRollout.h>

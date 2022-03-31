@@ -32,7 +32,7 @@
 Sets robot-specific configuration variables for legged robot.
 """
 
-from ocs2_mpcnet import config
+from ocs2_mpcnet_core import config
 
 #
 # config

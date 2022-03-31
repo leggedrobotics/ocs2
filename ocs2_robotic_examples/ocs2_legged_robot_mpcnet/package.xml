@@ -18,6 +18,6 @@
   <depend>ocs2_legged_robot</depend>
   <depend>ocs2_legged_robot_raisim</depend>
   <depend>ocs2_legged_robot_ros</depend>
-  <depend>ocs2_mpcnet</depend>
+  <depend>ocs2_mpcnet_core</depend>
 
 </package>

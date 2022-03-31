@@ -35,8 +35,8 @@ Provides robot-specific helper functions for legged robot.
 import numpy as np
 from typing import Tuple, List
 
-from ocs2_mpcnet import helper
-from ocs2_mpcnet import SystemObservationArray, ModeScheduleArray, TargetTrajectoriesArray
+from ocs2_mpcnet_core import helper
+from ocs2_mpcnet_core import SystemObservationArray, ModeScheduleArray, TargetTrajectoriesArray
 from ocs2_legged_robot_mpcnet import legged_robot_config as config
 
 

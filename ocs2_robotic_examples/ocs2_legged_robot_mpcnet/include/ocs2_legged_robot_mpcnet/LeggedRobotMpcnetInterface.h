@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_legged_robot/LeggedRobotInterface.h>
 #include <ocs2_legged_robot_raisim/LeggedRobotRaisimConversions.h>
-#include <ocs2_mpcnet/MpcnetInterfaceBase.h>
+#include <ocs2_mpcnet_core/MpcnetInterfaceBase.h>
 
 namespace ocs2 {
 namespace legged_robot {

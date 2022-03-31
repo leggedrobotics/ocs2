@@ -37,8 +37,8 @@ Todo:
 
 import torch
 
-from ocs2_mpcnet.policy import linear, mixture_of_linear_experts, mixture_of_nonlinear_experts, nonlinear
-from ocs2_mpcnet.helper import bmv, bmm
+from ocs2_mpcnet_core.policy import linear, mixture_of_linear_experts, mixture_of_nonlinear_experts, nonlinear
+from ocs2_mpcnet_core.helper import bmv, bmm
 
 from ocs2_legged_robot_mpcnet import legged_robot_config as config
 

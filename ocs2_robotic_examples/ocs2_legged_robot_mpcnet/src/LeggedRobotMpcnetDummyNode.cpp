@@ -36,9 +36,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_legged_robot_raisim/LeggedRobotRaisimVisualizer.h>
 #include <ocs2_legged_robot_ros/gait/GaitReceiver.h>
 #include <ocs2_legged_robot_ros/visualization/LeggedRobotVisualizer.h>
-#include <ocs2_mpcnet/control/MpcnetOnnxController.h>
-#include <ocs2_mpcnet/dummy/MpcnetDummyLoopRos.h>
-#include <ocs2_mpcnet/dummy/MpcnetDummyObserverRos.h>
+#include <ocs2_mpcnet_core/control/MpcnetOnnxController.h>
+#include <ocs2_mpcnet_core/dummy/MpcnetDummyLoopRos.h>
+#include <ocs2_mpcnet_core/dummy/MpcnetDummyObserverRos.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
 #include <ocs2_raisim_core/RaisimRollout.h>
 #include <ocs2_raisim_ros/RaisimHeightmapRosConverter.h>

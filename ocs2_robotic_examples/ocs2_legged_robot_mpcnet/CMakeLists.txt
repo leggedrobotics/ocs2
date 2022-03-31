@@ -5,7 +5,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_legged_robot
   ocs2_legged_robot_raisim
   ocs2_legged_robot_ros
-  ocs2_mpcnet
+  ocs2_mpcnet_core
 )
 
 find_package(catkin REQUIRED COMPONENTS

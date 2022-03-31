@@ -43,10 +43,10 @@ import numpy as np
 
 from torch.utils.tensorboard import SummaryWriter
 
-from ocs2_mpcnet.helper import bmv, bmm
-from ocs2_mpcnet.loss.hamiltonian import HamiltonianLoss as ExpertsLoss
-from ocs2_mpcnet.loss.cross_entropy import CrossEntropyLoss as GatingLoss
-from ocs2_mpcnet.memory.circular import CircularMemory as Memory
+from ocs2_mpcnet_core.helper import bmv, bmm
+from ocs2_mpcnet_core.loss.hamiltonian import HamiltonianLoss as ExpertsLoss
+from ocs2_mpcnet_core.loss.cross_entropy import CrossEntropyLoss as GatingLoss
+from ocs2_mpcnet_core.memory.circular import CircularMemory as Memory
 
 from ocs2_legged_robot_mpcnet.legged_robot_policy import LeggedRobotMixtureOfNonlinearExpertsPolicy as Policy
 from ocs2_legged_robot_mpcnet import legged_robot_config as config

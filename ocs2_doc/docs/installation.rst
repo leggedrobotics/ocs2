@@ -121,7 +121,7 @@ Optional Dependencies
     .. code-block:: bash
 
         source ~/venvs/mpcnet/bin/activate
-        python3 -m pip install -r ~/git/ocs2_dev/ocs2_mpcnet/ocs2_mpcnet_core/requirements.txt
+        python3 -m pip install -r ~/git/ocs2/ocs2_mpcnet/ocs2_mpcnet_core/requirements.txt
 
     Newer graphics cards might require a CUDA capability which is currently not supported by the standard PyTorch installation.
     In that case check `PyTorch Start Locally  <https://pytorch.org/get-started/locally/>`__ for a compatible version and, e.g., run:

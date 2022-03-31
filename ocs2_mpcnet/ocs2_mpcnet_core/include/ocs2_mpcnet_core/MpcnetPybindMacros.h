@@ -118,7 +118,7 @@ using namespace pybind11::literals;
   /* create a python module */                                                                                                 \
   PYBIND11_MODULE(LIB_NAME, m) {                                                                                               \
     /* import the general MPC-Net module */                                                                                    \
-    pybind11::module::import("ocs2_mpcnet.MpcnetPybindings");                                                                  \
+    pybind11::module::import("ocs2_mpcnet_core.MpcnetPybindings");                                                             \
     /* bind actual MPC-Net interface for specific robot */                                                                     \
     pybind11::class_<MPCNET_INTERFACE>(m, "MpcnetInterface")                                                                   \
         .def(pybind11::init<size_t, size_t, bool>())                                                                           \

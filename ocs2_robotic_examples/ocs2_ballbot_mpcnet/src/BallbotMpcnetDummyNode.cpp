@@ -32,9 +32,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_ballbot/BallbotInterface.h>
 #include <ocs2_ballbot_ros/BallbotDummyVisualization.h>
-#include <ocs2_mpcnet/control/MpcnetOnnxController.h>
-#include <ocs2_mpcnet/dummy/MpcnetDummyLoopRos.h>
-#include <ocs2_mpcnet/dummy/MpcnetDummyObserverRos.h>
+#include <ocs2_mpcnet_core/control/MpcnetOnnxController.h>
+#include <ocs2_mpcnet_core/dummy/MpcnetDummyLoopRos.h>
+#include <ocs2_mpcnet_core/dummy/MpcnetDummyObserverRos.h>
 #include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
 
 #include "ocs2_ballbot_mpcnet/BallbotMpcnetDefinition.h"

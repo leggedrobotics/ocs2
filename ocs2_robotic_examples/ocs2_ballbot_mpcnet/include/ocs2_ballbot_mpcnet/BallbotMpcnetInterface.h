@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_ballbot/BallbotInterface.h>
-#include <ocs2_mpcnet/MpcnetInterfaceBase.h>
+#include <ocs2_mpcnet_core/MpcnetInterfaceBase.h>
 
 namespace ocs2 {
 namespace ballbot {

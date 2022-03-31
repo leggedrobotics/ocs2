@@ -4,7 +4,7 @@ project(ocs2_ballbot_mpcnet)
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_ballbot
   ocs2_ballbot_ros
-  ocs2_mpcnet
+  ocs2_mpcnet_core
 )
 
 find_package(catkin REQUIRED COMPONENTS

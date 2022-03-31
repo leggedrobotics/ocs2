@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_mpcnet/MpcnetPybindMacros.h>
+#include <ocs2_mpcnet_core/MpcnetPybindMacros.h>
 
 #include "ocs2_ballbot_mpcnet/BallbotMpcnetInterface.h"
 

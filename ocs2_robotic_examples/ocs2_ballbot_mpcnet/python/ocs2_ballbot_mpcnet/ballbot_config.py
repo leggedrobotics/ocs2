@@ -32,7 +32,7 @@
 Sets robot-specific configuration variables for ballbot.
 """
 
-from ocs2_mpcnet import config
+from ocs2_mpcnet_core import config
 
 #
 # config

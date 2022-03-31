@@ -17,6 +17,6 @@
 
   <depend>ocs2_ballbot</depend>
   <depend>ocs2_ballbot_ros</depend>
-  <depend>ocs2_mpcnet</depend>
+  <depend>ocs2_mpcnet_core</depend>
 
 </package>

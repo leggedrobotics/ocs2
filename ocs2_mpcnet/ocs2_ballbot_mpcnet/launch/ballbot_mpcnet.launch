@@ -1,0 +1,20 @@
+<launch>
+    <arg name="rviz"             default="true"/>
+    <arg name="multiplot"        default="false"/>
+    <arg name="task_name"        default="mpc"/>
+    <arg name="policy_file_path" default="$(find ocs2_ballbot_mpcnet)/policy/ballbot.onnx"/>
+
+    <group if="$(arg rviz)">
+      <include file="$(find ocs2_ballbot_ros)/launch/visualize.launch"/>
+    </group>
+
+    <group if="$(arg multiplot)">
+      <include file="$(find ocs2_ballbot_ros)/launch/multiplot.launch"/>
+    </group>
+
+    <node pkg="ocs2_ballbot_mpcnet" type="ballbot_mpcnet_dummy" name="ballbot_mpcnet_dummy"
+          output="screen" args="$(arg task_name) $(arg policy_file_path)" launch-prefix=""/>
+
+    <node if="$(arg rviz)" pkg="ocs2_ballbot_ros" type="ballbot_target" name="ballbot_target"
+          output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>
+</launch>

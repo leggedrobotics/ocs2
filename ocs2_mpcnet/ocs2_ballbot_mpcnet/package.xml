@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ocs2_ballbot_mpcnet</name>
+  <version>0.0.0</version>
+  <description>The ocs2_ballbot_mpcnet package</description>
+
+  <author email="areske@ethz.ch">Alexander Reske</author>
+
+  <maintainer email="farbod.farshidian@gmail.com">Farbod Farshidian</maintainer>
+  <maintainer email="areske@ethz.ch">Alexander Reske</maintainer>
+
+  <license>BSD-3</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>cmake_clang_tools</build_depend>
+
+  <depend>ocs2_ballbot</depend>
+  <depend>ocs2_ballbot_ros</depend>
+  <depend>ocs2_mpcnet_core</depend>
+
+</package>

@@ -37,14 +37,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace mpcnet {
 
+/**
+ * Data point collected during the data generation rollout.
+ */
 struct DataPoint {
+  /** Mode of the system. */
   size_t mode;
+  /** Absolute time. */
   scalar_t t;
+  /** Observed state. */
   vector_t x;
+  /** Optimal control input. */
   vector_t u;
+  /** Generalized time as defined by the robot-specific MPC-Net definitions. */
   vector_t generalizedTime;
+  /** Relative state as defined by the robot-specific MPC-Net definitions. */
   vector_t relativeState;
+  /** Input transformation as defined by the robot-specific MPC-Net definitions. */
   matrix_t inputTransformation;
+  /** Linear-quadratic approximation of the Hamiltonian, using x and u as development/expansion points. */
   ScalarFunctionQuadraticApproximation hamiltonian;
 };
 using data_point_t = DataPoint;

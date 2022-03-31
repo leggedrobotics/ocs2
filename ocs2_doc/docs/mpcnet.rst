@@ -38,6 +38,10 @@ To build all MPC-Net packages, build the meta package:
 
 .. code-block:: bash
 
+    cd <path_to_catkin_ws>
+    catkin_build ocs2_mpcnet
+
+    # Example:
     cd ~/catkin_ws
     catkin_build ocs2_mpcnet
 
@@ -45,8 +49,12 @@ To build a robot-specific package, replace :code:`<robot>` with the robot name:
 
 .. code-block:: bash
 
-    cd ~/catkin_ws
+    cd <path_to_catkin_ws>
     catkin_build ocs2_<robot>_mpcnet
+
+    # Example:
+    cd ~/catkin_ws
+    catkin_build ocs2_ballbot_mpcnet
 
 Training
 ~~~~~~~~
@@ -55,23 +63,37 @@ To train an MPC-Net policy, run:
 
 .. code-block:: bash
 
-    cd ~/git/ocs2/ocs2_mpcnet/ocs2_<robot>_mpcnet/python/ocs2_<robot>_mpcnet
+    cd <path_to_git_repos>/ocs2/ocs2_mpcnet/ocs2_<robot>_mpcnet/python/ocs2_<robot>_mpcnet
+    source <path_to_catkin_ws>/devel/setup.bash
+    source <path_to_venvs>/mpcnet/bin/activate
+    python3 <robot>_mpcnet.py
+
+    # Example:
+    cd ~/git/ocs2/ocs2_mpcnet/ocs2_ballbot_mpcnet/python/ocs2_ballbot_mpcnet
     source ~/catkin_ws/devel/setup.bash
     source ~/venvs/mpcnet/bin/activate
-    python3 <robot>_mpcnet.py
+    python3 ballbot_mpcnet.py
 
 To monitor the training progress with Tensorboard, run:
 
 .. code-block:: bash
 
-    cd ~/git/ocs2/ocs2_mpcnet/ocs2_<robot>_mpcnet/python/ocs2_<robot>_mpcnet
+    cd <path_to_git_repos>/ocs2/ocs2_mpcnet/ocs2_<robot>_mpcnet/python/ocs2_<robot>_mpcnet
+    source <path_to_venvs>/mpcnet/bin/activate
+    tensorboard --logdir=runs
+
+    # Example:
+    cd ~/git/ocs2/ocs2_mpcnet/ocs2_ballbot_mpcnet/python/ocs2_ballbot_mpcnet
     source ~/venvs/mpcnet/bin/activate
     tensorboard --logdir=runs
 
-If you use RaiSim, you can visualize the data generation and policy evaluation rollouts with RaiSim Unity, where pre-built executables are provided in the :code:`~/git/raisimLib/raisimUnity` folder. For example, on Linux run:
+If you use RaiSim, you can visualize the data generation and policy evaluation rollouts with RaiSim Unity, where pre-built executables are provided in the :code:`<path_to_git_repos>/raisimLib/raisimUnity` folder. For example, on Linux run:
 
 .. code-block:: bash
 
+    <path_to_git_repos>/raisimLib/raisimUnity/linux/raisimUnity.x86_64
+
+    # Example:
     ~/git/raisimLib/raisimUnity/linux/raisimUnity.x86_64
 
 Deployment
@@ -81,17 +103,27 @@ To deploy the default policy stored in the robot-specific package's :code:`polic
 
 .. code-block:: bash
 
-    cd ~/catkin_ws
+    cd <path_to_catkin_ws>
     source devel/setup.bash
     roslaunch ocs2_<robot>_mpcnet <robot>_mpcnet.launch
 
-To deploy a new policy stored in the robot-specific package's :code:`./python/ocs2_<robot>_mpcnet/policies` folder, replace :code:`<path>` with the absolute file path to the final policy and run:
+    # Example:
+    cd ~/catkin_ws
+    source devel/setup.bash
+    roslaunch ocs2_ballbot_mpcnet ballbot_mpcnet.launch
+
+To deploy a new policy stored in the robot-specific package's :code:`python/ocs2_<robot>_mpcnet/policies` folder, replace :code:`<path>` with the absolute file path to the final policy and run:
 
 .. code-block:: bash
 
-    cd ~/catkin_ws
+    cd <path_to_catkin_ws>
     source devel/setup.bash
     roslaunch ocs2_<robot>_mpcnet <robot>_mpcnet.launch policyFile:=<path>
+
+    # Example:
+    cd ~/catkin_ws
+    source devel/setup.bash
+    roslaunch ocs2_ballbot_mpcnet ballbot_mpcnet.launch policyFile:='/home/user/git/ocs2/ocs2_mpcnet/ocs2_ballbot_mpcnet/python/ocs2_ballbot_mpcnet/policies/2022-04-01_12-00-00_ballbot_description/final_policy.onnx'
 
 How to Set Up a New Robot
 ~~~~~~~~~~~~~~~~~~~~~~~~~

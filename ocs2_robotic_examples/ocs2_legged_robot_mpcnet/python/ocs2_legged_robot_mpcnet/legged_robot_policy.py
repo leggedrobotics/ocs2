@@ -37,7 +37,7 @@ Todo:
 
 import torch
 
-from ocs2_mpcnet import policy
+from ocs2_mpcnet.policy import linear, mixture_of_linear_experts, mixture_of_nonlinear_experts, nonlinear
 from ocs2_mpcnet.helper import bmv, bmm
 
 from ocs2_legged_robot_mpcnet import legged_robot_config as config
@@ -61,7 +61,7 @@ def u_transform(u: torch.Tensor) -> torch.Tensor:
     return bmv(input_scaling, u) + input_bias
 
 
-class LeggedRobotLinearPolicy(policy.LinearPolicy):
+class LeggedRobotLinearPolicy(linear.LinearPolicy):
     def __init__(self, dim_t, dim_x, dim_u):
         super().__init__(dim_t, dim_x, dim_u)
         self.name = "LeggedRobotLinearPolicy"
@@ -71,7 +71,7 @@ class LeggedRobotLinearPolicy(policy.LinearPolicy):
         return u_transform(u)
 
 
-class LeggedRobotNonlinearPolicy(policy.NonlinearPolicy):
+class LeggedRobotNonlinearPolicy(nonlinear.NonlinearPolicy):
     def __init__(self, dim_t, dim_x, dim_u):
         super().__init__(dim_t, dim_x, dim_u)
         self.name = "LeggedRobotNonlinearPolicy"
@@ -81,7 +81,7 @@ class LeggedRobotNonlinearPolicy(policy.NonlinearPolicy):
         return u_transform(u)
 
 
-class LeggedRobotMixtureOfLinearExpertsPolicy(policy.MixtureOfLinearExpertsPolicy):
+class LeggedRobotMixtureOfLinearExpertsPolicy(mixture_of_linear_experts.MixtureOfLinearExpertsPolicy):
     def __init__(self, dim_t, dim_x, dim_u, num_experts):
         super().__init__(dim_t, dim_x, dim_u, num_experts)
         self.name = "LeggedRobotMixtureOfLinearExpertsPolicy"
@@ -91,7 +91,7 @@ class LeggedRobotMixtureOfLinearExpertsPolicy(policy.MixtureOfLinearExpertsPolic
         return u_transform(u), p
 
 
-class LeggedRobotMixtureOfNonlinearExpertsPolicy(policy.MixtureOfNonlinearExpertsPolicy):
+class LeggedRobotMixtureOfNonlinearExpertsPolicy(mixture_of_nonlinear_experts.MixtureOfNonlinearExpertsPolicy):
     def __init__(self, dim_t, dim_x, dim_u, num_experts):
         super().__init__(dim_t, dim_x, dim_u, num_experts)
         self.name = "LeggedRobotMixtureOfNonlinearExpertsPolicy"

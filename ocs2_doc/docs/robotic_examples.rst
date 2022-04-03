@@ -15,7 +15,7 @@ Double Integrator  2          1          No          No
 Cartpole           4          1          Yes         No
 Ballbot            10         3          No          No
 Quadrotor          12         4          No          No
-Mobile Manipulator 9          8          Yes         Yes / No
+Mobile Manipulator --         --          Yes         Yes / No
 Legged Robot       24         24         Yes         No
 ================== ========== ========== =========== ========
 
@@ -149,6 +149,16 @@ Note: This example implements both the cache and the
 non-cache variants of the MPC, which can be chosen through the
 usePreComputation flag in the config file. 
 
+The system model is determined by parsing the URDF and the task file. 
+Currently, the following system models are supported:
+
+* **Default** (*value:* 0): The default system model obtained by parsing the URDF
+* **Actuated Dummy wheel-base** (*value:* 1): Adds a dummy XY-Yaw joints to the the model parsed from the URDF which are actuated under holonomic constraint (velocity-control)
+* **Unactuated Dummy floating-base** (*value:* 2): Adds a dummy XYZ-RPY joints to the the model parsed from the URDF which are unactuated
+* **Actuated Dummy floating-base** (*value:* 3): Adds a dummy XYZ-RPY joints to the the model parsed from the URDF which are fully-actuated (velocity-control)
+
+To play-around different model types, you can change the model-information in the `task.info` files.
+
 .. code-block:: bash
 
     # Build the example
@@ -157,12 +167,75 @@ usePreComputation flag in the config file.
     # Do not forget to change <...> parts
     source <directory_to_ws>/<catkin_ws_name>/devel/setup.bash
 
-    # Launch the example
+For several common robot manipulators, we provide examples on running them
+with OCS2. The steps taken to generate the robot model files (URDF) are 
+available [here](https://github.com/leggedrobotics/ocs2_robotic_assets).
+
+.. note::
+    For these examples, the MPC has not been tuned to work on hardware.
+    Additionally, for some of the examples, the collision meshes need
+    to be processed into primitive shapes to allow collision avoidance.
+
+    We welcome pull requests with the right tuning parameters.
+
+
+Mabi-Mobile
+~~~~~~~~~~~
+
+.. code-block:: bash
+
     roslaunch ocs2_mobile_manipulator_ros manipulator_mabi_mobile.launch
 
-.. image:: ../tools/sphinx/_static/gif/mobile_manipulator.gif
-   :alt: mobile_manipulator.gif cannot be displayed!
-   :target: _static/gif/mobile_manipulator.gif
+.. image:: ../tools/sphinx/_static/gif/mobile_manipulator/mabi_mobile.gif
+   :alt: mabi_mobile.gif cannot be displayed!
+   :target: _static/gif/mobile_manipulator/mabi_mobile.gif
+
+Kinova Jaco2
+~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+    # For 6-Dof
+    roslaunch ocs2_mobile_manipulator_ros manipulator_kinova_j2n6.launch
+    # For 7-Dof
+    roslaunch ocs2_mobile_manipulator_ros manipulator_kinova_j2n7.launch
+
+.. image:: ../tools/sphinx/_static/gif/mobile_manipulator/kinova_j2n7.gif
+   :alt: kinova_j2n7.gif cannot be displayed!
+   :target: _static/gif/mobile_manipulator/kinova_j2n7.gif
+
+Franka Panda
+~~~~~~~~~~~~
+
+.. code-block:: bash
+
+    roslaunch ocs2_mobile_manipulator_ros manipulator_franka.launch
+
+.. image:: ../tools/sphinx/_static/gif/mobile_manipulator/franka.gif
+   :alt: franka.gif cannot be displayed!
+   :target: _static/gif/mobile_manipulator/franka.gif
+
+Willow Garage PR2
+~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+    roslaunch ocs2_mobile_manipulator_ros manipulator_pr2.launch
+
+.. image:: ../tools/sphinx/_static/gif/mobile_manipulator/pr2.gif
+   :alt: pr2.gif cannot be displayed!
+   :target: _static/gif/mobile_manipulator/pr2.gif
+
+Clearpath Ridgeback
+~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+    roslaunch ocs2_mobile_manipulator_ros manipulator_ridgeback_ur5.launch
+
+.. image:: ../tools/sphinx/_static/gif/mobile_manipulator/ridgeback_ur5.gif
+   :alt: ridgeback_ur5.gif cannot be displayed!
+   :target: _static/gif/mobile_manipulator/ridgeback_ur5.gif
 
 .. _doxid-ocs2_doc_robotic_examples_legged_robot:
 

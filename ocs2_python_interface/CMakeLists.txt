@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.0.2)
 project(ocs2_python_interface)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
-  roscpp
   ocs2_mpc
   ocs2_ddp
   ocs2_robotic_tools

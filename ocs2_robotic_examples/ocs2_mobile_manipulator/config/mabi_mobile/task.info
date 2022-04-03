@@ -233,7 +233,7 @@ jointPositionLimits
   activate  true
 
   ; relaxed log barrier mu
-  mu      0.01
+  mu      0.001
 
   ; relaxed log barrier delta
   delta   1e-3

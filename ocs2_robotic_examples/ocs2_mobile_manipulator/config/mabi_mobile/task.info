@@ -138,42 +138,45 @@ inputCost
     base
     {
       defaultManipulator
-        {
-        }
+      {
+      }
 
       floatingArmManipulator
-        {
-        }
+      {
+      }
 
       fullyActuatedFloatingArmManipulator
-        {
-          scaling 1e-2
-          (0,0)  5.0  ; position x
-          (1,1)  5.0  ; position y
-          (2,2)  5.0  ; position z
-          (3,3)  5.0  ; euler angle z
-          (4,4)  5.0  ; euler angle y
-          (5,5)  5.0  ; euler angle x
-        }
+      {
+        scaling 1e-2
+
+        (0,0)  5.0  ; position x
+        (1,1)  5.0  ; position y
+        (2,2)  5.0  ; position z
+        (3,3)  5.0  ; euler angle z
+        (4,4)  5.0  ; euler angle y
+        (5,5)  5.0  ; euler angle x
+      }
 
       wheelBasedMobileManipulator
-        {
-          scaling 1e-2
-          (0,0)  5.0  ; forward velocity
-          (1,1)  5.0  ; turning velocity
-        }
+      {
+        scaling 1e-2
+
+        (0,0)  5.0  ; forward velocity
+        (1,1)  5.0  ; turning velocity
+      }
     }
 
     ; input costs for the arm DOFs
     arm
     {
-       scaling 1e-2
-       (0,0)  1.0  ; SH_ROT velocity
-       (1,1)  1.0  ; SH_FLE velocity
-       (2,2)  1.0  ; EL_FLE velocity
-       (3,3)  1.0  ; EL_ROT velocity
-       (4,4)  1.0  ; WR_FLE velocity
-       (5,5)  1.0  ; WR_ROT velocity
+      scaling 1e-2
+
+      (0,0)  1.0  ; SH_ROT velocity
+      (1,1)  1.0  ; SH_FLE velocity
+      (2,2)  1.0  ; EL_FLE velocity
+      (3,3)  1.0  ; EL_ROT velocity
+      (4,4)  1.0  ; WR_FLE velocity
+      (5,5)  1.0  ; WR_ROT velocity
     }
   }
 }
@@ -247,84 +250,84 @@ jointVelocityLimits
   lowerBound
   {
     ; velocity limits for the different types of arm base DOFs
-        base
-        {
-          defaultManipulator
-            {
-            }
+    base
+    {
+      defaultManipulator
+      {
+      }
 
-          floatingArmManipulator
-            {
-            }
+      floatingArmManipulator
+      {
+      }
 
-          fullyActuatedFloatingArmManipulator
-            {
-              (0,0)  -0.1  ; linear velocity x
-              (1,0)  -0.1  ; linear velocity y
-              (2,0)  -0.1  ; linear velocity z
-              (3,0)  -0.3  ; euler angle velocity z
-              (4,0)  -0.3  ; euler angle velocity y
-              (5,0)  -0.3  ; euler angle velocity x
-            }
+      fullyActuatedFloatingArmManipulator
+      {
+        (0,0)  -0.1  ; linear velocity x
+        (1,0)  -0.1  ; linear velocity y
+        (2,0)  -0.1  ; linear velocity z
+        (3,0)  -0.3  ; euler angle velocity z
+        (4,0)  -0.3  ; euler angle velocity y
+        (5,0)  -0.3  ; euler angle velocity x
+      }
 
-          wheelBasedMobileManipulator
-            {
-              (0,0)  -0.1 ; forward velocity
-              (1,0)  -0.3 ; turning velocity
-            }
-        }
+      wheelBasedMobileManipulator
+      {
+        (0,0)  -0.1 ; forward velocity
+        (1,0)  -0.3 ; turning velocity
+      }
+    }
 
-        ; velocity limits for the arm DOFs
-        arm
-        {
-           (0,0)  -0.45  ; SH_ROT velocity
-           (1,0)  -0.45  ; SH_FLE velocity
-           (2,0)  -0.45  ; EL_FLE velocity
-           (3,0)  -0.45  ; EL_ROT velocity
-           (4,0)  -0.45  ; WR_FLE velocity
-           (5,0)  -0.45  ; WR_ROT velocity
-        }
+    ; velocity limits for the arm DOFs
+    arm
+    {
+      (0,0)  -0.45  ; SH_ROT velocity
+      (1,0)  -0.45  ; SH_FLE velocity
+      (2,0)  -0.45  ; EL_FLE velocity
+      (3,0)  -0.45  ; EL_ROT velocity
+      (4,0)  -0.45  ; WR_FLE velocity
+      (5,0)  -0.45  ; WR_ROT velocity
+    }
   }
 
   upperBound
   {
-      ; velocity limits for the different types of arm base DOFs
-          base
-          {
-            defaultManipulator
-              {
-              }
+    ; velocity limits for the different types of arm base DOFs
+    base
+    {
+      defaultManipulator
+      {
+      }
 
-            floatingArmManipulator
-              {
-              }
+      floatingArmManipulator
+      {
+      }
 
-            fullyActuatedFloatingArmManipulator
-              {
-                (0,0)  0.1  ; linear velocity x
-                (1,0)  0.1  ; linear velocity y
-                (2,0)  0.1  ; linear velocity z
-                (3,0)  0.3  ; euler angle velocity z
-                (4,0)  0.3  ; euler angle velocity y
-                (5,0)  0.3  ; euler angle velocity x
-              }
+      fullyActuatedFloatingArmManipulator
+      {
+        (0,0)  0.1  ; linear velocity x
+        (1,0)  0.1  ; linear velocity y
+        (2,0)  0.1  ; linear velocity z
+        (3,0)  0.3  ; euler angle velocity z
+        (4,0)  0.3  ; euler angle velocity y
+        (5,0)  0.3  ; euler angle velocity x
+      }
 
-            wheelBasedMobileManipulator
-              {
-                (0,0)  0.1 ; forward velocity
-                (1,0)  0.3 ; turning velocity
-              }
-          }
-
-          ; velocity limits for the arm DOFs
-          arm
-          {
-             (0,0)  0.45  ; SH_ROT velocity
-             (1,0)  0.45  ; SH_FLE velocity
-             (2,0)  0.45  ; EL_FLE velocity
-             (3,0)  0.45  ; EL_ROT velocity
-             (4,0)  0.45  ; WR_FLE velocity
-             (5,0)  0.45  ; WR_ROT velocity
-          }
+      wheelBasedMobileManipulator
+      {
+        (0,0)  0.1 ; forward velocity
+        (1,0)  0.3 ; turning velocity
+      }
     }
+
+    ; velocity limits for the arm DOFs
+    arm
+    {
+      (0,0)  0.45  ; SH_ROT velocity
+      (1,0)  0.45  ; SH_FLE velocity
+      (2,0)  0.45  ; EL_FLE velocity
+      (3,0)  0.45  ; EL_ROT velocity
+      (4,0)  0.45  ; WR_FLE velocity
+      (5,0)  0.45  ; WR_ROT velocity
+    }
+  }
 }

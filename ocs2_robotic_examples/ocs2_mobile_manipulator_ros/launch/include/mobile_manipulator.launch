@@ -7,11 +7,11 @@
       <arg name="debug"              default="false" />
 
       <!-- The URDF model of the robot -->
-      <arg name="urdfFile"           default="$(find ocs2_robotic_assets)/resources/mobile_manipulator/urdf/mobile_manipulator.urdf" />
+      <arg name="urdfFile" default="" />
       <!-- The task file for the mpc. -->
-      <arg name="taskFile"           default="$(find ocs2_mobile_manipulator)/config/mpc/task.info" />
+      <arg name="taskFile" default="" />
       <!-- The library folder to generate CppAD codegen into -->
-      <arg name="libFolder"          default="$(find ocs2_mobile_manipulator)/auto_generated" />
+      <arg name="libFolder" default="" />
 
       <!-- make the files into global parameters -->
       <param name="taskFile"   value="$(arg taskFile)" />
@@ -19,7 +19,7 @@
       <param name="libFolder"  value="$(arg libFolder)" />
 
       <group if="$(arg rviz)">
-            <include file="$(find ocs2_mobile_manipulator_ros)/launch/visualize.launch">
+            <include file="$(find ocs2_mobile_manipulator_ros)/launch/include/visualize.launch">
                   <arg name="urdf_file" value="$(arg urdfFile)" />
             </include>
       </group>

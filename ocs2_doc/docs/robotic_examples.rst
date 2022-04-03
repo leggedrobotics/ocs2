@@ -158,7 +158,7 @@ usePreComputation flag in the config file.
     source <directory_to_ws>/<catkin_ws_name>/devel/setup.bash
 
     # Launch the example
-    roslaunch ocs2_mobile_manipulator_ros mobile_manipulator.launch
+    roslaunch ocs2_mobile_manipulator_ros manipulator_mabi_mobile.launch
 
 .. image:: ../tools/sphinx/_static/gif/mobile_manipulator.gif
    :alt: mobile_manipulator.gif cannot be displayed!

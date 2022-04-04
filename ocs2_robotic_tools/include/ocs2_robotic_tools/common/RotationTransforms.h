@@ -80,9 +80,9 @@ Eigen::Matrix<SCALAR_T, 3, 4> quaternionDistanceJacobian(const Eigen::Quaternion
 template <typename SCALAR_T>
 Eigen::Quaternion<SCALAR_T> getQuaternionFromEulerAnglesZyx(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAnglesZyx) {
   // clang-format off
-  return Eigen::AngleAxis<SCALAR_T>(eulerAnglesZyx(0), Eigen::Vector3d::UnitZ()) *
-         Eigen::AngleAxis<SCALAR_T>(eulerAnglesZyx(1), Eigen::Vector3d::UnitY()) *
-         Eigen::AngleAxis<SCALAR_T>(eulerAnglesZyx(2), Eigen::Vector3d::UnitX());
+  return Eigen::AngleAxis<SCALAR_T>(eulerAnglesZyx(0), Eigen::Matrix<SCALAR_T, 3, 1>::UnitZ()) *
+         Eigen::AngleAxis<SCALAR_T>(eulerAnglesZyx(1), Eigen::Matrix<SCALAR_T, 3, 1>::UnitY()) *
+         Eigen::AngleAxis<SCALAR_T>(eulerAnglesZyx(2), Eigen::Matrix<SCALAR_T, 3, 1>::UnitX());
   // clang-format on
 }
 

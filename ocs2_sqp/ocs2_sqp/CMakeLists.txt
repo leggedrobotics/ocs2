@@ -47,9 +47,10 @@ add_library(${PROJECT_NAME}
   src/MultipleShootingInitialization.cpp
   src/MultipleShootingSettings.cpp
   src/MultipleShootingSolver.cpp
+  src/MultipleShootingSolverStatus.cpp
   src/MultipleShootingTranscription.cpp
   src/TimeDiscretization.cpp
-  )
+)
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
 )

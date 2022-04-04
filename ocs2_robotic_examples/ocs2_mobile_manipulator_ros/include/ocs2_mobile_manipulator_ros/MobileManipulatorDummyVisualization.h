@@ -61,6 +61,7 @@ class MobileManipulatorDummyVisualization final : public DummyObserver {
 
   PinocchioInterface pinocchioInterface_;
   const ManipulatorModelInfo modelInfo_;
+  std::vector<std::string> removeJointNames_;
 
   std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_;
   tf::TransformBroadcaster tfBroadcaster_;

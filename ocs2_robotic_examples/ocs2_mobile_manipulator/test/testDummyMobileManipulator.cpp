@@ -117,11 +117,11 @@ protected:
     const vector3_t eePositionError = eeKinematicsPtr->getPosition(state).front() - goalPosition;
     const vector3_t eeOrientationError = eeKinematicsPtr->getOrientationError(state, {goalOrientation}).front();
     // test report
-    std::cerr << "[SUMMARY]: ------------------------------------------------------";
+    std::cerr << "[SUMMARY]: ------------------------------------------------------\n";
     std::cerr << getTestName();
     std::cerr << "\teePositionError: " << eePositionError.transpose() << '\n';
     std::cerr << "\teeOrientationError: " << eeOrientationError.transpose() << '\n';
-    std::cerr << "-----------------------------------------------------------------";
+    std::cerr << "-----------------------------------------------------------------\n";
     // check that goal position is reached
     EXPECT_NEAR(eePositionError.x(), 0.0, tolerance);
     EXPECT_NEAR(eePositionError.y(), 0.0, tolerance);

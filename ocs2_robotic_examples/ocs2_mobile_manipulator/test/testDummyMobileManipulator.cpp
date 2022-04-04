@@ -49,21 +49,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using namespace ocs2;
 using namespace mobile_manipulator;
 
-class DummyMobileManipulatorParametersTests
-    : public testing::TestWithParam <std::tuple<std::string, std::string, std::string>> {
-protected:
-  using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
-  using quaternion_t = Eigen::Quaternion<scalar_t, Eigen::DontAlign>;
+// Aliases
+using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
+using quaternion_t = Eigen::Quaternion<scalar_t, Eigen::DontAlign>;
 
+/**
+ * @brief Test fixture for checking end-effector tracking using kinematic formulation for MPC.
+ * 
+ * @tparam A tuple containing the task file, library folder, URDF file, goal position and goal orientation.
+ */
+class DummyMobileManipulatorParametersTests
+    : public testing::TestWithParam <std::tuple<std::string, std::string, std::string, vector3_t, quaternion_t>> {
+protected:
+  
   // Constants
   static constexpr scalar_t tolerance = 1e-2;
   static constexpr scalar_t f_mpc = 10.0;
   static constexpr scalar_t initTime = 1234.5; // start from a random time
   static constexpr scalar_t finalTime = initTime + 10.0;
-
-  // Goal
-  const vector3_t goalPosition = vector3_t(-0.5, -0.8, 0.6);
-  const quaternion_t goalOrientation = quaternion_t(0.33, 0.0, 0.0, 0.95);
 
   // Resolve test fixture parameters
   const std::string getTaskFile() const {
@@ -74,6 +77,12 @@ protected:
   }
   const std::string getUrdfFile() const {
     return ocs2::robotic_assets::getPath() + "/resources/mobile_manipulator/" + std::get<2>(GetParam());
+  }
+  const vector3_t getGoalPosition() const {
+    return std::get<3>(GetParam());
+  }
+  const quaternion_t getGoalOrientation() const {
+    return std::get<4>(GetParam());
   }
 
   /**
@@ -88,7 +97,7 @@ protected:
     modelInfo = mobileManipulatorInterfacePtr->getManipulatorModelInfo();
 
     // initialize reference
-    const vector_t goalState = (vector_t(7) << goalPosition, goalOrientation.coeffs()).finished();
+    const vector_t goalState = (vector_t(7) << getGoalPosition(), getGoalOrientation().coeffs()).finished();
     TargetTrajectories targetTrajectories({initTime}, {goalState}, {vector_t::Zero(modelInfo.inputDim)});
     mobileManipulatorInterfacePtr->getReferenceManagerPtr()->setTargetTrajectories(std::move(targetTrajectories));
 
@@ -114,8 +123,8 @@ protected:
   }
 
   void verifyTrackingQuality(const vector_t& state) const {
-    const vector3_t eePositionError = eeKinematicsPtr->getPosition(state).front() - goalPosition;
-    const vector3_t eeOrientationError = eeKinematicsPtr->getOrientationError(state, {goalOrientation}).front();
+    const vector3_t eePositionError = eeKinematicsPtr->getPosition(state).front() - getGoalPosition();
+    const vector3_t eeOrientationError = eeKinematicsPtr->getOrientationError(state, {getGoalOrientation()}).front();
     // test report
     std::cerr << "[SUMMARY]: ------------------------------------------------------\n";
     std::cerr << getTestName();
@@ -256,22 +265,28 @@ TEST_P(DummyMobileManipulatorParametersTests, asynchronousTracking) {
 INSTANTIATE_TEST_CASE_P(
     DummyMobileManipulatorTests, DummyMobileManipulatorParametersTests,
     testing::Values(
-        // mabi-mobile: SE(2) + 6-Dof arm
-        std::make_tuple("mabi_mobile/task.info", "mabi_mobile",
-                        "mabi_mobile/urdf/mabi_mobile.urdf"),
         // franka panda: 7-Dof arm
-        std::make_tuple("franka/task.info", "franka", "franka/urdf/panda.urdf"),
+        std::make_tuple("franka/task.info", "franka", "franka/urdf/panda.urdf",
+                        vector3_t(-0.3, -0.3, 0.5), quaternion_t(0.33, 0.0, 0.0, 0.95)),
         // kinova jaco2: 6-Dof arm
         std::make_tuple("kinova/task_j2n6.info", "kinova/j2n6",
-                        "kinova/urdf/j2n6s300.urdf"),
+                        "kinova/urdf/j2n6s300.urdf", vector3_t(-0.3, -0.3, 0.5), 
+                        quaternion_t(0.33, 0.0, 0.0, 0.95)),
         // kinova jaco2: 7-Dof arm
         std::make_tuple("kinova/task_j2n7.info", "kinova/j2n7",
-                        "kinova/urdf/j2n7s300.urdf"),
+                        "kinova/urdf/j2n7s300.urdf", vector3_t(-0.3, -0.3, 0.5), 
+                        quaternion_t(0.33, 0.0, 0.0, 0.95)),
+        // mabi-mobile: SE(2) + 6-Dof arm
+        std::make_tuple("mabi_mobile/task.info", "mabi_mobile",
+                        "mabi_mobile/urdf/mabi_mobile.urdf", 
+                        vector3_t(-0.5, -0.8, 0.6), quaternion_t(0.33, 0.0, 0.0, 0.95)),
         // OSRF PR2: SE(2) + 7-Dof arm
-        std::make_tuple("pr2/task.info", "pr2", "pr2/urdf/pr2.urdf"),
+        std::make_tuple("pr2/task.info", "pr2", "pr2/urdf/pr2.urdf",
+                        vector3_t(-0.5, -0.8, 0.6), quaternion_t(0.33, 0.0, 0.0, 0.95)),
         // ridgeback with ur5: SE(2) + 6-Dof arm
         std::make_tuple("ridgeback_ur5/task.info", "ridgeback_ur5",
-                        "ridgeback_ur5/urdf/ridgeback_ur5.urdf")),
+                        "ridgeback_ur5/urdf/ridgeback_ur5.urdf", 
+                        vector3_t(-0.5, -0.8, 0.6), quaternion_t(0.33, 0.0, 0.0, 0.95))),
     [](const testing::TestParamInfo<DummyMobileManipulatorParametersTests::ParamType>& info) {
       /* returns test name for gtest summary */
       std::string robotName = std::get<1>(info.param);

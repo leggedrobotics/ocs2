@@ -81,8 +81,8 @@ void MpcnetRolloutBase::step(scalar_t timeStep) {
   vector_array_t stateTrajectory;
   vector_array_t inputTrajectory;
   rolloutPtr_->run(primalSolution_.timeTrajectory_.front(), primalSolution_.stateTrajectory_.front(),
-                   primalSolution_.timeTrajectory_.front() + timeStep, behavioralControllerPtr_.get(),
-                   primalSolution_.modeSchedule_.eventTimes, timeTrajectory, postEventIndicesStock, stateTrajectory, inputTrajectory);
+                   primalSolution_.timeTrajectory_.front() + timeStep, behavioralControllerPtr_.get(), primalSolution_.modeSchedule_,
+                   timeTrajectory, postEventIndicesStock, stateTrajectory, inputTrajectory);
 
   // update system observation
   systemObservation_.time = timeTrajectory.back();

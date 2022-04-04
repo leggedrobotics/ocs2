@@ -28,8 +28,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include <iostream>
-#include <typeinfo>
 #include <type_traits>
+#include <typeinfo>
 
 #include <gtest/gtest.h>
 

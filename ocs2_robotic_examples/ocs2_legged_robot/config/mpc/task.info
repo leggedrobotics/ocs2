@@ -72,8 +72,6 @@ ddp
 
   constraintPenaltyInitialValue   20.0
   constraintPenaltyIncreaseRate   2.0
-  inequalityConstraintMu          0.1
-  inequalityConstraintDelta       5.0
 
   preComputeRiccatiTerms          true
 

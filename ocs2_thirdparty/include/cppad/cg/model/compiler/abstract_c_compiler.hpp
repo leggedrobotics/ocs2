@@ -222,13 +222,9 @@ public:
                 sourceFile.open(srcfile.c_str());
                 sourceFile << it->second;
                 sourceFile.close();
-
-                // compile the file
-                compileFile(srcfile, file, posIndepCode);
-            } else {
-                 // compile without saving the source code to disk
-                compileSource(it->second, file, posIndepCode);
             }
+            // compile library from source code in memory
+            compileSource(it->second, file, posIndepCode);
 
             if (timer != nullptr) {
                 timer->finishedJob();

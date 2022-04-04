@@ -115,25 +115,32 @@ void RaisimRollout::setPdGains(const Eigen::VectorXd& pGain, const Eigen::Vector
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t RaisimRollout::runImpl(const time_interval_array_t& timeIntervalArray, const vector_t& initState, ControllerBase* controller,
-                                scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, vector_array_t& stateTrajectory,
-                                vector_array_t& inputTrajectory) {
-  assert(controller != nullptr);
+vector_t RaisimRollout::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, ControllerBase* controller,
+                            ModeSchedule& modeSchedule, scalar_array_t& timeTrajectory, size_array_t& postEventIndices,
+                            vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) {
+  if (initTime > finalTime) {
+    throw std::runtime_error("[RaisimRollout::run] The initial time should be less-equal to the final time!");
+  }
+  if (controller == nullptr) {
+    throw std::runtime_error("[RaisimRollout::run] Controller is not set!");
+  }
 
   world_.setTimeStep(this->settings().timeStep);
 
-  // Prepare arrays
+  // extract sub-systems
+  const auto timeIntervalArray = findActiveModesTimeInterval(initTime, finalTime, modeSchedule.eventTimes);
   const int numSubsystems = timeIntervalArray.size();
-  const auto maxNumSteps =
-      static_cast<int>(std::round((timeIntervalArray.back().second - timeIntervalArray.front().first) / this->settings().timeStep));
+  const auto maxNumSteps = static_cast<int>(std::round((finalTime - initTime) / this->settings().timeStep));
+
+  // Prepare arrays
   timeTrajectory.clear();
   timeTrajectory.reserve(maxNumSteps + numSubsystems);
   stateTrajectory.clear();
   stateTrajectory.reserve(maxNumSteps + numSubsystems);
   inputTrajectory.clear();
   inputTrajectory.reserve(maxNumSteps + numSubsystems);
-  postEventIndicesStock.clear();
-  postEventIndicesStock.reserve(numSubsystems - 1);
+  postEventIndices.clear();
+  postEventIndices.reserve(numSubsystems - 1);
 
   // Set inital state to simulation if requested
   if (raisimRolloutSettings_.setSimulatorStateOnRolloutRunAlways_ or raisimRolloutSettings_.setSimulatorStateOnRolloutRunOnce_) {
@@ -148,9 +155,9 @@ vector_t RaisimRollout::runImpl(const time_interval_array_t& timeIntervalArray, 
   // loop through intervals and integrate each separately
   for (const auto& interval : timeIntervalArray) {
     runSimulation(interval, controller, timeTrajectory, stateTrajectory, inputTrajectory);
-    postEventIndicesStock.push_back(stateTrajectory.size());
+    postEventIndices.push_back(stateTrajectory.size());
   }
-  postEventIndicesStock.pop_back();  // the last interval does not have any events afterwards
+  postEventIndices.pop_back();  // the last interval does not have any events afterwards
 
   return stateTrajectory.back();
 }
@@ -202,8 +209,8 @@ void RaisimRollout::deleteGroundPlane() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void RaisimRollout::runSimulation(const time_interval_t& timeInterval, ControllerBase* controller, scalar_array_t& timeTrajectory,
-                                  vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) {
+void RaisimRollout::runSimulation(const std::pair<scalar_t, scalar_t>& timeInterval, ControllerBase* controller,
+                                  scalar_array_t& timeTrajectory, vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) {
   const auto numSteps = static_cast<int>(std::ceil((timeInterval.second - timeInterval.first) / this->settings().timeStep));
 
   for (int i = 0; i < numSteps; i++) {
@@ -233,7 +240,7 @@ void RaisimRollout::runSimulation(const time_interval_t& timeInterval, Controlle
       system_->getState(raisim_q, raisim_dq);
       stateTrajectory.emplace_back(raisimGenCoordGenVelToState_(raisim_q, raisim_dq));
       if (stateTrajectory.back().hasNaN()) {
-        throw std::runtime_error("RaisimRollout::runSimulation - nan in state");
+        throw std::runtime_error("[RaisimRollout::runSimulation] nan in state");
       }
 
       // input might have been computed by initialization already

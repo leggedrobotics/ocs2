@@ -210,7 +210,7 @@ TEST(test_hpiphm_interface, noInputs) {
   ocs2::HpipmInterface hpipmInterface;
 
   int nx = 3;
-  int nu; // timeVarying
+  int nu;  // timeVarying
   int N = 5;
 
   // Problem setup.

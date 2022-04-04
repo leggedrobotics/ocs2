@@ -59,14 +59,12 @@ TEST(RotationTransforms, quaternionDifferenceJacobian) {
 
     vector_t qDyn = q.coeffs();
     vector_t qRefDyn = qRef.coeffs();
-    ASSERT_NEAR((quaternionDistance(q, qRef) - adInterface.getFunctionValue(qDyn, qRefDyn)).norm(), 0, 1e-5);
+    ASSERT_TRUE(quaternionDistance(q, qRef).isApprox(adInterface.getFunctionValue(qDyn, qRefDyn), 1e-5));
 
     matrix_t jacManual = quaternionDistanceJacobian(q, qRef);
     matrix_t jacAuto = adInterface.getJacobian(qDyn, qRefDyn);
-    ASSERT_NEAR((jacManual - jacAuto).sum(), 0, 1e-5);
+    ASSERT_TRUE(jacManual.isApprox(jacAuto, 1e-5));
   }
-
-  ASSERT_TRUE(true);
 }
 
 // Asserts that the quaterion performs the same rotation as the rotation matrix
@@ -113,8 +111,7 @@ TEST(RotationTransforms, matrixToQuaternionCppAd) {
     auto resultQuaternion = testRotationMatrix(q.toRotationMatrix());
 
     // Assert that our original generating quaternion matches the resulting one
-    ASSERT_NEAR(quaternionDistance(q, resultQuaternion).norm(), 0, 1e-5)
+    ASSERT_TRUE(quaternionDistance(q, resultQuaternion).isZero(1e-5))
         << "q = " << q.coeffs().transpose() << ", resultQuaternion = " << resultQuaternion.coeffs().transpose();
   }
 }
-

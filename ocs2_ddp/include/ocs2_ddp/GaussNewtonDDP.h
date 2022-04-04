@@ -377,6 +377,14 @@ class GaussNewtonDDP : public SolverBase {
 
   void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const ControllerBase* externalControllerPtr) override;
 
+  void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const PrimalSolution& primalSolution) override {
+    if (primalSolution.controllerPtr_ == nullptr) {
+      std::cerr
+          << "[GaussNewtonDDP] DDP cannot be warm started without a controller in the primal solution. Will revert to a cold start.\n";
+    }
+    runImpl(initTime, initState, finalTime, primalSolution.controllerPtr_.get());
+  }
+
  protected:
   PrimalDataContainer nominalPrimalData_, optimizedPrimalData_;
   // controller that is calculated directly from dual solution. It is unoptimized because it haven't gone through searching.

@@ -95,6 +95,16 @@ class MultipleShootingSolver : public SolverBase {
     }
   }
 
+  void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const PrimalSolution& primalSolution) override {
+    // Copy all except the controller
+    primalSolution_.timeTrajectory_ = primalSolution.timeTrajectory_;
+    primalSolution_.stateTrajectory_ = primalSolution.stateTrajectory_;
+    primalSolution_.inputTrajectory_ = primalSolution.inputTrajectory_;
+    primalSolution_.postEventIndices_ = primalSolution.postEventIndices_;
+    primalSolution_.modeSchedule_ = primalSolution.modeSchedule_;
+    runImpl(initTime, initState, finalTime);
+  }
+
   /** Run a task in parallel with settings.nThreads */
   void runParallel(std::function<void(int)> taskFunction);
 

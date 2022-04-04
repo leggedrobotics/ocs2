@@ -64,121 +64,66 @@ INPUT_DIM = 24
 EXPERT_NUM = 3
 
 # default state
+# fmt: off
 DEFAULT_STATE = [
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.575,
-    0.0,
-    0.0,
-    0.0,
-    -0.25,
-    0.6,
-    -0.85,
-    -0.25,
-    -0.6,
-    0.85,
-    0.25,
-    0.6,
-    -0.85,
-    0.25,
-    -0.6,
-    0.85,
+    0.0, 0.0, 0.0,      # normalized linear momentum
+    0.0, 0.0, 0.0,      # normalized angular momentum
+    0.0, 0.0, 0.575,    # position
+    0.0, 0.0, 0.0,      # orientation
+    -0.25, 0.6, -0.85,  # joint positions LF
+    -0.25, -0.6, 0.85,  # joint positions LH
+    0.25, 0.6, -0.85,   # joint positions RF
+    0.25, -0.6, 0.85    # joint positions RH
 ]
+# fmt: on
 
 # input bias
+# fmt: off
 INPUT_BIAS = [
-    0.0,
-    0.0,
-    127.861,
-    0.0,
-    0.0,
-    127.861,
-    0.0,
-    0.0,
-    127.861,
-    0.0,
-    0.0,
-    127.861,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
+    0.0, 0.0, 127.861,  # contact forces LF
+    0.0, 0.0, 127.861,  # contact forces LH
+    0.0, 0.0, 127.861,  # contact forces RF
+    0.0, 0.0, 127.861,  # contact forces RH
+    0.0, 0.0, 0.0,      # joint velocities LF
+    0.0, 0.0, 0.0,      # joint velocities LH
+    0.0, 0.0, 0.0,      # joint velocities RF
+    0.0, 0.0, 0.0       # joint velocities RH
 ]
+# fmt: on
 
 # input scaling
+# fmt: off
 INPUT_SCALING = [
-    100.0,
-    100.0,
-    100.0,
-    100.0,
-    100.0,
-    100.0,
-    100.0,
-    100.0,
-    100.0,
-    100.0,
-    100.0,
-    100.0,
-    10.0,
-    10.0,
-    10.0,
-    10.0,
-    10.0,
-    10.0,
-    10.0,
-    10.0,
-    10.0,
-    10.0,
-    10.0,
-    10.0,
+    100.0, 100.0, 100.0,  # contact forces LF
+    100.0, 100.0, 100.0,  # contact forces LH
+    100.0, 100.0, 100.0,  # contact forces RF
+    100.0, 100.0, 100.0,  # contact forces RH
+    10.0, 10.0, 10.0,     # joint velocities LF
+    10.0, 10.0, 10.0,     # joint velocities LH
+    10.0, 10.0, 10.0,     # joint velocities RF
+    10.0, 10.0, 10.0,     # joint velocities RH
 ]
+# fmt: on
 
 # (diagonally dominant) nominal centroidal inertia normalized by robot mass
 NORMALIZED_INERTIA = [1.62079 / 52.1348, 4.83559 / 52.1348, 4.72382 / 52.1348]
 
 # input cost for behavioral cloning
+# fmt: off
 R = [
-    0.001,
-    0.001,
-    0.001,
-    0.001,
-    0.001,
-    0.001,
-    0.001,
-    0.001,
-    0.001,
-    0.001,
-    0.001,
-    0.001,
-    5.0,
-    5.0,
-    5.0,
-    5.0,
-    5.0,
-    5.0,
-    5.0,
-    5.0,
-    5.0,
-    5.0,
-    5.0,
-    5.0,
+    0.001, 0.001, 0.001,  # contact forces LF
+    0.001, 0.001, 0.001,  # contact forces LH
+    0.001, 0.001, 0.001,  # contact forces RF
+    0.001, 0.001, 0.001,  # contact forces RH
+    5.0, 5.0, 5.0,        # joint velocities LF
+    5.0, 5.0, 5.0,        # joint velocities LH
+    5.0, 5.0, 5.0,        # joint velocities RF
+    5.0, 5.0, 5.0,        # joint velocities RH
 ]
+# fmt: on
 
-# dictionary for cheating
+# dictionary for cheating with the gating loss
+# assigns each of the OCS2 modes to an expert that is responsible for covering the corresponding contact configuration
 EXPERT_FOR_MODE = dict([(i, None) for i in range(16)])
 EXPERT_FOR_MODE[15] = 0  # stance
 EXPERT_FOR_MODE[6] = 1  # trot

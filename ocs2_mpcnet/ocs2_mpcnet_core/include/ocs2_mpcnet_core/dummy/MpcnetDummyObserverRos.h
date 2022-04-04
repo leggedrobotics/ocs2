@@ -1,17 +1,17 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2022, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
-* Redistributions of source code must retain the above copyright notice, this
+ * Redistributions of source code must retain the above copyright notice, this
   list of conditions and the following disclaimer.
 
-* Redistributions in binary form must reproduce the above copyright notice,
+ * Redistributions in binary form must reproduce the above copyright notice,
   this list of conditions and the following disclaimer in the documentation
   and/or other materials provided with the distribution.
 
-* Neither the name of the copyright holder nor the names of its
+ * Neither the name of the copyright holder nor the names of its
   contributors may be used to endorse or promote products derived from
   this software without specific prior written permission.
 
@@ -29,11 +29,41 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <ros/ros.h>
+
+#include <ocs2_ros_interfaces/mrt/DummyObserver.h>
+
 namespace ocs2 {
+namespace mpcnet {
 
 /**
- * Enum class for specifying controller type
+ *  Dummy observer that publishes the current system observation that is required for some target command nodes.
  */
-enum class ControllerType { UNKNOWN, FEEDFORWARD, LINEAR, ONNX, BEHAVIORAL };
+class MpcnetDummyObserverRos : public DummyObserver {
+ public:
+  /**
+   * Constructor.
+   * @param [in] nodeHandle : The ROS node handle.
+   * @param [in] topicPrefix : The prefix defines the names for the observation's publishing topic "topicPrefix_mpc_observation".
+   */
+  explicit MpcnetDummyObserverRos(ros::NodeHandle& nodeHandle, std::string topicPrefix = "anonymousRobot");
 
+  /**
+   * Default destructor.
+   */
+  ~MpcnetDummyObserverRos() override = default;
+
+  /**
+   * Update and publish.
+   * @param [in] observation: The current system observation.
+   * @param [in] primalSolution: The current primal solution.
+   * @param [in] command: The given command data.
+   */
+  void update(const SystemObservation& observation, const PrimalSolution& primalSolution, const CommandData& command) override;
+
+ private:
+  ros::Publisher observationPublisher_;
+};
+
+}  // namespace mpcnet
 }  // namespace ocs2

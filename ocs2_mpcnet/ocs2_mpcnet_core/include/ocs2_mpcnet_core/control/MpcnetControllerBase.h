@@ -1,17 +1,17 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2022, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
-* Redistributions of source code must retain the above copyright notice, this
+ * Redistributions of source code must retain the above copyright notice, this
   list of conditions and the following disclaimer.
 
-* Redistributions in binary form must reproduce the above copyright notice,
+ * Redistributions in binary form must reproduce the above copyright notice,
   this list of conditions and the following disclaimer in the documentation
   and/or other materials provided with the distribution.
 
-* Neither the name of the copyright holder nor the names of its
+ * Neither the name of the copyright holder nor the names of its
   contributors may be used to endorse or promote products derived from
   this software without specific prior written permission.
 
@@ -29,11 +29,29 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <ocs2_core/control/ControllerBase.h>
+
 namespace ocs2 {
+namespace mpcnet {
 
 /**
- * Enum class for specifying controller type
+ * The base class for all controllers that use a MPC-Net policy.
  */
-enum class ControllerType { UNKNOWN, FEEDFORWARD, LINEAR, ONNX, BEHAVIORAL };
+class MpcnetControllerBase : public ControllerBase {
+ public:
+  MpcnetControllerBase() = default;
+  ~MpcnetControllerBase() override = default;
+  MpcnetControllerBase* clone() const override = 0;
 
+  /**
+   * Load the model of the policy.
+   * @param [in] policyFilePath : Path to the file with the model of the policy.
+   */
+  virtual void loadPolicyModel(const std::string& policyFilePath) = 0;
+
+ protected:
+  MpcnetControllerBase(const MpcnetControllerBase& other) = default;
+};
+
+}  // namespace mpcnet
 }  // namespace ocs2

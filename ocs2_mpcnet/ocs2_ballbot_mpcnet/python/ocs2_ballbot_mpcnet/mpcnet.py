@@ -51,7 +51,8 @@ from ocs2_ballbot_mpcnet import config
 from ocs2_ballbot_mpcnet import helper
 from ocs2_ballbot_mpcnet import MpcnetInterface
 
-if __name__ == "__main__":
+
+def main():
     # settings for data generation by applying behavioral policy
     data_generation_time_step = 0.1
     data_generation_duration = 3.0
@@ -269,3 +270,7 @@ if __name__ == "__main__":
     writer.close()
 
     print("Done. Exiting now.")
+
+
+if __name__ == '__main__':
+    main()

@@ -163,7 +163,8 @@ Currently, the following system models are supported:
   model parsed from the URDF which are fully-actuated (velocity-control). This is a 
   model of a mobile-manipulator with a base controlled in SE(3).
 
-To play-around different model types, you can change the model-information in the `task.info` files.
+To play-around different model types, you can change the model-information in the 
+`task.info` files.
 
 .. code-block:: bash
 
@@ -173,11 +174,18 @@ To play-around different model types, you can change the model-information in th
     # Do not forget to change <...> parts
     source <directory_to_ws>/<catkin_ws_name>/devel/setup.bash
 
+
 For several common robot manipulators, we provide examples on running them
 with OCS2. The steps taken to generate the robot model files (URDF) are 
-available [here](https://github.com/leggedrobotics/ocs2_robotic_assets/blob/main/docs/MobileManipulatorUrdfAssets.md).
+available `here <https://github.com/leggedrobotics/ocs2_robotic_assets/blob/main/docs/MobileManipulatorUrdfAssets.md>`_.
 
-.. note::
+For some of these examples, we fix certain joints present in the URDF (such as the gripper 
+finger joints or wheel joints) through the `model_information.removeJoints` attribute in 
+the `task.info` file. This allows simplifying the constructed Pinocchio model. Only for
+visualization purposes on rviz, the joints under `removeJoints` in the `task.info` are published
+at zero joint positions by the dummy simulation node . 
+
+.. warning::
     For these examples, the MPC has not been tuned to work on hardware.
     Additionally, for some of the examples, the collision meshes need
     to be processed into primitive shapes to allow collision avoidance.

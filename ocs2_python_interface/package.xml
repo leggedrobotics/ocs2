@@ -15,7 +15,6 @@
   <build_depend>cmake_modules</build_depend>
   <build_depend>cmake_clang_tools</build_depend>
 
-  <depend>roscpp</depend>
   <depend>ocs2_mpc</depend>
   <depend>ocs2_ddp</depend>
   <depend>ocs2_robotic_tools</depend>

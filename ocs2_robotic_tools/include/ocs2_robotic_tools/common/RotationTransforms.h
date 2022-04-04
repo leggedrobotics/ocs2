@@ -198,10 +198,10 @@ Eigen::Quaternion<ad_scalar_t> matrixToQuaternion(const Eigen::Matrix<ad_scalar_
  *
  * @tparam SCALAR_T : numeric type
  * @param rotationMatrix : 3x3 rotation matrix
- * @return 3x1 rotation vector, theta * n, with the norm is equal to the rotation angle.
+ * @return 3x1 rotation vector, theta * n, with theta equal to the rotation angle, and n equal to the rotation axis.
  */
 template <typename SCALAR_T>
-Eigen::Matrix<SCALAR_T, 3, 1> rotationMatrixToAngleAxis(const Eigen::Matrix<SCALAR_T, 3, 3>& rotationMatrix) {
+Eigen::Matrix<SCALAR_T, 3, 1> rotationMatrixToRotationVector(const Eigen::Matrix<SCALAR_T, 3, 3>& rotationMatrix) {
   // Helper function to select a 3d vector compatible with CppAd
   auto selectSolutionGt = [](SCALAR_T left, SCALAR_T right, const Eigen::Matrix<SCALAR_T, 3, 1>& if_true,
                              const Eigen::Matrix<SCALAR_T, 3, 1>& if_false) -> Eigen::Matrix<SCALAR_T, 3, 1> {
@@ -265,7 +265,7 @@ Eigen::Matrix<SCALAR_T, 3, 1> rotationErrorInWorld(const Eigen::Matrix<SCALAR_T,
    *                 = angleAxis(W_R_lhs * rhs_R_W)
    */
   const Eigen::Matrix<SCALAR_T, 3, 3> rotationErrorInWorld = rotationMatrixLhs * rotationMatrixRhs.transpose();
-  return rotationMatrixToAngleAxis(rotationErrorInWorld);
+  return rotationMatrixToRotationVector(rotationErrorInWorld);
 }
 
 /**
@@ -287,7 +287,7 @@ template <typename SCALAR_T>
 Eigen::Matrix<SCALAR_T, 3, 1> rotationErrorInLocal(const Eigen::Matrix<SCALAR_T, 3, 3>& rotationMatrixLhs,
                                                    const Eigen::Matrix<SCALAR_T, 3, 3>& rotationMatrixRhs) {
   const Eigen::Matrix<SCALAR_T, 3, 3> rotationErrorInLocal = rotationMatrixRhs.transpose() * rotationMatrixLhs;
-  return rotationMatrixToAngleAxis(rotationErrorInLocal);
+  return rotationMatrixToRotationVector(rotationErrorInLocal);
 }
 
 }  // namespace ocs2

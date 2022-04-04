@@ -15,7 +15,7 @@ Double Integrator  2          1          No          No
 Cartpole           4          1          Yes         No
 Ballbot            10         3          No          No
 Quadrotor          12         4          No          No
-Mobile Manipulator --         --         Yes         Yes / No
+Mobile Manipulator 6-13       6-13       Yes         Yes / No
 Legged Robot       24         24         Yes         No
 ================== ========== ========== =========== ========
 
@@ -152,10 +152,16 @@ usePreComputation flag in the config file.
 The system model is determined by parsing the URDF and the task file. 
 Currently, the following system models are supported:
 
-* **Default** (*value:* 0): The default system model obtained by parsing the URDF
-* **Actuated Dummy wheel-base** (*value:* 1): Adds a dummy XY-Yaw joints to the the model parsed from the URDF which are actuated under holonomic constraint (velocity-control)
-* **Unactuated Dummy floating-base** (*value:* 2): Adds a dummy XYZ-RPY joints to the the model parsed from the URDF which are unactuated
-* **Actuated Dummy floating-base** (*value:* 3): Adds a dummy XYZ-RPY joints to the the model parsed from the URDF which are fully-actuated (velocity-control)
+* **Default** (*value:* 0): The default system model obtained by parsing the URDF.
+* **Actuated Dummy wheel-base** (*value:* 1): Adds a dummy XY-Yaw joints to the 
+  model parsed from the URDF which are actuated under holonomic constraint 
+  (velocity-control). This is a model of a mobile-manipulator with a base controlled
+  in SE(2).
+* **Unactuated Dummy floating-base** (*value:* 2): Adds a dummy XYZ-RPY joints to the 
+  model parsed from the URDF which are unactuated.
+* **Actuated Dummy floating-base** (*value:* 3): Adds a dummy XYZ-RPY joints to the 
+  model parsed from the URDF which are fully-actuated (velocity-control). This is a 
+  model of a mobile-manipulator with a base controlled in SE(3).
 
 To play-around different model types, you can change the model-information in the `task.info` files.
 
@@ -226,8 +232,8 @@ Willow Garage PR2
    :alt: pr2.gif cannot be displayed!
    :target: _static/gif/mobile_manipulator/pr2.gif
 
-Clearpath Ridgeback
-~~~~~~~~~~~~~~~~~~~
+Clearpath Ridgeback with UR-5
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 

@@ -175,7 +175,7 @@ To play-around different model types, you can change the model-information in th
 
 For several common robot manipulators, we provide examples on running them
 with OCS2. The steps taken to generate the robot model files (URDF) are 
-available [here](https://github.com/leggedrobotics/ocs2_robotic_assets).
+available [here](https://github.com/leggedrobotics/ocs2_robotic_assets/blob/main/docs/MobileManipulatorUrdfAssets.md).
 
 .. note::
     For these examples, the MPC has not been tuned to work on hardware.

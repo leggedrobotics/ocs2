@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <string>
 #include <thread>
+#include <algorithm>
 
 #include <gtest/gtest.h>
 
@@ -48,16 +49,41 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using namespace ocs2;
 using namespace mobile_manipulator;
 
-class MobileManipulatorIntegrationTest : public testing::Test {
- protected:
+class DummyMobileManipulatorParametersTests
+    : public testing::TestWithParam <std::tuple<std::string, std::string, std::string>> {
+protected:
   using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
   using quaternion_t = Eigen::Quaternion<scalar_t, Eigen::DontAlign>;
 
-  MobileManipulatorIntegrationTest() {
-    const std::string taskFile = ocs2::mobile_manipulator::getPath() + "/config/mabi_mobile/task.info";
-    const std::string libFolder = ocs2::mobile_manipulator::getPath() + "/auto_generated/mabi_mobile";
-    const std::string urdfFile = ocs2::robotic_assets::getPath() + "/resources/mobile_manipulator/mabi_mobile/urdf/mabi_mobile.urdf";
-    mobileManipulatorInterfacePtr.reset(new MobileManipulatorInterface(taskFile, libFolder, urdfFile));
+  // Constants
+  static constexpr scalar_t tolerance = 1e-2;
+  static constexpr scalar_t f_mpc = 10.0;
+  static constexpr scalar_t initTime = 1234.5; // start from a random time
+  static constexpr scalar_t finalTime = initTime + 10.0;
+
+  // Goal
+  const vector3_t goalPosition = vector3_t(-0.5, -0.8, 0.6);
+  const quaternion_t goalOrientation = quaternion_t(0.33, 0.0, 0.0, 0.95);
+
+  // Resolve test fixture parameters
+  const std::string getTaskFile() const {
+    return ocs2::mobile_manipulator::getPath() + "/config/" + std::get<0>(GetParam());
+  }
+  const std::string getLibFolder() const {
+    return ocs2::mobile_manipulator::getPath() + "/auto_generated/" + std::get<1>(GetParam());
+  }
+  const std::string getUrdfFile() const {
+    return ocs2::robotic_assets::getPath() + "/resources/mobile_manipulator/" + std::get<2>(GetParam());
+  }
+
+  /**
+   * @note: We separate `initialize()` and `getMpc()` since one can obtain
+   * multiple MPC instances from same interface.
+   */
+  bool initialize(const std::string& taskFile, const std::string& libFolder, const std::string& urdfFile) {
+    // create mpc interface
+    mobileManipulatorInterfacePtr.reset(
+        new MobileManipulatorInterface(taskFile, libFolder, urdfFile));
     // obtain robot model info
     modelInfo = mobileManipulatorInterfacePtr->getManipulatorModelInfo();
 
@@ -70,24 +96,32 @@ class MobileManipulatorIntegrationTest : public testing::Test {
     const std::string modelName = "end_effector_kinematics_dummytest";
     MobileManipulatorPinocchioMappingCppAd pinocchioMapping(modelInfo);
     const auto& pinocchioInterface = mobileManipulatorInterfacePtr->getPinocchioInterface();
-    eeKinematicsPtr.reset(new PinocchioEndEffectorKinematicsCppAd(pinocchioInterface, pinocchioMapping, {modelInfo.eeFrame},
-                                                                  modelInfo.stateDim, modelInfo.inputDim, modelName));
+    eeKinematicsPtr.reset(new PinocchioEndEffectorKinematicsCppAd(
+        pinocchioInterface, pinocchioMapping, {modelInfo.eeFrame},
+        modelInfo.stateDim, modelInfo.inputDim, modelName));
+    return true;
   }
 
   std::unique_ptr<GaussNewtonDDP_MPC> getMpc() {
     auto& interface = *mobileManipulatorInterfacePtr;
-    std::unique_ptr<GaussNewtonDDP_MPC> mpcPtr(new GaussNewtonDDP_MPC(interface.mpcSettings(), interface.ddpSettings(),
-                                                                      interface.getRollout(), interface.getOptimalControlProblem(),
-                                                                      interface.getInitializer()));
-    mpcPtr->getSolverPtr()->setReferenceManager(mobileManipulatorInterfacePtr->getReferenceManagerPtr());
+    std::unique_ptr<GaussNewtonDDP_MPC> mpcPtr(new GaussNewtonDDP_MPC(
+        interface.mpcSettings(), interface.ddpSettings(),
+        interface.getRollout(), interface.getOptimalControlProblem(),
+        interface.getInitializer()));
+    mpcPtr->getSolverPtr()->setReferenceManager(
+        mobileManipulatorInterfacePtr->getReferenceManagerPtr());
     return mpcPtr;
   }
 
   void verifyTrackingQuality(const vector_t& state) const {
     const vector3_t eePositionError = eeKinematicsPtr->getPosition(state).front() - goalPosition;
     const vector3_t eeOrientationError = eeKinematicsPtr->getOrientationError(state, {goalOrientation}).front();
-    std::cerr << "eePositionError: " << eePositionError.transpose() << '\n';
-    std::cerr << "eeOrientationError: " << eeOrientationError.transpose() << '\n';
+    // test report
+    std::cerr << "[SUMMARY]: ------------------------------------------------------";
+    std::cerr << getTestName();
+    std::cerr << "\teePositionError: " << eePositionError.transpose() << '\n';
+    std::cerr << "\teeOrientationError: " << eeOrientationError.transpose() << '\n';
+    std::cerr << "-----------------------------------------------------------------";
     // check that goal position is reached
     EXPECT_NEAR(eePositionError.x(), 0.0, tolerance);
     EXPECT_NEAR(eePositionError.y(), 0.0, tolerance);
@@ -97,35 +131,40 @@ class MobileManipulatorIntegrationTest : public testing::Test {
     EXPECT_NEAR(eeOrientationError.z(), 0.0, tolerance);
   }
 
-  static constexpr scalar_t tolerance = 1e-2;
-  static constexpr scalar_t f_mpc = 10.0;
-  static constexpr scalar_t initTime = 1234.5;  // start from a random time
-  static constexpr scalar_t finalTime = initTime + 10.0;
-
-  const vector3_t goalPosition = vector3_t(-0.5, -0.8, 0.6);
-  const quaternion_t goalOrientation = quaternion_t(0.33, 0.0, 0.0, 0.95);
+  const std::string getTestName() const {
+    std::string testName;
+    testName += "DummyMobileManipulatorParametersTests Test {";
+    testName += "\n\tTask: " + getTaskFile();
+    testName += "\n\tURDF: " + getUrdfFile();
+    testName += "\n}\n";
+    return testName;
+  }
 
   ManipulatorModelInfo modelInfo;
   std::unique_ptr<MobileManipulatorInterface> mobileManipulatorInterfacePtr;
   std::unique_ptr<PinocchioEndEffectorKinematicsCppAd> eeKinematicsPtr;
 };
 
-constexpr scalar_t MobileManipulatorIntegrationTest::tolerance;
-constexpr scalar_t MobileManipulatorIntegrationTest::f_mpc;
-constexpr scalar_t MobileManipulatorIntegrationTest::initTime;
-constexpr scalar_t MobileManipulatorIntegrationTest::finalTime;
+// expose constants globally
+constexpr scalar_t DummyMobileManipulatorParametersTests::tolerance;
+constexpr scalar_t DummyMobileManipulatorParametersTests::f_mpc;
+constexpr scalar_t DummyMobileManipulatorParametersTests::initTime;
+constexpr scalar_t DummyMobileManipulatorParametersTests::finalTime;
 
-TEST_F(MobileManipulatorIntegrationTest, synchronousTracking) {
+TEST_P(DummyMobileManipulatorParametersTests, synchronousTracking) {
+  // Obtain mpc
+  initialize(getTaskFile(), getLibFolder(), getUrdfFile());
   auto mpcPtr = getMpc();
   MPC_MRT_Interface mpcInterface(*mpcPtr);
 
+  // Set initial observation
   SystemObservation observation;
   observation.time = initTime;
   observation.state = mobileManipulatorInterfacePtr->getInitialState();
   observation.input.setZero(modelInfo.inputDim);
   mpcInterface.setCurrentObservation(observation);
 
-  // run MPC for N iterations
+  // Run MPC for N iterations
   auto time = initTime;
   while (time < finalTime) {
     // run MPC
@@ -137,7 +176,8 @@ TEST_F(MobileManipulatorIntegrationTest, synchronousTracking) {
       vector_t optimalState, optimalInput;
 
       mpcInterface.updatePolicy();
-      mpcInterface.evaluatePolicy(time, vector_t::Zero(modelInfo.stateDim), optimalState, optimalInput, mode);
+      mpcInterface.evaluatePolicy(time, vector_t::Zero(modelInfo.stateDim),
+                                  optimalState, optimalInput, mode);
 
       // use optimal state for the next observation:
       observation.time = time;
@@ -150,11 +190,13 @@ TEST_F(MobileManipulatorIntegrationTest, synchronousTracking) {
   verifyTrackingQuality(observation.state);
 }
 
-TEST_F(MobileManipulatorIntegrationTest, asynchronousTracking) {
+TEST_P(DummyMobileManipulatorParametersTests, asynchronousTracking) {
+  // Obtain mpc
+  initialize(getTaskFile(), getLibFolder(), getUrdfFile());
   auto mpcPtr = getMpc();
   MPC_MRT_Interface mpcInterface(*mpcPtr);
 
-  const scalar_t f_mrt = 100.0;  // Hz
+  const scalar_t f_mrt = 100.0; // Hz
 
   // Set initial observation
   SystemObservation observation;
@@ -190,8 +232,9 @@ TEST_F(MobileManipulatorIntegrationTest, asynchronousTracking) {
 
           // Evaluate the policy
           mpcInterface.updatePolicy();
-          mpcInterface.evaluatePolicy(observation.time, vector_t::Zero(modelInfo.stateDim), observation.state, observation.input,
-                                      observation.mode);
+          mpcInterface.evaluatePolicy(
+              observation.time, vector_t::Zero(modelInfo.stateDim),
+              observation.state, observation.input, observation.mode);
 
           // use optimal state for the next observation:
           mpcInterface.setCurrentObservation(observation);
@@ -206,3 +249,32 @@ TEST_F(MobileManipulatorIntegrationTest, asynchronousTracking) {
 
   verifyTrackingQuality(observation.state);
 }
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+INSTANTIATE_TEST_CASE_P(
+    DummyMobileManipulatorTests, DummyMobileManipulatorParametersTests,
+    testing::Values(
+        // mabi-mobile: SE(2) + 6-Dof arm
+        std::make_tuple("mabi_mobile/task.info", "mabi_mobile",
+                        "mabi_mobile/urdf/mabi_mobile.urdf"),
+        // franka panda: 7-Dof arm
+        std::make_tuple("franka/task.info", "franka", "franka/urdf/panda.urdf"),
+        // kinova jaco2: 6-Dof arm
+        std::make_tuple("kinova/task_j2n6.info", "kinova/j2n6",
+                        "kinova/urdf/j2n6s300.urdf"),
+        // kinova jaco2: 7-Dof arm
+        std::make_tuple("kinova/task_j2n7.info", "kinova/j2n7",
+                        "kinova/urdf/j2n7s300.urdf"),
+        // OSRF PR2: SE(2) + 7-Dof arm
+        std::make_tuple("pr2/task.info", "pr2", "pr2/urdf/pr2.urdf"),
+        // ridgeback with ur5: SE(2) + 6-Dof arm
+        std::make_tuple("ridgeback_ur5/task.info", "ridgeback_ur5",
+                        "ridgeback_ur5/urdf/ridgeback_ur5.urdf")),
+    [](const testing::TestParamInfo<DummyMobileManipulatorParametersTests::ParamType>& info) {
+      /* returns test name for gtest summary */
+      std::string robotName = std::get<1>(info.param);
+      std::replace(robotName.begin(), robotName.end(), '/', '_' );
+      return "Task__" + robotName;
+    });

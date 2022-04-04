@@ -122,7 +122,8 @@ R = [
 ]
 # fmt: on
 
-# dictionary for cheating
+# dictionary for cheating with the gating loss
+# assigns each of the OCS2 modes to an expert that is responsible for covering the corresponding contact configuration
 EXPERT_FOR_MODE = dict([(i, None) for i in range(16)])
 EXPERT_FOR_MODE[15] = 0  # stance
 EXPERT_FOR_MODE[6] = 1  # trot

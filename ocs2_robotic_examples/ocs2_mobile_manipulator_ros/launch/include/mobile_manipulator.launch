@@ -2,16 +2,16 @@
 
 <launch>
       <!-- Enable rviz visualization -->
-      <arg name="rviz"               default="true" />
+      <arg name="rviz"   default="true" />
       <!-- Set nodes on debug mode -->
-      <arg name="debug"              default="false" />
+      <arg name="debug"  default="false" />
 
       <!-- The URDF model of the robot -->
-      <arg name="urdfFile" default="" />
+      <arg name="urdfFile" />
       <!-- The task file for the mpc. -->
-      <arg name="taskFile" default="" />
+      <arg name="taskFile" />
       <!-- The library folder to generate CppAD codegen into -->
-      <arg name="libFolder" default="" />
+      <arg name="libFolder" />
 
       <!-- make the files into global parameters -->
       <param name="taskFile"   value="$(arg taskFile)" />
@@ -20,7 +20,7 @@
 
       <group if="$(arg rviz)">
             <include file="$(find ocs2_mobile_manipulator_ros)/launch/include/visualize.launch">
-                  <arg name="urdf_file" value="$(arg urdfFile)" />
+                  <arg name="urdfFile" value="$(arg urdfFile)" />
             </include>
       </group>
 

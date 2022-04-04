@@ -100,15 +100,14 @@ void MobileManipulatorDummyVisualization::launchVisualizerNode(ros::NodeHandle& 
   // read manipulator type
   ManipulatorModelType modelType = mobile_manipulator::loadManipulatorType(taskFile, "model_information.manipulatorModelType");
   // read the joints to make fixed
-  std::vector<std::string> removeJointNames;
-  loadData::loadStdVector<std::string>(taskFile, "model_information.removeJoints", removeJointNames, false);
+  loadData::loadStdVector<std::string>(taskFile, "model_information.removeJoints", removeJointNames_, false);
   // read if self-collision checking active
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile, pt);
   bool activateSelfCollision = true;
   loadData::loadPtreeValue(pt, activateSelfCollision, "selfCollision.activate", true);
   // create pinocchio interface
-  PinocchioInterface pinocchioInterface(mobile_manipulator::createPinocchioInterface(urdfFile, modelType, removeJointNames));
+  PinocchioInterface pinocchioInterface(mobile_manipulator::createPinocchioInterface(urdfFile, modelType, removeJointNames_));
   // activate markers for self-collision visualization
   if (activateSelfCollision) {
     std::vector<std::pair<size_t, size_t>> collisionObjectPairs;
@@ -155,6 +154,9 @@ void MobileManipulatorDummyVisualization::publishObservation(const ros::Time& ti
   std::map<std::string, scalar_t> jointPositions;
   for (size_t i = 0; i < modelInfo_.dofNames.size(); i++) {
     jointPositions[modelInfo_.dofNames[i]] = j_arm(i);
+  }
+  for (const auto& name : removeJointNames_) {
+    jointPositions[name] = 0.0;
   }
   robotStatePublisherPtr_->publishTransforms(jointPositions, timeStamp);
 }

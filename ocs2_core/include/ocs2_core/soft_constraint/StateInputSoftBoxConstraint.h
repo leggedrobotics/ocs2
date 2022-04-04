@@ -55,9 +55,11 @@ class StateInputSoftBoxConstraint final : public StateInputCost {
     //! Penalty function
     std::unique_ptr<PenaltyBase> penaltyPtr;
 
-    /** Copy constructor */
-    BoxConstraint(const BoxConstraint& other)
-        : index(other.index), lowerBound(other.lowerBound), upperBound(other.upperBound), penaltyPtr(penaltyPtr->clone()) {}
+    /* Constructors and assignment operators */
+    BoxConstraint(const BoxConstraint& other);
+    BoxConstraint& operator=(const BoxConstraint& other);
+    BoxConstraint(BoxConstraint&& other) noexcept = default;
+    BoxConstraint& operator=(BoxConstraint&& other) noexcept = default;
   };
 
   /**

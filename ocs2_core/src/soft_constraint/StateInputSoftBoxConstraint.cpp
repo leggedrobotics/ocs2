@@ -34,6 +34,23 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+StateInputSoftBoxConstraint::BoxConstraint::BoxConstraint(const BoxConstraint& other)
+    : index(other.index), lowerBound(other.lowerBound), upperBound(other.upperBound), penaltyPtr(other.penaltyPtr->clone()) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+StateInputSoftBoxConstraint::BoxConstraint& StateInputSoftBoxConstraint::BoxConstraint::operator=(const BoxConstraint& other) {
+  this->index = other.index;
+  this->lowerBound = other.lowerBound;
+  this->upperBound = other.upperBound;
+  this->penaltyPtr.reset(other.penaltyPtr->clone());
+  return *this;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 StateInputSoftBoxConstraint::StateInputSoftBoxConstraint(std::vector<BoxConstraint> stateBoxConstraints,
                                                          std::vector<BoxConstraint> inputBoxConstraints)
     : stateBoxConstraints_(std::move(stateBoxConstraints)), inputBoxConstraints_(std::move(inputBoxConstraints)), offset_(0.0) {

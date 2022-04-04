@@ -15,7 +15,7 @@ Double Integrator  2          1          No          No
 Cartpole           4          1          Yes         No
 Ballbot            10         3          No          No
 Quadrotor          12         4          No          No
-Mobile Manipulator --         --          Yes         Yes / No
+Mobile Manipulator --         --         Yes         Yes / No
 Legged Robot       24         24         Yes         No
 ================== ========== ========== =========== ========
 

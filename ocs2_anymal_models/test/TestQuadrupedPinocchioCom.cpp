@@ -27,43 +27,46 @@ TEST_F(QuadrupedComTest, totalMass) {
 }
 
 TEST_F(QuadrupedComTest, calculateBaseLocalAccelerations) {
-  const auto basePose = switched_model::base_coordinate_t::Zero();
-  const auto baseLocalVelocities = (switched_model::base_coordinate_t() << ocs2::vector_t::Zero(3), ocs2::vector_t::Random(3)).finished();
+  const ocs2::vector_t basePose = switched_model::base_coordinate_t::Zero();
+  const ocs2::vector_t baseLocalVelocities =
+      (switched_model::base_coordinate_t() << ocs2::vector_t::Random(3), ocs2::vector_t::Random(3)).finished();
 
-  const auto jointPositions = switched_model::joint_coordinate_t::Random();
-  const auto jointVelocities = switched_model::joint_coordinate_t::Random();
-  const auto jointAccelerations = switched_model::joint_coordinate_t::Random();
-  const auto forcesOnBaseInBaseFrame = switched_model::base_coordinate_t::Random();
-
-  ocs2::vector_t pAcc = pinocchioCom_.calculateBaseLocalAccelerations(basePose, baseLocalVelocities, jointPositions, jointVelocities,
-                                                                      jointAccelerations, forcesOnBaseInBaseFrame);
-
-  pAcc = pinocchioCom_.calculateBaseLocalAccelerations(basePose, baseLocalVelocities, jointPositions, jointVelocities, jointAccelerations,
-                                                       forcesOnBaseInBaseFrame);
+  const ocs2::vector_t jointPositions = switched_model::joint_coordinate_t::Zero();
+  const ocs2::vector_t jointVelocities = switched_model::joint_coordinate_t::Zero();
+  const ocs2::vector_t jointAccelerations = switched_model::joint_coordinate_t::Zero();
+  const ocs2::vector_t forcesOnBaseInBaseFrame = switched_model::base_coordinate_t::Zero();
 
   ocs2::vector_t rAcc = robcogenCom_.calculateBaseLocalAccelerations(basePose, baseLocalVelocities, jointPositions, jointVelocities,
                                                                      jointAccelerations, forcesOnBaseInBaseFrame);
+  ocs2::vector_t pAcc = pinocchioCom_.calculateBaseLocalAccelerations(basePose, baseLocalVelocities, jointPositions, jointVelocities,
+                                                                      jointAccelerations, forcesOnBaseInBaseFrame);
 
-  for (int i = 0; i < 5; i++) {
-    pAcc = pinocchioCom_.calculateBaseLocalAccelerations(basePose, baseLocalVelocities, jointPositions, jointVelocities, jointAccelerations,
-                                                         forcesOnBaseInBaseFrame);
-    std::cerr << pAcc.transpose() << "\n";
-  }
   EXPECT_TRUE(pAcc.isApprox(rAcc)) << "Pinocchio: " << pAcc.transpose() << "\nRoboGen: " << rAcc.transpose();
 }
 
-// #include <pinocchio/multibody/data.hpp>
-// #include <pinocchio/multibody/model.hpp>
+#include <pinocchio/multibody/data.hpp>
+#include <pinocchio/multibody/model.hpp>
 
-// #include <pinocchio/algorithm/center-of-mass.hpp>
-// #include <pinocchio/algorithm/crba.hpp>
-// #include <pinocchio/algorithm/rnea.hpp>
+#include <pinocchio/algorithm/center-of-mass.hpp>
+#include <pinocchio/algorithm/crba.hpp>
+#include <pinocchio/algorithm/rnea.hpp>
 
-// TEST(Link, testLink) {
-//   auto p = createQuadrupedPinocchioInterface("/home/boom/anymal_ws/link.urdf");
-//   auto& data = p.getData();
-//   const auto& model = p.getModel();
+TEST(Link, testLink) {
+  auto p = createQuadrupedPinocchioInterface(ros::package::getPath("ocs2_anymal_models") + "/test/link.urdf");
+  auto& data = p.getData();
+  const auto& model = p.getModel();
+  ocs2::vector_t velocity(6);
+  // velocity << ocs2::vector_t::Random(6);
+  velocity << 10, 0, 10, 0, 0, 0;
 
-//   pinocchio::aba(model, data, ocs2::vector_t::Zero(8), const Eigen::MatrixBase<TangentVectorType1>& v,
-//                  const Eigen::MatrixBase<TangentVectorType2>& tau, const container::aligned_vector<ForceDerived>& fext);
-// }
+  const Eigen::Quaterniond baseQuat(Eigen::AngleAxisd(0, Eigen::Vector3d::UnitX()) *
+                                    Eigen::AngleAxisd(-90.0 * M_PI / 180.0, Eigen::Vector3d::UnitY()) *
+                                    Eigen::AngleAxisd(0, Eigen::Vector3d::UnitZ()));
+
+  ocs2::vector_t configuration(7);
+  configuration << baseQuat.coeffs(), 0, 0, 0;
+  ocs2::vector_t c = pinocchio::nonLinearEffects(model, data, configuration, velocity);
+  ocs2::vector_t g = pinocchio::computeGeneralizedGravity(model, data, configuration);
+  std::cerr << "c: " << c.transpose() << "\n"
+            << "g: " << g.transpose() << "\n";
+}

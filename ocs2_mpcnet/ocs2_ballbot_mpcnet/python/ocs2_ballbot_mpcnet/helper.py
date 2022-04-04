@@ -37,7 +37,8 @@ from typing import Tuple
 
 from ocs2_mpcnet_core import helper
 from ocs2_mpcnet_core import SystemObservationArray, ModeScheduleArray, TargetTrajectoriesArray
-from ocs2_ballbot_mpcnet import ballbot_config as config
+
+from ocs2_ballbot_mpcnet import config
 
 
 def get_default_event_times_and_mode_sequence(duration: float) -> Tuple[np.ndarray, np.ndarray]:

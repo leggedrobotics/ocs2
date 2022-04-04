@@ -47,8 +47,8 @@ from ocs2_mpcnet_core.loss.hamiltonian import HamiltonianLoss as Loss
 from ocs2_mpcnet_core.memory.circular import CircularMemory as Memory
 from ocs2_mpcnet_core.policy.linear import LinearPolicy as Policy
 
-from ocs2_ballbot_mpcnet import ballbot_config as config
-from ocs2_ballbot_mpcnet import ballbot_helper as helper
+from ocs2_ballbot_mpcnet import config
+from ocs2_ballbot_mpcnet import helper
 from ocs2_ballbot_mpcnet import MpcnetInterface
 
 # settings for data generation by applying behavioral policy

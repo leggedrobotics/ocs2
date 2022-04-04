@@ -186,11 +186,11 @@ visualization purposes on rviz, the joints under `removeJoints` in the `task.inf
 at zero joint positions by the dummy simulation node . 
 
 .. warning::
-    For these examples, the MPC has not been tuned to work on hardware.
-    Additionally, for some of the examples, the collision meshes need
-    to be processed into primitive shapes to allow collision avoidance.
+    For these examples, additional tuning of the MPC might be required to work on hardware.
+    Additionally, for some of the examples, the collision meshes need to be simplified into
+    primitive shapes (such as cylinders and boxes) to allow collision avoidance.
 
-    We welcome pull requests with the right tuning parameters.
+    We welcome contributions from the community for these use-cases.
 
 
 Mabi-Mobile

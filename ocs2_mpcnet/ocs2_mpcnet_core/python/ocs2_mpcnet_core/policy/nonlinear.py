@@ -38,7 +38,8 @@ import torch
 class NonlinearPolicy(torch.nn.Module):
     """Nonlinear policy.
 
-    Class for a simple nonlinear neural network policy, where the hidden layer is the mean of the input and output layer.
+    Class for a simple nonlinear neural network policy, where the hidden layer is the mean of the input and output
+    layer.
 
     Attributes:
         name: A string with the name of the policy.

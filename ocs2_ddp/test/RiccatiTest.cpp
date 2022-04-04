@@ -61,7 +61,7 @@ class RiccatiInitializer {
     projectedModelData.cost.dfdxx = ocs2::LinearAlgebra::generateSPDmatrix<ocs2::matrix_t>(stateDim);
     projectedModelData.cost.dfdu = ocs2::vector_t::Random(inputDim);
     projectedModelData.cost.dfduu.setIdentity(inputDim,
-                                               inputDim);  // Important: It is identity since it is a projected projectedModelData!
+                                              inputDim);  // Important: It is identity since it is a projected projectedModelData!
     projectedModelData.cost.dfdux = ocs2::matrix_t::Random(inputDim, stateDim);
     projectedModelData.stateEqConstraint.setZero(0, stateDim, 0);
     projectedModelData.stateInputEqConstraint.setZero(inputDim, stateDim, inputDim);

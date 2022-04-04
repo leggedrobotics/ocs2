@@ -78,8 +78,6 @@ TEST(StateRolloutTests, rolloutTestBallDynamics) {
   // Initial State
   vector_t initState(nx);
   initState << 1, 0;
-  // Initial Event times (none)
-  scalar_array_t eventTimes(1, t0);
   // Controller (time constant zero controller)
   scalar_array_t timestamp(1, t0);
 
@@ -97,11 +95,12 @@ TEST(StateRolloutTests, rolloutTestBallDynamics) {
   size_array_t eventsPastTheEndIndeces(0);
   vector_array_t stateTrajectory(0);
   vector_array_t inputTrajectory(0);
+  ocs2::ModeSchedule modeSchedule;
   // Output State
   vector_t finalState;
   // Run
   finalState =
-      rollout.run(t0, initState, t1, &control, eventTimes, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
+      rollout.run(t0, initState, t1, &control, modeSchedule, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
 
   scalar_t energyLast = 9.81 * stateTrajectory[0][0] + +0.5 * stateTrajectory[0][1] * stateTrajectory[0][1];
   size_t eventCounter = 0;
@@ -110,7 +109,7 @@ TEST(StateRolloutTests, rolloutTestBallDynamics) {
     // Test 1: Energy Conservation
     scalar_t energy = 9.81 * stateTrajectory[i][0] + 0.5 * stateTrajectory[i][1] * stateTrajectory[i][1];
     if (i != eventsPastTheEndIndeces[eventCounter]) {
-      EXPECT_LT(std::fabs(energy - energyLast), 1e-5);
+      EXPECT_NEAR(energy, energyLast, 1e-5);
     } else {
       eventCounter++;
     }
@@ -123,16 +122,20 @@ TEST(StateRolloutTests, rolloutTestBallDynamics) {
     }
   }
   // Test 3: Event times (due to high number of actual event times)
-  scalar_array_t eventTestTimes = {0.451523642, 0.594011465, 0.74139258,  0.901399703, 1.06631179,  1.24745334,  1.433332390,
-                                   2.130901210, 2.79359158,  3.423147440, 4.02122550,  4.58939966,  5.129165110, 5.641942290,
-                                   6.12908061,  6.591862020, 7.03150435,  7.44916457,  7.845941770, 8.222880120, 8.58097155,
-                                   8.921158410, 9.24433592,  9.55135456,  9.84302227};
+  const scalar_array_t eventTestTimes{0.451523642, 0.594011465, 0.74139258,  0.901399703, 1.06631179,  1.24745334,  1.433332390,
+                                      2.130901210, 2.79359158,  3.423147440, 4.02122550,  4.58939966,  5.129165110, 5.641942290,
+                                      6.12908061,  6.591862020, 7.03150435,  7.44916457,  7.845941770, 8.222880120, 8.58097155,
+                                      8.921158410, 9.24433592,  9.55135456,  9.84302227};
 
-  EXPECT_EQ(eventTestTimes.size(), eventsPastTheEndIndeces.size());
+  ASSERT_EQ(eventTestTimes.size(), eventsPastTheEndIndeces.size());
   for (int i = 0; i < eventsPastTheEndIndeces.size(); i++) {
-    if (i < eventTestTimes.size()) {
-      EXPECT_LT(std::fabs(timeTrajectory[eventsPastTheEndIndeces[i] - 1] - eventTestTimes[i]), 1e-6);
-    }
+    EXPECT_NEAR(timeTrajectory[eventsPastTheEndIndeces[i] - 1], eventTestTimes[i], 1e-6);
+  }
+
+  EXPECT_EQ(modeSchedule.eventTimes.size() + 1, modeSchedule.modeSequence.size());
+  ASSERT_EQ(eventTestTimes.size(), modeSchedule.eventTimes.size());
+  for (int i = 0; i < eventTestTimes.size(); i++) {
+    EXPECT_NEAR(eventTestTimes[i], modeSchedule.eventTimes[i], 1e-6);
   }
 }
 /*
@@ -163,8 +166,6 @@ TEST(StateRolloutTests, rolloutTestPendulumDynamics) {
   // Initial State
   vector_t initState(nx);
   initState << 3.1415, 0;
-  // Initial Event times (none)
-  scalar_array_t eventTimes(1, t0);
   // Controller (time constant zero controller)
   scalar_array_t timestamp(1, t0);
   // bias Array of Controller
@@ -183,11 +184,12 @@ TEST(StateRolloutTests, rolloutTestPendulumDynamics) {
   size_array_t eventsPastTheEndIndeces(0);
   vector_array_t stateTrajectory(0);
   vector_array_t inputTrajectory(0);
+  ocs2::ModeSchedule modeSchedule;
   // Output State
   vector_t finalState;
   // Run
   finalState =
-      rollout.run(t0, initState, t1, &control, eventTimes, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
+      rollout.run(t0, initState, t1, &control, modeSchedule, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
 
   scalar_t energyPrevious = 9.81 * 2;  // Initial energy (pendulum in upright position h = 2*L)
   size_t eventCounter = 0;
@@ -204,7 +206,7 @@ TEST(StateRolloutTests, rolloutTestPendulumDynamics) {
     scalar_t E = 9.81 * h + 0.5 * vsq;
 
     if (i != eventsPastTheEndIndeces[eventCounter]) {
-      EXPECT_LT(std::fabs(E - energyPrevious), 1e-5);
+      EXPECT_NEAR(E, energyPrevious, 1e-5);
     } else {
       eventCounter++;
     }
@@ -212,13 +214,17 @@ TEST(StateRolloutTests, rolloutTestPendulumDynamics) {
   }
 
   // Test 3: Event times
-  scalar_array_t eventTestTimes = {3.62891045, 5.0851566,  6.37201902, 7.57356039, 8.72247948,
-                                   9.83580023, 10.9237331, 11.9929386, 13.0480082, 14.0922308};
-  EXPECT_EQ(eventTestTimes.size(), eventsPastTheEndIndeces.size());
+  const scalar_array_t eventTestTimes{3.62891045, 5.0851566,  6.37201902, 7.57356039, 8.72247948,
+                                      9.83580023, 10.9237331, 11.9929386, 13.0480082, 14.0922308};
+  ASSERT_EQ(eventTestTimes.size(), eventsPastTheEndIndeces.size());
   for (int i = 0; i < eventsPastTheEndIndeces.size(); i++) {
-    if (i < eventTestTimes.size()) {
-      EXPECT_LT(std::fabs(timeTrajectory[eventsPastTheEndIndeces[i] - 1] - eventTestTimes[i]), 1e-6);
-    }
+    EXPECT_NEAR(timeTrajectory[eventsPastTheEndIndeces[i] - 1], eventTestTimes[i], 1e-6);
+  }
+
+  EXPECT_EQ(modeSchedule.eventTimes.size() + 1, modeSchedule.modeSequence.size());
+  ASSERT_EQ(eventTestTimes.size(), modeSchedule.eventTimes.size());
+  for (int i = 0; i < eventTestTimes.size(); i++) {
+    EXPECT_NEAR(eventTestTimes[i], modeSchedule.eventTimes[i], 1e-6);
   }
 }
 /*
@@ -238,9 +244,6 @@ TEST(StateRolloutTests, runHybridDynamics) {
   const size_t nx = 3;
   const size_t nu = 1;
 
-  // Create Logic Rules
-  std::vector<scalar_t> eventTimes(0);
-  std::vector<size_t> subsystemsSequence{1};
   // Construct State TriggerdRollout Object
   ocs2::rollout::Settings rolloutSettings;
   ocs2::HybridSysDynamics dynamics;
@@ -262,17 +265,18 @@ TEST(StateRolloutTests, runHybridDynamics) {
   gain << 0, 0, 0;
   matrix_array_t gainArray(1, gain);
   ocs2::LinearController control(timestamp, biasArray, gainArray);
-
+  ocs2::ModeSchedule modeSchedule;
   // Trajectory storage
   scalar_array_t timeTrajectory(0);
   size_array_t eventsPastTheEndIndeces(0);
   vector_array_t stateTrajectory(0);
   vector_array_t inputTrajectory(0);
+
   // Output State
   vector_t finalState;
   // Run
   finalState =
-      rollout.run(t0, initState, t1, &control, eventTimes, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
+      rollout.run(t0, initState, t1, &control, modeSchedule, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
 
   // Test (and display statetrajectory)
   for (int i = 0; i < timeTrajectory.size(); i++) {
@@ -286,11 +290,15 @@ TEST(StateRolloutTests, runHybridDynamics) {
   }
 
   // Test 3: Event times
-  scalar_array_t eventTestTimes = {0.126835459, 1.73439091, 2.25798967, 3.86554513, 4.38914388};
-  EXPECT_EQ(eventTestTimes.size(), eventsPastTheEndIndeces.size());
+  const scalar_array_t eventTestTimes{0.126835459, 1.73439091, 2.25798967, 3.86554513, 4.38914388};
+  ASSERT_EQ(eventTestTimes.size(), eventsPastTheEndIndeces.size());
   for (int i = 0; i < eventsPastTheEndIndeces.size(); i++) {
-    if (i < eventTestTimes.size()) {
-      EXPECT_LT(std::fabs(timeTrajectory[eventsPastTheEndIndeces[i] - 1] - eventTestTimes[i]), 1e-8);
-    }
+    EXPECT_NEAR(timeTrajectory[eventsPastTheEndIndeces[i] - 1], eventTestTimes[i], 1e-8);
+  }
+
+  EXPECT_EQ(modeSchedule.eventTimes.size() + 1, modeSchedule.modeSequence.size());
+  ASSERT_EQ(eventTestTimes.size(), modeSchedule.eventTimes.size());
+  for (int i = 0; i < eventTestTimes.size(); i++) {
+    EXPECT_NEAR(eventTestTimes[i], modeSchedule.eventTimes[i], 1e-6);
   }
 }

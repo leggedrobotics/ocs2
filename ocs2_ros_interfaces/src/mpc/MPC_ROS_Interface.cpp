@@ -127,11 +127,18 @@ ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface::createMpcPolicyMsg(const 
   mpcPolicyMsg.stateTrajectory.reserve(N);
   mpcPolicyMsg.data.clear();
   mpcPolicyMsg.data.reserve(N);
+  mpcPolicyMsg.postEventIndices.clear();
+  mpcPolicyMsg.postEventIndices.reserve(primalSolution.postEventIndices_.size());
 
   // time
   for (auto t : primalSolution.timeTrajectory_) {
     mpcPolicyMsg.timeTrajectory.emplace_back(t);
-  }  // end of k loop
+  }
+
+  // post-event indices
+  for (auto ind : primalSolution.postEventIndices_) {
+    mpcPolicyMsg.postEventIndices.emplace_back(static_cast<uint16_t>(ind));
+  }
 
   // state
   for (size_t k = 0; k < N; k++) {

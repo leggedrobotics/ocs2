@@ -13,6 +13,7 @@ mpc_target_trajectories planTargetTrajectories # target trajectory in cost funct
 mpc_state[]             stateTrajectory        # optimized state trajectory from planner
 mpc_input[]             inputTrajectory        # optimized input trajectory from planner
 float64[]               timeTrajectory         # time trajectory for stateTrajectory and inputTrajectory
+uint16[]                postEventIndices       # array of indices indicating the index of post-event time in the trajectories
 mode_schedule           modeSchedule           # optimal/predefined MPC mode sequence and event times
 
 controller_data[]       data                   # the actual payload from flatten method: one vector of data per time step

@@ -117,11 +117,12 @@ void MpcnetDummyLoopRos::rollout(scalar_t duration, const SystemObservation& ini
   // start of while loop
   while (time <= initialSystemObservation.time + duration) {
     // forward simulate system
+    ModeSchedule modeSchedule = rosReferenceManagerPtr_->getModeSchedule();
     scalar_array_t timeTrajectory;
     size_array_t postEventIndicesStock;
     vector_array_t stateTrajectory;
     vector_array_t inputTrajectory;
-    rolloutPtr_->run(time, state, time + timeStep, mpcnetPtr_.get(), {}, timeTrajectory, postEventIndicesStock, stateTrajectory,
+    rolloutPtr_->run(time, state, time + timeStep, mpcnetPtr_.get(), modeSchedule, timeTrajectory, postEventIndicesStock, stateTrajectory,
                      inputTrajectory);
 
     // update time, state and input

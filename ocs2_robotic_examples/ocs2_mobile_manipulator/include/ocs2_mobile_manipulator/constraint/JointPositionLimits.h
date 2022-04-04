@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,40 +25,31 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************/
+******************************************************************************/
 
 #pragma once
 
 #include <memory>
 
-#include <ocs2_core/initialization/Initializer.h>
-
-#include "ocs2_oc/rollout/RolloutBase.h"
+#include <ocs2_core/constraint/StateConstraint.h>
 
 namespace ocs2 {
+namespace mobile_manipulator {
 
-/**
- * This class is an interface class for forward rollout of the initializer.
- */
-class InitializerRollout : public RolloutBase {
+class JointPositionLimits final : public StateConstraint {
  public:
-  /**
-   * Constructor.
-   *
-   * @param [in] initializer: The initializer for the state and the input.
-   * @param [in] rolloutSettings: The rollout settings.
-   */
-  explicit InitializerRollout(const Initializer& initializer, rollout::Settings rolloutSettings = rollout::Settings());
+  explicit JointPositionLimits(size_t armDim) : StateConstraint(ConstraintOrder::Linear), armDim_(armDim) {}
+  ~JointPositionLimits() override = default;
+  JointPositionLimits* clone() const override { return new JointPositionLimits(*this); }
 
-  ~InitializerRollout() override = default;
-  InitializerRollout* clone() const override;
-
-  vector_t run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, ControllerBase* controller, ModeSchedule& modeSchedule,
-               scalar_array_t& timeTrajectory, size_array_t& postEventIndices, vector_array_t& stateTrajectory,
-               vector_array_t& inputTrajectory) override;
+  size_t getNumConstraints(scalar_t time) const override { return armDim_; }
+  vector_t getValue(scalar_t time, const vector_t& state, const PreComputation&) const override;
+  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const PreComputation&) const override;
 
  private:
-  std::unique_ptr<Initializer> initializerPtr_;
+  JointPositionLimits(const JointPositionLimits& other) = default;
+  const size_t armDim_;
 };
 
+}  // namespace mobile_manipulator
 }  // namespace ocs2

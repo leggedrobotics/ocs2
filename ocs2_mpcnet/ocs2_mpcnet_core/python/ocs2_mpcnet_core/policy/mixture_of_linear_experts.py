@@ -41,7 +41,7 @@ from ocs2_mpcnet_core.helper import bmv
 class MixtureOfLinearExpertsPolicy(torch.nn.Module):
     """Mixture of linear experts policy.
 
-    Class for a mixture of experts neural network with linear experts.
+    Class for a mixture of experts neural network policy with linear experts.
 
     Attributes:
         name: A string with the name of the policy.
@@ -72,7 +72,7 @@ class MixtureOfLinearExpertsPolicy(torch.nn.Module):
         self.gating_net = torch.nn.Sequential(torch.nn.Linear(self.dim_in, self.num_experts), torch.nn.Softmax(dim=1))
         # experts
         self.expert_nets = torch.nn.ModuleList(
-            [LinearExpert(i, self.dim_in, self.dim_out) for i in range(self.num_experts)]
+            [_LinearExpert(i, self.dim_in, self.dim_out) for i in range(self.num_experts)]
         )
 
     def forward(self, t: torch.Tensor, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -94,7 +94,7 @@ class MixtureOfLinearExpertsPolicy(torch.nn.Module):
         return u, p
 
 
-class LinearExpert(torch.nn.Module):
+class _LinearExpert(torch.nn.Module):
     """Linear expert.
 
     Class for a simple linear neural network expert.
@@ -107,9 +107,9 @@ class LinearExpert(torch.nn.Module):
     """
 
     def __init__(self, index: int, dim_in: int, dim_out: int) -> None:
-        """Initializes the LinearExpert class.
+        """Initializes the _LinearExpert class.
 
-        Initializes the LinearExpert class by setting fixed and variable attributes.
+        Initializes the _LinearExpert class by setting fixed and variable attributes.
 
         Args:
             index: An integer with the index of the expert.

@@ -47,8 +47,7 @@ class DiscreteTranscriptionTest : public testing::Test {
   DiscreteTranscriptionTest() {
     srand(0);
 
-    targetTrajectories =
-        ocs2::TargetTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
+    targetTrajectories = ocs2::TargetTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
 
     system = ocs2::getOcs2Dynamics(ocs2::getRandomDynamics(STATE_DIM, INPUT_DIM));
 

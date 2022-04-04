@@ -41,8 +41,8 @@ from ocs2_mpcnet_core.helper import bmv
 class MixtureOfNonlinearExpertsPolicy(torch.nn.Module):
     """Mixture of nonlinear experts policy.
 
-    Class for a mixture of experts neural network with nonlinear experts, where the hidden layer is the mean of the
-    input and output layer.
+    Class for a mixture of experts neural network policy with nonlinear experts, where the hidden layer is the mean of
+    the input and output layer.
 
     Attributes:
         name: A string with the name of the policy.
@@ -83,7 +83,7 @@ class MixtureOfNonlinearExpertsPolicy(torch.nn.Module):
         )
         # experts
         self.expert_nets = torch.nn.ModuleList(
-            [NonlinearExpert(i, self.dim_in, self.dim_hidden_expert, self.dim_out) for i in range(self.num_experts)]
+            [_NonlinearExpert(i, self.dim_in, self.dim_hidden_expert, self.dim_out) for i in range(self.num_experts)]
         )
 
     def forward(self, t: torch.Tensor, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -105,7 +105,7 @@ class MixtureOfNonlinearExpertsPolicy(torch.nn.Module):
         return u, p
 
 
-class NonlinearExpert(torch.nn.Module):
+class _NonlinearExpert(torch.nn.Module):
     """Nonlinear expert.
 
     Class for a simple nonlinear neural network expert, where the hidden layer is the mean of the input and output layer.
@@ -121,9 +121,9 @@ class NonlinearExpert(torch.nn.Module):
     """
 
     def __init__(self, index: int, dim_in: int, dim_hidden: int, dim_out: int) -> None:
-        """Initializes the NonlinearExpert class.
+        """Initializes the _NonlinearExpert class.
 
-        Initializes the NonlinearExpert class by setting fixed and variable attributes.
+        Initializes the _NonlinearExpert class by setting fixed and variable attributes.
 
         Args:
             index: An integer with the index of the expert.

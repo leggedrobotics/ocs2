@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/integration/StateTriggeredEventHandler.h>
 
-#include "RolloutBase.h"
+#include "ocs2_oc/rollout/RolloutBase.h"
 
 namespace ocs2 {
 
@@ -45,46 +45,28 @@ namespace ocs2 {
  */
 class StateTriggeredRollout : public RolloutBase {
  public:
-  using RolloutBase::time_interval_array_t;
-
   /**
    * Constructor.
    *
    * @param [in] systemDynamics: The system dynamics for forward rollout.
    * @param [in] rolloutSettings: The rollout settings.
    */
-  explicit StateTriggeredRollout(const ControlledSystemBase& systemDynamics, rollout::Settings rolloutSettings = rollout::Settings())
-      : RolloutBase(std::move(rolloutSettings)),
-        systemDynamicsPtr_(systemDynamics.clone()),
-        systemEventHandlersPtr_(new StateTriggeredEventHandler(this->settings().timeStep)) {
-    // construct dynamicsIntegratorsPtr
-    dynamicsIntegratorPtr_ = std::move(newIntegrator(this->settings().integratorType, systemEventHandlersPtr_));
-  }
+  explicit StateTriggeredRollout(const ControlledSystemBase& systemDynamics, rollout::Settings rolloutSettings = rollout::Settings());
 
-  /**
-   * Default destructor.
-   */
   ~StateTriggeredRollout() override = default;
-
   StateTriggeredRollout(const StateTriggeredRollout&) = delete;
-
   StateTriggeredRollout& operator=(const StateTriggeredRollout&) = delete;
-
   StateTriggeredRollout* clone() const override { return new StateTriggeredRollout(*systemDynamicsPtr_, this->settings()); }
 
-  /**
-   * Returns the underlying dynamics
-   */
+  /** Returns the underlying dynamics. */
   ControlledSystemBase* systemDynamicsPtr() { return systemDynamicsPtr_.get(); }
 
   void abortRollout() override { systemEventHandlersPtr_->killIntegration_ = true; }
-
   void reactivateRollout() override { systemEventHandlersPtr_->killIntegration_ = false; }
 
- protected:
-  vector_t runImpl(const time_interval_array_t& timeIntervalArray, const vector_t& initState, ControllerBase* controller,
-                   scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces, vector_array_t& stateTrajectory,
-                   vector_array_t& inputTrajectory) override;
+  vector_t run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, ControllerBase* controller, ModeSchedule& modeSchedule,
+               scalar_array_t& timeTrajectory, size_array_t& postEventIndices, vector_array_t& stateTrajectory,
+               vector_array_t& inputTrajectory) override;
 
  private:
   std::unique_ptr<PreComputation> preCompPtr_;

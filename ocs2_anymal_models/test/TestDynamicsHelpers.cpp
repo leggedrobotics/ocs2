@@ -4,12 +4,14 @@
 
 #include <gtest/gtest.h>
 
-#include <ocs2_anymal_models/RobcogenHelpers.h>
+#include <ocs2_anymal_models/DynamicsHelpers.h>
+
+#include <ocs2_switched_model_interface/core/Rotations.h>
 
 using namespace switched_model;
 
 TEST(TestInertiaInverse, inv33sym) {
-  using anymal::robcogen_helpers::inv33sym;
+  using anymal::inv33sym;
 
   matrix3_t Ahalf = matrix3_t::Random();
   matrix3_t A = Ahalf.transpose() * Ahalf;
@@ -20,7 +22,7 @@ TEST(TestInertiaInverse, inv33sym) {
 }
 
 TEST(TestInertiaInverse, solve33sym) {
-  using anymal::robcogen_helpers::solve33sym;
+  using anymal::solve33sym;
 
   matrix3_t Ahalf = matrix3_t::Random();
   vector3_t b = vector3_t::Random();
@@ -33,7 +35,7 @@ TEST(TestInertiaInverse, solve33sym) {
 }
 
 TEST(TestInertiaInverse, inertiaTensorSolve) {
-  using anymal::robcogen_helpers::inertiaTensorSolve;
+  using anymal::inertiaTensorSolve;
 
   // Construct a inertia tensor
   double m = 10.0;
@@ -41,7 +43,7 @@ TEST(TestInertiaInverse, inertiaTensorSolve) {
   vector3_t comVector = vector3_t::Random();
   matrix3_t crossTerm = crossProductMatrix<scalar_t>(m * comVector);
   matrix6_t M;
-  M << Ihalf.transpose() * Ihalf + 1.0 / m * crossTerm * crossTerm.transpose(), crossTerm, crossTerm.transpose(), m * matrix3_t::Identity();
+  M << m * matrix3_t::Identity(), crossTerm.transpose(), crossTerm, Ihalf.transpose() * Ihalf + 1.0 / m * crossTerm * crossTerm.transpose();
 
   // Check if the eigenvalues are valid
   ASSERT_GT(M.eigenvalues().real().minCoeff(), 0.0);

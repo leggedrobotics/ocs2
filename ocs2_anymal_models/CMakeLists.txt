@@ -101,7 +101,7 @@ catkin_add_gtest(${PROJECT_NAME}_switched_model_test
   test/TestAnymalChimera.cpp
   test/TestAnymalWheels.cpp
   test/TestAnymalWheelsChimera.cpp
-  test/TestRobcogenHelpers.cpp
+  test/TestDynamicsHelpers.cpp
 )
 target_link_libraries(${PROJECT_NAME}_switched_model_test
   ${PROJECT_NAME}

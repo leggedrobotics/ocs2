@@ -19,7 +19,6 @@ class QuadrupedPinocchioMappingTpl final {
   joint_coordinate_t mapJointOcs2ToPinocchio(const joint_coordinate_t& state) const;
 
  private:
-  // QuadrupedPinocchioMappingTpl(const QuadrupedPinocchioMappingTpl& rhs) = default;
   switched_model::feet_array_t<std::size_t> mapFeetOrderOcs2ToPinocchio_;
 };
 

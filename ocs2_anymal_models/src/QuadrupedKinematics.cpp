@@ -18,10 +18,10 @@ QuadrupedKinematics<SCALAR_T>::QuadrupedKinematics(const ocs2::PinocchioInterfac
   // Frame index mapping
   auto checkAndSetIndex = [this](std::size_t footIndex, const FrameIndex frameIndex, const std::string& name) {
     const auto& model = pinocchioInterfacePtr_->getModel();
-    if (model.existFrame(name)) {
-      mapFrameIndexToId_[footIndex].setId(frameIndex, model.getFrameId(name));
+    if (model.existBodyName(name)) {
+      mapFrameIndexToId_[footIndex].setId(frameIndex, model.getBodyId(name));
     } else {
-      throw std::runtime_error("[QuadrupedKinematics] Frame " + name + " does not exist.");
+      throw std::runtime_error("[QuadrupedKinematics] Body " + name + " does not exist.");
     }
   };
   for (std::size_t i = 0; i < switched_model::NUM_CONTACT_POINTS; ++i) {

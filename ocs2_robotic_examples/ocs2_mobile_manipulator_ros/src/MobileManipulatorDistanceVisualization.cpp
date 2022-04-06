@@ -31,10 +31,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/multibody/geometry.hpp>
 
 #include <ocs2_core/misc/LoadData.h>
+#include <ocs2_core/misc/LoadStdVectorOfPair.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
 #include <ocs2_self_collision/PinocchioGeometryInterface.h>
-#include <ocs2_self_collision/loadStdVectorOfPair.h>
 #include <ocs2_self_collision_visualization/GeometryInterfaceVisualization.h>
 
 #include <ocs2_mobile_manipulator/FactoryFunctions.h>

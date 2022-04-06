@@ -43,7 +43,9 @@ include_directories(
 
 add_library(${PROJECT_NAME}
   src/AnymalModels.cpp
+  src/QuadrupedPinocchioMapping.cpp
   src/QuadrupedKinematics.cpp
+  src/QuadrupedCom.cpp
   src/bear/AnymalBearCom.cpp
   src/bear/AnymalBearKinematics.cpp
   src/bear/WholebodyDynamicsBear.cpp
@@ -99,7 +101,7 @@ catkin_add_gtest(${PROJECT_NAME}_switched_model_test
   test/TestAnymalChimera.cpp
   test/TestAnymalWheels.cpp
   test/TestAnymalWheelsChimera.cpp
-  test/TestRobcogenHelpers.cpp
+  test/TestDynamicsHelpers.cpp
 )
 target_link_libraries(${PROJECT_NAME}_switched_model_test
   ${PROJECT_NAME}
@@ -111,6 +113,15 @@ catkin_add_gtest(TestQuadrupedPinocchioKinematics
   test/TestQuadrupedPinocchioKinematics.cpp
 )
 target_link_libraries(TestQuadrupedPinocchioKinematics
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
+
+catkin_add_gtest(TestQuadrupedPinocchioCom
+  test/TestQuadrupedPinocchioCom.cpp
+)
+target_link_libraries(TestQuadrupedPinocchioCom
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   gtest_main

@@ -36,9 +36,39 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace loadData {
 
+/**
+ * An auxiliary function which loads a vector of string pairs from a file.
+ *
+ * It has the following format:	<br>
+ * topicName	<br>
+ * {	<br>
+ *   [0] "value1, value2"	<br>
+ *   [2] "value1, value2"	<br>
+ *   [1] "value1, value2"	<br>
+ * } 	<br>
+ *
+ * @param [in] filename: File name which contains the configuration data.
+ * @param [in] topicName: The key name assigned in the config file.
+ * @param [out] loadVector: The loaded vector of pairs of strings.
+ */
 extern void loadStdVectorOfPair(const std::string& filename, const std::string& topicName,
                                 std::vector<std::pair<std::string, std::string>>& loadVector, bool verbose = true);
 
+/**
+ * An auxiliary function which loads a vector of integer pairs from a file.
+ *
+ * It has the following format:	<br>
+ * topicName	<br>
+ * {	<br>
+ *   [0] "value1, value2"	<br>
+ *   [2] "value1, value2"	<br>
+ *   [1] "value1, value2"	<br>
+ * } 	<br>
+ *
+ * @param [in] filename: File name which contains the configuration data.
+ * @param [in] topicName: The key name assigned in the config file.
+ * @param [out] loadVector: The loaded vector of pairs of integer.
+ */
 extern void loadStdVectorOfPair(const std::string& filename, const std::string& topicName,
                                 std::vector<std::pair<size_t, size_t>>& loadVector, bool verbose = true);
 

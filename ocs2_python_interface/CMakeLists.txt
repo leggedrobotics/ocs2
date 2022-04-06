@@ -14,7 +14,6 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
-find_package(Boost REQUIRED COMPONENTS filesystem)
 
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -31,8 +30,6 @@ catkin_package(
     ${PROJECT_NAME}
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
-  DEPENDS
-    Boost
 )
 
 ###########
@@ -71,6 +68,5 @@ catkin_add_gtest(testDummyPyBindings
 target_link_libraries(testDummyPyBindings
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
   gtest_main
 )

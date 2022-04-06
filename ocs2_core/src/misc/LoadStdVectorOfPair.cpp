@@ -28,10 +28,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
 #include <algorithm>
-#include <boost/tokenizer.hpp>
 #include <string>
 #include <type_traits>
 #include <utility>
+
+#include <boost/tokenizer.hpp>
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/misc/LoadData.h>

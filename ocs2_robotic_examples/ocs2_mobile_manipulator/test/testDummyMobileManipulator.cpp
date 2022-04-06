@@ -267,14 +267,14 @@ INSTANTIATE_TEST_CASE_P(
     testing::Values(
         // franka panda: 7-Dof arm
         std::make_tuple("franka/task.info", "franka", "franka/urdf/panda.urdf",
-                        vector3_t(-0.2, -0.2, 0.6), quaternion_t(0.33, 0.0, 0.0, 0.95)),
+                        vector3_t(0.4, 0.1, 0.5), quaternion_t(0.33, 0.0, 0.0, 0.95)),
         // kinova jaco2: 6-Dof arm
         std::make_tuple("kinova/task_j2n6.info", "kinova/j2n6",
-                        "kinova/urdf/j2n6s300.urdf", vector3_t(-0.2, -0.2, 0.6), 
+                        "kinova/urdf/j2n6s300.urdf", vector3_t(0.2, 0.2, 0.6), 
                         quaternion_t(0.33, 0.0, 0.0, 0.95)),
         // kinova jaco2: 7-Dof arm
         std::make_tuple("kinova/task_j2n7.info", "kinova/j2n7",
-                        "kinova/urdf/j2n7s300.urdf", vector3_t(-0.2, -0.2, 0.6),
+                        "kinova/urdf/j2n7s300.urdf", vector3_t(0.2, 0.2, 0.6),
                         quaternion_t(0.33, 0.0, 0.0, 0.95)),
         // mabi-mobile: SE(2) + 6-Dof arm
         std::make_tuple("mabi_mobile/task.info", "mabi_mobile",

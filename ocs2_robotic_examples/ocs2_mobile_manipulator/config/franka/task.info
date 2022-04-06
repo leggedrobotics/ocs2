@@ -190,20 +190,20 @@ inputCost
 endEffector
 {
   ; end effector quadratic penalty scaling
-  muPosition      10.0
-  muOrientation    5.0
+  muPosition      50.0
+  muOrientation   25.0
 }
 
 finalEndEffector
 {
-  muPosition      10.0
-  muOrientation    5.0
+  muPosition      50.0
+  muOrientation   25.0
 }
 
 selfCollision
 { 
   ; activate self-collision constraint
-  activate  false
+  activate  true
 
   ; Self Collision raw object pairs
   collisionObjectPairs
@@ -217,7 +217,7 @@ selfCollision
   }
 
   ; minimum distance allowed between the pairs
-  minimumDistance  0.1
+  minimumDistance  0.05
 
   ; relaxed log barrier mu
   mu      1e-2
@@ -233,10 +233,10 @@ jointPositionLimits
   activate  false
 
   ; relaxed log barrier mu
-  mu      0.001
+  mu      1e-3
 
   ; relaxed log barrier delta
-  delta   1e-3
+  delta   1e-4
 }
 
 jointVelocityLimits

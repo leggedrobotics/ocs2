@@ -28,28 +28,29 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
 #include <algorithm>
+#include <boost/tokenizer.hpp>
 #include <string>
 #include <type_traits>
 #include <utility>
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/misc/LoadData.h>
-#include <ocs2_self_collision/loadStdVectorOfPair.h>
 
-#include <boost/tokenizer.hpp>
+#include "ocs2_core/misc/LoadStdVectorOfPair.h"
 
 namespace ocs2 {
+namespace internal {
 
-template <typename First, typename Second>
+template <typename T1, typename T2>
 class ExtendedPair {
  public:
-  First first;
-  Second second;
+  T1 first;
+  T2 second;
 
-  using stdPair = std::pair<First, Second>;
+  using stdPair = std::pair<T1, T2>;
 
   // conversion operator to std::pair
-  explicit operator stdPair() const { return std::pair<First, Second>(first, second); }
+  explicit operator stdPair() const { return std::pair<T1, T2>(first, second); }
 
   friend std::ostream& operator<<(std::ostream& stream, const ExtendedPair& pair) {
     stream << "[" << pair.first << ", " << pair.second << "]";
@@ -57,16 +58,17 @@ class ExtendedPair {
   }
 };
 
+}  // namespace internal
 }  // namespace ocs2
 
 namespace boost {
 namespace property_tree {
 
 template <>
-struct translator_between<std::string, ocs2::ExtendedPair<size_t, size_t>> {
+struct translator_between<std::string, ocs2::internal::ExtendedPair<size_t, size_t>> {
   struct type {
     using internal_type = std::string;
-    using external_type = ocs2::ExtendedPair<size_t, size_t>;
+    using external_type = ocs2::internal::ExtendedPair<size_t, size_t>;
     using separator = boost::char_separator<char>;
 
     boost::optional<external_type> get_value(const internal_type& str) {
@@ -92,10 +94,10 @@ struct translator_between<std::string, ocs2::ExtendedPair<size_t, size_t>> {
 };
 
 template <>
-struct translator_between<std::string, ocs2::ExtendedPair<std::string, std::string>> {
+struct translator_between<std::string, ocs2::internal::ExtendedPair<std::string, std::string>> {
   struct type {
     using internal_type = std::string;
-    using external_type = ocs2::ExtendedPair<std::string, std::string>;
+    using external_type = ocs2::internal::ExtendedPair<std::string, std::string>;
     using separator = boost::char_separator<char>;
 
     boost::optional<external_type> get_value(const internal_type& str) {
@@ -126,14 +128,14 @@ struct translator_between<std::string, ocs2::ExtendedPair<std::string, std::stri
 namespace ocs2 {
 namespace loadData {
 
-template <typename First, typename Second>
-void loadStdVectorOfPairImpl(const std::string& filename, const std::string& topicName, std::vector<std::pair<First, Second>>& loadVector,
+template <typename T1, typename T2>
+void loadStdVectorOfPairImpl(const std::string& filename, const std::string& topicName, std::vector<std::pair<T1, T2>>& loadVector,
                              bool verbose = true) {
-  std::vector<ExtendedPair<First, Second>> extendedPairVector;
+  std::vector<internal::ExtendedPair<T1, T2>> extendedPairVector;
   loadStdVector(filename, topicName, extendedPairVector, verbose);
   if (!extendedPairVector.empty()) {
     loadVector.clear();
-    auto toStdPair = [](const ExtendedPair<First, Second>& p) { return std::pair<First, Second>(p); };
+    auto toStdPair = [](const internal::ExtendedPair<T1, T2>& p) { return std::pair<T1, T2>(p); };
     std::transform(extendedPairVector.begin(), extendedPairVector.end(), std::back_inserter(loadVector), toStdPair);
   }
 }

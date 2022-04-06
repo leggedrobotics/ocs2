@@ -267,7 +267,7 @@ INSTANTIATE_TEST_CASE_P(
     testing::Values(
         // franka panda: 7-Dof arm
         std::make_tuple("franka/task.info", "franka", "franka/urdf/panda.urdf",
-                        vector3_t(-0.25, -0.25, 0.5), quaternion_t(0.33, 0.0, 0.0, 0.95)),
+                        vector3_t(-0.3, -0.3, 0.5), quaternion_t(0.33, 0.0, 0.0, 0.95)),
         // kinova jaco2: 6-Dof arm
         std::make_tuple("kinova/task_j2n6.info", "kinova/j2n6",
                         "kinova/urdf/j2n6s300.urdf", vector3_t(-0.2, -0.2, 0.6), 

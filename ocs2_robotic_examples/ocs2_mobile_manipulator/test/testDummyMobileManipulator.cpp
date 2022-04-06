@@ -267,14 +267,14 @@ INSTANTIATE_TEST_CASE_P(
     testing::Values(
         // franka panda: 7-Dof arm
         std::make_tuple("franka/task.info", "franka", "franka/urdf/panda.urdf",
-                        vector3_t(-0.3, -0.3, 0.5), quaternion_t(0.33, 0.0, 0.0, 0.95)),
+                        vector3_t(-0.25, -0.25, 0.5), quaternion_t(0.33, 0.0, 0.0, 0.95)),
         // kinova jaco2: 6-Dof arm
         std::make_tuple("kinova/task_j2n6.info", "kinova/j2n6",
-                        "kinova/urdf/j2n6s300.urdf", vector3_t(-0.3, -0.3, 0.5), 
+                        "kinova/urdf/j2n6s300.urdf", vector3_t(-0.2, -0.2, 0.6), 
                         quaternion_t(0.33, 0.0, 0.0, 0.95)),
         // kinova jaco2: 7-Dof arm
         std::make_tuple("kinova/task_j2n7.info", "kinova/j2n7",
-                        "kinova/urdf/j2n7s300.urdf", vector3_t(-0.3, -0.3, 0.5), 
+                        "kinova/urdf/j2n7s300.urdf", vector3_t(-0.25, -0.25, 0.5), 
                         quaternion_t(0.33, 0.0, 0.0, 0.95)),
         // mabi-mobile: SE(2) + 6-Dof arm
         std::make_tuple("mabi_mobile/task.info", "mabi_mobile",
@@ -286,7 +286,8 @@ INSTANTIATE_TEST_CASE_P(
         // ridgeback with ur5: SE(2) + 6-Dof arm
         std::make_tuple("ridgeback_ur5/task.info", "ridgeback_ur5",
                         "ridgeback_ur5/urdf/ridgeback_ur5.urdf", 
-                        vector3_t(-0.5, -0.8, 0.6), quaternion_t(0.33, 0.0, 0.0, 0.95))),
+                        vector3_t(-0.5, -0.8, 0.6), quaternion_t(0.33, 0.0, 0.0, 0.95))
+      ),
     [](const testing::TestParamInfo<DummyMobileManipulatorParametersTests::ParamType>& info) {
       /* returns test name for gtest summary */
       std::string robotName = std::get<1>(info.param);

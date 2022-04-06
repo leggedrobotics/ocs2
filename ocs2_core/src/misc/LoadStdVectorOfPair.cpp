@@ -40,11 +40,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_core/misc/LoadStdVectorOfPair.h"
 
 namespace ocs2 {
-namespace internal {
+namespace anonymous {
 
 template <typename T1, typename T2>
-class ExtendedPair {
- public:
+struct ExtendedPair {
   T1 first;
   T2 second;
 
@@ -59,17 +58,17 @@ class ExtendedPair {
   }
 };
 
-}  // namespace internal
+}  // namespace anonymous
 }  // namespace ocs2
 
 namespace boost {
 namespace property_tree {
 
 template <>
-struct translator_between<std::string, ocs2::internal::ExtendedPair<size_t, size_t>> {
+struct translator_between<std::string, ocs2::anonymous::ExtendedPair<size_t, size_t>> {
   struct type {
     using internal_type = std::string;
-    using external_type = ocs2::internal::ExtendedPair<size_t, size_t>;
+    using external_type = ocs2::anonymous::ExtendedPair<size_t, size_t>;
     using separator = boost::char_separator<char>;
 
     boost::optional<external_type> get_value(const internal_type& str) {
@@ -95,10 +94,10 @@ struct translator_between<std::string, ocs2::internal::ExtendedPair<size_t, size
 };
 
 template <>
-struct translator_between<std::string, ocs2::internal::ExtendedPair<std::string, std::string>> {
+struct translator_between<std::string, ocs2::anonymous::ExtendedPair<std::string, std::string>> {
   struct type {
     using internal_type = std::string;
-    using external_type = ocs2::internal::ExtendedPair<std::string, std::string>;
+    using external_type = ocs2::anonymous::ExtendedPair<std::string, std::string>;
     using separator = boost::char_separator<char>;
 
     boost::optional<external_type> get_value(const internal_type& str) {
@@ -132,11 +131,11 @@ namespace loadData {
 template <typename T1, typename T2>
 void loadStdVectorOfPairImpl(const std::string& filename, const std::string& topicName, std::vector<std::pair<T1, T2>>& loadVector,
                              bool verbose = true) {
-  std::vector<internal::ExtendedPair<T1, T2>> extendedPairVector;
+  std::vector<anonymous::ExtendedPair<T1, T2>> extendedPairVector;
   loadStdVector(filename, topicName, extendedPairVector, verbose);
   if (!extendedPairVector.empty()) {
     loadVector.clear();
-    auto toStdPair = [](const internal::ExtendedPair<T1, T2>& p) { return std::pair<T1, T2>(p); };
+    auto toStdPair = [](const anonymous::ExtendedPair<T1, T2>& p) { return std::pair<T1, T2>(p); };
     std::transform(extendedPairVector.begin(), extendedPairVector.end(), std::back_inserter(loadVector), toStdPair);
   }
 }

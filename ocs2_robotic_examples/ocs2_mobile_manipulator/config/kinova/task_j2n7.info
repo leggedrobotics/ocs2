@@ -13,47 +13,49 @@ model_information {
   }
 
   ; base frame of the robot (from URDF)
-  baseFrame                "root"
+  baseFrame                     "root"
   ; end-effector frame of the robot (from URDF)
-  eeFrame                  "j2n7s300_end_effector"
+  eeFrame                       "j2n7s300_end_effector"
 }
 
 model_settings
 {
-  usePreComputation             true
-  recompileLibraries            true
+  usePreComputation               true
+  recompileLibraries              true
 }
 
 ; DDP settings
 ddp
 {
-  algorithm                     SLQ
+  algorithm                       SLQ
 
-  nThreads                      3
+  nThreads                        3
+  threadPriority                  50
 
-  maxNumIterations              10
-  minRelCost                    0.1
-  constraintTolerance           1e-3
+  maxNumIterations                10
+  minRelCost                      0.1
+  constraintTolerance             1e-3
 
-  displayInfo                   false
-  displayShortSummary           false
-  checkNumericalStability       false
+  displayInfo                     false
+  displayShortSummary             false
+  checkNumericalStability         false
+  debugPrintRollout               false
+  debugCaching                    false
 
-  AbsTolODE                     1e-5
-  RelTolODE                     1e-3
-  timeStep                      1e-3
-  maxNumStepsPerSecond          100000
-  backwardPassIntegratorType    ODE45
+  AbsTolODE                       1e-5
+  RelTolODE                       1e-3
+  maxNumStepsPerSecond            100000
+  timeStep                        1e-3
+  backwardPassIntegratorType      ODE45
 
-  inequalityConstraintMu        100.0
-  inequalityConstraintDelta     1.1
+  constraintPenaltyInitialValue   20.0
+  constraintPenaltyIncreaseRate   2.0
 
-  preComputeRiccatiTerms        true
-  useNominalTimeForBackwardPass false
+  preComputeRiccatiTerms          true
 
-  useFeedbackPolicy             false
+  useFeedbackPolicy               false
 
-  strategy                      LINE_SEARCH
+  strategy                        LINE_SEARCH
   lineSearch
   {
     minStepLength                 1e-2
@@ -66,34 +68,25 @@ ddp
 ; Rollout settings
 rollout
 {
-  AbsTolODE                     1e-5
-  RelTolODE                     1e-3
-  timeStep                      1e-2
-  maxNumStepsPerSecond          100000
-  checkNumericalStability       false
+  AbsTolODE                       1e-5
+  RelTolODE                       1e-3
+  timeStep                        1e-2
+  integratorType                  ODE45
+  maxNumStepsPerSecond            100000
+  checkNumericalStability         false
 }
 
 ; MPC settings
 mpc
 {
-  timeHorizon                    1.0
-  numPartitions                  4
+  timeHorizon                     1.0   ; [s]
+  solutionTimeWindow              0.2   ; [s]
+  coldStart                       false
+  
+  debugPrint                      false
 
-  runtimeMaxNumIterations        1
-  initMaxNumIterations           10
-
-  runtimeMaxStepLength           1.0
-  runtimeMinStepLength           1e-2
-  initMaxStepLength              1.0
-  initMinStepLength              1e-2
-
-  debugPrint                     false
-  coldStart                      false
-
-  solutionTimeWindow             0.2   ; [s]
-
-  mpcDesiredFrequency            100   ; [Hz]
-  mrtDesiredFrequency            400   ; [Hz]
+  mpcDesiredFrequency             100   ; [Hz]
+  mrtDesiredFrequency             400   ; [Hz]
 }
 
 ; initial state
@@ -203,14 +196,14 @@ inputCost
 endEffector
 {
   ; end effector quadratic penalty scaling
-  muPosition  10.0
-  muOrientation  5.0
+  muPosition      10.0
+  muOrientation    5.0
 }
 
 finalEndEffector
 {
-  muPosition  10.0
-  muOrientation  5.0
+  muPosition      10.0
+  muOrientation    5.0
 }
 
 selfCollision

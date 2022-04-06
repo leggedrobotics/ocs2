@@ -6,8 +6,8 @@ Frequently Asked Questions
 ==========================
 
 
-At runtime, I receive warnings on thread priority
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+At runtime, I receive warnings on setting thread priority
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The priority of a thread affects how the thread is scheduled by the OS. 
 A higher priority thread is likely to be scheduled more often and lowers 

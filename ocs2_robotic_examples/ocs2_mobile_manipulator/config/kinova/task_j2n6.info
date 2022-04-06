@@ -32,7 +32,7 @@ ddp
   nThreads                        3
   threadPriority                  50
 
-  maxNumIterations                10
+  maxNumIterations                1
   minRelCost                      0.1
   constraintTolerance             1e-3
 

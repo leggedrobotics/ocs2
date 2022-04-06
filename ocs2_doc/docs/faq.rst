@@ -24,7 +24,7 @@ your username):
 
 .. code-block::
     
-    <username>       -       rtprio           50
+    <username>       -       rtprio           99
     <username>       -       nice            -20
 
 To allow your entire group to set higher priorities, append (replacing <groupname>
@@ -32,9 +32,6 @@ with the created group name):
 
 .. code-block::
 
-    @<groupname>     -       rtprio           50
+    @<groupname>     -       rtprio           99
     @<groupname>     -       nice            -20
-
-
-
 

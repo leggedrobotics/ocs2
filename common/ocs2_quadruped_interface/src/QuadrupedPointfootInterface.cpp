@@ -52,6 +52,9 @@ QuadrupedPointfootInterface::QuadrupedPointfootInterface(const kinematic_model_t
   problemPtr_->finalCostPtr->add("lqr_terminal_cost", createMotionTrackingTerminalCost(lqrSolution.valueFunction));
 
   // Store cost approximation at nominal state input
+  auto& preComputation = *problemPtr_->preComputationPtr;
+  constexpr auto request = ocs2::Request::Cost + ocs2::Request::SoftConstraint + ocs2::Request::Approximation;
+  preComputation.request(request, 0.0, getInitialState(), uSystemForWeightCompensation);
   nominalCostApproximation_ = ocs2::approximateCost(*problemPtr_, 0.0, getInitialState(), uSystemForWeightCompensation);
 
   // Reset, the target trajectories pointed to are local

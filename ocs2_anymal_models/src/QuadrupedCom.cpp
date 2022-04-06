@@ -1,7 +1,10 @@
 #include "ocs2_anymal_models/QuadrupedCom.h"
 #include "ocs2_anymal_models/DynamicsHelpers.h"
 
+#include <ocs2_switched_model_interface/core/Rotations.h>
+
 #include <ocs2_pinocchio_interface/urdf.h>
+
 // Pinocchio
 #include <pinocchio/multibody/data.hpp>
 #include <pinocchio/multibody/model.hpp>
@@ -45,10 +48,6 @@ switched_model::base_coordinate_s_t<SCALAR_T> QuadrupedCom<SCALAR_T>::calculateB
     const switched_model::base_coordinate_s_t<SCALAR_T>& forcesOnBaseInBaseFrame) const {
   auto& data = pinocchioInterfacePtr_->getData();
   const auto& model = pinocchioInterfacePtr_->getModel();
-  const Eigen::Quaternion<SCALAR_T> baseQuat(Eigen::AngleAxis<SCALAR_T>(basePose(0), Eigen::Matrix<SCALAR_T, 3, 1>::UnitX()) *
-                                             Eigen::AngleAxis<SCALAR_T>(basePose(1), Eigen::Matrix<SCALAR_T, 3, 1>::UnitY()) *
-                                             Eigen::AngleAxis<SCALAR_T>(basePose(2), Eigen::Matrix<SCALAR_T, 3, 1>::UnitZ()));
-
   auto jointOcs2ToPinocchio = [this](vector_t joint) -> vector_t { return pinocchioMapping_.mapJointOcs2ToPinocchio(joint); };
   /**
    * pinocchio state = [basePos(0-2) baseQuad(3-6) q(7-18)]
@@ -66,6 +65,7 @@ switched_model::base_coordinate_s_t<SCALAR_T> QuadrupedCom<SCALAR_T>::calculateB
   vector_t configuration = vector_t::Zero(model.nq);
   // Leave basePos empty here - Not necessary to fill
   // baseQuad
+  const Eigen::Quaternion<SCALAR_T> baseQuat = switched_model::quaternionBaseToOrigin<SCALAR_T>(switched_model::getOrientation(basePose));
   configuration.template segment<4>(3) = baseQuat.coeffs();
   // JointsPos
   configuration.template segment<switched_model::JOINT_COORDINATE_SIZE>(7) = jointOcs2ToPinocchio(jointPositions);
@@ -94,8 +94,7 @@ switched_model::base_coordinate_s_t<SCALAR_T> QuadrupedCom<SCALAR_T>::calculateB
 
   // M are symmetric but pinocchio only fills in the upper triangle.
   switched_model::matrix6_s_t<SCALAR_T> Mb = data.M.topLeftCorner(6, 6).template selfadjointView<Eigen::Upper>();
-  // vector_t baseAcceleration = data.M.topLeftCorner(6, 6).llt().solve(baseForcesInBaseFrame);
-  vector_t baseAcceleration = inertiaTensorSolve(Mb, baseForcesInBaseFrame);
+  vector_t baseAcceleration = inertiaTensorSolveLinearAngular(Mb, baseForcesInBaseFrame);
 
   vector_t ocs2baseAcceleration(6);
   // Angular

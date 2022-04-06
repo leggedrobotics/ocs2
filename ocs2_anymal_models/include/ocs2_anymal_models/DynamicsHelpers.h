@@ -73,9 +73,9 @@ switched_model::vector3_s_t<SCALAR_T> solve33sym(const switched_model::matrix3_s
  * The implementation is compatible with auto-differentiation.
  */
 template <typename SCALAR_T>
-switched_model::vector6_s_t<SCALAR_T> inertiaTensorSolve(const switched_model::matrix6_s_t<SCALAR_T>& M,
-                                                         const switched_model::vector6_s_t<SCALAR_T>& b,
-                                                         SCALAR_T DinvMax = SCALAR_T(1e12)) {
+switched_model::vector6_s_t<SCALAR_T> inertiaTensorSolveLinearAngular(const switched_model::matrix6_s_t<SCALAR_T>& M,
+                                                                      const switched_model::vector6_s_t<SCALAR_T>& b,
+                                                                      SCALAR_T DinvMax = SCALAR_T(1e12)) {
   /*
    * Uses the schur-complement method plus the structure of the inertia tensor to efficiently construct the result of inv(M) * b
    *
@@ -113,6 +113,57 @@ switched_model::vector6_s_t<SCALAR_T> inertiaTensorSolve(const switched_model::m
   c.template tail<3>() = solve33sym(centroidalInertia, tmp, DinvMax);
   // Linear acceleration
   c.template head<3>() = invm * b.template head<3>() + comVector.template cross(c.template tail<3>());
+
+  return c;
+}
+
+/**
+ * Solve c = inv(M) * b, where M is an inertia tensor with first angular, then linear components.
+ *
+ * i.e. M = [Theta, crossTerm;
+ *           crossTerm', m * I_3x3 ]
+ *
+ * The implementation is compatible with auto-differentiation.
+ */
+template <typename SCALAR_T>
+switched_model::vector6_s_t<SCALAR_T> inertiaTensorSolveAngularLinear(const switched_model::matrix6_s_t<SCALAR_T>& M,
+                                                                      const switched_model::vector6_s_t<SCALAR_T>& b,
+                                                                      SCALAR_T DinvMax = SCALAR_T(1e12)) {
+  /*
+   * Uses the schur complement method plus the structure of the interia tensor to efficiently construct the result of inv(M) * b
+   *
+   * M has the following structure:
+   * topLeft(3x3) = Theta = Theta_com + m * [comVector]_x * [comVector]_x'
+   * topRight(3x3) = m * [comVector]_x
+   * bottomRight(3x3) = m * I_3x3
+   */
+
+  // total mass, bottom right block is m * I_3x3;
+  const SCALAR_T invm = SCALAR_T(1.0) / M(5, 5);
+
+  // extract underlying vector for the crossterms s.t. M.upperRight = crossTerm = [m * comVector]_x
+  const switched_model::vector3_s_t<SCALAR_T> scaledComVector{M(2, 4), M(0, 5), M(1, 3)};  // is actually m * comVector
+  const switched_model::vector3_s_t<SCALAR_T> comVector = invm * scaledComVector;          // store a version that is pre-multiplied by 1/m
+
+  // prepare rhs for solve33sym, tmp = b.head(3) * crossTerm' * b.tail(3)
+  switched_model::vector3_s_t<SCALAR_T> tmp = b.template head<3>() - comVector.template cross(b.template tail<3>());
+
+  // prepare lhs for solve33sym, fill only upper triangular part
+  switched_model::matrix3_s_t<SCALAR_T> centroidalInertia;  // = theta_com = theta - 1/m * crossTerm * crossTerm'
+  const SCALAR_T v0v0 = comVector(0) * scaledComVector(0);
+  const SCALAR_T v1v1 = comVector(1) * scaledComVector(1);
+  const SCALAR_T v2v2 = comVector(2) * scaledComVector(2);
+  centroidalInertia(0, 0) = M(0, 0) - v1v1 - v2v2;
+  centroidalInertia(0, 1) = M(0, 1) + comVector(0) * scaledComVector(1);
+  centroidalInertia(0, 2) = M(0, 2) + comVector(0) * scaledComVector(2);
+  centroidalInertia(1, 1) = M(1, 1) - v0v0 - v2v2;
+  centroidalInertia(1, 2) = M(1, 2) + comVector(1) * scaledComVector(2);
+  centroidalInertia(2, 2) = M(2, 2) - v0v0 - v1v1;
+
+  // Solve the linear system, only need to invert the 3x3 schur complement (= centroidalInertia)
+  switched_model::vector6_s_t<SCALAR_T> c;
+  c.template head<3>() = solve33sym(centroidalInertia, tmp, DinvMax);
+  c.template tail<3>() = invm * b.template tail<3>() + comVector.template cross(c.template head<3>());
 
   return c;
 }

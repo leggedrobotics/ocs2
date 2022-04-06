@@ -35,23 +35,34 @@ TEST(TestInertiaInverse, solve33sym) {
 }
 
 TEST(TestInertiaInverse, inertiaTensorSolve) {
-  using anymal::inertiaTensorSolve;
+  using anymal::inertiaTensorSolveLinearAngular;
+  using anymal::inertiaTensorSolveAngularLinear;
 
   // Construct a inertia tensor
   double m = 10.0;
   matrix3_t Ihalf = matrix3_t::Random();
   vector3_t comVector = vector3_t::Random();
   matrix3_t crossTerm = crossProductMatrix<scalar_t>(m * comVector);
-  matrix6_t M;
-  M << m * matrix3_t::Identity(), crossTerm.transpose(), crossTerm, Ihalf.transpose() * Ihalf + 1.0 / m * crossTerm * crossTerm.transpose();
+  matrix6_t MLinAng, MAngLin;
+  MLinAng << m * matrix3_t::Identity(), crossTerm.transpose(), crossTerm, Ihalf.transpose() * Ihalf + 1.0 / m * crossTerm * crossTerm.transpose();
+  MAngLin << Ihalf.transpose() * Ihalf + 1.0 / m * crossTerm * crossTerm.transpose(), crossTerm, crossTerm.transpose(), m * matrix3_t::Identity();
 
   // Check if the eigenvalues are valid
-  ASSERT_GT(M.eigenvalues().real().minCoeff(), 0.0);
+  ASSERT_GT(MLinAng.eigenvalues().real().minCoeff(), 0.0);
+  ASSERT_GT(MAngLin.eigenvalues().real().minCoeff(), 0.0);
 
-  vector6_t b = vector6_t::Random();
+  vector6_t bLinAng = vector6_t::Random();
+  vector6_t bAngLin;
+  bAngLin << bLinAng.tail<3>(), bLinAng.head<3>();
 
-  vector6_t solveTest = inertiaTensorSolve(M, b);
-  vector6_t solveCheck = M.lu().solve(b);
+  vector6_t solveTestLinAng = inertiaTensorSolveLinearAngular(MLinAng, bLinAng);
+  vector6_t solveCheckLinAng = MLinAng.lu().solve(bLinAng);
+  ASSERT_TRUE(solveTestLinAng.isApprox(solveCheckLinAng));
 
-  ASSERT_TRUE(solveTest.isApprox(solveCheck));
+  vector6_t solveTestAngLin = inertiaTensorSolveAngularLinear(MAngLin, bAngLin);
+  vector6_t solveCheckAngLin = MAngLin.lu().solve(bAngLin);
+  ASSERT_TRUE(solveTestAngLin.isApprox(solveCheckAngLin));
+
+  ASSERT_TRUE(solveTestAngLin.head<3>().isApprox(solveTestLinAng.tail<3>()));
+  ASSERT_TRUE(solveTestAngLin.tail<3>().isApprox(solveTestLinAng.head<3>()));
 }

@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2021, Farbod Farshidian. All rights reserved.
+Copyright (c) 2022, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,39 +29,43 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/thread_support/Synchronized.h>
-#include <ocs2_oc/synchronized_module/ReferenceManager.h>
-
-#include "ocs2_legged_robot/foot_planner/SwingTrajectoryPlanner.h"
-#include "ocs2_legged_robot/gait/GaitSchedule.h"
-#include "ocs2_legged_robot/gait/MotionPhaseDefinition.h"
+#include <ocs2_legged_robot/LeggedRobotInterface.h>
+#include <ocs2_legged_robot_raisim/LeggedRobotRaisimConversions.h>
+#include <ocs2_mpcnet_core/MpcnetInterfaceBase.h>
 
 namespace ocs2 {
 namespace legged_robot {
 
 /**
- * Manages the ModeSchedule and the TargetTrajectories for switched model.
+ *  Legged robot MPC-Net interface between C++ and Python.
  */
-class SwitchedModelReferenceManager : public ReferenceManager {
+class LeggedRobotMpcnetInterface final : public ocs2::mpcnet::MpcnetInterfaceBase {
  public:
-  SwitchedModelReferenceManager(std::shared_ptr<GaitSchedule> gaitSchedulePtr, std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr);
+  /**
+   * Constructor.
+   * @param [in] nDataGenerationThreads : Number of data generation threads.
+   * @param [in] nPolicyEvaluationThreads : Number of policy evaluation threads.
+   * @param [in] raisim : Whether to use RaiSim for the rollouts.
+   */
+  LeggedRobotMpcnetInterface(size_t nDataGenerationThreads, size_t nPolicyEvaluationThreads, bool raisim);
 
-  ~SwitchedModelReferenceManager() override = default;
-
-  void setModeSchedule(const ModeSchedule& modeSchedule) override;
-
-  contact_flag_t getContactFlags(scalar_t time) const;
-
-  const std::shared_ptr<GaitSchedule>& getGaitSchedule() { return gaitSchedulePtr_; }
-
-  const std::shared_ptr<SwingTrajectoryPlanner>& getSwingTrajectoryPlanner() { return swingTrajectoryPtr_; }
+  /**
+   * Default destructor.
+   */
+  ~LeggedRobotMpcnetInterface() override = default;
 
  private:
-  void modifyReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState, TargetTrajectories& targetTrajectories,
-                        ModeSchedule& modeSchedule) override;
+  /**
+   * Helper to get the MPC.
+   * @param [in] leggedRobotInterface : The legged robot interface.
+   * @return Pointer to the MPC.
+   */
+  std::unique_ptr<MPC_BASE> getMpc(LeggedRobotInterface& leggedRobotInterface);
 
-  std::shared_ptr<GaitSchedule> gaitSchedulePtr_;
-  std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr_;
+  // Legged robot interface pointers (keep alive for Pinocchio interface)
+  std::vector<std::unique_ptr<LeggedRobotInterface>> leggedRobotInterfacePtrs_;
+  // Legged robot RaiSim conversions pointers (keep alive for RaiSim rollout)
+  std::vector<std::unique_ptr<LeggedRobotRaisimConversions>> leggedRobotRaisimConversionsPtrs_;
 };
 
 }  // namespace legged_robot

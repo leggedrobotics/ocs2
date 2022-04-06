@@ -39,6 +39,8 @@ void MpcnetOnnxController::loadPolicyModel(const std::string& policyFilePath) {
   policyFilePath_ = policyFilePath;
   // create session
   Ort::SessionOptions sessionOptions;
+  sessionOptions.SetIntraOpNumThreads(1);
+  sessionOptions.SetInterOpNumThreads(1);
   sessionPtr_.reset(new Ort::Session(*onnxEnvironmentPtr_, policyFilePath_.c_str(), sessionOptions));
   // get input and output info
   inputNames_.clear();

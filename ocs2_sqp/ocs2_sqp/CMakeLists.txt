@@ -15,6 +15,11 @@ find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
+find_package(Boost REQUIRED COMPONENTS
+  system
+  filesystem
+)
+
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 ###################################
@@ -29,6 +34,8 @@ catkin_package(
     ${CATKIN_PACKAGE_DEPENDENCIES}
   LIBRARIES
     ${PROJECT_NAME}
+  DEPENDS
+    Boost
 )
 
 ###########
@@ -39,6 +46,7 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
 )
 
 # Multiple shooting solver library
@@ -47,14 +55,16 @@ add_library(${PROJECT_NAME}
   src/MultipleShootingInitialization.cpp
   src/MultipleShootingSettings.cpp
   src/MultipleShootingSolver.cpp
+  src/MultipleShootingSolverStatus.cpp
   src/MultipleShootingTranscription.cpp
   src/TimeDiscretization.cpp
-  )
+)
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
 )
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 

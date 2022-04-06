@@ -203,7 +203,7 @@ finalEndEffector
 selfCollision
 { 
   ; activate self-collision constraint
-  activate  true
+  activate  false
 
   ; Self Collision raw object pairs
   collisionObjectPairs
@@ -230,7 +230,7 @@ selfCollision
 jointPositionLimits
 {
   ; activate constraint
-  activate  true
+  activate  false
 
   ; relaxed log barrier mu
   mu      0.001

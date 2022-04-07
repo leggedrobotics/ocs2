@@ -97,12 +97,20 @@
 <li class="toctree-l2"><a class="reference internal" href="#cartpole">Cartpole</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#ballbot">Ballbot</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#quadrotor">Quadrotor</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#mobile-manipulator">Mobile Manipulator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#mobile-manipulator">Mobile Manipulator</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#mabi-mobile">Mabi-Mobile</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#kinova-jaco2">Kinova Jaco2</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#franka-panda">Franka Panda</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#willow-garage-pr2">Willow Garage PR2</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#clearpath-ridgeback-with-ur-5">Clearpath Ridgeback with UR-5</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#legged-robot">Legged Robot</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="from_urdf_to_ocp.html">From URDF to OCP</a></li>
 <li class="toctree-l1"><a class="reference internal" href="profiling.html">How to Profile the Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
 </ul>
 
             
@@ -216,8 +224,8 @@ features of each example.</p>
 <td><p>No</p></td>
 </tr>
 <tr class="row-even"><td><p>Mobile Manipulator</p></td>
-<td><p>9</p></td>
-<td><p>8</p></td>
+<td><p>6-13</p></td>
+<td><p>6-13</p></td>
 <td><p>Yes</p></td>
 <td><p>Yes / No</p></td>
 </tr>
@@ -325,17 +333,82 @@ ocs2_self_collision).</p>
 <p>Note: This example implements both the cache and the
 non-cache variants of the MPC, which can be chosen through the
 usePreComputation flag in the config file.</p>
+<p>The system model is determined by parsing the URDF and the task file.
+Currently, the following system models are supported:</p>
+<ul class="simple">
+<li><p><strong>Default</strong> (<em>value:</em> 0): The default system model obtained by parsing the URDF.</p></li>
+<li><p><strong>Actuated Dummy wheel-base</strong> (<em>value:</em> 1): Adds a dummy XY-Yaw joints to the
+model parsed from the URDF which are actuated under holonomic constraint
+(velocity-control). This is a model of a mobile-manipulator with a base controlled
+in SE(2).</p></li>
+<li><p><strong>Unactuated Dummy floating-base</strong> (<em>value:</em> 2): Adds a dummy XYZ-RPY joints to the
+model parsed from the URDF which are unactuated.</p></li>
+<li><p><strong>Actuated Dummy floating-base</strong> (<em>value:</em> 3): Adds a dummy XYZ-RPY joints to the
+model parsed from the URDF which are fully-actuated (velocity-control). This is a
+model of a mobile-manipulator with a base controlled in SE(3).</p></li>
+</ul>
+<p>To play-around different model types, you can change the model-information in the
+<cite>task.info</cite> files.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Build the example</span>
 catkin build ocs2_mobile_manipulator_ros
 <span class="c1"># Source workspace</span>
 <span class="c1"># Do not forget to change &lt;...&gt; parts</span>
 <span class="nb">source</span> &lt;directory_to_ws&gt;/&lt;catkin_ws_name&gt;/devel/setup.bash
-
-<span class="c1"># Launch the example</span>
-roslaunch ocs2_mobile_manipulator_ros mobile_manipulator.launch
 </pre></div>
 </div>
-<a class="reference external image-reference" href="_static/gif/mobile_manipulator.gif"><img alt="mobile_manipulator.gif cannot be displayed!" src="_images/mobile_manipulator.gif" /></a>
+<p>For several common robot manipulators, we provide examples on running them
+with OCS2. The steps taken to generate the robot model files (URDF) are
+available <a class="reference external" href="https://github.com/leggedrobotics/ocs2_robotic_assets/blob/main/docs/MobileManipulatorUrdfAssets.md">here</a>.</p>
+<p>For some of these examples, we fix certain joints present in the URDF (such as the gripper
+finger joints or wheel joints) through the <cite>model_information.removeJoints</cite> attribute in
+the <cite>task.info</cite> file. This allows simplifying the constructed Pinocchio model. Only for
+visualization purposes on rviz, the joints under <cite>removeJoints</cite> in the <cite>task.info</cite> are published
+at zero joint positions by the dummy simulation node .</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>For these examples, additional tuning of the MPC might be required to work on hardware.
+Additionally, for some of the examples, the collision meshes need to be simplified into
+primitive shapes (such as cylinders and boxes) to allow collision avoidance.</p>
+<p>We welcome contributions from the community for these use-cases.</p>
+</div>
+<div class="section" id="mabi-mobile">
+<h3>Mabi-Mobile<a class="headerlink" href="#mabi-mobile" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>roslaunch ocs2_mobile_manipulator_ros manipulator_mabi_mobile.launch
+</pre></div>
+</div>
+<a class="reference external image-reference" href="_static/gif/mobile_manipulator/mabi_mobile.gif"><img alt="mabi_mobile.gif cannot be displayed!" src="_images/mabi_mobile.gif" /></a>
+</div>
+<div class="section" id="kinova-jaco2">
+<h3>Kinova Jaco2<a class="headerlink" href="#kinova-jaco2" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># For 6-Dof</span>
+roslaunch ocs2_mobile_manipulator_ros manipulator_kinova_j2n6.launch
+<span class="c1"># For 7-Dof</span>
+roslaunch ocs2_mobile_manipulator_ros manipulator_kinova_j2n7.launch
+</pre></div>
+</div>
+<a class="reference external image-reference" href="_static/gif/mobile_manipulator/kinova_j2n7.gif"><img alt="kinova_j2n7.gif cannot be displayed!" src="_images/kinova_j2n7.gif" /></a>
+</div>
+<div class="section" id="franka-panda">
+<h3>Franka Panda<a class="headerlink" href="#franka-panda" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>roslaunch ocs2_mobile_manipulator_ros manipulator_franka.launch
+</pre></div>
+</div>
+<a class="reference external image-reference" href="_static/gif/mobile_manipulator/franka.gif"><img alt="franka.gif cannot be displayed!" src="_images/franka.gif" /></a>
+</div>
+<div class="section" id="willow-garage-pr2">
+<h3>Willow Garage PR2<a class="headerlink" href="#willow-garage-pr2" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>roslaunch ocs2_mobile_manipulator_ros manipulator_pr2.launch
+</pre></div>
+</div>
+<a class="reference external image-reference" href="_static/gif/mobile_manipulator/pr2.gif"><img alt="pr2.gif cannot be displayed!" src="_images/pr2.gif" /></a>
+</div>
+<div class="section" id="clearpath-ridgeback-with-ur-5">
+<h3>Clearpath Ridgeback with UR-5<a class="headerlink" href="#clearpath-ridgeback-with-ur-5" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>roslaunch ocs2_mobile_manipulator_ros manipulator_ridgeback_ur5.launch
+</pre></div>
+</div>
+<a class="reference external image-reference" href="_static/gif/mobile_manipulator/ridgeback_ur5.gif"><img alt="ridgeback_ur5.gif cannot be displayed!" src="_images/ridgeback_ur5.gif" /></a>
+</div>
 </div>
 <div class="section" id="legged-robot">
 <span id="doxid-ocs2-doc-robotic-examples-legged-robot"></span><h2>Legged Robot<a class="headerlink" href="#legged-robot" title="Permalink to this headline">¶</a></h2>

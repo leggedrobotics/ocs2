@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>Search &mdash; OCS2 1.0.0 documentation</title>
+  <title>Frequently Asked Questions &mdash; OCS2 1.0.0 documentation</title>
   
 
   
@@ -25,7 +25,6 @@
   
 
   
-    
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -40,10 +39,9 @@
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
-    <script type="text/javascript" src="_static/searchtools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="#" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="How to Profile the Solvers" href="profiling.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -70,7 +68,7 @@
 
           
 <div role="search">
-  <form id="rtd-search-form" class="wy-form" action="#" method="get">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
@@ -88,7 +86,7 @@
               
             
             
-              <ul>
+              <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting Started</a></li>
@@ -96,7 +94,10 @@
 <li class="toctree-l1"><a class="reference internal" href="robotic_examples.html">Robotic Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="from_urdf_to_ocp.html">From URDF to OCP</a></li>
 <li class="toctree-l1"><a class="reference internal" href="profiling.html">How to Profile the Solvers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Frequently Asked Questions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#at-runtime-i-receive-warnings-on-setting-thread-priority">At runtime, I receive warnings on setting thread priority</a></li>
+</ul>
+</li>
 </ul>
 
             
@@ -145,10 +146,14 @@
     
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
-      <li>Search</li>
+      <li>Frequently Asked Questions</li>
     
     
       <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/faq.rst.txt" rel="nofollow"> View page source</a>
+          
         
       </li>
     
@@ -160,23 +165,41 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <noscript>
-  <div id="fallback" class="admonition warning">
-    <p class="last">
-      Please activate JavaScript to enable the search functionality.
-    </p>
-  </div>
-  </noscript>
+  <div class="section" id="frequently-asked-questions">
+<span id="doxid-ocs2-doc-faq"></span><span id="index-0"></span><h1>Frequently Asked Questions<a class="headerlink" href="#frequently-asked-questions" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="at-runtime-i-receive-warnings-on-setting-thread-priority">
+<h2>At runtime, I receive warnings on setting thread priority<a class="headerlink" href="#at-runtime-i-receive-warnings-on-setting-thread-priority" title="Permalink to this headline">¶</a></h2>
+<p>The priority of a thread affects how the thread is scheduled by the OS.
+A higher priority thread is likely to be scheduled more often and lowers
+the latency of its execution.</p>
+<p>We can set the thread priority for the solver through the <cite>threadPriority</cite>
+attribute in the <cite>task.info</cite> file. This is set to <cite>50</cite> in the
+provided robotic examples.</p>
+<p>Normal users cannot set priorities higher than <cite>0</cite> by default. To allow
+your linux user account to do so, you need to append the following
+entries to the <cite>/etc/security/limits.conf</cite> file (replacing &lt;username&gt; with
+your username):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">username</span><span class="o">&gt;</span>       <span class="o">-</span>       <span class="n">rtprio</span>           <span class="mi">99</span>
+<span class="o">&lt;</span><span class="n">username</span><span class="o">&gt;</span>       <span class="o">-</span>       <span class="n">nice</span>            <span class="o">-</span><span class="mi">20</span>
+</pre></div>
+</div>
+<p>To allow your entire group to set higher priorities, append (replacing &lt;groupname&gt;
+with the created group name):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">@&lt;</span><span class="n">groupname</span><span class="o">&gt;</span>     <span class="o">-</span>       <span class="n">rtprio</span>           <span class="mi">99</span>
+<span class="o">@&lt;</span><span class="n">groupname</span><span class="o">&gt;</span>     <span class="o">-</span>       <span class="n">nice</span>            <span class="o">-</span><span class="mi">20</span>
+</pre></div>
+</div>
+</div>
+</div>
 
-  
-  <div id="search-results">
-  
-  </div>
 
            </div>
            
           </div>
           <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="profiling.html" class="btn btn-neutral float-left" title="How to Profile the Solvers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
 
   <hr/>
 
@@ -213,14 +236,7 @@
   
   
     
-  
-  <script type="text/javascript">
-    jQuery(function() { Search.loadIndex("searchindex.js"); });
-  </script>
-  
-  <script type="text/javascript" id="searchindexloader"></script>
    
-
 
 </body>
 </html>

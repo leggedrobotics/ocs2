@@ -48,7 +48,16 @@ Optional Dependencies
         git clone --recurse-submodules https://github.com/leggedrobotics/hpp-fcl.git
         # install dependencies 
         sudo apt install liburdfdom-dev liboctomap-dev libassimp-dev
-        
+
+* For various robotic assets used in OCS2 unit tests and the robotic examples
+
+.. _`ocs2_robotic_assets`: https://github.com/leggedrobotics/ocs2_robotic_assets
+
+    .. code-block:: bash
+    
+        # Clone ocs2_robotic_assets
+        git clone https://github.com/leggedrobotics/ocs2_robotic_assets.git
+     
 * `rqt_multiplot`_ package can be used for visualizing the solver's performance indices and other optimization outputs
 
 .. _`rqt_multiplot`: http://wiki.ros.org/rqt_multiplot

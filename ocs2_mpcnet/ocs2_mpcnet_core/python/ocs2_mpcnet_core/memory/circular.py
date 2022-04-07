@@ -69,7 +69,7 @@ class CircularMemory:
     ) -> None:
         """Initializes the CircularMemory class.
 
-        Initializes the BehavioralCloning class by setting fixed attributes, initializing variable attributes and
+        Initializes the CircularMemory class by setting fixed attributes, initializing variable attributes and
         pre-allocating memory.
 
         Args:

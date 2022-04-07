@@ -298,5 +298,5 @@ def main():
     print("Done. Exiting now.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

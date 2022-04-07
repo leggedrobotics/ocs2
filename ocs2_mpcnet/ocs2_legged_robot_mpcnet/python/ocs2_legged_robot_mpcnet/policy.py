@@ -44,13 +44,12 @@ from ocs2_legged_robot_mpcnet import config
 
 
 input_scaling = torch.tensor(config.INPUT_SCALING, device=config.DEVICE, dtype=config.DTYPE).diag().unsqueeze(dim=0)
-input_bias = torch.tensor(config.INPUT_BIAS, device=config.DEVICE, dtype=config.DTYPE).unsqueeze(dim=0)
 
 
 def u_transform(a: torch.Tensor) -> torch.Tensor:
     """Control input transformation.
 
-    Transforms the predicted action by scaling and adding a bias.
+    Transforms the predicted action by scaling.
 
     Args:
         a: A (B,A) tensor with the predicted actions.
@@ -58,7 +57,7 @@ def u_transform(a: torch.Tensor) -> torch.Tensor:
     Returns:
         u: A (B,U) tensor with the transformed control inputs.
     """
-    return bmv(input_scaling, a) + input_bias
+    return bmv(input_scaling, a)
 
 
 class LeggedRobotLinearPolicy(linear.LinearPolicy):

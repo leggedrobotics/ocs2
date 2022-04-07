@@ -89,20 +89,6 @@ DEFAULT_STATE = [
 ]
 # fmt: on
 
-# input bias
-# fmt: off
-INPUT_BIAS = [
-    0.0, 0.0, 127.861,  # contact forces LF
-    0.0, 0.0, 127.861,  # contact forces LH
-    0.0, 0.0, 127.861,  # contact forces RF
-    0.0, 0.0, 127.861,  # contact forces RH
-    0.0, 0.0, 0.0,      # joint velocities LF
-    0.0, 0.0, 0.0,      # joint velocities LH
-    0.0, 0.0, 0.0,      # joint velocities RF
-    0.0, 0.0, 0.0       # joint velocities RH
-]
-# fmt: on
-
 # input scaling
 # fmt: off
 INPUT_SCALING = [

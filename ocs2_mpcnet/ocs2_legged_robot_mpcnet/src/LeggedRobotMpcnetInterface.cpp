@@ -65,8 +65,7 @@ LeggedRobotMpcnetInterface::LeggedRobotMpcnetInterface(size_t nDataGenerationThr
   referenceManagerPtrs.reserve(nDataGenerationThreads + nPolicyEvaluationThreads);
   for (int i = 0; i < (nDataGenerationThreads + nPolicyEvaluationThreads); i++) {
     leggedRobotInterfacePtrs_.push_back(std::unique_ptr<LeggedRobotInterface>(new LeggedRobotInterface(taskFile, urdfFile, referenceFile)));
-    std::shared_ptr<ocs2::mpcnet::MpcnetDefinitionBase> mpcnetDefinitionPtr(
-        new LeggedRobotMpcnetDefinition(leggedRobotInterfacePtrs_[i]->getInitialState()));
+    std::shared_ptr<ocs2::mpcnet::MpcnetDefinitionBase> mpcnetDefinitionPtr(new LeggedRobotMpcnetDefinition(*leggedRobotInterfacePtrs_[i]));
     mpcPtrs.push_back(getMpc(*leggedRobotInterfacePtrs_[i]));
     mpcnetPtrs.push_back(std::unique_ptr<ocs2::mpcnet::MpcnetControllerBase>(new ocs2::mpcnet::MpcnetOnnxController(
         mpcnetDefinitionPtr, leggedRobotInterfacePtrs_[i]->getReferenceManagerPtr(), onnxEnvironmentPtr)));

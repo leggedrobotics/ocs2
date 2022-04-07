@@ -51,24 +51,21 @@ class LeggedRobotMpcnetDefinition final : public ocs2::mpcnet::MpcnetDefinitionB
   ~LeggedRobotMpcnetDefinition() override = default;
 
   /**
-   * @see MpcnetDefinitionBase::getGeneralizedTime
+   * @see MpcnetDefinitionBase::getObservation
    */
-  vector_t getGeneralizedTime(scalar_t t, const ModeSchedule& modeSchedule) override;
+  vector_t getObservation(scalar_t t, const vector_t& x, const ModeSchedule& modeSchedule,
+                          const TargetTrajectories& targetTrajectories) override;
 
   /**
-   * @see MpcnetDefinitionBase::getRelativeState
+   * @see MpcnetDefinitionBase::getActionTransformation
    */
-  vector_t getRelativeState(scalar_t t, const vector_t& x, const TargetTrajectories& targetTrajectories) override;
+  std::pair<matrix_t, vector_t> getActionTransformation(scalar_t t, const vector_t& x, const ModeSchedule& modeSchedule,
+                                                        const TargetTrajectories& targetTrajectories) override;
 
   /**
-   * @see MpcnetDefinitionBase::getInputTransformation
+   * @see MpcnetDefinitionBase::isValid
    */
-  matrix_t getInputTransformation(scalar_t t, const vector_t& x) override;
-
-  /**
-   * @see MpcnetDefinitionBase::validState
-   */
-  bool validState(const vector_t& x) override;
+  bool isValid(scalar_t t, const vector_t& x, const ModeSchedule& modeSchedule, const TargetTrajectories& targetTrajectories) override;
 
  private:
   const scalar_t allowedHeightDeviation_ = 0.2;

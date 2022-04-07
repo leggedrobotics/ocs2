@@ -60,6 +60,18 @@ STATE_DIM = 24
 # input dimension
 INPUT_DIM = 24
 
+# target trajectories state dimension
+TARGET_STATE_DIM = STATE_DIM
+
+# target trajectories input dimension
+TARGET_INPUT_DIM = INPUT_DIM
+
+# observation dimension
+OBSERVATION_DIM = 12 + STATE_DIM
+
+# action dimension
+ACTION_DIM = INPUT_DIM
+
 # expert number
 EXPERT_NUM = 3
 

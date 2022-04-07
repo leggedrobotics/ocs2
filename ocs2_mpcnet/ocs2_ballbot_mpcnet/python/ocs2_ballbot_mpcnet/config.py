@@ -60,5 +60,17 @@ STATE_DIM = 10
 # input dimension
 INPUT_DIM = 3
 
+# target trajectories state dimension
+TARGET_STATE_DIM = STATE_DIM
+
+# target trajectories input dimension
+TARGET_INPUT_DIM = INPUT_DIM
+
+# observation dimension
+OBSERVATION_DIM = STATE_DIM
+
+# action dimension
+ACTION_DIM = INPUT_DIM
+
 # input cost for behavioral cloning
 R = [2.0, 2.0, 2.0]

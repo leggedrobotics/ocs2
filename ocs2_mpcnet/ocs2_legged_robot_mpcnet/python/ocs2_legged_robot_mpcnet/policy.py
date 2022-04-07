@@ -47,55 +47,55 @@ input_scaling = torch.tensor(config.INPUT_SCALING, device=config.DEVICE, dtype=c
 input_bias = torch.tensor(config.INPUT_BIAS, device=config.DEVICE, dtype=config.DTYPE).unsqueeze(dim=0)
 
 
-def u_transform(u: torch.Tensor) -> torch.Tensor:
+def u_transform(a: torch.Tensor) -> torch.Tensor:
     """Control input transformation.
 
-    Transforms the predicted control input by scaling and adding a bias.
+    Transforms the predicted action by scaling and adding a bias.
 
     Args:
-        u: A (B,U) tensor with the predicted control inputs.
+        a: A (B,A) tensor with the predicted actions.
 
     Returns:
         u: A (B,U) tensor with the transformed control inputs.
     """
-    return bmv(input_scaling, u) + input_bias
+    return bmv(input_scaling, a) + input_bias
 
 
 class LeggedRobotLinearPolicy(linear.LinearPolicy):
-    def __init__(self, dim_t, dim_x, dim_u):
-        super().__init__(dim_t, dim_x, dim_u)
+    def __init__(self, observation_dimension, action_dimension):
+        super().__init__(observation_dimension, action_dimension)
         self.name = "LeggedRobotLinearPolicy"
 
-    def forward(self, t, x):
-        u = super().forward(t, x)
-        return u_transform(u)
+    def forward(self, o):
+        a = super().forward(o)
+        return u_transform(a)
 
 
 class LeggedRobotNonlinearPolicy(nonlinear.NonlinearPolicy):
-    def __init__(self, dim_t, dim_x, dim_u):
-        super().__init__(dim_t, dim_x, dim_u)
+    def __init__(self, observation_dimension, action_dimension):
+        super().__init__(observation_dimension, action_dimension)
         self.name = "LeggedRobotNonlinearPolicy"
 
-    def forward(self, t, x):
-        u = super().forward(t, x)
-        return u_transform(u)
+    def forward(self, o):
+        a = super().forward(o)
+        return u_transform(a)
 
 
 class LeggedRobotMixtureOfLinearExpertsPolicy(mixture_of_linear_experts.MixtureOfLinearExpertsPolicy):
-    def __init__(self, dim_t, dim_x, dim_u, num_experts):
-        super().__init__(dim_t, dim_x, dim_u, num_experts)
+    def __init__(self, observation_dimension, action_dimension, expert_number):
+        super().__init__(observation_dimension, action_dimension, expert_number)
         self.name = "LeggedRobotMixtureOfLinearExpertsPolicy"
 
-    def forward(self, t, x):
-        u, p = super().forward(t, x)
-        return u_transform(u), p
+    def forward(self, o):
+        a, p = super().forward(o)
+        return u_transform(a), p
 
 
 class LeggedRobotMixtureOfNonlinearExpertsPolicy(mixture_of_nonlinear_experts.MixtureOfNonlinearExpertsPolicy):
-    def __init__(self, dim_t, dim_x, dim_u, num_experts):
-        super().__init__(dim_t, dim_x, dim_u, num_experts)
+    def __init__(self, observation_dimension, action_dimension, expert_number):
+        super().__init__(observation_dimension, action_dimension, expert_number)
         self.name = "LeggedRobotMixtureOfNonlinearExpertsPolicy"
 
-    def forward(self, t, x):
-        u, p = super().forward(t, x)
-        return u_transform(u), p
+    def forward(self, o):
+        a, p = super().forward(o)
+        return u_transform(a), p

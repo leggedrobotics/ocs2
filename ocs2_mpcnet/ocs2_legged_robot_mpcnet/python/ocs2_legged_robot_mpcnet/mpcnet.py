@@ -102,20 +102,24 @@ def main():
 
     # memory
     memory_capacity = 400000
-    memory = Memory(memory_capacity, config.TIME_DIM, config.STATE_DIM, config.INPUT_DIM, config.EXPERT_NUM)
+    memory = Memory(
+        memory_capacity,
+        config.STATE_DIM,
+        config.INPUT_DIM,
+        config.OBSERVATION_DIM,
+        config.ACTION_DIM,
+        config.EXPERT_NUM,
+    )
 
     # policy
-    policy = Policy(config.TIME_DIM, config.STATE_DIM, config.INPUT_DIM, config.EXPERT_NUM)
+    policy = Policy(config.OBSERVATION_DIM, config.ACTION_DIM, config.EXPERT_NUM)
     policy.to(config.DEVICE)
     print("Initial policy parameters:")
     print(list(policy.named_parameters()))
-    dummy_input = (
-        torch.randn(1, config.TIME_DIM, device=config.DEVICE, dtype=config.DTYPE),
-        torch.randn(1, config.STATE_DIM, device=config.DEVICE, dtype=config.DTYPE),
-    )
+    dummy_observation = torch.randn(1, config.OBSERVATION_DIM, device=config.DEVICE, dtype=config.DTYPE)
     print("Saving initial policy.")
     save_path = "policies/" + folder + "/initial_policy"
-    torch.onnx.export(model=policy, args=dummy_input, f=save_path + ".onnx")
+    torch.onnx.export(model=policy, args=dummy_observation, f=save_path + ".onnx")
     torch.save(obj=policy, f=save_path + ".pt")
 
     # optimizer
@@ -137,7 +141,7 @@ def main():
 
     def start_data_generation(policy, alpha=1.0):
         policy_file_path = "/tmp/data_generation_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".onnx"
-        torch.onnx.export(model=policy, args=dummy_input, f=policy_file_path)
+        torch.onnx.export(model=policy, args=dummy_observation, f=policy_file_path)
         choices = random.choices(["stance", "trot_1", "trot_2"], k=data_generation_n_tasks, weights=weights)
         initial_observations, mode_schedules, target_trajectories = helper.get_tasks(
             data_generation_n_tasks, data_generation_duration, choices
@@ -156,7 +160,7 @@ def main():
 
     def start_policy_evaluation(policy, alpha=0.0):
         policy_file_path = "/tmp/policy_evaluation_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".onnx"
-        torch.onnx.export(model=policy, args=dummy_input, f=policy_file_path)
+        torch.onnx.export(model=policy, args=dummy_observation, f=policy_file_path)
         choices = random.choices(["stance", "trot_1", "trot_2"], k=policy_evaluation_n_tasks, weights=weights)
         initial_observations, mode_schedules, target_trajectories = helper.get_tasks(
             policy_evaluation_n_tasks, policy_evaluation_duration, choices
@@ -186,15 +190,14 @@ def main():
                 # get generated data
                 data = mpcnet_interface.getGeneratedData()
                 for i in range(len(data)):
-                    # push t, x, u, p, generalized time, relative state, input_transformation, Hamiltonian into memory
+                    # push t, x, u, p, observation, action transformation, Hamiltonian into memory
                     memory.push(
                         data[i].t,
                         data[i].x,
                         data[i].u,
                         helper.get_one_hot(data[i].mode),
-                        data[i].generalizedTime,
-                        data[i].relativeState,
-                        data[i].inputTransformation,
+                        data[i].observation,
+                        data[i].actionTransformation,
                         data[i].hamiltonian,
                     )
                 # logging
@@ -229,7 +232,7 @@ def main():
             if (iteration % 10000 == 0) and (iteration > 0):
                 print("Saving intermediate policy for iteration", iteration)
                 save_path = "policies/" + folder + "/intermediate_policy_" + str(iteration)
-                torch.onnx.export(model=policy, args=dummy_input, f=save_path + ".onnx")
+                torch.onnx.export(model=policy, args=dummy_observation, f=save_path + ".onnx")
                 torch.save(obj=policy, f=save_path + ".pt")
 
             # extract batch from memory
@@ -238,9 +241,9 @@ def main():
                 x,
                 u,
                 p,
-                generalized_time,
-                relative_state,
-                input_transformation,
+                observation,
+                action_transformation_matrix,
+                action_transformation_vector,
                 dHdxx,
                 dHdux,
                 dHduu,
@@ -254,11 +257,11 @@ def main():
                 # clear the gradients
                 optimizer.zero_grad()
                 # prediction
-                u_predicted, p_predicted = policy(generalized_time, relative_state)
-                u_predicted = bmv(input_transformation, u_predicted)
+                action, expert_weights = policy(observation)
+                input = bmv(action_transformation_matrix, action) + action_transformation_vector
                 # compute the empirical loss
-                empirical_experts_loss = experts_loss(x, x, u_predicted, u, dHdxx, dHdux, dHduu, dHdx, dHdu, H)
-                empirical_gating_loss = gating_loss(p, p_predicted)
+                empirical_experts_loss = experts_loss(x, x, input, u, dHdxx, dHdux, dHduu, dHdx, dHdu, H)
+                empirical_gating_loss = gating_loss(p, expert_weights)
                 empirical_loss = empirical_experts_loss + my_lambda * empirical_gating_loss
                 # compute the gradients
                 empirical_loss.backward()
@@ -290,7 +293,7 @@ def main():
 
     print("Saving final policy.")
     save_path = "policies/" + folder + "/final_policy"
-    torch.onnx.export(model=policy, args=dummy_input, f=save_path + ".onnx")
+    torch.onnx.export(model=policy, args=dummy_observation, f=save_path + ".onnx")
     torch.save(obj=policy, f=save_path + ".pt")
 
     writer.close()

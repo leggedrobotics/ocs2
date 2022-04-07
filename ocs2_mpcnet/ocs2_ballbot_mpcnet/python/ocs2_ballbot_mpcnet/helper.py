@@ -92,7 +92,7 @@ def get_random_target_state() -> np.ndarray:
     max_position_x = 1.0
     max_position_y = 1.0
     max_orientation_z = 45.0 * np.pi / 180.0
-    random_state = np.zeros(config.STATE_DIM)
+    random_state = np.zeros(config.TARGET_STATE_DIM)
     random_state[0] = np.random.uniform(-max_position_x, max_position_x)
     random_state[1] = np.random.uniform(-max_position_y, max_position_y)
     random_state[2] = np.random.uniform(-max_orientation_z, max_orientation_z)
@@ -126,7 +126,7 @@ def get_tasks(
         mode_schedules[i] = helper.get_mode_schedule(*get_default_event_times_and_mode_sequence(duration))
         target_trajectories[i] = helper.get_target_trajectories(
             duration * np.ones((1, 1)),
-            get_random_target_state().reshape((1, config.STATE_DIM)),
-            np.zeros((1, config.INPUT_DIM)),
+            get_random_target_state().reshape((1, config.TARGET_STATE_DIM)),
+            np.zeros((1, config.TARGET_INPUT_DIM)),
         )
     return initial_observations, mode_schedules, target_trajectories

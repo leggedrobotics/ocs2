@@ -65,24 +65,24 @@ vector_t MpcnetOnnxController::computeInput(const scalar_t t, const vector_t& x)
   if (sessionPtr_ == nullptr) {
     throw std::runtime_error("[MpcnetOnnxController::computeInput] cannot compute input, since policy model is not loaded.");
   }
-  // create input tensor objects
-  Eigen::Matrix<tensor_element_t, Eigen::Dynamic, 1> time =
-      mpcnetDefinitionPtr_->getGeneralizedTime(t, referenceManagerPtr_->getModeSchedule()).cast<tensor_element_t>();
-  Eigen::Matrix<tensor_element_t, Eigen::Dynamic, 1> state =
-      mpcnetDefinitionPtr_->getRelativeState(t, x, referenceManagerPtr_->getTargetTrajectories()).cast<tensor_element_t>();
+  // create input tensor object
+  Eigen::Matrix<tensor_element_t, Eigen::Dynamic, 1> observation =
+      mpcnetDefinitionPtr_->getObservation(t, x, referenceManagerPtr_->getModeSchedule(), referenceManagerPtr_->getTargetTrajectories())
+          .cast<tensor_element_t>();
   Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
   std::vector<Ort::Value> inputValues;
-  inputValues.push_back(
-      Ort::Value::CreateTensor<tensor_element_t>(memoryInfo, time.data(), time.size(), inputShapes_[0].data(), inputShapes_[0].size()));
-  inputValues.push_back(
-      Ort::Value::CreateTensor<tensor_element_t>(memoryInfo, state.data(), state.size(), inputShapes_[1].data(), inputShapes_[1].size()));
+  inputValues.push_back(Ort::Value::CreateTensor<tensor_element_t>(memoryInfo, observation.data(), observation.size(),
+                                                                   inputShapes_[0].data(), inputShapes_[0].size()));
   // run inference
   Ort::RunOptions runOptions;
-  std::vector<Ort::Value> outputValues = sessionPtr_->Run(runOptions, inputNames_.data(), inputValues.data(), 2, outputNames_.data(), 1);
-  // evaluate output tensor objects
-  Eigen::Map<Eigen::Matrix<tensor_element_t, Eigen::Dynamic, 1>> input(outputValues[0].GetTensorMutableData<tensor_element_t>(),
-                                                                       outputShapes_[0][1], outputShapes_[0][0]);
-  return mpcnetDefinitionPtr_->getInputTransformation(t, x) * input.cast<scalar_t>();
+  std::vector<Ort::Value> outputValues = sessionPtr_->Run(runOptions, inputNames_.data(), inputValues.data(), 1, outputNames_.data(), 1);
+  // evaluate output tensor object
+  Eigen::Map<Eigen::Matrix<tensor_element_t, Eigen::Dynamic, 1>> action(outputValues[0].GetTensorMutableData<tensor_element_t>(),
+                                                                        outputShapes_[0][1], outputShapes_[0][0]);
+  std::pair<matrix_t, vector_t> actionTransformation = mpcnetDefinitionPtr_->getActionTransformation(
+      t, x, referenceManagerPtr_->getModeSchedule(), referenceManagerPtr_->getTargetTrajectories());
+  // transform action
+  return actionTransformation.first * action.cast<scalar_t>() + actionTransformation.second;
 }
 
 }  // namespace mpcnet

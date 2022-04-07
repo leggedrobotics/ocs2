@@ -61,36 +61,39 @@ class MpcnetDefinitionBase {
   MpcnetDefinitionBase& operator=(const MpcnetDefinitionBase&) = delete;
 
   /**
-   * Get the generalized time.
+   * Get the observation.
+   * @note The observation o is the input to the policy.
    * @param[in] t : Absolute time.
+   * @param[in] x : Robot state.
    * @param[in] modeSchedule : Mode schedule.
-   * @return The generalized time.
-   */
-  virtual vector_t getGeneralizedTime(scalar_t t, const ModeSchedule& modeSchedule) = 0;
-
-  /**
-   * Get the relative state.
-   * @param[in] t : Absolute time.
-   * @param[in] x : Robot state.
    * @param[in] targetTrajectories : Target trajectories.
-   * @return The relative state.
+   * @return The observation.
    */
-  virtual vector_t getRelativeState(scalar_t t, const vector_t& x, const TargetTrajectories& targetTrajectories) = 0;
+  virtual vector_t getObservation(scalar_t t, const vector_t& x, const ModeSchedule& modeSchedule,
+                                  const TargetTrajectories& targetTrajectories) = 0;
 
   /**
-   * Get the input transformation.
+   * Get the action transformation.
+   * @note Used for computing the control input u = A * a + b from the action a predicted by the policy.
    * @param[in] t : Absolute time.
    * @param[in] x : Robot state.
-   * @return The input transformation.
+   * @param[in] modeSchedule : Mode schedule.
+   * @param[in] targetTrajectories : Target trajectories.
+   * @return The action transformation pair {A, b}.
    */
-  virtual matrix_t getInputTransformation(scalar_t t, const vector_t& x) = 0;
+  virtual std::pair<matrix_t, vector_t> getActionTransformation(scalar_t t, const vector_t& x, const ModeSchedule& modeSchedule,
+                                                                const TargetTrajectories& targetTrajectories) = 0;
 
   /**
-   * Check if a state is valid.
-   * @param [in] x : State.
+   * Check if the tuple (t, x, modeSchedule, targetTrajectories) is valid.
+   * @note E.g., check if the state diverged or if tracking is poor.
+   * @param[in] t : Absolute time.
+   * @param[in] x : Robot state.
+   * @param[in] modeSchedule : Mode schedule.
+   * @param[in] targetTrajectories : Target trajectories.
    * @return True if valid.
    */
-  virtual bool validState(const vector_t& x) = 0;
+  virtual bool isValid(scalar_t t, const vector_t& x, const ModeSchedule& modeSchedule, const TargetTrajectories& targetTrajectories) = 0;
 };
 
 }  // namespace mpcnet

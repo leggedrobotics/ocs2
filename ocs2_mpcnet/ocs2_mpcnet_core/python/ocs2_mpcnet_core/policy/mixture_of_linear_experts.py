@@ -33,8 +33,10 @@ Provides classes that implement a mixture of linear experts policy.
 """
 
 import torch
+import numpy as np
 from typing import Tuple
 
+from ocs2_mpcnet_core import config
 from ocs2_mpcnet_core.helper import bmv
 
 
@@ -48,11 +50,20 @@ class MixtureOfLinearExpertsPolicy(torch.nn.Module):
         observation_dimension: An integer defining the observation (i.e. input) dimension of the policy.
         action_dimension: An integer defining the action (i.e. output) dimension of the policy.
         expert_number: An integer defining the number of experts.
+        observation_scaling: A (1,O,O) tensor for the observation scaling.
+        action_scaling: A (1,A,A) tensor for the action scaling.
         gating_net: The gating network.
         expert_nets: The expert networks.
     """
 
-    def __init__(self, observation_dimension: int, action_dimension: int, expert_number: int) -> None:
+    def __init__(
+        self,
+        observation_dimension: int,
+        action_dimension: int,
+        expert_number: int,
+        observation_scaling: np.ndarray,
+        action_scaling: np.ndarray,
+    ) -> None:
         """Initializes the MixtureOfLinearExpertsPolicy class.
 
         Initializes the MixtureOfLinearExpertsPolicy class by setting fixed and variable attributes.
@@ -61,12 +72,20 @@ class MixtureOfLinearExpertsPolicy(torch.nn.Module):
             observation_dimension: An integer defining the observation dimension.
             action_dimension: An integer defining the action dimension.
             expert_number: An integer defining the number of experts.
+            observation_scaling: A NumPy array of shape (O) defining the observation scaling.
+            action_scaling: A NumPy array of shape (A) defining the action scaling.
         """
         super().__init__()
         self.name = "MixtureOfLinearExpertsPolicy"
         self.observation_dimension = observation_dimension
         self.action_dimension = action_dimension
         self.expert_number = expert_number
+        self.observation_scaling = (
+            torch.tensor(observation_scaling, device=config.DEVICE, dtype=config.DTYPE).diag().unsqueeze(dim=0)
+        )
+        self.action_scaling = (
+            torch.tensor(action_scaling, device=config.DEVICE, dtype=config.DTYPE).diag().unsqueeze(dim=0)
+        )
         # gating
         self.gating_net = torch.nn.Sequential(
             torch.nn.Linear(self.observation_dimension, self.expert_number), torch.nn.Softmax(dim=1)
@@ -88,9 +107,13 @@ class MixtureOfLinearExpertsPolicy(torch.nn.Module):
             action: A (B,A) tensor with the predicted actions.
             expert_weights: A (B,E) tensor with the predicted expert weights.
         """
-        expert_weights = self.gating_net(observation)
-        expert_actions = torch.stack([self.expert_nets[i](observation) for i in range(self.expert_number)], dim=2)
-        action = bmv(expert_actions, expert_weights)
+        scaled_observation = bmv(self.observation_scaling, observation)
+        expert_weights = self.gating_net(scaled_observation)
+        expert_actions = torch.stack(
+            [self.expert_nets[i](scaled_observation) for i in range(self.expert_number)], dim=2
+        )
+        unscaled_action = bmv(expert_actions, expert_weights)
+        action = bmv(self.action_scaling, unscaled_action)
         return action, expert_weights
 
 

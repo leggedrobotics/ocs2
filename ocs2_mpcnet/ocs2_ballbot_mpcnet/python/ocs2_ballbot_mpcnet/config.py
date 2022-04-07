@@ -72,5 +72,16 @@ OBSERVATION_DIM = STATE_DIM
 # action dimension
 ACTION_DIM = INPUT_DIM
 
+# observation scaling
+# fmt: off
+OBSERVATION_SCALING = [
+    1.0, 1.0, 1.0, 1.0, 1.0,  # pose
+    1.0, 1.0, 1.0, 1.0, 1.0   # twist
+]
+# fmt: on
+
+# action scaling
+ACTION_SCALING = [1.0, 1.0, 1.0]
+
 # input cost for behavioral cloning
 R = [2.0, 2.0, 2.0]

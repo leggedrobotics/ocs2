@@ -47,8 +47,8 @@ from ocs2_mpcnet_core.helper import bmv, bmm
 from ocs2_mpcnet_core.loss.hamiltonian import HamiltonianLoss as ExpertsLoss
 from ocs2_mpcnet_core.loss.cross_entropy import CrossEntropyLoss as GatingLoss
 from ocs2_mpcnet_core.memory.circular import CircularMemory as Memory
+from ocs2_mpcnet_core.policy.mixture_of_nonlinear_experts import MixtureOfNonlinearExpertsPolicy as Policy
 
-from ocs2_legged_robot_mpcnet.policy import LeggedRobotMixtureOfNonlinearExpertsPolicy as Policy
 from ocs2_legged_robot_mpcnet import config
 from ocs2_legged_robot_mpcnet import helper
 from ocs2_legged_robot_mpcnet import MpcnetInterface
@@ -112,7 +112,9 @@ def main():
     )
 
     # policy
-    policy = Policy(config.OBSERVATION_DIM, config.ACTION_DIM, config.EXPERT_NUM)
+    policy = Policy(
+        config.OBSERVATION_DIM, config.ACTION_DIM, config.EXPERT_NUM, config.OBSERVATION_SCALING, config.ACTION_SCALING
+    )
     policy.to(config.DEVICE)
     print("Initial policy parameters:")
     print(list(policy.named_parameters()))

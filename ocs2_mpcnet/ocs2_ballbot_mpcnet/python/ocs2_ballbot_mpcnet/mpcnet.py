@@ -96,7 +96,7 @@ def main():
     memory = Memory(memory_capacity, config.STATE_DIM, config.INPUT_DIM, config.OBSERVATION_DIM, config.ACTION_DIM)
 
     # policy
-    policy = Policy(config.OBSERVATION_DIM, config.ACTION_DIM)
+    policy = Policy(config.OBSERVATION_DIM, config.ACTION_DIM, config.OBSERVATION_SCALING, config.ACTION_SCALING)
     policy.to(config.DEVICE)
     print("Initial policy parameters:")
     print(list(policy.named_parameters()))

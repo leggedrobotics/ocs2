@@ -33,6 +33,10 @@ Provides a class that implements a linear policy.
 """
 
 import torch
+import numpy as np
+
+from ocs2_mpcnet_core import config
+from ocs2_mpcnet_core.helper import bmv
 
 
 class LinearPolicy(torch.nn.Module):
@@ -44,10 +48,18 @@ class LinearPolicy(torch.nn.Module):
         name: A string with the name of the policy.
         observation_dimension: An integer defining the observation (i.e. input) dimension of the policy.
         action_dimension: An integer defining the action (i.e. output) dimension of the policy.
+        observation_scaling: A (1,O,O) tensor for the observation scaling.
+        action_scaling: A (1,A,A) tensor for the action scaling.
         linear: The linear neural network layer.
     """
 
-    def __init__(self, observation_dimension: int, action_dimension: int) -> None:
+    def __init__(
+        self,
+        observation_dimension: int,
+        action_dimension: int,
+        observation_scaling: np.ndarray,
+        action_scaling: np.ndarray,
+    ) -> None:
         """Initializes the LinearPolicy class.
 
         Initializes the LinearPolicy class by setting fixed and variable attributes.
@@ -55,11 +67,19 @@ class LinearPolicy(torch.nn.Module):
         Args:
             observation_dimension: An integer defining the observation dimension.
             action_dimension: An integer defining the action dimension.
+            observation_scaling: A NumPy array of shape (O) defining the observation scaling.
+            action_scaling: A NumPy array of shape (A) defining the action scaling.
         """
         super().__init__()
         self.name = "LinearPolicy"
         self.observation_dimension = observation_dimension
         self.action_dimension = action_dimension
+        self.observation_scaling = (
+            torch.tensor(observation_scaling, device=config.DEVICE, dtype=config.DTYPE).diag().unsqueeze(dim=0)
+        )
+        self.action_scaling = (
+            torch.tensor(action_scaling, device=config.DEVICE, dtype=config.DTYPE).diag().unsqueeze(dim=0)
+        )
         self.linear = torch.nn.Linear(self.observation_dimension, self.action_dimension)
 
     def forward(self, observation: torch.Tensor) -> torch.Tensor:
@@ -73,4 +93,7 @@ class LinearPolicy(torch.nn.Module):
         Returns:
             action: A (B,A) tensor with the predicted actions.
         """
-        return self.linear(observation)
+        scaled_observation = bmv(self.observation_scaling, observation)
+        unscaled_action = self.linear(scaled_observation)
+        action = bmv(self.action_scaling, unscaled_action)
+        return action

@@ -89,9 +89,26 @@ DEFAULT_STATE = [
 ]
 # fmt: on
 
-# input scaling
+# observation scaling
 # fmt: off
-INPUT_SCALING = [
+OBSERVATION_SCALING = [
+    1.0, 1.0, 1.0, 1.0,  # swing phases
+    1.0, 1.0, 1.0, 1.0,  # swing phase rates
+    1.0, 1.0, 1.0, 1.0,  # sinusoidal bumps
+    1.0, 1.0, 1.0,       # normalized linear momentum
+    1.0, 1.0, 1.0,       # normalized angular momentum
+    1.0, 1.0, 1.0,       # position
+    1.0, 1.0, 1.0,       # orientation
+    1.0, 1.0, 1.0,       # joint positions LF
+    1.0, 1.0, 1.0,       # joint positions LH
+    1.0, 1.0, 1.0,       # joint positions RF
+    1.0, 1.0, 1.0        # joint positions RH
+]
+# fmt: on
+
+# action scaling
+# fmt: off
+ACTION_SCALING = [
     100.0, 100.0, 100.0,  # contact forces LF
     100.0, 100.0, 100.0,  # contact forces LH
     100.0, 100.0, 100.0,  # contact forces RF

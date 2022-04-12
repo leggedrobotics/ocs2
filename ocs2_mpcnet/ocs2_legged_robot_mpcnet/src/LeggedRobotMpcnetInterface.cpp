@@ -91,6 +91,13 @@ LeggedRobotMpcnetInterface::LeggedRobotMpcnetInterface(size_t nDataGenerationThr
           [&, i](double time, const vector_t& input, const vector_t& state, const Eigen::VectorXd& q, const Eigen::VectorXd& dq) {
             return leggedRobotRaisimConversionsPtrs_[i]->inputToRaisimPdTargets(time, input, state, q, dq);
           })));
+      if (raisimRolloutSettings.generateTerrain_) {
+        raisim::TerrainProperties terrainProperties;
+        terrainProperties.zScale = raisimRolloutSettings.terrainRoughness_;
+        terrainProperties.seed = raisimRolloutSettings.terrainSeed_ + i;
+        auto terrainPtr = static_cast<RaisimRollout*>(rolloutPtrs[i].get())->generateTerrain(terrainProperties);
+        leggedRobotRaisimConversionsPtrs_[i]->setTerrain(*terrainPtr);
+      }
     } else {
       rolloutPtrs.push_back(std::unique_ptr<RolloutBase>(leggedRobotInterfacePtrs_[i]->getRollout().clone()));
     }

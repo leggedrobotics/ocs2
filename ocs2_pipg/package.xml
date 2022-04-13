@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ocs2_pipg</name>
+  <version>0.0.0</version>
+  <description>A numerical implementation of PIPG.</description>
+
+  <maintainer email="zhengfuaj@gmail.com">Zhengyu Fu</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>ocs2_core</depend>
+
+  <!-- Test dependancy -->
+  <depend>ocs2_qp_solver</depend>
+
+</package>

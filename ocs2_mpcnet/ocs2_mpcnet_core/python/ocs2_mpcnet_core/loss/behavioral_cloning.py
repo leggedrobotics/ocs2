@@ -54,15 +54,15 @@ class BehavioralCloningLoss:
         R: A (1,U,U) tensor with the input cost matrix.
     """
 
-    def __init__(self, R: np.ndarray) -> None:
+    def __init__(self, config: config.Config) -> None:
         """Initializes the BehavioralCloningLoss class.
 
         Initializes the BehavioralCloningLoss class by setting fixed attributes.
 
         Args:
-            R: A NumPy array of shape (U, U) with the input cost matrix.
+            config: An instance of the configuration class.
         """
-        self.R = torch.tensor(R, device=config.DEVICE, dtype=config.DTYPE).unsqueeze(dim=0)
+        self.R = torch.tensor(config.R, device=config.DEVICE, dtype=config.DTYPE).unsqueeze(dim=0)
 
     def __call__(self, u_predicted: torch.Tensor, u_target: torch.Tensor) -> torch.Tensor:
         """Computes the mean behavioral cloning loss.

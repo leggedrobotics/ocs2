@@ -53,15 +53,15 @@ class CrossEntropyLoss:
         epsilon: A (1) tensor with a small epsilon used to stabilize the logarithm.
     """
 
-    def __init__(self, epsilon: float) -> None:
+    def __init__(self, config: config.Config) -> None:
         """Initializes the CrossEntropyLoss class.
 
         Initializes the CrossEntropyLoss class by setting fixed attributes.
 
         Args:
-            epsilon: A float used to stabilize the logarithm.
+            config: An instance of the configuration class.
         """
-        self.epsilon = torch.tensor(epsilon, device=config.DEVICE, dtype=config.DTYPE)
+        self.epsilon = torch.tensor(config.EPSILON, device=config.DEVICE, dtype=config.DTYPE)
 
     def __call__(self, p_target: torch.Tensor, p_predicted: torch.Tensor) -> torch.Tensor:
         """Computes the mean cross entropy loss.

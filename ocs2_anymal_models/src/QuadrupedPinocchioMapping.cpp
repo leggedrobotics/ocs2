@@ -4,8 +4,8 @@ namespace anymal {
 namespace tpl {
 
 template <typename SCALAR_T>
-QuadrupedPinocchioMappingTpl<SCALAR_T>::QuadrupedPinocchioMappingTpl(switched_model::feet_array_t<std::size_t> feetMap)
-    : mapFeetOrderOcs2ToPinocchio_(std::move(feetMap)) {}
+QuadrupedPinocchioMappingTpl<SCALAR_T>::QuadrupedPinocchioMappingTpl(const switched_model::feet_array_t<size_t>& feetMap)
+    : mapFeetOrderOcs2ToPinocchio_(feetMap) {}
 
 template <typename SCALAR_T>
 auto QuadrupedPinocchioMappingTpl<SCALAR_T>::mapJointOcs2ToPinocchio(const joint_coordinate_t& jointPositions) const -> joint_coordinate_t {

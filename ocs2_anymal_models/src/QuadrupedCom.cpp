@@ -22,8 +22,8 @@ ocs2::PinocchioInterface createQuadrupedPinocchioInterface(const std::string& ur
 
 namespace tpl {
 template <typename SCALAR_T>
-QuadrupedCom<SCALAR_T>::QuadrupedCom(const ocs2::PinocchioInterface& pinocchioInterface)
-    : pinocchioMapping_({0, 2, 1, 3}), pinocchioInterfacePtr_(new PinocchioInterface(castPinocchioInterface(pinocchioInterface))) {
+QuadrupedCom<SCALAR_T>::QuadrupedCom(const ocs2::PinocchioInterface& pinocchioInterface, const QuadrupedPinocchioMappingTpl<SCALAR_T>& pinnochioMapping)
+    : pinocchioInterfacePtr_(new PinocchioInterface(castPinocchioInterface(pinocchioInterface))), pinocchioMapping_(pinnochioMapping) {
   const auto& model = pinocchioInterfacePtr_->getModel();
   totalMass_ = pinocchio::computeTotalMass(model);
 }
@@ -31,8 +31,8 @@ QuadrupedCom<SCALAR_T>::QuadrupedCom(const ocs2::PinocchioInterface& pinocchioIn
 template <typename SCALAR_T>
 QuadrupedCom<SCALAR_T>::QuadrupedCom(const QuadrupedCom& rhs)
     : pinocchioInterfacePtr_(new PinocchioInterface(*rhs.pinocchioInterfacePtr_)),
-      totalMass_(rhs.totalMass_),
-      pinocchioMapping_(rhs.pinocchioMapping_) {}
+      pinocchioMapping_(rhs.pinocchioMapping_),
+      totalMass_(rhs.totalMass_) {}
 
 template <typename SCALAR_T>
 QuadrupedCom<SCALAR_T>* QuadrupedCom<SCALAR_T>::clone() const {

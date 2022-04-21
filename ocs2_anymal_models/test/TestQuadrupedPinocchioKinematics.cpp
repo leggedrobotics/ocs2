@@ -15,7 +15,8 @@ class QuadrupedKinematicsTest : public ::testing::Test {
  public:
   QuadrupedKinematicsTest()
       : pinocchioKinematics_(
-            ocs2::getPinocchioInterfaceFromUrdfFile(ros::package::getPath("anymal_camel_rsl") + "/urdf/cached_anymal_camel_rsl.urdf")) {
+            ocs2::getPinocchioInterfaceFromUrdfFile(ros::package::getPath("anymal_camel_rsl") + "/urdf/cached_anymal_camel_rsl.urdf"),
+            QuadrupedMapping({0, 2, 1, 3})) {
     srand(10);
   }
 

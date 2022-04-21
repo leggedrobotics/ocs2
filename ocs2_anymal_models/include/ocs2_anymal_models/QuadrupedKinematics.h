@@ -1,12 +1,14 @@
 #pragma once
 
+#include <array>
+#include <string>
+#include <vector>
+
 #include <ocs2_switched_model_interface/core/KinematicsModelBase.h>
 
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
-#include <array>
-#include <string>
-#include <vector>
+#include "ocs2_anymal_models/QuadrupedPinocchioMapping.h"
 
 namespace anymal {
 namespace tpl {
@@ -25,7 +27,7 @@ class QuadrupedKinematics final : public switched_model::KinematicsModelBase<SCA
 
   enum class FrameIndex : std::size_t { HAA = 0, FOOT, KFE, FRAME_INDEX_SIZE };
 
-  QuadrupedKinematics(const ocs2::PinocchioInterface& pinocchioInterface);
+  QuadrupedKinematics(const ocs2::PinocchioInterface& pinocchioInterface, const QuadrupedPinocchioMappingTpl<SCALAR_T>& pinnochioMapping);
   ~QuadrupedKinematics() = default;
 
   QuadrupedKinematics<SCALAR_T>* clone() const override;
@@ -43,9 +45,6 @@ class QuadrupedKinematics final : public switched_model::KinematicsModelBase<SCA
 
   std::vector<CollisionSphere> collisionSpheresInBaseFrame(
       const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const override;
-
-  switched_model::joint_coordinate_s_t<SCALAR_T> mapJointConfigurationOcs2ToPinocchio(
-      const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
 
  private:
   QuadrupedKinematics(const QuadrupedKinematics& rhs);
@@ -72,15 +71,9 @@ class QuadrupedKinematics final : public switched_model::KinematicsModelBase<SCA
   };
 
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
+  QuadrupedPinocchioMappingTpl<SCALAR_T> pinocchioMapping_;
 
   switched_model::feet_array_t<FrameIndexMap> mapFrameIndexToId_;
-
-  /**
-   * Used to map joint configuration space from OCS2 to Pinocchio. In OCS2, the feet order is {LF, RF, LH, RH}. But in Pinocchio, the feet
-   * order is {LF, LH, RF, RH}. Assume index i stands for a foot index in OCS2 and thus mapFeetOrderOcs2ToPinocchio_[i] is the foot index in
-   * Pinocchio.
-   */
-  switched_model::feet_array_t<std::size_t> mapFeetOrderOcs2ToPinocchio_;
 };
 
 }  // namespace tpl

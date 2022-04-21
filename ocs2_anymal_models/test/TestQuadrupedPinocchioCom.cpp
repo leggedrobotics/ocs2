@@ -10,7 +10,8 @@ using namespace anymal;
 class QuadrupedComTest : public ::testing::Test {
  public:
   QuadrupedComTest()
-      : pinocchioCom_(createQuadrupedPinocchioInterface(ros::package::getPath("anymal_camel_rsl") + "/urdf/cached_anymal_camel_rsl.urdf")) {
+      : pinocchioCom_(createQuadrupedPinocchioInterface(ros::package::getPath("anymal_camel_rsl") + "/urdf/cached_anymal_camel_rsl.urdf"),
+                      QuadrupedMapping({0, 2, 1, 3})) {
     srand(0);
   }
 

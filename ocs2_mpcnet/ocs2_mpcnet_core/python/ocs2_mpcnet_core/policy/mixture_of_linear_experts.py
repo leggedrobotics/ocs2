@@ -33,7 +33,6 @@ Provides classes that implement a mixture of linear experts policy.
 """
 
 import torch
-import numpy as np
 from typing import Tuple
 
 from ocs2_mpcnet_core import config

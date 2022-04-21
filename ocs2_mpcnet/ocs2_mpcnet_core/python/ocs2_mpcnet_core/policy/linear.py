@@ -33,7 +33,6 @@ Provides a class that implements a linear policy.
 """
 
 import torch
-import numpy as np
 
 from ocs2_mpcnet_core import config
 from ocs2_mpcnet_core.helper import bmv

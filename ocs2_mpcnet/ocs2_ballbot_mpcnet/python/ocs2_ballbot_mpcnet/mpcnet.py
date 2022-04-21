@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 ###############################################################################
 # Copyright (c) 2022, Farbod Farshidian. All rights reserved.
 #
@@ -29,224 +27,109 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###############################################################################
 
-"""Ballbot MPC-Net.
+"""Ballbot MPC-Net class.
 
-Main script for training an MPC-Net policy for ballbot.
+Provides a class that handles the MPC-Net training for ballbot.
 """
 
-import os
-import sys
-import time
-import datetime
-import torch
 import numpy as np
+from typing import Tuple
 
-from torch.utils.tensorboard import SummaryWriter
-
-from ocs2_mpcnet_core.config import Config
-from ocs2_mpcnet_core.helper import bmv, bmm
-from ocs2_mpcnet_core.loss.hamiltonian import HamiltonianLoss as Loss
-from ocs2_mpcnet_core.memory.circular import CircularMemory as Memory
-from ocs2_mpcnet_core.policy.linear import LinearPolicy as Policy
-
-from ocs2_ballbot_mpcnet import helper
-from ocs2_ballbot_mpcnet import MpcnetInterface
+from ocs2_mpcnet_core import helper
+from ocs2_mpcnet_core import mpcnet
+from ocs2_mpcnet_core import SystemObservationArray, ModeScheduleArray, TargetTrajectoriesArray
 
 
-def main(config_file_path: str) -> None:
-    # config
-    config = Config(config_file_path)
+class BallbotMpcnet(mpcnet.Mpcnet):
+    """Ballbot MPC-Net.
 
-    # mpcnet interface
-    mpcnet_interface = MpcnetInterface(config.DATA_GENERATION_THREADS, config.POLICY_EVALUATION_THREADS, config.RAISIM)
+    Adds robot-specific methods for the MPC-Net training.
+    """
 
-    # logging
-    folder = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_" + config.NAME + "_" + config.DESCRIPTION
-    writer = SummaryWriter("runs/" + folder)
-    os.makedirs(name="policies/" + folder)
+    @staticmethod
+    def get_default_event_times_and_mode_sequence(duration: float) -> Tuple[np.ndarray, np.ndarray]:
+        """Get the event times and mode sequence describing the default mode schedule.
 
-    # loss
-    loss = Loss()
+        Creates the default event times and mode sequence for a certain time duration.
 
-    # memory
-    memory = Memory(config)
+        Args:
+            duration: The duration of the mode schedule given by a float.
 
-    # policy
-    policy = Policy(config)
-    policy.to(config.DEVICE)
-    print("Initial policy parameters:")
-    print(list(policy.named_parameters()))
-    dummy_observation = torch.randn(1, config.OBSERVATION_DIM, device=config.DEVICE, dtype=config.DTYPE)
-    print("Saving initial policy.")
-    save_path = "policies/" + folder + "/initial_policy"
-    torch.onnx.export(model=policy, args=dummy_observation, f=save_path + ".onnx")
-    torch.save(obj=policy, f=save_path + ".pt")
+        Returns:
+            A tuple containing the components of the mode schedule.
+                - event_times: The event times given by a NumPy array of shape (K-1) containing floats.
+                - mode_sequence: The mode sequence given by a NumPy array of shape (K) containing integers.
+        """
+        event_times_template = np.array([1.0], dtype=np.float64)
+        mode_sequence_template = np.array([0], dtype=np.uintp)
+        return helper.get_event_times_and_mode_sequence(0, duration, event_times_template, mode_sequence_template)
 
-    # optimizer
-    optimizer = torch.optim.Adam(policy.parameters(), lr=config.LEARNING_RATE)
+    def get_random_initial_state(self) -> np.ndarray:
+        """Get a random initial state.
 
-    def start_data_generation(policy, alpha=1.0):
-        policy_file_path = "/tmp/data_generation_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".onnx"
-        torch.onnx.export(model=policy, args=dummy_observation, f=policy_file_path)
-        initial_observations, mode_schedules, target_trajectories = helper.get_tasks(
-            config,
-            config.DATA_GENERATION_TASKS,
-            config.DATA_GENERATION_DURATION,
-        )
-        mpcnet_interface.startDataGeneration(
-            alpha,
-            policy_file_path,
-            config.DATA_GENERATION_TIME_STEP,
-            config.DATA_GENERATION_DATA_DECIMATION,
-            config.DATA_GENERATION_SAMPLES,
-            np.diag(np.power(np.array(config.DATA_GENERATION_SAMPLING_VARIANCE), 2)),
-            initial_observations,
-            mode_schedules,
-            target_trajectories,
-        )
+        Samples a random initial state for the robot.
 
-    def start_policy_evaluation(policy, alpha=0.0):
-        policy_file_path = "/tmp/policy_evaluation_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".onnx"
-        torch.onnx.export(model=policy, args=dummy_observation, f=policy_file_path)
-        initial_observations, mode_schedules, target_trajectories = helper.get_tasks(
-            config,
-            config.POLICY_EVALUATION_TASKS,
-            config.POLICY_EVALUATION_DURATION,
-        )
-        mpcnet_interface.startPolicyEvaluation(
-            alpha,
-            policy_file_path,
-            config.POLICY_EVALUATION_TIME_STEP,
-            initial_observations,
-            mode_schedules,
-            target_trajectories,
-        )
+        Returns:
+            x: A random initial state given by a NumPy array containing floats.
+        """
+        max_linear_velocity_x = 0.5
+        max_linear_velocity_y = 0.5
+        max_euler_angle_derivative_z = 45.0 / 180.0 * np.pi
+        max_euler_angle_derivative_y = 45.0 / 180.0 * np.pi
+        max_euler_angle_derivative_x = 45.0 / 180.0 * np.pi
+        random_deviation = np.zeros(self.config.STATE_DIM)
+        random_deviation[5] = np.random.uniform(-max_linear_velocity_x, max_linear_velocity_x)
+        random_deviation[6] = np.random.uniform(-max_linear_velocity_y, max_linear_velocity_y)
+        random_deviation[7] = np.random.uniform(-max_euler_angle_derivative_z, max_euler_angle_derivative_z)
+        random_deviation[8] = np.random.uniform(-max_euler_angle_derivative_y, max_euler_angle_derivative_y)
+        random_deviation[9] = np.random.uniform(-max_euler_angle_derivative_x, max_euler_angle_derivative_x)
+        return np.array(self.config.DEFAULT_STATE) + random_deviation
 
-    try:
-        print("==============\nWaiting for first data.\n==============")
-        start_data_generation(policy)
-        start_policy_evaluation(policy)
-        while not mpcnet_interface.isDataGenerationDone():
-            time.sleep(1.0)
+    def get_random_target_state(self) -> np.ndarray:
+        """Get a random target state.
 
-        print("==============\nStarting training.\n==============")
-        for iteration in range(config.LEARNING_ITERATIONS):
-            alpha = 1.0 - 1.0 * iteration / config.LEARNING_ITERATIONS
+        Samples a random target state for the robot.
 
-            # data generation
-            if mpcnet_interface.isDataGenerationDone():
-                # get generated data
-                data = mpcnet_interface.getGeneratedData()
-                for i in range(len(data)):
-                    # push t, x, u, p, observation, action transformation, Hamiltonian into memory
-                    memory.push(
-                        data[i].t,
-                        data[i].x,
-                        data[i].u,
-                        torch.ones(1, device=config.DEVICE, dtype=config.DTYPE),
-                        data[i].observation,
-                        data[i].actionTransformation,
-                        data[i].hamiltonian,
-                    )
-                # logging
-                writer.add_scalar("data/new_data_points", len(data), iteration)
-                writer.add_scalar("data/total_data_points", len(memory), iteration)
-                print("iteration", iteration, "received data points", len(data), "requesting with alpha", alpha)
-                # start new data generation
-                start_data_generation(policy, alpha)
+        Returns:
+            x: A random target state given by a NumPy array containing floats.
+        """
+        max_position_x = 1.0
+        max_position_y = 1.0
+        max_orientation_z = 45.0 / 180.0 * np.pi
+        random_deviation = np.zeros(self.config.TARGET_STATE_DIM)
+        random_deviation[0] = np.random.uniform(-max_position_x, max_position_x)
+        random_deviation[1] = np.random.uniform(-max_position_y, max_position_y)
+        random_deviation[2] = np.random.uniform(-max_orientation_z, max_orientation_z)
+        return np.array(self.config.DEFAULT_TARGET_STATE) + random_deviation
 
-            # policy evaluation
-            if mpcnet_interface.isPolicyEvaluationDone():
-                # get computed metrics
-                metrics = mpcnet_interface.getComputedMetrics()
-                survival_time = np.mean([metrics[i].survivalTime for i in range(len(metrics))])
-                incurred_hamiltonian = np.mean([metrics[i].incurredHamiltonian for i in range(len(metrics))])
-                # logging
-                writer.add_scalar("metric/survival_time", survival_time, iteration)
-                writer.add_scalar("metric/incurred_hamiltonian", incurred_hamiltonian, iteration)
-                print(
-                    "iteration",
-                    iteration,
-                    "received metrics:",
-                    "incurred_hamiltonian",
-                    incurred_hamiltonian,
-                    "survival_time",
-                    survival_time,
-                )
-                # start new policy evaluation
-                start_policy_evaluation(policy)
+    def get_tasks(
+        self, tasks_number: int, duration: float
+    ) -> Tuple[SystemObservationArray, ModeScheduleArray, TargetTrajectoriesArray]:
+        """Get tasks.
 
-            # intermediate policies
-            if (iteration % 1000 == 0) and (iteration > 0):
-                print("Saving intermediate policy for iteration", iteration)
-                save_path = "policies/" + folder + "/intermediate_policy_" + str(iteration)
-                torch.onnx.export(model=policy, args=dummy_observation, f=save_path + ".onnx")
-                torch.save(obj=policy, f=save_path + ".pt")
+        Get a random set of task that should be executed by the data generation or policy evaluation.
 
-            # extract batch from memory
-            (
-                t,
-                x,
-                u,
-                p,
-                observation,
-                action_transformation_matrix,
-                action_transformation_vector,
-                dHdxx,
-                dHdux,
-                dHduu,
-                dHdx,
-                dHdu,
-                H,
-            ) = memory.sample(config.BATCH_SIZE)
+        Args:
+            tasks_number: Number of tasks given by an integer.
+            duration: Duration of each task given by a float.
 
-            # take an optimization step
-            def closure():
-                # clear the gradients
-                optimizer.zero_grad()
-                # prediction
-                action = policy(observation)
-                input = bmv(action_transformation_matrix, action) + action_transformation_vector
-                # compute the empirical loss
-                empirical_loss = loss(x, x, input, u, dHdxx, dHdux, dHduu, dHdx, dHdu, H)
-                # compute the gradients
-                empirical_loss.backward()
-                # logging
-                writer.add_scalar("objective/empirical_loss", empirical_loss.item(), iteration)
-                # return empirical loss
-                return empirical_loss
-
-            optimizer.step(closure)
-
-            # let data generation and policy evaluation finish in last iteration (to avoid a segmentation fault)
-            if iteration == config.LEARNING_ITERATIONS - 1:
-                while (not mpcnet_interface.isDataGenerationDone()) or (not mpcnet_interface.isPolicyEvaluationDone()):
-                    time.sleep(1.0)
-
-        print("==============\nTraining completed.\n==============")
-
-    except KeyboardInterrupt:
-        # let data generation and policy evaluation finish (to avoid a segmentation fault)
-        while (not mpcnet_interface.isDataGenerationDone()) or (not mpcnet_interface.isPolicyEvaluationDone()):
-            time.sleep(1.0)
-        print("==============\nTraining interrupted.\n==============")
-        pass
-
-    print("Final policy parameters:")
-    print(list(policy.named_parameters()))
-
-    print("Saving final policy.")
-    save_path = "policies/" + folder + "/final_policy"
-    torch.onnx.export(model=policy, args=dummy_observation, f=save_path + ".onnx")
-    torch.save(obj=policy, f=save_path + ".pt")
-
-    writer.close()
-
-    print("Done. Exiting now.")
-
-
-if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        main(sys.argv[1])
-    else:
-        main("./config/ballbot.yaml")
+        Returns:
+            A tuple containing the components of the task.
+                - initial_observations: The initial observations given by an OCS2 system observation array.
+                - mode_schedules: The desired mode schedules given by an OCS2 mode schedule array.
+                - target_trajectories: The desired target trajectories given by an OCS2 target trajectories array.
+        """
+        initial_observations = helper.get_system_observation_array(tasks_number)
+        mode_schedules = helper.get_mode_schedule_array(tasks_number)
+        target_trajectories = helper.get_target_trajectories_array(tasks_number)
+        for i in range(tasks_number):
+            initial_observations[i] = helper.get_system_observation(
+                0, 0.0, self.get_random_initial_state(), np.zeros(self.config.INPUT_DIM)
+            )
+            mode_schedules[i] = helper.get_mode_schedule(*self.get_default_event_times_and_mode_sequence(duration))
+            target_trajectories[i] = helper.get_target_trajectories(
+                duration * np.ones((1, 1)),
+                self.get_random_target_state().reshape((1, self.config.TARGET_STATE_DIM)),
+                np.zeros((1, self.config.TARGET_INPUT_DIM)),
+            )
+        return initial_observations, mode_schedules, target_trajectories

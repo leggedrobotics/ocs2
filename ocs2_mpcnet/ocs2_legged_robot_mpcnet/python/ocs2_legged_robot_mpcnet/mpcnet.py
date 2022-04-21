@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 ###############################################################################
 # Copyright (c) 2022, Farbod Farshidian. All rights reserved.
 #
@@ -29,230 +27,235 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###############################################################################
 
-"""Legged robot MPC-Net.
+"""Legged robot MPC-Net class.
 
-Main script for training an MPC-Net policy for legged robot.
+Provides a class that handles the MPC-Net training for legged robot.
 """
 
-import os
-import sys
-import time
-import datetime
-import torch
+import random
 import numpy as np
+from typing import Tuple
 
-from torch.utils.tensorboard import SummaryWriter
-
-from ocs2_mpcnet_core.config import Config
-from ocs2_mpcnet_core.helper import bmv, bmm
-from ocs2_mpcnet_core.loss.hamiltonian import HamiltonianLoss as ExpertsLoss
-from ocs2_mpcnet_core.loss.cross_entropy import CrossEntropyLoss as GatingLoss
-from ocs2_mpcnet_core.memory.circular import CircularMemory as Memory
-from ocs2_mpcnet_core.policy.mixture_of_nonlinear_experts import MixtureOfNonlinearExpertsPolicy as Policy
-
-from ocs2_legged_robot_mpcnet import helper
-from ocs2_legged_robot_mpcnet import MpcnetInterface
+from ocs2_mpcnet_core import helper
+from ocs2_mpcnet_core import mpcnet
+from ocs2_mpcnet_core import SystemObservationArray, ModeScheduleArray, TargetTrajectoriesArray
 
 
-def main(config_file_path: str) -> None:
-    # config
-    config = Config(config_file_path)
+class LeggedRobotMpcnet(mpcnet.Mpcnet):
+    """Legged robot MPC-Net.
 
-    # mpcnet interface
-    mpcnet_interface = MpcnetInterface(config.DATA_GENERATION_THREADS, config.POLICY_EVALUATION_THREADS, config.RAISIM)
+    Adds robot-specific methods for the MPC-Net training.
+    """
 
-    # logging
-    folder = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_" + config.NAME + "_" + config.DESCRIPTION
-    writer = SummaryWriter("runs/" + folder)
-    os.makedirs(name="policies/" + folder)
+    @staticmethod
+    def get_stance(duration: float) -> Tuple[np.ndarray, np.ndarray]:
+        """Get the stance gait.
 
-    # loss
-    experts_loss = ExpertsLoss()
-    gating_loss = GatingLoss(config)
+        Creates the stance event times and mode sequence for a certain time duration:
+            - contact schedule: STANCE
+            - swing schedule: -
 
-    # memory
-    memory = Memory(config)
+        Args:
+            duration: The duration of the mode schedule given by a float.
 
-    # policy
-    policy = Policy(config)
-    policy.to(config.DEVICE)
-    print("Initial policy parameters:")
-    print(list(policy.named_parameters()))
-    dummy_observation = torch.randn(1, config.OBSERVATION_DIM, device=config.DEVICE, dtype=config.DTYPE)
-    print("Saving initial policy.")
-    save_path = "policies/" + folder + "/initial_policy"
-    torch.onnx.export(model=policy, args=dummy_observation, f=save_path + ".onnx")
-    torch.save(obj=policy, f=save_path + ".pt")
+        Returns:
+            A tuple containing the components of the mode schedule.
+                - event_times: The event times given by a NumPy array of shape (K-1) containing floats.
+                - mode_sequence: The mode sequence given by a NumPy array of shape (K) containing integers.
+        """
+        event_times_template = np.array([1.0], dtype=np.float64)
+        mode_sequence_template = np.array([15], dtype=np.uintp)
+        return helper.get_event_times_and_mode_sequence(15, duration, event_times_template, mode_sequence_template)
 
-    # optimizer
-    optimizer = torch.optim.Adam(policy.parameters(), lr=config.LEARNING_RATE)
+    def get_random_initial_state_stance(self) -> np.ndarray:
+        """Get a random initial state for stance.
 
-    def start_data_generation(policy, alpha=1.0):
-        policy_file_path = "/tmp/data_generation_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".onnx"
-        torch.onnx.export(model=policy, args=dummy_observation, f=policy_file_path)
-        initial_observations, mode_schedules, target_trajectories = helper.get_tasks(
-            config,
-            config.DATA_GENERATION_TASKS,
-            config.DATA_GENERATION_DURATION,
+        Samples a random initial state for the robot in the stance gait.
+
+        Returns:
+            x: A random initial state given by a NumPy array containing floats.
+        """
+        max_normalized_linear_momentum_x = 0.1
+        max_normalized_linear_momentum_y = 0.1
+        max_normalized_linear_momentum_z = 0.1
+        max_normalized_angular_momentum_x = 1.62079 / 52.1348 * 30.0 / 180.0 * np.pi
+        max_normalized_angular_momentum_y = 4.83559 / 52.1348 * 30.0 / 180.0 * np.pi
+        max_normalized_angular_momentum_z = 4.72382 / 52.1348 * 30.0 / 180.0 * np.pi
+        random_deviation = np.zeros(self.config.STATE_DIM)
+        random_deviation[0] = np.random.uniform(-max_normalized_linear_momentum_x, max_normalized_linear_momentum_x)
+        random_deviation[1] = np.random.uniform(-max_normalized_linear_momentum_y, max_normalized_linear_momentum_y)
+        random_deviation[2] = np.random.uniform(
+            -max_normalized_linear_momentum_z, max_normalized_linear_momentum_z / 2.0
         )
-        mpcnet_interface.startDataGeneration(
-            alpha,
-            policy_file_path,
-            config.DATA_GENERATION_TIME_STEP,
-            config.DATA_GENERATION_DATA_DECIMATION,
-            config.DATA_GENERATION_SAMPLES,
-            np.diag(np.power(np.array(config.DATA_GENERATION_SAMPLING_VARIANCE), 2)),
-            initial_observations,
-            mode_schedules,
-            target_trajectories,
+        random_deviation[3] = np.random.uniform(-max_normalized_angular_momentum_x, max_normalized_angular_momentum_x)
+        random_deviation[4] = np.random.uniform(-max_normalized_angular_momentum_y, max_normalized_angular_momentum_y)
+        random_deviation[5] = np.random.uniform(-max_normalized_angular_momentum_z, max_normalized_angular_momentum_z)
+        return np.array(self.config.DEFAULT_STATE) + random_deviation
+
+    def get_random_target_state_stance(self) -> np.ndarray:
+        """Get a random target state for stance.
+
+        Samples a random target state for the robot in the stance gait.
+
+        Returns:
+            x: A random target state given by a NumPy array containing floats.
+        """
+        max_position_z = 0.075
+        max_orientation_z = 25.0 / 180.0 * np.pi
+        max_orientation_y = 15.0 / 180.0 * np.pi
+        max_orientation_x = 25.0 / 180.0 * np.pi
+        random_deviation = np.zeros(self.config.TARGET_STATE_DIM)
+        random_deviation[8] = np.random.uniform(-max_position_z, max_position_z)
+        random_deviation[9] = np.random.uniform(-max_orientation_z, max_orientation_z)
+        random_deviation[10] = np.random.uniform(-max_orientation_y, max_orientation_y)
+        random_deviation[11] = np.random.uniform(-max_orientation_x, max_orientation_x)
+        return np.array(self.config.DEFAULT_TARGET_STATE) + random_deviation
+
+    @staticmethod
+    def get_trot_1(duration: float) -> Tuple[np.ndarray, np.ndarray]:
+        """Get the first trot gait.
+
+        Creates the first trot event times and mode sequence for a certain time duration:
+            - contact schedule: LF_RH, RF_LH
+            - swing schedule: RF_LH, LF_RH
+
+        Args:
+            duration: The duration of the mode schedule given by a float.
+
+        Returns:
+            A tuple containing the components of the mode schedule.
+                - event_times: The event times given by a NumPy array of shape (K-1) containing floats.
+                - mode_sequence: The mode sequence given by a NumPy array of shape (K) containing integers.
+        """
+        event_times_template = np.array([0.35, 0.7], dtype=np.float64)
+        mode_sequence_template = np.array([9, 6], dtype=np.uintp)
+        return helper.get_event_times_and_mode_sequence(15, duration, event_times_template, mode_sequence_template)
+
+    @staticmethod
+    def get_trot_2(duration: float) -> Tuple[np.ndarray, np.ndarray]:
+        """Get the second trot gait.
+
+        Creates the second trot event times and mode sequence for a certain time duration:
+            - contact schedule: RF_LH, LF_RH
+            - swing schedule: LF_RH, RF_LH
+
+        Args:
+            duration: The duration of the mode schedule given by a float.
+
+        Returns:
+            A tuple containing the components of the mode schedule.
+                - event_times: The event times given by a NumPy array of shape (K-1) containing floats.
+                - mode_sequence: The mode sequence given by a NumPy array of shape (K) containing integers.
+        """
+        event_times_template = np.array([0.35, 0.7], dtype=np.float64)
+        mode_sequence_template = np.array([6, 9], dtype=np.uintp)
+        return helper.get_event_times_and_mode_sequence(15, duration, event_times_template, mode_sequence_template)
+
+    def get_random_initial_state_trot(self) -> np.ndarray:
+        """Get a random initial state for trot.
+
+        Samples a random initial state for the robot in a trot gait.
+
+        Returns:
+            x: A random initial state given by a NumPy array containing floats.
+        """
+        max_normalized_linear_momentum_x = 0.5
+        max_normalized_linear_momentum_y = 0.25
+        max_normalized_linear_momentum_z = 0.25
+        max_normalized_angular_momentum_x = 1.62079 / 52.1348 * 60.0 / 180.0 * np.pi
+        max_normalized_angular_momentum_y = 4.83559 / 52.1348 * 60.0 / 180.0 * np.pi
+        max_normalized_angular_momentum_z = 4.72382 / 52.1348 * 35.0 / 180.0 * np.pi
+        random_deviation = np.zeros(self.config.STATE_DIM)
+        random_deviation[0] = np.random.uniform(-max_normalized_linear_momentum_x, max_normalized_linear_momentum_x)
+        random_deviation[1] = np.random.uniform(-max_normalized_linear_momentum_y, max_normalized_linear_momentum_y)
+        random_deviation[2] = np.random.uniform(
+            -max_normalized_linear_momentum_z, max_normalized_linear_momentum_z / 2.0
         )
+        random_deviation[3] = np.random.uniform(-max_normalized_angular_momentum_x, max_normalized_angular_momentum_x)
+        random_deviation[4] = np.random.uniform(-max_normalized_angular_momentum_y, max_normalized_angular_momentum_y)
+        random_deviation[5] = np.random.uniform(-max_normalized_angular_momentum_z, max_normalized_angular_momentum_z)
+        return np.array(self.config.DEFAULT_STATE) + random_deviation
 
-    def start_policy_evaluation(policy, alpha=0.0):
-        policy_file_path = "/tmp/policy_evaluation_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".onnx"
-        torch.onnx.export(model=policy, args=dummy_observation, f=policy_file_path)
-        initial_observations, mode_schedules, target_trajectories = helper.get_tasks(
-            config,
-            config.POLICY_EVALUATION_TASKS,
-            config.POLICY_EVALUATION_DURATION,
+    def get_random_target_state_trot(self) -> np.ndarray:
+        """Get a random target state for trot.
+
+        Samples a random target state for the robot in a trot gait.
+
+        Returns:
+            x: A random target state given by a NumPy array containing floats.
+        """
+        max_position_x = 0.3
+        max_position_y = 0.15
+        max_orientation_z = 30.0 / 180.0 * np.pi
+        random_deviation = np.zeros(self.config.TARGET_STATE_DIM)
+        random_deviation[6] = np.random.uniform(-max_position_x, max_position_x)
+        random_deviation[7] = np.random.uniform(-max_position_y, max_position_y)
+        random_deviation[9] = np.random.uniform(-max_orientation_z, max_orientation_z)
+        return np.array(self.config.DEFAULT_TARGET_STATE) + random_deviation
+
+    def get_tasks(
+        self, tasks_number: int, duration: float
+    ) -> Tuple[SystemObservationArray, ModeScheduleArray, TargetTrajectoriesArray]:
+        """Get tasks.
+
+        Get a random set of task that should be executed by the data generation or policy evaluation.
+
+        Args:
+            tasks_number: Number of tasks given by an integer.
+            duration: Duration of each task given by a float.
+
+        Returns:
+            A tuple containing the components of the task.
+                - initial_observations: The initial observations given by an OCS2 system observation array.
+                - mode_schedules: The desired mode schedules given by an OCS2 mode schedule array.
+                - target_trajectories: The desired target trajectories given by an OCS2 target trajectories array.
+        """
+        initial_observations = helper.get_system_observation_array(tasks_number)
+        mode_schedules = helper.get_mode_schedule_array(tasks_number)
+        target_trajectories = helper.get_target_trajectories_array(tasks_number)
+        choices = random.choices(
+            list(self.config.WEIGHTS_FOR_GAITS.keys()),
+            k=tasks_number,
+            weights=list(self.config.WEIGHTS_FOR_GAITS.values()),
         )
-        mpcnet_interface.startPolicyEvaluation(
-            alpha,
-            policy_file_path,
-            config.POLICY_EVALUATION_TIME_STEP,
-            initial_observations,
-            mode_schedules,
-            target_trajectories,
-        )
-
-    try:
-        print("==============\nWaiting for first data.\n==============")
-        start_data_generation(policy)
-        start_policy_evaluation(policy)
-        while not mpcnet_interface.isDataGenerationDone():
-            time.sleep(1.0)
-
-        print("==============\nStarting training.\n==============")
-        for iteration in range(config.LEARNING_ITERATIONS):
-            alpha = 1.0 - 1.0 * iteration / config.LEARNING_ITERATIONS
-
-            # data generation
-            if mpcnet_interface.isDataGenerationDone():
-                # get generated data
-                data = mpcnet_interface.getGeneratedData()
-                for i in range(len(data)):
-                    # push t, x, u, p, observation, action transformation, Hamiltonian into memory
-                    memory.push(
-                        data[i].t,
-                        data[i].x,
-                        data[i].u,
-                        helper.get_one_hot(data[i].mode, config.EXPERT_NUM, config.EXPERT_FOR_MODE),
-                        data[i].observation,
-                        data[i].actionTransformation,
-                        data[i].hamiltonian,
-                    )
-                # logging
-                writer.add_scalar("data/new_data_points", len(data), iteration)
-                writer.add_scalar("data/total_data_points", len(memory), iteration)
-                print("iteration", iteration, "received data points", len(data), "requesting with alpha", alpha)
-                # start new data generation
-                start_data_generation(policy, alpha)
-
-            # policy evaluation
-            if mpcnet_interface.isPolicyEvaluationDone():
-                # get computed metrics
-                metrics = mpcnet_interface.getComputedMetrics()
-                survival_time = np.mean([metrics[i].survivalTime for i in range(len(metrics))])
-                incurred_hamiltonian = np.mean([metrics[i].incurredHamiltonian for i in range(len(metrics))])
-                # logging
-                writer.add_scalar("metric/survival_time", survival_time, iteration)
-                writer.add_scalar("metric/incurred_hamiltonian", incurred_hamiltonian, iteration)
-                print(
-                    "iteration",
-                    iteration,
-                    "received metrics:",
-                    "incurred_hamiltonian",
-                    incurred_hamiltonian,
-                    "survival_time",
-                    survival_time,
+        for i in range(tasks_number):
+            if choices[i] == "stance":
+                initial_observations[i] = helper.get_system_observation(
+                    15,
+                    0.0,
+                    self.get_random_initial_state_stance(),
+                    np.zeros(self.config.INPUT_DIM),
                 )
-                # start new policy evaluation
-                start_policy_evaluation(policy)
-
-            # intermediate policies
-            if (iteration % 10000 == 0) and (iteration > 0):
-                print("Saving intermediate policy for iteration", iteration)
-                save_path = "policies/" + folder + "/intermediate_policy_" + str(iteration)
-                torch.onnx.export(model=policy, args=dummy_observation, f=save_path + ".onnx")
-                torch.save(obj=policy, f=save_path + ".pt")
-
-            # extract batch from memory
-            (
-                t,
-                x,
-                u,
-                p,
-                observation,
-                action_transformation_matrix,
-                action_transformation_vector,
-                dHdxx,
-                dHdux,
-                dHduu,
-                dHdx,
-                dHdu,
-                H,
-            ) = memory.sample(config.BATCH_SIZE)
-
-            # take an optimization step
-            def closure():
-                # clear the gradients
-                optimizer.zero_grad()
-                # prediction
-                action, expert_weights = policy(observation)
-                input = bmv(action_transformation_matrix, action) + action_transformation_vector
-                # compute the empirical loss
-                empirical_experts_loss = experts_loss(x, x, input, u, dHdxx, dHdux, dHduu, dHdx, dHdu, H)
-                empirical_gating_loss = gating_loss(p, expert_weights)
-                empirical_loss = empirical_experts_loss + config.LAMBDA * empirical_gating_loss
-                # compute the gradients
-                empirical_loss.backward()
-                # logging
-                writer.add_scalar("objective/empirical_experts_loss", empirical_experts_loss.item(), iteration)
-                writer.add_scalar("objective/empirical_gating_loss", empirical_gating_loss.item(), iteration)
-                writer.add_scalar("objective/empirical_loss", empirical_loss.item(), iteration)
-                # return empirical loss
-                return empirical_loss
-
-            optimizer.step(closure)
-
-            # let data generation and policy evaluation finish in last iteration (to avoid a segmentation fault)
-            if iteration == config.LEARNING_ITERATIONS - 1:
-                while (not mpcnet_interface.isDataGenerationDone()) or (not mpcnet_interface.isPolicyEvaluationDone()):
-                    time.sleep(1.0)
-
-        print("==============\nTraining completed.\n==============")
-
-    except KeyboardInterrupt:
-        # let data generation and policy evaluation finish (to avoid a segmentation fault)
-        while (not mpcnet_interface.isDataGenerationDone()) or (not mpcnet_interface.isPolicyEvaluationDone()):
-            time.sleep(1.0)
-        print("==============\nTraining interrupted.\n==============")
-        pass
-
-    print("Final policy parameters:")
-    print(list(policy.named_parameters()))
-
-    print("Saving final policy.")
-    save_path = "policies/" + folder + "/final_policy"
-    torch.onnx.export(model=policy, args=dummy_observation, f=save_path + ".onnx")
-    torch.save(obj=policy, f=save_path + ".pt")
-
-    writer.close()
-
-    print("Done. Exiting now.")
-
-
-if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        main(sys.argv[1])
-    else:
-        main("./config/legged_robot.yaml")
+                mode_schedules[i] = helper.get_mode_schedule(*self.get_stance(duration))
+                target_trajectories[i] = helper.get_target_trajectories(
+                    duration * np.ones((1, 1)),
+                    self.get_random_target_state_stance().reshape((1, self.config.TARGET_STATE_DIM)),
+                    np.zeros((1, self.config.TARGET_INPUT_DIM)),
+                )
+            elif choices[i] == "trot_1":
+                initial_observations[i] = helper.get_system_observation(
+                    15,
+                    0.0,
+                    self.get_random_initial_state_trot(),
+                    np.zeros(self.config.INPUT_DIM),
+                )
+                mode_schedules[i] = helper.get_mode_schedule(*self.get_trot_1(duration))
+                target_trajectories[i] = helper.get_target_trajectories(
+                    duration * np.ones((1, 1)),
+                    self.get_random_target_state_trot().reshape((1, self.config.TARGET_STATE_DIM)),
+                    np.zeros((1, self.config.TARGET_INPUT_DIM)),
+                )
+            elif choices[i] == "trot_2":
+                initial_observations[i] = helper.get_system_observation(
+                    15,
+                    0.0,
+                    self.get_random_initial_state_trot(),
+                    np.zeros(self.config.INPUT_DIM),
+                )
+                mode_schedules[i] = helper.get_mode_schedule(*self.get_trot_2(duration))
+                target_trajectories[i] = helper.get_target_trajectories(
+                    duration * np.ones((1, 1)),
+                    self.get_random_target_state_trot().reshape((1, self.config.TARGET_STATE_DIM)),
+                    np.zeros((1, self.config.TARGET_INPUT_DIM)),
+                )
+        return initial_observations, mode_schedules, target_trajectories

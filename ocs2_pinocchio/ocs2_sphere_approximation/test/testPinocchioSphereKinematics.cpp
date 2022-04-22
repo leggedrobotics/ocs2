@@ -70,7 +70,7 @@ class TestSphereKinematics : public ::testing::Test {
   using quaternion_t = Eigen::Quaternion<ocs2::scalar_t>;
 
   TestSphereKinematics() {
-    const std::string urdfFile = ocs2::robotic_assets::getPath() + "/resources/mobile_manipulator/urdf/mobile_manipulator.urdf";
+    const std::string urdfFile = ocs2::robotic_assets::getPath() + "/resources/mobile_manipulator/mabi_mobile/urdf/mabi_mobile.urdf";
     pinocchioInterfacePtr.reset(new ocs2::PinocchioInterface(ocs2::getPinocchioInterfaceFromUrdfFile(urdfFile)));
     pinocchioSphereInterfacePtr.reset(new ocs2::PinocchioSphereInterface(*pinocchioInterfacePtr, {"ARM", "SHOULDER", "FOREARM", "WRIST_1"},
                                                                          {0.20, 0.10, 0.05, 0.05}, 0.7));

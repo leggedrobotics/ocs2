@@ -96,9 +96,10 @@ std::pair<matrix_t, vector_t> LeggedRobotMpcnetDefinition::getActionTransformati
   actionTransformationMatrix.block<3, 3>(3, 3) = R;
   actionTransformationMatrix.block<3, 3>(6, 6) = R;
   actionTransformationMatrix.block<3, 3>(9, 9) = R;
-  const auto contactFlags = modeNumber2StanceLeg(modeSchedule.modeAtTime(t));
-  const vector_t actionTransformationVector = weightCompensatingInput(centroidalModelInfo_, contactFlags);
-  return {actionTransformationMatrix, actionTransformationVector};
+  // TODO(areske): check why less robust with weight compensating bias?
+  // const auto contactFlags = modeNumber2StanceLeg(modeSchedule.modeAtTime(t));
+  // const vector_t actionTransformationVector = weightCompensatingInput(centroidalModelInfo_, contactFlags);
+  return {actionTransformationMatrix, vector_t::Zero(24)};
 }
 
 bool LeggedRobotMpcnetDefinition::isValid(scalar_t t, const vector_t& x, const ModeSchedule& modeSchedule,

@@ -41,8 +41,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <visualization_msgs/MarkerArray.h>
 
 #include <ocs2_core/misc/LoadData.h>
+#include <ocs2_core/misc/LoadStdVectorOfPair.h>
 #include <ocs2_ros_interfaces/common/RosMsgHelpers.h>
-#include <ocs2_self_collision/loadStdVectorOfPair.h>
 
 #include <ocs2_mobile_manipulator/AccessHelperFunctions.h>
 #include <ocs2_mobile_manipulator/FactoryFunctions.h>

@@ -13,7 +13,13 @@ find_package(catkin REQUIRED COMPONENTS
     ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
+find_package(Boost REQUIRED COMPONENTS
+  system
+  filesystem
+)
+
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+
 find_package(raisim REQUIRED)
 
 ###################################
@@ -28,6 +34,7 @@ catkin_package(
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
   DEPENDS
+    Boost
     raisim
 )
 
@@ -40,12 +47,15 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
   ${raisim_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
 )
 
 add_library(${PROJECT_NAME}
-  src/RaisimRollout.cpp)
+  src/RaisimRollout.cpp
+)
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
 )
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 

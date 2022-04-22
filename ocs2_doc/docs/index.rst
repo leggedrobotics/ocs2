@@ -12,6 +12,7 @@ Table of Contents
    from_urdf_to_ocp.rst
    profiling.rst
    mpcnet.rst
+   faq.rst
 
 .. rubric:: Reference and Index:
 

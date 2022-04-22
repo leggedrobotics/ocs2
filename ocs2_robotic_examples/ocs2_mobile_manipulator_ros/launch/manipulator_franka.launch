@@ -1,0 +1,21 @@
+<launch>
+      <!-- Enable rviz visualization -->
+      <arg name="rviz"        default="true" />
+      <!-- Set nodes on debug mode -->
+      <arg name="debug"       default="false" />
+
+      <!-- The URDF model of the robot -->
+      <arg name="urdfFile"    value="$(find ocs2_robotic_assets)/resources/mobile_manipulator/franka/urdf/panda.urdf" />
+      <!-- The task file for the mpc. -->
+      <arg name="taskFile"    value="$(find ocs2_mobile_manipulator)/config/franka/task.info" />
+      <!-- The library folder to generate CppAD codegen into -->
+      <arg name="libFolder"   value="$(find ocs2_mobile_manipulator)/auto_generated/franka" />
+      
+      <include file="$(find ocs2_mobile_manipulator_ros)/launch/include/mobile_manipulator.launch">
+            <arg name="rviz"        value="$(arg rviz)" />
+            <arg name="debug"       value="$(arg debug)" />
+            <arg name="urdfFile"    value="$(arg urdfFile)" />
+            <arg name="taskFile"    value="$(arg taskFile)" />
+            <arg name="libFolder"   value="$(arg libFolder)" />
+      </include>
+</launch>

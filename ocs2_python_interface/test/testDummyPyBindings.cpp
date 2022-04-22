@@ -6,7 +6,7 @@
 #include <ocs2_core/cost/QuadraticStateInputCost.h>
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
 #include <ocs2_core/initialization/DefaultInitializer.h>
-#include <ocs2_ddp/GaussNewtonDDP_MPC.h>"
+#include <ocs2_ddp/GaussNewtonDDP_MPC.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ocs2_python_interface/PythonInterface.h>

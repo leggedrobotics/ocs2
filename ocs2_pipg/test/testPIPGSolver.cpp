@@ -7,6 +7,20 @@
 
 #include <Eigen/Sparse>
 
+ocs2::pipg::Settings configurePipg(size_t nThreads, size_t maxNumIterations, ocs2::scalar_t absoluteTolerance,
+                                   ocs2::scalar_t relativeTolerance, bool verbose) {
+  ocs2::pipg::Settings settings;
+  settings.nThreads = nThreads;
+  settings.maxNumIterations = maxNumIterations;
+  settings.absoluteTolerance = absoluteTolerance;
+  settings.relativeTolerance = relativeTolerance;
+  settings.checkTerminationInterval = 1;
+  settings.numScaling = 3;
+  settings.displayShortSummary = verbose;
+
+  return settings;
+}
+
 class PIPGSolverTest : public testing::Test {
  protected:
   // x_0, x_1, ... x_{N - 1}, X_{N}
@@ -18,16 +32,7 @@ class PIPGSolverTest : public testing::Test {
   static constexpr size_t numConstraints = N_ * (nx_ + nc_);
   static constexpr bool verbose = true;
 
-  PIPGSolverTest()
-      : pipgSolver({
-            8,        // nThreads
-            50,       // threadPriority
-            30000,    // maxNumIterations
-            1e-10,    // absoluteTolerance
-            1e-3,     // relativeTolerance
-            1,        // checkTerminationInterval
-            verbose,  // displayShortSummary
-        }) {
+  PIPGSolverTest() : pipgSolver(configurePipg(8, 30000, 1e-10, 1e-3, verbose)) {
     srand(10);
 
     // Construct OCP problem

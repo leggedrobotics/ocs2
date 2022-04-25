@@ -17,12 +17,12 @@ class QuadrupedPinocchioMappingTpl {
   using joint_coordinate_t = switched_model::joint_coordinate_s_t<SCALAR_T>;
 
   /**
-   * @param feetMap : specify the order in which the feet are ordered in the pinnochio.
+   * @param feetMap : specify the order in which the feet are ordered in the pinocchio.
    * Assume index i stands for a foot index in OCS2 and thus feetMap[i] is the foot index in Pinocchio.
    *
-   * feetmap[0] = left-front foot order in URDF / pinnochio
+   * feetmap[0] = left-front foot order in URDF / pinocchio
    * ...
-   * feetmap[3] = right-hind foot order in URDF / pinnochio
+   * feetmap[3] = right-hind foot order in URDF / pinocchio
    */
   explicit QuadrupedPinocchioMappingTpl(const switched_model::feet_array_t<size_t>& feetMap);
 

@@ -14,8 +14,8 @@ namespace tpl {
 
 template <typename SCALAR_T>
 QuadrupedKinematics<SCALAR_T>::QuadrupedKinematics(const ocs2::PinocchioInterface& pinocchioInterface,
-                                                   const QuadrupedPinocchioMappingTpl<SCALAR_T>& pinnochioMapping)
-    : pinocchioInterfacePtr_(new PinocchioInterface(castPinocchioInterface(pinocchioInterface))), pinocchioMapping_(pinnochioMapping) {
+                                                   const QuadrupedPinocchioMappingTpl<SCALAR_T>& pinocchioMapping)
+    : pinocchioInterfacePtr_(new PinocchioInterface(castPinocchioInterface(pinocchioInterface))), pinocchioMapping_(pinocchioMapping) {
   // Frame index mapping
   auto checkAndSetIndex = [this](std::size_t footIndex, const FrameIndex frameIndex, const std::string& name) {
     const auto& model = pinocchioInterfacePtr_->getModel();

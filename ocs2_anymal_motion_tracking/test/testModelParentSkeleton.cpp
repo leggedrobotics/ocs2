@@ -15,21 +15,21 @@ const std::string URDF_FILE = ocs2::robotic_assets::getPath() + "/resources/anym
 
 using namespace switched_model;
 
-TEST(testModelParentSkeleton, pinnochioInterface) {
-  auto pinnochioInterface = getPinnochioInterface<scalar_t>(URDF_FILE);
-  const auto& frames = getAllFrames(pinnochioInterface);
+TEST(testModelParentSkeleton, pinocchioInterface) {
+  auto pinocchioInterface = getPinocchioInterface<scalar_t>(URDF_FILE);
+  const auto& frames = getAllFrames(pinocchioInterface);
   for (const auto& frame : frames) {
     std::cout << frame << std::endl;
   }
-  ModelParentSkeleton<scalar_t> skeleton(std::move(pinnochioInterface), {"base", "LF_FOOT"});
+  ModelParentSkeleton<scalar_t> skeleton(std::move(pinocchioInterface), {"base", "LF_FOOT"});
   vector_t x = state_vector_t::Zero();
   vector_t u = input_vector_t::Zero();
   skeleton.update(x, u);
 }
 
 TEST(testModelParentSkeleton, autodiff) {
-  auto pinnochioInterface = getPinnochioInterface<ad_scalar_t>(URDF_FILE);
-  ModelParentSkeleton<ad_scalar_t> skeleton(std::move(pinnochioInterface), {"base", "LF_FOOT", "RF_FOOT", "LH_FOOT", "RH_FOOT"});
+  auto pinocchioInterface = getPinocchioInterface<ad_scalar_t>(URDF_FILE);
+  ModelParentSkeleton<ad_scalar_t> skeleton(std::move(pinocchioInterface), {"base", "LF_FOOT", "RF_FOOT", "LH_FOOT", "RH_FOOT"});
 
   auto func = [&](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
     const ad_vector_t state = x.head(STATE_DIM);
@@ -54,8 +54,8 @@ TEST(testModelParentSkeleton, autodiff) {
 }
 
 TEST(testModelParentSkeleton, tracking) {
-  auto pinnochioInterface = getPinnochioInterface<ad_scalar_t>(URDF_FILE);
-  ModelParentSkeleton<ad_scalar_t> skeleton(std::move(pinnochioInterface), {"base", "LF_FOOT", "RF_FOOT", "LH_FOOT", "RH_FOOT"});
+  auto pinocchioInterface = getPinocchioInterface<ad_scalar_t>(URDF_FILE);
+  ModelParentSkeleton<ad_scalar_t> skeleton(std::move(pinocchioInterface), {"base", "LF_FOOT", "RF_FOOT", "LH_FOOT", "RH_FOOT"});
 
   MotionTarget<ad_scalar_t> worldTarget = MotionTarget<ad_scalar_t>::Zero();
 

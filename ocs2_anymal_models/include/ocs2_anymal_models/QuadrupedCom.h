@@ -18,7 +18,7 @@ class QuadrupedCom : public switched_model::ComModelBase<SCALAR_T> {
   using vector_t = Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>;
   using matrix_t = Eigen::Matrix<SCALAR_T, Eigen::Dynamic, Eigen::Dynamic>;
 
-  QuadrupedCom(const ocs2::PinocchioInterface& pinocchioInterface, const QuadrupedPinocchioMappingTpl<SCALAR_T>& pinnochioMapping);
+  QuadrupedCom(const ocs2::PinocchioInterface& pinocchioInterface, const QuadrupedPinocchioMappingTpl<SCALAR_T>& pinocchioMapping);
   ~QuadrupedCom() = default;
 
   QuadrupedCom<SCALAR_T>* clone() const override;

@@ -13,16 +13,16 @@
 namespace switched_model {
 
 template <typename SCALAR_T>
-ocs2::PinocchioInterfaceTpl<SCALAR_T> getPinnochioInterface(const std::string& urdf);
+ocs2::PinocchioInterfaceTpl<SCALAR_T> getPinocchioInterface(const std::string& urdf);
 
 template <typename SCALAR_T>
-std::vector<std::string> getAllFrames(const ocs2::PinocchioInterfaceTpl<SCALAR_T>& pinnochioInterface);
+std::vector<std::string> getAllFrames(const ocs2::PinocchioInterfaceTpl<SCALAR_T>& pinocchioInterface);
 
 template <typename SCALAR_T>
 class ModelParentSkeleton {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  ModelParentSkeleton(ocs2::PinocchioInterfaceTpl<SCALAR_T> pinnochioInterface, const std::vector<std::string>& frames);
+  ModelParentSkeleton(ocs2::PinocchioInterfaceTpl<SCALAR_T> pinocchioInterface, const std::vector<std::string>& frames);
 
   const std::vector<MotionTarget<SCALAR_T>>& update(const Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& state,
                                                     const Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& input);

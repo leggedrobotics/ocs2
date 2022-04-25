@@ -27,7 +27,7 @@ class QuadrupedKinematics final : public switched_model::KinematicsModelBase<SCA
 
   enum class FrameIndex : std::size_t { HAA = 0, FOOT, KFE, FRAME_INDEX_SIZE };
 
-  QuadrupedKinematics(const ocs2::PinocchioInterface& pinocchioInterface, const QuadrupedPinocchioMappingTpl<SCALAR_T>& pinnochioMapping);
+  QuadrupedKinematics(const ocs2::PinocchioInterface& pinocchioInterface, const QuadrupedPinocchioMappingTpl<SCALAR_T>& pinocchioMapping);
   ~QuadrupedKinematics() = default;
 
   QuadrupedKinematics<SCALAR_T>* clone() const override;

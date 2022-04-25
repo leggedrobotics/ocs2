@@ -90,6 +90,23 @@ switched_model::matrix3_s_t<SCALAR_T> QuadrupedKinematics<SCALAR_T>::footOrienta
 }
 
 template <typename SCALAR_T>
+switched_model::vector3_s_t<SCALAR_T> QuadrupedKinematics<SCALAR_T>::footVelocityRelativeToBaseInBaseFrame(
+    size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions,
+    const switched_model::joint_coordinate_s_t<SCALAR_T>& jointVelocities) const {
+  auto& data = pinocchioInterfacePtr_->getData();
+  const auto& model = pinocchioInterfacePtr_->getModel();
+
+  const auto pinocchioJointPositions = pinocchioMapping_.mapJointOcs2ToPinocchio(jointPositions);
+  const auto pinocchioJointVelocities = pinocchioMapping_.mapJointOcs2ToPinocchio(jointVelocities);
+
+  pinocchio::forwardKinematics(model, data, pinocchioJointPositions, pinocchioJointVelocities);
+
+  pinocchio::FrameIndex frameId = mapFrameIndexToId_[footIndex].getId(FrameIndex::FOOT);
+
+  return getFrameVelocity(model, data, frameId, pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED).linear();
+}
+
+template <typename SCALAR_T>
 auto QuadrupedKinematics<SCALAR_T>::collisionSpheresInBaseFrame(const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const
     -> std::vector<CollisionSphere> {
   auto& data = pinocchioInterfacePtr_->getData();

@@ -43,6 +43,10 @@ class QuadrupedKinematics final : public switched_model::KinematicsModelBase<SCA
   switched_model::matrix3_s_t<SCALAR_T> footOrientationInBaseFrame(
       size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const override;
 
+  switched_model::vector3_s_t<SCALAR_T> footVelocityRelativeToBaseInBaseFrame(
+      size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions,
+      const switched_model::joint_coordinate_s_t<SCALAR_T>& jointVelocities) const override;
+
   std::vector<CollisionSphere> collisionSpheresInBaseFrame(
       const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const override;
 

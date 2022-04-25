@@ -65,8 +65,9 @@ class KinematicsModelBase {
   matrix3_s_t<SCALAR_T> footOrientationInOriginFrame(size_t footIndex, const base_coordinate_s_t<SCALAR_T>& basePose,
                                                      const joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
 
-  vector3_s_t<SCALAR_T> footVelocityRelativeToBaseInBaseFrame(size_t footIndex, const joint_coordinate_s_t<SCALAR_T>& jointPositions,
-                                                              const joint_coordinate_s_t<SCALAR_T>& jointVelocities) const;
+  virtual vector3_s_t<SCALAR_T> footVelocityRelativeToBaseInBaseFrame(size_t footIndex,
+                                                                      const joint_coordinate_s_t<SCALAR_T>& jointPositions,
+                                                                      const joint_coordinate_s_t<SCALAR_T>& jointVelocities) const;
 
   vector3_s_t<SCALAR_T> footVelocityInBaseFrame(size_t footIndex, const base_coordinate_s_t<SCALAR_T>& baseTwistInBaseFrame,
                                                 const joint_coordinate_s_t<SCALAR_T>& jointPositions,

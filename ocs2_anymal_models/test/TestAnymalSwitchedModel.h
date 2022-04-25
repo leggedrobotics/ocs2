@@ -14,7 +14,6 @@
 #include <ocs2_switched_model_interface/constraint/FootNormalConstraint.h>
 #include <ocs2_switched_model_interface/core/Rotations.h>
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
-#include <ocs2_switched_model_interface/core/WholebodyDynamics.h>
 #include <ocs2_switched_model_interface/cost/MotionTrackingCost.h>
 #include <ocs2_switched_model_interface/test/TestEvaluateConstraints.h>
 
@@ -29,13 +28,11 @@ class TestAnymalSwitchedModel : public ::testing::Test {
   TestAnymalSwitchedModel(std::unique_ptr<KinematicsModelBase<ocs2::scalar_t>> kinematics,
                           std::unique_ptr<KinematicsModelBase<ocs2::ad_scalar_t>> kinematicsAd,
                           std::unique_ptr<ComModelBase<ocs2::scalar_t>> comModel,
-                          std::unique_ptr<ComModelBase<ocs2::ad_scalar_t>> comModelAd,
-                          std::unique_ptr<WholebodyDynamics<ocs2::scalar_t>> wholebodyDynamics)
+                          std::unique_ptr<ComModelBase<ocs2::ad_scalar_t>> comModelAd)
       : kinematics_(std::move(kinematics)),
         kinematicsAd_(std::move(kinematicsAd)),
         comModel_(std::move(comModel)),
         comModelAd_(std::move(comModelAd)),
-        wholebodyDynamics_(std::move(wholebodyDynamics)),
         randAngle{std::bind(std::ref(angleDist_), std::ref(generator_))},
         randPos{std::bind(std::ref(posDist_), std::ref(generator_))} {}
 
@@ -45,35 +42,6 @@ class TestAnymalSwitchedModel : public ::testing::Test {
 
   void testConstraints() {
     // TODO
-  }
-
-  void testBaseDynamics() {
-    // Check if the base accelerations computed with full dynamics is the same as the one in comModel, which uses only the top 6 rows.
-    if (wholebodyDynamics_) {
-      for (int i = 0; i < 100; i++) {
-        const switched_model::rbd_state_t rbdState = switched_model::rbd_state_t::Random();
-        const switched_model::generalized_coordinate_t externalForces = switched_model::generalized_coordinate_t::Random();
-        const switched_model::base_coordinate_t forcesOnBaseInBaseFrame = externalForces.head<6>();
-        const switched_model::joint_coordinate_t tau = switched_model::joint_coordinate_t::Random();
-        const switched_model::base_coordinate_t qBase = switched_model::getBasePose(rbdState);
-        const switched_model::base_coordinate_t qdBase = switched_model::getBaseLocalVelocity(rbdState);
-        const switched_model::joint_coordinate_t qj = switched_model::getJointPositions(rbdState);
-        const switched_model::joint_coordinate_t dqj = switched_model::getJointVelocities(rbdState);
-
-        // Compute with full dynamics
-        const auto fullRbdDynamics = wholebodyDynamics_->getDynamicsTerms(rbdState);
-        switched_model::generalized_coordinate_t dynamicsForce = externalForces - fullRbdDynamics.G - fullRbdDynamics.C;
-        dynamicsForce.tail<JOINT_COORDINATE_SIZE>() += tau;
-        const switched_model::generalized_coordinate_t generalizedAcceleration = fullRbdDynamics.M.ldlt().solve(dynamicsForce);
-
-        // Compute with base dynamics, use joint accelerations as given by full forward dynamics.
-        const switched_model::joint_coordinate_t ddqj = generalizedAcceleration.tail<JOINT_COORDINATE_SIZE>();
-        const auto baseAcceleration =
-            this->comModel_->calculateBaseLocalAccelerations(qBase, qdBase, qj, dqj, ddqj, forcesOnBaseInBaseFrame);
-
-        ASSERT_TRUE(baseAcceleration.isApprox(generalizedAcceleration.head<6>()));
-      }
-    }
   }
 
   void printKinematics() {
@@ -177,7 +145,6 @@ class TestAnymalSwitchedModel : public ::testing::Test {
   std::unique_ptr<KinematicsModelBase<ocs2::ad_scalar_t>> kinematicsAd_;
   std::unique_ptr<ComModelBase<ocs2::scalar_t>> comModel_;
   std::unique_ptr<ComModelBase<ocs2::ad_scalar_t>> comModelAd_;
-  std::unique_ptr<WholebodyDynamics<ocs2::scalar_t>> wholebodyDynamics_;
 
  private:
   contact_flag_t stanceLegs_ = {{true, true, true, true}};

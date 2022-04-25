@@ -20,8 +20,7 @@ class AnymalCamelSwitchedModelTests : public switched_model::TestAnymalSwitchedM
  public:
   AnymalCamelSwitchedModelTests()
       : TestAnymalSwitchedModel(getAnymalKinematics(AnymalModel::Camel), getAnymalKinematicsAd(AnymalModel::Camel),
-                                getAnymalComModel(AnymalModel::Camel), getAnymalComModelAd(AnymalModel::Camel),
-                                getWholebodyDynamics(AnymalModel::Camel)) {}
+                                getAnymalComModel(AnymalModel::Camel), getAnymalComModelAd(AnymalModel::Camel)) {}
 };
 
 TEST_F(AnymalCamelSwitchedModelTests, Cost) {
@@ -36,21 +35,16 @@ TEST_F(AnymalCamelSwitchedModelTests, Kinematics) {
   this->printKinematics();
 }
 
-TEST_F(AnymalCamelSwitchedModelTests, baseDynamics) {
-  this->testBaseDynamics();
-}
-
 TEST_F(AnymalCamelSwitchedModelTests, fullDynamics) {
-  const switched_model::rbd_state_t rbdState = switched_model::rbd_state_t::Random();
   const switched_model::base_coordinate_t forcesOnBaseInBaseFrame = switched_model::base_coordinate_t::Random();
   const switched_model::joint_coordinate_t tau = switched_model::joint_coordinate_t::Random();
-  const switched_model::base_coordinate_t qBase = switched_model::getBasePose(rbdState);
-  const switched_model::base_coordinate_t qdBase = switched_model::getBaseLocalVelocity(rbdState);
-  const switched_model::joint_coordinate_t qj = switched_model::getJointPositions(rbdState);
-  const switched_model::joint_coordinate_t dqj = switched_model::getJointVelocities(rbdState);
+  const switched_model::base_coordinate_t qBase = switched_model::base_coordinate_t::Random();
+  const switched_model::base_coordinate_t qdBase = switched_model::base_coordinate_t::Random();
+  const switched_model::joint_coordinate_t qj = switched_model::joint_coordinate_t::Random();
+  const switched_model::joint_coordinate_t dqj = switched_model::joint_coordinate_t::Random();
 
   switched_model::vector6_t gravity;
-  const auto b_R_o = switched_model::rotationMatrixOriginToBase(switched_model::getOrientation(switched_model::getBasePose(rbdState)));
+  const auto b_R_o = switched_model::rotationMatrixOriginToBase(switched_model::getOrientation(qBase));
   gravity << switched_model::vector3_t::Zero(), b_R_o * switched_model::vector3_t(0.0, 0.0, -9.81);
 
   using trait_t = typename iit::rbd::tpl::TraitSelector<double>::Trait;

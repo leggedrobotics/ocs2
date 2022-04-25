@@ -6,7 +6,6 @@
 
 #include <ocs2_switched_model_interface/core/Rotations.h>
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
-#include <ocs2_switched_model_interface/core/WholebodyDynamics.h>
 
 #include "ocs2_anymal_models/DynamicsHelpers.h"
 
@@ -56,45 +55,6 @@ BaseDynamicsTerms<SCALAR_T, NUM_JOINTS_IMPL> getBaseDynamicsTermsImpl(INVDYN& in
   }
 
   return baseDynamicsTerms;
-}
-
-template <typename INVDYN, typename JSIM, typename SCALAR_T>
-typename switched_model::WholebodyDynamics<SCALAR_T>::DynamicsTerms getDynamicsTermsImpl(
-    INVDYN& inverseDynamics, JSIM& jsim, const switched_model::rbd_state_s_t<SCALAR_T>& rbdState) {
-  const switched_model::base_coordinate_s_t<SCALAR_T> qBase = switched_model::getBasePose(rbdState);
-  const switched_model::joint_coordinate_s_t<SCALAR_T> qJoints = switched_model::getJointPositions(rbdState);
-  const switched_model::base_coordinate_s_t<SCALAR_T> qdBase = switched_model::getBaseLocalVelocity(rbdState);
-  const switched_model::joint_coordinate_s_t<SCALAR_T> qdJoints = switched_model::getJointVelocities(rbdState);
-
-  typename switched_model::WholebodyDynamics<SCALAR_T>::DynamicsTerms dynamicsTerms;
-  dynamicsTerms.M = jsim.update(qJoints);
-
-  inverseDynamics.setJointStatus(qJoints);
-
-  {  // Get gravitational vector
-    // gravity vector in the base frame
-    switched_model::vector6_s_t<SCALAR_T> gravity;
-    //! @todo(jcarius) Gravity hardcoded
-    const SCALAR_T gravitationalAcceleration = SCALAR_T(9.81);
-    gravity << switched_model::vector3_s_t<SCALAR_T>::Zero(),
-        switched_model::rotateVectorOriginToBase(
-            switched_model::vector3_s_t<SCALAR_T>(SCALAR_T(0.0), SCALAR_T(0.0), -gravitationalAcceleration),
-            switched_model::getOrientation(qBase));
-
-    switched_model::vector6_s_t<SCALAR_T> baseWrench;
-    switched_model::joint_coordinate_s_t<SCALAR_T> jForces;
-    inverseDynamics.G_terms_fully_actuated(baseWrench, jForces, gravity);
-    dynamicsTerms.G << baseWrench, jForces;
-  }
-
-  {  // Get coriolis/centrifugal vector
-    switched_model::vector6_s_t<SCALAR_T> baseWrench;
-    switched_model::joint_coordinate_s_t<SCALAR_T> jForces;
-    inverseDynamics.C_terms_fully_actuated(baseWrench, jForces, qdBase, qdJoints);
-    dynamicsTerms.C << baseWrench, jForces;
-  }
-
-  return dynamicsTerms;
 }
 
 template <typename INVDYN, typename JSIM, typename SCALAR_T, int NUM_JOINTS_IMPL>

@@ -12,7 +12,6 @@
 #include <ocs2_switched_model_interface/constraint/FrictionConeConstraint.h>
 #include <ocs2_switched_model_interface/constraint/ZeroForceConstraint.h>
 #include <ocs2_switched_model_interface/core/SwitchedModelPrecomputation.h>
-#include <ocs2_switched_model_interface/core/SwitchedModelStateEstimator.h>
 #include <ocs2_switched_model_interface/cost/CollisionAvoidanceCost.h>
 #include <ocs2_switched_model_interface/cost/FootPlacementCost.h>
 #include <ocs2_switched_model_interface/cost/FrictionConeCost.h>
@@ -129,9 +128,7 @@ QuadrupedInterface::Settings loadQuadrupedSettings(const std::string& pathToConf
   settings.trackingWeights_ = loadWeightsFromFile(pathToConfigFile, "tracking_cost_weights");
 
   // initial state of the switched system
-  Eigen::Matrix<scalar_t, RBD_STATE_DIM, 1> initRbdState;
-  ocs2::loadData::loadEigenMatrix(pathToConfigFile, "initialRobotState", initRbdState);
-  settings.initialState_ = estimateComkinoModelState(initRbdState);
+  ocs2::loadData::loadEigenMatrix(pathToConfigFile, "initialRobotState", settings.initialState_);
 
   // Gait Schedule
   const auto defaultModeSequenceTemplate = loadModeSequenceTemplate(pathToConfigFile, "defaultModeSequenceTemplate", false);

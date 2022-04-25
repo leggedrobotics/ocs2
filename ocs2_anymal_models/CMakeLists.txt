@@ -48,16 +48,12 @@ add_library(${PROJECT_NAME}
   src/QuadrupedCom.cpp
   src/bear/AnymalBearCom.cpp
   src/bear/AnymalBearKinematics.cpp
-  src/bear/WholebodyDynamicsBear.cpp
   src/camel/AnymalCamelCom.cpp
   src/camel/AnymalCamelKinematics.cpp
-  src/camel/WholebodyDynamicsCamel.cpp
   src/cerberus/AnymalCerberusCom.cpp
   src/cerberus/AnymalCerberusKinematics.cpp
-  src/cerberus/WholebodyDynamicsCerberus.cpp
   src/chimera/AnymalChimeraCom.cpp
   src/chimera/AnymalChimeraKinematics.cpp
-  src/chimera/WholebodyDynamicsChimera.cpp
   src/wheels/AnymalWheelsCom.cpp
   src/wheels/AnymalWheelsKinematics.cpp
   src/wheels_chimera/AnymalWheelsChimeraCom.cpp

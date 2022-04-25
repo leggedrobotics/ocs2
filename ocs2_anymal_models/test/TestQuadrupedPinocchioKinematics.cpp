@@ -77,7 +77,7 @@ TEST_F(QuadrupedKinematicsTest, footVelocityRelativeToBaseInBaseFrame) {
 
   for (std::size_t i = 0; i < switched_model::NUM_CONTACT_POINTS; i++) {
     auto pinocchio = pinocchioKinematics_.footVelocityRelativeToBaseInBaseFrame(i, q, v);
-    auto reference = pinocchioKinematics_.KinematicsModelBase::footVelocityRelativeToBaseInBaseFrame(i, q, v);
+    auto reference = robcogenKinematics_.footVelocityRelativeToBaseInBaseFrame(i, q, v);
     EXPECT_TRUE(pinocchio.isApprox(reference)) << "i: " << i << "\nPinocchio:\n"
                                                << pinocchio.transpose() << "\nReference:\n"
                                                << reference.transpose() << "\n";

@@ -12,8 +12,7 @@ class AnymalBearSwitchedModelTests : public switched_model::TestAnymalSwitchedMo
  public:
   AnymalBearSwitchedModelTests()
       : TestAnymalSwitchedModel(getAnymalKinematics(AnymalModel::Bear), getAnymalKinematicsAd(AnymalModel::Bear),
-                                getAnymalComModel(AnymalModel::Bear), getAnymalComModelAd(AnymalModel::Bear),
-                                getWholebodyDynamics(AnymalModel::Bear)) {}
+                                getAnymalComModel(AnymalModel::Bear), getAnymalComModelAd(AnymalModel::Bear)) {}
 };
 
 TEST_F(AnymalBearSwitchedModelTests, Cost) {
@@ -26,10 +25,6 @@ TEST_F(AnymalBearSwitchedModelTests, Constraints) {
 
 TEST_F(AnymalBearSwitchedModelTests, Kinematics) {
   this->printKinematics();
-}
-
-TEST_F(AnymalBearSwitchedModelTests, baseDynamics) {
-  this->testBaseDynamics();
 }
 
 TEST_F(AnymalBearSwitchedModelTests, EndeffectorOrientation) {

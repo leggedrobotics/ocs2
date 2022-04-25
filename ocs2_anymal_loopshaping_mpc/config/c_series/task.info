@@ -199,7 +199,7 @@ mpc
 ; initial state
 initialRobotState
 {
- ; orientation
+   ; orientation
    (0,0) 0.0     ; x
    (1,0) 0.0     ; y
    (2,0) 0.0     ; z
@@ -209,43 +209,29 @@ initialRobotState
    (4,0) 0.0     ; y
    (5,0) 0.57    ; z
 
-   ; joint state
-   (6,0)  -0.25       ; LF_HAA
-   (7,0)   0.60       ; LF_HFE
-   (8,0)  -0.85       ; LF_KFE
-   (9,0)   0.25       ; RF_HAA
-   (10,0)  0.60       ; RF_HFE
-   (11,0) -0.85       ; RF_KFE
-   (12,0) -0.25       ; LH_HAA
-   (13,0) -0.60       ; LH_HFE
-   (14,0)  0.85       ; LH_KFE
-   (15,0)  0.25       ; RH_HAA
-   (16,0) -0.60       ; RH_HFE
-   (17,0)  0.85       ; RH_KFE
-
    ; angular velocity
-   (18,0) 0.0    ; x
-   (19,0) 0.0    ; y
-   (20,0) 0.0    ; z
+   (6,0) 0.0    ; x
+   (7,0) 0.0    ; y
+   (8,0) 0.0    ; z
 
    ; translational velocity
-   (21,0) 0.0    ; x
-   (22,0) 0.0    ; y
-   (23,0) 0.0    ; z
+   (9,0)  0.0    ; x
+   (10,0) 0.0    ; y
+   (11,0) 0.0    ; z
 
-   ; joint velocity
-   (24,0) 0.0    ; HAA
-   (25,0) 0.0    ; HFE
-   (26,0) 0.0    ; KFE
-   (27,0) 0.0    ; HAA
-   (28,0) 0.0    ; HFE
-   (29,0) 0.0    ; KFE
-   (30,0) 0.0    ; HAA
-   (31,0) 0.0    ; HFE
-   (32,0) 0.0    ; KFE
-   (33,0) 0.0    ; HAA
-   (34,0) 0.0    ; HFE
-   (35,0) 0.0    ; KFE
+   ; joint state
+   (12,0) -0.25  ; LF_HAA
+   (13,0)  0.60  ; LF_HFE
+   (14,0) -0.85  ; LF_KFE
+   (15,0)  0.25  ; RF_HAA
+   (16,0)  0.60  ; RF_HFE
+   (17,0) -0.85  ; RF_KFE
+   (18,0) -0.25  ; LH_HAA
+   (19,0) -0.60  ; LH_HFE
+   (20,0)  0.85  ; LH_KFE
+   (21,0)  0.25  ; RH_HAA
+   (22,0) -0.60  ; RH_HFE
+   (23,0)  0.85  ; RH_KFE
 }
 
 tracking_cost_weights

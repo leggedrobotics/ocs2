@@ -8,16 +8,12 @@
 
 #include <ocs2_anymal_models/bear/AnymalBearCom.h>
 #include <ocs2_anymal_models/bear/AnymalBearKinematics.h>
-#include <ocs2_anymal_models/bear/WholebodyDynamicsBear.h>
 #include <ocs2_anymal_models/cerberus/AnymalCerberusCom.h>
 #include <ocs2_anymal_models/cerberus/AnymalCerberusKinematics.h>
-#include <ocs2_anymal_models/cerberus/WholebodyDynamicsCerberus.h>
 #include <ocs2_anymal_models/chimera/AnymalChimeraCom.h>
 #include <ocs2_anymal_models/chimera/AnymalChimeraKinematics.h>
-#include <ocs2_anymal_models/chimera/WholebodyDynamicsChimera.h>
 #include <ocs2_anymal_models/camel/AnymalCamelCom.h>
 #include <ocs2_anymal_models/camel/AnymalCamelKinematics.h>
-#include <ocs2_anymal_models/camel/WholebodyDynamicsCamel.h>
 #include <ocs2_anymal_models/wheels/AnymalWheelsCom.h>
 #include <ocs2_anymal_models/wheels/AnymalWheelsKinematics.h>
 #include <ocs2_anymal_models/wheels_chimera/AnymalWheelsChimeraCom.h>
@@ -110,44 +106,6 @@ std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>> getAnymalComMod
       return std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>>(new AnymalWheelsComAd());
     case AnymalModel::WheelsChimera:
       return std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>>(new AnymalWheelsChimeraComAd());
-    default:
-      throw std::runtime_error("[AnymalModels] unkown model");
-  }
-}
-
-std::unique_ptr<switched_model::WholebodyDynamics<ocs2::scalar_t>> getWholebodyDynamics(AnymalModel model) {
-  switch (model) {
-    case AnymalModel::Bear:
-      return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::scalar_t>>(new WholebodyDynamicsBear());
-    case AnymalModel::Cerberus:
-      return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::scalar_t>>(new WholebodyDynamicsCerberus());
-    case AnymalModel::Chimera:
-      return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::scalar_t>>(new WholebodyDynamicsChimera());
-    case AnymalModel::Camel:
-      return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::scalar_t>>(new WholebodyDynamicsCamel());
-    case AnymalModel::Wheels:
-      throw std::runtime_error("[getWholebodyDynamics] not implemented for wheels");
-    case AnymalModel::WheelsChimera:
-      throw std::runtime_error("[getWholebodyDynamics] not implemented for wheels");
-    default:
-      throw std::runtime_error("[AnymalModels] unkown model");
-  }
-}
-
-std::unique_ptr<switched_model::WholebodyDynamics<ocs2::ad_scalar_t>> getWholebodyDynamicsAd(AnymalModel model) {
-  switch (model) {
-    case AnymalModel::Bear:
-      return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::ad_scalar_t>>(new WholebodyDynamicsBearAd());
-    case AnymalModel::Cerberus:
-      return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::ad_scalar_t>>(new WholebodyDynamicsCerberusAd());
-    case AnymalModel::Chimera:
-      return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::ad_scalar_t>>(new WholebodyDynamicsChimeraAd());
-    case AnymalModel::Camel:
-      return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::ad_scalar_t>>(new WholebodyDynamicsCamelAd());
-    case AnymalModel::Wheels:
-      throw std::runtime_error("[getWholebodyDynamicsAd] not implemented for wheels");
-    case AnymalModel::WheelsChimera:
-      throw std::runtime_error("[getWholebodyDynamicsAd] not implemented for wheels");
     default:
       throw std::runtime_error("[AnymalModels] unkown model");
   }

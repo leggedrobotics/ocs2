@@ -22,7 +22,6 @@ class KinematicsModelBase {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using geometric_jacobian_t = Eigen::Matrix<SCALAR_T, 6, GENERALIZED_COORDINATE_SIZE>;
   using joint_jacobian_t = Eigen::Matrix<SCALAR_T, 6, JOINT_COORDINATE_SIZE>;
   using joint_jacobian_block_t = Eigen::Matrix<SCALAR_T, 6, 3>;
 

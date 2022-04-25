@@ -6,7 +6,6 @@
 
 #include <ocs2_switched_model_interface/core/ComModelBase.h>
 #include <ocs2_switched_model_interface/core/KinematicsModelBase.h>
-#include <ocs2_switched_model_interface/core/WholebodyDynamics.h>
 
 namespace anymal {
 
@@ -23,9 +22,5 @@ std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>> getAnyma
 std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>> getAnymalComModel(AnymalModel model);
 
 std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>> getAnymalComModelAd(AnymalModel model);
-
-std::unique_ptr<switched_model::WholebodyDynamics<ocs2::scalar_t>> getWholebodyDynamics(AnymalModel model);
-
-std::unique_ptr<switched_model::WholebodyDynamics<ocs2::ad_scalar_t>> getWholebodyDynamicsAd(AnymalModel model);
 
 }  // namespace anymal

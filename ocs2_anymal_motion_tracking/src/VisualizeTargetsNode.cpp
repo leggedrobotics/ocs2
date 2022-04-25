@@ -128,8 +128,8 @@ int main(int argc, char* argv[]) {
   //  std::string urdfFile = "";
   //  nodeHandle.getParam("/urdfFile", urdfFile);
 
-  ModelParentSkeleton<scalar_t> skeleton(getPinnochioInterface<scalar_t>(URDF_FILE), {"base", "LF_FOOT", "RF_FOOT", "LH_FOOT", "RH_FOOT"});
-  ModelParentSkeleton<ad_scalar_t> skeletonAd(getPinnochioInterface<ad_scalar_t>(URDF_FILE),
+  ModelParentSkeleton<scalar_t> skeleton(getPinocchioInterface<scalar_t>(URDF_FILE), {"base", "LF_FOOT", "RF_FOOT", "LH_FOOT", "RH_FOOT"});
+  ModelParentSkeleton<ad_scalar_t> skeletonAd(getPinocchioInterface<ad_scalar_t>(URDF_FILE),
                                               {"base", "LF_FOOT", "RF_FOOT", "LH_FOOT", "RH_FOOT"});
 
   auto parentPublisher_ = MotionTargetPublisher(nodeHandle, "/ocs2_anymal/tracking_parents", "/ocs2_anymal/tracking_parents_vel");

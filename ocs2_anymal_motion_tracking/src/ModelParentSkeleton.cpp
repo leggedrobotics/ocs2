@@ -15,18 +15,18 @@
 namespace switched_model {
 
 template <>
-ocs2::PinocchioInterfaceTpl<scalar_t> getPinnochioInterface<>(const std::string& urdf) {
+ocs2::PinocchioInterfaceTpl<scalar_t> getPinocchioInterface<>(const std::string& urdf) {
   return ocs2::getPinocchioInterfaceFromUrdfFile(urdf);
 }
 
 template <>
-ocs2::PinocchioInterfaceTpl<ad_scalar_t> getPinnochioInterface<ad_scalar_t>(const std::string& urdf) {
-  return getPinnochioInterface<scalar_t>(urdf).toCppAd();
+ocs2::PinocchioInterfaceTpl<ad_scalar_t> getPinocchioInterface<ad_scalar_t>(const std::string& urdf) {
+  return getPinocchioInterface<scalar_t>(urdf).toCppAd();
 }
 
 template <typename SCALAR_T>
-std::vector<std::string> getAllFrames(const ocs2::PinocchioInterfaceTpl<SCALAR_T>& pinnochioInterface) {
-  const auto& frames = pinnochioInterface.getModel().frames;
+std::vector<std::string> getAllFrames(const ocs2::PinocchioInterfaceTpl<SCALAR_T>& pinocchioInterface) {
+  const auto& frames = pinocchioInterface.getModel().frames;
   std::vector<std::string> names;
   names.reserve(frames.size());
   for (const auto& frame : frames) {
@@ -35,13 +35,13 @@ std::vector<std::string> getAllFrames(const ocs2::PinocchioInterfaceTpl<SCALAR_T
   return names;
 }
 
-template std::vector<std::string> getAllFrames<scalar_t>(const ocs2::PinocchioInterfaceTpl<scalar_t>& pinnochioInterface);
-template std::vector<std::string> getAllFrames<ad_scalar_t>(const ocs2::PinocchioInterfaceTpl<ad_scalar_t>& pinnochioInterface);
+template std::vector<std::string> getAllFrames<scalar_t>(const ocs2::PinocchioInterfaceTpl<scalar_t>& pinocchioInterface);
+template std::vector<std::string> getAllFrames<ad_scalar_t>(const ocs2::PinocchioInterfaceTpl<ad_scalar_t>& pinocchioInterface);
 
 template <typename SCALAR_T>
-ModelParentSkeleton<SCALAR_T>::ModelParentSkeleton(ocs2::PinocchioInterfaceTpl<SCALAR_T> pinnochioInterface,
+ModelParentSkeleton<SCALAR_T>::ModelParentSkeleton(ocs2::PinocchioInterfaceTpl<SCALAR_T> pinocchioInterface,
                                                    const std::vector<std::string>& frames)
-    : pinocchioInterface_(std::move(pinnochioInterface)) {
+    : pinocchioInterface_(std::move(pinocchioInterface)) {
   const auto& model = pinocchioInterface_.getModel();
   for (const auto& name : frames) {
     frameIds_.push_back(model.getBodyId(name));

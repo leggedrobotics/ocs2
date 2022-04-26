@@ -52,7 +52,7 @@ def main(config_file_path: str) -> None:
     # interface
     interface = MpcnetInterface(config.DATA_GENERATION_THREADS, config.POLICY_EVALUATION_THREADS, config.RAISIM)
     # loss
-    experts_loss = HamiltonianLoss()
+    experts_loss = HamiltonianLoss(config)
     gating_loss = CrossEntropyLoss(config)
     # memory
     memory = CircularMemory(config)

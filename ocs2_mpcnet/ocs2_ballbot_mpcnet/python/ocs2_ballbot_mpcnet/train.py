@@ -51,7 +51,7 @@ def main(config_file_path: str) -> None:
     # interface
     interface = MpcnetInterface(config.DATA_GENERATION_THREADS, config.POLICY_EVALUATION_THREADS, config.RAISIM)
     # loss
-    loss = HamiltonianLoss()
+    loss = HamiltonianLoss(config)
     # memory
     memory = CircularMemory(config)
     # policy

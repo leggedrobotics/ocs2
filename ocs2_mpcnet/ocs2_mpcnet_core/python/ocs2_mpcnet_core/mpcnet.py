@@ -43,8 +43,7 @@ from torch.utils.tensorboard import SummaryWriter
 from ocs2_mpcnet_core import helper
 from ocs2_mpcnet_core import SystemObservationArray, ModeScheduleArray, TargetTrajectoriesArray
 from ocs2_mpcnet_core.config import Config
-from ocs2_mpcnet_core.loss.hamiltonian import HamiltonianLoss
-from ocs2_mpcnet_core.loss.cross_entropy import CrossEntropyLoss
+from ocs2_mpcnet_core.loss.base import BaseLoss
 from ocs2_mpcnet_core.memory.circular import CircularMemory
 
 
@@ -60,8 +59,8 @@ class Mpcnet:
         interface: object,
         memory: CircularMemory,
         policy: torch.nn.Module,
-        experts_loss: HamiltonianLoss,
-        gating_loss: Optional[CrossEntropyLoss] = None,
+        experts_loss: BaseLoss,
+        gating_loss: Optional[BaseLoss] = None,
     ) -> None:
         """Initializes the Mpcnet class.
 
@@ -266,7 +265,7 @@ class Mpcnet:
                     action = self.policy(observation)
                     input = helper.bmv(action_transformation_matrix, action) + action_transformation_vector
                     # compute the empirical loss
-                    empirical_loss = self.experts_loss(x, x, input, u, dHdxx, dHdux, dHduu, dHdx, dHdu, H)
+                    empirical_loss = self.experts_loss(x, x, input, u, p, p, dHdxx, dHdux, dHduu, dHdx, dHdu, H)
                     # compute the gradients
                     empirical_loss.backward()
                     # logging
@@ -279,11 +278,11 @@ class Mpcnet:
                     # clear the gradients
                     self.optimizer.zero_grad()
                     # prediction
-                    action, expert_weights = self.policy(observation)
+                    action, weights = self.policy(observation)
                     input = helper.bmv(action_transformation_matrix, action) + action_transformation_vector
                     # compute the empirical loss
-                    empirical_experts_loss = self.experts_loss(x, x, input, u, dHdxx, dHdux, dHduu, dHdx, dHdu, H)
-                    empirical_gating_loss = self.gating_loss(p, expert_weights)
+                    empirical_experts_loss = self.experts_loss(x, x, input, u, p, p, dHdxx, dHdux, dHduu, dHdx, dHdu, H)
+                    empirical_gating_loss = self.gating_loss(x, x, u, u, weights, p, dHdxx, dHdux, dHduu, dHdx, dHdu, H)
                     empirical_loss = empirical_experts_loss + self.config.LAMBDA * empirical_gating_loss
                     # compute the gradients
                     empirical_loss.backward()

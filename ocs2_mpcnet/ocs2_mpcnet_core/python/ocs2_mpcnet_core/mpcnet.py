@@ -44,7 +44,7 @@ from ocs2_mpcnet_core import helper
 from ocs2_mpcnet_core import SystemObservationArray, ModeScheduleArray, TargetTrajectoriesArray
 from ocs2_mpcnet_core.config import Config
 from ocs2_mpcnet_core.loss.base import BaseLoss
-from ocs2_mpcnet_core.memory.circular import CircularMemory
+from ocs2_mpcnet_core.memory.base import BaseMemory
 from ocs2_mpcnet_core.policy.base import BasePolicy
 
 
@@ -58,7 +58,7 @@ class Mpcnet:
         self,
         config: Config,
         interface: object,
-        memory: CircularMemory,
+        memory: BaseMemory,
         policy: BasePolicy,
         experts_loss: BaseLoss,
         gating_loss: Optional[BaseLoss] = None,

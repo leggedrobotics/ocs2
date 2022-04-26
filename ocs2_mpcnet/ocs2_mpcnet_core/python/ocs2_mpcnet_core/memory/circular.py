@@ -36,11 +36,12 @@ import torch
 import numpy as np
 from typing import Tuple, List
 
-from ocs2_mpcnet_core import config
+from ocs2_mpcnet_core.config import Config
+from ocs2_mpcnet_core.memory.base import BaseMemory
 from ocs2_mpcnet_core import ScalarFunctionQuadraticApproximation
 
 
-class CircularMemory:
+class CircularMemory(BaseMemory):
     """Circular memory.
 
     Stores data in a circular memory that overwrites old data if the size of the memory reaches its capacity.
@@ -64,7 +65,7 @@ class CircularMemory:
         H: A (C) tensor for the Hamiltonians at the development/expansion points.
     """
 
-    def __init__(self, config: config.Config) -> None:
+    def __init__(self, config: Config) -> None:
         """Initializes the CircularMemory class.
 
         Initializes the CircularMemory class by setting fixed attributes, initializing variable attributes and
@@ -115,9 +116,9 @@ class CircularMemory:
         action_transformation: List[np.ndarray],
         hamiltonian: ScalarFunctionQuadraticApproximation,
     ) -> None:
-        """Pushes data into the circular memory.
+        """Pushes data into the memory.
 
-        Pushes one data sample into the circular memory.
+        Pushes one data sample into the memory.
 
         Args:
             t: A float with the time.
@@ -153,9 +154,9 @@ class CircularMemory:
         self.position = (self.position + 1) % self.capacity
 
     def sample(self, batch_size: int) -> Tuple[torch.Tensor, ...]:
-        """Samples data from the circular memory.
+        """Samples data from the memory.
 
-        Samples a batch of data from the circular memory.
+        Samples a batch of data from the memory.
 
         Args:
             batch_size: An integer defining the batch size B.

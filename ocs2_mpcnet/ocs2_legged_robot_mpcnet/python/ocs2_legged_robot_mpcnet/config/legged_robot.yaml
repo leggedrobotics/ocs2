@@ -80,7 +80,7 @@ config:
   # whether to cheat by adding the gating loss
   CHEATING: True
   # parameter to control the relative importance of both loss types
-  LAMBDA: 10.0
+  LAMBDA: 1.0
   # dictionary for the gating loss (assigns modes to experts responsible for the corresponding contact configuration)
   EXPERT_FOR_MODE:
     6: 1   # trot

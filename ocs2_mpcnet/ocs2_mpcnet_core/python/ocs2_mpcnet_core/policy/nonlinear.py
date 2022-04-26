@@ -86,4 +86,4 @@ class NonlinearPolicy(BasePolicy):
         scaled_observation = self.scale_observation(observation)
         unscaled_action = self.linear2(self.activation(self.linear1(scaled_observation)))
         action = self.scale_action(unscaled_action)
-        return action,
+        return (action,)

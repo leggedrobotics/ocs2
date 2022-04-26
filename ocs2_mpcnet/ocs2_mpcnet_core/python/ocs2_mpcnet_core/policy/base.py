@@ -37,6 +37,7 @@ import torch
 from ocs2_mpcnet_core.config import Config
 from ocs2_mpcnet_core.helper import bmv
 
+
 class BasePolicy(torch.nn.Module):
     """Base policy.
 

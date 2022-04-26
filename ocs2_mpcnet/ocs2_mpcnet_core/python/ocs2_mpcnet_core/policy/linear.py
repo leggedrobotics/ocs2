@@ -79,4 +79,4 @@ class LinearPolicy(BasePolicy):
         scaled_observation = self.scale_observation(observation)
         unscaled_action = self.linear(scaled_observation)
         action = self.scale_action(unscaled_action)
-        return action,
+        return (action,)

@@ -44,9 +44,9 @@ class BaseLoss:
     """
 
     def __init__(self, config: Config) -> None:
-        """Initializes the Loss class.
+        """Initializes the BaseLoss class.
 
-        Initializes the Loss class.
+        Initializes the BaseLoss class.
 
         Args:
             config: An instance of the configuration class.

@@ -33,12 +33,13 @@ Provides a class that implements a linear policy.
 """
 
 import torch
+from typing import Tuple
 
-from ocs2_mpcnet_core import config
-from ocs2_mpcnet_core.helper import bmv
+from ocs2_mpcnet_core.config import Config
+from ocs2_mpcnet_core.policy.base import BasePolicy
 
 
-class LinearPolicy(torch.nn.Module):
+class LinearPolicy(BasePolicy):
     """Linear policy.
 
     Class for a simple linear neural network policy.
@@ -47,12 +48,10 @@ class LinearPolicy(torch.nn.Module):
         name: A string with the name of the policy.
         observation_dimension: An integer defining the observation (i.e. input) dimension of the policy.
         action_dimension: An integer defining the action (i.e. output) dimension of the policy.
-        observation_scaling: A (1,O,O) tensor for the observation scaling.
-        action_scaling: A (1,A,A) tensor for the action scaling.
         linear: The linear neural network layer.
     """
 
-    def __init__(self, config: config.Config) -> None:
+    def __init__(self, config: Config) -> None:
         """Initializes the LinearPolicy class.
 
         Initializes the LinearPolicy class by setting fixed and variable attributes.
@@ -60,19 +59,13 @@ class LinearPolicy(torch.nn.Module):
         Args:
             config: An instance of the configuration class.
         """
-        super().__init__()
+        super().__init__(config)
         self.name = "LinearPolicy"
         self.observation_dimension = config.OBSERVATION_DIM
         self.action_dimension = config.ACTION_DIM
-        self.observation_scaling = (
-            torch.tensor(config.OBSERVATION_SCALING, device=config.DEVICE, dtype=config.DTYPE).diag().unsqueeze(dim=0)
-        )
-        self.action_scaling = (
-            torch.tensor(config.ACTION_SCALING, device=config.DEVICE, dtype=config.DTYPE).diag().unsqueeze(dim=0)
-        )
         self.linear = torch.nn.Linear(self.observation_dimension, self.action_dimension)
 
-    def forward(self, observation: torch.Tensor) -> torch.Tensor:
+    def forward(self, observation: torch.Tensor) -> Tuple[torch.Tensor]:
         """Forward method.
 
         Defines the computation performed at every call. Computes the output tensors from the input tensors.
@@ -83,7 +76,7 @@ class LinearPolicy(torch.nn.Module):
         Returns:
             action: A (B,A) tensor with the predicted actions.
         """
-        scaled_observation = bmv(self.observation_scaling, observation)
+        scaled_observation = self.scale_observation(observation)
         unscaled_action = self.linear(scaled_observation)
-        action = bmv(self.action_scaling, unscaled_action)
-        return action
+        action = self.scale_action(unscaled_action)
+        return action,

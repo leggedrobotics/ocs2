@@ -45,6 +45,7 @@ from ocs2_mpcnet_core import SystemObservationArray, ModeScheduleArray, TargetTr
 from ocs2_mpcnet_core.config import Config
 from ocs2_mpcnet_core.loss.base import BaseLoss
 from ocs2_mpcnet_core.memory.circular import CircularMemory
+from ocs2_mpcnet_core.policy.base import BasePolicy
 
 
 class Mpcnet:
@@ -58,7 +59,7 @@ class Mpcnet:
         config: Config,
         interface: object,
         memory: CircularMemory,
-        policy: torch.nn.Module,
+        policy: BasePolicy,
         experts_loss: BaseLoss,
         gating_loss: Optional[BaseLoss] = None,
     ) -> None:
@@ -119,7 +120,7 @@ class Mpcnet:
         """
         raise NotImplementedError()
 
-    def start_data_generation(self, policy: torch.nn.Module, alpha: float = 1.0):
+    def start_data_generation(self, policy: BasePolicy, alpha: float = 1.0):
         """Start data generation.
 
         Start the data generation rollouts to receive new data.
@@ -146,7 +147,7 @@ class Mpcnet:
             target_trajectories,
         )
 
-    def start_policy_evaluation(self, policy: torch.nn.Module, alpha: float = 0.0):
+    def start_policy_evaluation(self, policy: BasePolicy, alpha: float = 0.0):
         """Start policy evaluation.
 
         Start the policy evaluation rollouts to validate the current performance.
@@ -257,12 +258,12 @@ class Mpcnet:
                     H,
                 ) = self.memory.sample(self.config.BATCH_SIZE)
 
-                # normal closure only evaluating the experts loss for standard networks
+                # normal closure only evaluating the experts loss
                 def normal_closure():
                     # clear the gradients
                     self.optimizer.zero_grad()
                     # prediction
-                    action = self.policy(observation)
+                    action = self.policy(observation)[0]
                     input = helper.bmv(action_transformation_matrix, action) + action_transformation_vector
                     # compute the empirical loss
                     empirical_loss = self.experts_loss(x, x, input, u, p, p, dHdxx, dHdux, dHduu, dHdx, dHdu, H)
@@ -273,12 +274,12 @@ class Mpcnet:
                     # return empirical loss
                     return empirical_loss
 
-                # cheating closure also adding the gating loss for mixture of experts networks
+                # cheating closure also adding the gating loss (only relevant for mixture of experts networks)
                 def cheating_closure():
                     # clear the gradients
                     self.optimizer.zero_grad()
                     # prediction
-                    action, weights = self.policy(observation)
+                    action, weights = self.policy(observation)[:2]
                     input = helper.bmv(action_transformation_matrix, action) + action_transformation_vector
                     # compute the empirical loss
                     empirical_experts_loss = self.experts_loss(x, x, input, u, p, p, dHdxx, dHdux, dHduu, dHdx, dHdu, H)

@@ -42,6 +42,32 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace {
 
+/**
+ * Conversion from string to type. To be implemented for each type we want to read.
+ */
+template <typename T>
+T fromString(const std::string& str);
+
+template <>
+std::string fromString<std::string>(const std::string& str) {
+  return str;
+}
+
+template <>
+std::size_t fromString<std::size_t>(const std::string& str) {
+  return std::stoul(str);
+}
+
+template <>
+scalar_t fromString<scalar_t>(const std::string& str) {
+  return std::stod(str);
+}
+
+/**
+ * Extends a pair with methods to read from and to strings
+ * @tparam T1
+ * @tparam T2
+ */
 template <typename T1, typename T2>
 struct ExtendedPair {
   T1 first;
@@ -49,13 +75,50 @@ struct ExtendedPair {
 
   using stdPair = std::pair<T1, T2>;
 
+  // Constructor
+  ExtendedPair(T1 firstIn, T2 secondIn) : first(std::move(firstIn)), second(std::move(secondIn)) {}
+
+  // Constructor from string
+  explicit ExtendedPair(const std::string& str) : first(), second() {
+    using separator = boost::char_separator<char>;
+
+    std::vector<std::string> container;
+    container.reserve(2);
+
+    boost::tokenizer<separator> tokens(str, separator(", "));
+    std::copy(tokens.begin(), tokens.end(), std::back_inserter(container));
+    if (container.size() != 2) {
+      const std::string msg = "Failed parsing pair: \"" + str + R"(". Expected: x,x (no spaces) or "x, x")";
+      throw std::runtime_error(msg);
+    } else {
+      first = fromString<T1>(container[0]);
+      second = fromString<T2>(container[1]);
+    }
+  }
+
   // conversion operator to std::pair
   explicit operator stdPair() const { return std::pair<T1, T2>(first, second); }
 
+  // stream operator
   friend std::ostream& operator<<(std::ostream& stream, const ExtendedPair& pair) {
     stream << "[" << pair.first << ", " << pair.second << "]";
     return stream;
   }
+
+  // conversion to string, relies on the type being compatible with the stream operator.
+  std::string toString() const {
+    std::ostringstream stream;
+    stream << *this;
+    return stream.str();
+  }
+};
+
+template <typename T1, typename T2>
+struct translator_between_impl {
+  using internal_type = std::string;
+  using external_type = ocs2::ExtendedPair<T1, T2>;
+  boost::optional<external_type> get_value(const internal_type& str) { return boost::optional<external_type>(external_type(str)); }
+  boost::optional<internal_type> put_value(const external_type& obj) { return boost::optional<internal_type>(obj.toString()); }
 };
 
 }  // namespace
@@ -64,62 +127,9 @@ struct ExtendedPair {
 namespace boost {
 namespace property_tree {
 
-template <>
-struct translator_between<std::string, ocs2::ExtendedPair<size_t, size_t>> {
-  struct type {
-    using internal_type = std::string;
-    using external_type = ocs2::ExtendedPair<size_t, size_t>;
-    using separator = boost::char_separator<char>;
-
-    boost::optional<external_type> get_value(const internal_type& str) {
-      std::vector<std::string> container;
-      boost::tokenizer<separator> tokens(str, separator(", "));
-      std::copy(tokens.begin(), tokens.end(), std::back_inserter(container));
-      if (container.size() != 2) {
-        const std::string msg = "Failed parsing pair: \"" + str + R"(". Expected: x,x (no spaces) or "x, x")";
-        throw std::runtime_error(msg);
-      } else {
-        external_type pair;
-        pair.first = std::stoul(container[0]);
-        pair.second = std::stoul(container[1]);
-        return boost::optional<external_type>(pair);
-      }
-    }
-
-    boost::optional<internal_type> put_value(const external_type& obj) {
-      std::string returnval = std::to_string(obj.first) + ", " + std::to_string(obj.second);
-      return boost::optional<internal_type>(returnval);
-    }
-  };
-};
-
-template <>
-struct translator_between<std::string, ocs2::ExtendedPair<std::string, std::string>> {
-  struct type {
-    using internal_type = std::string;
-    using external_type = ocs2::ExtendedPair<std::string, std::string>;
-    using separator = boost::char_separator<char>;
-
-    boost::optional<external_type> get_value(const internal_type& str) {
-      std::vector<std::string> container;
-      boost::tokenizer<separator> tokens(str, separator(", "));
-      std::copy(tokens.begin(), tokens.end(), std::back_inserter(container));
-      if (container.size() != 2) {
-        const std::string msg = "Failed parsing pair: \"" + str + R"(". Expected: x,x (no spaces) or "x, x")";
-        throw std::runtime_error(msg);
-      } else {
-        external_type pair;
-        pair.first = container[0];
-        pair.second = container[1];
-        return boost::optional<external_type>(pair);
-      }
-    }
-
-    boost::optional<internal_type> put_value(const external_type& obj) {
-      std::string returnval = obj.first + ", " + obj.second;
-      return boost::optional<internal_type>(returnval);
-    }
-  };
+template <typename T1, typename T2>
+struct translator_between<std::string, ocs2::ExtendedPair<T1, T2>> {
+  using type = ocs2::translator_between_impl<T1, T2>;
 };
 
 }  // namespace property_tree
@@ -146,6 +156,16 @@ void loadStdVectorOfPair(const std::string& filename, const std::string& topicNa
 }
 
 void loadStdVectorOfPair(const std::string& filename, const std::string& topicName, std::vector<std::pair<size_t, size_t>>& loadVector,
+                         bool verbose) {
+  loadStdVectorOfPairImpl(filename, topicName, loadVector, verbose);
+}
+
+void loadStdVectorOfPair(const std::string& filename, const std::string& topicName,
+                         std::vector<std::pair<std::string, scalar_t>>& loadVector, bool verbose) {
+  loadStdVectorOfPairImpl(filename, topicName, loadVector, verbose);
+}
+
+void loadStdVectorOfPair(const std::string& filename, const std::string& topicName, std::vector<std::pair<std::string, size_t>>& loadVector,
                          bool verbose) {
   loadStdVectorOfPairImpl(filename, topicName, loadVector, verbose);
 }

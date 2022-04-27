@@ -3,10 +3,8 @@ project(ocs2_anymal_mpc)
 
 find_package(catkin REQUIRED COMPONENTS
   roslib
-  pybind11_catkin
   ocs2_anymal_models
   ocs2_quadruped_interface
-  ocs2_python_interface
 )
 
 ## Eigen3
@@ -31,7 +29,6 @@ catkin_package(
   CATKIN_DEPENDS
     ocs2_anymal_models
     ocs2_quadruped_interface
-    ocs2_python_interface
   DEPENDS
     Boost
 )
@@ -107,37 +104,6 @@ target_link_libraries(${PROJECT_NAME}_visualize_foothold_selection
   ${catkin_LIBRARIES}
   )
 
-# PyBindings library (c++ side)
-add_library(${PROJECT_NAME}_PyBindings_cpp
-  src/AnymalPyBindings.cpp
-)
-add_dependencies(${PROJECT_NAME}_PyBindings_cpp
-  ${PROJECT_NAME}
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(${PROJECT_NAME}_PyBindings_cpp
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
-
-# Build python bindings
-pybind11_add_module(AnymalPyBindings SHARED
-  src/pyBindModule.cpp
-)
-add_dependencies(AnymalPyBindings
-  ${PROJECT_NAME}_PyBindings_cpp
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(AnymalPyBindings PRIVATE
-  ${PROJECT_NAME}_PyBindings_cpp
-  ${catkin_LIBRARIES}
-)
-
-set_target_properties(AnymalPyBindings
-    PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
-)
-catkin_python_setup()
-
 #########################
 ###   CLANG TOOLING   ###
 #########################
@@ -170,10 +136,6 @@ install(DIRECTORY include/${PROJECT_NAME}/
 install(DIRECTORY config launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
-install(TARGETS AnymalPyBindings
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
-)
 
 #############
 ## Testing ##
@@ -184,9 +146,9 @@ catkin_add_nosetests(test)
 # Build unit tests
 catkin_add_gtest(${PROJECT_NAME}_test
   test/testProblemFormulation.cpp
-  )
+)
 target_link_libraries(${PROJECT_NAME}_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   gtest_main
-  )
+)

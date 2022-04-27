@@ -1,45 +1,39 @@
 #pragma once
 
-#include "ocs2_pipg/OcpSize.h"
-#include "ocs2_pipg/PIPG_Settings.h"
+#include <string>
+
+#include <Eigen/Sparse>
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_core/thread_support/ThreadPool.h>
+#include <ocs2_oc/oc_problem/OcpSize.h>
 
-#include <Eigen/Sparse>
-
-#include <algorithm>
-#include <condition_variable>
-#include <mutex>
-#include <numeric>
+#include "ocs2_pipg/PIPG_Settings.h"
 
 namespace ocs2 {
+namespace pipg {
+enum class SolverStatus { SUCCESS, MAX_ITER };
+inline std::string toString(SolverStatus s) {
+  switch (s) {
+    case SolverStatus::SUCCESS:
+      return std::string("SUCCESS");
+
+    case SolverStatus::MAX_ITER:
+      return std::string("MAX_ITER");
+
+    default:
+      throw std::invalid_argument("[pipg::toString] Invalid solver status.");
+  }
+}
+}  // namespace pipg
 
 class Pipg {
  public:
+  using OcpSize = ocs2::OcpSize;
   using Settings = pipg::Settings;
-  using OcpSize = pipg::OcpSize;
-  // solver status
-  enum class SolverStatus { SUCCESS, MAX_ITER };
-  static std::string status2string(SolverStatus s) {
-    std::string res;
-    switch (s) {
-      case SolverStatus::SUCCESS:
-        res = "SUCCESS";
-        break;
+  using SolverStatus = ocs2::pipg::SolverStatus;
 
-      case SolverStatus::MAX_ITER:
-        res = "FAIL";
-        break;
-
-      default:
-        break;
-    }
-    return res;
-  }
-
-  Pipg() = default;
   explicit Pipg(pipg::Settings pipgSettings);
   ~Pipg();
 
@@ -165,11 +159,7 @@ class Pipg {
 
   int getNumDynamicsConstraints() const { return numDynamicsConstraints; }
 
-  int getNumGeneralEqualityConstraints() const {
-    const auto totalNumberOfGeneralEqualityConstraints =
-        std::accumulate(ocpSize_.numIneqConstraints.begin(), ocpSize_.numIneqConstraints.end(), 0);
-    return totalNumberOfGeneralEqualityConstraints;
-  }
+  int getNumGeneralEqualityConstraints() const;
 
   void getStackedSolution(vector_t& res) const;
 
@@ -193,6 +183,8 @@ class Pipg {
                    const std::vector<ScalarFunctionQuadraticApproximation>& cost,
                    const std::vector<VectorFunctionLinearApproximation>* constraints) const;
 
+  void verifyOcpSize(const OcpSize& ocpSize) const;
+
   void runParallel(std::function<void(int)> taskFunction);
 
   void invSqrtInfNorm(const std::vector<VectorFunctionLinearApproximation>& dynamics,
@@ -213,7 +205,6 @@ class Pipg {
   // data buffer for parallelized QP
   vector_array_t X_, W_, V_, U_;
   vector_array_t XNew_, UNew_, WNew_;
-  scalar_array_t startIndexArray_;
 
   // Problem size
   int numDecisionVariables;

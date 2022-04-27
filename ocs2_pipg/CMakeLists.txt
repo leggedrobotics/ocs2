@@ -3,6 +3,7 @@ project(ocs2_pipg)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
+  ocs2_oc
   ocs2_qp_solver
 )
 
@@ -40,7 +41,6 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
-  src/OcpSize.cpp
   src/PIPG_Settings.cpp
   src/PIPG.cpp
 )

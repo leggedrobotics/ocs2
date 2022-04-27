@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 
 namespace ocs2 {
-namespace hpipm_interface {
+inline namespace hpipm_interface {
 
 /**
  * Size of the optimal control problem to be solved with the HpipmInterface

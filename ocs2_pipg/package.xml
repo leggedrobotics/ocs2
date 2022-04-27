@@ -10,6 +10,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <depend>ocs2_core</depend>
+  <depend>ocs2_oc</depend>
 
   <!-- Test dependancy -->
   <depend>ocs2_qp_solver</depend>

@@ -1,7 +1,10 @@
 
 #include "ocs2_pipg/PIPG.h"
 
+#include <condition_variable>
 #include <iostream>
+#include <mutex>
+#include <numeric>
 
 namespace ocs2 {
 
@@ -71,16 +74,17 @@ Pipg::SolverStatus Pipg::solveDenseQP(const Eigen::SparseMatrix<scalar_t>& H, co
   denseQPTimer_.endTimer();
   result = z;
 
+  Pipg::SolverStatus status = isConverged ? Pipg::SolverStatus::SUCCESS : Pipg::SolverStatus::MAX_ITER;
   if (settings().displayShortSummary) {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
-    std::cerr << "\n++++++++++++++ PIPG-DenseQP " << (isConverged ? "Success" : "Fail") << " +++++++++++++";
+    std::cerr << "\n++++++++++++++ PIPG-DenseQP " << pipg::toString(status) << " +++++++++++++";
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
     std::cerr << "Number of Iterations: " << k << " out of " << settings().maxNumIterations << "\n";
     std::cerr << "Relative change of primal solution : " << std::sqrt((z - z_old).squaredNorm() / zNorm) << "\n";
     std::cerr << "Constraints violation : " << constraintsViolationInfNorm << "\n";
     std::cerr << "Run time: " << denseQPTimer_.getLastIntervalInMilliseconds() << "\n";
   }
-  return Pipg::SolverStatus::SUCCESS;
+  return status;
 };
 
 Pipg::SolverStatus Pipg::solveOCPInParallel(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
@@ -357,10 +361,11 @@ Pipg::SolverStatus Pipg::solveOCPInParallel(const vector_t& x0, std::vector<Vect
 
   parallelizedQPTimer_.endTimer();
 
+  Pipg::SolverStatus status = isConverged ? Pipg::SolverStatus::SUCCESS : Pipg::SolverStatus::MAX_ITER;
   if (settings().displayShortSummary) {
     scalar_t totalTasks = std::accumulate(threadsWorkloadCounter.cbegin(), threadsWorkloadCounter.cend(), 0.0);
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
-    std::cerr << "\n++++++++++++++ PIPG-Parallel " << (isConverged ? "Success" : "Fail") << " +++++++++++++";
+    std::cerr << "\n++++++++++++++ PIPG-Parallel " << pipg::toString(status) << " +++++++++++++";
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
     std::cerr << "Number of Iterations: " << k << " out of " << settings().maxNumIterations << "\n";
     std::cerr << "Relative change of primal solution : " << std::sqrt(solutionSSE / solutionSquaredNorm) << "\n";
@@ -375,7 +380,7 @@ Pipg::SolverStatus Pipg::solveOCPInParallel(const vector_t& x0, std::vector<Vect
 
   Eigen::setNbThreads(0);  // Restore default setup.
 
-  return Pipg::SolverStatus::SUCCESS;
+  return status;
 };
 
 void Pipg::calculatePreConditioningFactors(Eigen::SparseMatrix<scalar_t>& H, vector_t& h, Eigen::SparseMatrix<scalar_t>& G,
@@ -832,13 +837,10 @@ void Pipg::resize(const OcpSize& ocpSize) {
   if (ocpSize_ == ocpSize) {
     return;
   }
+  verifyOcpSize(ocpSize);
 
   ocpSize_ = ocpSize;
   const int N = ocpSize_.numStages;
-
-  startIndexArray_.resize(N);
-  startIndexArray_.front() = 0;
-  std::partial_sum(ocpSize_.numStates.begin() + 1, ocpSize_.numStates.end() - 1, startIndexArray_.begin() + 1);
 
   numDecisionVariables = std::accumulate(ocpSize_.numStates.begin() + 1, ocpSize_.numStates.end(), 0);
   numDecisionVariables += std::accumulate(ocpSize_.numInputs.begin(), ocpSize_.numInputs.end(), 0);
@@ -928,6 +930,26 @@ void Pipg::verifySizes(const std::vector<VectorFunctionLinearApproximation>& dyn
       throw std::runtime_error("[PIPG] Inconsistent size of constraints: " + std::to_string(constraints->size()) + " with " +
                                std::to_string(ocpSize_.numStages + 1) + " nodes.");
     }
+  }
+}
+
+void Pipg::verifyOcpSize(const OcpSize& ocpSize) const {
+  auto isNotEmpty = [](const std::vector<int>& v) { return std::any_of(v.cbegin(), v.cend(), [](int s) { return s != 0; }); };
+
+  if (isNotEmpty(ocpSize.numInputBoxConstraints)) {
+    throw std::runtime_error("[Pipg::verifyOcpSize] PIPG solver does not support input box constraints.");
+  }
+  if (isNotEmpty(ocpSize.numStateBoxConstraints)) {
+    throw std::runtime_error("[Pipg::verifyOcpSize] PIPG solver does not support state box constraints.");
+  }
+  if (isNotEmpty(ocpSize.numInputBoxSlack)) {
+    throw std::runtime_error("[Pipg::verifyOcpSize] PIPG solver does not support input slack variables.");
+  }
+  if (isNotEmpty(ocpSize.numStateBoxSlack)) {
+    throw std::runtime_error("[Pipg::verifyOcpSize] PIPG solver does not support state slack variables.");
+  }
+  if (isNotEmpty(ocpSize.numIneqSlack)) {
+    throw std::runtime_error("[Pipg::verifyOcpSize] PIPG solver does not support inequality slack variables.");
   }
 }
 
@@ -1387,6 +1409,12 @@ void Pipg::GGTAbsRowSumInParallel(const std::vector<VectorFunctionLinearApproxim
   //  * ************ Test end *********
   //  * *********************************
   //  */
+}
+
+int Pipg::getNumGeneralEqualityConstraints() const {
+  const auto totalNumberOfGeneralEqualityConstraints =
+      std::accumulate(ocpSize_.numIneqConstraints.begin(), ocpSize_.numIneqConstraints.end(), 0);
+  return totalNumberOfGeneralEqualityConstraints;
 }
 
 std::string Pipg::getBenchmarkingInformationDense() const {

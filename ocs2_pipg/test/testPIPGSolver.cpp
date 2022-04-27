@@ -46,7 +46,7 @@ class PIPGSolverTest : public testing::Test {
     costArray.push_back(lqProblem[N_].cost);
     constraintsArray.push_back(lqProblem[N_].constraints);
 
-    pipgSolver.resize(ocs2::pipg::extractSizesFromProblem(dynamicsArray, costArray, &constraintsArray));
+    pipgSolver.resize(ocs2::extractSizesFromProblem(dynamicsArray, costArray, &constraintsArray));
     pipgSolver.getCostMatrix(x0, costArray, costApproximation);
     pipgSolver.getConstraintMatrix(x0, dynamicsArray, nullptr, nullptr, constraintsApproximation);
   }

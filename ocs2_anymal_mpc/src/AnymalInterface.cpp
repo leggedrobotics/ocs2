@@ -11,32 +11,26 @@
 
 namespace anymal {
 
-std::unique_ptr<switched_model::QuadrupedInterface> getAnymalInterface(AnymalModel model, const std::string& taskFolder) {
+std::unique_ptr<switched_model::QuadrupedInterface> getAnymalInterface(const std::string& urdf, const std::string& taskFolder,
+                                                                       bool wheels) {
   std::cerr << "Loading task file from: " << taskFolder << std::endl;
 
-  return getAnymalInterface(model, switched_model::loadQuadrupedSettings(taskFolder + "/task.info"));
+  return getAnymalInterface(urdf, switched_model::loadQuadrupedSettings(taskFolder + "/task.info"), wheels);
 }
 
-std::unique_ptr<switched_model::QuadrupedInterface> getAnymalInterface(AnymalModel model,
-                                                                       switched_model::QuadrupedInterface::Settings settings) {
-  auto kin = getAnymalKinematics(model);
-  auto kinAd = getAnymalKinematicsAd(model);
-  auto com = getAnymalComModel(model);
-  auto comAd = getAnymalComModelAd(model);
+std::unique_ptr<switched_model::QuadrupedInterface> getAnymalInterface(const std::string& urdf,
+                                                                       switched_model::QuadrupedInterface::Settings settings, bool wheels) {
+  auto kin = getAnymalKinematics(urdf);
+  auto kinAd = getAnymalKinematicsAd(urdf);
+  auto com = getAnymalComModel(urdf);
+  auto comAd = getAnymalComModelAd(urdf);
 
-  switch (model) {
-    case AnymalModel::Bear:
-    case AnymalModel::Cerberus:
-    case AnymalModel::Chimera:
-    case AnymalModel::Camel:
-      return std::unique_ptr<switched_model::QuadrupedInterface>(
-          new switched_model::QuadrupedPointfootInterface(*kin, *kinAd, *com, *comAd, std::move(settings)));
-    case AnymalModel::Wheels:
-    case AnymalModel::WheelsChimera:
-      return std::unique_ptr<switched_model::QuadrupedInterface>(
-          new switched_model::QuadrupedWheeledInterface(*kin, *kinAd, *com, *comAd, std::move(settings)));
-    default:
-      throw std::runtime_error("[getAnymalInterface] unkown model");
+  if (wheels) {
+    return std::unique_ptr<switched_model::QuadrupedInterface>(
+        new switched_model::QuadrupedWheeledInterface(*kin, *kinAd, *com, *comAd, std::move(settings)));
+  } else {
+    return std::unique_ptr<switched_model::QuadrupedInterface>(
+        new switched_model::QuadrupedPointfootInterface(*kin, *kinAd, *com, *comAd, std::move(settings)));
   }
 }
 

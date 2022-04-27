@@ -12,14 +12,14 @@
 class TestAnymalLoopshapingModel : public ::testing::Test {
  public:
   TestAnymalLoopshapingModel() {
-    const std::string robotName("camel");
+    const auto model = anymal::AnymalModel::Camel;
     const std::string configName("c_series");
     const std::string path(__FILE__);
     const std::string dir = path.substr(0, path.find_last_of("/"));
     const std::string configFolder = dir + "/../config/" + configName;
 
     // Get interface
-    anymalInterface = anymal::getAnymalLoopshapingInterface(anymal::stringToAnymalModel(robotName), configFolder);
+    anymalInterface = anymal::getAnymalLoopshapingInterface(anymal::getUrdfString(model), configFolder);
 
     problem = anymalInterface->getOptimalControlProblem();
 

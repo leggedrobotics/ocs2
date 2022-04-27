@@ -15,14 +15,15 @@
 
 namespace anymal {
 
-ocs2::PinocchioInterface createQuadrupedPinocchioInterface(const std::string& urdfFilePath) {
+ocs2::PinocchioInterface createQuadrupedPinocchioInterfaceFromUrdfString(const std::string& urdfString) {
   // add 6 DoF for the floating base
-  return ocs2::getPinocchioInterfaceFromUrdfFile(urdfFilePath, pinocchio::JointModelFreeFlyer());
+  return ocs2::getPinocchioInterfaceFromUrdfString(urdfString, pinocchio::JointModelFreeFlyer());
 }
 
 namespace tpl {
 template <typename SCALAR_T>
-QuadrupedCom<SCALAR_T>::QuadrupedCom(const ocs2::PinocchioInterface& pinocchioInterface, const QuadrupedPinocchioMappingTpl<SCALAR_T>& pinocchioMapping)
+QuadrupedCom<SCALAR_T>::QuadrupedCom(const ocs2::PinocchioInterface& pinocchioInterface,
+                                     const QuadrupedPinocchioMappingTpl<SCALAR_T>& pinocchioMapping)
     : pinocchioInterfacePtr_(new PinocchioInterface(castPinocchioInterface(pinocchioInterface))), pinocchioMapping_(pinocchioMapping) {
   const auto& model = pinocchioInterfacePtr_->getModel();
   totalMass_ = pinocchio::computeTotalMass(model);

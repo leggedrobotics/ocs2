@@ -4,7 +4,7 @@
 #include <ocs2_anymal_models/camel/AnymalCamelKinematics.h>
 #include <ocs2_pinocchio_interface/urdf.h>
 
-#include <ros/package.h>
+#include <ocs2_anymal_models/AnymalModels.h>
 
 #include <iostream>
 #include <string>
@@ -14,9 +14,7 @@ using namespace anymal;
 class QuadrupedKinematicsTest : public ::testing::Test {
  public:
   QuadrupedKinematicsTest()
-      : pinocchioKinematics_(
-            ocs2::getPinocchioInterfaceFromUrdfFile(ros::package::getPath("anymal_camel_rsl") + "/urdf/cached_anymal_camel_rsl.urdf"),
-            QuadrupedMapping({0, 2, 1, 3})) {
+      : pinocchioKinematics_(ocs2::getPinocchioInterfaceFromUrdfString(getUrdfString(AnymalModel::Camel)), QuadrupedMapping({0, 2, 1, 3})) {
     srand(10);
   }
 

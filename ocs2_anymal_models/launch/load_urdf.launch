@@ -3,32 +3,27 @@
   <arg name="robot_name"/>
   <arg name="description_name"/>
 
-  <!-- Load bear description -->
-  <group if="$(eval arg('robot_name') == 'bear')">
-    <include file="$(find rosparam_tools)/launch/load_rosparam.launch">
-      <arg name="parameter"       value="$(arg description_name)"/>
-      <arg name="file"            value="$(find ocs2_anymal_models)/kindsl/bear/cached_anymal_bear.urdf"/>
-    </include>
-  </group>
-
   <!-- Load cerberus description -->
   <group if="$(eval arg('robot_name') == 'cerberus')">
-    <include file="$(find anymal_cerberus_rsl)/launch/load_urdf.launch">
-        <arg name="description_name"     value="$(arg description_name)"/>
+    <include file="$(find rosparam_tools)/launch/load_rosparam.launch">
+      <arg name="parameter"       value="$(arg description_name)"/>
+      <arg name="file"            value="$(find ocs2_anymal_models)/urdf/anymal_cerberus_rsl.urdf"/>
     </include>
   </group>
 
   <!-- Load chimera description -->
   <group if="$(eval arg('robot_name') == 'chimera')">
-    <include file="$(find anymal_chimera_rsl)/launch/load_urdf.launch">
-        <arg name="description_name"     value="$(arg description_name)"/>
+    <include file="$(find rosparam_tools)/launch/load_rosparam.launch">
+      <arg name="parameter"       value="$(arg description_name)"/>
+      <arg name="file"            value="$(find ocs2_anymal_models)/urdf/anymal_chimera_rsl.urdf"/>
     </include>
   </group>
 
   <!-- Load camel description -->
   <group if="$(eval arg('robot_name') == 'camel')">
-    <include file="$(find anymal_camel_rsl)/launch/load_urdf.launch">
-        <arg name="description_name"     value="$(arg description_name)"/>
+    <include file="$(find rosparam_tools)/launch/load_rosparam.launch">
+      <arg name="parameter"       value="$(arg description_name)"/>
+      <arg name="file"            value="$(find ocs2_anymal_models)/urdf/anymal_camel_rsl.urdf"/>
     </include>
   </group>
 

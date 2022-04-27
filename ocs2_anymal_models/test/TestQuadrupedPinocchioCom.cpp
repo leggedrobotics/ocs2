@@ -1,17 +1,15 @@
 #include <gtest/gtest.h>
 
+#include <ocs2_anymal_models/AnymalModels.h>
 #include <ocs2_anymal_models/QuadrupedCom.h>
 #include <ocs2_anymal_models/camel/AnymalCamelCom.h>
-
-#include <ros/package.h>
 
 using namespace anymal;
 
 class QuadrupedComTest : public ::testing::Test {
  public:
   QuadrupedComTest()
-      : pinocchioCom_(createQuadrupedPinocchioInterface(ros::package::getPath("anymal_camel_rsl") + "/urdf/cached_anymal_camel_rsl.urdf"),
-                      QuadrupedMapping({0, 2, 1, 3})) {
+      : pinocchioCom_(createQuadrupedPinocchioInterfaceFromUrdfString(getUrdfString(AnymalModel::Camel)), QuadrupedMapping({0, 2, 1, 3})) {
     srand(0);
   }
 

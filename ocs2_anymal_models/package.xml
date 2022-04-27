@@ -18,7 +18,6 @@
   <depend>ocs2_robotic_assets</depend>
   <depend>roslib</depend>
   <exec_depend>rosparam_tools</exec_depend>
-  <exec_depend>anymal_b</exec_depend>
   <exec_depend>anymal_cerberus_rsl</exec_depend>
   <exec_depend>anymal_chimera_rsl</exec_depend>
   <exec_depend>anymal_camel_rsl</exec_depend>

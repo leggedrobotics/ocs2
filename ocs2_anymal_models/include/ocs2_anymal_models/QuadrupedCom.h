@@ -54,7 +54,7 @@ class QuadrupedCom : public switched_model::ComModelBase<SCALAR_T> {
 
 }  // namespace tpl
 
-ocs2::PinocchioInterface createQuadrupedPinocchioInterface(const std::string& urdfFilePath);
+ocs2::PinocchioInterface createQuadrupedPinocchioInterfaceFromUrdfString(const std::string& urdfString);
 
 using QuadrupedCom = tpl::QuadrupedCom<ocs2::scalar_t>;
 using QuadrupedComAd = tpl::QuadrupedCom<ocs2::ad_scalar_t>;

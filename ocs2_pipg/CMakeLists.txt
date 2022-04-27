@@ -10,12 +10,13 @@ find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
+find_package(Boost REQUIRED)
+
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 ###################################
 ## catkin specific configuration ##
 ###################################
-
 catkin_package(
   INCLUDE_DIRS
     include
@@ -24,23 +25,24 @@ catkin_package(
     ${CATKIN_PACKAGE_DEPENDENCIES}
   LIBRARIES
     ${PROJECT_NAME}
-  # DEPENDS
+  DEPENDS
+    Boost
 )
 
 ###########
 ## Build ##
 ###########
-
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
 )
 
-# Multiple shooting solver library
 add_library(${PROJECT_NAME}
-  src/PIPG.cpp
   src/OcpSize.cpp
+  src/PIPG_Settings.cpp
+  src/PIPG.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
@@ -80,7 +82,6 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 ## Testing ##
 #############
-
 catkin_add_gtest(test_${PROJECT_NAME}
   test/testPIPGSolver.cpp
 )

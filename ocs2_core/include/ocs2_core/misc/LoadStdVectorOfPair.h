@@ -87,7 +87,7 @@ void loadStdVectorOfPair(const std::string& filename, const std::string& topicNa
  *
  * @param [in] filename: File name which contains the configuration data.
  * @param [in] topicName: The key name assigned in the config file.
- * @param [out] loadVector: The loaded vector of pairs of integer.
+ * @param [out] loadVector: The loaded vector of pairs.
  */
 void loadStdVectorOfPair(const std::string& filename, const std::string& topicName,
                          std::vector<std::pair<std::string, scalar_t>>& loadVector, bool verbose = true);
@@ -105,7 +105,7 @@ void loadStdVectorOfPair(const std::string& filename, const std::string& topicNa
  *
  * @param [in] filename: File name which contains the configuration data.
  * @param [in] topicName: The key name assigned in the config file.
- * @param [out] loadVector: The loaded vector of pairs of integer.
+ * @param [out] loadVector: The loaded vector of pairs.
  */
 void loadStdVectorOfPair(const std::string& filename, const std::string& topicName, std::vector<std::pair<std::string, size_t>>& loadVector,
                          bool verbose = true);

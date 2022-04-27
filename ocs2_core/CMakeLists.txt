@@ -285,7 +285,7 @@ catkin_add_gtest(${PROJECT_NAME}_test_misc
   test/misc/testLogging.cpp
   test/misc/testLoadData.cpp
   test/misc/testLookup.cpp
-  )
+)
 target_link_libraries(${PROJECT_NAME}_test_misc
   ${PROJECT_NAME}
   ${Boost_LIBRARIES}

@@ -13,30 +13,14 @@ namespace anymal {
 namespace tpl {
 
 template <typename SCALAR_T>
-QuadrupedKinematics<SCALAR_T>::QuadrupedKinematics(const ocs2::PinocchioInterface& pinocchioInterface,
-                                                   const QuadrupedPinocchioMappingTpl<SCALAR_T>& pinocchioMapping)
-    : pinocchioInterfacePtr_(new PinocchioInterface(castPinocchioInterface(pinocchioInterface))), pinocchioMapping_(pinocchioMapping) {
-  // Frame index mapping
-  auto checkAndSetIndex = [this](std::size_t footIndex, const FrameIndex frameIndex, const std::string& name) {
-    const auto& model = pinocchioInterfacePtr_->getModel();
-    if (model.existBodyName(name)) {
-      mapFrameIndexToId_[footIndex].setId(frameIndex, model.getBodyId(name));
-    } else {
-      throw std::runtime_error("[QuadrupedKinematics] Body " + name + " does not exist.");
-    }
-  };
-  for (std::size_t i = 0; i < switched_model::NUM_CONTACT_POINTS; ++i) {
-    checkAndSetIndex(i, FrameIndex::HAA, switched_model::feetNames[i] + "_HAA");
-    checkAndSetIndex(i, FrameIndex::FOOT, switched_model::feetNames[i] + "_FOOT");
-    checkAndSetIndex(i, FrameIndex::KFE, switched_model::feetNames[i] + "_KFE");
-  }
-}
+QuadrupedKinematics<SCALAR_T>::QuadrupedKinematics(const FrameDeclaration& frameDeclaration,
+                                                   const ocs2::PinocchioInterface& pinocchioInterface)
+    : pinocchioInterfacePtr_(new PinocchioInterface_s_t(castPinocchioInterface(pinocchioInterface))),
+      pinocchioMapping_(frameDeclaration, pinocchioInterface) {}
 
 template <typename SCALAR_T>
 QuadrupedKinematics<SCALAR_T>::QuadrupedKinematics(const QuadrupedKinematics& rhs)
-    : pinocchioInterfacePtr_(new PinocchioInterface(*rhs.pinocchioInterfacePtr_)),
-      pinocchioMapping_(rhs.pinocchioMapping_),
-      mapFrameIndexToId_(rhs.mapFrameIndexToId_){};
+    : pinocchioInterfacePtr_(new PinocchioInterface_s_t(*rhs.pinocchioInterfacePtr_)), pinocchioMapping_(rhs.pinocchioMapping_){};
 
 template <typename SCALAR_T>
 QuadrupedKinematics<SCALAR_T>* QuadrupedKinematics<SCALAR_T>::clone() const {
@@ -47,15 +31,15 @@ template <typename SCALAR_T>
 switched_model::vector3_s_t<SCALAR_T> QuadrupedKinematics<SCALAR_T>::baseToLegRootInBaseFrame(size_t footIndex) const {
   switched_model::joint_coordinate_s_t<SCALAR_T> zeroConfiguration;
   zeroConfiguration.setZero();
-  pinocchio::FrameIndex frameId = mapFrameIndexToId_[footIndex].getId(FrameIndex::HAA);
+  pinocchio::FrameIndex frameId = pinocchioMapping_.getHipFrameId(footIndex);
   return relativeTranslationInBaseFrame(zeroConfiguration, frameId);
 }
 
 template <typename SCALAR_T>
 switched_model::vector3_s_t<SCALAR_T> QuadrupedKinematics<SCALAR_T>::positionBaseToFootInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
-  pinocchio::FrameIndex frameId = mapFrameIndexToId_[footIndex].getId(FrameIndex::FOOT);
-  const auto pinocchioJointPositions = pinocchioMapping_.mapJointOcs2ToPinocchio(jointPositions);
+  pinocchio::FrameIndex frameId = pinocchioMapping_.getFootFrameId(footIndex);
+  const auto pinocchioJointPositions = pinocchioMapping_.getPinocchioJointVector(jointPositions);
   return relativeTranslationInBaseFrame(pinocchioJointPositions, frameId);
 }
 
@@ -65,18 +49,17 @@ auto QuadrupedKinematics<SCALAR_T>::baseToFootJacobianBlockInBaseFrame(
   auto& data = pinocchioInterfacePtr_->getData();
   const auto& model = pinocchioInterfacePtr_->getModel();
 
-  const auto pinocchioJointPositions = pinocchioMapping_.mapJointOcs2ToPinocchio(jointPositions);
-  pinocchio::FrameIndex frameId = mapFrameIndexToId_[footIndex].getId(FrameIndex::FOOT);
+  const auto pinocchioJointPositions = pinocchioMapping_.getPinocchioJointVector(jointPositions);
+  pinocchio::FrameIndex frameId = pinocchioMapping_.getFootFrameId(footIndex);
 
-  const pinocchio::ReferenceFrame rf = pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED;
   joint_jacobian_t J;
-  pinocchio::computeFrameJacobian(model, data, pinocchioJointPositions, frameId, rf, J);
+  pinocchio::computeFrameJacobian(model, data, pinocchioJointPositions, frameId, pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED, J);
 
   // In Pinocchio, the first three coordinates of J represent linear part and the last three coordinates represent angular part. But it
   // is the other way round in OCS2. Swap linear and angular parts to stick to the originally used OCS2's convention.
   joint_jacobian_block_t res;
-  res.template block<3, 3>(0, 0) = J.template block<3, 3>(3, pinocchioMapping_.mapFootIdxOcs2ToPinocchio(footIndex) * 3u);
-  res.template block<3, 3>(3, 0) = J.template block<3, 3>(0, pinocchioMapping_.mapFootIdxOcs2ToPinocchio(footIndex) * 3u);
+  res.template block<3, 3>(0, 0) = J.template block<3, 3>(3, pinocchioMapping_.getPinocchioFootIndex(footIndex) * 3u);
+  res.template block<3, 3>(3, 0) = J.template block<3, 3>(0, pinocchioMapping_.getPinocchioFootIndex(footIndex) * 3u);
 
   return res;
 }
@@ -84,8 +67,8 @@ auto QuadrupedKinematics<SCALAR_T>::baseToFootJacobianBlockInBaseFrame(
 template <typename SCALAR_T>
 switched_model::matrix3_s_t<SCALAR_T> QuadrupedKinematics<SCALAR_T>::footOrientationInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
-  pinocchio::FrameIndex frameId = mapFrameIndexToId_[footIndex].getId(FrameIndex::FOOT);
-  const auto pinocchioJointPositions = pinocchioMapping_.mapJointOcs2ToPinocchio(jointPositions);
+  pinocchio::FrameIndex frameId = pinocchioMapping_.getFootFrameId(footIndex);
+  const auto pinocchioJointPositions = pinocchioMapping_.getPinocchioJointVector(jointPositions);
   return relativeOrientationInBaseFrame(pinocchioJointPositions, frameId);
 }
 
@@ -96,12 +79,12 @@ switched_model::vector3_s_t<SCALAR_T> QuadrupedKinematics<SCALAR_T>::footVelocit
   auto& data = pinocchioInterfacePtr_->getData();
   const auto& model = pinocchioInterfacePtr_->getModel();
 
-  const auto pinocchioJointPositions = pinocchioMapping_.mapJointOcs2ToPinocchio(jointPositions);
-  const auto pinocchioJointVelocities = pinocchioMapping_.mapJointOcs2ToPinocchio(jointVelocities);
+  const auto pinocchioJointPositions = pinocchioMapping_.getPinocchioJointVector(jointPositions);
+  const auto pinocchioJointVelocities = pinocchioMapping_.getPinocchioJointVector(jointVelocities);
 
   pinocchio::forwardKinematics(model, data, pinocchioJointPositions, pinocchioJointVelocities);
 
-  pinocchio::FrameIndex frameId = mapFrameIndexToId_[footIndex].getId(FrameIndex::FOOT);
+  pinocchio::FrameIndex frameId = pinocchioMapping_.getFootFrameId(footIndex);
 
   return getFrameVelocity(model, data, frameId, pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED).linear();
 }
@@ -111,17 +94,18 @@ auto QuadrupedKinematics<SCALAR_T>::collisionSpheresInBaseFrame(const switched_m
     -> std::vector<CollisionSphere> {
   auto& data = pinocchioInterfacePtr_->getData();
   const auto& model = pinocchioInterfacePtr_->getModel();
-  const auto pinocchioJointPositions = pinocchioMapping_.mapJointOcs2ToPinocchio(jointPositions);
+  const auto pinocchioJointPositions = pinocchioMapping_.getPinocchioJointVector(jointPositions);
   pinocchio::forwardKinematics(model, data, pinocchioJointPositions);
 
-  const switched_model::vector3_s_t<SCALAR_T> kneeOffsetInKneeFrame{SCALAR_T(-0.055), SCALAR_T(0.0), SCALAR_T(0.0)};
-  std::vector<CollisionSphere> collisionSpheres;
-  const SCALAR_T kneeRadius(0.08);
+  const auto& linkFrames = pinocchioMapping_.getCollisionLinkFrameIds();
+  const auto& decl = pinocchioMapping_.getCollisionDeclaration();
 
-  for (size_t i = 0; i < switched_model::NUM_CONTACT_POINTS; i++) {
-    pinocchio::FrameIndex frameId = mapFrameIndexToId_[i].getId(FrameIndex::KFE);
-    const auto& transformation = pinocchio::updateFramePlacement(model, data, frameId);
-    collisionSpheres.push_back({transformation.act(kneeOffsetInKneeFrame), kneeRadius});
+  std::vector<CollisionSphere> collisionSpheres;
+  collisionSpheres.reserve(linkFrames.size());
+  for (int i =0; i<linkFrames.size(); ++i) {
+    const auto& transformation = pinocchio::updateFramePlacement(model, data, linkFrames[i]);
+    const switched_model::vector3_s_t<SCALAR_T> offset = decl[i].offset.cast<SCALAR_T>();
+    collisionSpheres.push_back({transformation.act(offset), SCALAR_T(decl[i].radius)});
   }
 
   return collisionSpheres;

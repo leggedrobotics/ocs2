@@ -55,23 +55,23 @@ std::string getUrdfString(AnymalModel model) {
 }
 
 std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>> getAnymalKinematics(const std::string& urdf) {
-  return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>>(
-      new QuadrupedKinematics(ocs2::getPinocchioInterfaceFromUrdfString(urdf), QuadrupedMapping({0, 2, 1, 3})));
+  //  return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>>(
+  //      new QuadrupedKinematics(ocs2::getPinocchioInterfaceFromUrdfString(urdf), QuadrupedMapping({0, 2, 1, 3})));
 }
 
 std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>> getAnymalKinematicsAd(const std::string& urdf) {
-  return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>>(
-      new QuadrupedKinematicsAd(ocs2::getPinocchioInterfaceFromUrdfString(urdf), QuadrupedMappingAd({0, 2, 1, 3})));
+  //  return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>>(
+  //      new QuadrupedKinematicsAd(ocs2::getPinocchioInterfaceFromUrdfString(urdf), QuadrupedMappingAd({0, 2, 1, 3})));
 }
 
 std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>> getAnymalComModel(const std::string& urdf) {
-  return std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>>(
-      new QuadrupedCom(createQuadrupedPinocchioInterfaceFromUrdfString(urdf), QuadrupedMapping({0, 2, 1, 3})));
+  //  return std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>>(
+  //      new QuadrupedCom(createQuadrupedPinocchioInterfaceFromUrdfString(urdf), QuadrupedMapping({0, 2, 1, 3})));
 }
 
 std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>> getAnymalComModelAd(const std::string& urdf) {
-  return std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>>(
-      new QuadrupedComAd(createQuadrupedPinocchioInterfaceFromUrdfString(urdf), QuadrupedMappingAd({0, 2, 1, 3})));
+  //  return std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>>(
+  //      new QuadrupedComAd(createQuadrupedPinocchioInterfaceFromUrdfString(urdf), QuadrupedMappingAd({0, 2, 1, 3})));
 }
 
 }  // namespace anymal

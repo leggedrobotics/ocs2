@@ -36,7 +36,7 @@ namespace anymal {
 
 /** Gets the path to the package source directory. */
 inline std::string getPath() {
-  return "/home/rgrandia/projects/anymal_ocs2/catkin_ws/src/ocs2_anymal/ocs2_anymal_models";
+  return "/home/rgrandia/projects/anymal_ocs2/clion/anymal_ocs2_sim/src/ocs2_anymal/ocs2_anymal_models";
 }
 
 }  // namespace anymal

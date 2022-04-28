@@ -22,16 +22,16 @@ ocs2::PinocchioInterface createQuadrupedPinocchioInterfaceFromUrdfString(const s
 
 namespace tpl {
 template <typename SCALAR_T>
-QuadrupedCom<SCALAR_T>::QuadrupedCom(const ocs2::PinocchioInterface& pinocchioInterface,
-                                     const QuadrupedPinocchioMappingTpl<SCALAR_T>& pinocchioMapping)
-    : pinocchioInterfacePtr_(new PinocchioInterface(castPinocchioInterface(pinocchioInterface))), pinocchioMapping_(pinocchioMapping) {
+QuadrupedCom<SCALAR_T>::QuadrupedCom(const FrameDeclaration& frameDeclaration, const ocs2::PinocchioInterface& pinocchioInterface)
+    : pinocchioInterfacePtr_(new PinocchioInterface_s_t(castPinocchioInterface(pinocchioInterface))),
+      pinocchioMapping_(frameDeclaration, pinocchioInterface) {
   const auto& model = pinocchioInterfacePtr_->getModel();
   totalMass_ = pinocchio::computeTotalMass(model);
 }
 
 template <typename SCALAR_T>
 QuadrupedCom<SCALAR_T>::QuadrupedCom(const QuadrupedCom& rhs)
-    : pinocchioInterfacePtr_(new PinocchioInterface(*rhs.pinocchioInterfacePtr_)),
+    : pinocchioInterfacePtr_(new PinocchioInterface_s_t(*rhs.pinocchioInterfacePtr_)),
       pinocchioMapping_(rhs.pinocchioMapping_),
       totalMass_(rhs.totalMass_) {}
 
@@ -47,9 +47,10 @@ switched_model::base_coordinate_s_t<SCALAR_T> QuadrupedCom<SCALAR_T>::calculateB
     const switched_model::joint_coordinate_s_t<SCALAR_T>& jointVelocities,
     const switched_model::joint_coordinate_s_t<SCALAR_T>& jointAccelerations,
     const switched_model::base_coordinate_s_t<SCALAR_T>& forcesOnBaseInBaseFrame) const {
+  using vector_t = Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>;
+
   auto& data = pinocchioInterfacePtr_->getData();
   const auto& model = pinocchioInterfacePtr_->getModel();
-  auto jointOcs2ToPinocchio = [this](vector_t joint) -> vector_t { return pinocchioMapping_.mapJointOcs2ToPinocchio(joint); };
   /**
    * pinocchio state = [basePos(0-2) baseQuad(3-6) q(7-18)]
    *
@@ -69,7 +70,7 @@ switched_model::base_coordinate_s_t<SCALAR_T> QuadrupedCom<SCALAR_T>::calculateB
   const Eigen::Quaternion<SCALAR_T> baseQuat = switched_model::quaternionBaseToOrigin<SCALAR_T>(switched_model::getOrientation(basePose));
   configuration.template segment<4>(3) = baseQuat.coeffs();
   // JointsPos
-  configuration.template segment<switched_model::JOINT_COORDINATE_SIZE>(7) = jointOcs2ToPinocchio(jointPositions);
+  configuration.template segment<switched_model::JOINT_COORDINATE_SIZE>(7) = pinocchioMapping_.getPinocchioJointVector(jointPositions);
 
   // Calculate joint space inertial matrix
   pinocchio::crba(model, data, configuration);
@@ -80,7 +81,7 @@ switched_model::base_coordinate_s_t<SCALAR_T> QuadrupedCom<SCALAR_T>::calculateB
   // Base angular velocity in Base frame
   velocity.template segment<3>(3) = switched_model::getAngularVelocity(baseLocalVelocities);
   // Joint velocity
-  velocity.template segment<switched_model::JOINT_COORDINATE_SIZE>(6) = jointOcs2ToPinocchio(jointVelocities);
+  velocity.template segment<switched_model::JOINT_COORDINATE_SIZE>(6) = pinocchioMapping_.getPinocchioJointVector(jointVelocities);
 
   const vector_t dynamicBias = pinocchio::nonLinearEffects(model, data, configuration, velocity);
 
@@ -91,7 +92,7 @@ switched_model::base_coordinate_s_t<SCALAR_T> QuadrupedCom<SCALAR_T>::calculateB
   pinocchioBaseForces.template tail<3>() = forcesOnBaseInBaseFrame.template head<3>();
 
   switched_model::vector6_s_t<SCALAR_T> baseForcesInBaseFrame = pinocchioBaseForces - dynamicBias.head(6);
-  baseForcesInBaseFrame.noalias() -= data.M.template block<6, 12>(0, 6) * jointOcs2ToPinocchio(jointAccelerations);
+  baseForcesInBaseFrame.noalias() -= data.M.template block<6, 12>(0, 6) * pinocchioMapping_.getPinocchioJointVector(jointAccelerations);
 
   // M are symmetric but pinocchio only fills in the upper triangle.
   switched_model::matrix6_s_t<SCALAR_T> Mb = data.M.topLeftCorner(6, 6).template selfadjointView<Eigen::Upper>();

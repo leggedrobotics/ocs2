@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <boost/filesystem.hpp>
+
 #include <ocs2_anymal_models/QuadrupedKinematics.h>
 #include <ocs2_anymal_models/camel/AnymalCamelKinematics.h>
 #include <ocs2_pinocchio_interface/urdf.h>
@@ -11,13 +13,21 @@
 
 using namespace anymal;
 
+namespace {
+const std::string dataFolder = boost::filesystem::path(__FILE__).parent_path().generic_string() + "/data/";
+}
+
 class QuadrupedKinematicsTest : public ::testing::Test {
  public:
   QuadrupedKinematicsTest()
-      : pinocchioKinematics_(ocs2::getPinocchioInterfaceFromUrdfString(getUrdfString(AnymalModel::Camel)), QuadrupedMapping({0, 2, 1, 3})) {
+      : frameDeclaration(frameDeclarationFromFile(dataFolder + "testDeclarationCamel.info")),
+        pinocchioInterface(ocs2::getPinocchioInterfaceFromUrdfString(getUrdfString(AnymalModel::Camel))),
+        pinocchioKinematics_(frameDeclaration, pinocchioInterface) {
     srand(10);
   }
 
+  FrameDeclaration frameDeclaration;
+  ocs2::PinocchioInterface pinocchioInterface;
   QuadrupedKinematics pinocchioKinematics_;
   AnymalCamelKinematics robcogenKinematics_;
 };

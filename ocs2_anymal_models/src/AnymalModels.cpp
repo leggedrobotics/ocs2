@@ -35,10 +35,8 @@ std::string getUrdfPath(AnymalModel model) {
       return getPath() + "/urdf/anymal_chimera_rsl.urdf";
     case AnymalModel::Camel:
       return getPath() + "/urdf/anymal_camel_rsl.urdf";
-    case AnymalModel::Urdf:
-      throw std::runtime_error("[AnymalModels] no default urdf available");
     default:
-      throw std::runtime_error("[AnymalModels] unkown model");
+      throw std::runtime_error("[AnymalModels] no default urdf available");
   }
 }
 

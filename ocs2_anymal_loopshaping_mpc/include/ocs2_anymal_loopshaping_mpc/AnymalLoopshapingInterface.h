@@ -13,7 +13,7 @@ std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAn
                                                                                                          const std::string& configFolder);
 
 std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAnymalLoopshapingInterface(
-    const std::string& urdf, switched_model::QuadrupedInterface::Settings settings,
+    const std::string& urdf, switched_model::QuadrupedInterface::Settings settings, const FrameDeclaration& frameDeclaration,
     std::shared_ptr<ocs2::LoopshapingDefinition> loopshapingDefinition);
 
 std::string getConfigFolderLoopshaping(const std::string& configName);

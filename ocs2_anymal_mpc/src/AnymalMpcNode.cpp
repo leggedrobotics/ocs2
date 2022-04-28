@@ -22,7 +22,6 @@ int main(int argc, char* argv[]) {
   }
   const std::string descriptionName(programArgs[1]);
   const std::string configName(programArgs[2]);
-  const bool hasWheels = configName == "wheels";
 
   // Initialize ros node
   ros::init(argc, argv, "anymal_mpc");
@@ -31,7 +30,7 @@ int main(int argc, char* argv[]) {
   std::string urdfString;
   nodeHandle.getParam(descriptionName, urdfString);
 
-  auto anymalInterface = anymal::getAnymalInterface(urdfString, anymal::getConfigFolder(configName), hasWheels);
+  auto anymalInterface = anymal::getAnymalInterface(urdfString, anymal::getConfigFolder(configName));
   const auto mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePath(configName));
 
   switch (anymalInterface->modelSettings().algorithm_) {

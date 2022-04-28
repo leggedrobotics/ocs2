@@ -11,12 +11,11 @@
 
 namespace anymal {
 
-std::unique_ptr<switched_model::QuadrupedInterface> getAnymalInterface(const std::string& urdf, const std::string& taskFolder,
-                                                                       bool wheels = false);
+std::unique_ptr<switched_model::QuadrupedInterface> getAnymalInterface(const std::string& urdf, const std::string& taskFolder);
 
 std::unique_ptr<switched_model::QuadrupedInterface> getAnymalInterface(const std::string& urdf,
                                                                        switched_model::QuadrupedInterface::Settings settings,
-                                                                       const FrameDeclaration& frameDeclaration, bool wheels = false);
+                                                                       const FrameDeclaration& frameDeclaration);
 
 std::string getConfigFolder(const std::string& configName);
 

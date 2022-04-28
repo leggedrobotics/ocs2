@@ -3,14 +3,6 @@
   <arg name="robot_name"/>
   <arg name="description_name"/>
 
-  <!-- Load bear description -->
-  <group if="$(eval arg('robot_name') == 'bear')">
-    <include file="$(find rosparam_tools)/launch/load_rosparam.launch">
-      <arg name="parameter"       value="$(arg description_name)"/>
-      <arg name="file"            value="$(find ocs2_anymal_models)/urdf/anymal_bear.urdf"/>
-    </include>
-  </group>
-
   <!-- Load cerberus description -->
   <group if="$(eval arg('robot_name') == 'cerberus')">
     <include file="$(find rosparam_tools)/launch/load_rosparam.launch">
@@ -33,20 +25,6 @@
       <arg name="parameter"       value="$(arg description_name)"/>
       <arg name="file"            value="$(find ocs2_anymal_models)/urdf/anymal_camel_rsl.urdf"/>
     </include>
-  </group>
-
-  <!-- Load wheels description -->
-  <group if="$(eval arg('robot_name') == 'wheels')">
-      <include file="$(find anymal_wheels_description)/launch/load.launch">
-        <arg name="description_name"   value="$(arg description_name)"/>
-      </include>
-  </group>
-
-  <!-- Load wheels description -->
-  <group if="$(eval arg('robot_name') == 'wheels_chimera')">
-      <include file="$(find anymal_wheels_chimera)/launch/load_urdf.launch">
-        <arg name="description_name"   value="$(arg description_name)"/>
-      </include>
   </group>
 
 </launch>

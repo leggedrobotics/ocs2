@@ -11,29 +11,23 @@
 
 namespace anymal {
 
-std::unique_ptr<switched_model::QuadrupedInterface> getAnymalInterface(const std::string& urdf, const std::string& taskFolder,
-                                                                       bool wheels) {
+std::unique_ptr<switched_model::QuadrupedInterface> getAnymalInterface(const std::string& urdf, const std::string& taskFolder) {
   std::cerr << "Loading task file from: " << taskFolder << std::endl;
 
   return getAnymalInterface(urdf, switched_model::loadQuadrupedSettings(taskFolder + "/task.info"),
-                            frameDeclarationFromFile(taskFolder + "/frame_declaration.info"), wheels);
+                            frameDeclarationFromFile(taskFolder + "/frame_declaration.info"));
 }
 
 std::unique_ptr<switched_model::QuadrupedInterface> getAnymalInterface(const std::string& urdf,
                                                                        switched_model::QuadrupedInterface::Settings settings,
-                                                                       const FrameDeclaration& frameDeclaration, bool wheels) {
+                                                                       const FrameDeclaration& frameDeclaration) {
   auto kin = getAnymalKinematics(frameDeclaration, urdf);
   auto kinAd = getAnymalKinematicsAd(frameDeclaration, urdf);
   auto com = getAnymalComModel(frameDeclaration, urdf);
   auto comAd = getAnymalComModelAd(frameDeclaration, urdf);
 
-  if (wheels) {
-    return std::unique_ptr<switched_model::QuadrupedInterface>(
-        new switched_model::QuadrupedWheeledInterface(*kin, *kinAd, *com, *comAd, std::move(settings)));
-  } else {
-    return std::unique_ptr<switched_model::QuadrupedInterface>(
-        new switched_model::QuadrupedPointfootInterface(*kin, *kinAd, *com, *comAd, std::move(settings)));
-  }
+  return std::unique_ptr<switched_model::QuadrupedInterface>(
+      new switched_model::QuadrupedPointfootInterface(*kin, *kinAd, *com, *comAd, std::move(settings)));
 }
 
 std::string getConfigFolder(const std::string& configName) {

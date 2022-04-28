@@ -2,12 +2,12 @@
 // Created by rgrandia on 18.09.19.
 //
 
-#include "ocs2_anymal_models/camel/AnymalCamelKinematics.h"
+#include "AnymalCamelKinematics.h"
 
 #include <iit/rbd/traits/TraitSelector.h>
 
-#include "ocs2_anymal_models/camel/generated/jacobians.h"
-#include "ocs2_anymal_models/camel/generated/transforms.h"
+#include "generated/jacobians.h"
+#include "generated/transforms.h"
 
 namespace anymal {
 namespace tpl {

@@ -19,10 +19,10 @@
     </group>
 
     <node pkg="ocs2_anymal_loopshaping_mpc" type="ocs2_anymal_loopshaping_mpc_mpc_node" name="ocs2_anymal_loopshaping_mpc_mpc_node"
-          output="screen" args="$(arg robot_name) $(arg config_name)" launch-prefix=""/>
+          output="screen" args="$(arg description_name) $(arg config_name)" launch-prefix=""/>
 
     <node pkg="ocs2_anymal_loopshaping_mpc" type="ocs2_anymal_loopshaping_mpc_dummy_mrt_node" name="ocs2_anymal_loopshaping_mpc_dummy_mrt_node"
-          output="screen" args="$(arg robot_name) $(arg config_name)" launch-prefix="gnome-terminal -- "/>
+          output="screen" args="$(arg description_name) $(arg config_name)" launch-prefix="gnome-terminal -- "/>
 
     <node pkg="ocs2_anymal_commands" type="gait_command_node" name="gait_command_node"
           output="screen" launch-prefix="gnome-terminal --"/>

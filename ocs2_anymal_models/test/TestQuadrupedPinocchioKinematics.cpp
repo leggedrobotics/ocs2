@@ -1,26 +1,22 @@
 #include <gtest/gtest.h>
 
-#include <boost/filesystem.hpp>
-
-#include <ocs2_anymal_models/QuadrupedKinematics.h>
-#include <ocs2_anymal_models/camel/AnymalCamelKinematics.h>
 #include <ocs2_pinocchio_interface/urdf.h>
 
+#include <ocs2_anymal_models/QuadrupedKinematics.h>
 #include <ocs2_anymal_models/AnymalModels.h>
+#include <ocs2_anymal_models/package_path.h>
+
+#include "camel/AnymalCamelKinematics.h"
 
 #include <iostream>
 #include <string>
 
 using namespace anymal;
 
-namespace {
-const std::string dataFolder = boost::filesystem::path(__FILE__).parent_path().generic_string() + "/data/";
-}
-
 class QuadrupedKinematicsTest : public ::testing::Test {
  public:
   QuadrupedKinematicsTest()
-      : frameDeclaration(frameDeclarationFromFile(dataFolder + "testDeclarationCamel.info")),
+      : frameDeclaration(frameDeclarationFromFile(getPath() + "/urdf/frame_declaration_anymal_c.info")),
         pinocchioInterface(ocs2::getPinocchioInterfaceFromUrdfString(getUrdfString(AnymalModel::Camel))),
         pinocchioKinematics_(frameDeclaration, pinocchioInterface) {
     srand(10);

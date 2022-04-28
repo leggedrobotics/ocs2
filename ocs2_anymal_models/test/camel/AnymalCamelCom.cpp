@@ -5,15 +5,15 @@
  *      Author: farbod
  */
 
-#include "ocs2_anymal_models/camel/AnymalCamelCom.h"
+#include "AnymalCamelCom.h"
 
 #include <iit/rbd/traits/TraitSelector.h>
-#include <ocs2_anymal_models/RobcogenHelpers.h>
-#include <ocs2_anymal_models/camel/generated/inverse_dynamics.h>
-#include "ocs2_anymal_models/camel/generated/inertia_properties.h"
-#include "ocs2_anymal_models/camel/generated/jsim.h"
-#include "ocs2_anymal_models/camel/generated/miscellaneous.h"
-#include "ocs2_anymal_models/camel/generated/transforms.h"
+#include "RobcogenHelpers.h"
+#include "generated/inertia_properties.h"
+#include "generated/inverse_dynamics.h"
+#include "generated/jsim.h"
+#include "generated/miscellaneous.h"
+#include "generated/transforms.h"
 
 #include "ocs2_switched_model_interface/core/Rotations.h"
 

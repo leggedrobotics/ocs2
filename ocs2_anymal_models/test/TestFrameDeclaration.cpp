@@ -4,20 +4,15 @@
 
 #include <gtest/gtest.h>
 
-#include <boost/filesystem.hpp>
-
 #include <ocs2_pinocchio_interface/urdf.h>
 
 #include <ocs2_anymal_models/AnymalModels.h>
 #include <ocs2_anymal_models/FrameDeclaration.h>
 #include <ocs2_anymal_models/QuadrupedPinocchioMapping.h>
-
-namespace {
-const std::string dataFolder = boost::filesystem::path(__FILE__).parent_path().generic_string() + "/data/";
-}
+#include <ocs2_anymal_models/package_path.h>
 
 TEST(TestFrameDeclaration, loadTestFile) {
-  const auto decl = anymal::frameDeclarationFromFile(dataFolder + "testDeclarationCamel.info");
+  const auto decl = anymal::frameDeclarationFromFile(anymal::getPath() + "/urdf/frame_declaration_anymal_c.info");
   EXPECT_EQ(decl.legs[0].root, "LF_HAA");
   EXPECT_EQ(decl.legs[1].tip, "RF_FOOT");
   EXPECT_EQ(decl.legs[2].joints[1], "LH_HFE");
@@ -28,7 +23,7 @@ TEST(TestFrameDeclaration, loadTestFile) {
 
 TEST(TestFrameMapping, camelPinocchioMapping) {
   const auto interface = ocs2::getPinocchioInterfaceFromUrdfString(getUrdfString(anymal::AnymalModel::Camel));
-  const auto decl = anymal::frameDeclarationFromFile(dataFolder + "testDeclarationCamel.info");
+  const auto decl = anymal::frameDeclarationFromFile(anymal::getPath() + "/urdf/frame_declaration_anymal_c.info");
   anymal::QuadrupedPinocchioMapping mapping(decl, interface);
 
   EXPECT_EQ(mapping.getPinocchioFootIndex(0), 0);

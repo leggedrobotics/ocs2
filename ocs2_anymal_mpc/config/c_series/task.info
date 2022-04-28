@@ -1,7 +1,7 @@
 model_settings
 {
   algorithm                     SQP
-  simplifyDynamics              true  ; true: neglect centrifugal and coriolis terms
+  simplifyDynamics              false  ; true: neglect centrifugal and coriolis terms
   recompileLibraries            true
 
   frictionCoefficient           0.5

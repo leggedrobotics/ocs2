@@ -42,6 +42,7 @@ include_directories(
 
 add_library(${PROJECT_NAME}
   src/PIPG_Settings.cpp
+  src/HelperFunctions.cpp
   src/PIPG.cpp
 )
 target_link_libraries(${PROJECT_NAME}
@@ -84,6 +85,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 catkin_add_gtest(test_${PROJECT_NAME}
   test/testPIPGSolver.cpp
+  test/testHelper.cpp
 )
 target_link_libraries(test_${PROJECT_NAME}
   ${PROJECT_NAME}

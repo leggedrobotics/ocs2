@@ -83,12 +83,6 @@ class Pipg {
                                   const vector_array_t* EInv, const scalar_t mu, const scalar_t lambda, const scalar_t sigma,
                                   const ScalarFunctionQuadraticApproximation& costM, const VectorFunctionLinearApproximation& constraintsM);
 
-  vector_t HAbsRowSumInParallel(const std::vector<ScalarFunctionQuadraticApproximation>& cost) const;
-
-  void GGTAbsRowSumInParallel(const std::vector<VectorFunctionLinearApproximation>& dynamics,
-                              const std::vector<VectorFunctionLinearApproximation>* constraints, const vector_array_t* scalingVectorsPtr,
-                              vector_t& res);
-
   void resize(const OcpSize& size);
 
   int getNumDecisionVariables() const { return numDecisionVariables; }
@@ -114,6 +108,7 @@ class Pipg {
   const Settings& settings() const { return pipgSettings_; }
   Settings& settings() { return pipgSettings_; }
   const OcpSize& size() const { return ocpSize_; }
+  ThreadPool& getThreadPool() { return threadPool_; }
 
  private:
   void verifySizes(const std::vector<VectorFunctionLinearApproximation>& dynamics,
@@ -148,7 +143,4 @@ class Pipg {
   benchmark::RepeatedTimer step3w_;
   benchmark::RepeatedTimer step4CheckConvergence_;
 };
-
-vector_t matrixRowwiseAbsSum(const Eigen::SparseMatrix<scalar_t>& mat);
-
 }  // namespace ocs2

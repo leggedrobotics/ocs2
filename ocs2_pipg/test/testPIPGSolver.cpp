@@ -148,12 +148,6 @@ TEST_F(PIPGSolverTest, correctness) {
   EXPECT_TRUE(std::abs(PIPGParallelCConstraintViolation - PIPGConstraintViolation) < pipgSolver.settings().absoluteTolerance * 10.0);
 }
 
-TEST_F(PIPGSolverTest, HAbsRowSumInParallel) {
-  ocs2::vector_t rowwiseSum = pipgSolver.HAbsRowSumInParallel(costArray);
-
-  EXPECT_TRUE(rowwiseSum.isApprox(costApproximation.dfdxx.cwiseAbs().rowwise().sum()));
-}
-
 TEST_F(PIPGSolverTest, descaleSolution) {
   ocs2::vector_array_t D(2 * N_);
   ocs2::vector_t DStacked(numDecisionVariables);

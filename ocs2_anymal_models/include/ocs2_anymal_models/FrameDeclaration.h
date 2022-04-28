@@ -22,9 +22,12 @@ struct LimbFrames {
 };
 
 struct FrameDeclaration {
+  std::string root;
   switched_model::feet_array_t<LimbFrames> legs;
   std::vector<CollisionDeclaration> collisions;
 };
+
+std::vector<std::string> getJointNames(const FrameDeclaration& frameDeclaration);
 
 LimbFrames limbFramesFromFile(const std::string& file, const std::string& field);
 

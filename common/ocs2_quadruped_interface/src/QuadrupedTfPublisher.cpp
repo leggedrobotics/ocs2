@@ -18,7 +18,17 @@
 namespace switched_model {
 
 void QuadrupedTfPublisher::launchNode(ros::NodeHandle& nodeHandle, const std::string& descriptionName, const std::string& tfPrefix) {
+  std::vector<std::string> jointNamesAnymal = {"LF_HAA", "LF_HFE", "LF_KFE", "RF_HAA", "RF_HFE", "RF_KFE",
+                                               "LH_HAA", "LH_HFE", "LH_KFE", "RH_HAA", "RH_HFE", "RH_KFE"};
+  std::string baseName = "base";
+  launchNode(nodeHandle, descriptionName, std::move(jointNamesAnymal), std::move(baseName), tfPrefix);
+}
+
+void QuadrupedTfPublisher::launchNode(ros::NodeHandle& nodeHandle, const std::string& descriptionName, std::vector<std::string> jointNames,
+                                      std::string baseName, const std::string& tfPrefix) {
   tfPrefix_ = tfPrefix;
+  jointNames_ = std::move(jointNames);
+  baseName_ = std::move(baseName);
 
   // Load URDF model
   urdf::Model urdfModel;
@@ -53,23 +63,23 @@ void QuadrupedTfPublisher::publish(ros::Time timeStamp, const base_coordinate_t&
 }
 
 void QuadrupedTfPublisher::updateJointPositions(const joint_coordinate_t& jointPositions) {
-  jointPositionsMap_["LF_HAA"] = jointPositions[0];
-  jointPositionsMap_["LF_HFE"] = jointPositions[1];
-  jointPositionsMap_["LF_KFE"] = jointPositions[2];
-  jointPositionsMap_["RF_HAA"] = jointPositions[3];
-  jointPositionsMap_["RF_HFE"] = jointPositions[4];
-  jointPositionsMap_["RF_KFE"] = jointPositions[5];
-  jointPositionsMap_["LH_HAA"] = jointPositions[6];
-  jointPositionsMap_["LH_HFE"] = jointPositions[7];
-  jointPositionsMap_["LH_KFE"] = jointPositions[8];
-  jointPositionsMap_["RH_HAA"] = jointPositions[9];
-  jointPositionsMap_["RH_HFE"] = jointPositions[10];
-  jointPositionsMap_["RH_KFE"] = jointPositions[11];
+  jointPositionsMap_[jointNames_[0]] = jointPositions[0];
+  jointPositionsMap_[jointNames_[1]] = jointPositions[1];
+  jointPositionsMap_[jointNames_[2]] = jointPositions[2];
+  jointPositionsMap_[jointNames_[3]] = jointPositions[3];
+  jointPositionsMap_[jointNames_[4]] = jointPositions[4];
+  jointPositionsMap_[jointNames_[5]] = jointPositions[5];
+  jointPositionsMap_[jointNames_[6]] = jointPositions[6];
+  jointPositionsMap_[jointNames_[7]] = jointPositions[7];
+  jointPositionsMap_[jointNames_[8]] = jointPositions[8];
+  jointPositionsMap_[jointNames_[9]] = jointPositions[9];
+  jointPositionsMap_[jointNames_[10]] = jointPositions[10];
+  jointPositionsMap_[jointNames_[11]] = jointPositions[11];
 }
 
 void QuadrupedTfPublisher::updateBasePose(ros::Time timeStamp, const base_coordinate_t& basePose, const std::string& worldFrame) {
   baseToWorldTransform_.header = ocs2::getHeaderMsg(worldFrame, timeStamp);
-  baseToWorldTransform_.child_frame_id = tfPrefix_ + "/base";
+  baseToWorldTransform_.child_frame_id = tfPrefix_ + "/" + baseName_;
 
   const Eigen::Quaternion<scalar_t> q_world_base = quaternionBaseToOrigin<scalar_t>(getOrientation(basePose));
   baseToWorldTransform_.transform.rotation = ocs2::getOrientationMsg(q_world_base);

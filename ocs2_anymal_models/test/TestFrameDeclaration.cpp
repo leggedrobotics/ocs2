@@ -13,12 +13,13 @@
 
 TEST(TestFrameDeclaration, loadTestFile) {
   const auto decl = anymal::frameDeclarationFromFile(anymal::getPath() + "/urdf/frame_declaration_anymal_c.info");
+  EXPECT_EQ(decl.root, "base");
   EXPECT_EQ(decl.legs[0].root, "LF_HAA");
   EXPECT_EQ(decl.legs[1].tip, "RF_FOOT");
   EXPECT_EQ(decl.legs[2].joints[1], "LH_HFE");
   EXPECT_EQ(decl.collisions[3].link, "RH_KFE");
   EXPECT_DOUBLE_EQ(decl.collisions[3].radius, 0.08);
-  EXPECT_DOUBLE_EQ(decl.collisions[3].offset.z(), 0.055);
+  EXPECT_DOUBLE_EQ(decl.collisions[3].offset.x(), -0.055);
 }
 
 TEST(TestFrameMapping, camelPinocchioMapping) {

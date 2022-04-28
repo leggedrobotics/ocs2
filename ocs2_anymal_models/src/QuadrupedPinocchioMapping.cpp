@@ -11,8 +11,8 @@ QuadrupedPinocchioMapping::QuadrupedPinocchioMapping(const FrameDeclaration& fra
   for (int i = 0; i < switched_model::NUM_CONTACT_POINTS; ++i) {
     hipFrameIds_[i] = getBodyId(frameDeclaration.legs[i].root, pinocchioInterface);
     footFrameIds_[i] = getBodyId(frameDeclaration.legs[i].tip, pinocchioInterface);
-    ocs2JointNames_.insert(ocs2JointNames_.end(), frameDeclaration.legs[i].joints.begin(), frameDeclaration.legs[i].joints.end());
   }
+  ocs2JointNames_ = getJointNames(frameDeclaration);
   extractPinocchioJointNames(pinocchioInterface);
   extractFeetOrdering(pinocchioInterface);
 

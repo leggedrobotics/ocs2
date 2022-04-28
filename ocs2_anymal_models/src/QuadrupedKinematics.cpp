@@ -102,7 +102,7 @@ auto QuadrupedKinematics<SCALAR_T>::collisionSpheresInBaseFrame(const switched_m
 
   std::vector<CollisionSphere> collisionSpheres;
   collisionSpheres.reserve(linkFrames.size());
-  for (int i =0; i<linkFrames.size(); ++i) {
+  for (int i = 0; i < linkFrames.size(); ++i) {
     const auto& transformation = pinocchio::updateFramePlacement(model, data, linkFrames[i]);
     const switched_model::vector3_s_t<SCALAR_T> offset = decl[i].offset.cast<SCALAR_T>();
     collisionSpheres.push_back({transformation.act(offset), SCALAR_T(decl[i].radius)});

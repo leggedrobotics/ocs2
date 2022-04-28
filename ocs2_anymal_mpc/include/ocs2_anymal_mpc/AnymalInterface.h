@@ -7,6 +7,7 @@
 #include <ocs2_quadruped_interface/QuadrupedInterface.h>
 
 #include <ocs2_anymal_models/AnymalModels.h>
+#include <ocs2_anymal_models/FrameDeclaration.h>
 
 namespace anymal {
 
@@ -15,7 +16,7 @@ std::unique_ptr<switched_model::QuadrupedInterface> getAnymalInterface(const std
 
 std::unique_ptr<switched_model::QuadrupedInterface> getAnymalInterface(const std::string& urdf,
                                                                        switched_model::QuadrupedInterface::Settings settings,
-                                                                       bool wheels = false);
+                                                                       const FrameDeclaration& frameDeclaration, bool wheels = false);
 
 std::string getConfigFolder(const std::string& configName);
 

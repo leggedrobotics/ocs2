@@ -6,12 +6,11 @@
 
 #include <unordered_map>
 
-#include <ros/package.h>
-
 #include <ocs2_pinocchio_interface/urdf.h>
 
 #include <ocs2_anymal_models/QuadrupedCom.h>
 #include <ocs2_anymal_models/QuadrupedKinematics.h>
+
 #include <ocs2_anymal_models/package_path.h>
 
 namespace anymal {
@@ -54,24 +53,28 @@ std::string getUrdfString(AnymalModel model) {
   return xml_str;
 }
 
-std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>> getAnymalKinematics(const std::string& urdf) {
-  //  return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>>(
-  //      new QuadrupedKinematics(ocs2::getPinocchioInterfaceFromUrdfString(urdf), QuadrupedMapping({0, 2, 1, 3})));
+std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>> getAnymalKinematics(const FrameDeclaration& frameDeclaration,
+                                                                                         const std::string& urdf) {
+  return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>>(
+      new QuadrupedKinematics(frameDeclaration, ocs2::getPinocchioInterfaceFromUrdfString(urdf)));
 }
 
-std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>> getAnymalKinematicsAd(const std::string& urdf) {
-  //  return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>>(
-  //      new QuadrupedKinematicsAd(ocs2::getPinocchioInterfaceFromUrdfString(urdf), QuadrupedMappingAd({0, 2, 1, 3})));
+std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>> getAnymalKinematicsAd(const FrameDeclaration& frameDeclaration,
+                                                                                              const std::string& urdf) {
+  return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>>(
+      new QuadrupedKinematicsAd(frameDeclaration, ocs2::getPinocchioInterfaceFromUrdfString(urdf)));
 }
 
-std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>> getAnymalComModel(const std::string& urdf) {
-  //  return std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>>(
-  //      new QuadrupedCom(createQuadrupedPinocchioInterfaceFromUrdfString(urdf), QuadrupedMapping({0, 2, 1, 3})));
+std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>> getAnymalComModel(const FrameDeclaration& frameDeclaration,
+                                                                                const std::string& urdf) {
+  return std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>>(
+      new QuadrupedCom(frameDeclaration, createQuadrupedPinocchioInterfaceFromUrdfString(urdf)));
 }
 
-std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>> getAnymalComModelAd(const std::string& urdf) {
-  //  return std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>>(
-  //      new QuadrupedComAd(createQuadrupedPinocchioInterfaceFromUrdfString(urdf), QuadrupedMappingAd({0, 2, 1, 3})));
+std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>> getAnymalComModelAd(const FrameDeclaration& frameDeclaration,
+                                                                                     const std::string& urdf) {
+  return std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>>(
+      new QuadrupedComAd(frameDeclaration, createQuadrupedPinocchioInterfaceFromUrdfString(urdf)));
 }
 
 }  // namespace anymal

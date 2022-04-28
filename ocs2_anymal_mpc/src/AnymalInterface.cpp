@@ -15,15 +15,17 @@ std::unique_ptr<switched_model::QuadrupedInterface> getAnymalInterface(const std
                                                                        bool wheels) {
   std::cerr << "Loading task file from: " << taskFolder << std::endl;
 
-  return getAnymalInterface(urdf, switched_model::loadQuadrupedSettings(taskFolder + "/task.info"), wheels);
+  return getAnymalInterface(urdf, switched_model::loadQuadrupedSettings(taskFolder + "/task.info"),
+                            frameDeclarationFromFile(taskFolder + "/frame_declaration.info"), wheels);
 }
 
 std::unique_ptr<switched_model::QuadrupedInterface> getAnymalInterface(const std::string& urdf,
-                                                                       switched_model::QuadrupedInterface::Settings settings, bool wheels) {
-  auto kin = getAnymalKinematics(urdf);
-  auto kinAd = getAnymalKinematicsAd(urdf);
-  auto com = getAnymalComModel(urdf);
-  auto comAd = getAnymalComModelAd(urdf);
+                                                                       switched_model::QuadrupedInterface::Settings settings,
+                                                                       const FrameDeclaration& frameDeclaration, bool wheels) {
+  auto kin = getAnymalKinematics(frameDeclaration, urdf);
+  auto kinAd = getAnymalKinematicsAd(frameDeclaration, urdf);
+  auto com = getAnymalComModel(frameDeclaration, urdf);
+  auto comAd = getAnymalComModelAd(frameDeclaration, urdf);
 
   if (wheels) {
     return std::unique_ptr<switched_model::QuadrupedInterface>(

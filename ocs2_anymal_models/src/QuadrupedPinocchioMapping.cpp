@@ -53,10 +53,16 @@ switched_model::joint_coordinate_ad_t QuadrupedPinocchioMapping::getPinocchioJoi
 
 size_t QuadrupedPinocchioMapping::getBodyId(const std::string& bodyName, const ocs2::PinocchioInterface& pinocchioInterface) const {
   const auto& model = pinocchioInterface.getModel();
+  // Try as body first, to prevent a conflict when a body and joint have the same name
   if (model.existBodyName(bodyName)) {
     return model.getBodyId(bodyName);
   } else {
-    throw std::runtime_error("[QuadrupedPinocchioMapping] Body " + bodyName + " does not exist.");
+    // Try to take the joint frame if body does not exist
+    if (model.existJointName(bodyName)) {
+      return model.getFrameId(bodyName, pinocchio::JOINT);
+    } else {
+      throw std::runtime_error("[QuadrupedPinocchioMapping] Body " + bodyName + " does not exist.");
+    }
   }
 }
 

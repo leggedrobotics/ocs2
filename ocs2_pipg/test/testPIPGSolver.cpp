@@ -2,10 +2,24 @@
 
 #include "ocs2_pipg/PIPG.h"
 
-#include <ocs2_qp_solver/QpSolver.h>
-#include <ocs2_qp_solver/test/testProblemsGeneration.h>
-
 #include <Eigen/Sparse>
+
+#include <ocs2_oc/oc_problem/OcpMatrixConstruction.h>
+#include <ocs2_oc/test/testProblemsGeneration.h>
+#include <ocs2_qp_solver/QpSolver.h>
+
+ocs2::pipg::Settings configurePipg(size_t nThreads, size_t maxNumIterations, ocs2::scalar_t absoluteTolerance,
+                                   ocs2::scalar_t relativeTolerance, bool verbose) {
+  ocs2::pipg::Settings settings;
+  settings.nThreads = nThreads;
+  settings.maxNumIterations = maxNumIterations;
+  settings.absoluteTolerance = absoluteTolerance;
+  settings.relativeTolerance = relativeTolerance;
+  settings.checkTerminationInterval = 1;
+  settings.displayShortSummary = verbose;
+
+  return settings;
+}
 
 ocs2::pipg::Settings configurePipg(size_t nThreads, size_t maxNumIterations, ocs2::scalar_t absoluteTolerance,
                                    ocs2::scalar_t relativeTolerance, bool verbose) {
@@ -24,7 +38,7 @@ ocs2::pipg::Settings configurePipg(size_t nThreads, size_t maxNumIterations, ocs
 class PIPGSolverTest : public testing::Test {
  protected:
   // x_0, x_1, ... x_{N - 1}, X_{N}
-  static constexpr size_t N_ = 5;  // numStages
+  static constexpr size_t N_ = 10;  // numStages
   static constexpr size_t nx_ = 4;
   static constexpr size_t nu_ = 3;
   static constexpr size_t nc_ = 0;
@@ -36,23 +50,21 @@ class PIPGSolverTest : public testing::Test {
     srand(10);
 
     // Construct OCP problem
-    lqProblem = ocs2::qp_solver::generateRandomLqProblem(N_, nx_, nu_, nc_);
     x0 = ocs2::vector_t::Random(nx_);
 
     for (int i = 0; i < N_; i++) {
-      dynamicsArray.push_back(lqProblem[i].dynamics);
-      costArray.push_back(lqProblem[i].cost);
-      constraintsArray.push_back(lqProblem[i].constraints);
+      dynamicsArray.push_back(ocs2::getRandomDynamics(nx_, nu_));
+      costArray.push_back(ocs2::getRandomCost(nx_, nu_));
+      constraintsArray.push_back(ocs2::getRandomConstraints(nx_, nu_, nc_));
     }
-    costArray.push_back(lqProblem[N_].cost);
-    constraintsArray.push_back(lqProblem[N_].constraints);
+    costArray.push_back(ocs2::getRandomCost(nx_, nu_));
+    constraintsArray.push_back(ocs2::getRandomConstraints(nx_, nu_, nc_));
 
-    pipgSolver.resize(ocs2::pipg::extractSizesFromProblem(dynamicsArray, costArray, &constraintsArray));
-    pipgSolver.getCostMatrix(x0, costArray, costApproximation);
-    pipgSolver.getConstraintMatrix(x0, dynamicsArray, nullptr, nullptr, constraintsApproximation);
+    pipgSolver.resize(ocs2::extractSizesFromProblem(dynamicsArray, costArray, &constraintsArray));
+    ocs2::getCostMatrix(pipgSolver.size(), x0, costArray, costApproximation);
+    ocs2::getConstraintMatrix(pipgSolver.size(), x0, dynamicsArray, nullptr, nullptr, constraintsApproximation);
   }
 
-  std::vector<ocs2::qp_solver::LinearQuadraticStage> lqProblem;
   ocs2::vector_t x0;
   ocs2::ScalarFunctionQuadraticApproximation costApproximation;
   ocs2::VectorFunctionLinearApproximation constraintsApproximation;
@@ -66,13 +78,12 @@ class PIPGSolverTest : public testing::Test {
 constexpr size_t PIPGSolverTest::numDecisionVariables;
 constexpr size_t PIPGSolverTest::numConstraints;
 
-TEST_F(PIPGSolverTest, PIPGcorrectness) {
-  // SolveDenseQP use  Gz + g = 0 for constraints
+TEST_F(PIPGSolverTest, correctness) {
+  // ocs2::qp_solver::SolveDenseQP use  Gz + g = 0 for constraints
   auto QPconstraints = constraintsApproximation;
   QPconstraints.f = -QPconstraints.f;
   ocs2::vector_t primalSolutionQP;
   std::tie(primalSolutionQP, std::ignore) = ocs2::qp_solver::solveDenseQp(costApproximation, QPconstraints);
-  // primalSolutionQP.setZero(numDecisionVariables);
 
   Eigen::JacobiSVD<ocs2::matrix_t> svd(costApproximation.dfdxx);
   ocs2::vector_t s = svd.singularValues();
@@ -82,9 +93,9 @@ TEST_F(PIPGSolverTest, PIPGcorrectness) {
   ocs2::scalar_t sigma = svdGTG.singularValues()(0);
 
   ocs2::vector_t primalSolutionPIPG;
-  pipgSolver.solveDenseQP(costApproximation, constraintsApproximation, ocs2::vector_t::Ones(pipgSolver.getNumDynamicsConstraints()), mu,
-                          lambda, sigma, primalSolutionPIPG);
-  // primalSolutionPIPG.setZero(numDecisionVariables);
+  pipgSolver.solveDenseQP(costApproximation.dfdxx.sparseView(), costApproximation.dfdx, constraintsApproximation.dfdx.sparseView(),
+                          constraintsApproximation.f, ocs2::vector_t::Ones(pipgSolver.getNumDynamicsConstraints()), mu, lambda, sigma,
+                          primalSolutionPIPG);
 
   ocs2::vector_t primalSolutionPIPGParallel;
   ocs2::vector_array_t scalingVectors(N_, ocs2::vector_t::Ones(nx_));
@@ -92,7 +103,6 @@ TEST_F(PIPGSolverTest, PIPGcorrectness) {
   pipgSolver.solveOCPInParallel(x0, dynamicsArray, costArray, nullptr, scalingVectors, nullptr, mu, lambda, sigma, costApproximation,
                                 constraintsApproximation);
   pipgSolver.getStackedSolution(primalSolutionPIPGParallel);
-  // primalSolutionPIPGParallel.setZero(numDecisionVariables);
 
   auto calculateConstraintViolation = [&](const ocs2::vector_t& sol) -> ocs2::scalar_t {
     return (constraintsApproximation.dfdx * sol - constraintsApproximation.f).cwiseAbs().maxCoeff();
@@ -152,119 +162,6 @@ TEST_F(PIPGSolverTest, PIPGcorrectness) {
   EXPECT_TRUE(std::abs(PIPGParallelCConstraintViolation - PIPGConstraintViolation) < pipgSolver.settings().absoluteTolerance * 10.0);
 }
 
-TEST_F(PIPGSolverTest, preConditioning) {
-  auto costScaledWithFactors = costApproximation;
-  auto constraintScaledWithFactors = constraintsApproximation;
-  ocs2::vector_t D, E;
-  ocs2::scalar_t c;
-  Eigen::SparseMatrix<ocs2::scalar_t> HScaledFromCalculation = costApproximation.dfdxx.sparseView(),
-                                      GScaledFromCalculation = constraintsApproximation.dfdx.sparseView();
-  ocs2::vector_t hScaledFromCalculation = costApproximation.dfdx;
-
-  pipgSolver.calculatePreConditioningFactors(HScaledFromCalculation, hScaledFromCalculation, GScaledFromCalculation, 5, D, E, c);
-
-  costScaledWithFactors.dfdxx = c * D.asDiagonal() * costScaledWithFactors.dfdxx * D.asDiagonal();
-  costScaledWithFactors.dfdx = c * D.asDiagonal() * costScaledWithFactors.dfdx;
-  constraintScaledWithFactors.dfdx = E.asDiagonal() * constraintScaledWithFactors.dfdx * D.asDiagonal();
-  constraintScaledWithFactors.f = E.asDiagonal() * constraintScaledWithFactors.f;
-
-  // The scaled matrix given by calculatePreConditioningFactors function and the one calculated with D, E and c factors should be the same.
-  EXPECT_TRUE(costScaledWithFactors.dfdxx.isApprox(HScaledFromCalculation.toDense()));       // H
-  EXPECT_TRUE(costScaledWithFactors.dfdx.isApprox(hScaledFromCalculation));                  // h
-  EXPECT_TRUE(constraintScaledWithFactors.dfdx.isApprox(GScaledFromCalculation.toDense()));  // G
-
-  // Normalized the inf-Norm of both rows and cols of KKT matrix to 1
-  ocs2::matrix_t KKT(costApproximation.dfdxx.rows() + constraintsApproximation.dfdx.rows(),
-                     costApproximation.dfdxx.rows() + constraintsApproximation.dfdx.rows());
-  KKT << costApproximation.dfdxx, constraintsApproximation.dfdx.transpose(), constraintsApproximation.dfdx,
-      ocs2::matrix_t::Zero(constraintsApproximation.dfdx.rows(), constraintsApproximation.dfdx.rows());
-
-  ocs2::matrix_t KKTScaled(costApproximation.dfdxx.rows() + constraintsApproximation.dfdx.rows(),
-                           costApproximation.dfdxx.rows() + constraintsApproximation.dfdx.rows());
-  KKTScaled << costScaledWithFactors.dfdxx, constraintScaledWithFactors.dfdx.transpose(), constraintScaledWithFactors.dfdx,
-      ocs2::matrix_t::Zero(constraintsApproximation.dfdx.rows(), constraintsApproximation.dfdx.rows());
-
-  ocs2::vector_t infNormOfKKT = KKT.cwiseAbs().rowwise().maxCoeff();
-  ocs2::vector_t infNormOfKKTScaled = KKTScaled.cwiseAbs().rowwise().maxCoeff();
-  EXPECT_LT((infNormOfKKTScaled.array() - 1).abs().maxCoeff(), (infNormOfKKT.array() - 1).abs().maxCoeff());
-
-  std::vector<ocs2::vector_t> scalingVectors;
-  pipgSolver.scaleDataInPlace(D, E, c, dynamicsArray, costArray, scalingVectors);
-
-  ocs2::ScalarFunctionQuadraticApproximation costConstructedFromScaledDataArray;
-  ocs2::VectorFunctionLinearApproximation constraintConstructedFromScaledDataArray;
-  pipgSolver.getCostMatrix(x0, costArray, costConstructedFromScaledDataArray);
-  pipgSolver.getConstraintMatrix(x0, dynamicsArray, nullptr, &scalingVectors, constraintConstructedFromScaledDataArray);
-
-  EXPECT_TRUE(costScaledWithFactors.dfdxx.isApprox(costConstructedFromScaledDataArray.dfdxx));            // H
-  EXPECT_TRUE(costScaledWithFactors.dfdx.isApprox(costConstructedFromScaledDataArray.dfdx));              // h
-  EXPECT_TRUE(constraintScaledWithFactors.dfdx.isApprox(constraintConstructedFromScaledDataArray.dfdx));  // G
-  EXPECT_TRUE(constraintScaledWithFactors.f.isApprox(constraintConstructedFromScaledDataArray.f));        // g
-}
-
-TEST_F(PIPGSolverTest, preConditioningSimplified) {
-  auto costScaledWithFactors = costApproximation;
-  auto constraintScaledWithFactors = constraintsApproximation;
-  ocs2::vector_t D, E;
-  ocs2::scalar_t c;
-  Eigen::SparseMatrix<ocs2::scalar_t> HScaledFromCalculation = costApproximation.dfdxx.sparseView(),
-                                      GScaledFromCalculation = constraintsApproximation.dfdx.sparseView();
-  ocs2::vector_t hScaledFromCalculation = costApproximation.dfdx;
-
-  pipgSolver.calculatePreConditioningFactors(HScaledFromCalculation, hScaledFromCalculation, GScaledFromCalculation, 5, D, E, c);
-
-  ocs2::vector_array_t DArray, EArray;
-  ocs2::scalar_t cMy;
-  ocs2::vector_array_t scalingVectors(N_);
-  pipgSolver.preConditioningInPlaceInParallel(x0, dynamicsArray, costArray, 5, DArray, EArray, scalingVectors, cMy,
-                                              costApproximation.dfdxx.sparseView(), costApproximation.dfdx,
-                                              constraintsApproximation.dfdx.sparseView());
-
-  ocs2::vector_t DStacked(pipgSolver.getNumDecisionVariables()), EStacked(pipgSolver.getNumDynamicsConstraints());
-  int curRow = 0;
-  for (auto& v : DArray) {
-    DStacked.segment(curRow, v.size()) = v;
-    curRow += v.size();
-  }
-  curRow = 0;
-  for (auto& v : EArray) {
-    EStacked.segment(curRow, v.size()) = v;
-    curRow += v.size();
-  }
-
-  // The scaled matrix given by calculatePreConditioningFactors function and the one calculated with D, E and c factors should be the
-  // same.
-  EXPECT_TRUE(DStacked.isApprox(D));
-  EXPECT_TRUE(EStacked.isApprox(E));
-  EXPECT_FLOAT_EQ(c, cMy);
-
-  ocs2::ScalarFunctionQuadraticApproximation costConstructedFromScaledDataArray;
-  ocs2::VectorFunctionLinearApproximation constraintConstructedFromScaledDataArray;
-  ocs2::vector_t gScaledFromCalculation = E.cwiseProduct(constraintsApproximation.f);
-  pipgSolver.getCostMatrix(x0, costArray, costConstructedFromScaledDataArray);
-  pipgSolver.getConstraintMatrix(x0, dynamicsArray, nullptr, &scalingVectors, constraintConstructedFromScaledDataArray);
-
-  EXPECT_TRUE(HScaledFromCalculation.isApprox(costConstructedFromScaledDataArray.dfdxx));       // H
-  EXPECT_TRUE(hScaledFromCalculation.isApprox(costConstructedFromScaledDataArray.dfdx));        // h
-  EXPECT_TRUE(GScaledFromCalculation.isApprox(constraintConstructedFromScaledDataArray.dfdx));  // G
-  EXPECT_TRUE(gScaledFromCalculation.isApprox(constraintConstructedFromScaledDataArray.f));     // g
-}
-
-TEST_F(PIPGSolverTest, constructSparseCostApproximation) {
-  Eigen::SparseMatrix<ocs2::scalar_t> H;
-  ocs2::vector_t h;
-  pipgSolver.getCostMatrixSparse(x0, costArray, H, h);
-
-  EXPECT_TRUE(costApproximation.dfdxx.isApprox(H.toDense()));
-  EXPECT_TRUE(costApproximation.dfdx.isApprox(h));
-}
-
-TEST_F(PIPGSolverTest, HAbsRowSumInParallel) {
-  ocs2::vector_t rowwiseSum = pipgSolver.HAbsRowSumInParallel(costArray);
-
-  EXPECT_TRUE(rowwiseSum.isApprox(costApproximation.dfdxx.cwiseAbs().rowwise().sum()));
-}
-
 TEST_F(PIPGSolverTest, descaleSolution) {
   ocs2::vector_array_t D(2 * N_);
   ocs2::vector_t DStacked(numDecisionVariables);
@@ -281,10 +178,8 @@ TEST_F(PIPGSolverTest, descaleSolution) {
     DStacked.segment(curRow, v.size()) = v;
     curRow += v.size();
   }
-  std::cerr << "DStacked:\n" << DStacked.transpose() << "\n\n";
   ocs2::vector_t packedSolution;
   pipgSolver.packSolution(x, u, packedSolution);
-  std::cerr << "packedSolution:\n" << packedSolution.transpose() << "\n\n";
 
   packedSolution.array() *= DStacked.array();
 
@@ -294,20 +189,4 @@ TEST_F(PIPGSolverTest, descaleSolution) {
   EXPECT_TRUE(packedSolutionMy.isApprox(packedSolution)) << std::setprecision(6) << "DescaledSolution: \n"
                                                          << packedSolutionMy.transpose() << "\nIt should be \n"
                                                          << packedSolution.transpose();
-}
-
-TEST_F(PIPGSolverTest, constructSparseConstraintsApproximation) {
-  Eigen::SparseMatrix<ocs2::scalar_t> G;
-  ocs2::vector_t g;
-  ocs2::vector_array_t scalingVectors(N_);
-  for (auto& v : scalingVectors) {
-    v = ocs2::vector_t::Random(nx_);
-  }
-  ocs2::VectorFunctionLinearApproximation constraintsApproximation;
-  pipgSolver.getConstraintMatrix(x0, dynamicsArray, &constraintsArray, &scalingVectors, constraintsApproximation);
-
-  pipgSolver.getConstraintMatrixSparse(x0, dynamicsArray, &constraintsArray, &scalingVectors, G, g);
-
-  EXPECT_TRUE(constraintsApproximation.dfdx.isApprox(G.toDense()));
-  EXPECT_TRUE(constraintsApproximation.f.isApprox(g));
 }

@@ -27,10 +27,10 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "hpipm_catkin/OcpSize.h"
+#include "ocs2_oc/oc_problem/OcpSize.h"
 
 namespace ocs2 {
-namespace hpipm_interface {
+inline namespace hpipm_interface {
 
 bool operator==(const OcpSize& lhs, const OcpSize& rhs) noexcept {
   // use && instead of &= to enable short-circuit evaluation

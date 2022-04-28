@@ -3,6 +3,7 @@ project(ocs2_pipg)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
+  ocs2_oc
   ocs2_sqp
   ocs2_mpc
   ocs2_qp_solver
@@ -44,6 +45,7 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/OcpSize.cpp
   src/PIPG_Settings.cpp
+  src/HelperFunctions.cpp
   src/PIPG.cpp
   src/mpc/PipgMpcSolver.cpp
 )
@@ -87,6 +89,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 catkin_add_gtest(test_${PROJECT_NAME}
   test/testPIPGSolver.cpp
+  test/testHelper.cpp
 )
 target_link_libraries(test_${PROJECT_NAME}
   ${PROJECT_NAME}

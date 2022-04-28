@@ -36,9 +36,9 @@ extern "C" {
 }
 
 #include <ocs2_core/Types.h>
+#include <ocs2_oc/oc_problem/OcpSize.h>
 
 #include "hpipm_catkin/HpipmInterfaceSettings.h"
-#include "hpipm_catkin/OcpSize.h"
 
 namespace ocs2 {
 

@@ -10,6 +10,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <depend>ocs2_core</depend>
+  <depend>ocs2_oc</depend>
   <depend>ocs2_sqp</depend>
   <depend>ocs2_mpc</depend>
 

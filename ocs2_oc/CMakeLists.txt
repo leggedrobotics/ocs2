@@ -53,8 +53,11 @@ add_library(${PROJECT_NAME}
   src/oc_data/Metrics.cpp
   src/oc_problem/OptimalControlProblem.cpp
   src/oc_problem/LoopshapingOptimalControlProblem.cpp
-  src/oc_solver/SolverBase.cpp
+  src/oc_problem/OcpSize.cpp
   src/oc_problem/OptimalControlProblem.cpp
+  src/oc_problem/OcpMatrixConstruction.cpp
+  src/oc_solver/SolverBase.cpp
+  src/pre_condition/Scaling.cpp
   src/rollout/PerformanceIndicesRollout.cpp
   src/rollout/RolloutBase.cpp
   src/rollout/RootFinder.cpp
@@ -154,6 +157,26 @@ catkin_add_gtest(test_trajectory_spreading
   test/trajectory_adjustment/TrajectorySpreadingTest.cpp
 )
 target_link_libraries(test_trajectory_spreading
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  gtest_main
+)
+
+catkin_add_gtest(test_matrix_construction
+  test/testMatrixConstruction.cpp
+)
+target_link_libraries(test_matrix_construction
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  gtest_main
+)
+
+catkin_add_gtest(test_scaling
+  test/testScaling.cpp
+)
+target_link_libraries(test_scaling
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}

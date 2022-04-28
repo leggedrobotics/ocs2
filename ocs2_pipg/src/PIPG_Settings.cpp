@@ -1,15 +1,13 @@
 #include "ocs2_pipg/PIPG_Settings.h"
 
-#include <ocs2_core/misc/LoadData.h>
+#include <iostream>
 
 #include <boost/property_tree/info_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 
-#include <iostream>
-
+#include <ocs2_core/misc/LoadData.h>
 namespace ocs2 {
 namespace pipg {
-
 Settings loadSettings(const std::string& filename, const std::string& fieldName, bool verbose) {
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(filename, pt);

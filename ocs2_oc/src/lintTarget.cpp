@@ -4,9 +4,16 @@
 // oc_data
 #include <ocs2_oc/oc_data/PrimalSolution.h>
 
+// oc_problem
+#include <ocs2_oc/oc_problem/OcpMatrixConstruction.h>
+#include <ocs2_oc/oc_problem/OcpSize.h>
+
 // oc_solver
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
 #include <ocs2_oc/oc_solver/SolverBase.h>
+
+// pre_condition
+#include <ocs2_oc/pre_condition/Scaling.h>
 
 // synchronized_module
 #include <ocs2_oc/synchronized_module/LoopshapingReferenceManager.h>

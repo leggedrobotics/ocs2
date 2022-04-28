@@ -35,6 +35,31 @@ AnymalModel stringToAnymalModel(const std::string& name) {
   return map.at(name);
 }
 
+std::string getUrdfPath(AnymalModel model) {
+  switch (model) {
+    case AnymalModel::Cerberus:
+      return getPath() + "/urdf/anymal_cerberus_rsl.urdf";
+    case AnymalModel::Chimera:
+      return getPath() + "/urdf/anymal_chimera_rsl.urdf";
+    case AnymalModel::Camel:
+      return getPath() + "/urdf/anymal_camel_rsl.urdf";
+    default:
+      throw std::runtime_error("[AnymalModels] no default urdf available");
+  }
+}
+
+std::string getUrdfString(AnymalModel model) {
+  const auto path = getUrdfPath(model);
+  std::ifstream stream(path.c_str());
+  if (!stream) {
+    throw std::runtime_error("File " + path + " does not exist");
+  }
+
+  std::string xml_str((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
+  return xml_str;
+}
+
+
 std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>> getAnymalKinematics(AnymalModel model) {
   switch (model) {
     case AnymalModel::Bear:

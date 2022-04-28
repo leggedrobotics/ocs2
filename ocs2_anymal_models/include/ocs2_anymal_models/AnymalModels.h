@@ -15,6 +15,9 @@ std::string toString(AnymalModel model);
 
 AnymalModel stringToAnymalModel(const std::string& name);
 
+std::string getUrdfPath(AnymalModel model);
+std::string getUrdfString(AnymalModel model);
+
 std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>> getAnymalKinematics(AnymalModel model);
 
 std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>> getAnymalKinematicsAd(AnymalModel model);

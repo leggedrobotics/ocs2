@@ -1,45 +1,58 @@
 #pragma once
 
-#include <ocs2_pinocchio_interface/PinocchioStateInputMapping.h>
+#include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
 
+#include <ocs2_anymal_models/FrameDeclaration.h>
+
 namespace anymal {
-namespace tpl {
 
 /**
  * Used to map joint configuration space from OCS2 to Pinocchio. In OCS2, the feet order is {LF, RF, LH, RH}. But in Pinocchio, the feet
  * order depends on the URDF.
  */
-template <typename SCALAR_T>
-class QuadrupedPinocchioMappingTpl {
+class QuadrupedPinocchioMapping {
  public:
-  using joint_coordinate_t = switched_model::joint_coordinate_s_t<SCALAR_T>;
+  QuadrupedPinocchioMapping(const FrameDeclaration& frameDeclaration, const ocs2::PinocchioInterface& pinocchioInterface);
 
-  /**
-   * @param feetMap : specify the order in which the feet are ordered in the pinocchio.
-   * Assume index i stands for a foot index in OCS2 and thus feetMap[i] is the foot index in Pinocchio.
-   *
-   * feetmap[0] = left-front foot order in URDF / pinocchio
-   * ...
-   * feetmap[3] = right-hind foot order in URDF / pinocchio
-   */
-  explicit QuadrupedPinocchioMappingTpl(const switched_model::feet_array_t<size_t>& feetMap);
+  switched_model::joint_coordinate_t getPinocchioJointVector(const switched_model::joint_coordinate_t& jointPositions) const;
 
-  joint_coordinate_t mapJointOcs2ToPinocchio(const joint_coordinate_t& state) const;
+  switched_model::joint_coordinate_ad_t getPinocchioJointVector(const switched_model::joint_coordinate_ad_t& jointPositions) const;
 
-  size_t mapFootIdxOcs2ToPinocchio(size_t ocs2Idx) const { return mapFeetOrderOcs2ToPinocchio_[ocs2Idx]; }
+  size_t getPinocchioFootIndex(size_t ocs2FootIdx) const { return mapFeetOrderOcs2ToPinocchio_[ocs2FootIdx]; }
+
+  size_t getFootFrameId(size_t ocs2FootIdx) const { return footFrameIds_[ocs2FootIdx]; }
+
+  size_t getHipFrameId(size_t ocs2FootIdx) const { return hipFrameIds_[ocs2FootIdx]; }
+
+  const std::vector<size_t>& getCollisionLinkFrameIds() const { return collisionLinkFrameIds_; }
+  const std::vector<CollisionDeclaration>& getCollisionDeclaration() const { return collisionDeclaration_; }
+
+  const std::vector<std::string>& getOcs2JointNames() const { return ocs2JointNames_; }
+
+  const std::vector<std::string>& getPinocchioJointNames() const { return pinocchioJointNames_; }
 
  private:
+  size_t getBodyId(const std::string& bodyName, const ocs2::PinocchioInterface& pinocchioInterface) const;
+  void extractPinocchioJointNames(const ocs2::PinocchioInterface& pinocchioInterface);
+  void extractFeetOrdering(const ocs2::PinocchioInterface& pinocchioInterface);
+
+  // Frame Ids
+  switched_model::feet_array_t<size_t> hipFrameIds_;
+  switched_model::feet_array_t<size_t> footFrameIds_;
+
+  // Collisions
+  std::vector<size_t> collisionLinkFrameIds_;
+  std::vector<CollisionDeclaration> collisionDeclaration_;
+
+  // Feet ordering
   switched_model::feet_array_t<size_t> mapFeetOrderOcs2ToPinocchio_;
+  switched_model::feet_array_t<size_t> mapFeetOrderPinocchioToOcs2_;
+
+  // Frame names
+  std::vector<std::string> ocs2JointNames_;
+  std::vector<std::string> pinocchioJointNames_;
 };
 
-}  // namespace tpl
-
-using QuadrupedMapping = tpl::QuadrupedPinocchioMappingTpl<ocs2::scalar_t>;
-using QuadrupedMappingAd = tpl::QuadrupedPinocchioMappingTpl<ocs2::ad_scalar_t>;
-
 }  // namespace anymal
-
-extern template class anymal::tpl::QuadrupedPinocchioMappingTpl<ocs2::scalar_t>;
-extern template class anymal::tpl::QuadrupedPinocchioMappingTpl<ocs2::ad_scalar_t>;

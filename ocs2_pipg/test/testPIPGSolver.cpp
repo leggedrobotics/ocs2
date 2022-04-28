@@ -164,10 +164,8 @@ TEST_F(PIPGSolverTest, descaleSolution) {
     DStacked.segment(curRow, v.size()) = v;
     curRow += v.size();
   }
-  std::cerr << "DStacked:\n" << DStacked.transpose() << "\n\n";
   ocs2::vector_t packedSolution;
   pipgSolver.packSolution(x, u, packedSolution);
-  std::cerr << "packedSolution:\n" << packedSolution.transpose() << "\n\n";
 
   packedSolution.array() *= DStacked.array();
 

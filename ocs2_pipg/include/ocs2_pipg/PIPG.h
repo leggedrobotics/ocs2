@@ -85,9 +85,9 @@ class Pipg {
 
   void resize(const OcpSize& size);
 
-  int getNumDecisionVariables() const { return numDecisionVariables; }
+  int getNumDecisionVariables() const { return numDecisionVariables_; }
 
-  int getNumDynamicsConstraints() const { return numDynamicsConstraints; }
+  int getNumDynamicsConstraints() const { return numDynamicsConstraints_; }
 
   int getNumGeneralEqualityConstraints() const;
 
@@ -106,7 +106,6 @@ class Pipg {
   scalar_t getAverageRunTimeInMilliseconds() const { return parallelizedQPTimer_.getAverageInMilliseconds(); }
 
   const Settings& settings() const { return pipgSettings_; }
-  Settings& settings() { return pipgSettings_; }
   const OcpSize& size() const { return ocpSize_; }
   ThreadPool& getThreadPool() { return threadPool_; }
 
@@ -120,9 +119,9 @@ class Pipg {
   void runParallel(std::function<void(int)> taskFunction);
 
  private:
-  ThreadPool threadPool_;
+  const Settings pipgSettings_;
 
-  Settings pipgSettings_;
+  ThreadPool threadPool_;
 
   OcpSize ocpSize_;
 
@@ -131,16 +130,16 @@ class Pipg {
   vector_array_t XNew_, UNew_, WNew_;
 
   // Problem size
-  int numDecisionVariables;
-  int numDynamicsConstraints;
+  int numDecisionVariables_;
+  int numDynamicsConstraints_;
 
   benchmark::RepeatedTimer denseQPTimer_;
   benchmark::RepeatedTimer parallelizedQPTimer_;
 
   // Profiling
-  benchmark::RepeatedTimer step1v_;
-  benchmark::RepeatedTimer step2z_;
-  benchmark::RepeatedTimer step3w_;
-  benchmark::RepeatedTimer step4CheckConvergence_;
+  benchmark::RepeatedTimer vComputationTimer_;
+  benchmark::RepeatedTimer zComputationTimer_;
+  benchmark::RepeatedTimer wComputationTimer_;
+  benchmark::RepeatedTimer convergenceCheckTimer_;
 };
 }  // namespace ocs2

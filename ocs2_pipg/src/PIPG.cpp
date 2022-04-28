@@ -24,55 +24,64 @@ Pipg::SolverStatus Pipg::solveDenseQP(const Eigen::SparseMatrix<scalar_t>& H, co
 
   // Cold start
   vector_t z = vector_t::Zero(H.cols());
-  vector_t z_old;
+  vector_t z_old = vector_t::Zero(H.cols());
 
-  scalar_t alpha, beta;
-  vector_t v, w;
-
-  w.setZero(g.rows());
+  vector_t v = vector_t::Zero(g.rows());
+  vector_t w = vector_t::Zero(g.rows());
+  vector_t constraintsViolation(g.rows());
 
   // Iteration number
   size_t k = 0;
   bool isConverged = false;
   scalar_t constraintsViolationInfNorm;
-  scalar_t zNorm;
   while (k < settings().maxNumIterations && !isConverged) {
-    alpha = 2.0 / ((k + 1.0) * mu + 2.0 * lambda);
-    beta = (k + 1) * mu / (2.0 * sigma);
+    const scalar_t alpha = 2.0 / ((k + 1.0) * mu + 2.0 * lambda);
+    const scalar_t beta = (k + 1) * mu / (2.0 * sigma);
 
-    step1v_.startTimer();
-    z_old = z;
+    z_old.swap(z);
+    vComputationTimer_.startTimer();
     // v = w + beta * (G * z - g);
-    v = w - beta * g;
-    v.noalias() += beta * (G * z);
-    step1v_.endTimer();
+    v = -g;
+    v.noalias() += G * z;
+    v *= beta;
+    v += w;
+    vComputationTimer_.endTimer();
 
-    step2z_.startTimer();
+    zComputationTimer_.startTimer();
     // z = z_old - alpha * (H * z_old + h + G.transpose() * v);
-    z = z_old - alpha * h;
-    z.noalias() -= alpha * (H * z_old);
-    z.noalias() -= alpha * (G.transpose() * v);
-    step2z_.endTimer();
+    z = -h;
+    z.noalias() -= (H * z_old);
+    z.noalias() -= (G.transpose() * v);
+    z *= alpha;
+    z.noalias() += z_old;
+    zComputationTimer_.endTimer();
 
-    step3w_.startTimer();
+    wComputationTimer_.startTimer();
     // w = w + beta * (G * z - g);
     w -= beta * g;
     w.noalias() += beta * (G * z);
-    step3w_.endTimer();
+    wComputationTimer_.endTimer();
 
     if (k % settings().checkTerminationInterval == 0) {
-      step4CheckConvergence_.startTimer();
-      zNorm = z.squaredNorm() < 0.1 ? 1.0 : z.squaredNorm();
-      constraintsViolationInfNorm = (EInv.asDiagonal() * (G * z - g)).lpNorm<Eigen::Infinity>();
+      convergenceCheckTimer_.startTimer();
+      const scalar_t zNorm = z.squaredNorm();
+
+      constraintsViolation.noalias() = G * z;
+      constraintsViolation -= g;
+      constraintsViolation.cwiseProduct(EInv);
+      constraintsViolationInfNorm = constraintsViolation.lpNorm<Eigen::Infinity>();
+
+      const vector_t z_delta = z - z_old;
+      const scalar_t z_deltaNorm = z_delta.squaredNorm();
       isConverged = constraintsViolationInfNorm <= settings().absoluteTolerance &&
-                    (z - z_old).squaredNorm() <= settings().relativeTolerance * settings().relativeTolerance * zNorm;
-      step4CheckConvergence_.endTimer();
+                    (z_deltaNorm <= settings().relativeTolerance * settings().relativeTolerance * zNorm ||
+                     z_deltaNorm <= settings().absoluteTolerance);
+      convergenceCheckTimer_.endTimer();
     }
 
-    k++;
+    ++k;
   }
   denseQPTimer_.endTimer();
-  result = z;
 
   Pipg::SolverStatus status = isConverged ? Pipg::SolverStatus::SUCCESS : Pipg::SolverStatus::MAX_ITER;
   if (settings().displayShortSummary) {
@@ -80,10 +89,13 @@ Pipg::SolverStatus Pipg::solveDenseQP(const Eigen::SparseMatrix<scalar_t>& H, co
     std::cerr << "\n++++++++++++++ PIPG-DenseQP " << pipg::toString(status) << " +++++++++++++";
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
     std::cerr << "Number of Iterations: " << k << " out of " << settings().maxNumIterations << "\n";
-    std::cerr << "Relative change of primal solution : " << std::sqrt((z - z_old).squaredNorm() / zNorm) << "\n";
+    std::cerr << "Norm of delta primal solution: " << (z - z_old).norm() << "\n";
     std::cerr << "Constraints violation : " << constraintsViolationInfNorm << "\n";
     std::cerr << "Run time: " << denseQPTimer_.getLastIntervalInMilliseconds() << "\n";
   }
+
+  result.swap(z);
+
   return status;
 };
 
@@ -96,7 +108,7 @@ Pipg::SolverStatus Pipg::solveOCPInParallel(const vector_t& x0, std::vector<Vect
   verifySizes(dynamics, cost, constraints);
   const int N = ocpSize_.numStages;
   if (N < 1) {
-    throw std::runtime_error("[PIPG] The number of stages cannot be less than 1.");
+    throw std::runtime_error("[PIPG: solveOCPInParallel] The number of stages cannot be less than 1.");
   }
   if (scalingVectors.size() != N) {
     throw std::runtime_error("[PIPG: solveOCPInParallel] The size of scalingVectors doesn't match the number of stage.");
@@ -176,8 +188,8 @@ Pipg::SolverStatus Pipg::solveOCPInParallel(const vector_t& x0, std::vector<Vect
         const auto& R = cost[t - 1].dfduu;
         const auto& Q = cost[t].dfdxx;
         const auto& P = cost[t - 1].dfdux;
-        const auto& hx = cost[t].dfdx;
-        const auto& hu = cost[t - 1].dfdu;
+        const auto& q = cost[t].dfdx;
+        const auto& r = cost[t - 1].dfdu;
 
         if (k != 0) {
           // Update W of the iteration k - 1. Move the update of W to the front of the calculation of V to prevent data race.
@@ -210,14 +222,14 @@ Pipg::SolverStatus Pipg::solveOCPInParallel(const vector_t& x0, std::vector<Vect
         V_[t - 1].noalias() -= (beta + betaLast) * (A * X_[t - 1]);
         V_[t - 1].noalias() -= (beta + betaLast) * (B * U_[t - 1]);
 
-        // UNew_[t - 1] = U_[t - 1] - alpha * (R * U_[t - 1] + P * X_[t - 1] + hu - B.transpose() * V_[t - 1]);
-        UNew_[t - 1] = U_[t - 1] - alpha * hu;
+        // UNew_[t - 1] = U_[t - 1] - alpha * (R * U_[t - 1] + P * X_[t - 1] + r - B.transpose() * V_[t - 1]);
+        UNew_[t - 1] = U_[t - 1] - alpha * r;
         UNew_[t - 1].noalias() -= alpha * (R * U_[t - 1]);
         UNew_[t - 1].noalias() -= alpha * (P * X_[t - 1]);
         UNew_[t - 1].noalias() += alpha * (B.transpose() * V_[t - 1]);
 
-        // XNew_[t] = X_[t] - alpha * (Q * X_[t] + hx + C * V_[t - 1]);
-        XNew_[t] = X_[t] - alpha * hx;
+        // XNew_[t] = X_[t] - alpha * (Q * X_[t] + q + C * V_[t - 1]);
+        XNew_[t] = X_[t] - alpha * q;
         XNew_[t].array() -= alpha * C.array() * V_[t - 1].array();
         XNew_[t].noalias() -= alpha * (Q * X_[t]);
 
@@ -260,10 +272,10 @@ Pipg::SolverStatus Pipg::solveOCPInParallel(const vector_t& x0, std::vector<Vect
 
           solutionSSE = std::accumulate(solutionSEArray.begin(), solutionSEArray.end(), 0.0);
           solutionSquaredNorm = std::accumulate(solutionSquaredNormArray.begin(), solutionSquaredNormArray.end(), 0.0);
-          solutionSquaredNorm = solutionSquaredNorm < 0.1 ? 1.0 : solutionSquaredNorm;
 
           isConverged = constraintsViolationInfNorm <= settings().absoluteTolerance &&
-                        solutionSSE <= settings().relativeTolerance * settings().relativeTolerance * solutionSquaredNorm;
+                        (solutionSSE <= settings().relativeTolerance * settings().relativeTolerance * solutionSquaredNorm ||
+                         solutionSSE <= settings().absoluteTolerance);
 
           keepRunning = k < settings().maxNumIterations && !isConverged;
         }
@@ -368,7 +380,7 @@ Pipg::SolverStatus Pipg::solveOCPInParallel(const vector_t& x0, std::vector<Vect
     std::cerr << "\n++++++++++++++ PIPG-Parallel " << pipg::toString(status) << " +++++++++++++";
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
     std::cerr << "Number of Iterations: " << k << " out of " << settings().maxNumIterations << "\n";
-    std::cerr << "Relative change of primal solution : " << std::sqrt(solutionSSE / solutionSquaredNorm) << "\n";
+    std::cerr << "Norm of delta primal solution: " << std::sqrt(solutionSSE) << "\n";
     std::cerr << "Constraints violation : " << constraintsViolationInfNorm << "\n";
     std::cerr << "Thread workload(ID: # of finished tasks): ";
     for (int i = 0; i < threadsWorkloadCounter.size(); i++) {
@@ -392,9 +404,9 @@ void Pipg::resize(const OcpSize& ocpSize) {
   ocpSize_ = ocpSize;
   const int N = ocpSize_.numStages;
 
-  numDecisionVariables = std::accumulate(ocpSize_.numStates.begin() + 1, ocpSize_.numStates.end(), 0);
-  numDecisionVariables += std::accumulate(ocpSize_.numInputs.begin(), ocpSize_.numInputs.end(), 0);
-  numDynamicsConstraints = std::accumulate(ocpSize_.numStates.begin() + 1, ocpSize_.numStates.end(), 0);
+  numDecisionVariables_ = std::accumulate(ocpSize_.numStates.begin() + 1, ocpSize_.numStates.end(), 0);
+  numDecisionVariables_ += std::accumulate(ocpSize_.numInputs.begin(), ocpSize_.numInputs.end(), 0);
+  numDynamicsConstraints_ = std::accumulate(ocpSize_.numStates.begin() + 1, ocpSize_.numStates.end(), 0);
 
   X_.resize(N + 1);
   W_.resize(N);
@@ -510,10 +522,10 @@ int Pipg::getNumGeneralEqualityConstraints() const {
 }
 
 std::string Pipg::getBenchmarkingInformationDense() const {
-  const auto step1v = step1v_.getTotalInMilliseconds();
-  const auto step2z = step2z_.getTotalInMilliseconds();
-  const auto step3w = step3w_.getTotalInMilliseconds();
-  const auto step4CheckConvergence = step4CheckConvergence_.getTotalInMilliseconds();
+  const auto step1v = vComputationTimer_.getTotalInMilliseconds();
+  const auto step2z = zComputationTimer_.getTotalInMilliseconds();
+  const auto step3w = wComputationTimer_.getTotalInMilliseconds();
+  const auto step4CheckConvergence = convergenceCheckTimer_.getTotalInMilliseconds();
 
   const auto benchmarkTotal = step1v + step2z + step3w + step4CheckConvergence;
 
@@ -521,15 +533,15 @@ std::string Pipg::getBenchmarkingInformationDense() const {
   if (benchmarkTotal > 0.0) {
     const scalar_t inPercent = 100.0;
     infoStream << "\n########################################################################\n";
-    infoStream << "The benchmarking is computed over " << step1v_.getNumTimedIntervals() << " iterations. \n";
+    infoStream << "The benchmarking is computed over " << vComputationTimer_.getNumTimedIntervals() << " iterations. \n";
     infoStream << "PIPG Dense Benchmarking\t     :\tAverage time [ms]   (% of total runtime)\n";
-    infoStream << "\tstep1v                  :\t" << step1v_.getAverageInMilliseconds() << " [ms] \t\t("
+    infoStream << "\tvComputation         :\t" << vComputationTimer_.getAverageInMilliseconds() << " [ms] \t\t("
                << step1v / benchmarkTotal * inPercent << "%)\n";
-    infoStream << "\tstep2z                  :\t" << step2z_.getAverageInMilliseconds() << " [ms] \t\t("
+    infoStream << "\tzComputation         :\t" << zComputationTimer_.getAverageInMilliseconds() << " [ms] \t\t("
                << step2z / benchmarkTotal * inPercent << "%)\n";
-    infoStream << "\tstep3w                  :\t" << step3w_.getAverageInMilliseconds() << " [ms] \t\t("
+    infoStream << "\twComputation         :\t" << wComputationTimer_.getAverageInMilliseconds() << " [ms] \t\t("
                << step3w / benchmarkTotal * inPercent << "%)\n";
-    infoStream << "\tstep4CheckConvergence   :\t" << step4CheckConvergence_.getAverageInMilliseconds() << " [ms] \t\t("
+    infoStream << "\tCheckConvergence     :\t" << convergenceCheckTimer_.getAverageInMilliseconds() << " [ms] \t\t("
                << step4CheckConvergence / benchmarkTotal * inPercent << "%)\n";
   }
   return infoStream.str();

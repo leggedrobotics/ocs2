@@ -1,20 +1,28 @@
 #include <gtest/gtest.h>
 
+#include <boost/filesystem.hpp>
+
+#include <ocs2_anymal_models/AnymalModels.h>
 #include <ocs2_anymal_models/QuadrupedCom.h>
 #include <ocs2_anymal_models/camel/AnymalCamelCom.h>
 
-#include <ros/package.h>
-
 using namespace anymal;
+
+namespace {
+const std::string dataFolder = boost::filesystem::path(__FILE__).parent_path().generic_string() + "/data/";
+}
 
 class QuadrupedComTest : public ::testing::Test {
  public:
   QuadrupedComTest()
-      : pinocchioCom_(createQuadrupedPinocchioInterface(ros::package::getPath("anymal_camel_rsl") + "/urdf/cached_anymal_camel_rsl.urdf"),
-                      QuadrupedMapping({0, 2, 1, 3})) {
+      : frameDeclaration(frameDeclarationFromFile(dataFolder + "testDeclarationCamel.info")),
+        pinocchioInterface(createQuadrupedPinocchioInterfaceFromUrdfString(getUrdfString(AnymalModel::Camel))),
+        pinocchioCom_(frameDeclaration, pinocchioInterface) {
     srand(0);
   }
 
+  FrameDeclaration frameDeclaration;
+  ocs2::PinocchioInterface pinocchioInterface;
   QuadrupedCom pinocchioCom_;
   AnymalCamelCom robcogenCom_;
 };

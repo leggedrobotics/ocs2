@@ -23,11 +23,7 @@ class QuadrupedKinematics final : public switched_model::KinematicsModelBase<SCA
   using typename BASE::joint_jacobian_block_t;
   using typename BASE::joint_jacobian_t;
 
-  using PinocchioInterface = ocs2::PinocchioInterfaceTpl<SCALAR_T>;
-
-  enum class FrameIndex : std::size_t { HAA = 0, FOOT, KFE, FRAME_INDEX_SIZE };
-
-  QuadrupedKinematics(const ocs2::PinocchioInterface& pinocchioInterface, const QuadrupedPinocchioMappingTpl<SCALAR_T>& pinocchioMapping);
+  QuadrupedKinematics(const FrameDeclaration& frameDeclaration, const ocs2::PinocchioInterface& pinocchioInterface);
   ~QuadrupedKinematics() = default;
 
   QuadrupedKinematics<SCALAR_T>* clone() const override;
@@ -53,13 +49,15 @@ class QuadrupedKinematics final : public switched_model::KinematicsModelBase<SCA
  private:
   QuadrupedKinematics(const QuadrupedKinematics& rhs);
 
+  using PinocchioInterface_s_t = ocs2::PinocchioInterfaceTpl<SCALAR_T>;
+
   template <typename T = SCALAR_T, typename std::enable_if<std::is_same<T, ocs2::ad_scalar_t>::value, bool>::type = true>
-  PinocchioInterface castPinocchioInterface(const ocs2::PinocchioInterface& pinocchioInterface) {
+  PinocchioInterface_s_t castPinocchioInterface(const ocs2::PinocchioInterface& pinocchioInterface) {
     return pinocchioInterface.toCppAd();
   }
 
   template <typename T = SCALAR_T, typename std::enable_if<!std::is_same<T, ocs2::ad_scalar_t>::value, bool>::type = true>
-  PinocchioInterface castPinocchioInterface(const ocs2::PinocchioInterface& pinocchioInterface) {
+  PinocchioInterface_s_t castPinocchioInterface(const ocs2::PinocchioInterface& pinocchioInterface) {
     return pinocchioInterface;
   }
 
@@ -68,16 +66,8 @@ class QuadrupedKinematics final : public switched_model::KinematicsModelBase<SCA
   switched_model::matrix3_s_t<SCALAR_T> relativeOrientationInBaseFrame(const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions,
                                                                        std::size_t frame) const;
 
-  struct FrameIndexMap {
-    std::array<std::size_t, static_cast<std::size_t>(FrameIndex::FRAME_INDEX_SIZE)> indexMap;
-    void setId(FrameIndex i, std::size_t ind) { indexMap.at(static_cast<std::size_t>(i)) = ind; }
-    std::size_t getId(FrameIndex i) const { return indexMap.at(static_cast<std::size_t>(i)); }
-  };
-
-  std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
-  QuadrupedPinocchioMappingTpl<SCALAR_T> pinocchioMapping_;
-
-  switched_model::feet_array_t<FrameIndexMap> mapFrameIndexToId_;
+  std::unique_ptr<PinocchioInterface_s_t> pinocchioInterfacePtr_;
+  QuadrupedPinocchioMapping pinocchioMapping_;
 };
 
 }  // namespace tpl

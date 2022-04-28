@@ -14,11 +14,7 @@ class QuadrupedCom : public switched_model::ComModelBase<SCALAR_T> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using PinocchioInterface = ocs2::PinocchioInterfaceTpl<SCALAR_T>;
-  using vector_t = Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>;
-  using matrix_t = Eigen::Matrix<SCALAR_T, Eigen::Dynamic, Eigen::Dynamic>;
-
-  QuadrupedCom(const ocs2::PinocchioInterface& pinocchioInterface, const QuadrupedPinocchioMappingTpl<SCALAR_T>& pinocchioMapping);
+  QuadrupedCom(const FrameDeclaration& frameDeclaration, const ocs2::PinocchioInterface& pinocchioInterface);
   ~QuadrupedCom() = default;
 
   QuadrupedCom<SCALAR_T>* clone() const override;
@@ -36,25 +32,27 @@ class QuadrupedCom : public switched_model::ComModelBase<SCALAR_T> {
  private:
   QuadrupedCom(const QuadrupedCom& rhs);
 
+  using PinocchioInterface_s_t = ocs2::PinocchioInterfaceTpl<SCALAR_T>;
+
   template <typename T = SCALAR_T, typename std::enable_if<std::is_same<T, ocs2::ad_scalar_t>::value, bool>::type = true>
-  PinocchioInterface castPinocchioInterface(const ocs2::PinocchioInterface& pinocchioInterface) {
+  PinocchioInterface_s_t castPinocchioInterface(const ocs2::PinocchioInterface& pinocchioInterface) {
     return pinocchioInterface.toCppAd();
   }
 
   template <typename T = SCALAR_T, typename std::enable_if<!std::is_same<T, ocs2::ad_scalar_t>::value, bool>::type = true>
-  PinocchioInterface castPinocchioInterface(const ocs2::PinocchioInterface& pinocchioInterface) {
+  PinocchioInterface_s_t castPinocchioInterface(const ocs2::PinocchioInterface& pinocchioInterface) {
     return pinocchioInterface;
   }
 
-  std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
-  QuadrupedPinocchioMappingTpl<SCALAR_T> pinocchioMapping_;
+  std::unique_ptr<PinocchioInterface_s_t> pinocchioInterfacePtr_;
+  QuadrupedPinocchioMapping pinocchioMapping_;
 
   SCALAR_T totalMass_;
 };
 
 }  // namespace tpl
 
-ocs2::PinocchioInterface createQuadrupedPinocchioInterface(const std::string& urdfFilePath);
+ocs2::PinocchioInterface createQuadrupedPinocchioInterfaceFromUrdfString(const std::string& urdfString);
 
 using QuadrupedCom = tpl::QuadrupedCom<ocs2::scalar_t>;
 using QuadrupedComAd = tpl::QuadrupedCom<ocs2::ad_scalar_t>;

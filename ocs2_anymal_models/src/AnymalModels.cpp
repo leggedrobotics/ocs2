@@ -8,12 +8,13 @@
 
 #include <ocs2_anymal_models/bear/AnymalBearCom.h>
 #include <ocs2_anymal_models/bear/AnymalBearKinematics.h>
+#include <ocs2_anymal_models/camel/AnymalCamelCom.h>
+#include <ocs2_anymal_models/camel/AnymalCamelKinematics.h>
 #include <ocs2_anymal_models/cerberus/AnymalCerberusCom.h>
 #include <ocs2_anymal_models/cerberus/AnymalCerberusKinematics.h>
 #include <ocs2_anymal_models/chimera/AnymalChimeraCom.h>
 #include <ocs2_anymal_models/chimera/AnymalChimeraKinematics.h>
-#include <ocs2_anymal_models/camel/AnymalCamelCom.h>
-#include <ocs2_anymal_models/camel/AnymalCamelKinematics.h>
+#include <ocs2_anymal_models/package_path.h>
 #include <ocs2_anymal_models/wheels/AnymalWheelsCom.h>
 #include <ocs2_anymal_models/wheels/AnymalWheelsKinematics.h>
 #include <ocs2_anymal_models/wheels_chimera/AnymalWheelsChimeraCom.h>
@@ -23,16 +24,40 @@ namespace anymal {
 
 std::string toString(AnymalModel model) {
   static const std::unordered_map<AnymalModel, std::string> map{
-      {AnymalModel::Bear, "bear"}, {AnymalModel::Cerberus, "cerberus"}, {AnymalModel::Chimera, "chimera"},
+      {AnymalModel::Bear, "bear"},   {AnymalModel::Cerberus, "cerberus"}, {AnymalModel::Chimera, "chimera"},
       {AnymalModel::Camel, "camel"}, {AnymalModel::Wheels, "wheels"},     {AnymalModel::WheelsChimera, "wheels_chimera"}};
   return map.at(model);
 }
 
 AnymalModel stringToAnymalModel(const std::string& name) {
   static const std::unordered_map<std::string, AnymalModel> map{
-      {"bear", AnymalModel::Bear}, {"cerberus", AnymalModel::Cerberus}, {"chimera", AnymalModel::Chimera},
+      {"bear", AnymalModel::Bear},   {"cerberus", AnymalModel::Cerberus}, {"chimera", AnymalModel::Chimera},
       {"camel", AnymalModel::Camel}, {"wheels", AnymalModel::Wheels},     {"wheels_chimera", AnymalModel::WheelsChimera}};
   return map.at(name);
+}
+
+std::string getUrdfPath(AnymalModel model) {
+  switch (model) {
+    case AnymalModel::Cerberus:
+      return getPath() + "/urdf/anymal_cerberus_rsl.urdf";
+    case AnymalModel::Chimera:
+      return getPath() + "/urdf/anymal_chimera_rsl.urdf";
+    case AnymalModel::Camel:
+      return getPath() + "/urdf/anymal_camel_rsl.urdf";
+    default:
+      throw std::runtime_error("[AnymalModels] no default urdf available");
+  }
+}
+
+std::string getUrdfString(AnymalModel model) {
+  const auto path = getUrdfPath(model);
+  std::ifstream stream(path.c_str());
+  if (!stream) {
+    throw std::runtime_error("File " + path + " does not exist");
+  }
+
+  std::string xml_str((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
+  return xml_str;
 }
 
 std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>> getAnymalKinematics(AnymalModel model) {

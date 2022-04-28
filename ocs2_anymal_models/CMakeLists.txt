@@ -35,6 +35,12 @@ catkin_package(
 ## Build ##
 ###########
 
+# Resolve for the package path at compile time.
+configure_file(
+  "${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}/package_path.h.in"
+  "${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}/package_path.h" @ONLY
+)
+
 include_directories(
   include
   ${EIGEN3_INCLUDE_DIRS}
@@ -43,6 +49,7 @@ include_directories(
 
 add_library(${PROJECT_NAME}
   src/AnymalModels.cpp
+  src/FrameDeclaration.cpp
   src/QuadrupedPinocchioMapping.cpp
   src/QuadrupedKinematics.cpp
   src/QuadrupedCom.cpp
@@ -105,19 +112,12 @@ target_link_libraries(${PROJECT_NAME}_switched_model_test
   gtest_main
 )
 
-catkin_add_gtest(TestQuadrupedPinocchioKinematics
-  test/TestQuadrupedPinocchioKinematics.cpp
-)
-target_link_libraries(TestQuadrupedPinocchioKinematics
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  gtest_main
-)
-
-catkin_add_gtest(TestQuadrupedPinocchioCom
+catkin_add_gtest(TestQuadrupedPinocchio
   test/TestQuadrupedPinocchioCom.cpp
+  test/TestQuadrupedPinocchioKinematics.cpp
+  test/TestFrameDeclaration.cpp
 )
-target_link_libraries(TestQuadrupedPinocchioCom
+target_link_libraries(TestQuadrupedPinocchio
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   gtest_main

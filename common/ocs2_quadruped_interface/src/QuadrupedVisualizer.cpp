@@ -22,7 +22,7 @@
 
 namespace switched_model {
 
-void QuadrupedVisualizer::launchVisualizerNode(ros::NodeHandle& nodeHandle) {
+void QuadrupedVisualizer::launchVisualizerNode(ros::NodeHandle& nodeHandle, std::vector<std::string> jointNames, std::string baseName) {
   costDesiredBasePositionPublisher_ = nodeHandle.advertise<visualization_msgs::Marker>("/ocs2_anymal/desiredBaseTrajectory", 1);
   costDesiredBasePosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/desiredPoseTrajectory", 1);
   costDesiredBaseAngVelocityPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("/ocs2_anymal/desiredAngVelTrajectory", 1);
@@ -45,7 +45,7 @@ void QuadrupedVisualizer::launchVisualizerNode(ros::NodeHandle& nodeHandle) {
   currentFeetPosesPublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/currentFeetPoses", 1);
   currentCollisionSpheresPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("/ocs2_anymal/currentCollisionSpheres", 1);
 
-  quadrupedTfPublisher_.launchNode(nodeHandle, "ocs2_anymal_description");
+  quadrupedTfPublisher_.launchNode(nodeHandle, "ocs2_anymal_description", std::move(jointNames), std::move(baseName));
 }
 
 void QuadrupedVisualizer::update(const ocs2::SystemObservation& observation, const ocs2::PrimalSolution& primalSolution,

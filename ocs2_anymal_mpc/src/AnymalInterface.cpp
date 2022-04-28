@@ -25,9 +25,11 @@ std::unique_ptr<switched_model::QuadrupedInterface> getAnymalInterface(const std
   auto kinAd = getAnymalKinematicsAd(frameDeclaration, urdf);
   auto com = getAnymalComModel(frameDeclaration, urdf);
   auto comAd = getAnymalComModelAd(frameDeclaration, urdf);
+  auto jointNames = getJointNames(frameDeclaration);
+  auto baseName = frameDeclaration.root;
 
-  return std::unique_ptr<switched_model::QuadrupedInterface>(
-      new switched_model::QuadrupedPointfootInterface(*kin, *kinAd, *com, *comAd, std::move(settings)));
+  return std::unique_ptr<switched_model::QuadrupedInterface>(new switched_model::QuadrupedPointfootInterface(
+      *kin, *kinAd, *com, *comAd, std::move(settings), std::move(jointNames), std::move(baseName)));
 }
 
 std::string getConfigFolder(const std::string& configName) {

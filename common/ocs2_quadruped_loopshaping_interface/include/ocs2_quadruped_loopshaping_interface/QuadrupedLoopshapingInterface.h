@@ -46,6 +46,10 @@ class QuadrupedLoopshapingInterface : public ocs2::LoopshapingRobotInterface {
   /** Access to model settings */
   const switched_model::ModelSettings& modelSettings() const { return getQuadrupedInterface().modelSettings(); };
 
+  /** Access to model names */
+  const std::vector<std::string>& getJointNames() const { return getQuadrupedInterface().getJointNames(); };
+  const std::string& getBaseName() const { return getQuadrupedInterface().getBaseName(); };
+
   /** Gets the rollout class */
   const ocs2::RolloutBase& getRollout() const { return *timeTriggeredRolloutPtr_; }
 

@@ -20,7 +20,8 @@ class QuadrupedWheeledInterface : public QuadrupedInterface {
   using time_triggered_rollout_t = ocs2::TimeTriggeredRollout;
 
   QuadrupedWheeledInterface(const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel,
-                            const com_model_t& comModel, const ad_com_model_t& adComModel, Settings settings);
+                            const com_model_t& comModel, const ad_com_model_t& adComModel, Settings settings,
+                            std::vector<std::string> jointNames, std::string baseName);
 
   ~QuadrupedWheeledInterface() override = default;
 

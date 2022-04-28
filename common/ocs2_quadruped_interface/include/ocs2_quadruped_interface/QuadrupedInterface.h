@@ -52,10 +52,12 @@ class QuadrupedInterface : public ocs2::RobotInterface {
    * @param adKinematicModel : Kinematics model templated on the auto-differentiation scalar
    * @param comModel : Center of mass model
    * @param adComModel : Center of mass model templated on the auto-differentiation scalar
-   * @param settings : settomgs
+   * @param settings : settings
+   * @param jointNames : names of the joints in the order of the state vector
+   * @param baseName : names of the model root frame
    */
   QuadrupedInterface(const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel, const com_model_t& comModel,
-                     const ad_com_model_t& adComModel, Settings settings);
+                     const ad_com_model_t& adComModel, Settings settings, std::vector<std::string> jointNames, std::string baseName);
 
   /** Destructor */
   ~QuadrupedInterface() override = default;
@@ -90,6 +92,10 @@ class QuadrupedInterface : public ocs2::RobotInterface {
 
   /** Access to model settings */
   const ModelSettings& modelSettings() const { return settings_.modelSettings_; };
+
+  /** Access to model names */
+  const std::vector<std::string>& getJointNames() const { return jointNames_; };
+  const std::string& getBaseName() const { return baseName_; };
 
   /** Access to cost settings */
   const MotionTrackingCost::Weights& costSettings() const { return settings_.trackingWeights_; };
@@ -127,6 +133,8 @@ class QuadrupedInterface : public ocs2::RobotInterface {
 
  private:
   Settings settings_;
+  std::vector<std::string> jointNames_;
+  std::string baseName_;
   std::unique_ptr<kinematic_model_t> kinematicModelPtr_;
   std::unique_ptr<ad_kinematic_model_t> adKinematicModelPtr_;
   std::unique_ptr<com_model_t> comModelPtr_;

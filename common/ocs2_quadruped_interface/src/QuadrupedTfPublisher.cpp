@@ -17,13 +17,6 @@
 
 namespace switched_model {
 
-void QuadrupedTfPublisher::launchNode(ros::NodeHandle& nodeHandle, const std::string& descriptionName, const std::string& tfPrefix) {
-  std::vector<std::string> jointNamesAnymal = {"LF_HAA", "LF_HFE", "LF_KFE", "RF_HAA", "RF_HFE", "RF_KFE",
-                                               "LH_HAA", "LH_HFE", "LH_KFE", "RH_HAA", "RH_HFE", "RH_KFE"};
-  std::string baseName = "base";
-  launchNode(nodeHandle, descriptionName, std::move(jointNamesAnymal), std::move(baseName), tfPrefix);
-}
-
 void QuadrupedTfPublisher::launchNode(ros::NodeHandle& nodeHandle, const std::string& descriptionName, std::vector<std::string> jointNames,
                                       std::string baseName, const std::string& tfPrefix) {
   tfPrefix_ = tfPrefix;

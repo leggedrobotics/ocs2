@@ -9,6 +9,14 @@
 
 namespace anymal {
 
+std::vector<std::string> getJointNames(const FrameDeclaration& frameDeclaration) {
+  std::vector<std::string> jointNames;
+  for (const auto& leg : frameDeclaration.legs) {
+    jointNames.insert(jointNames.end(), leg.joints.begin(), leg.joints.end());
+  }
+  return jointNames;
+}
+
 LimbFrames limbFramesFromFile(const std::string& file, const std::string& field) {
   LimbFrames frames;
   ocs2::loadData::loadCppDataType(file, field + ".root", frames.root);
@@ -19,6 +27,7 @@ LimbFrames limbFramesFromFile(const std::string& file, const std::string& field)
 
 FrameDeclaration frameDeclarationFromFile(const std::string& file) {
   FrameDeclaration decl;
+  ocs2::loadData::loadCppDataType(file, "root", decl.root);
   decl.legs[0] = limbFramesFromFile(file, "left_front");
   decl.legs[1] = limbFramesFromFile(file, "right_front");
   decl.legs[2] = limbFramesFromFile(file, "left_hind");

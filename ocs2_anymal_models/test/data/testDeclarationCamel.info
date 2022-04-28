@@ -1,3 +1,5 @@
+root    base
+
 left_front {
     root    LF_HAA
     tip     LF_FOOT

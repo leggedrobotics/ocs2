@@ -241,7 +241,7 @@ TEST(test_hpiphm_interface, noInputs) {
   cost.emplace_back(ocs2::getRandomCost(nx, 0));
   cost[N].dfdx = -cost[N].dfdxx * xSolGiven[N];
 
-  const auto ocpSize = ocs2::hpipm_interface::extractSizesFromProblem(system, cost, nullptr);
+  const auto ocpSize = ocs2::extractSizesFromProblem(system, cost, nullptr);
   hpipmInterface.resize(ocpSize);
 
   // Solve!

@@ -48,7 +48,7 @@ namespace ocs2 {
  */
 class HpipmInterface {
  public:
-  using OcpSize = hpipm_interface::OcpSize;
+  using OcpSize = ::ocs2::OcpSize;
   using Settings = hpipm_interface::Settings;
 
   /**

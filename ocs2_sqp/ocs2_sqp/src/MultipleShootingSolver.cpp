@@ -46,7 +46,7 @@ MultipleShootingSolver::MultipleShootingSolver(Settings settings, const OptimalC
                                                const Initializer& initializer)
     : SolverBase(),
       settings_(std::move(settings)),
-      hpipmInterface_(hpipm_interface::OcpSize(), settings.hpipmSettings),
+      hpipmInterface_(OcpSize(), settings.hpipmSettings),
       threadPool_(std::max(settings_.nThreads, size_t(1)) - 1, settings_.threadPriority) {
   Eigen::setNbThreads(1);  // No multithreading within Eigen.
   Eigen::initParallel();
@@ -251,10 +251,10 @@ MultipleShootingSolver::OcpSubproblemSolution MultipleShootingSolver::getOCPSolu
   hpipm_status status;
   const bool hasStateInputConstraints = !ocpDefinitions_.front().equalityConstraintPtr->empty();
   if (hasStateInputConstraints && !settings_.projectStateInputEqualityConstraints) {
-    hpipmInterface_.resize(hpipm_interface::extractSizesFromProblem(dynamics_, cost_, &constraints_));
+    hpipmInterface_.resize(extractSizesFromProblem(dynamics_, cost_, &constraints_));
     status = hpipmInterface_.solve(delta_x0, dynamics_, cost_, &constraints_, deltaXSol, deltaUSol, settings_.printSolverStatus);
   } else {  // without constraints, or when using projection, we have an unconstrained QP.
-    hpipmInterface_.resize(hpipm_interface::extractSizesFromProblem(dynamics_, cost_, nullptr));
+    hpipmInterface_.resize(extractSizesFromProblem(dynamics_, cost_, nullptr));
     status = hpipmInterface_.solve(delta_x0, dynamics_, cost_, nullptr, deltaXSol, deltaUSol, settings_.printSolverStatus);
   }
 

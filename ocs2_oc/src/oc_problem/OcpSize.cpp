@@ -30,8 +30,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_oc/oc_problem/OcpSize.h"
 
 namespace ocs2 {
-inline namespace hpipm_interface {
-
 bool operator==(const OcpSize& lhs, const OcpSize& rhs) noexcept {
   // use && instead of &= to enable short-circuit evaluation
   bool same = lhs.numStages == rhs.numStages;
@@ -71,5 +69,4 @@ OcpSize extractSizesFromProblem(const std::vector<VectorFunctionLinearApproximat
   return problemSize;
 }
 
-}  // namespace hpipm_interface
 }  // namespace ocs2

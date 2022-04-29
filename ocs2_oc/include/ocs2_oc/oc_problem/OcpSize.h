@@ -34,8 +34,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 
 namespace ocs2 {
-inline namespace hpipm_interface {
-
 /**
  * Size of the optimal control problem to be solved with the HpipmInterface
  *
@@ -88,5 +86,4 @@ OcpSize extractSizesFromProblem(const std::vector<VectorFunctionLinearApproximat
                                 const std::vector<ScalarFunctionQuadraticApproximation>& cost,
                                 const std::vector<VectorFunctionLinearApproximation>* constraints);
 
-}  // namespace hpipm_interface
 }  // namespace ocs2

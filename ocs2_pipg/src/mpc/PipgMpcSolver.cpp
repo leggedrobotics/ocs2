@@ -1,12 +1,14 @@
 #include "ocs2_pipg/mpc/PipgMpcSolver.h"
 
-#include <ocs2_core/control/FeedforwardController.h>
+#include <iostream>
+#include <numeric>
 
+#include <ocs2_core/control/FeedforwardController.h>
+#include <ocs2_oc/pre_condition/Scaling.h>
 #include <ocs2_sqp/MultipleShootingInitialization.h>
 #include <ocs2_sqp/MultipleShootingTranscription.h>
 
-#include <iostream>
-#include <numeric>
+#include "ocs2_pipg/HelperFunctions.h"
 
 namespace ocs2 {
 
@@ -15,8 +17,7 @@ PipgMpcSolver::PipgMpcSolver(multiple_shooting::Settings sqpSettings, pipg::Sett
     : SolverBase(),
       settings_(std::move(sqpSettings)),
       threadPool_(std::max(settings_.nThreads, size_t(1)) - 1, settings_.threadPriority),
-      pipgSolver_(pipgSettings),
-      pipgSettings_(pipgSettings) {
+      pipgSolver_(pipgSettings) {
   Eigen::setNbThreads(1);  // No multithreading within Eigen.
   Eigen::initParallel();
 
@@ -38,29 +39,22 @@ PipgMpcSolver::PipgMpcSolver(multiple_shooting::Settings sqpSettings, pipg::Sett
 }
 
 std::string PipgMpcSolver::getBenchmarkingInformationPIPG() const {
-  const auto constructH = constructH_.getTotalInMilliseconds();
-  const auto constructG = constructG_.getTotalInMilliseconds();
-  const auto GTGMultiplication = GTGMultiplication_.getTotalInMilliseconds();
+  const auto GGTMultiplication = GGTMultiplication_.getTotalInMilliseconds();
   const auto preConditioning = preConditioning_.getTotalInMilliseconds();
   const auto lambdaEstimation = lambdaEstimation_.getTotalInMilliseconds();
   const auto sigmaEstimation = sigmaEstimation_.getTotalInMilliseconds();
   const auto pipgRuntime = pipgSolver_.getTotalRunTimeInMilliseconds();
 
-  const auto benchmarkTotal =
-      constructH + constructG + GTGMultiplication + preConditioning + lambdaEstimation + sigmaEstimation + pipgRuntime;
+  const auto benchmarkTotal = GGTMultiplication + preConditioning + lambdaEstimation + sigmaEstimation + pipgRuntime;
 
   std::stringstream infoStream;
   if (benchmarkTotal > 0.0) {
     const scalar_t inPercent = 100.0;
     infoStream << "\n########################################################################\n";
-    infoStream << "The benchmarking is computed over " << constructH_.getNumTimedIntervals() << " iterations. \n";
+    infoStream << "The benchmarking is computed over " << GGTMultiplication_.getNumTimedIntervals() << " iterations. \n";
     infoStream << "PIPG Benchmarking\t       :\tAverage time [ms]   (% of total runtime)\n";
-    infoStream << "\tconstructH             :\t" << std::setw(10) << constructH_.getAverageInMilliseconds() << " [ms] \t("
-               << constructH / benchmarkTotal * inPercent << "%)\n";
-    infoStream << "\tconstructG             :\t" << std::setw(10) << constructG_.getAverageInMilliseconds() << " [ms] \t("
-               << constructG / benchmarkTotal * inPercent << "%)\n";
-    infoStream << "\tGTGMultiplication      :\t" << std::setw(10) << GTGMultiplication_.getAverageInMilliseconds() << " [ms] \t("
-               << GTGMultiplication / benchmarkTotal * inPercent << "%)\n";
+    infoStream << "\tGGTMultiplication      :\t" << std::setw(10) << GGTMultiplication_.getAverageInMilliseconds() << " [ms] \t("
+               << GGTMultiplication / benchmarkTotal * inPercent << "%)\n";
     infoStream << "\tpreConditioning        :\t" << std::setw(10) << preConditioning_.getAverageInMilliseconds() << " [ms] \t("
                << preConditioning / benchmarkTotal * inPercent << "%)\n";
     infoStream << "\tlambdaEstimation       :\t" << std::setw(10) << lambdaEstimation_.getAverageInMilliseconds() << " [ms] \t("
@@ -259,35 +253,30 @@ PipgMpcSolver::OcpSubproblemSolution PipgMpcSolver::getOCPSolution(const vector_
   }
 
   // without constraints, or when using projection, we have an unconstrained QP.
-  pipgSolver_.resize(pipg::extractSizesFromProblem(dynamics_, cost_, nullptr));
-
-  constructH_.startTimer();
-  constructH_.endTimer();
-
-  constructG_.startTimer();
-  constructG_.endTimer();
+  pipgSolver_.resize(extractSizesFromProblem(dynamics_, cost_, nullptr));
 
   vector_array_t D, E;
   vector_array_t scalingVectors;
   scalar_t c;
 
   preConditioning_.startTimer();
-  pipgSolver_.preConditioningInPlaceInParallel(delta_x0, dynamics_, cost_, pipgSettings_.numScaling, D, E, scalingVectors, c,
-                                               Eigen::SparseMatrix<scalar_t>(), vector_t(), Eigen::SparseMatrix<scalar_t>());
+  preConditioningInPlaceInParallel(delta_x0, pipgSolver_.size(), pipgSolver_.settings().numScaling, dynamics_, cost_, D, E, scalingVectors,
+                                   c, pipgSolver_.getThreadPool(), Eigen::SparseMatrix<scalar_t>(), vector_t(),
+                                   Eigen::SparseMatrix<scalar_t>());
   preConditioning_.endTimer();
 
   lambdaEstimation_.startTimer();
-  vector_t rowwiseAbsSumH = pipgSolver_.HAbsRowSumInParallel(cost_);
-  scalar_t lambdaScaled = rowwiseAbsSumH.maxCoeff();
+  const vector_t rowwiseAbsSumH = pipg::hessianAbsRowSum(pipgSolver_.size(), cost_);
+  const scalar_t lambdaScaled = rowwiseAbsSumH.maxCoeff();
   lambdaEstimation_.endTimer();
 
-  GTGMultiplication_.startTimer();
-  vector_t rowwiseAbsSumGGT;
-  pipgSolver_.GGTAbsRowSumInParallel(dynamics_, nullptr, &scalingVectors, rowwiseAbsSumGGT);
-  GTGMultiplication_.endTimer();
+  GGTMultiplication_.startTimer();
+  const vector_t rowwiseAbsSumGGT =
+      pipg::GGTAbsRowSumInParallel(pipgSolver_.size(), dynamics_, nullptr, &scalingVectors, pipgSolver_.getThreadPool());
+  GGTMultiplication_.endTimer();
 
   sigmaEstimation_.startTimer();
-  scalar_t sigmaScaled = rowwiseAbsSumGGT.maxCoeff();
+  const scalar_t sigmaScaled = rowwiseAbsSumGGT.maxCoeff();
   sigmaEstimation_.endTimer();
 
   scalar_t maxScalingFactor = -1;
@@ -296,7 +285,7 @@ PipgMpcSolver::OcpSubproblemSolution PipgMpcSolver::getOCPSolution(const vector_
       maxScalingFactor = std::max(maxScalingFactor, v.maxCoeff());
     }
   }
-  scalar_t muEstimated = pipgSettings_.lowerBoundH * c * maxScalingFactor * maxScalingFactor;
+  const scalar_t muEstimated = pipgSolver_.settings().lowerBoundH * c * maxScalingFactor * maxScalingFactor;
 
   vector_array_t EInv(E.size());
   std::transform(E.begin(), E.end(), EInv.begin(), [](const vector_t& v) { return v.cwiseInverse(); });

@@ -125,7 +125,6 @@ class PipgMpcSolver : public SolverBase {
   PrimalSolution primalSolution_;
 
   // Solver interface
-  pipg::Settings pipgSettings_;
   Pipg pipgSolver_;
 
   // LQ approximation
@@ -147,9 +146,7 @@ class PipgMpcSolver : public SolverBase {
   benchmark::RepeatedTimer computeControllerTimer_;
 
   // PIPG Solver
-  benchmark::RepeatedTimer constructH_;
-  benchmark::RepeatedTimer constructG_;
-  benchmark::RepeatedTimer GTGMultiplication_;
+  benchmark::RepeatedTimer GGTMultiplication_;
   benchmark::RepeatedTimer lambdaEstimation_;
   benchmark::RepeatedTimer sigmaEstimation_;
   benchmark::RepeatedTimer preConditioning_;

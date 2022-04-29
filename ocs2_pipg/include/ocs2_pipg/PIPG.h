@@ -133,10 +133,12 @@ class Pipg {
   int numDecisionVariables_;
   int numDynamicsConstraints_;
 
+  // Profiling
+  // Dense PIPG
   benchmark::RepeatedTimer denseQPTimer_;
   benchmark::RepeatedTimer parallelizedQPTimer_;
 
-  // Profiling
+  // Parallel PIPG
   benchmark::RepeatedTimer vComputationTimer_;
   benchmark::RepeatedTimer zComputationTimer_;
   benchmark::RepeatedTimer wComputationTimer_;

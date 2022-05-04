@@ -165,7 +165,7 @@ vector3_s_t<SCALAR_T> getCostVector(const AbsoluteTrackingTask<SCALAR_T>& task, 
     const auto velocityError = source.twistInWorld.linear - target.twistInWorld.linear;
     return task.poseWeights.template cwiseProduct(positionError) + task.twistweights.template cwiseProduct(velocityError);
   } else {
-    const auto orientationError = rotationErrorInWorld<SCALAR_T>(source.poseInWorld.orientation, target.poseInWorld.orientation);
+    const auto orientationError = ocs2::rotationErrorInWorld<SCALAR_T>(source.poseInWorld.orientation, target.poseInWorld.orientation);
     const auto velocityError = source.twistInWorld.angular - target.twistInWorld.angular;
     return task.poseWeights.template cwiseProduct(orientationError) + task.twistweights.template cwiseProduct(velocityError);
   }

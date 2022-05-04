@@ -12,7 +12,7 @@ class AnymalWheelsChimeraSwitchedModelTests : public switched_model::TestAnymalS
  public:
   AnymalWheelsChimeraSwitchedModelTests()
       : TestAnymalSwitchedModel(getAnymalKinematics(AnymalModel::WheelsChimera), getAnymalKinematicsAd(AnymalModel::WheelsChimera),
-                                getAnymalComModel(AnymalModel::WheelsChimera), getAnymalComModelAd(AnymalModel::WheelsChimera), nullptr) {}
+                                getAnymalComModel(AnymalModel::WheelsChimera), getAnymalComModelAd(AnymalModel::WheelsChimera)) {}
 };
 
 TEST_F(AnymalWheelsChimeraSwitchedModelTests, Cost) {
@@ -31,10 +31,3 @@ TEST_F(AnymalWheelsChimeraSwitchedModelTests, EndeffectorOrientation) {
   this->testEndeffectorOrientation();
 }
 
-TEST_F(AnymalWheelsChimeraSwitchedModelTests, EndeffectorAlignedYAxisRandomHFEKFE) {
-  this->testEndeffectorAlignedYAxisRandomHFEKFE();
-}
-
-TEST_F(AnymalWheelsChimeraSwitchedModelTests, EndeffectorAlignedXAxisRandomHAA) {
-  this->testEndeffectorAlignedXAxisRandomHAA();
-}

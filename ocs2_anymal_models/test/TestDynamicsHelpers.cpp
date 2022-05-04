@@ -57,11 +57,11 @@ TEST(TestInertiaInverse, inertiaTensorSolve) {
 
   vector6_t solveTestLinAng = inertiaTensorSolveLinearAngular(MLinAng, bLinAng);
   vector6_t solveCheckLinAng = MLinAng.lu().solve(bLinAng);
-  ASSERT_TRUE(solveTestLinAng.isApprox(solveCheckLinAng));
+  ASSERT_TRUE(solveTestLinAng.isApprox(solveCheckLinAng, 1e-8));
 
   vector6_t solveTestAngLin = inertiaTensorSolveAngularLinear(MAngLin, bAngLin);
   vector6_t solveCheckAngLin = MAngLin.lu().solve(bAngLin);
-  ASSERT_TRUE(solveTestAngLin.isApprox(solveCheckAngLin));
+  ASSERT_TRUE(solveTestAngLin.isApprox(solveCheckAngLin, 1e-8));
 
   ASSERT_TRUE(solveTestAngLin.head<3>().isApprox(solveTestLinAng.tail<3>()));
   ASSERT_TRUE(solveTestAngLin.tail<3>().isApprox(solveTestLinAng.head<3>()));

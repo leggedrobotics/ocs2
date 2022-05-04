@@ -70,11 +70,3 @@ TEST_F(AnymalCamelSwitchedModelTests, fullDynamics) {
 TEST_F(AnymalCamelSwitchedModelTests, EndeffectorOrientation) {
   this->testEndeffectorOrientation();
 }
-
-TEST_F(AnymalCamelSwitchedModelTests, EndeffectorAlignedYAxisRandomHFEKFE) {
-  this->testEndeffectorAlignedYAxisRandomHFEKFE();
-}
-
-TEST_F(AnymalCamelSwitchedModelTests, EndeffectorAlignedXAxisRandomHAA) {
-  this->testEndeffectorAlignedXAxisRandomHAA();
-}

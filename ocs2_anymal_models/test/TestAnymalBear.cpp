@@ -30,11 +30,3 @@ TEST_F(AnymalBearSwitchedModelTests, Kinematics) {
 TEST_F(AnymalBearSwitchedModelTests, EndeffectorOrientation) {
   this->testEndeffectorOrientation();
 }
-
-TEST_F(AnymalBearSwitchedModelTests, EndeffectorAlignedYAxisRandomHFEKFE) {
-  this->testEndeffectorAlignedYAxisRandomHFEKFE();
-}
-
-TEST_F(AnymalBearSwitchedModelTests, EndeffectorAlignedXAxisRandomHAA) {
-  this->testEndeffectorAlignedXAxisRandomHAA();
-}

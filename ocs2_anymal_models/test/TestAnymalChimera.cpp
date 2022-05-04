@@ -30,11 +30,3 @@ TEST_F(AnymalChimeraSwitchedModelTests, Kinematics) {
 TEST_F(AnymalChimeraSwitchedModelTests, EndeffectorOrientation) {
   this->testEndeffectorOrientation();
 }
-
-TEST_F(AnymalChimeraSwitchedModelTests, EndeffectorAlignedYAxisRandomHFEKFE) {
-  this->testEndeffectorAlignedYAxisRandomHFEKFE();
-}
-
-TEST_F(AnymalChimeraSwitchedModelTests, EndeffectorAlignedXAxisRandomHAA) {
-  this->testEndeffectorAlignedXAxisRandomHAA();
-}

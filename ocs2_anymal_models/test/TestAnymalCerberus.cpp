@@ -30,11 +30,3 @@ TEST_F(AnymalCerberusSwitchedModelTests, Kinematics) {
 TEST_F(AnymalCerberusSwitchedModelTests, EndeffectorOrientation) {
   this->testEndeffectorOrientation();
 }
-
-TEST_F(AnymalCerberusSwitchedModelTests, EndeffectorAlignedYAxisRandomHFEKFE) {
-  this->testEndeffectorAlignedYAxisRandomHFEKFE();
-}
-
-TEST_F(AnymalCerberusSwitchedModelTests, EndeffectorAlignedXAxisRandomHAA) {
-  this->testEndeffectorAlignedXAxisRandomHAA();
-}

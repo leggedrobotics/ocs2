@@ -12,7 +12,7 @@ class AnymalWheelsSwitchedModelTests : public switched_model::TestAnymalSwitched
  public:
   AnymalWheelsSwitchedModelTests()
       : TestAnymalSwitchedModel(getAnymalKinematics(AnymalModel::Wheels), getAnymalKinematicsAd(AnymalModel::Wheels),
-                                getAnymalComModel(AnymalModel::Wheels), getAnymalComModelAd(AnymalModel::Wheels), nullptr) {}
+                                getAnymalComModel(AnymalModel::Wheels), getAnymalComModelAd(AnymalModel::Wheels)) {}
 };
 
 TEST_F(AnymalWheelsSwitchedModelTests, Cost) {
@@ -29,12 +29,4 @@ TEST_F(AnymalWheelsSwitchedModelTests, Kinematics) {
 
 TEST_F(AnymalWheelsSwitchedModelTests, EndeffectorOrientation) {
   this->testEndeffectorOrientation();
-}
-
-TEST_F(AnymalWheelsSwitchedModelTests, EndeffectorAlignedYAxisRandomHFEKFE) {
-  this->testEndeffectorAlignedYAxisRandomHFEKFE();
-}
-
-TEST_F(AnymalWheelsSwitchedModelTests, EndeffectorAlignedXAxisRandomHAA) {
-  this->testEndeffectorAlignedXAxisRandomHAA();
 }

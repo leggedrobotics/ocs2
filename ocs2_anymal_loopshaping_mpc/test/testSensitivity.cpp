@@ -27,6 +27,7 @@ TEST(TestAnymalLoopshapingMotionTracking, testSensitivity) {
   const auto mpcSettings = ocs2::mpc::loadSettings(configFolder + "/task.info");
   const auto sqpSettings = ocs2::multiple_shooting::loadSettings(configFolder + "/multiple_shooting.info");
   auto quadrupedSettings = switched_model::loadQuadrupedSettings(configFolder + "/task.info");
+  const auto frameDecl = anymal::frameDeclarationFromFile(configFolder + "/frame_declaration.info");
   auto loopshapingDefinition = ocs2::loopshaping_property_tree::load(configFolder + "/loopshaping.info");
 
   ocs2::scalar_t initTime = motionData.first.timeTrajectory.front();
@@ -152,7 +153,7 @@ TEST(TestAnymalLoopshapingMotionTracking, testSensitivity) {
     }
 
     // Get interface
-    auto anymalInterface = anymal::getAnymalLoopshapingInterface(anymal::getUrdfString(model), quadrupedSettingsCopy, loopshapingDefinition);
+    auto anymalInterface = anymal::getAnymalLoopshapingInterface(anymal::getUrdfString(model), quadrupedSettingsCopy, frameDecl, loopshapingDefinition);
 
     auto mpcPtr = switched_model_loopshaping::getSqpMpc(*anymalInterface, mpcSettings, sqpSettings);
     ocs2::MPC_MRT_Interface mpcInterface(*mpcPtr);

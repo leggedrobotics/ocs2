@@ -81,14 +81,14 @@ bool operator==(const OcpSize& lhs, const OcpSize& rhs) noexcept;
  *
  * @param dynamics : Linearized approximation of the discrete dynamics.
  * @param cost : Quadratic approximation of the cost.
- * @param constraints : Linearized approximation of constraints, all constraints are mapped to inequality constraints in HPIPM.
+ * @param constraints : Linearized approximation of equality constraints, all constraints are mapped to inequality constraints in HPIPM.
+ * @param ineqConstraints : Linearized approximation of inequality constraints.
  * @return Derived sizes
  */
 OcpSize extractSizesFromProblem(const std::vector<VectorFunctionLinearApproximation>& dynamics,
                                 const std::vector<ScalarFunctionQuadraticApproximation>& cost,
                                 const std::vector<VectorFunctionLinearApproximation>* constraints,
-                                const std::vector<VectorFunctionLinearApproximation>* ineqConstraints,
-                                const std::vector<VectorFunctionLinearApproximation>* boxConstraints);
+                                const std::vector<VectorFunctionLinearApproximation>* ineqConstraints);
 
 }  // namespace hpipm_interface
 }  // namespace ocs2

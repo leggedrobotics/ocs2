@@ -250,11 +250,11 @@ MultipleShootingSolver::OcpSubproblemSolution MultipleShootingSolver::getOCPSolu
   hpipm_status status;
   const bool hasStateInputConstraints = !ocpDefinitions_.front().equalityConstraintPtr->empty();
   if (hasStateInputConstraints && !settings_.projectStateInputEqualityConstraints) {
-    hpipmInterface_.resize(hpipm_interface::extractSizesFromProblem(dynamics_, cost_, &constraints_, &ineqConstraints_, &boxConstraints_));
-    status = hpipmInterface_.solve(delta_x0, dynamics_, cost_, &constraints_, &ineqConstraints_, &boxConstraints_, deltaXSol, deltaUSol, settings_.printSolverStatus);
+    hpipmInterface_.resize(hpipm_interface::extractSizesFromProblem(dynamics_, cost_, &constraints_, &ineqConstraints_));
+    status = hpipmInterface_.solve(delta_x0, dynamics_, cost_, &constraints_, &ineqConstraints_, deltaXSol, deltaUSol, settings_.printSolverStatus);
   } else {  // without constraints, or when using projection, we have an unconstrained QP.
-    hpipmInterface_.resize(hpipm_interface::extractSizesFromProblem(dynamics_, cost_, nullptr, nullptr, nullptr));
-    status = hpipmInterface_.solve(delta_x0, dynamics_, cost_, nullptr, nullptr, nullptr, deltaXSol, deltaUSol, settings_.printSolverStatus);
+    hpipmInterface_.resize(hpipm_interface::extractSizesFromProblem(dynamics_, cost_, nullptr, nullptr));
+    status = hpipmInterface_.solve(delta_x0, dynamics_, cost_, nullptr, nullptr, deltaXSol, deltaUSol, settings_.printSolverStatus);
   }
 
   if (status != hpipm_status::SUCCESS) {
@@ -359,7 +359,6 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
   cost_.resize(N + 1);
   constraints_.resize(N + 1);
   ineqConstraints_.resize(N + 1);
-  boxConstraints_.resize(N + 1);
   constraintsProjection_.resize(N);
 
   std::atomic_int timeIndex{0};
@@ -379,7 +378,6 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
         cost_[i] = std::move(result.cost);
         constraints_[i] = std::move(result.constraints);
         ineqConstraints_[i] = std::move(result.ineqConstraints);
-        boxConstraints_[i] = std::move(result.boxConstraints);
         constraintsProjection_[i] = VectorFunctionLinearApproximation::Zero(0, x[i].size(), 0);
       } else {
         // Normal, intermediate node
@@ -392,7 +390,6 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
         cost_[i] = std::move(result.cost);
         constraints_[i] = std::move(result.constraints);
         ineqConstraints_[i] = std::move(result.ineqConstraints);
-        boxConstraints_[i] = std::move(result.boxConstraints);
         constraintsProjection_[i] = std::move(result.constraintsProjection);
       }
 
@@ -406,7 +403,6 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
       cost_[i] = std::move(result.cost);
       constraints_[i] = std::move(result.constraints);
       ineqConstraints_[i] = std::move(result.ineqConstraints);
-      boxConstraints_[i] = std::move(result.boxConstraints);
     }
 
     // Accumulate! Same worker might run multiple tasks

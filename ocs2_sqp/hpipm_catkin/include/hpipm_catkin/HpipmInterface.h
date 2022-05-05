@@ -86,8 +86,7 @@ class HpipmInterface {
   // TODO this needs to be modified to accept inequality and box constraints
   hpipm_status solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
                      std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<VectorFunctionLinearApproximation>* constraints,
-                     std::vector<VectorFunctionLinearApproximation>* ineqConstraints,
-                     std::vector<VectorFunctionLinearApproximation>* boxConstraints, vector_array_t& stateTrajectory,
+                     std::vector<VectorFunctionLinearApproximation>* ineqConstraints, vector_array_t& stateTrajectory,
                      vector_array_t& inputTrajectory, bool verbose = false);
 
   /**

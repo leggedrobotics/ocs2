@@ -56,7 +56,7 @@ TEST(test_hpiphm_interface, solve_and_check_dynamic) {
   // Solve!
   std::vector<ocs2::vector_t> xSol;
   std::vector<ocs2::vector_t> uSol;
-  const auto status = hpipmInterface.solve(x0, system, cost, nullptr, nullptr, nullptr, xSol, uSol, true);
+  const auto status = hpipmInterface.solve(x0, system, cost, nullptr, nullptr, xSol, uSol, true);
   ASSERT_EQ(status, hpipm_status::SUCCESS);
 
   // Initial condition
@@ -93,11 +93,11 @@ TEST(test_hpiphm_interface, solve_after_resize) {
   // Solve!
   std::vector<ocs2::vector_t> xSol;
   std::vector<ocs2::vector_t> uSol;
-  hpipmInterface.solve(x0, system, cost, nullptr, nullptr, nullptr, xSol, uSol, true);
+  hpipmInterface.solve(x0, system, cost, nullptr, nullptr, xSol, uSol, true);
 
   // Solve again!
   hpipmInterface.resize(ocpSize);
-  const auto status = hpipmInterface.solve(x0, system, cost, nullptr, nullptr, nullptr, xSol, uSol, true);
+  const auto status = hpipmInterface.solve(x0, system, cost, nullptr, nullptr, xSol, uSol, true);
   ASSERT_EQ(status, hpipm_status::SUCCESS);
 
   // Initial condition
@@ -143,7 +143,7 @@ TEST(test_hpiphm_interface, knownSolution) {
   // Solve!
   std::vector<ocs2::vector_t> xSol;
   std::vector<ocs2::vector_t> uSol;
-  const auto status = hpipmInterface.solve(xSolGiven[0], system, cost, nullptr, nullptr, nullptr, xSol, uSol, true);
+  const auto status = hpipmInterface.solve(xSolGiven[0], system, cost, nullptr, nullptr, xSol, uSol, true);
   ASSERT_EQ(status, hpipm_status::SUCCESS);
 
   // Check!
@@ -186,7 +186,7 @@ TEST(test_hpiphm_interface, with_equality_constraints) {
   // Solve!
   std::vector<ocs2::vector_t> xSol;
   std::vector<ocs2::vector_t> uSol;
-  const auto status = hpipmInterface.solve(x0, system, cost, &constraints, nullptr, nullptr, xSol, uSol, true);
+  const auto status = hpipmInterface.solve(x0, system, cost, &constraints, nullptr, xSol, uSol, true);
   ASSERT_EQ(status, hpipm_status::SUCCESS);
 
   // Initial condition
@@ -240,7 +240,7 @@ TEST(test_hpiphm_interface, with_inequality_constraints) {
   // Solve!
   std::vector<ocs2::vector_t> xSol;
   std::vector<ocs2::vector_t> uSol;
-  const auto status = hpipmInterface.solve(x0, system, cost, nullptr, &ineqConstraints, nullptr, xSol, uSol, true);
+  const auto status = hpipmInterface.solve(x0, system, cost, nullptr, &ineqConstraints, xSol, uSol, true);
   ASSERT_EQ(status, hpipm_status::SUCCESS);
 
   // Initial condition
@@ -297,13 +297,13 @@ TEST(test_hpiphm_interface, noInputs) {
   cost.emplace_back(ocs2::getRandomCost(nx, 0));
   cost[N].dfdx = -cost[N].dfdxx * xSolGiven[N];
 
-  const auto ocpSize = ocs2::hpipm_interface::extractSizesFromProblem(system, cost, nullptr, nullptr, nullptr);
+  const auto ocpSize = ocs2::hpipm_interface::extractSizesFromProblem(system, cost, nullptr, nullptr);
   hpipmInterface.resize(ocpSize);
 
   // Solve!
   std::vector<ocs2::vector_t> xSol;
   std::vector<ocs2::vector_t> uSol;
-  const auto status = hpipmInterface.solve(xSolGiven.front(), system, cost, nullptr, nullptr, nullptr, xSol, uSol, true);
+  const auto status = hpipmInterface.solve(xSolGiven.front(), system, cost, nullptr, nullptr, xSol, uSol, true);
   ASSERT_EQ(status, hpipm_status::SUCCESS);
 
   // Check!
@@ -366,7 +366,7 @@ TEST(test_hpiphm_interface, retrieveRiccati) {
   // Solve!
   std::vector<ocs2::vector_t> xSol;
   std::vector<ocs2::vector_t> uSol;
-  const auto status = hpipmInterface.solve(x0, system, cost, nullptr, nullptr, nullptr, xSol, uSol, true);
+  const auto status = hpipmInterface.solve(x0, system, cost, nullptr, nullptr, xSol, uSol, true);
   ASSERT_EQ(status, hpipm_status::SUCCESS);
 
   // Get Riccati info from hpipm interface

@@ -147,7 +147,8 @@ class HpipmInterface::Impl {
 
   void verifySizes(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
                    std::vector<ScalarFunctionQuadraticApproximation>& cost,
-                   std::vector<VectorFunctionLinearApproximation>* constraints) const {
+                   std::vector<VectorFunctionLinearApproximation>* constraints,
+                   std::vector<VectorFunctionLinearApproximation>* ineqConstraints) const {
     if (dynamics.size() != ocpSize_.numStages) {
       throw std::runtime_error("[HpipmInterface] Inconsistent size of dynamics: " + std::to_string(dynamics.size()) + " with " +
                                std::to_string(ocpSize_.numStages) + " number of stages.");
@@ -158,7 +159,13 @@ class HpipmInterface::Impl {
     }
     if (constraints != nullptr) {
       if (constraints->size() != ocpSize_.numStages + 1) {
-        throw std::runtime_error("[HpipmInterface] Inconsistent size of constraints: " + std::to_string(constraints->size()) + " with " +
+        throw std::runtime_error("[HpipmInterface] Inconsistent size of equality constraints: " + std::to_string(constraints->size()) + " with " +
+                                 std::to_string(ocpSize_.numStages + 1) + " nodes.");
+      }
+    }
+    if (ineqConstraints != nullptr) {
+      if (ineqConstraints->size() != ocpSize_.numStages + 1) {
+        throw std::runtime_error("[HpipmInterface] Inconsistent size of inequality constraints: " + std::to_string(ineqConstraints->size()) + " with " +
                                  std::to_string(ocpSize_.numStages + 1) + " nodes.");
       }
     }
@@ -167,11 +174,10 @@ class HpipmInterface::Impl {
 
   hpipm_status solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
                      std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<VectorFunctionLinearApproximation>* constraints,
-                     std::vector<VectorFunctionLinearApproximation>* ineqConstraints,
-                     std::vector<VectorFunctionLinearApproximation>* boxConstraints, vector_array_t& stateTrajectory,
+                     std::vector<VectorFunctionLinearApproximation>* ineqConstraints, vector_array_t& stateTrajectory,
                      vector_array_t& inputTrajectory, bool verbose) {
     const int N = ocpSize_.numStages;
-    verifySizes(x0, dynamics, cost, constraints);
+    verifySizes(x0, dynamics, cost, constraints, ineqConstraints);
 
     // === Dynamics ===
     std::vector<scalar_t*> AA(N, nullptr);
@@ -601,10 +607,9 @@ hpipm_status HpipmInterface::solve(const vector_t& x0, std::vector<VectorFunctio
                                    std::vector<ScalarFunctionQuadraticApproximation>& cost,
                                    std::vector<VectorFunctionLinearApproximation>* constraints,
                                    std::vector<VectorFunctionLinearApproximation>* ineqConstraints,
-                                   std::vector<VectorFunctionLinearApproximation>* boxConstraints,
                                    vector_array_t& stateTrajectory,
                                    vector_array_t& inputTrajectory, bool verbose) {
-  return pImpl_->solve(x0, dynamics, cost, constraints, ineqConstraints, boxConstraints, stateTrajectory, inputTrajectory, verbose);
+  return pImpl_->solve(x0, dynamics, cost, constraints, ineqConstraints, stateTrajectory, inputTrajectory, verbose);
 }
 
 std::vector<ScalarFunctionQuadraticApproximation> HpipmInterface::getRiccatiCostToGo(const VectorFunctionLinearApproximation& dynamics0,

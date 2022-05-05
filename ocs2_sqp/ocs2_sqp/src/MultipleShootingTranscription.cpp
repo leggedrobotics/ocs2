@@ -47,7 +47,6 @@ Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlP
   auto& cost = transcription.cost;
   auto& constraints = transcription.constraints;
   auto& ineqConstraints = transcription.ineqConstraints;
-  auto& boxConstraints = transcription.boxConstraints;
   auto& projection = transcription.constraintsProjection;
 
   // Dynamics
@@ -132,7 +131,6 @@ TerminalTranscription setupTerminalNode(const OptimalControlProblem& optimalCont
   auto& cost = transcription.cost;
   auto& constraints = transcription.constraints;
   auto& ineqConstraints = transcription.ineqConstraints;
-  auto& boxConstraints = transcription.boxConstraints;
 
   constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Approximation;
   optimalControlProblem.preComputationPtr->requestFinal(request, t, x);
@@ -142,7 +140,6 @@ TerminalTranscription setupTerminalNode(const OptimalControlProblem& optimalCont
 
   constraints = VectorFunctionLinearApproximation::Zero(0, x.size(), 0);
   ineqConstraints = VectorFunctionLinearApproximation::Zero(0, x.size(), 0);
-  boxConstraints = VectorFunctionLinearApproximation::Zero(0, x.size(), 0);
 
   return transcription;
 }
@@ -167,9 +164,7 @@ EventTranscription setupEventNode(const OptimalControlProblem& optimalControlPro
   auto& cost = transcription.cost;
   auto& constraints = transcription.constraints;
   auto& ineqConstraints = transcription.ineqConstraints;
-  auto& boxConstraints = transcription.boxConstraints;
 
-  // TODO: adam: modify request here?
   constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Dynamics + Request::Approximation;
   optimalControlProblem.preComputationPtr->requestPreJump(request, t, x);
 
@@ -185,7 +180,6 @@ EventTranscription setupEventNode(const OptimalControlProblem& optimalControlPro
 
   constraints = VectorFunctionLinearApproximation::Zero(0, x.size(), 0);
   ineqConstraints = VectorFunctionLinearApproximation::Zero(0, x.size(), 0);
-  boxConstraints = VectorFunctionLinearApproximation::Zero(0, x.size(), 0);
   return transcription;
 }
 

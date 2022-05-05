@@ -46,6 +46,8 @@ Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlP
   auto& performance = transcription.performance;
   auto& cost = transcription.cost;
   auto& constraints = transcription.constraints;
+  auto& ineqConstraints = transcription.ineqConstraints;
+  auto& boxConstraints = transcription.boxConstraints;
   auto& projection = transcription.constraintsProjection;
 
   // Dynamics
@@ -81,6 +83,10 @@ Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlP
     }
   }
 
+  if (!optimalControlProblem.inequalityConstraintPtr->empty()) {
+    ineqConstraints = optimalControlProblem.inequalityConstraintPtr->getLinearApproximation(t, x, u, *optimalControlProblem.preComputationPtr);
+  }
+
   return transcription;
 }
 
@@ -108,6 +114,14 @@ PerformanceIndex computeIntermediatePerformance(const OptimalControlProblem& opt
     }
   }
 
+  if (!optimalControlProblem.inequalityConstraintPtr->empty()) {
+    const vector_t ineqConstraints = optimalControlProblem.inequalityConstraintPtr->getValue(t, x, u, *optimalControlProblem.preComputationPtr);
+    if (ineqConstraints.size() > 0) {
+      // constraint is only a violation if negative
+      performance.equalityConstraintsSSE += dt * ineqConstraints.cwiseMin(0.0).squaredNorm();
+    }
+  }
+
   return performance;
 }
 
@@ -117,6 +131,8 @@ TerminalTranscription setupTerminalNode(const OptimalControlProblem& optimalCont
   auto& performance = transcription.performance;
   auto& cost = transcription.cost;
   auto& constraints = transcription.constraints;
+  auto& ineqConstraints = transcription.ineqConstraints;
+  auto& boxConstraints = transcription.boxConstraints;
 
   constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Approximation;
   optimalControlProblem.preComputationPtr->requestFinal(request, t, x);
@@ -125,6 +141,8 @@ TerminalTranscription setupTerminalNode(const OptimalControlProblem& optimalCont
   performance.cost = cost.f;
 
   constraints = VectorFunctionLinearApproximation::Zero(0, x.size(), 0);
+  ineqConstraints = VectorFunctionLinearApproximation::Zero(0, x.size(), 0);
+  boxConstraints = VectorFunctionLinearApproximation::Zero(0, x.size(), 0);
 
   return transcription;
 }
@@ -148,7 +166,10 @@ EventTranscription setupEventNode(const OptimalControlProblem& optimalControlPro
   auto& dynamics = transcription.dynamics;
   auto& cost = transcription.cost;
   auto& constraints = transcription.constraints;
+  auto& ineqConstraints = transcription.ineqConstraints;
+  auto& boxConstraints = transcription.boxConstraints;
 
+  // TODO: adam: modify request here?
   constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Dynamics + Request::Approximation;
   optimalControlProblem.preComputationPtr->requestPreJump(request, t, x);
 
@@ -163,6 +184,8 @@ EventTranscription setupEventNode(const OptimalControlProblem& optimalControlPro
   performance.cost = cost.f;
 
   constraints = VectorFunctionLinearApproximation::Zero(0, x.size(), 0);
+  ineqConstraints = VectorFunctionLinearApproximation::Zero(0, x.size(), 0);
+  boxConstraints = VectorFunctionLinearApproximation::Zero(0, x.size(), 0);
   return transcription;
 }
 

@@ -31,6 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/misc/LinearAlgebra.h>
 
+#include <iostream>
+
 extern "C" {
 #include <hpipm_d_ocp_qp.h>
 #include <hpipm_d_ocp_qp_dim.h>
@@ -165,7 +167,9 @@ class HpipmInterface::Impl {
 
   hpipm_status solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
                      std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<VectorFunctionLinearApproximation>* constraints,
-                     vector_array_t& stateTrajectory, vector_array_t& inputTrajectory, bool verbose) {
+                     std::vector<VectorFunctionLinearApproximation>* ineqConstraints,
+                     std::vector<VectorFunctionLinearApproximation>* boxConstraints, vector_array_t& stateTrajectory,
+                     vector_array_t& inputTrajectory, bool verbose) {
     const int N = ocpSize_.numStages;
     verifySizes(x0, dynamics, cost, constraints);
 
@@ -221,46 +225,108 @@ class HpipmInterface::Impl {
     qq[N] = cost[N].dfdx.data();
 
     // === Constraints ===
-    // for ocs2 --> C*dx + D*du + e = 0
-    // for hpipm --> ug >= C*dx + D*du >= lg
-    std::vector<scalar_t*> CC(N + 1, nullptr);
-    std::vector<scalar_t*> DD(N + 1, nullptr);
-    std::vector<scalar_t*> llg(N + 1, nullptr);
-    std::vector<scalar_t*> uug(N + 1, nullptr);
-    std::vector<ocs2::vector_t> boundData;  // Declare at this scope to keep the data alive while HPIPM has the pointers
+
+    // Equality constraints for each stage:
+    // C * x + D * u == b
+    std::vector<matrix_t> C_eq(N + 1);
+    std::vector<matrix_t> D_eq(N + 1);
+    std::vector<vector_t> d_eq(N + 1);
 
     if (constraints != nullptr) {
       auto& constr = *constraints;
-      boundData.resize(N + 1);
 
-      // k = 0, eliminate initial state
-      // numState[0] = 0 --> No need to specify C[0] here
+      // k = 0
+      // No need to specify C_eq[0] since initial state is given
       if (constr[0].f.size() > 0) {
-        boundData[0] = -constr[0].f;
-        boundData[0].noalias() -= constr[0].dfdx * x0;
-        llg[0] = boundData[0].data();
-        uug[0] = boundData[0].data();
-        DD[0] = constr[0].dfdu.data();
+        d_eq[0] = -constr[0].f;
+        d_eq[0].noalias() -= constr[0].dfdx * x0;
+        D_eq[0] = constr[0].dfdu;
       }
 
       // k = 1 -> (N-1)
       for (int k = 1; k < N; k++) {
         if (constr[k].f.size() > 0) {
-          CC[k] = constr[k].dfdx.data();
-          DD[k] = constr[k].dfdu.data();
-          boundData[k] = -constr[k].f;
-          llg[k] = boundData[k].data();
-          uug[k] = boundData[k].data();
+          d_eq[k] = -constr[k].f;
+          C_eq[k] = constr[k].dfdx;
+          D_eq[k] = constr[k].dfdu;
         }
       }
 
       // k = N, no inputs
       if (constr[N].f.size() > 0) {
-        CC[N] = constr[N].dfdx.data();
-        boundData[N] = -constr[N].f;
-        llg[N] = boundData[N].data();
-        uug[N] = boundData[N].data();
+        d_eq[N] = -constr[N].f;
+        C_eq[N] = constr[N].dfdx;
       }
+    }
+
+    // Inequality constraints for each stage:
+    // C * x + D * u >= b
+    std::vector<matrix_t> C_ineq(N + 1);
+    std::vector<matrix_t> D_ineq(N + 1);
+    std::vector<vector_t> d_ineq(N + 1);
+
+    if (ineqConstraints != nullptr) {
+      auto& constr = *ineqConstraints;
+
+      // k = 0
+      // No need to specify C_ineq[0] since initial state is given
+      if (constr[0].f.size() > 0) {
+        d_ineq[0] = -constr[0].f;
+        d_ineq[0].noalias() -= constr[0].dfdx * x0;
+        D_ineq[0] = constr[0].dfdu;
+      }
+
+      // k = 1 -> (N-1)
+      for (int k = 1; k < N; k++) {
+        if (constr[k].f.size() > 0) {
+          C_ineq[k] = constr[k].dfdx;
+          D_ineq[k] = constr[k].dfdu;
+          d_ineq[k] = -constr[k].f;
+        }
+      }
+
+      if (constr[N].f.size() > 0) {
+        d_ineq[N] = -constr[N].f;
+        C_ineq[N] = constr[N].dfdx;
+      }
+    }
+
+    // Combined equality and inequality constraints for each stage
+    std::vector<matrix_t> C_con(N + 1);
+    std::vector<matrix_t> D_con(N + 1);
+    std::vector<vector_t> d_con(N + 1);
+    std::vector<vector_t> upper_bound_mask(N + 1);
+
+    // Raw data for each stage
+    std::vector<scalar_t*> CC(N + 1, nullptr);
+    std::vector<scalar_t*> DD(N + 1, nullptr);
+    std::vector<scalar_t*> llg(N + 1, nullptr);
+    std::vector<scalar_t*> uug(N + 1, nullptr);
+
+    // Combine equality and inequality constraints and extract raw data
+    for (int k = 0; k <= N; k++) {
+        C_con[k].setZero(C_eq[k].rows() + C_ineq[k].rows(), C_eq[k].cols() + C_ineq[k].cols());
+        C_con[k].topLeftCorner(C_eq[k].rows(), C_eq[k].cols()) = C_eq[k];
+        C_con[k].bottomRightCorner(C_ineq[k].rows(), C_ineq[k].cols()) = C_ineq[k];
+        CC[k] = C_con[k].data();
+
+        D_con[k].setZero(D_eq[k].rows() + D_ineq[k].rows(), D_eq[k].cols() + D_ineq[k].cols());
+        D_con[k].topLeftCorner(D_eq[k].rows(), D_eq[k].cols()) = D_eq[k];
+        D_con[k].bottomRightCorner(D_ineq[k].rows(), D_ineq[k].cols()) = D_ineq[k];
+        DD[k] = D_con[k].data();
+
+        // Equality constraints have both upper and lower bounds (which are the
+        // same). The inequality constraints have only lower bounds: we set it
+        // the same as the lower bound, but then mask out the inequalities
+        // constraints to make them unbounded.
+        d_con[k].setZero(d_eq[k].rows() + d_ineq[k].rows());
+        d_con[k] << d_eq[k], d_ineq[k];
+        llg[k] = d_con[k].data();
+        uug[k] = d_con[k].data();
+
+        upper_bound_mask[k].setZero(d_eq[k].rows() + d_ineq[k].rows());
+        upper_bound_mask[k].head(d_eq[k].rows()).setOnes();
+        d_ocp_qp_set_ug_mask(k, upper_bound_mask[k].data(), &qp_);
     }
 
     // === Unused ===
@@ -533,9 +599,12 @@ void HpipmInterface::resize(OcpSize ocpSize) {
 
 hpipm_status HpipmInterface::solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
                                    std::vector<ScalarFunctionQuadraticApproximation>& cost,
-                                   std::vector<VectorFunctionLinearApproximation>* constraints, vector_array_t& stateTrajectory,
+                                   std::vector<VectorFunctionLinearApproximation>* constraints,
+                                   std::vector<VectorFunctionLinearApproximation>* ineqConstraints,
+                                   std::vector<VectorFunctionLinearApproximation>* boxConstraints,
+                                   vector_array_t& stateTrajectory,
                                    vector_array_t& inputTrajectory, bool verbose) {
-  return pImpl_->solve(x0, dynamics, cost, constraints, stateTrajectory, inputTrajectory, verbose);
+  return pImpl_->solve(x0, dynamics, cost, constraints, ineqConstraints, boxConstraints, stateTrajectory, inputTrajectory, verbose);
 }
 
 std::vector<ScalarFunctionQuadraticApproximation> HpipmInterface::getRiccatiCostToGo(const VectorFunctionLinearApproximation& dynamics0,

@@ -86,7 +86,9 @@ bool operator==(const OcpSize& lhs, const OcpSize& rhs) noexcept;
  */
 OcpSize extractSizesFromProblem(const std::vector<VectorFunctionLinearApproximation>& dynamics,
                                 const std::vector<ScalarFunctionQuadraticApproximation>& cost,
-                                const std::vector<VectorFunctionLinearApproximation>* constraints);
+                                const std::vector<VectorFunctionLinearApproximation>* constraints,
+                                const std::vector<VectorFunctionLinearApproximation>* ineqConstraints,
+                                const std::vector<VectorFunctionLinearApproximation>* boxConstraints);
 
 }  // namespace hpipm_interface
 }  // namespace ocs2

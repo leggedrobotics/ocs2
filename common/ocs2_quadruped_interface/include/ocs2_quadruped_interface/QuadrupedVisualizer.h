@@ -41,11 +41,12 @@ class QuadrupedVisualizer : public ocs2::DummyObserver {
    * @param n
    * @param maxUpdateFrequency : maximum publish frequency measured in MPC time.
    */
-  QuadrupedVisualizer(const kinematic_model_t& kinematicModel, ros::NodeHandle& n, scalar_t maxUpdateFrequency = 1000.0)
+  QuadrupedVisualizer(const kinematic_model_t& kinematicModel, std::vector<std::string> jointNames, std::string baseName,
+                      ros::NodeHandle& n, scalar_t maxUpdateFrequency = 1000.0)
       : kinematicModelPtr_(kinematicModel.clone()),
         lastTime_(std::numeric_limits<scalar_t>::lowest()),
         minPublishTimeDifference_(1.0 / maxUpdateFrequency) {
-    launchVisualizerNode(n);
+    launchVisualizerNode(n, std::move(jointNames), std::move(baseName));
   };
 
   ~QuadrupedVisualizer() override = default;
@@ -53,7 +54,7 @@ class QuadrupedVisualizer : public ocs2::DummyObserver {
   void update(const ocs2::SystemObservation& observation, const ocs2::PrimalSolution& primalSolution,
               const ocs2::CommandData& command) override;
 
-  void launchVisualizerNode(ros::NodeHandle& nodeHandle);
+  void launchVisualizerNode(ros::NodeHandle& nodeHandle, std::vector<std::string> jointNames, std::string baseName);
 
   void publishTrajectory(const std::vector<ocs2::SystemObservation>& system_observation_array, scalar_t speed = 1.0);
 

@@ -1,21 +1,17 @@
 #include <gtest/gtest.h>
 
-#include <boost/filesystem.hpp>
-
 #include <ocs2_anymal_models/AnymalModels.h>
 #include <ocs2_anymal_models/QuadrupedCom.h>
-#include <ocs2_anymal_models/camel/AnymalCamelCom.h>
+#include <ocs2_anymal_models/package_path.h>
+
+#include "camel/AnymalCamelCom.h"
 
 using namespace anymal;
-
-namespace {
-const std::string dataFolder = boost::filesystem::path(__FILE__).parent_path().generic_string() + "/data/";
-}
 
 class QuadrupedComTest : public ::testing::Test {
  public:
   QuadrupedComTest()
-      : frameDeclaration(frameDeclarationFromFile(dataFolder + "testDeclarationCamel.info")),
+      : frameDeclaration(frameDeclarationFromFile(getPath() + "/urdf/frame_declaration_anymal_c.info")),
         pinocchioInterface(createQuadrupedPinocchioInterfaceFromUrdfString(getUrdfString(AnymalModel::Camel))),
         pinocchioCom_(frameDeclaration, pinocchioInterface) {
     srand(0);

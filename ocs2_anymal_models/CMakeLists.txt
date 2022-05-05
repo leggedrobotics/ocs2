@@ -6,7 +6,6 @@ find_package(catkin REQUIRED COMPONENTS
     ocs2_switched_model_interface
     ocs2_robotic_tools
     ocs2_pinocchio_interface
-    ocs2_robotic_assets
     roslib
 )
 
@@ -26,7 +25,6 @@ catkin_package(
     ocs2_switched_model_interface
     ocs2_robotic_tools
     ocs2_pinocchio_interface
-    ocs2_robotic_assets
     roslib
 #   DEPENDS
 )
@@ -53,18 +51,6 @@ add_library(${PROJECT_NAME}
   src/QuadrupedPinocchioMapping.cpp
   src/QuadrupedKinematics.cpp
   src/QuadrupedCom.cpp
-  src/bear/AnymalBearCom.cpp
-  src/bear/AnymalBearKinematics.cpp
-  src/camel/AnymalCamelCom.cpp
-  src/camel/AnymalCamelKinematics.cpp
-  src/cerberus/AnymalCerberusCom.cpp
-  src/cerberus/AnymalCerberusKinematics.cpp
-  src/chimera/AnymalChimeraCom.cpp
-  src/chimera/AnymalChimeraKinematics.cpp
-  src/wheels/AnymalWheelsCom.cpp
-  src/wheels/AnymalWheelsKinematics.cpp
-  src/wheels_chimera/AnymalWheelsChimeraCom.cpp
-  src/wheels_chimera/AnymalWheelsChimeraKinematics.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
@@ -88,7 +74,7 @@ install(TARGETS ${PROJECT_NAME}
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
-install(DIRECTORY kindsl launch
+install(DIRECTORY launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
@@ -98,12 +84,6 @@ install(DIRECTORY kindsl launch
 
 # Build unit tests
 catkin_add_gtest(${PROJECT_NAME}_switched_model_test
-  test/TestAnymalBear.cpp
-  test/TestAnymalCamel.cpp
-  test/TestAnymalCerberus.cpp
-  test/TestAnymalChimera.cpp
-  test/TestAnymalWheels.cpp
-  test/TestAnymalWheelsChimera.cpp
   test/TestDynamicsHelpers.cpp
 )
 target_link_libraries(${PROJECT_NAME}_switched_model_test
@@ -113,6 +93,8 @@ target_link_libraries(${PROJECT_NAME}_switched_model_test
 )
 
 catkin_add_gtest(TestQuadrupedPinocchio
+  test/camel/AnymalCamelCom.cpp
+  test/camel/AnymalCamelKinematics.cpp
   test/TestQuadrupedPinocchioCom.cpp
   test/TestQuadrupedPinocchioKinematics.cpp
   test/TestFrameDeclaration.cpp

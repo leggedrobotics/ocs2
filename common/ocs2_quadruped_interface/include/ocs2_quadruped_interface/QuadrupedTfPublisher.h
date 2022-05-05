@@ -16,8 +16,6 @@ class QuadrupedTfPublisher {
  public:
   QuadrupedTfPublisher() = default;
 
-  void launchNode(ros::NodeHandle& nodeHandle, const std::string& descriptionName, const std::string& tfPrefix = "");
-
   void launchNode(ros::NodeHandle& nodeHandle, const std::string& descriptionName, std::vector<std::string> jointNames,
                   std::string baseName, const std::string& tfPrefix = "");
 

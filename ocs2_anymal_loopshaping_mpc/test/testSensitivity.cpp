@@ -14,7 +14,7 @@
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
 
 TEST(TestAnymalLoopshapingMotionTracking, testSensitivity) {
-  const std::string robotName("camel");
+  const auto model = anymal::AnymalModel::Camel;
   const std::string configName("c_series");
   const std::string motionName = "walking";
   const std::string path(__FILE__);
@@ -26,8 +26,8 @@ TEST(TestAnymalLoopshapingMotionTracking, testSensitivity) {
   const auto motionData = switched_model::readMotion(csvData, 0.05);
   const auto mpcSettings = ocs2::mpc::loadSettings(configFolder + "/task.info");
   const auto sqpSettings = ocs2::multiple_shooting::loadSettings(configFolder + "/multiple_shooting.info");
-  const auto model = anymal::stringToAnymalModel(robotName);
   auto quadrupedSettings = switched_model::loadQuadrupedSettings(configFolder + "/task.info");
+  const auto frameDecl = anymal::frameDeclarationFromFile(configFolder + "/frame_declaration.info");
   auto loopshapingDefinition = ocs2::loopshaping_property_tree::load(configFolder + "/loopshaping.info");
 
   ocs2::scalar_t initTime = motionData.first.timeTrajectory.front();
@@ -153,7 +153,7 @@ TEST(TestAnymalLoopshapingMotionTracking, testSensitivity) {
     }
 
     // Get interface
-    auto anymalInterface = anymal::getAnymalLoopshapingInterface(model, quadrupedSettingsCopy, loopshapingDefinition);
+    auto anymalInterface = anymal::getAnymalLoopshapingInterface(anymal::getUrdfString(model), quadrupedSettingsCopy, frameDecl, loopshapingDefinition);
 
     auto mpcPtr = switched_model_loopshaping::getSqpMpc(*anymalInterface, mpcSettings, sqpSettings);
     ocs2::MPC_MRT_Interface mpcInterface(*mpcPtr);

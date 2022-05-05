@@ -1,0 +1,64 @@
+root    base
+
+left_front {
+    root    LF_HAA
+    tip     LF_FOOT
+    joints {
+        [0] LF_HAA
+        [1] LF_HFE
+        [2] LF_KFE
+    }
+}
+
+right_front {
+    root    RF_HAA
+    tip     RF_FOOT
+    joints {
+        [0] RF_HAA
+        [1] RF_HFE
+        [2] RF_KFE
+    }
+}
+
+left_hind {
+    root    LH_HAA
+    tip     LH_FOOT
+    joints {
+        [0] LH_HAA
+        [1] LH_HFE
+        [2] LH_KFE
+    }
+}
+
+right_hind {
+    root    RH_HAA
+    tip     RH_FOOT
+    joints {
+        [0] RH_HAA
+        [1] RH_HFE
+        [2] RH_KFE
+    }
+}
+
+collisions {
+    collisionSpheres {
+        [0] "LF_KFE, 0.08"
+        [1] "RF_KFE, 0.08"
+        [2] "LH_KFE, 0.08"
+        [3] "RH_KFE, 0.08"
+    }
+    collisionOffsets {
+        (0,0) -0.055
+        (0,1) 0.0
+        (0,2) 0.0
+        (1,0) -0.055
+        (1,1) 0.0
+        (1,2) 0.0
+        (2,0) -0.055
+        (2,1) 0.0
+        (2,2) 0.0
+        (3,0) -0.055
+        (3,1) 0.0
+        (3,2) 0.0
+    }
+}

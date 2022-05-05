@@ -82,17 +82,6 @@ target_link_libraries(${PROJECT_NAME}_dummy_mrt_node
   ${catkin_LIBRARIES}
 )
 
-add_executable(${PROJECT_NAME}_wheels_dummy_visualization_node
-  src/AnymalWheelsDummyVisualization.cpp
-)
-add_dependencies(${PROJECT_NAME}_wheels_dummy_visualization_node
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(${PROJECT_NAME}_wheels_dummy_visualization_node
-  ${catkin_LIBRARIES}
-)
-
 add_executable(${PROJECT_NAME}_visualize_foothold_selection
   src/visualizeFootholdSelection.cpp
   )
@@ -127,7 +116,7 @@ install(TARGETS ${PROJECT_NAME}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
-install(TARGETS ${PROJECT_NAME}_mpc_node ${PROJECT_NAME}_dummy_mrt_node ${PROJECT_NAME}_wheels_dummy_visualization_node
+install(TARGETS ${PROJECT_NAME}_mpc_node ${PROJECT_NAME}_dummy_mrt_node
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 install(DIRECTORY include/${PROJECT_NAME}/

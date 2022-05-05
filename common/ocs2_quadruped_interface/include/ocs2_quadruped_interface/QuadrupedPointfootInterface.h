@@ -19,7 +19,8 @@ class QuadrupedPointfootInterface : public QuadrupedInterface {
   using QuadrupedInterface::synchronized_module_ptr_array_t;
 
   QuadrupedPointfootInterface(const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel,
-                              const com_model_t& comModel, const ad_com_model_t& adComModel, Settings settings);
+                              const com_model_t& comModel, const ad_com_model_t& adComModel, Settings settings,
+                              std::vector<std::string> jointNames, std::string baseName);
 
   ~QuadrupedPointfootInterface() override = default;
 

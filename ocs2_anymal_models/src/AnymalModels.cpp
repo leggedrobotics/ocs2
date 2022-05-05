@@ -6,33 +6,24 @@
 
 #include <unordered_map>
 
-#include <ocs2_anymal_models/bear/AnymalBearCom.h>
-#include <ocs2_anymal_models/bear/AnymalBearKinematics.h>
-#include <ocs2_anymal_models/camel/AnymalCamelCom.h>
-#include <ocs2_anymal_models/camel/AnymalCamelKinematics.h>
-#include <ocs2_anymal_models/cerberus/AnymalCerberusCom.h>
-#include <ocs2_anymal_models/cerberus/AnymalCerberusKinematics.h>
-#include <ocs2_anymal_models/chimera/AnymalChimeraCom.h>
-#include <ocs2_anymal_models/chimera/AnymalChimeraKinematics.h>
+#include <ocs2_pinocchio_interface/urdf.h>
+
+#include <ocs2_anymal_models/QuadrupedCom.h>
+#include <ocs2_anymal_models/QuadrupedKinematics.h>
+
 #include <ocs2_anymal_models/package_path.h>
-#include <ocs2_anymal_models/wheels/AnymalWheelsCom.h>
-#include <ocs2_anymal_models/wheels/AnymalWheelsKinematics.h>
-#include <ocs2_anymal_models/wheels_chimera/AnymalWheelsChimeraCom.h>
-#include <ocs2_anymal_models/wheels_chimera/AnymalWheelsChimeraKinematics.h>
 
 namespace anymal {
 
 std::string toString(AnymalModel model) {
   static const std::unordered_map<AnymalModel, std::string> map{
-      {AnymalModel::Bear, "bear"},   {AnymalModel::Cerberus, "cerberus"}, {AnymalModel::Chimera, "chimera"},
-      {AnymalModel::Camel, "camel"}, {AnymalModel::Wheels, "wheels"},     {AnymalModel::WheelsChimera, "wheels_chimera"}};
+      {AnymalModel::Cerberus, "cerberus"}, {AnymalModel::Chimera, "chimera"}, {AnymalModel::Camel, "camel"}};
   return map.at(model);
 }
 
 AnymalModel stringToAnymalModel(const std::string& name) {
   static const std::unordered_map<std::string, AnymalModel> map{
-      {"bear", AnymalModel::Bear},   {"cerberus", AnymalModel::Cerberus}, {"chimera", AnymalModel::Chimera},
-      {"camel", AnymalModel::Camel}, {"wheels", AnymalModel::Wheels},     {"wheels_chimera", AnymalModel::WheelsChimera}};
+      {"cerberus", AnymalModel::Cerberus}, {"chimera", AnymalModel::Chimera}, {"camel", AnymalModel::Camel}};
   return map.at(name);
 }
 
@@ -60,80 +51,28 @@ std::string getUrdfString(AnymalModel model) {
   return xml_str;
 }
 
-std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>> getAnymalKinematics(AnymalModel model) {
-  switch (model) {
-    case AnymalModel::Bear:
-      return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>>(new AnymalBearKinematics());
-    case AnymalModel::Cerberus:
-      return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>>(new AnymalCerberusKinematics());
-    case AnymalModel::Chimera:
-      return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>>(new AnymalChimeraKinematics());
-    case AnymalModel::Camel:
-      return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>>(new AnymalCamelKinematics());
-    case AnymalModel::Wheels:
-      return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>>(new AnymalWheelsKinematics());
-    case AnymalModel::WheelsChimera:
-      return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>>(new AnymalWheelsChimeraKinematics());
-    default:
-      throw std::runtime_error("[AnymalModels] unkown model");
-  }
+std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>> getAnymalKinematics(const FrameDeclaration& frameDeclaration,
+                                                                                         const std::string& urdf) {
+  return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>>(
+      new QuadrupedKinematics(frameDeclaration, ocs2::getPinocchioInterfaceFromUrdfString(urdf)));
 }
 
-std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>> getAnymalKinematicsAd(AnymalModel model) {
-  switch (model) {
-    case AnymalModel::Bear:
-      return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>>(new AnymalBearKinematicsAd());
-    case AnymalModel::Cerberus:
-      return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>>(new AnymalCerberusKinematicsAd());
-    case AnymalModel::Chimera:
-      return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>>(new AnymalChimeraKinematicsAd());
-    case AnymalModel::Camel:
-      return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>>(new AnymalCamelKinematicsAd());
-    case AnymalModel::Wheels:
-      return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>>(new AnymalWheelsKinematicsAd());
-    case AnymalModel::WheelsChimera:
-      return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>>(new AnymalWheelsChimeraKinematicsAd());
-    default:
-      throw std::runtime_error("[AnymalModels] unkown model");
-  }
+std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>> getAnymalKinematicsAd(const FrameDeclaration& frameDeclaration,
+                                                                                              const std::string& urdf) {
+  return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>>(
+      new QuadrupedKinematicsAd(frameDeclaration, ocs2::getPinocchioInterfaceFromUrdfString(urdf)));
 }
 
-std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>> getAnymalComModel(AnymalModel model) {
-  switch (model) {
-    case AnymalModel::Bear:
-      return std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>>(new AnymalBearCom());
-    case AnymalModel::Cerberus:
-      return std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>>(new AnymalCerberusCom());
-    case AnymalModel::Chimera:
-      return std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>>(new AnymalChimeraCom());
-    case AnymalModel::Camel:
-      return std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>>(new AnymalCamelCom());
-    case AnymalModel::Wheels:
-      return std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>>(new AnymalWheelsCom());
-    case AnymalModel::WheelsChimera:
-      return std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>>(new AnymalWheelsChimeraCom());
-    default:
-      throw std::runtime_error("[AnymalModels] unkown model");
-  }
+std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>> getAnymalComModel(const FrameDeclaration& frameDeclaration,
+                                                                                const std::string& urdf) {
+  return std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>>(
+      new QuadrupedCom(frameDeclaration, createQuadrupedPinocchioInterfaceFromUrdfString(urdf)));
 }
 
-std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>> getAnymalComModelAd(AnymalModel model) {
-  switch (model) {
-    case AnymalModel::Bear:
-      return std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>>(new AnymalBearComAd());
-    case AnymalModel::Cerberus:
-      return std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>>(new AnymalCerberusComAd());
-    case AnymalModel::Chimera:
-      return std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>>(new AnymalChimeraComAd());
-    case AnymalModel::Camel:
-      return std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>>(new AnymalCamelComAd());
-    case AnymalModel::Wheels:
-      return std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>>(new AnymalWheelsComAd());
-    case AnymalModel::WheelsChimera:
-      return std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>>(new AnymalWheelsChimeraComAd());
-    default:
-      throw std::runtime_error("[AnymalModels] unkown model");
-  }
+std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>> getAnymalComModelAd(const FrameDeclaration& frameDeclaration,
+                                                                                     const std::string& urdf) {
+  return std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>>(
+      new QuadrupedComAd(frameDeclaration, createQuadrupedPinocchioInterfaceFromUrdfString(urdf)));
 }
 
 }  // namespace anymal

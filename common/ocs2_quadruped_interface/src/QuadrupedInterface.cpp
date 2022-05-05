@@ -28,9 +28,11 @@
 namespace switched_model {
 
 QuadrupedInterface::QuadrupedInterface(const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel,
-                                       const com_model_t& comModel, const ad_com_model_t& adComModel, Settings settings)
-
+                                       const com_model_t& comModel, const ad_com_model_t& adComModel, Settings settings,
+                                       std::vector<std::string> jointNames, std::string baseName)
     : settings_(std::move(settings)),
+      jointNames_(std::move(jointNames)),
+      baseName_(std::move(baseName)),
       kinematicModelPtr_(kinematicModel.clone()),
       adKinematicModelPtr_(adKinematicModel.clone()),
       comModelPtr_(comModel.clone()),

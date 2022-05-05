@@ -17,15 +17,17 @@ int main(int argc, char* argv[]) {
   if (programArgs.size() < 3) {
     throw std::runtime_error("No robot name and config folder specified. Aborting.");
   }
-  const std::string robotName(programArgs[1]);
+  const std::string descriptionName(programArgs[1]);
   const std::string configName(programArgs[2]);
 
   // Initialize ros node
   ros::init(argc, argv, "anymal_loopshaping_mpc");
   ros::NodeHandle nodeHandle;
 
-  auto anymalInterface =
-      anymal::getAnymalLoopshapingInterface(anymal::stringToAnymalModel(robotName), anymal::getConfigFolderLoopshaping(configName));
+  std::string urdfString;
+  nodeHandle.getParam(descriptionName, urdfString);
+
+  auto anymalInterface = anymal::getAnymalLoopshapingInterface(urdfString, anymal::getConfigFolderLoopshaping(configName));
   const auto mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePathLoopshaping(configName));
 
   switch (anymalInterface->modelSettings().algorithm_) {

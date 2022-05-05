@@ -61,7 +61,6 @@ add_library(${PROJECT_NAME}
   src/QuadrupedPointfootInterface.cpp
   src/QuadrupedTfPublisher.cpp
   src/QuadrupedVisualizer.cpp
-  src/QuadrupedWheeledInterface.cpp
   src/SwingPlanningVisualizer.cpp
   src/TerrainPlaneVisualizer.cpp
   src/TerrainReceiver.cpp

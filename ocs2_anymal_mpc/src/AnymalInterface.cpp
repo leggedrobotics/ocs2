@@ -7,7 +7,6 @@
 #include <ros/package.h>
 
 #include <ocs2_quadruped_interface/QuadrupedPointfootInterface.h>
-#include <ocs2_quadruped_interface/QuadrupedWheeledInterface.h>
 
 namespace anymal {
 

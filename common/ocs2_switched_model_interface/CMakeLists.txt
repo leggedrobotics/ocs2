@@ -46,7 +46,6 @@ include_directories(
 
 add_library(${PROJECT_NAME}
 	src/constraint/EndEffectorVelocityConstraint.cpp
-	src/constraint/EndEffectorVelocityInFootFrameConstraint.cpp
 	src/constraint/FootNormalConstraint.cpp
 	src/constraint/FrictionConeConstraint.cpp
 	src/constraint/ZeroForceConstraint.cpp

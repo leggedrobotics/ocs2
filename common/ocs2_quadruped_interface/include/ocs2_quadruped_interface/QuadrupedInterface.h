@@ -128,7 +128,6 @@ class QuadrupedInterface : public ocs2::RobotInterface {
   std::unique_ptr<ocs2::StateInputConstraint> createZeroForceConstraint(size_t leg) const;
   std::unique_ptr<ocs2::StateInputConstraint> createFootNormalConstraint(size_t leg) const;
   std::unique_ptr<ocs2::StateInputConstraint> createEndEffectorVelocityConstraint(size_t leg) const;
-  std::unique_ptr<ocs2::StateInputConstraint> createEndEffectorVelocityInFootFrameConstraint(size_t leg) const;
   std::unique_ptr<ocs2::StateInputCost> createFrictionConeCost() const;
 
  private:

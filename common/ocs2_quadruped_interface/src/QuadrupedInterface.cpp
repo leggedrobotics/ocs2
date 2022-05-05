@@ -7,7 +7,6 @@
 #include <ocs2_core/misc/Display.h>
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraint.h>
-#include <ocs2_switched_model_interface/constraint/EndEffectorVelocityInFootFrameConstraint.h>
 #include <ocs2_switched_model_interface/constraint/FootNormalConstraint.h>
 #include <ocs2_switched_model_interface/constraint/FrictionConeConstraint.h>
 #include <ocs2_switched_model_interface/constraint/ZeroForceConstraint.h>
@@ -107,11 +106,6 @@ std::unique_ptr<ocs2::StateInputConstraint> QuadrupedInterface::createFootNormal
 
 std::unique_ptr<ocs2::StateInputConstraint> QuadrupedInterface::createEndEffectorVelocityConstraint(size_t leg) const {
   return std::unique_ptr<ocs2::StateInputConstraint>(new EndEffectorVelocityConstraint(leg, *getSwitchedModelModeScheduleManagerPtr()));
-}
-
-std::unique_ptr<ocs2::StateInputConstraint> QuadrupedInterface::createEndEffectorVelocityInFootFrameConstraint(size_t leg) const {
-  return std::unique_ptr<ocs2::StateInputConstraint>(new EndEffectorVelocityInFootFrameConstraint(
-      leg, *getSwitchedModelModeScheduleManagerPtr(), getKinematicModelAd(), modelSettings().recompileLibraries_));
 }
 
 std::unique_ptr<ocs2::StateInputCost> QuadrupedInterface::createFrictionConeCost() const {

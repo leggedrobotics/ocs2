@@ -474,8 +474,7 @@ scalar_t MultipleShootingSolver::trajectoryNorm(const vector_array_t& v) {
 }
 
 scalar_t MultipleShootingSolver::totalConstraintViolation(const PerformanceIndex& performance) const {
-    // TODO: adam: update this to include inequality violations
-  return std::sqrt(performance.dynamicsViolationSSE + performance.equalityConstraintsSSE);
+  return std::sqrt(performance.dynamicsViolationSSE + performance.equalityConstraintsSSE + performance.inequalityConstraintsSSE);
 }
 
 multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIndex& baseline,

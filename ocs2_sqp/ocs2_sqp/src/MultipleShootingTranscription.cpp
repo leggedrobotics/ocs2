@@ -64,7 +64,7 @@ Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlP
   cost *= dt;
   performance.cost = cost.f;
 
-  // Constraints
+  // Equality constraints
   if (!optimalControlProblem.equalityConstraintPtr->empty()) {
     // C_{k} * dx_{k} + D_{k} * du_{k} + e_{k} = 0
     constraints = optimalControlProblem.equalityConstraintPtr->getLinearApproximation(t, x, u, *optimalControlProblem.preComputationPtr);
@@ -82,8 +82,14 @@ Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlP
     }
   }
 
+  // Inequality constraints
   if (!optimalControlProblem.inequalityConstraintPtr->empty()) {
+    // C_{k} * dx_{k} + D_{k} * du_{k} + e_{k} >= 0
     ineqConstraints = optimalControlProblem.inequalityConstraintPtr->getLinearApproximation(t, x, u, *optimalControlProblem.preComputationPtr);
+    if (ineqConstraints.f.size() > 0) {
+      // constraint is only a violation if negative
+      performance.inequalityConstraintsSSE = dt * ineqConstraints.f.cwiseMin(0.0).squaredNorm();
+    }
   }
 
   return transcription;
@@ -105,7 +111,7 @@ PerformanceIndex computeIntermediatePerformance(const OptimalControlProblem& opt
   // Costs
   performance.cost = dt * computeCost(optimalControlProblem, t, x, u);
 
-  // Constraints
+  // Equality constraints
   if (!optimalControlProblem.equalityConstraintPtr->empty()) {
     const vector_t constraints = optimalControlProblem.equalityConstraintPtr->getValue(t, x, u, *optimalControlProblem.preComputationPtr);
     if (constraints.size() > 0) {
@@ -113,11 +119,12 @@ PerformanceIndex computeIntermediatePerformance(const OptimalControlProblem& opt
     }
   }
 
+  // Inequality constraints
   if (!optimalControlProblem.inequalityConstraintPtr->empty()) {
     const vector_t ineqConstraints = optimalControlProblem.inequalityConstraintPtr->getValue(t, x, u, *optimalControlProblem.preComputationPtr);
     if (ineqConstraints.size() > 0) {
       // constraint is only a violation if negative
-      performance.equalityConstraintsSSE += dt * ineqConstraints.cwiseMin(0.0).squaredNorm();
+      performance.inequalityConstraintsSSE += dt * ineqConstraints.cwiseMin(0.0).squaredNorm();
     }
   }
 

@@ -208,4 +208,3 @@ PerformanceIndex computeEventPerformance(const OptimalControlProblem& optimalCon
 
 }  // namespace multiple_shooting
 }  // namespace ocs2
-

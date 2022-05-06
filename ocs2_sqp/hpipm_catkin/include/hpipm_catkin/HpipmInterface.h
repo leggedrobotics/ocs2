@@ -130,4 +130,3 @@ class HpipmInterface {
 };
 
 }  // namespace ocs2
-

@@ -176,9 +176,7 @@ void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile
 
     // problemPtr_->softConstraintPtr->add(footName + "_frictionCone",
     //                                     getFrictionConeConstraint(i, frictionCoefficient, barrierPenaltyConfig));
-    problemPtr_->inequalityConstraintPtr->add(footName + "_frictionCone",
-                                        getHardFrictionConeConstraint(i, frictionCoefficient, barrierPenaltyConfig));
-
+    problemPtr_->inequalityConstraintPtr->add(footName + "_frictionCone", getHardFrictionConeConstraint(i, frictionCoefficient));
     problemPtr_->equalityConstraintPtr->add(footName + "_zeroForce", getZeroForceConstraint(i));
     problemPtr_->equalityConstraintPtr->add(footName + "_zeroVelocity",
                                             getZeroVelocityConstraint(*eeKinematicsPtr, i, useAnalyticalGradientsConstraints));
@@ -324,8 +322,7 @@ std::unique_ptr<StateInputCost> LeggedRobotInterface::getFrictionConeConstraint(
   return std::unique_ptr<StateInputCost>(new StateInputSoftConstraint(std::move(frictionConeConstraintPtr), std::move(penalty)));
 }
 
-std::unique_ptr<StateInputConstraint> LeggedRobotInterface::getHardFrictionConeConstraint(size_t contactPointIndex, scalar_t frictionCoefficient,
-                                                                                const RelaxedBarrierPenalty::Config& barrierPenaltyConfig) {
+std::unique_ptr<StateInputConstraint> LeggedRobotInterface::getHardFrictionConeConstraint(size_t contactPointIndex, scalar_t frictionCoefficient) {
   FrictionConeConstraint::Config frictionConeConConfig(frictionCoefficient);
   std::unique_ptr<FrictionConeConstraint> frictionConeConstraintPtr(
       new FrictionConeConstraint(*referenceManagerPtr_, std::move(frictionConeConConfig), contactPointIndex, centroidalModelInfo_));

@@ -56,11 +56,7 @@ struct PerformanceIndex {
    */
   scalar_t equalityConstraintsSSE = 0.0;
 
-  /** Sum of Squared Error (SSE) of inequality constraints:
-   * - Final: squared norm of violation in state equality constraints
-   * - PreJumps: sum of squared norm of violation in state equality constraints
-   * - Intermediates: Integral of squared norm violation in state/state-input equality constraints
-   *
+  /** Sum of Squared Error (SSE) of hard inequality constraints, used by the SQP solver.
    * Inequality constraints are satisfied if positive, so there is only error if the constraints are negative.
    */
   scalar_t inequalityConstraintsSSE = 0.0;

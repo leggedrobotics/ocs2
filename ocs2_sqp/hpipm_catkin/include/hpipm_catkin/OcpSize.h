@@ -92,3 +92,4 @@ OcpSize extractSizesFromProblem(const std::vector<VectorFunctionLinearApproximat
 
 }  // namespace hpipm_interface
 }  // namespace ocs2
+

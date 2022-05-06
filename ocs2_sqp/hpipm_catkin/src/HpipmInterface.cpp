@@ -31,8 +31,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/misc/LinearAlgebra.h>
 
-#include <iostream>
-
 extern "C" {
 #include <hpipm_d_ocp_qp.h>
 #include <hpipm_d_ocp_qp_dim.h>
@@ -233,7 +231,8 @@ class HpipmInterface::Impl {
     // === Constraints ===
 
     // Equality constraints for each stage:
-    // C * x + D * u == b
+    // C * x + D * u == d
+    // Declare at this scope to keep data alive while HPIPM has the pointers
     std::vector<matrix_t> C_eq(N + 1);
     std::vector<matrix_t> D_eq(N + 1);
     std::vector<vector_t> d_eq(N + 1);
@@ -266,7 +265,7 @@ class HpipmInterface::Impl {
     }
 
     // Inequality constraints for each stage:
-    // C * x + D * u >= b
+    // C * x + D * u >= d
     std::vector<matrix_t> C_ineq(N + 1);
     std::vector<matrix_t> D_ineq(N + 1);
     std::vector<vector_t> d_ineq(N + 1);
@@ -275,7 +274,6 @@ class HpipmInterface::Impl {
       auto& constr = *ineqConstraints;
 
       // k = 0
-      // No need to specify C_ineq[0] since initial state is given
       if (constr[0].f.size() > 0) {
         d_ineq[0] = -constr[0].f;
         d_ineq[0].noalias() -= constr[0].dfdx * x0;
@@ -291,6 +289,7 @@ class HpipmInterface::Impl {
         }
       }
 
+      // k = N
       if (constr[N].f.size() > 0) {
         d_ineq[N] = -constr[N].f;
         C_ineq[N] = constr[N].dfdx;
@@ -311,11 +310,14 @@ class HpipmInterface::Impl {
 
     // Combine equality and inequality constraints and extract raw data
     for (int k = 0; k <= N; k++) {
+        // Make block diagonal C = [[C_eq, 0     ],
+        //                          [0,    C_ineq]]
         C_con[k].setZero(C_eq[k].rows() + C_ineq[k].rows(), C_eq[k].cols() + C_ineq[k].cols());
         C_con[k].topLeftCorner(C_eq[k].rows(), C_eq[k].cols()) = C_eq[k];
         C_con[k].bottomRightCorner(C_ineq[k].rows(), C_ineq[k].cols()) = C_ineq[k];
         CC[k] = C_con[k].data();
 
+        // Make block diagonal D
         D_con[k].setZero(D_eq[k].rows() + D_ineq[k].rows(), D_eq[k].cols() + D_ineq[k].cols());
         D_con[k].topLeftCorner(D_eq[k].rows(), D_eq[k].cols()) = D_eq[k];
         D_con[k].bottomRightCorner(D_ineq[k].rows(), D_ineq[k].cols()) = D_ineq[k];

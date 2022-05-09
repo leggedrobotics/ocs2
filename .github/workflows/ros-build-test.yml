@@ -45,12 +45,12 @@ jobs:
       run: |
         git clone --recurse-submodules https://github.com/leggedrobotics/pinocchio.git src/pinocchio
         git clone --recurse-submodules https://github.com/leggedrobotics/hpp-fcl.git src/hpp-fcl
-        git clone https://github.com/ANYbotics/anymal_c_simple_description.git src/anymal-c-simple-description
+        git clone https://github.com/leggedrobotics/ocs2_robotic_assets.git src/ocs2_robotic_assets
     - name: Build (${{ matrix.build_type }})
       shell: bash
       run: |
         source /opt/ros/noetic/setup.bash
-        catkin_make_isolated --use-ninja --merge --only-pkg-with-deps ocs2 --cmake-args -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} 
+        catkin_make_isolated --use-ninja --merge --only-pkg-with-deps ocs2 --ignore-pkg ocs2_raisim --cmake-args -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} 
         
     - name: Test
       shell: bash

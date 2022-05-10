@@ -221,12 +221,14 @@ Eigen::Matrix<SCALAR_T, 3, 1> rotationMatrixToRotationVector(const Eigen::Matrix
   // Clip trace away from singularities, to be used in branches that might result in NaN.
   const SCALAR_T safeHighTrace =
       CppAD::CondExpGt(trace, smallAngleThreshold, smallAngleThreshold, trace);  // this trace is lower than 3 - eps
+  const SCALAR_T safeTrace = CppAD::CondExpGt(safeHighTrace, largeAngleThreshold, safeHighTrace,
+                                              largeAngleThreshold);  // this trace is also higher than -1.0 + eps
 
   // Rotation close to zero -> use taylor expansion, use when trace > 3.0 - eps
   const Eigen::Matrix<SCALAR_T, 3, 1> taylorExpansionSol = (SCALAR_T(0.5) - (trace - SCALAR_T(3.0)) / SCALAR_T(12.0)) * skewVector;
 
   // Normal rotation, use normal logarithmic map
-  const SCALAR_T tmp = SCALAR_T(0.5) * (safeHighTrace - SCALAR_T(1.0));
+  const SCALAR_T tmp = SCALAR_T(0.5) * (safeTrace - SCALAR_T(1.0));
   const SCALAR_T theta = acos(tmp);
   const Eigen::Matrix<SCALAR_T, 3, 1> normalSol = (SCALAR_T(0.5) * theta / sqrt(SCALAR_T(1.0) - tmp * tmp)) * skewVector;
 

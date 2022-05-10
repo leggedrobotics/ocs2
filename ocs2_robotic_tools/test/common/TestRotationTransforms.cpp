@@ -246,7 +246,10 @@ TEST(RotationTransforms, rotationErrorSquaredGradient) {
 
   vector_t in(9);
   in << 1, 0, 0, 0, 1, 0, 0, 0, 1;
+  const auto Jidentity = adInterface.getJacobian(in);
+  ASSERT_TRUE(Jidentity.allFinite());
 
-  const auto J = adInterface.getJacobian(in);
-  ASSERT_TRUE(J.allFinite());
+  in << 1, 0, 0, 0, -1, 0, 0, 0, -1;
+  const auto J180 = adInterface.getJacobian(in);
+  ASSERT_TRUE(J180.allFinite());
 }

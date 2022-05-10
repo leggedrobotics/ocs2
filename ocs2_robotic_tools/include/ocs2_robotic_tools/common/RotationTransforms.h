@@ -215,12 +215,18 @@ Eigen::Matrix<SCALAR_T, 3, 1> rotationMatrixToRotationVector(const Eigen::Matrix
 
   // Tolerance to select alternative solution near singularity
   const SCALAR_T eps(1e-8);
+  const SCALAR_T smallAngleThreshold = SCALAR_T(3.0) - eps;   // select taylorExpansionSol if trace > 3 - eps
+  const SCALAR_T largeAngleThreshold = -SCALAR_T(1.0) + eps;  // select quaternionSol if trace < -1.0 + eps
+
+  // Clip trace away from singularities, to be used in branches that might result in NaN.
+  const SCALAR_T safeHighTrace =
+      CppAD::CondExpGt(trace, smallAngleThreshold, smallAngleThreshold, trace);  // this trace is lower than 3 - eps
 
   // Rotation close to zero -> use taylor expansion, use when trace > 3.0 - eps
   const Eigen::Matrix<SCALAR_T, 3, 1> taylorExpansionSol = (SCALAR_T(0.5) - (trace - SCALAR_T(3.0)) / SCALAR_T(12.0)) * skewVector;
 
   // Normal rotation, use normal logarithmic map
-  const SCALAR_T tmp = SCALAR_T(0.5) * (trace - SCALAR_T(1.0));
+  const SCALAR_T tmp = SCALAR_T(0.5) * (safeHighTrace - SCALAR_T(1.0));
   const SCALAR_T theta = acos(tmp);
   const Eigen::Matrix<SCALAR_T, 3, 1> normalSol = (SCALAR_T(0.5) * theta / sqrt(SCALAR_T(1.0) - tmp * tmp)) * skewVector;
 
@@ -232,13 +238,11 @@ Eigen::Matrix<SCALAR_T, 3, 1> rotationMatrixToRotationVector(const Eigen::Matrix
   q.w() = CppAD::CondExpGt(q.w(), SCALAR_T(0.0), q.w(), -q.w());
 
   // Norm of vector part of the quaternion. Compute from trace to avoid squaring element and losing precision
-  const SCALAR_T qVecNorm = SCALAR_T(0.5) * sqrt(SCALAR_T(3.0) - trace);
+  const SCALAR_T qVecNorm = SCALAR_T(0.5) * sqrt(SCALAR_T(3.0) - safeHighTrace);
 
   Eigen::Matrix<SCALAR_T, 3, 1> quaternionSol = SCALAR_T(4.0) * atan(qVecNorm / (q.w() + SCALAR_T(1.0))) * q.vec() / qVecNorm;
 
   // Select solution
-  const SCALAR_T smallAngleThreshold = SCALAR_T(3.0) - eps;   // select taylorExpansionSol if trace > 3 - eps
-  const SCALAR_T largeAngleThreshold = -SCALAR_T(1.0) + eps;  // select quaternionSol if trace < -1.0 + eps
   return selectSolutionGt(trace, largeAngleThreshold, selectSolutionGt(trace, smallAngleThreshold, taylorExpansionSol, normalSol),
                           quaternionSol);
 }

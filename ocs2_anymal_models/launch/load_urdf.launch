@@ -27,4 +27,20 @@
     </include>
   </group>
 
+  <!-- Load dingo description -->
+  <group if="$(eval arg('robot_name') == 'dingo')">
+    <include file="$(find rosparam_tools)/launch/load_rosparam.launch">
+      <arg name="parameter"       value="$(arg description_name)"/>
+      <arg name="file"            value="$(find anymal_dingo_rsl)/urdf/cached_anymal_dingo_rsl.urdf"/>
+    </include>
+  </group>
+
+  <!-- Load donkey description -->
+  <group if="$(eval arg('robot_name') == 'donkey')">
+    <include file="$(find rosparam_tools)/launch/load_rosparam.launch">
+      <arg name="parameter"       value="$(arg description_name)"/>
+      <arg name="file"            value="$(find anymal_donkey_rsl)/urdf/cached_anymal_donkey_rsl.urdf"/>
+    </include>
+  </group>
+
 </launch>

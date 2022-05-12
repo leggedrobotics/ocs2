@@ -4,7 +4,7 @@
     <arg name="rviz"                  default="true" />
     <arg name="performance_indices"   default="true" />
     <arg name="description_name"      default="ocs2_anymal_description"/>
-    <arg name="target_command"        default="$(find ocs2_anymal_commands)/config/targetCommand.info"/>
+    <arg name="target_command"        default="$(find ocs2_anymal_mpc)/config/$(arg config_name)/targetCommand.info"/>
 
     <group if="$(arg rviz)">
       <!-- Load robot description -->

@@ -20,5 +20,7 @@
   <exec_depend>anymal_cerberus_rsl</exec_depend>
   <exec_depend>anymal_chimera_rsl</exec_depend>
   <exec_depend>anymal_camel_rsl</exec_depend>
+  <exec_depend>anymal_dingo_rsl</exec_depend>
+  <exec_depend>anymal_donkey_rsl</exec_depend>
 
 </package>

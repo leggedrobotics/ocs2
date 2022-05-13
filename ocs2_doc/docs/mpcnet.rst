@@ -145,6 +145,13 @@ The most important classes/files that have to be implemented are:
 * **mpcnet.py**: Adds robot-specific methods, e.g. implements the tasks that the robot should execute, for the MPC-Net training.
 * **train.py**: Starts the main training script.
 
+Known Issues
+~~~~~~~~~~~~
+
+Stiff inequality constraints can lead to very large Hamiltonians and gradients of the Hamilltonian near the log barrier.
+This can obstruct the learning process and the policy might not learn something useful.
+In that case, enable the gradient clipping in the robot's MPC-Net YAML configuration file and tune the gradient clipping value.
+
 References
 ~~~~~~~~~~
 

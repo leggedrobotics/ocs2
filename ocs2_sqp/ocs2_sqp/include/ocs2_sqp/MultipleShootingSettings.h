@@ -54,7 +54,8 @@ struct Settings {
   scalar_t gamma_c = 1e-6;       // (3): ELSE REQUIRE c{i+1} < (c{i} - gamma_c * g{i}) OR g{i+1} < (1-gamma_c) * g{i}
 
   // controller type
-  bool useFeedbackPolicy = true;  // true to use feedback, false to use feedforward
+  bool useFeedbackPolicy = true;     // true to use feedback, false to use feedforward
+  bool createValueFunction = false;  // true to store the value function, false to ignore it
 
   // QP subproblem solver settings
   hpipm_interface::Settings hpipmSettings = hpipm_interface::Settings();

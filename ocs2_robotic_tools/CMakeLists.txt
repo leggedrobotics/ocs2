@@ -94,6 +94,7 @@ install(DIRECTORY
 
 catkin_add_gtest(rotation_transform_tests
   test/common/TestRotationTransforms.cpp
+  test/common/TestRotationDerivativesTransforms.cpp
 )
 target_link_libraries(rotation_transform_tests
   ${PROJECT_NAME}

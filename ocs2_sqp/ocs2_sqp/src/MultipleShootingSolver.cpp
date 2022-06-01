@@ -76,6 +76,7 @@ MultipleShootingSolver::~MultipleShootingSolver() {
 void MultipleShootingSolver::reset() {
   // Clear solution
   primalSolution_ = PrimalSolution();
+  valueFunction_.clear();
   performanceIndeces_.clear();
 
   // reset timers
@@ -121,6 +122,27 @@ const std::vector<PerformanceIndex>& MultipleShootingSolver::getIterationsLog() 
   }
 }
 
+ScalarFunctionQuadraticApproximation MultipleShootingSolver::getValueFunction(scalar_t time, const vector_t& state) const {
+  if (valueFunction_.empty()) {
+    throw std::runtime_error("[MultipleShootingSolver] Value function is empty! Is createValueFunction true and did the solver run?");
+  } else {
+    // Interpolation
+    const auto indexAlpha = LinearInterpolation::timeSegment(time, primalSolution_.timeTrajectory_);
+
+    ScalarFunctionQuadraticApproximation valueFunction;
+    using T = std::vector<ocs2::ScalarFunctionQuadraticApproximation>;
+    using LinearInterpolation::interpolate;
+    valueFunction.f = 0.0;
+    valueFunction.dfdx = interpolate(indexAlpha, valueFunction_, [](const T& v, size_t ind) -> const vector_t& { return v[ind].dfdx; });
+    valueFunction.dfdxx = interpolate(indexAlpha, valueFunction_, [](const T& v, size_t ind) -> const matrix_t& { return v[ind].dfdxx; });
+
+    // Re-center around query state
+    valueFunction.dfdx.noalias() += valueFunction.dfdxx * state;
+
+    return valueFunction;
+  }
+}
+
 void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
   if (settings_.printSolverStatus || settings_.printLinesearch) {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
@@ -160,6 +182,7 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
     solveQpTimer_.startTimer();
     const vector_t delta_x0 = initState - x[0];
     const auto deltaSolution = getOCPSolution(delta_x0);
+    setValueFunction(timeDiscretization, x);
     solveQpTimer_.endTimer();
 
     // Apply step
@@ -285,6 +308,16 @@ MultipleShootingSolver::OcpSubproblemSolution MultipleShootingSolver::getOCPSolu
   }
 
   return solution;
+}
+
+void MultipleShootingSolver::setValueFunction(const std::vector<AnnotatedTime>& time, const vector_array_t& x) {
+  if (settings_.createValueFunction) {
+    valueFunction_ = hpipmInterface_.getRiccatiCostToGo(dynamics_[0], cost_[0]);
+    // Correct for linearization state
+    for (int i = 0; i < time.size(); ++i) {
+      valueFunction_[i].dfdx.noalias() -= valueFunction_[i].dfdxx * x[i];
+    }
+  }
 }
 
 void MultipleShootingSolver::setPrimalSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& x, vector_array_t&& u) {

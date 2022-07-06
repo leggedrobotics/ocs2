@@ -431,7 +431,9 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointLimitSoftCon
     }
   }
 
-  return std::unique_ptr<StateInputCost>(new StateInputSoftBoxConstraint(stateLimits, inputLimits));
+  auto boxConstraints = std::unique_ptr<StateInputSoftBoxConstraint>(new StateInputSoftBoxConstraint(stateLimits, inputLimits));
+  boxConstraints->initializeOffset(0.0, vector_t::Zero(manipulatorModelInfo_.stateDim), vector_t::Zero(manipulatorModelInfo_.inputDim));
+  return boxConstraints;
 }
 
 }  // namespace mobile_manipulator

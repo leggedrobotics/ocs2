@@ -56,6 +56,8 @@ class StateInputSoftBoxConstraint final : public StateInputCost {
     std::unique_ptr<PenaltyBase> penaltyPtr;
 
     /* Constructors and assignment operators */
+    BoxConstraint() = default;
+    ~BoxConstraint() = default;
     BoxConstraint(const BoxConstraint& other);
     BoxConstraint& operator=(const BoxConstraint& other);
     BoxConstraint(BoxConstraint&& other) noexcept = default;

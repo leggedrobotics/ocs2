@@ -12,7 +12,6 @@ namespace {
 const std::string dataFolder = boost::filesystem::path(__FILE__).parent_path().generic_string() + "/data/";
 }
 
-
 TEST(testLoadPair, loadStringPair) {
   std::vector<std::pair<std::string, std::string>> loadVector;
   ocs2::loadData::loadStdVectorOfPair(dataFolder + "/pairVectors.info", "stringPairs", loadVector);

@@ -84,7 +84,7 @@ void StateInputSoftBoxConstraint::sortByIndex(std::vector<BoxConstraint>& boxCon
 /******************************************************************************************************/
 /******************************************************************************************************/
 void StateInputSoftBoxConstraint::initializeOffset(scalar_t time, const vector_t& state, const vector_t& input) {
-  offset_ = getValue(time, state, stateBoxConstraints_) + getValue(time, input, inputBoxConstraints_);
+  offset_ = -getValue(time, state, stateBoxConstraints_) - getValue(time, input, inputBoxConstraints_);
 }
 
 /******************************************************************************************************/

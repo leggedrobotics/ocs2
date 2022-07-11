@@ -129,7 +129,6 @@ add_library(${PROJECT_NAME}
   src/model_data/ModelData.cpp
   src/misc/LinearAlgebra.cpp
   src/misc/Log.cpp
-  src/misc/LoadStdVectorOfPair.cpp
   src/soft_constraint/StateSoftConstraint.cpp
   src/soft_constraint/StateInputSoftConstraint.cpp
   src/penalties/MultidimensionalPenalty.cpp
@@ -285,7 +284,7 @@ catkin_add_gtest(${PROJECT_NAME}_test_misc
   test/misc/testLogging.cpp
   test/misc/testLoadData.cpp
   test/misc/testLookup.cpp
-  )
+)
 target_link_libraries(${PROJECT_NAME}_test_misc
   ${PROJECT_NAME}
   ${Boost_LIBRARIES}

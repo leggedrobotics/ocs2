@@ -235,7 +235,7 @@ TEST(RotationTransforms, rotationErrorSquaredGradient) {
   // Tests that the box minus rotation error has suitable, finite gradients when tacking the error squared
   auto adFunction = [](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
     ad_matrix_t R(3, 3);
-    R << x[0],x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8];
+    R << x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8];
     ad_vector_t f = rotationMatrixToRotationVector<ad_scalar_t>(R);
     y = ad_vector_t(1);
     y << f.squaredNorm();

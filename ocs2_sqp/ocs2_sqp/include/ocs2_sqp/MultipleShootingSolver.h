@@ -130,8 +130,8 @@ class MultipleShootingSolver : public SolverBase {
   };
   OcpSubproblemSolution getOCPSolution(const vector_t& delta_x0);
 
-  /** Set up the value function based on the last solved QP */
-  void setValueFunction(const std::vector<AnnotatedTime>& time, const vector_array_t& x);
+  /** Extract the value function based on the last solved QP */
+  void extractValueFunction(const std::vector<AnnotatedTime>& time, const vector_array_t& x);
 
   /** Set up the primal solution based on the optimized state and input trajectories */
   void setPrimalSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& x, vector_array_t&& u);

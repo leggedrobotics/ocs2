@@ -208,7 +208,7 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
     solveQpTimer_.startTimer();
     const vector_t delta_x0 = initState - x[0];
     const auto deltaSolution = getOCPSolution(delta_x0);
-    setValueFunction(timeDiscretization, x);
+    extractValueFunction(timeDiscretization, x);
     solveQpTimer_.endTimer();
 
     // Apply step
@@ -352,7 +352,7 @@ MultipleShootingSolver::OcpSubproblemSolution MultipleShootingSolver::getOCPSolu
   return solution;
 }
 
-void MultipleShootingSolver::setValueFunction(const std::vector<AnnotatedTime>& time, const vector_array_t& x) {
+void MultipleShootingSolver::extractValueFunction(const std::vector<AnnotatedTime>& time, const vector_array_t& x) {
   if (settings_.createValueFunction) {
     valueFunction_ = hpipmInterface_.getRiccatiCostToGo(dynamics_[0], cost_[0]);
     // Correct for linearization state

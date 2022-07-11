@@ -18,7 +18,7 @@ pkg_check_modules(pinocchio REQUIRED pinocchio)
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-# Add pinocchio link directory
+# Add pinocchio configurations
 include(cmake/pinocchio_config.cmake)
 
 ###################################

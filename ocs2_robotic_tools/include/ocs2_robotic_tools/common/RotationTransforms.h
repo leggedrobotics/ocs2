@@ -105,11 +105,14 @@ Eigen::Matrix<SCALAR_T, 3, 3> getRotationMatrixFromZyxEulerAngles(const Eigen::M
   const SCALAR_T s2 = sin(y);
   const SCALAR_T s3 = sin(x);
 
+  const SCALAR_T s2s3 = s2 * s3;
+  const SCALAR_T s2c3 = s2 * c3;
+
   // clang-format off
   Eigen::Matrix<SCALAR_T, 3, 3> rotationMatrix;
-  rotationMatrix << c1 * c2,      c1 * s2 * s3 - s1 * c3,       c1 * s2 * c3 + s1 * s3,
-                    s1 * c2,      s1 * s2 * s3 + c1 * c3,       s1 * s2 * c3 - c1 * s3,
-                      -s2,                c2 * s3,                      c2 * c3;
+  rotationMatrix << c1 * c2,      c1 * s2s3 - s1 * c3,       c1 * s2c3 + s1 * s3,
+                    s1 * c2,      s1 * s2s3 + c1 * c3,       s1 * s2c3 - c1 * s3,
+                        -s2,                  c2 * s3,                   c2 * c3;
   // clang-format on
   return rotationMatrix;
 }

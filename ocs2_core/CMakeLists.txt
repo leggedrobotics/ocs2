@@ -129,7 +129,6 @@ add_library(${PROJECT_NAME}
   src/model_data/ModelData.cpp
   src/misc/LinearAlgebra.cpp
   src/misc/Log.cpp
-  src/misc/LoadStdVectorOfPair.cpp
   src/soft_constraint/StateSoftConstraint.cpp
   src/soft_constraint/StateInputSoftConstraint.cpp
   src/penalties/MultidimensionalPenalty.cpp
@@ -282,6 +281,8 @@ target_link_libraries(${PROJECT_NAME}_loopshaping
 catkin_add_gtest(${PROJECT_NAME}_test_misc
   test/misc/testInterpolation.cpp
   test/misc/testLinearAlgebra.cpp
+  test/misc/testLogging.cpp
+  test/misc/testLoadData.cpp
   test/misc/testLookup.cpp
 )
 target_link_libraries(${PROJECT_NAME}_test_misc
@@ -339,16 +340,6 @@ catkin_add_gtest(test_ModeSchedule
 )
 target_link_libraries(test_ModeSchedule
   ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  gtest_main
-)
-
-catkin_add_gtest(test_Logging
-  test/misc/testLogging.cpp
-)
-target_link_libraries(test_Logging
-  ${PROJECT_NAME}
-  ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
   gtest_main
 )

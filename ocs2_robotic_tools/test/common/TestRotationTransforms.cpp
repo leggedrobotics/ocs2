@@ -230,3 +230,26 @@ TEST(RotationTransforms, rotationErrorGradientDescent) {
   eulerAnglesReference = vector3_t::Random();
   ASSERT_TRUE(gradientDescent(eulerAngles, eulerAnglesReference).isApprox(eulerAnglesReference, 1e-6));
 }
+
+TEST(RotationTransforms, rotationErrorSquaredGradient) {
+  // Tests that the box minus rotation error has suitable, finite gradients when tacking the error squared
+  auto adFunction = [](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
+    ad_matrix_t R(3, 3);
+    R << x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8];
+    ad_vector_t f = rotationMatrixToRotationVector<ad_scalar_t>(R);
+    y = ad_vector_t(1);
+    y << f.squaredNorm();
+  };
+
+  CppAdInterface adInterface(adFunction, 9, 0, "rotationErrorSquaredTest");
+  adInterface.createModels();
+
+  vector_t in(9);
+  in << 1, 0, 0, 0, 1, 0, 0, 0, 1;
+  const auto Jidentity = adInterface.getJacobian(in);
+  ASSERT_TRUE(Jidentity.allFinite());
+
+  in << 1, 0, 0, 0, -1, 0, 0, 0, -1;
+  const auto J180 = adInterface.getJacobian(in);
+  ASSERT_TRUE(J180.allFinite());
+}

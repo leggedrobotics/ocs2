@@ -1,0 +1,19 @@
+stringPairs {
+   [0] "s1, s2"
+   [1] "s3, s4"
+}
+
+sizePairs {
+   [0] "1, 2"
+   [1] "3, 4"
+}
+
+stringScalarPairs {
+   [0] "s1, 2.1"
+   [1] "s3, 4.3"
+}
+
+stringSizePairs {
+   [0] "s1, 2"
+   [1] "s3, 4"
+}

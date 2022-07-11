@@ -31,7 +31,6 @@ visualization_msgs::MarkerArray getConvexTerrainMarkers(const ConvexTerrain& con
     boundary.emplace_back(ocs2::getPointMsg(pointInWorldFrame));
 
     markerArray.markers.emplace_back(ocs2::getLineMsg(std::move(boundary), color, linewidth));
-  } else {
   }
 
   return markerArray;

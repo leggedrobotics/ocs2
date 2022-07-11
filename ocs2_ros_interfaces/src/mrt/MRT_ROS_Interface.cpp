@@ -127,7 +127,6 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
   commandData.mpcInitObservation_ = ros_msg_conversions::readObservationMsg(msg.initObservation);
   commandData.mpcTargetTrajectories_ = ros_msg_conversions::readTargetTrajectoriesMsg(msg.planTargetTrajectories);
   performanceIndices = ros_msg_conversions::readPerformanceIndicesMsg(msg.performanceIndices);
-  primalSolution.modeSchedule_ = ros_msg_conversions::readModeScheduleMsg(msg.modeSchedule);
 
   const size_t N = msg.timeTrajectory.size();
   if (N == 0) {
@@ -141,6 +140,8 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
   }
 
   primalSolution.clear();
+
+  primalSolution.modeSchedule_ = ros_msg_conversions::readModeScheduleMsg(msg.modeSchedule);
 
   size_array_t stateDim(N);
   size_array_t inputDim(N);

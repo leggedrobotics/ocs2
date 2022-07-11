@@ -72,9 +72,7 @@ class MultipleShootingSolver : public SolverBase {
 
   const std::vector<PerformanceIndex>& getIterationsLog() const override;
 
-  ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const override {
-    throw std::runtime_error("[MultipleShootingSolver] getValueFunction() not available yet.");
-  };
+  ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const override;
 
   ScalarFunctionQuadraticApproximation getHamiltonian(scalar_t time, const vector_t& state, const vector_t& input) override {
     throw std::runtime_error("[MultipleShootingSolver] getHamiltonian() not available yet.");
@@ -121,6 +119,9 @@ class MultipleShootingSolver : public SolverBase {
   };
   OcpSubproblemSolution getOCPSolution(const vector_t& delta_x0);
 
+  /** Extract the value function based on the last solved QP */
+  void extractValueFunction(const std::vector<AnnotatedTime>& time, const vector_array_t& x);
+
   /** Set up the primal solution based on the optimized state and input trajectories */
   void setPrimalSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& x, vector_array_t&& u);
 
@@ -151,6 +152,9 @@ class MultipleShootingSolver : public SolverBase {
 
   // Solution
   PrimalSolution primalSolution_;
+
+  // Value function in absolute state coordinates (without the constant value)
+  std::vector<ScalarFunctionQuadraticApproximation> valueFunction_;
 
   // Solver interface
   HpipmInterface hpipmInterface_;

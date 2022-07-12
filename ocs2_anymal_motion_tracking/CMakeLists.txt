@@ -56,13 +56,13 @@ target_link_libraries(${PROJECT_NAME}
 )
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
-add_executable(${PROJECT_NAME}_viz_node
-  src/VisualizeTargetsNode.cpp
-)
-target_link_libraries(${PROJECT_NAME}_viz_node
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
+#add_executable(${PROJECT_NAME}_viz_node
+#  src/VisualizeTargetsNode.cpp
+#)
+#target_link_libraries(${PROJECT_NAME}_viz_node
+#  ${PROJECT_NAME}
+#  ${catkin_LIBRARIES}
+#)
 
 #########################
 ###   CLANG TOOLING   ###
@@ -71,7 +71,7 @@ find_package(cmake_clang_tools QUIET)
 if (cmake_clang_tools_FOUND)
   message(STATUS "Run clang tooling")
   add_clang_tooling(
-    TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_viz_node
+    TARGETS ${PROJECT_NAME}
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CF_WERROR

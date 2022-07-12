@@ -55,7 +55,7 @@ void initializeDualSolution(const OptimalControlProblem& ocp, const PrimalSoluti
  * Initializes final MultiplierCollection for equality and inequality Lagrangians.
  *
  * @param [in] ocp : A const reference to the optimal control problem.
- * @param [in] time : Fianl time.
+ * @param [in] time : Final time.
  * @param [out] multiplierCollection : The initialized final MultiplierCollection.
  */
 void initializeFinalMultiplierCollection(const OptimalControlProblem& ocp, scalar_t time, MultiplierCollection& multiplierCollection);
@@ -80,7 +80,7 @@ void initializeIntermediateMultiplierCollection(const OptimalControlProblem& ocp
                                                 MultiplierCollection& multiplierCollection);
 
 /**
- * Updates in-place the dual solution based on its current solution and state-onpit values using the Lagrangian update method in ocp.
+ * Updates in-place the dual solution based on its current solution and state-input values using the Lagrangian update method in ocp.
  * Moreover it also updates the penalties of ProblemMetrics based on the update of dual solution.
  *
  * @param [in] ocp : A const reference to the optimal control problem.
@@ -96,8 +96,8 @@ void updateDualSolution(const OptimalControlProblem& ocp, const PrimalSolution& 
  * Moreover it also updates the penalties of MetricsCollection based on the update of multipliers.
  *
  * @param [in] ocp : A const reference to the optimal control problem.
- * @param [in] time : Fianl time.
- * @param [in] state : Fianl state.
+ * @param [in] time : Final time.
+ * @param [in] state : Final state.
  * @param [in, out] metricsCollection: The final MetricsCollection. Its penalties will be updated based on
  *                                     the update of multiplierCollection.
  * @param [out] multiplierCollection : The updated final MultiplierCollection.

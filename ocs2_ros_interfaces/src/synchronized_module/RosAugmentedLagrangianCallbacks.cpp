@@ -38,12 +38,21 @@ namespace ros {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-AugmentedLagrangianObserver::metrics_callback_t createMetricsCallback(const scalar_array_t& observingTimePoints,
-                                                                      std::vector<::ros::Publisher>& metricsPublishers) {
-  if (observingTimePoints.size() != metricsPublishers.size()) {
-    throw std::runtime_error("[createMetricsCallback] For each observing time points, you should provide a publisher!");
+AugmentedLagrangianObserver::metrics_callback_t createMetricsCallback(::ros::NodeHandle& nodeHandle,
+                                                                      const scalar_array_t& observingTimePoints,
+                                                                      const std::vector<std::string>& topicNames) {
+  if (observingTimePoints.size() != topicNames.size()) {
+    throw std::runtime_error("[createMetricsCallback] For each observing time points, you should provide a unique topic name!");
   }
 
+  std::vector<::ros::Publisher> metricsPublishers;
+  for (const auto& name : topicNames) {
+    metricsPublishers.push_back(nodeHandle.advertise<ocs2_msgs::lagrangian_metrics>(name, 1, true));
+  }
+
+  // note that we need to copy the publishers as the local ones will go out of scope. Good news is that ROS publisher
+  // has internal ("Once all copies of a specific Publisher go out of scope, any subscriber status callbacks associated
+  // with that handle will stop being called.")
   return [=](const scalar_array_t& timeTrajectory, const std::vector<LagrangianMetricsConstRef>& termMetricsArray) {
     if (!timeTrajectory.empty()) {
       for (size_t i = 0; i < observingTimePoints.size(); i++) {
@@ -59,12 +68,21 @@ AugmentedLagrangianObserver::metrics_callback_t createMetricsCallback(const scal
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-AugmentedLagrangianObserver::multiplier_callback_t createMultiplierCallback(const scalar_array_t& observingTimePoints,
-                                                                            std::vector<::ros::Publisher>& multiplierPublishers) {
-  if (observingTimePoints.size() != multiplierPublishers.size()) {
-    throw std::runtime_error("[createMetricsCallback] For each observing time points, you should provide a publisher!");
+AugmentedLagrangianObserver::multiplier_callback_t createMultiplierCallback(::ros::NodeHandle& nodeHandle,
+                                                                            const scalar_array_t& observingTimePoints,
+                                                                            const std::vector<std::string>& topicNames) {
+  if (observingTimePoints.size() != topicNames.size()) {
+    throw std::runtime_error("[createMetricsCallback] For each observing time points, you should provide a unique topic name!");
   }
 
+  std::vector<::ros::Publisher> multiplierPublishers;
+  for (const auto& name : topicNames) {
+    multiplierPublishers.push_back(nodeHandle.advertise<ocs2_msgs::multiplier>(name, 1, true));
+  }
+
+  // note that we need to copy the publishers as the local ones will go out of scope. Good news is that ROS publisher
+  // has internal ("Once all copies of a specific Publisher go out of scope, any subscriber status callbacks associated
+  // with that handle will stop being called.")
   return [=](const scalar_array_t& timeTrajectory, const std::vector<MultiplierConstRef>& termMultiplierArray) {
     if (!timeTrajectory.empty()) {
       for (size_t i = 0; i < observingTimePoints.size(); i++) {

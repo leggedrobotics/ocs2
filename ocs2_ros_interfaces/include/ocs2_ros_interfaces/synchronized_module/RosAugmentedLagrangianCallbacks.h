@@ -40,23 +40,27 @@ namespace ros {
  * Creates a ROS-based callback for AugmentedLagrangianObserver that publishes a term's LagrangianMetrics at the
  * requested lookahead time points.
  *
+ * @param [in] nodeHandle: ROS node handle.
  * @param [in] observingTimePoints: An array of lookahead times for which we want to publish the values of LagrangianMetrics.
- * @param [in] metricsPublishers: An array of publishers for advertising ocs2::ocs2_msgs::lagrangian_metrics.
+ * @param [in] topicNames: An array of topic names. For each observing time points, you should provide a unique topic name.
  * @return A callback which can be set to SolverObserverModule in order to observe a requested term's LagrangianMetrics.
  */
-AugmentedLagrangianObserver::metrics_callback_t createMetricsCallback(const scalar_array_t& observingTimePoints,
-                                                                      std::vector<::ros::Publisher>& metricsPublishers);
+AugmentedLagrangianObserver::metrics_callback_t createMetricsCallback(::ros::NodeHandle& nodeHandle,
+                                                                      const scalar_array_t& observingTimePoints,
+                                                                      const std::vector<std::string>& topicNames);
 
 /**
  * Creates a ROS-based callback for AugmentedLagrangianObserver that publishes a term's Lagrange multiplier at the
  * requested lookahead time points.
  *
+ * @param [in] nodeHandle: ROS node handle.
  * @param [in] observingTimePoints: An array of lookahead times for which we want to publish the values of multiplier.
- * @param [in] multiplierPublishers: An array of publishers for advertising ocs2::ocs2_msgs::multiplier.
+ * @param [in] topicNames: An array of topic names. For each observing time points, you should provide a unique topic name.
  * @return A callback which can be set to SolverObserverModule in order to observe a requested term's multiplier.
  */
-AugmentedLagrangianObserver::multiplier_callback_t createMultiplierCallback(const scalar_array_t& observingTimePoints,
-                                                                            std::vector<::ros::Publisher>& multiplierPublishers);
+AugmentedLagrangianObserver::multiplier_callback_t createMultiplierCallback(::ros::NodeHandle& nodeHandle,
+                                                                            const scalar_array_t& observingTimePoints,
+                                                                            const std::vector<std::string>& topicNames);
 
 }  // namespace ros
 }  // namespace ocs2

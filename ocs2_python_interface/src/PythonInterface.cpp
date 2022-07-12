@@ -100,9 +100,7 @@ void PythonInterface::getMpcSolution(scalar_array_t& t, vector_array_t& x, vecto
 /******************************************************************************************************/
 /******************************************************************************************************/
 matrix_t PythonInterface::getLinearFeedbackGain(scalar_t time) {
-  matrix_t K;
-  mpcMrtInterface_->getLinearFeedbackGain(time, K);
-  return K;
+  return mpcMrtInterface_->getLinearFeedbackGain(time);
 }
 
 /******************************************************************************************************/

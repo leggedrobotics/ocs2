@@ -43,7 +43,6 @@ ModelSettings loadModelSettings(const std::string& filename, bool verbose) {
   modelSettings.algorithm_ = fromAlgorithmName(algorithmName);
 
   ocs2::loadData::loadPtreeValue(pt, modelSettings.phaseTransitionStanceTime_, prefix + "phaseTransitionStanceTime", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.simplifyDynamics_, prefix + "simplifyDynamics", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.recompileLibraries_, prefix + "recompileLibraries", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.frictionCoefficient_, prefix + "frictionCoefficient", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.coneRegularization_, prefix + "coneRegularization", verbose);

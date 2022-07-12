@@ -12,7 +12,6 @@ Algorithm fromAlgorithmName(std::string name);
 
 struct ModelSettings {
   Algorithm algorithm_ = Algorithm::SQP;
-  bool simplifyDynamics_ = true;
   bool recompileLibraries_ = true;
 
   scalar_t phaseTransitionStanceTime_ = 0.4;

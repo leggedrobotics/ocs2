@@ -45,12 +45,6 @@ class ComKinoSystemDynamicsAd : public ocs2::SystemDynamicsBaseAD {
       const comkino_state_s_t<SCALAR_T>& comKinoState, const comkino_input_s_t<SCALAR_T>& comKinoInput,
       const ComKinoSystemDynamicsParameters<SCALAR_T>& parameters = ComKinoSystemDynamicsParameters<SCALAR_T>());
 
-  template <typename SCALAR_T>
-  static com_state_s_t<SCALAR_T> computeComStateDerivativeSimplified(
-      const ComModelBase<SCALAR_T>& comModel, const KinematicsModelBase<SCALAR_T>& kinematicsModel,
-      const comkino_state_s_t<SCALAR_T>& comKinoState, const comkino_input_s_t<SCALAR_T>& comKinoInput,
-      const ComKinoSystemDynamicsParameters<SCALAR_T>& parameters = ComKinoSystemDynamicsParameters<SCALAR_T>());
-
  private:
   std::unique_ptr<ad_kinematic_model_t> adKinematicModelPtr_;
   std::unique_ptr<ad_com_model_t> adComModelPtr_;
@@ -69,11 +63,5 @@ extern template com_state_ad_t ComKinoSystemDynamicsAd::computeComStateDerivativ
                                                                                   const comkino_state_ad_t& comKinoState,
                                                                                   const comkino_input_ad_t& comKinoInput,
                                                                                   const ad_parameters_t& parameters);
-extern template com_state_t ComKinoSystemDynamicsAd::computeComStateDerivativeSimplified(
-    const ComModelBase<scalar_t>& comModel, const KinematicsModelBase<scalar_t>& kinematicsModel, const comkino_state_t& comKinoState,
-    const comkino_input_t& comKinoInput, const parameters_t& parameters);
-extern template com_state_ad_t ComKinoSystemDynamicsAd::computeComStateDerivativeSimplified(
-    const ComModelBase<ad_scalar_t>& comModel, const KinematicsModelBase<ad_scalar_t>& kinematicsModel,
-    const comkino_state_ad_t& comKinoState, const comkino_input_ad_t& comKinoInput, const ad_parameters_t& parameters);
 
 }  // namespace switched_model

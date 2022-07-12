@@ -54,7 +54,7 @@ class RosSolverObserverModule final : public SolverObserverModule {
   /**
    * Launches the publishers. Refer to the class description to see the topic names that the module publishes on them.
    */
-  void subscribe(ros::NodeHandle& nh);
+  void advertise(ros::NodeHandle& nh);
 
  private:
   RosSolverObserverModule(const RosSolverObserverModule& other) = default;

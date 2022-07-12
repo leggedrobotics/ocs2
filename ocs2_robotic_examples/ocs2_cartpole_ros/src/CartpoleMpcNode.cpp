@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
 
   // observer for the input limits constraints
   std::unique_ptr<ocs2::RosSolverObserverModule> stateInputBoundsObserverPtr(new ocs2::RosSolverObserverModule("InputLimits", {0.0, 0.5}));
-  stateInputBoundsObserverPtr->subscribe(nodeHandle);
+  stateInputBoundsObserverPtr->advertise(nodeHandle);
   mpc.getSolverPtr()->addObserverModule(std::move(stateInputBoundsObserverPtr));
 
   // Launch MPC ROS node

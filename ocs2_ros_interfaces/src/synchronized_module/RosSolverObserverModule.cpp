@@ -39,7 +39,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void RosSolverObserverModule::subscribe(ros::NodeHandle& nh) {
+void RosSolverObserverModule::advertise(ros::NodeHandle& nh) {
   for (const auto& t : timePoints_) {
     const int timeMs = static_cast<int>(t * 1000.0);
     const std::string topicName = termsName_ + "/" + std::to_string(timeMs) + "MsLookAhead";

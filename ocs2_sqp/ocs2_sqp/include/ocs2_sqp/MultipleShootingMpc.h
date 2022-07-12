@@ -56,7 +56,7 @@ class MultipleShootingMpc final : public MPC_BASE {
   MultipleShootingSolver* getSolverPtr() override { return solverPtr_.get(); }
   const MultipleShootingSolver* getSolverPtr() const override { return solverPtr_.get(); }
 
- private:
+ protected:
   void calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override {
     if (settings().coldStart_) {
       solverPtr_->reset();
@@ -64,6 +64,7 @@ class MultipleShootingMpc final : public MPC_BASE {
     solverPtr_->run(initTime, initState, finalTime);
   }
 
+ private:
   std::unique_ptr<MultipleShootingSolver> solverPtr_;
 };
 }  // namespace ocs2

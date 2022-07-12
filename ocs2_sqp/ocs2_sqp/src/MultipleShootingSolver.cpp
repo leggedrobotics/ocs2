@@ -76,9 +76,11 @@ MultipleShootingSolver::~MultipleShootingSolver() {
 void MultipleShootingSolver::reset() {
   // Clear solution
   primalSolution_ = PrimalSolution();
+  valueFunction_.clear();
   performanceIndeces_.clear();
 
   // reset timers
+  numProblems_ = 0;
   totalNumIterations_ = 0;
   linearQuadraticApproximationTimer_.reset();
   solveQpTimer_.reset();
@@ -120,6 +122,27 @@ const std::vector<PerformanceIndex>& MultipleShootingSolver::getIterationsLog() 
   }
 }
 
+ScalarFunctionQuadraticApproximation MultipleShootingSolver::getValueFunction(scalar_t time, const vector_t& state) const {
+  if (valueFunction_.empty()) {
+    throw std::runtime_error("[MultipleShootingSolver] Value function is empty! Is createValueFunction true and did the solver run?");
+  } else {
+    // Interpolation
+    const auto indexAlpha = LinearInterpolation::timeSegment(time, primalSolution_.timeTrajectory_);
+
+    ScalarFunctionQuadraticApproximation valueFunction;
+    using T = std::vector<ocs2::ScalarFunctionQuadraticApproximation>;
+    using LinearInterpolation::interpolate;
+    valueFunction.f = 0.0;
+    valueFunction.dfdx = interpolate(indexAlpha, valueFunction_, [](const T& v, size_t ind) -> const vector_t& { return v[ind].dfdx; });
+    valueFunction.dfdxx = interpolate(indexAlpha, valueFunction_, [](const T& v, size_t ind) -> const matrix_t& { return v[ind].dfdxx; });
+
+    // Re-center around query state
+    valueFunction.dfdx.noalias() += valueFunction.dfdxx * state;
+
+    return valueFunction;
+  }
+}
+
 void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
   if (settings_.printSolverStatus || settings_.printLinesearch) {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
@@ -144,7 +167,9 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   // Bookkeeping
   performanceIndeces_.clear();
 
-  for (int iter = 0; iter < settings_.sqpIteration; iter++) {
+  int iter = 0;
+  multiple_shooting::Convergence convergence = multiple_shooting::Convergence::FALSE;
+  while (convergence == multiple_shooting::Convergence::FALSE) {
     if (settings_.printSolverStatus || settings_.printLinesearch) {
       std::cerr << "\nSQP iteration: " << iter << "\n";
     }
@@ -157,26 +182,31 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
     solveQpTimer_.startTimer();
     const vector_t delta_x0 = initState - x[0];
     const auto deltaSolution = getOCPSolution(delta_x0);
+    extractValueFunction(timeDiscretization, x);
     solveQpTimer_.endTimer();
 
     // Apply step
     linesearchTimer_.startTimer();
     const auto stepInfo = takeStep(baselinePerformance, timeDiscretization, initState, deltaSolution, x, u);
-    const bool converged = stepInfo.first;
-    performanceIndeces_.push_back(stepInfo.second);
+    performanceIndeces_.push_back(stepInfo.performanceAfterStep);
     linesearchTimer_.endTimer();
 
-    totalNumIterations_++;
-    if (converged) {
-      break;
-    }
+    // Check convergence
+    convergence = checkConvergence(iter, baselinePerformance, stepInfo);
+
+    // Next iteration
+    ++iter;
+    ++totalNumIterations_;
   }
 
   computeControllerTimer_.startTimer();
   setPrimalSolution(timeDiscretization, std::move(x), std::move(u));
   computeControllerTimer_.endTimer();
 
+  ++numProblems_;
+
   if (settings_.printSolverStatus || settings_.printLinesearch) {
+    std::cerr << "\nConvergence : " << toString(convergence) << "\n";
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
     std::cerr << "\n+++++++++++++ SQP solver has terminated ++++++++++++++";
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
@@ -280,9 +310,19 @@ MultipleShootingSolver::OcpSubproblemSolution MultipleShootingSolver::getOCPSolu
   return solution;
 }
 
+void MultipleShootingSolver::extractValueFunction(const std::vector<AnnotatedTime>& time, const vector_array_t& x) {
+  if (settings_.createValueFunction) {
+    valueFunction_ = hpipmInterface_.getRiccatiCostToGo(dynamics_[0], cost_[0]);
+    // Correct for linearization state
+    for (int i = 0; i < time.size(); ++i) {
+      valueFunction_[i].dfdx.noalias() -= valueFunction_[i].dfdxx * x[i];
+    }
+  }
+}
+
 void MultipleShootingSolver::setPrimalSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& x, vector_array_t&& u) {
   // Clear old solution
-  primalSolution_ = PrimalSolution();
+  primalSolution_.clear();
 
   // Correct for missing inputs at PreEvents
   for (int i = 0; i < time.size(); ++i) {
@@ -321,12 +361,16 @@ void MultipleShootingSolver::setPrimalSolution(const std::vector<AnnotatedTime>&
     controllerGain.push_back(controllerGain.back());
   }
 
-  // Construct nominal state and inputs
+  // Construct nominal time, state and input trajectories
   primalSolution_.stateTrajectory_ = std::move(x);
   u.push_back(u.back());  // Repeat last input to make equal length vectors
   primalSolution_.inputTrajectory_ = std::move(u);
-  for (const auto& t : time) {
-    primalSolution_.timeTrajectory_.push_back(t.time);
+  primalSolution_.timeTrajectory_.reserve(time.size());
+  for (size_t i = 0; i < time.size(); i++) {
+    primalSolution_.timeTrajectory_.push_back(time[i].time);
+    if (time[i].event == AnnotatedTime::Event::PreEvent) {
+      primalSolution_.postEventIndices_.push_back(i + 1);
+    }
   }
   primalSolution_.modeSchedule_ = this->getReferenceManager().getModeSchedule();
 
@@ -458,11 +502,16 @@ scalar_t MultipleShootingSolver::trajectoryNorm(const vector_array_t& v) {
   return std::sqrt(norm);
 }
 
-std::pair<bool, PerformanceIndex> MultipleShootingSolver::takeStep(const PerformanceIndex& baseline,
-                                                                   const std::vector<AnnotatedTime>& timeDiscretization,
-                                                                   const vector_t& initState,
-                                                                   const OcpSubproblemSolution& subproblemSolution, vector_array_t& x,
-                                                                   vector_array_t& u) {
+scalar_t MultipleShootingSolver::totalConstraintViolation(const PerformanceIndex& performance) const {
+  return std::sqrt(performance.dynamicsViolationSSE + performance.equalityConstraintsSSE);
+}
+
+multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIndex& baseline,
+                                                             const std::vector<AnnotatedTime>& timeDiscretization,
+                                                             const vector_t& initState, const OcpSubproblemSolution& subproblemSolution,
+                                                             vector_array_t& x, vector_array_t& u) {
+  using StepType = multiple_shooting::StepInfo::StepType;
+
   /*
    * Filter linesearch based on:
    * "On the implementation of an interior-point filter line-search algorithm for large-scale nonlinear programming"
@@ -474,28 +523,17 @@ std::pair<bool, PerformanceIndex> MultipleShootingSolver::takeStep(const Perform
     std::cerr << "Baseline:\n" << baseline << "\n";
   }
 
-  // Some settings and shorthands
-  const scalar_t alpha_decay = settings_.alpha_decay;
-  const scalar_t alpha_min = settings_.alpha_min;
-  const scalar_t gamma_c = settings_.gamma_c;
-  const scalar_t g_max = settings_.g_max;
-  const scalar_t g_min = settings_.g_min;
-  const scalar_t costTol = settings_.costTol;
-  const scalar_t armijoFactor = settings_.armijoFactor;
-  const auto& dx = subproblemSolution.deltaXSol;
-  const auto& du = subproblemSolution.deltaUSol;
-  const auto& armijoDescentMetric = subproblemSolution.armijoDescentMetric;
-
-  // Total Constraint violation function
-  auto constraintViolation = [](const PerformanceIndex& performance) -> scalar_t {
-    return std::sqrt(performance.dynamicsViolationSSE + performance.equalityConstraintsSSE);
-  };
-
-  const scalar_t baselineConstraintViolation = constraintViolation(baseline);
+  // Baseline costs
+  const scalar_t baselineConstraintViolation = totalConstraintViolation(baseline);
 
   // Update norm
+  const auto& dx = subproblemSolution.deltaXSol;
+  const auto& du = subproblemSolution.deltaUSol;
   const scalar_t deltaUnorm = trajectoryNorm(du);
   const scalar_t deltaXnorm = trajectoryNorm(dx);
+
+  // Prepare step info
+  multiple_shooting::StepInfo stepInfo;
 
   scalar_t alpha = 1.0;
   vector_array_t xNew(x.size());
@@ -513,47 +551,93 @@ std::pair<bool, PerformanceIndex> MultipleShootingSolver::takeStep(const Perform
 
     // Compute cost and constraints
     const PerformanceIndex performanceNew = computePerformance(timeDiscretization, initState, xNew, uNew);
-    const scalar_t newConstraintViolation = constraintViolation(performanceNew);
+    const scalar_t newConstraintViolation = totalConstraintViolation(performanceNew);
 
+    // Step acceptance and record step type
     const bool stepAccepted = [&]() {
-      if (newConstraintViolation > std::max(g_max, baselineConstraintViolation)) {
-        // High constraint violation. Only accept decrease in constraints. Prevents new constraint violation higher than g_max
-        return false;
-      } else if (newConstraintViolation < g_min && baselineConstraintViolation < g_min && armijoDescentMetric < 0.0) {
+      if (newConstraintViolation > settings_.g_max) {
+        // High constraint violation. Only accept decrease in constraints.
+        stepInfo.stepType = StepType::CONSTRAINT;
+        return newConstraintViolation < ((1.0 - settings_.gamma_c) * baselineConstraintViolation);
+      } else if (newConstraintViolation < settings_.g_min && baselineConstraintViolation < settings_.g_min &&
+                 subproblemSolution.armijoDescentMetric < 0.0) {
         // With low violation and having a descent direction, require the armijo condition.
-        return (performanceNew.merit < baseline.merit + armijoFactor * alpha * armijoDescentMetric);
+        stepInfo.stepType = StepType::COST;
+        return performanceNew.merit < (baseline.merit + settings_.armijoFactor * alpha * subproblemSolution.armijoDescentMetric);
       } else {
         // Medium violation: either merit or constraints decrease (with small gamma_c mixing of old constraints)
-        return performanceNew.merit < (baseline.merit - gamma_c * baselineConstraintViolation) ||
-               newConstraintViolation < ((1.0 - gamma_c) * baselineConstraintViolation);
+        stepInfo.stepType = StepType::DUAL;
+        return performanceNew.merit < (baseline.merit - settings_.gamma_c * baselineConstraintViolation) ||
+               newConstraintViolation < ((1.0 - settings_.gamma_c) * baselineConstraintViolation);
       }
     }();
 
     if (settings_.printLinesearch) {
-      std::cerr << "Stepsize = " << alpha << (stepAccepted ? std::string{" (Accepted)"} : std::string{" (Rejected)"}) << "\n";
+      std::cerr << "Step size: " << alpha << ", Step Type: " << toString(stepInfo.stepType)
+                << (stepAccepted ? std::string{" (Accepted)"} : std::string{" (Rejected)"}) << "\n";
       std::cerr << "|dx| = " << alpha * deltaXnorm << "\t|du| = " << alpha * deltaUnorm << "\n";
       std::cerr << performanceNew << "\n";
     }
 
-    // Exit conditions
-    const bool stepSizeBelowTol = alpha * deltaUnorm < settings_.deltaTol && alpha * deltaXnorm < settings_.deltaTol;
-
     if (stepAccepted) {  // Return if step accepted
       x = std::move(xNew);
       u = std::move(uNew);
-      const bool improvementBelowTol = std::abs(baseline.merit - performanceNew.merit) < costTol && newConstraintViolation < g_min;
-      return {stepSizeBelowTol || improvementBelowTol, performanceNew};
-    } else if (stepSizeBelowTol) {  // Return if steps get too small without being accepted
-      if (settings_.printLinesearch) {
-        std::cerr << "Stepsize is smaller than provided deltaTol -> converged \n";
-      }
-      return {true, baseline};
-    } else {  // Try smaller step
-      alpha *= alpha_decay;
-    }
-  } while (alpha > alpha_min);
 
-  return {true, baseline};  // Alpha_min reached and no improvement found -> Converged
+      stepInfo.stepSize = alpha;
+      stepInfo.dx_norm = alpha * deltaXnorm;
+      stepInfo.du_norm = alpha * deltaUnorm;
+      stepInfo.performanceAfterStep = performanceNew;
+      stepInfo.totalConstraintViolationAfterStep = newConstraintViolation;
+      return stepInfo;
+    } else {  // Try smaller step
+      alpha *= settings_.alpha_decay;
+
+      // Detect too small step size during back-tracking to escape early. Prevents going all the way to alpha_min
+      if (alpha * deltaXnorm < settings_.deltaTol && alpha * deltaUnorm < settings_.deltaTol) {
+        if (settings_.printLinesearch) {
+          std::cerr << "Exiting linesearch early due to too small primal steps |dx|: " << alpha * deltaXnorm
+                    << ", and or |du|: " << alpha * deltaUnorm << " are below deltaTol: " << settings_.deltaTol << "\n";
+        }
+        break;
+      }
+    }
+  } while (alpha >= settings_.alpha_min);
+
+  // Alpha_min reached -> Don't take a step
+  stepInfo.stepSize = 0.0;
+  stepInfo.stepType = StepType::ZERO;
+  stepInfo.dx_norm = 0.0;
+  stepInfo.du_norm = 0.0;
+  stepInfo.performanceAfterStep = baseline;
+  stepInfo.totalConstraintViolationAfterStep = baselineConstraintViolation;
+
+  if (settings_.printLinesearch) {
+    std::cerr << "[Linesearch terminated] Step size: " << stepInfo.stepSize << ", Step Type: " << toString(stepInfo.stepType) << "\n";
+  }
+
+  return stepInfo;
+}
+
+multiple_shooting::Convergence MultipleShootingSolver::checkConvergence(int iteration, const PerformanceIndex& baseline,
+                                                                        const multiple_shooting::StepInfo& stepInfo) const {
+  using Convergence = multiple_shooting::Convergence;
+  if ((iteration + 1) >= settings_.sqpIteration) {
+    // Converged because the next iteration would exceed the specified number of iterations
+    return Convergence::ITERATIONS;
+  } else if (stepInfo.stepSize < settings_.alpha_min) {
+    // Converged because step size is below the specified minimum
+    return Convergence::STEPSIZE;
+  } else if (std::abs(stepInfo.performanceAfterStep.merit - baseline.merit) < settings_.costTol &&
+             totalConstraintViolation(stepInfo.performanceAfterStep) < settings_.g_min) {
+    // Converged because the change in merit is below the specified tolerance while the constraint violation is below the minimum
+    return Convergence::METRICS;
+  } else if (stepInfo.dx_norm < settings_.deltaTol && stepInfo.du_norm < settings_.deltaTol) {
+    // Converged because the change in primal variables is below the specified tolerance
+    return Convergence::PRIMAL;
+  } else {
+    // None of the above convergence criteria were met -> not converged.
+    return Convergence::FALSE;
+  }
 }
 
 }  // namespace ocs2

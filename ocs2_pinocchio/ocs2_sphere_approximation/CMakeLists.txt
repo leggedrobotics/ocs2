@@ -15,11 +15,6 @@ find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
-find_package(Boost REQUIRED COMPONENTS
-  system
-  filesystem
-)
-
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(pinocchio REQUIRED pinocchio)
 
@@ -37,7 +32,6 @@ catkin_package(
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
   DEPENDS
-    Boost
     pinocchio
 )
 
@@ -58,7 +52,6 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS}
   ${pinocchio_INCLUDE_DIRS}
 )
 
@@ -77,7 +70,6 @@ add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(${PROJECT_NAME}
-  ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
   ${pinocchio_LIBRARIES}
 )
@@ -122,5 +114,4 @@ target_link_libraries(PinocchioSphereKinematicsTest
   gtest_main
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
 )

@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+
+<launch>
+
+  <!-- The URDF model of the robot -->
+  <arg name="urdfFile" />
+  <!-- The task file for the mpc. -->
+  <arg name="taskFile" />
+  <!-- Configuration for rviz file -->
+  <arg name="rvizconfig"    value="$(find ocs2_mobile_manipulator_ros)/rviz/mobile_manipulator_distance.rviz" />
+
+  <!-- make the files into global parameters -->
+  <param name="urdfFile"    value="$(arg urdfFile)" />
+  <param name="taskFile"    value="$(arg taskFile)" />
+
+  <include file="$(find ocs2_mobile_manipulator_ros)/launch/include/visualize.launch">
+    <arg name="urdfFile"    value="$(arg urdfFile)" />
+    <arg name="rvizconfig"  value="$(arg rvizconfig)" />
+  </include>
+
+  <!-- Open joint_state_publisher for alma_c_description with GUI for debugging -->
+  <node name="mobile_manipulator_joint_state_publisher" pkg="joint_state_publisher_gui" type="joint_state_publisher_gui" output="screen">
+    <param name="rate" value="100" />
+  </node>
+
+  <node pkg="ocs2_mobile_manipulator_ros" type="mobile_manipulator_distance_visualization" name="mobile_manipulator_distance_visualization" output="screen" />
+
+
+</launch>

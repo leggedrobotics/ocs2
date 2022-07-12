@@ -11,6 +11,7 @@ Table of Contents
    robotic_examples.rst
    from_urdf_to_ocp.rst
    profiling.rst
+   faq.rst
 
 .. rubric:: Reference and Index:
 

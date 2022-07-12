@@ -48,13 +48,14 @@ struct Settings {
   scalar_t alpha_min = 1e-4;   // terminate linesearch if the attempted step size is below this threshold
 
   // Linesearch - step acceptance criteria with c = costs, g = the norm of constraint violation, and w = [x; u]
-  scalar_t g_max = 1e6;          // (1): g{i+1} < g_max
-  scalar_t g_min = 1e-6;         // (2a): IF (g{i} < g_min AND g{i+1} < g_min AND dc/dw'{i} * delta_w < 0) REQUIRE armijo condition
+  scalar_t g_max = 1e6;          // (1): IF g{i+1} > g_max REQUIRE g{i+1} < (1-gamma_c) * g{i}
+  scalar_t g_min = 1e-6;         // (2): ELSE IF (g{i} < g_min AND g{i+1} < g_min AND dc/dw'{i} * delta_w < 0) REQUIRE armijo condition
   scalar_t armijoFactor = 1e-4;  // Armijo condition: c{i+1} < c{i} + armijoFactor * dc/dw'{i} * delta_w
-  scalar_t gamma_c = 1e-6;       // (2b): ELSE REQUIRE c{i+1} < (c{i} - gamma_c * g{i}) OR c{i+1} < (1-gamma_c) * g{i}
+  scalar_t gamma_c = 1e-6;       // (3): ELSE REQUIRE c{i+1} < (c{i} - gamma_c * g{i}) OR g{i+1} < (1-gamma_c) * g{i}
 
   // controller type
-  bool useFeedbackPolicy = true;  // true to use feedback, false to use feedforward
+  bool useFeedbackPolicy = true;     // true to use feedback, false to use feedforward
+  bool createValueFunction = false;  // true to store the value function, false to ignore it
 
   // QP subproblem solver settings
   hpipm_interface::Settings hpipmSettings = hpipm_interface::Settings();

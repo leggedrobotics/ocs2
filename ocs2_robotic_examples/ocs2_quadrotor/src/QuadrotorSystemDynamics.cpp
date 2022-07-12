@@ -38,7 +38,7 @@ namespace quadrotor {
 vector_t QuadrotorSystemDynamics::computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation&) {
   // angular velocities to Euler angle Derivatives transformation
   Eigen::Matrix<scalar_t, 3, 1> eulerAngle = state.segment<3>(3);
-  Eigen::Matrix<scalar_t, 3, 3> T = AngularVelocitiesToEulerAngleDerivativesMatrix<scalar_t>(eulerAngle);
+  Eigen::Matrix<scalar_t, 3, 3> T = getMappingFromLocalAngularVelocityToEulerAnglesXyzDerivative<scalar_t>(eulerAngle);
 
   // positions
   scalar_t qxQ = state(0);  // x

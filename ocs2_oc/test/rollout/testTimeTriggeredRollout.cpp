@@ -63,12 +63,12 @@ TEST(time_rollout_test, time_rollout_test) {
 
   // Rollout Settings
   const auto rolloutSettings = [&] {
-      rollout::Settings settings;
-      settings.absTolODE = 1e-7;
-      settings.relTolODE = 1e-5;
-      settings.timeStep = 1e-3;
-      settings.maxNumStepsPerSecond = 10000;
-      return settings;
+    rollout::Settings settings;
+    settings.absTolODE = 1e-7;
+    settings.relTolODE = 1e-5;
+    settings.timeStep = 1e-3;
+    settings.maxNumStepsPerSecond = 10000;
+    return settings;
   }();
 
   // rollout class
@@ -79,8 +79,8 @@ TEST(time_rollout_test, time_rollout_test) {
   vector_array_t stateTrajectory;
   vector_array_t inputTrajectory;
 
-  rolloutBasePtr->run(initTime, initState, finalTime, &controller, modeSchedule, timeTrajectory, eventsPastTheEndIndeces,
-                      stateTrajectory, inputTrajectory);
+  rolloutBasePtr->run(initTime, initState, finalTime, &controller, modeSchedule, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory,
+                      inputTrajectory);
 
   // check sizes
   const auto totalSize = timeTrajectory.size();

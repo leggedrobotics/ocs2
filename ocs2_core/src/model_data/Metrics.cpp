@@ -60,7 +60,19 @@ MetricsCollection interpolate(const index_alpha_t& indexAlpha, const std::vector
 
   MetricsCollection out;
 
-  // state equality
+  // cost
+  out.cost = interpolate(indexAlpha, dataArray,
+                         [](const std::vector<MetricsCollection>& array, size_t t) -> const scalar_t& { return array[t].cost; });
+
+  // constraints
+  out.stateEqConstraint = interpolate(indexAlpha, dataArray, [](const std::vector<MetricsCollection>& array, size_t t) -> const vector_t& {
+    return array[t].stateEqConstraint;
+  });
+  out.stateInputEqConstraint =
+      interpolate(indexAlpha, dataArray,
+                  [](const std::vector<MetricsCollection>& array, size_t t) -> const vector_t& { return array[t].stateInputEqConstraint; });
+
+  // state equality Lagrangian
   out.stateEqLagrangian.reserve(mumStateEq);
   for (size_t i = 0; i < mumStateEq; i++) {
     auto penalty = interpolate(indexAlpha, dataArray, [i](const std::vector<MetricsCollection>& array, size_t t) -> const scalar_t& {
@@ -72,7 +84,7 @@ MetricsCollection interpolate(const index_alpha_t& indexAlpha, const std::vector
     out.stateEqLagrangian.emplace_back(penalty, std::move(constraint));
   }  // end of i loop
 
-  // state inequality
+  // state inequality Lagrangian
   out.stateIneqLagrangian.reserve(mumStateIneq);
   for (size_t i = 0; i < mumStateIneq; i++) {
     auto penalty = interpolate(indexAlpha, dataArray, [i](const std::vector<MetricsCollection>& array, size_t t) -> const scalar_t& {
@@ -84,7 +96,7 @@ MetricsCollection interpolate(const index_alpha_t& indexAlpha, const std::vector
     out.stateIneqLagrangian.emplace_back(penalty, std::move(constraint));
   }  // end of i loop
 
-  // state-input equality
+  // state-input equality Lagrangian
   out.stateInputEqLagrangian.reserve(mumStateInputEq);
   for (size_t i = 0; i < mumStateInputEq; i++) {
     auto penalty = interpolate(indexAlpha, dataArray, [i](const std::vector<MetricsCollection>& array, size_t t) -> const scalar_t& {
@@ -96,7 +108,7 @@ MetricsCollection interpolate(const index_alpha_t& indexAlpha, const std::vector
     out.stateInputEqLagrangian.emplace_back(penalty, std::move(constraint));
   }  // end of i loop
 
-  // state-input inequality
+  // state-input inequality Lagrangian
   out.stateInputIneqLagrangian.reserve(mumStateInputIneq);
   for (size_t i = 0; i < mumStateInputIneq; i++) {
     auto penalty = interpolate(indexAlpha, dataArray, [i](const std::vector<MetricsCollection>& array, size_t t) -> const scalar_t& {

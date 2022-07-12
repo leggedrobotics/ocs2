@@ -61,6 +61,10 @@ struct DualSolution {
   }
 };
 
+/**
+ * Note that this view of DualSolution does not have access to its timestamp, signaling that functions
+ * operating on it cannot modify its timestamp.
+ */
 struct DualSolutionRef {
   DualSolutionRef(DualSolution& dualSolution) : DualSolutionRef(dualSolution.final, dualSolution.preJumps, dualSolution.intermediates) {}
 
@@ -73,6 +77,10 @@ struct DualSolutionRef {
   std::vector<MultiplierCollection>& intermediates;
 };
 
+/**
+ * Note that this view of DualSolution does not have access to its timestamp, signaling that functions
+ * operating on it are not depending on the timestamp.
+ */
 struct DualSolutionConstRef {
   DualSolutionConstRef(const DualSolution& dualSolution)
       : DualSolutionConstRef(dualSolution.final, dualSolution.preJumps, dualSolution.intermediates) {}

@@ -31,43 +31,32 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ros/ros.h>
 
-#include <ocs2_oc/synchronized_module/SolverObserverModule.h>
+#include <ocs2_oc/synchronized_module/AugmentedLagrangianObserver.h>
 
 namespace ocs2 {
+namespace ros {
 
 /**
- * A ROS wrapper for SolverObserverModule that publishes metrics and multiplier corresponding to the requested term at
- * requested lookahead time points. The class will publish in the following topics respectively for metrics and multipliers
- * + metrics/TERMS_NAME/xxxMsLookAhead
- * + multipliers/TERMS_NAME/xxxMsLookAhead
+ * Creates a ROS-based callback for AugmentedLagrangianObserver that publishes a term's LagrangianMetrics at the
+ * requested lookahead time points.
  *
- * where TERMS_NAME is the name of the term and xxx is the lookahead time in millisecond.
+ * @param [in] observingTimePoints: An array of lookahead times for which we want to publish the values of LagrangianMetrics.
+ * @param [in] metricsPublishers: An array of publishers for advertising ocs2::ocs2_msgs::lagrangian_metrics.
+ * @return A callback which can be set to SolverObserverModule in order to observe a requested term's LagrangianMetrics.
  */
-class RosSolverObserverModule final : public SolverObserverModule {
- public:
-  RosSolverObserverModule(std::string termsName, scalar_array_t timePoints)
-      : SolverObserverModule(std::move(termsName)), timePoints_(std::move(timePoints)) {}
+AugmentedLagrangianObserver::metrics_callback_t createMetricsCallback(const scalar_array_t& observingTimePoints,
+                                                                      std::vector<::ros::Publisher>& metricsPublishers);
 
-  ~RosSolverObserverModule() override = default;
-  RosSolverObserverModule* clone() const override { return new RosSolverObserverModule(*this); }
+/**
+ * Creates a ROS-based callback for AugmentedLagrangianObserver that publishes a term's Lagrange multiplier at the
+ * requested lookahead time points.
+ *
+ * @param [in] observingTimePoints: An array of lookahead times for which we want to publish the values of multiplier.
+ * @param [in] multiplierPublishers: An array of publishers for advertising ocs2::ocs2_msgs::multiplier.
+ * @return A callback which can be set to SolverObserverModule in order to observe a requested term's multiplier.
+ */
+AugmentedLagrangianObserver::multiplier_callback_t createMultiplierCallback(const scalar_array_t& observingTimePoints,
+                                                                            std::vector<::ros::Publisher>& multiplierPublishers);
 
-  /**
-   * Launches the publishers. Refer to the class description to see the topic names that the module publishes on them.
-   */
-  void advertise(ros::NodeHandle& nh);
-
- private:
-  RosSolverObserverModule(const RosSolverObserverModule& other) = default;
-
-  /** Metrics observer */
-  void observeTermMetrics(const scalar_array_t& timeTrajectory, const std::vector<LagrangianMetricsConstRef>& termMetricsArray);
-
-  /** Multiplier observer */
-  void observeTermMultiplier(const scalar_array_t& timeTrajectory, const std::vector<MultiplierConstRef>& termMultiplierArray);
-
-  const scalar_array_t timePoints_;
-  std::vector<ros::Publisher> metricsPublishers_;
-  std::vector<ros::Publisher> multiplierPublishers_;
-};
-
+}  // namespace ros
 }  // namespace ocs2

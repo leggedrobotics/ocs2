@@ -75,8 +75,8 @@ size_t StateAugmentedLagrangian::getNumConstraints(scalar_t time) const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-Metrics StateAugmentedLagrangian::getValue(scalar_t time, const vector_t& state, const Multiplier& multiplier,
-                                           const PreComputation& preComp) const {
+LagrangianMetrics StateAugmentedLagrangian::getValue(scalar_t time, const vector_t& state, const Multiplier& multiplier,
+                                                     const PreComputation& preComp) const {
   const auto h = constraintPtr_->getValue(time, state, preComp);
   const auto p = multiplier.penalty * penalty_.getValue(time, h, &multiplier.lagrangian);
   return {p, h};

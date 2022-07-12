@@ -48,14 +48,14 @@ class LoopshapingStateAugmentedLagrangian final : public StateAugmentedLagrangia
   ~LoopshapingStateAugmentedLagrangian() override = default;
   LoopshapingStateAugmentedLagrangian* clone() const override { return new LoopshapingStateAugmentedLagrangian(*this); }
 
-  std::vector<Metrics> getValue(scalar_t t, const vector_t& x, const std::vector<Multiplier>& termsMultiplier,
-                                const PreComputation& preComp) const override;
+  std::vector<LagrangianMetrics> getValue(scalar_t t, const vector_t& x, const std::vector<Multiplier>& termsMultiplier,
+                                          const PreComputation& preComp) const override;
 
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t t, const vector_t& x,
                                                                  const std::vector<Multiplier>& termsMultiplier,
                                                                  const PreComputation& preComp) const override;
 
-  void updateLagrangian(scalar_t t, const vector_t& x, std::vector<Metrics>& termsMetrics,
+  void updateLagrangian(scalar_t t, const vector_t& x, std::vector<LagrangianMetrics>& termsMetrics,
                         std::vector<Multiplier>& termsMultiplier) const override;
 
  private:

@@ -27,13 +27,15 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
+#include <memory>
+
 #include <ros/init.h>
 #include <ros/package.h>
 
+#include <ocs2_cartpole/CartPoleInterface.h>
 #include <ocs2_ddp/GaussNewtonDDP_MPC.h>
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
-
-#include <ocs2_cartpole/CartPoleInterface.h>
+#include <ocs2_ros_interfaces/synchronized_module/RosAugmentedLagrangianCallbacks.h>
 
 int main(int argc, char** argv) {
   const std::string robotName = "cartpole";
@@ -53,11 +55,28 @@ int main(int argc, char** argv) {
   // Robot interface
   const std::string taskFile = ros::package::getPath("ocs2_cartpole") + "/config/" + taskFileFolderName + "/task.info";
   const std::string libFolder = ros::package::getPath("ocs2_cartpole") + "/auto_generated";
-  ocs2::cartpole::CartPoleInterface cartPoleInterface(taskFile, libFolder);
+  ocs2::cartpole::CartPoleInterface cartPoleInterface(taskFile, libFolder, true /*verbose*/);
 
   // MPC
   ocs2::GaussNewtonDDP_MPC mpc(cartPoleInterface.mpcSettings(), cartPoleInterface.ddpSettings(), cartPoleInterface.getRollout(),
                                cartPoleInterface.getOptimalControlProblem(), cartPoleInterface.getInitializer());
+
+  // observer for the input limits constraints
+  const std::string observingLagrangianTerm = "InputLimits";
+  const ocs2::scalar_array_t observingTimePoints{0.0, 0.5};
+  std::vector<std::string> metricsTopicNames;
+  std::vector<std::string> multiplierTopicNames;
+  for (const auto& t : observingTimePoints) {
+    const int timeMs = static_cast<int>(t * 1000.0);
+    metricsTopicNames.push_back("metrics/" + observingLagrangianTerm + "/" + std::to_string(timeMs) + "MsLookAhead");
+    multiplierTopicNames.push_back("multipliers/" + observingLagrangianTerm + "/" + std::to_string(timeMs) + "MsLookAhead");
+  }
+  std::unique_ptr<ocs2::AugmentedLagrangianObserver> stateInputBoundsObserverPtr(
+      new ocs2::AugmentedLagrangianObserver(observingLagrangianTerm));
+  stateInputBoundsObserverPtr->setMetricsCallback(ocs2::ros::createMetricsCallback(nodeHandle, observingTimePoints, metricsTopicNames));
+  stateInputBoundsObserverPtr->setMultiplierCallback(
+      ocs2::ros::createMultiplierCallback(nodeHandle, observingTimePoints, multiplierTopicNames));
+  mpc.getSolverPtr()->addAugmentedLagrangianObserver(std::move(stateInputBoundsObserverPtr));
 
   // Launch MPC ROS node
   ocs2::MPC_ROS_Interface mpcNode(mpc, robotName);

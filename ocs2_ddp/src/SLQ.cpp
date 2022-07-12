@@ -75,12 +75,13 @@ SLQ::SLQ(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalCon
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SLQ::approximateIntermediateLQ(PrimalDataContainer& primalData) {
+void SLQ::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalDataContainer& primalData) {
   // create alias
   const auto& timeTrajectory = primalData.primalSolution.timeTrajectory_;
   const auto& stateTrajectory = primalData.primalSolution.stateTrajectory_;
   const auto& inputTrajectory = primalData.primalSolution.inputTrajectory_;
   const auto& postEventIndices = primalData.primalSolution.postEventIndices_;
+  const auto& multiplierTrajectory = dualSolution.intermediates;
   auto& modelDataTrajectory = primalData.modelDataTrajectory;
 
   modelDataTrajectory.clear();
@@ -96,7 +97,7 @@ void SLQ::approximateIntermediateLQ(PrimalDataContainer& primalData) {
     while ((timeIndex = nextTimeIndex_++) < timeTrajectory.size()) {
       // approximate LQ for the given time index
       ocs2::approximateIntermediateLQ(optimalControlProblemStock_[taskId], timeTrajectory[timeIndex], stateTrajectory[timeIndex],
-                                      inputTrajectory[timeIndex], modelDataTrajectory[timeIndex]);
+                                      inputTrajectory[timeIndex], multiplierTrajectory[timeIndex], modelDataTrajectory[timeIndex]);
 
       // checking the numerical properties
       if (settings().checkNumericalStability_) {
@@ -175,8 +176,8 @@ scalar_t SLQ::solveSequentialRiccatiEquations(const ScalarFunctionQuadraticAppro
   // number of the intermediate LQ variables
   const size_t N = nominalPrimalData_.primalSolution.timeTrajectory_.size();
 
-  dualData_.riccatiModificationTrajectory.resize(N);
-  dualData_.projectedModelDataTrajectory.resize(N);
+  nominalDualData_.riccatiModificationTrajectory.resize(N);
+  nominalDualData_.projectedModelDataTrajectory.resize(N);
 
   if (N > 0) {
     // perform the computeRiccatiModificationTerms for partition i
@@ -189,8 +190,8 @@ scalar_t SLQ::solveSequentialRiccatiEquations(const ScalarFunctionQuadraticAppro
       // get next time index is atomic
       while ((timeIndex = nextTimeIndex_++) < N) {
         computeProjectionAndRiccatiModification(nominalPrimalData_.modelDataTrajectory[timeIndex], SmDummy,
-                                                dualData_.projectedModelDataTrajectory[timeIndex],
-                                                dualData_.riccatiModificationTrajectory[timeIndex]);
+                                                nominalDualData_.projectedModelDataTrajectory[timeIndex],
+                                                nominalDualData_.riccatiModificationTrajectory[timeIndex]);
       }
     };
     runParallel(task, settings().nThreads_);
@@ -213,15 +214,15 @@ void SLQ::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& 
                                  const ScalarFunctionQuadraticApproximation& finalValueFunction) {
   // set data for Riccati equations
   riccatiEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
-  riccatiEquationsPtrStock_[workerIndex]->setData(&(nominalPrimalData_.primalSolution.timeTrajectory_),
-                                                  &(dualData_.projectedModelDataTrajectory),
-                                                  &(nominalPrimalData_.primalSolution.postEventIndices_),
-                                                  &(nominalPrimalData_.modelDataEventTimes), &(dualData_.riccatiModificationTrajectory));
+  riccatiEquationsPtrStock_[workerIndex]->setData(
+      &(nominalPrimalData_.primalSolution.timeTrajectory_), &(nominalDualData_.projectedModelDataTrajectory),
+      &(nominalPrimalData_.primalSolution.postEventIndices_), &(nominalPrimalData_.modelDataEventTimes),
+      &(nominalDualData_.riccatiModificationTrajectory));
 
   const auto& nominalTimeTrajectory = nominalPrimalData_.primalSolution.timeTrajectory_;
   const auto& nominalEventsPastTheEndIndices = nominalPrimalData_.primalSolution.postEventIndices_;
 
-  auto& valueFunctionTrajectory = dualData_.valueFunctionTrajectory;
+  auto& valueFunctionTrajectory = nominalDualData_.valueFunctionTrajectory;
 
   // Convert final value of value function in vector format
   vector_t allSsFinal = ContinuousTimeRiccatiEquations::convert2Vector(finalValueFunction);

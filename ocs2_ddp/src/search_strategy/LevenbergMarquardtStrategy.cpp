@@ -32,6 +32,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_ddp/DDP_HelperFunctions.h"
 #include "ocs2_ddp/HessianCorrection.h"
 
+#include <ocs2_oc/oc_problem/OptimalControlProblemHelperFunction.h>
+#include <ocs2_oc/trajectory_adjustment/TrajectorySpreadingHelperFunctions.h>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
@@ -58,7 +61,8 @@ void LevenbergMarquardtStrategy::reset() {
 /******************************************************************************************************/
 bool LevenbergMarquardtStrategy::run(const std::pair<scalar_t, scalar_t>& timePeriod, const vector_t& initState,
                                      const scalar_t expectedCost, const LinearController& unoptimizedController,
-                                     const ModeSchedule& modeSchedule, search_strategy::SolutionRef solution) {
+                                     const DualSolution& dualSolution, const ModeSchedule& modeSchedule,
+                                     search_strategy::SolutionRef solution) {
   constexpr size_t taskId = 0;
 
   // previous merit and the expected reduction
@@ -74,11 +78,27 @@ bool LevenbergMarquardtStrategy::run(const std::pair<scalar_t, scalar_t>& timePe
     incrementController(stepLength, unoptimizedController, getLinearController(solution.primalSolution));
     solution.avgTimeStep = rolloutTrajectory(rolloutRef_, timePeriod.first, initState, timePeriod.second, solution.primalSolution);
 
-    // compute metrics
-    computeRolloutMetrics(optimalControlProblemRef_, solution.primalSolution, solution.metrics);
+    // adjust dual solution only if it is required
+    const DualSolution* adjustedDualSolutionPtr = &dualSolution;
+    if (!dualSolution.timeTrajectory.empty()) {
+      // trajectory spreading
+      constexpr bool debugPrint = false;
+      TrajectorySpreading trajectorySpreading(debugPrint);
+      const auto status = trajectorySpreading.set(modeSchedule, solution.primalSolution.modeSchedule_, dualSolution.timeTrajectory);
+      if (status.willTruncate || status.willPerformTrajectorySpreading) {
+        trajectorySpread(trajectorySpreading, dualSolution, tempDualSolution_);
+        adjustedDualSolutionPtr = &tempDualSolution_;
+      }
+    }
+
+    // initialize dual solution
+    initializeDualSolution(optimalControlProblemRef_, solution.primalSolution, *adjustedDualSolutionPtr, solution.dualSolution);
+
+    // compute problem metrics
+    computeRolloutMetrics(optimalControlProblemRef_, solution.primalSolution, solution.dualSolution, solution.problemMetrics);
 
     // compute performanceIndex
-    solution.performanceIndex = computeRolloutPerformanceIndex(solution.primalSolution.timeTrajectory_, solution.metrics);
+    solution.performanceIndex = computeRolloutPerformanceIndex(solution.primalSolution.timeTrajectory_, solution.problemMetrics);
     solution.performanceIndex.merit = meritFunc_(solution.performanceIndex);
 
     // display

@@ -54,8 +54,8 @@ class StateAugmentedLagrangianCollection : public Collection<StateAugmentedLagra
   size_t getNumberOfActiveConstraints(scalar_t time) const;
 
   /** Get state constraints and their penalties for each active term */
-  virtual std::vector<Metrics> getValue(scalar_t time, const vector_t& state, const std::vector<Multiplier>& termsMultiplier,
-                                        const PreComputation& preComp) const;
+  virtual std::vector<LagrangianMetrics> getValue(scalar_t time, const vector_t& state, const std::vector<Multiplier>& termsMultiplier,
+                                                  const PreComputation& preComp) const;
 
   /** Get the sum of state Lagrangian penalties quadratic approximation */
   virtual ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
@@ -63,7 +63,7 @@ class StateAugmentedLagrangianCollection : public Collection<StateAugmentedLagra
                                                                          const PreComputation& preComp) const;
 
   /** Update Lagrange/penalty multipliers, and the penalty value for each active term. */
-  virtual void updateLagrangian(scalar_t time, const vector_t& state, std::vector<Metrics>& termsMetrics,
+  virtual void updateLagrangian(scalar_t time, const vector_t& state, std::vector<LagrangianMetrics>& termsMetrics,
                                 std::vector<Multiplier>& termsMultiplier) const;
 
   /** Initialize Lagrange/penalty multipliers for each active term. */

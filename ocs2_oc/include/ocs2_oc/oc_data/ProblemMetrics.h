@@ -1,4 +1,4 @@
-/******************************************************************************
+#include <ocs2_oc/oc_data/PrimalSolution.h>/******************************************************************************
 Copyright (c) 2017, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -30,47 +30,28 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
-#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
+#include <ocs2_core/model_data/Metrics.h>
 
 namespace ocs2 {
 
-struct Metrics {
-  using value_t = std::pair<vector_t, scalar_t>;
+struct ProblemMetrics {
+  MetricsCollection final;
+  std::vector<MetricsCollection> preJumps;
+  std::vector<MetricsCollection> intermediates;
 
-  // Cost
-  scalar_t cost;
+  /** Exchanges the content of ProblemMetrics */
+  void swap(ProblemMetrics& other) {
+    final.swap(other.final);
+    preJumps.swap(other.preJumps);
+    intermediates.swap(other.intermediates);
+  }
 
-  // Equality constraints
-  vector_t stateEqConstraint;
-  vector_t stateInputEqConstraint;
-
-  // Lagrangians
-  //  std::vector<value_t> stateEqLagrangian;
-  //  std::vector<value_t> stateIneqLagrangian;
-  //  std::vector<value_t> stateInputEqLagrangian;
-  //  std::vector<value_t> stateInputIneqLagrangian;
-  scalar_t stateEqLagrangian;
-  scalar_t stateIneqLagrangian;
-  scalar_t stateInputEqLagrangian;
-  scalar_t stateInputIneqLagrangian;
+  /** Clears the content of the ProblemMetrics */
+  void clear() {
+    final.clear();
+    preJumps.clear();
+    intermediates.clear();
+  }
 };
-
-struct MetricsCollection {
-  Metrics final;
-  std::vector<Metrics> preJumps;
-  std::vector<Metrics> intermediates;
-};
-
-/** Exchanges the given values of Metrics */
-void swap(Metrics& lhs, Metrics& rhs);
-
-/** Clears the value of the given Metrics */
-void clear(Metrics& m);
-
-/** Exchanges the given values of MetricsCollection */
-void swap(MetricsCollection& lhs, MetricsCollection& rhs);
-
-/** Clears the value of the given MetricsCollection */
-void clear(MetricsCollection& m);
 
 }  // namespace ocs2

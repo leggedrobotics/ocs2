@@ -33,10 +33,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_cartpole/CartPoleInterface.h"
 #include "ocs2_cartpole/dynamics/CartPoleSystemDynamics.h"
 
+#include <ocs2_core/augmented_lagrangian/AugmentedLagrangian.h>
+#include <ocs2_core/constraint/LinearStateInputConstraint.h>
 #include <ocs2_core/cost/QuadraticStateCost.h>
 #include <ocs2_core/cost/QuadraticStateInputCost.h>
 #include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_core/misc/LoadData.h>
+#include <ocs2_core/penalties/Penalties.h>
 
 // Boost
 #include <boost/filesystem/operations.hpp>
@@ -48,28 +51,30 @@ namespace cartpole {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-CartPoleInterface::CartPoleInterface(const std::string& taskFile, const std::string& libraryFolder) {
+CartPoleInterface::CartPoleInterface(const std::string& taskFile, const std::string& libraryFolder, bool verbose) {
   // check that task file exists
   boost::filesystem::path taskFilePath(taskFile);
   if (boost::filesystem::exists(taskFilePath)) {
-    std::cerr << "[CartPoleInterface] Loading task file: " << taskFilePath << std::endl;
+    std::cerr << "[CartPoleInterface] Loading task file: " << taskFilePath << "\n";
   } else {
     throw std::invalid_argument("[CartPoleInterface] Task file not found: " + taskFilePath.string());
   }
   // create library folder if it does not exist
   boost::filesystem::path libraryFolderPath(libraryFolder);
   boost::filesystem::create_directories(libraryFolderPath);
-  std::cerr << "[CartPoleInterface] Generated library path: " << libraryFolderPath << std::endl;
+  std::cerr << "[CartPoleInterface] Generated library path: " << libraryFolderPath << "\n";
 
   // Default initial condition
   loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
   loadData::loadEigenMatrix(taskFile, "x_final", xFinal_);
-  std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
-  std::cerr << "x_final:  " << xFinal_.transpose() << std::endl;
+  if (verbose) {
+    std::cerr << "x_init:   " << initialState_.transpose() << "\n";
+    std::cerr << "x_final:  " << xFinal_.transpose() << "\n";
+  }
 
   // DDP-MPC settings
-  ddpSettings_ = ddp::loadSettings(taskFile, "ddp");
-  mpcSettings_ = mpc::loadSettings(taskFile, "mpc");
+  ddpSettings_ = ddp::loadSettings(taskFile, "ddp", verbose);
+  mpcSettings_ = mpc::loadSettings(taskFile, "mpc", verbose);
 
   /*
    * Optimal control problem
@@ -81,21 +86,39 @@ CartPoleInterface::CartPoleInterface(const std::string& taskFile, const std::str
   loadData::loadEigenMatrix(taskFile, "Q", Q);
   loadData::loadEigenMatrix(taskFile, "R", R);
   loadData::loadEigenMatrix(taskFile, "Q_final", Qf);
-  std::cerr << "Q:  \n" << Q << "\n";
-  std::cerr << "R:  \n" << R << "\n";
-  std::cerr << "Q_final:\n" << Qf << "\n";
+  if (verbose) {
+    std::cerr << "Q:  \n" << Q << "\n";
+    std::cerr << "R:  \n" << R << "\n";
+    std::cerr << "Q_final:\n" << Qf << "\n";
+  }
 
   problem_.costPtr->add("cost", std::unique_ptr<StateInputCost>(new QuadraticStateInputCost(Q, R)));
   problem_.finalCostPtr->add("finalCost", std::unique_ptr<StateCost>(new QuadraticStateCost(Qf)));
 
   // Dynamics
   CartPoleParameters cartPoleParameters;
-  cartPoleParameters.loadSettings(taskFile);
-  problem_.dynamicsPtr.reset(new CartPoleSytemDynamics(cartPoleParameters, libraryFolder));
+  cartPoleParameters.loadSettings(taskFile, "cartpole_parameters", verbose);
+  problem_.dynamicsPtr.reset(new CartPoleSytemDynamics(cartPoleParameters, libraryFolder, verbose));
 
   // Rollout
-  auto rolloutSettings = rollout::loadSettings(taskFile, "rollout");
+  auto rolloutSettings = rollout::loadSettings(taskFile, "rollout", verbose);
   rolloutPtr_.reset(new TimeTriggeredRollout(*problem_.dynamicsPtr, rolloutSettings));
+
+  // Constraints
+  auto getPenalty = [&]() {
+    using penalty_type = augmented::SlacknessSquaredHingePenalty;
+    penalty_type::Config boundsConfig;
+    loadData::loadPenaltyConfig(taskFile, "bounds_penalty_config", boundsConfig, verbose);
+    return penalty_type::create(boundsConfig);
+  };
+  auto getConstraint = [&]() {
+    constexpr size_t numIneqConstraint = 2;
+    const vector_t e = (vector_t(numIneqConstraint) << cartPoleParameters.maxInput_, cartPoleParameters.maxInput_).finished();
+    const vector_t D = (vector_t(numIneqConstraint) << 1.0, -1.0).finished();
+    const matrix_t C = matrix_t::Zero(numIneqConstraint, STATE_DIM);
+    return std::unique_ptr<StateInputConstraint>(new LinearStateInputConstraint(e, C, D));
+  };
+  problem_.inequalityLagrangianPtr->add("InputLimits", create(getConstraint(), getPenalty()));
 
   // Initialization
   cartPoleInitializerPtr_.reset(new DefaultInitializer(INPUT_DIM));

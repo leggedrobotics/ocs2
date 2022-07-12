@@ -59,7 +59,8 @@ class StateAugmentedLagrangian final : public StateAugmentedLagrangianInterface 
   bool isActive(scalar_t time) const override;
   size_t getNumConstraints(scalar_t time) const override;
 
-  Metrics getValue(scalar_t time, const vector_t& state, const Multiplier& multiplier, const PreComputation& preComp) const override;
+  LagrangianMetrics getValue(scalar_t time, const vector_t& state, const Multiplier& multiplier,
+                             const PreComputation& preComp) const override;
 
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const Multiplier& multiplier,
                                                                  const PreComputation& preComp) const override;

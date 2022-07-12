@@ -57,10 +57,8 @@ namespace ocs2 {
  */
 class MRT_BASE {
  public:
-  /** Constructor */
   MRT_BASE();
 
-  /** Default destructor */
   virtual ~MRT_BASE() = default;
 
   /**

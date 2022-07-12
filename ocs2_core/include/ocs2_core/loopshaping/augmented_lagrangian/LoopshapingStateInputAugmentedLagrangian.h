@@ -43,10 +43,10 @@ class LoopshapingStateInputAugmentedLagrangian : public StateInputAugmentedLagra
  public:
   ~LoopshapingStateInputAugmentedLagrangian() override = default;
 
-  std::vector<Metrics> getValue(scalar_t t, const vector_t& x, const vector_t& u, const std::vector<Multiplier>& termsMultiplier,
-                                const PreComputation& preComp) const final override;
+  std::vector<LagrangianMetrics> getValue(scalar_t t, const vector_t& x, const vector_t& u, const std::vector<Multiplier>& termsMultiplier,
+                                          const PreComputation& preComp) const final override;
 
-  void updateLagrangian(scalar_t t, const vector_t& x, const vector_t& u, std::vector<Metrics>& termsMetrics,
+  void updateLagrangian(scalar_t t, const vector_t& x, const vector_t& u, std::vector<LagrangianMetrics>& termsMetrics,
                         std::vector<Multiplier>& termsMultiplier) const final override;
 
  protected:

@@ -34,17 +34,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-struct Metrics {
-  Metrics() : Metrics(0.0, vector_t()) {}
-  Metrics(scalar_t penaltyArg, vector_t constraintArg) : penalty(penaltyArg), constraint(std::move(constraintArg)) {}
+struct LagrangianMetrics {
+  LagrangianMetrics() : LagrangianMetrics(0.0, vector_t()) {}
+  LagrangianMetrics(scalar_t penaltyArg, vector_t constraintArg) : penalty(penaltyArg), constraint(std::move(constraintArg)) {}
 
   scalar_t penalty;
   vector_t constraint;
 };
 
-/** A const reference view to Metrics. This is useful for having an array of references to Metrics. */
-struct MetricsConstRef {
-  MetricsConstRef(const Metrics& metricsArg) : penalty(metricsArg.penalty), constraint(metricsArg.constraint) {}
+/** A const reference view to LagrangianMetrics. This is useful for having an array of references to LagrangianMetrics. */
+struct LagrangianMetricsConstRef {
+  LagrangianMetricsConstRef(const LagrangianMetrics& metricsArg) : penalty(metricsArg.penalty), constraint(metricsArg.constraint) {}
 
   const scalar_t& penalty;
   const vector_t& constraint;
@@ -59,10 +59,10 @@ struct MetricsCollection {
   vector_t stateInputEqConstraint;
 
   // Lagrangians
-  std::vector<Metrics> stateEqLagrangian;
-  std::vector<Metrics> stateIneqLagrangian;
-  std::vector<Metrics> stateInputEqLagrangian;
-  std::vector<Metrics> stateInputIneqLagrangian;
+  std::vector<LagrangianMetrics> stateEqLagrangian;
+  std::vector<LagrangianMetrics> stateIneqLagrangian;
+  std::vector<LagrangianMetrics> stateInputEqLagrangian;
+  std::vector<LagrangianMetrics> stateInputIneqLagrangian;
 
   /** Exchanges the values of MetricsCollection */
   void swap(MetricsCollection& other) {
@@ -93,23 +93,23 @@ struct MetricsCollection {
   }
 };
 
-/** Sums penalties of an array of Metrics */
-inline scalar_t sumPenalties(const std::vector<Metrics>& metricsArray) {
+/** Sums penalties of an array of LagrangianMetrics */
+inline scalar_t sumPenalties(const std::vector<LagrangianMetrics>& metricsArray) {
   scalar_t s = 0.0;
-  std::for_each(metricsArray.begin(), metricsArray.end(), [&s](const Metrics& m) { s += m.penalty; });
+  std::for_each(metricsArray.begin(), metricsArray.end(), [&s](const LagrangianMetrics& m) { s += m.penalty; });
   return s;
 }
 
 namespace LinearInterpolation {
 
 /**
- * Linearly interpolates a trajectory of Metrics.
+ * Linearly interpolates a trajectory of LagrangianMetrics.
  *
  * @param [in] indexAlpha : index and interpolation coefficient (alpha) pair.
- * @param [in] dataArray : A trajectory of MetricsConstRef.
- * @return The interpolated Metrics at indexAlpha.
+ * @param [in] dataArray : A trajectory of LagrangianMetricsConstRef.
+ * @return The interpolated LagrangianMetrics at indexAlpha.
  */
-Metrics interpolate(const index_alpha_t& indexAlpha, const std::vector<MetricsConstRef>& dataArray);
+LagrangianMetrics interpolate(const index_alpha_t& indexAlpha, const std::vector<LagrangianMetricsConstRef>& dataArray);
 
 /**
  * Linearly interpolates a trajectory of MetricsCollection.

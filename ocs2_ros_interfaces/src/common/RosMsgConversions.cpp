@@ -216,8 +216,8 @@ TargetTrajectories readTargetTrajectoriesMsg(const ocs2_msgs::mpc_target_traject
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ocs2_msgs::metrics createMetricsMsg(scalar_t time, MetricsConstRef metrics) {
-  ocs2_msgs::metrics metricsMsg;
+ocs2_msgs::lagrangian_metrics createMetricsMsg(scalar_t time, LagrangianMetricsConstRef metrics) {
+  ocs2_msgs::lagrangian_metrics metricsMsg;
 
   metricsMsg.time = time;
   metricsMsg.penalty = metrics.penalty;

@@ -59,7 +59,7 @@ class SolverObserverModule {
   /**
    * Sets the callback for processing extracted metrics array.
    * The callback should have the following signature:
-   * void callback(const scalar_array_t& timeTrajectory, const std::vector<MetricsConstRef>& termMetrics)
+   * void callback(const scalar_array_t& timeTrajectory, const std::vector<LagrangianMetricsConstRef>& termMetrics)
    */
   template <class CallbackType>
   void setMetricsCallback(CallbackType&& callback) {
@@ -100,10 +100,10 @@ class SolverObserverModule {
   const std::string termsName_;
 
  private:
-  std::vector<MetricsConstRef> termMetricsArray_{};
+  std::vector<LagrangianMetricsConstRef> termMetricsArray_{};
   std::vector<MultiplierConstRef> termMultiplierArray_{};
 
-  std::function<void(const scalar_array_t&, const std::vector<MetricsConstRef>&)> metricsCallback_;
+  std::function<void(const scalar_array_t&, const std::vector<LagrangianMetricsConstRef>&)> metricsCallback_;
   std::function<void(const scalar_array_t&, const std::vector<MultiplierConstRef>&)> multiplierCallback_;
 };
 

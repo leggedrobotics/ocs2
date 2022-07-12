@@ -35,12 +35,14 @@ namespace LinearInterpolation {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-Metrics interpolate(const index_alpha_t& indexAlpha, const std::vector<MetricsConstRef>& dataArray) {
-  const auto penalty = interpolate(indexAlpha, dataArray,
-                                   [](const std::vector<MetricsConstRef>& array, size_t t) -> const scalar_t& { return array[t].penalty; });
+LagrangianMetrics interpolate(const index_alpha_t& indexAlpha, const std::vector<LagrangianMetricsConstRef>& dataArray) {
+  const auto penalty =
+      interpolate(indexAlpha, dataArray,
+                  [](const std::vector<LagrangianMetricsConstRef>& array, size_t t) -> const scalar_t& { return array[t].penalty; });
 
-  const auto constraint = interpolate(
-      indexAlpha, dataArray, [](const std::vector<MetricsConstRef>& array, size_t t) -> const vector_t& { return array[t].constraint; });
+  const auto constraint =
+      interpolate(indexAlpha, dataArray,
+                  [](const std::vector<LagrangianMetricsConstRef>& array, size_t t) -> const vector_t& { return array[t].constraint; });
 
   return {penalty, constraint};
 }

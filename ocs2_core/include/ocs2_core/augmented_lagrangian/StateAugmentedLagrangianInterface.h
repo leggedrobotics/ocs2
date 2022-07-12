@@ -51,7 +51,8 @@ class StateAugmentedLagrangianInterface {
   virtual size_t getNumConstraints(scalar_t time) const = 0;
 
   /** Get the constraint and its penalty value */
-  virtual Metrics getValue(scalar_t time, const vector_t& state, const Multiplier& multiplier, const PreComputation& preComp) const = 0;
+  virtual LagrangianMetrics getValue(scalar_t time, const vector_t& state, const Multiplier& multiplier,
+                                     const PreComputation& preComp) const = 0;
 
   /** Get the constraint's penalty quadratic approximation */
   virtual ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const Multiplier& multiplier,

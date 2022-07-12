@@ -54,10 +54,11 @@ size_t StateInputAugmentedLagrangianCollection::getNumberOfActiveConstraints(sca
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::vector<Metrics> StateInputAugmentedLagrangianCollection::getValue(scalar_t time, const vector_t& state, const vector_t& input,
-                                                                       const std::vector<Multiplier>& termsMultiplier,
-                                                                       const PreComputation& preComp) const {
-  std::vector<Metrics> termsConstraintPenalty;
+std::vector<LagrangianMetrics> StateInputAugmentedLagrangianCollection::getValue(scalar_t time, const vector_t& state,
+                                                                                 const vector_t& input,
+                                                                                 const std::vector<Multiplier>& termsMultiplier,
+                                                                                 const PreComputation& preComp) const {
+  std::vector<LagrangianMetrics> termsConstraintPenalty;
   termsConstraintPenalty.reserve(terms_.size());
   for (size_t i = 0; i < terms_.size(); i++) {
     if (terms_[i]->isActive(time)) {
@@ -102,7 +103,7 @@ ScalarFunctionQuadraticApproximation StateInputAugmentedLagrangianCollection::ge
 /******************************************************************************************************/
 /******************************************************************************************************/
 void StateInputAugmentedLagrangianCollection::updateLagrangian(scalar_t time, const vector_t& state, const vector_t& input,
-                                                               std::vector<Metrics>& termsMetrics,
+                                                               std::vector<LagrangianMetrics>& termsMetrics,
                                                                std::vector<Multiplier>& termsMultiplier) const {
   assert(termsMetrics.size() == termsMultiplier.size());
 

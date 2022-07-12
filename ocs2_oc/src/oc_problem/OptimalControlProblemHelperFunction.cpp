@@ -186,7 +186,8 @@ void updateIntermediateMultiplierCollection(const OptimalControlProblem& ocp, sc
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-const Metrics* extractFinalTermMetrics(const OptimalControlProblem& ocp, const std::string& name, const MetricsCollection& metricsColl) {
+const LagrangianMetrics* extractFinalTermMetrics(const OptimalControlProblem& ocp, const std::string& name,
+                                                 const MetricsCollection& metricsColl) {
   size_t index;
   if (ocp.finalEqualityLagrangianPtr->getTermIndex(name, index)) {
     return &metricsColl.stateEqLagrangian[index];
@@ -203,7 +204,8 @@ const Metrics* extractFinalTermMetrics(const OptimalControlProblem& ocp, const s
 /******************************************************************************************************/
 /******************************************************************************************************/
 bool extractPreJumpTermMetrics(const OptimalControlProblem& ocp, const std::string& name,
-                               const std::vector<MetricsCollection>& metricsCollArray, std::vector<MetricsConstRef>& metricsArray) {
+                               const std::vector<MetricsCollection>& metricsCollArray,
+                               std::vector<LagrangianMetricsConstRef>& metricsArray) {
   metricsArray.clear();
 
   size_t index;
@@ -231,7 +233,7 @@ bool extractPreJumpTermMetrics(const OptimalControlProblem& ocp, const std::stri
 /******************************************************************************************************/
 bool extractIntermediateTermMetrics(const OptimalControlProblem& ocp, const std::string& name,
                                     const std::vector<MetricsCollection>& metricsCollTraj,
-                                    std::vector<MetricsConstRef>& metricsTrajectory) {
+                                    std::vector<LagrangianMetricsConstRef>& metricsTrajectory) {
   metricsTrajectory.clear();
 
   size_t index;

@@ -1,4 +1,4 @@
-# MPC metrics
+# MPC Lagrangian metrics
 
 float32   time
 float32   penalty

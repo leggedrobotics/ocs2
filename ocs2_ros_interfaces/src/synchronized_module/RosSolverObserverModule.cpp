@@ -43,11 +43,11 @@ void RosSolverObserverModule::subscribe(ros::NodeHandle& nh) {
   for (const auto& t : timePoints_) {
     const int timeMs = static_cast<int>(t * 1000.0);
     const std::string topicName = termsName_ + "/" + std::to_string(timeMs) + "MsLookAhead";
-    metricsPublishers_.push_back(nh.advertise<ocs2_msgs::metrics>("metrics/" + topicName, 1, true));
+    metricsPublishers_.push_back(nh.advertise<ocs2_msgs::lagrangian_metrics>("metrics/" + topicName, 1, true));
     multiplierPublishers_.push_back(nh.advertise<ocs2_msgs::multiplier>("multipliers/" + topicName, 1, true));
   }
 
-  setMetricsCallback([this](const scalar_array_t& timeTrajectory, const std::vector<MetricsConstRef>& termMetrics) {
+  setMetricsCallback([this](const scalar_array_t& timeTrajectory, const std::vector<LagrangianMetricsConstRef>& termMetrics) {
     this->observeTermMetrics(timeTrajectory, termMetrics);
   });
 
@@ -60,7 +60,7 @@ void RosSolverObserverModule::subscribe(ros::NodeHandle& nh) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void RosSolverObserverModule::observeTermMetrics(const scalar_array_t& timeTrajectory,
-                                                 const std::vector<MetricsConstRef>& termMetricsArray) {
+                                                 const std::vector<LagrangianMetricsConstRef>& termMetricsArray) {
   if (!timeTrajectory.empty()) {
     for (size_t i = 0; i < timePoints_.size(); i++) {
       const auto t = timeTrajectory.front() + timePoints_[i];

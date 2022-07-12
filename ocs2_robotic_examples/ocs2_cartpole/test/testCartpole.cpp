@@ -156,7 +156,7 @@ class TestCartpole : public testing::TestWithParam<std::tuple<ddp::Algorithm, Pe
     return std::unique_ptr<StateInputConstraint>(termStateInpuLagrangianPtr->get().clone());
   }
 
-  void testInputLimitsViolation(const scalar_array_t& timeTrajectory, const std::vector<MetricsConstRef>& termMetrics) const {
+  void testInputLimitsViolation(const scalar_array_t& timeTrajectory, const std::vector<LagrangianMetricsConstRef>& termMetrics) const {
     for (size_t i = 0; i < timeTrajectory.size(); i++) {
       const vector_t constraintViolation = termMetrics[i].constraint.cwiseMin(0.0);
       EXPECT_NEAR(constraintViolation(0), 0.0, constraintViolationTolerance)
@@ -201,7 +201,7 @@ TEST_P(TestCartpole, testDDP) {
   // observer for InputLimits violation
   std::unique_ptr<SolverObserverModule> inputLimitsObserverModulePtr(new SolverObserverModule("InputLimits"));
   inputLimitsObserverModulePtr->setMetricsCallback(
-      [&](const scalar_array_t& timeTrajectory, const std::vector<MetricsConstRef>& termMetrics) {
+      [&](const scalar_array_t& timeTrajectory, const std::vector<LagrangianMetricsConstRef>& termMetrics) {
         testInputLimitsViolation(timeTrajectory, termMetrics);
       });
   ddpPtr->addObserverModule(std::move(inputLimitsObserverModulePtr));

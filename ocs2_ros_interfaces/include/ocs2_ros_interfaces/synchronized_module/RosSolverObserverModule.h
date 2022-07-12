@@ -60,7 +60,7 @@ class RosSolverObserverModule final : public SolverObserverModule {
   RosSolverObserverModule(const RosSolverObserverModule& other) = default;
 
   /** Metrics observer */
-  void observeTermMetrics(const scalar_array_t& timeTrajectory, const std::vector<MetricsConstRef>& termMetricsArray);
+  void observeTermMetrics(const scalar_array_t& timeTrajectory, const std::vector<LagrangianMetricsConstRef>& termMetricsArray);
 
   /** Multiplier observer */
   void observeTermMultiplier(const scalar_array_t& timeTrajectory, const std::vector<MultiplierConstRef>& termMultiplierArray);

@@ -57,7 +57,7 @@ void SolverObserverModule::extractTermMetrics(const OptimalControlProblem& ocp, 
 
   // search final
   else {
-    const Metrics* metricsPtr = extractFinalTermMetrics(ocp, termsName_, problemMetrics.final);
+    const LagrangianMetrics* metricsPtr = extractFinalTermMetrics(ocp, termsName_, problemMetrics.final);
     if (metricsPtr != nullptr) {
       if (!primalSolution.timeTrajectory_.empty() && metricsCallback_ != nullptr) {
         const scalar_array_t timeArray{primalSolution.timeTrajectory_.back()};

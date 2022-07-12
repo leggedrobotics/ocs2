@@ -161,7 +161,7 @@ ScalarFunctionQuadraticApproximation approximateFinalCost(const OptimalControlPr
                                                           const vector_t& state);
 
 /**
- * Compute the intermediate-time metrics (i.e. cost, softConstraints, and constraints).
+ * Compute the intermediate-time MetricsCollection (i.e. cost, softConstraints, and constraints).
  *
  * @note It is assumed that the precomputation request is already made.
  * problem.preComputationPtr->request(Request::Cost + Request::Constraint + Request::SoftConstraint, t, x, u)
@@ -177,7 +177,7 @@ MetricsCollection computeIntermediateMetrics(OptimalControlProblem& problem, con
                                              const vector_t& input, const MultiplierCollection& multipliers);
 
 /**
- * Compute the event-time metrics based on pre-jump state value (i.e. cost, softConstraints, and constraints).
+ * Compute the event-time MetricsCollection based on pre-jump state value (i.e. cost, softConstraints, and constraints).
  *
  * @note It is assumed that the precomputation request is already made.
  * problem.preComputationPtr->requestPreJump(Request::Cost + Request::Constraint + Request::SoftConstraint, t, x)
@@ -192,7 +192,7 @@ MetricsCollection computePreJumpMetrics(OptimalControlProblem& problem, const sc
                                         const MultiplierCollection& multipliers);
 
 /**
- * Compute the final-time metrics (i.e. cost, softConstraints, and constraints).
+ * Compute the final-time MetricsCollection (i.e. cost, softConstraints, and constraints).
  *
  * @note It is assumed that the precomputation request is already made.
  * problem.preComputationPtr->requestFinal(Request::Cost + Request::Constraint + Request::SoftConstraint, t, x)

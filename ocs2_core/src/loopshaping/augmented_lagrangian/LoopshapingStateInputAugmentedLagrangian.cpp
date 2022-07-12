@@ -32,9 +32,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-std::vector<Metrics> LoopshapingStateInputAugmentedLagrangian::getValue(scalar_t t, const vector_t& x, const vector_t& u,
-                                                                        const std::vector<Multiplier>& termsMultiplier,
-                                                                        const PreComputation& preComp) const {
+std::vector<LagrangianMetrics> LoopshapingStateInputAugmentedLagrangian::getValue(scalar_t t, const vector_t& x, const vector_t& u,
+                                                                                  const std::vector<Multiplier>& termsMultiplier,
+                                                                                  const PreComputation& preComp) const {
   if (this->empty()) {
     return {};
   }
@@ -48,7 +48,7 @@ std::vector<Metrics> LoopshapingStateInputAugmentedLagrangian::getValue(scalar_t
 }
 
 void LoopshapingStateInputAugmentedLagrangian::updateLagrangian(scalar_t t, const vector_t& x, const vector_t& u,
-                                                                std::vector<Metrics>& termsMetrics,
+                                                                std::vector<LagrangianMetrics>& termsMetrics,
                                                                 std::vector<Multiplier>& termsMultiplier) const {
   if (this->empty()) {
     termsMultiplier.clear();

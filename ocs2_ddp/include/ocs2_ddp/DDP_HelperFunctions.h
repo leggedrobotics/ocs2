@@ -54,7 +54,7 @@ void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution&
                            ProblemMetrics& problemMetrics);
 
 /**
- * Calculates the PerformanceIndex associated to the input Metrics.
+ * Calculates the PerformanceIndex associated to the given ProblemMetrics.
  *
  * @param [in] timeTrajectory: Time stamp of the rollout.
  * @param [in] problemMetrics: The cost, soft constraints and constraints values of the rollout.

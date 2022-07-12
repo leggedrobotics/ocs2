@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
 
 // MPC messages
-#include <ocs2_msgs/metrics.h>
+#include <ocs2_msgs/lagrangian_metrics.h>
 #include <ocs2_msgs/mode_schedule.h>
 #include <ocs2_msgs/mpc_observation.h>
 #include <ocs2_msgs/mpc_performance_indices.h>
@@ -78,8 +78,8 @@ ocs2_msgs::mpc_performance_indices createPerformanceIndicesMsg(scalar_t initTime
 /** Reads the performance indices message. */
 PerformanceIndex readPerformanceIndicesMsg(const ocs2_msgs::mpc_performance_indices& performanceIndicesMsg);
 
-/** Creates metrics message. */
-ocs2_msgs::metrics createMetricsMsg(scalar_t time, MetricsConstRef metrics);
+/** Creates lagrangian_metrics message. */
+ocs2_msgs::lagrangian_metrics createMetricsMsg(scalar_t time, LagrangianMetricsConstRef metrics);
 
 /** Creates multiplier message. */
 ocs2_msgs::multiplier createMultiplierMsg(scalar_t time, MultiplierConstRef multiplier);

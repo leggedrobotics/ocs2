@@ -4,4 +4,5 @@ ciPipeline("--environment anymal --release 21.11 \
                            'git@github.com:leggedrobotics/pinocchio.git;master;git'\
                            'git@github.com:leggedrobotics/ocs2_robotic_assets.git;main;git'\
                            'git@github.com:leggedrobotics/elevation_mapping_cupy.git;main;git'\
+                           'git@github.com:ANYbotics/grid_map.git;master;git'\
            ")

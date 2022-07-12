@@ -31,7 +31,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <algorithm>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "ocs2_core/Types.h"

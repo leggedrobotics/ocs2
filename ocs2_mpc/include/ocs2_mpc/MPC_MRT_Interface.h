@@ -55,9 +55,6 @@ class MPC_MRT_Interface final : public MRT_BASE {
    */
   explicit MPC_MRT_Interface(MPC_BASE& mpc);
 
-  /**
-   * Destructor.
-   */
   ~MPC_MRT_Interface() override = default;
 
   void resetMpcNode(const TargetTrajectories& initTargetTrajectories) override;
@@ -71,29 +68,37 @@ class MPC_MRT_Interface final : public MRT_BASE {
   const ReferenceManagerInterface& getReferenceManager() const;
 
   /**
-   * Advance the mpc module for one iteration.
-   * The evaluation methods can be called while this method is running.
-   * They will evaluate the control law that was up-to-date at the last updatePolicy() call
+   * Advance the mpc module for one iteration. The evaluation methods can be called while this method is running. They will evaluate the
+   * control law that was up-to-date at the last updatePolicy() call.
    */
   void advanceMpc();
 
   /**
-   * @brief getLinearFeedbackGain retrieves K matrix from solver
-   * @param [in] time
-   * @param [out] K
+   * @brief Retrieves the gain matrix from solver capable of optimizing over LinearController type.
+   *
+   * @note This method is not thread-safe, meaning you can only access this data safely at the end of each MPC iteration.
+   *
+   * @param [in] time: query time
+   * @return The gain matrix.
    */
-  void getLinearFeedbackGain(scalar_t time, matrix_t& K);
+  matrix_t getLinearFeedbackGain(scalar_t time);
 
   /**
-   * @brief Access the solver's internal value function
-   * @param time: query time
-   * @param state: query state
+   * @brief Access the solver's internal value function.
+   *
+   * @note This method is not thread-safe, meaning you can only access this data safely at the end of each MPC iteration.
+   *
+   * @param [in] time: query time
+   * @param [in] state: query state
    * @return The quadratic approximation of the value function at the requested time and state.
    */
   ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const;
 
   /**
    * @brief Computes the Lagrange multiplier related to the state-input constraints
+   *
+   * @note This method is not thread-safe, meaning you can only access this data safely at the end of each MPC iteration.
+   *
    * @param [in] time: query time
    * @param [in] state: query state
    * @return The Lagrange multiplier at the requested time and state
@@ -101,14 +106,16 @@ class MPC_MRT_Interface final : public MRT_BASE {
   vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const;
 
   /**
-   * Returns the intermediate dual solution at the given time.
+   * @brief Returns the intermediate dual solution at the given time.
+   *
+   * @note This method is not thread-safe, meaning you can only access this data safely at the end of each MPC iteration.
    *
    * @param [in] time: The inquiry time
    * @return The collection of multipliers associated to state/state-input, equality/inequality Lagrangian terms.
    */
   MultiplierCollection getIntermediateDualSolution(scalar_t time) const;
 
- protected:
+ private:
   /**
    * Updates the buffer variables from the MPC object. This method is automatically called by advanceMpc()
    *
@@ -116,9 +123,7 @@ class MPC_MRT_Interface final : public MRT_BASE {
    */
   void copyToBuffer(const SystemObservation& mpcInitObservation);
 
- protected:
   MPC_BASE& mpc_;
-
   benchmark::RepeatedTimer mpcTimer_;
 
   // MPC inputs

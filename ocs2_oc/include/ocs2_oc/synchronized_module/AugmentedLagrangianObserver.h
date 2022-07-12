@@ -44,17 +44,19 @@ namespace ocs2 {
 /**
  * A solver observer module that extract the metrics and multiplier corresponding to the requested term.
  */
-class SolverObserverModule {
+class AugmentedLagrangianObserver {
  public:
+  /** Input arguments are time stamp and a const reference array of the term's LagrangianMetrics. */
+  using metrics_callback_t = std::function<void(const scalar_array_t&, const std::vector<LagrangianMetricsConstRef>&)>;
+  /** Input arguments are time stamp and a const reference array of the term's Multiplier. */
+  using multiplier_callback_t = std::function<void(const scalar_array_t&, const std::vector<MultiplierConstRef>&)>;
+
   /**
    * Constructor.
    * @param [in] termsName: The name of the term used to add it to OptimalControlProblem.
    * @note The name is case sensitive.
    */
-  explicit SolverObserverModule(std::string termsName) : termsName_(std::move(termsName)) {}
-
-  virtual ~SolverObserverModule() = default;
-  virtual SolverObserverModule* clone() const { return new SolverObserverModule(*this); }
+  explicit AugmentedLagrangianObserver(std::string termName) : termName_(std::move(termName)) {}
 
   /**
    * Sets the callback for processing extracted metrics array.
@@ -93,18 +95,13 @@ class SolverObserverModule {
    */
   void extractTermMultipliers(const OptimalControlProblem& ocp, const DualSolution& dualSolution);
 
- protected:
-  SolverObserverModule(const SolverObserverModule& other)
-      : termsName_(other.termsName_), metricsCallback_(other.metricsCallback_), multiplierCallback_(other.multiplierCallback_) {}
-
-  const std::string termsName_;
-
  private:
+  const std::string termName_;
   std::vector<LagrangianMetricsConstRef> termMetricsArray_{};
   std::vector<MultiplierConstRef> termMultiplierArray_{};
 
-  std::function<void(const scalar_array_t&, const std::vector<LagrangianMetricsConstRef>&)> metricsCallback_;
-  std::function<void(const scalar_array_t&, const std::vector<MultiplierConstRef>&)> multiplierCallback_;
+  metrics_callback_t metricsCallback_;
+  multiplier_callback_t multiplierCallback_;
 };
 
 }  // namespace ocs2

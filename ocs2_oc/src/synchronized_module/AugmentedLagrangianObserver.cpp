@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_oc/synchronized_module/SolverObserverModule.h"
+#include "ocs2_oc/synchronized_module/AugmentedLagrangianObserver.h"
 
 #include "ocs2_oc/oc_problem/OptimalControlProblemHelperFunction.h"
 
@@ -36,17 +36,17 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SolverObserverModule::extractTermMetrics(const OptimalControlProblem& ocp, const PrimalSolution& primalSolution,
-                                              const ProblemMetrics& problemMetrics) {
+void AugmentedLagrangianObserver::extractTermMetrics(const OptimalControlProblem& ocp, const PrimalSolution& primalSolution,
+                                                     const ProblemMetrics& problemMetrics) {
   // search intermediate
-  if (extractIntermediateTermMetrics(ocp, termsName_, problemMetrics.intermediates, termMetricsArray_)) {
+  if (extractIntermediateTermMetrics(ocp, termName_, problemMetrics.intermediates, termMetricsArray_)) {
     if (!primalSolution.timeTrajectory_.empty() && metricsCallback_ != nullptr) {
       metricsCallback_(primalSolution.timeTrajectory_, termMetricsArray_);
     }
   }
 
   // search pre_jump
-  else if (extractPreJumpTermMetrics(ocp, termsName_, problemMetrics.preJumps, termMetricsArray_)) {
+  else if (extractPreJumpTermMetrics(ocp, termName_, problemMetrics.preJumps, termMetricsArray_)) {
     if (!primalSolution.postEventIndices_.empty() && metricsCallback_ != nullptr) {
       scalar_array_t timeArray(primalSolution.postEventIndices_.size());
       std::transform(primalSolution.postEventIndices_.cbegin(), primalSolution.postEventIndices_.cend(), timeArray.begin(),
@@ -57,7 +57,7 @@ void SolverObserverModule::extractTermMetrics(const OptimalControlProblem& ocp, 
 
   // search final
   else {
-    const LagrangianMetrics* metricsPtr = extractFinalTermMetrics(ocp, termsName_, problemMetrics.final);
+    const LagrangianMetrics* metricsPtr = extractFinalTermMetrics(ocp, termName_, problemMetrics.final);
     if (metricsPtr != nullptr) {
       if (!primalSolution.timeTrajectory_.empty() && metricsCallback_ != nullptr) {
         const scalar_array_t timeArray{primalSolution.timeTrajectory_.back()};
@@ -66,7 +66,7 @@ void SolverObserverModule::extractTermMetrics(const OptimalControlProblem& ocp, 
       }
 
     } else {
-      throw std::runtime_error("[SolverObserverModule::extractTermsMetrics] Term (" + termsName_ +
+      throw std::runtime_error("[AugmentedLagrangianObserver::extractTermsMetrics] Term (" + termName_ +
                                ") does not exist in the Lagrangian collections!");
     }
   }
@@ -75,16 +75,16 @@ void SolverObserverModule::extractTermMetrics(const OptimalControlProblem& ocp, 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SolverObserverModule::extractTermMultipliers(const OptimalControlProblem& ocp, const DualSolution& dualSolution) {
+void AugmentedLagrangianObserver::extractTermMultipliers(const OptimalControlProblem& ocp, const DualSolution& dualSolution) {
   // search intermediate
-  if (extractIntermediateTermMultiplier(ocp, termsName_, dualSolution.intermediates, termMultiplierArray_)) {
+  if (extractIntermediateTermMultiplier(ocp, termName_, dualSolution.intermediates, termMultiplierArray_)) {
     if (!dualSolution.timeTrajectory.empty() && multiplierCallback_ != nullptr) {
       multiplierCallback_(dualSolution.timeTrajectory, termMultiplierArray_);
     }
   }
 
   // search pre_jump
-  else if (extractPreJumpTermMultiplier(ocp, termsName_, dualSolution.preJumps, termMultiplierArray_)) {
+  else if (extractPreJumpTermMultiplier(ocp, termName_, dualSolution.preJumps, termMultiplierArray_)) {
     if (!dualSolution.postEventIndices.empty() && multiplierCallback_ != nullptr) {
       scalar_array_t timeArray(dualSolution.postEventIndices.size());
       std::transform(dualSolution.postEventIndices.cbegin(), dualSolution.postEventIndices.cend(), timeArray.begin(),
@@ -95,7 +95,7 @@ void SolverObserverModule::extractTermMultipliers(const OptimalControlProblem& o
 
   // search final
   else {
-    const Multiplier* multiplierPtr = extractFinalTermMultiplier(ocp, termsName_, dualSolution.final);
+    const Multiplier* multiplierPtr = extractFinalTermMultiplier(ocp, termName_, dualSolution.final);
     if (multiplierPtr != nullptr) {
       if (!dualSolution.timeTrajectory.empty() && multiplierCallback_ != nullptr) {
         const scalar_array_t timeArray{dualSolution.timeTrajectory.back()};
@@ -104,7 +104,7 @@ void SolverObserverModule::extractTermMultipliers(const OptimalControlProblem& o
       }
 
     } else {
-      throw std::runtime_error("[SolverObserverModule::extractTermMultipliers] Term (" + termsName_ +
+      throw std::runtime_error("[AugmentedLagrangianObserver::extractTermMultipliers] Term (" + termName_ +
                                ") does not exist in the Lagrangian collections!");
     }
   }

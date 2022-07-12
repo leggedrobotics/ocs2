@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/penalties/Penalties.h>
 #include <ocs2_ddp/ILQR.h>
 #include <ocs2_ddp/SLQ.h>
-#include <ocs2_oc/synchronized_module/SolverObserverModule.h>
+#include <ocs2_oc/synchronized_module/AugmentedLagrangianObserver.h>
 
 #include "ocs2_cartpole/CartPoleInterface.h"
 #include "ocs2_cartpole/package_path.h"
@@ -199,12 +199,12 @@ TEST_P(TestCartpole, testDDP) {
   ddpPtr->getReferenceManager().setTargetTrajectories(initTargetTrajectories);
 
   // observer for InputLimits violation
-  std::unique_ptr<SolverObserverModule> inputLimitsObserverModulePtr(new SolverObserverModule("InputLimits"));
+  std::unique_ptr<AugmentedLagrangianObserver> inputLimitsObserverModulePtr(new AugmentedLagrangianObserver("InputLimits"));
   inputLimitsObserverModulePtr->setMetricsCallback(
       [&](const scalar_array_t& timeTrajectory, const std::vector<LagrangianMetricsConstRef>& termMetrics) {
         testInputLimitsViolation(timeTrajectory, termMetrics);
       });
-  ddpPtr->addObserverModule(std::move(inputLimitsObserverModulePtr));
+  ddpPtr->addAugmentedLagrangianObserver(std::move(inputLimitsObserverModulePtr));
 
   // run solver
   ddpPtr->run(0.0, cartPoleInterfacePtr->getInitialState(), timeHorizon);

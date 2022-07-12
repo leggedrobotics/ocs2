@@ -40,6 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <hpipm_catkin/HpipmInterface.h>
 
 #include "ocs2_sqp/MultipleShootingSettings.h"
+#include "ocs2_sqp/MultipleShootingSolverStatus.h"
 #include "ocs2_sqp/TimeDiscretization.h"
 
 namespace ocs2 {
@@ -71,9 +72,7 @@ class MultipleShootingSolver : public SolverBase {
 
   const std::vector<PerformanceIndex>& getIterationsLog() const override;
 
-  ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const override {
-    throw std::runtime_error("[MultipleShootingSolver] getValueFunction() not available yet.");
-  };
+  ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const override;
 
   ScalarFunctionQuadraticApproximation getHamiltonian(scalar_t time, const vector_t& state, const vector_t& input) override {
     throw std::runtime_error("[MultipleShootingSolver] getHamiltonian() not available yet.");
@@ -120,16 +119,26 @@ class MultipleShootingSolver : public SolverBase {
   };
   OcpSubproblemSolution getOCPSolution(const vector_t& delta_x0);
 
+  /** Extract the value function based on the last solved QP */
+  void extractValueFunction(const std::vector<AnnotatedTime>& time, const vector_array_t& x);
+
   /** Set up the primal solution based on the optimized state and input trajectories */
   void setPrimalSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& x, vector_array_t&& u);
 
   /** Compute 2-norm of the trajectory: sqrt(sum_i v[i]^2)  */
   static scalar_t trajectoryNorm(const vector_array_t& v);
 
+  /** Compute total constraint violation */
+  scalar_t totalConstraintViolation(const PerformanceIndex& performance) const;
+
   /** Decides on the step to take and overrides given trajectories {x(t), u(t)} <- {x(t) + a*dx(t), u(t) + a*du(t)} */
-  std::pair<bool, PerformanceIndex> takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization,
-                                             const vector_t& initState, const OcpSubproblemSolution& subproblemSolution, vector_array_t& x,
-                                             vector_array_t& u);
+  multiple_shooting::StepInfo takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization,
+                                       const vector_t& initState, const OcpSubproblemSolution& subproblemSolution, vector_array_t& x,
+                                       vector_array_t& u);
+
+  /** Determine convergence after a step */
+  multiple_shooting::Convergence checkConvergence(int iteration, const PerformanceIndex& baseline,
+                                                  const multiple_shooting::StepInfo& stepInfo) const;
 
   // Problem definition
   Settings settings_;
@@ -144,6 +153,9 @@ class MultipleShootingSolver : public SolverBase {
   // Solution
   PrimalSolution primalSolution_;
 
+  // Value function in absolute state coordinates (without the constant value)
+  std::vector<ScalarFunctionQuadraticApproximation> valueFunction_;
+
   // Solver interface
   HpipmInterface hpipmInterface_;
 
@@ -157,6 +169,7 @@ class MultipleShootingSolver : public SolverBase {
   std::vector<PerformanceIndex> performanceIndeces_;
 
   // Benchmarking
+  size_t numProblems_{0};
   size_t totalNumIterations_{0};
   benchmark::RepeatedTimer initializationTimer_;
   benchmark::RepeatedTimer linearQuadraticApproximationTimer_;

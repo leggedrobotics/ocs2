@@ -77,8 +77,8 @@ class TestSelfCollision : public ::testing::Test {
 
  protected:
   PinocchioInterface createMobileManipulatorPinocchioInterface() {
-    const std::string urdfPath = ocs2::robotic_assets::getPath() + "/resources/mobile_manipulator/urdf/mobile_manipulator.urdf";
-    const std::string taskFile = ocs2::mobile_manipulator::getPath() + "/config/mpc/task.info";
+    const std::string urdfPath = ocs2::robotic_assets::getPath() + "/resources/mobile_manipulator/mabi_mobile/urdf/mabi_mobile.urdf";
+    const std::string taskFile = ocs2::mobile_manipulator::getPath() + "/config/mabi_mobile/task.info";
 
     // read manipulator type
     ManipulatorModelType modelType = mobile_manipulator::loadManipulatorType(taskFile, "model_information.manipulatorModelType");

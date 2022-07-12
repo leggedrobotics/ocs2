@@ -80,9 +80,9 @@ Eigen::Matrix<SCALAR_T, 3, 4> quaternionDistanceJacobian(const Eigen::Quaternion
 template <typename SCALAR_T>
 Eigen::Quaternion<SCALAR_T> getQuaternionFromEulerAnglesZyx(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAnglesZyx) {
   // clang-format off
-  return Eigen::AngleAxis<SCALAR_T>(eulerAnglesZyx(0), Eigen::Vector3d::UnitZ()) *
-         Eigen::AngleAxis<SCALAR_T>(eulerAnglesZyx(1), Eigen::Vector3d::UnitY()) *
-         Eigen::AngleAxis<SCALAR_T>(eulerAnglesZyx(2), Eigen::Vector3d::UnitX());
+  return Eigen::AngleAxis<SCALAR_T>(eulerAnglesZyx(0), Eigen::Matrix<SCALAR_T, 3, 1>::UnitZ()) *
+         Eigen::AngleAxis<SCALAR_T>(eulerAnglesZyx(1), Eigen::Matrix<SCALAR_T, 3, 1>::UnitY()) *
+         Eigen::AngleAxis<SCALAR_T>(eulerAnglesZyx(2), Eigen::Matrix<SCALAR_T, 3, 1>::UnitX());
   // clang-format on
 }
 
@@ -105,11 +105,14 @@ Eigen::Matrix<SCALAR_T, 3, 3> getRotationMatrixFromZyxEulerAngles(const Eigen::M
   const SCALAR_T s2 = sin(y);
   const SCALAR_T s3 = sin(x);
 
+  const SCALAR_T s2s3 = s2 * s3;
+  const SCALAR_T s2c3 = s2 * c3;
+
   // clang-format off
   Eigen::Matrix<SCALAR_T, 3, 3> rotationMatrix;
-  rotationMatrix << c1 * c2,      c1 * s2 * s3 - s1 * c3,       c1 * s2 * c3 + s1 * s3,
-                    s1 * c2,      s1 * s2 * s3 + c1 * c3,       s1 * s2 * c3 - c1 * s3,
-                      -s2,                c2 * s3,                      c2 * c3;
+  rotationMatrix << c1 * c2,      c1 * s2s3 - s1 * c3,       c1 * s2c3 + s1 * s3,
+                    s1 * c2,      s1 * s2s3 + c1 * c3,       s1 * s2c3 - c1 * s3,
+                        -s2,                  c2 * s3,                   c2 * c3;
   // clang-format on
   return rotationMatrix;
 }
@@ -184,5 +187,116 @@ Eigen::Quaternion<SCALAR_T> matrixToQuaternion(const Eigen::Matrix<SCALAR_T, 3, 
  * @return A quaternion representing an equivalent rotation to R.
  */
 Eigen::Quaternion<ad_scalar_t> matrixToQuaternion(const Eigen::Matrix<ad_scalar_t, 3, 3>& R);
+
+/**
+ * Returns the logarithmic map of the rotation
+ *      w = theta * n = log(R);
+ *
+ * Will find an angle, theta, in the interval [0, pi]
+ *
+ * To make the computation numerically stable and compatible with autodiff, we have to switch between 3 cases.
+ * - For most angles we use the logarithmic map directly
+ * - For angles close to 0.0, we use the taylor expansion
+ * - For angles close to PI, we use a quaternion based solution.
+ *
+ * @tparam SCALAR_T : numeric type
+ * @param rotationMatrix : 3x3 rotation matrix
+ * @return 3x1 rotation vector, theta * n, with theta equal to the rotation angle, and n equal to the rotation axis.
+ */
+template <typename SCALAR_T>
+Eigen::Matrix<SCALAR_T, 3, 1> rotationMatrixToRotationVector(const Eigen::Matrix<SCALAR_T, 3, 3>& rotationMatrix) {
+  // Helper function to select a 3d vector compatible with CppAd
+  auto selectSolutionGt = [](SCALAR_T left, SCALAR_T right, const Eigen::Matrix<SCALAR_T, 3, 1>& if_true,
+                             const Eigen::Matrix<SCALAR_T, 3, 1>& if_false) -> Eigen::Matrix<SCALAR_T, 3, 1> {
+    return {CppAD::CondExpGt(left, right, if_true[0], if_false[0]), CppAD::CondExpGt(left, right, if_true[1], if_false[1]),
+            CppAD::CondExpGt(left, right, if_true[2], if_false[2])};
+  };
+  const auto& R = rotationMatrix;
+
+  const SCALAR_T trace = R(0, 0) + R(1, 1) + R(2, 2);
+  const Eigen::Matrix<SCALAR_T, 3, 1> skewVector(R(2, 1) - R(1, 2), R(0, 2) - R(2, 0), R(1, 0) - R(0, 1));
+
+  // Tolerance to select alternative solution near singularity
+  const SCALAR_T eps(1e-8);
+  const SCALAR_T smallAngleThreshold = SCALAR_T(3.0) - eps;   // select taylorExpansionSol if trace > 3 - eps
+  const SCALAR_T largeAngleThreshold = -SCALAR_T(1.0) + eps;  // select quaternionSol if trace < -1.0 + eps
+
+  // Clip trace away from singularities, to be used in branches that might result in NaN.
+  const SCALAR_T safeHighTrace =
+      CppAD::CondExpGt(trace, smallAngleThreshold, smallAngleThreshold, trace);  // this trace is lower than 3 - eps
+  const SCALAR_T safeTrace = CppAD::CondExpGt(safeHighTrace, largeAngleThreshold, safeHighTrace,
+                                              largeAngleThreshold);  // this trace is also higher than -1.0 + eps
+
+  // Rotation close to zero -> use taylor expansion, use when trace > 3.0 - eps
+  const Eigen::Matrix<SCALAR_T, 3, 1> taylorExpansionSol = (SCALAR_T(0.75) - trace / SCALAR_T(12.0)) * skewVector;
+
+  // Normal rotation, use normal logarithmic map
+  const SCALAR_T tmp = SCALAR_T(0.5) * (safeTrace - SCALAR_T(1.0));
+  const SCALAR_T theta = acos(tmp);
+  const Eigen::Matrix<SCALAR_T, 3, 1> normalSol = (SCALAR_T(0.5) * theta / sqrt(SCALAR_T(1.0) - tmp * tmp)) * skewVector;
+
+  // Quaternion solution, when close to pi, use when trace < -1.0 + eps
+  auto q = ocs2::matrixToQuaternion(R);
+
+  // Correct sign to make qw positive
+  q.vec() = selectSolutionGt(q.w(), SCALAR_T(0.0), q.vec(), -q.vec());
+  q.w() = CppAD::CondExpGt(q.w(), SCALAR_T(0.0), q.w(), -q.w());
+
+  // Norm of vector part of the quaternion. Compute from trace to avoid squaring element and losing precision
+  const SCALAR_T qVecNorm = SCALAR_T(0.5) * sqrt(SCALAR_T(3.0) - safeHighTrace);
+
+  Eigen::Matrix<SCALAR_T, 3, 1> quaternionSol = SCALAR_T(4.0) * atan(qVecNorm / (q.w() + SCALAR_T(1.0))) * q.vec() / qVecNorm;
+
+  // Select solution
+  return selectSolutionGt(trace, largeAngleThreshold, selectSolutionGt(trace, smallAngleThreshold, taylorExpansionSol, normalSol),
+                          quaternionSol);
+}
+
+/**
+ * Computes a rotation error as a 3D vector in world frame. This 3D vector is the angle * axis representation of the rotation error.
+ * This operation is also known as "box-minus": error = lhs [-] rhs
+ *
+ * Example usage:
+ *    rotationErrorInWorld = rotationErrorInWorld(rotationBaseMeasuredToWorld, rotationBaseReferenceToWorld)
+ *
+ * @tparam SCALAR_T : numerical type
+ * @param rotationMatrixLhs : rotation from lhs frame to world
+ * @param rotationMatrixRhs : rotation from rhs frame to world
+ * @return error = lhs [-] rhs
+ */
+template <typename SCALAR_T>
+Eigen::Matrix<SCALAR_T, 3, 1> rotationErrorInWorld(const Eigen::Matrix<SCALAR_T, 3, 3>& rotationMatrixLhs,
+                                                   const Eigen::Matrix<SCALAR_T, 3, 3>& rotationMatrixRhs) {
+  /* Note that this error (W_R_lhs * rhs_R_W) does not follow the usual concatination of rotations.
+   * It follows from simplifying:
+   *    errorInWorld = W_R_lhs * angleAxis(rhs_R_W * W_R_lhs)
+   *                 = angleAxis(W_R_lhs * rhs_R_W * W_R_lhs * lhs_R_W)
+   *                 = angleAxis(W_R_lhs * rhs_R_W)
+   */
+  const Eigen::Matrix<SCALAR_T, 3, 3> rotationErrorInWorld = rotationMatrixLhs * rotationMatrixRhs.transpose();
+  return rotationMatrixToRotationVector(rotationErrorInWorld);
+}
+
+/**
+ * The returned rotation error is expressed in the local frame (lhs or rhs).
+ * Because the rotation error rotates between the lhs and rhs frame, its representation in both frames is numerically identical.
+ *
+ * Example usage:
+ *    rotationErrorInBase = rotationErrorInLocal(rotationBaseMeasuredToWorld, rotationBaseReferenceToWorld)
+ *
+ * with the note that rotationErrorInBaseMeasured = rotationErrorInBaseReference
+ *
+ * See rotationErrorInWorld for further explanation.
+ * @tparam SCALAR_T : numerical type
+ * @param rotationMatrixLhs : rotation from lhs frame to world
+ * @param rotationMatrixRhs : rotation from rhs frame to world
+ * @return error = lhs [-] rhs
+ */
+template <typename SCALAR_T>
+Eigen::Matrix<SCALAR_T, 3, 1> rotationErrorInLocal(const Eigen::Matrix<SCALAR_T, 3, 3>& rotationMatrixLhs,
+                                                   const Eigen::Matrix<SCALAR_T, 3, 3>& rotationMatrixRhs) {
+  const Eigen::Matrix<SCALAR_T, 3, 3> rotationErrorInLocal = rotationMatrixRhs.transpose() * rotationMatrixLhs;
+  return rotationMatrixToRotationVector(rotationErrorInLocal);
+}
 
 }  // namespace ocs2

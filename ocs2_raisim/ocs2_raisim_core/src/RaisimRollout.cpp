@@ -121,7 +121,7 @@ vector_t RaisimRollout::run(scalar_t initTime, const vector_t& initState, scalar
   // extract sub-systems
   const auto timeIntervalArray = findActiveModesTimeInterval(initTime, finalTime, modeSchedule.eventTimes);
   const int numSubsystems = timeIntervalArray.size();
-  const auto maxNumSteps = static_cast<int>(std::round((finalTime- initTime) / this->settings().timeStep));
+  const auto maxNumSteps = static_cast<int>(std::round((finalTime - initTime) / this->settings().timeStep));
 
   // Prepare arrays
   timeTrajectory.clear();

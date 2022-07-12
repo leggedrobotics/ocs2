@@ -94,11 +94,11 @@ install(DIRECTORY
 
 catkin_add_gtest(rotation_transform_tests
   test/common/TestRotationTransforms.cpp
+  test/common/TestRotationDerivativesTransforms.cpp
 )
 target_link_libraries(rotation_transform_tests
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
   gtest_main
 )
 target_compile_options(rotation_transform_tests PRIVATE ${OCS2_CXX_FLAGS})

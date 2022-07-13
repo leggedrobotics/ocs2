@@ -123,7 +123,7 @@ std::pair<ocs2::TargetTrajectories, Gait> readMotion(const CsvData& csvData, sca
     auto newOrientation = eulerAnglesFromQuaternionBaseToOrigin(quaternion);
     ocs2::makeEulerAnglesUnique(newOrientation);
     const auto prevYaw = targetTrajectories.stateTrajectory.empty() ? 0.0 : targetTrajectories.stateTrajectory.back()[2];
-    const auto newYaw = findOrientationClostestToReference(newOrientation[2], prevYaw);
+    const auto newYaw = ocs2::moduloAngleWithReference(newOrientation[2], prevYaw);
     const vector3_t eulerXYZ(newOrientation[0], newOrientation[1], newYaw);
     const matrix3_t o_R_b = rotationMatrixBaseToOrigin(eulerXYZ);
 
@@ -263,7 +263,7 @@ std::pair<ocs2::TargetTrajectories, Gait> readCartesianMotion(const CsvData& csv
     auto newOrientation = eulerAnglesFromQuaternionBaseToOrigin(quaternion);
     ocs2::makeEulerAnglesUnique(newOrientation);
     const auto prevYaw = targetTrajectories.stateTrajectory.empty() ? 0.0 : targetTrajectories.stateTrajectory.back()[2];
-    const auto newYaw = findOrientationClostestToReference(newOrientation[2], prevYaw);
+    const auto newYaw = ocs2::moduloAngleWithReference(newOrientation[2], prevYaw);
     const vector3_t eulerXYZ(newOrientation[0], newOrientation[1], newYaw);
     const matrix3_t o_R_b = rotationMatrixBaseToOrigin(eulerXYZ);
 

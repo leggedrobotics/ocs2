@@ -17,11 +17,6 @@ namespace switched_model {
 vector3_t adaptDesiredPositionHeightToTerrain(const vector3_t& desiredPosition, const TerrainPlane& terrainPlane, scalar_t desiredHeight);
 
 /**
- * Returns a yaw angle (yaw + k*2*pi) with k such that the result is within [reference - pi, reference + pi]
- */
-scalar_t findOrientationClostestToReference(scalar_t yaw, scalar_t reference);
-
-/**
  * Return euler angles XYZ from a rotation matrix. When a reference yaw is given, the yaw angle is chosen as close as possible to the
  * reference.
  */

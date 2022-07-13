@@ -11,17 +11,10 @@ vector3_t adaptDesiredPositionHeightToTerrain(const vector3_t& desiredPosition, 
   return {desiredPosition.x(), desiredPosition.y(), adaptedHeight};
 }
 
-scalar_t findOrientationClostestToReference(scalar_t yaw, scalar_t reference) {
-  while (std::abs(reference - yaw) > M_PI) {
-    yaw += std::copysign(scalar_t(2.0 * M_PI), reference - yaw);
-  }
-  return yaw;
-}
-
 vector3_t eulerXYZFromRotationMatrix(const matrix3_t& orientationTargetToWorld, scalar_t referenceYaw) {
   vector3_t eulerXYZ = orientationTargetToWorld.eulerAngles(0, 1, 2);
   ocs2::makeEulerAnglesUnique(eulerXYZ);
-  eulerXYZ.z() = findOrientationClostestToReference(eulerXYZ.z(), referenceYaw);
+  eulerXYZ.z() = ocs2::moduloAngleWithReference(eulerXYZ.z(), referenceYaw);
   return eulerXYZ;
 }
 

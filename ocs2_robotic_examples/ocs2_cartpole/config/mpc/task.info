@@ -38,10 +38,10 @@ ddp
   strategy                       LINE_SEARCH
   lineSearch
   {
-    minStepLength              0.1
-    maxStepLength              1.0
-    hessianCorrectionStrategy  EIGENVALUE_MODIFICATION
-    hessianCorrectionMultiple  1e-6
+    minStepLength                0.1
+    maxStepLength                1.0
+    hessianCorrectionStrategy    EIGENVALUE_MODIFICATION
+    hessianCorrectionMultiple    1e-6
   }
 }
 

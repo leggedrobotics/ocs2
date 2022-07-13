@@ -84,7 +84,7 @@ TEST(HybridSlqTest, state_rollout_slq) {
   ddpSettings.useFeedbackPolicy_ = true;
   ddpSettings.debugPrintRollout_ = false;
   ddpSettings.strategy_ = search_strategy::Type::LINE_SEARCH;
-  ddpSettings.lineSearch_.minStepLength_ = 0.001;
+  ddpSettings.lineSearch_.minStepLength = 0.001;
 
   rollout::Settings rolloutSettings;
   rolloutSettings.absTolODE = 1e-10;

@@ -52,7 +52,7 @@ namespace ocs2 {
 class LineSearchStrategy final : public SearchStrategyBase {
  public:
   /**
-   * constructor.
+   * Constructor.
    *
    * @param [in] baseSettings: The basic settings for the search strategy algorithms.
    * @param [in] settings: The line search settings.
@@ -66,11 +66,7 @@ class LineSearchStrategy final : public SearchStrategyBase {
                      std::vector<std::reference_wrapper<OptimalControlProblem>> optimalControlProblemRef,
                      std::function<scalar_t(const PerformanceIndex&)> meritFunc);
 
-  /**
-   * Default destructor.
-   */
   ~LineSearchStrategy() override = default;
-
   LineSearchStrategy(const LineSearchStrategy&) = delete;
   LineSearchStrategy& operator=(const LineSearchStrategy&) = delete;
 

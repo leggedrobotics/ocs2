@@ -73,16 +73,16 @@ Settings load(const std::string& filename, const std::string& fieldName, bool ve
 
   Settings settings;
 
-  loadData::loadPtreeValue(pt, settings.minStepLength_, fieldName + ".minStepLength", verbose);
-  loadData::loadPtreeValue(pt, settings.maxStepLength_, fieldName + ".maxStepLength", verbose);
-  loadData::loadPtreeValue(pt, settings.contractionRate_, fieldName + ".contractionRate", verbose);
-  loadData::loadPtreeValue(pt, settings.armijoCoefficient_, fieldName + ".armijoCoefficient", verbose);
+  loadData::loadPtreeValue(pt, settings.minStepLength, fieldName + ".minStepLength", verbose);
+  loadData::loadPtreeValue(pt, settings.maxStepLength, fieldName + ".maxStepLength", verbose);
+  loadData::loadPtreeValue(pt, settings.contractionRate, fieldName + ".contractionRate", verbose);
+  loadData::loadPtreeValue(pt, settings.armijoCoefficient, fieldName + ".armijoCoefficient", verbose);
 
-  std::string hessianCorrectionStrategyName = hessian_correction::toString(settings.hessianCorrectionStrategy_);
+  std::string hessianCorrectionStrategyName = hessian_correction::toString(settings.hessianCorrectionStrategy);
   loadData::loadPtreeValue(pt, hessianCorrectionStrategyName, fieldName + ".hessianCorrectionStrategy", verbose);
-  settings.hessianCorrectionStrategy_ = hessian_correction::fromString(hessianCorrectionStrategyName);
+  settings.hessianCorrectionStrategy = hessian_correction::fromString(hessianCorrectionStrategyName);
 
-  loadData::loadPtreeValue(pt, settings.hessianCorrectionMultiple_, fieldName + ".hessianCorrectionMultiple", verbose);
+  loadData::loadPtreeValue(pt, settings.hessianCorrectionMultiple, fieldName + ".hessianCorrectionMultiple", verbose);
 
   if (verbose) {
     std::cerr << " #### }" << std::endl;
@@ -107,10 +107,10 @@ Settings load(const std::string& filename, const std::string& fieldName, bool ve
 
   Settings settings;
 
-  loadData::loadPtreeValue(pt, settings.minAcceptedPho_, fieldName + ".minAcceptedPho", verbose);
-  loadData::loadPtreeValue(pt, settings.riccatiMultipleDefaultRatio_, fieldName + ".riccatiMultipleDefaultRatio", verbose);
-  loadData::loadPtreeValue(pt, settings.riccatiMultipleDefaultFactor_, fieldName + ".riccatiMultipleDefaultFactor", verbose);
-  loadData::loadPtreeValue(pt, settings.maxNumSuccessiveRejections_, fieldName + ".maxNumSuccessiveRejections", verbose);
+  loadData::loadPtreeValue(pt, settings.minAcceptedPho, fieldName + ".minAcceptedPho", verbose);
+  loadData::loadPtreeValue(pt, settings.riccatiMultipleDefaultRatio, fieldName + ".riccatiMultipleDefaultRatio", verbose);
+  loadData::loadPtreeValue(pt, settings.riccatiMultipleDefaultFactor, fieldName + ".riccatiMultipleDefaultFactor", verbose);
+  loadData::loadPtreeValue(pt, settings.maxNumSuccessiveRejections, fieldName + ".maxNumSuccessiveRejections", verbose);
   if (verbose) {
     std::cerr << " #### }" << std::endl;
   }

@@ -262,7 +262,7 @@ TEST(AngleModulo, testSetOfAngles) {
     return std::abs(diffLoops - std::round(diffLoops)) < (tol / (2.0 * M_PI));
   };
 
-  std::vector<scalar_t> testRange = {-123.0, -17.0 / 5.0, -3.0, -2.0, -1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0, 3.0, 17.0 / 5.0, 123.0};
+  std::vector<scalar_t> testRange = {-123.0, -17.0 / 3.0, -3.0, -2.0, -1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0, 3.0, 17.0 / 3.0, 123.0};
   std::for_each(testRange.begin(), testRange.end(), [](scalar_t& v) { v *= M_PI; });
 
   const scalar_t tol = 1e-12;

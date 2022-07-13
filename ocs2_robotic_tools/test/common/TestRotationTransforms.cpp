@@ -253,3 +253,30 @@ TEST(RotationTransforms, rotationErrorSquaredGradient) {
   const auto J180 = adInterface.getJacobian(in);
   ASSERT_TRUE(J180.allFinite());
 }
+
+TEST(AngleModulo, testSetOfAngles) {
+  // test if two angles have a multiple of 2*pi between them
+  auto anglesAreEqual = [](scalar_t x, scalar_t y, scalar_t tol) {
+    const scalar_t diff = std::abs(x - y);
+    const scalar_t diffLoops = diff / (2.0 * M_PI);
+    return std::abs(diffLoops - std::round(diffLoops)) < (tol / (2.0 * M_PI));
+  };
+
+  std::vector<scalar_t> testRange = {-123.0, -17.0 / 5.0, -3.0, -2.0, -1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0, 3.0, 17.0 / 5.0, 123.0};
+  std::for_each(testRange.begin(), testRange.end(), [](scalar_t& v) { v *= M_PI; });
+
+  const scalar_t tol = 1e-12;
+
+  for (const scalar_t x : testRange) {
+    for (const scalar_t ref : testRange) {
+      const auto y = moduloAngleWithReference(x, ref);
+
+      // Check that y is within bound around reference
+      ASSERT_LE(y, ref + M_PI);
+      ASSERT_GE(y, ref - M_PI);
+
+      // Check that the angle represented by y is still equal to x
+      ASSERT_TRUE(anglesAreEqual(x, y, tol));
+    }
+  }
+}

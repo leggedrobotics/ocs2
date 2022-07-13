@@ -299,4 +299,13 @@ Eigen::Matrix<SCALAR_T, 3, 1> rotationErrorInLocal(const Eigen::Matrix<SCALAR_T,
   return rotationMatrixToRotationVector(rotationErrorInLocal);
 }
 
+/**
+ * Find an angle that is closest to a reference angle.
+ *
+ * @param [in] x : The input angle.
+ * @param [in] reference : The reference angle.
+ * @return An angle (x + k*2*pi) with k such that the result is within [reference - pi, reference + pi].
+ */
+scalar_t moduloAngleWithReference(scalar_t x, scalar_t reference);
+
 }  // namespace ocs2

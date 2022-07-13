@@ -64,6 +64,15 @@ void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t fina
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const PrimalSolution& primalSolution) {
+  preRun(initTime, initState, finalTime);
+  runImpl(initTime, initState, finalTime, primalSolution);
+  postRun();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 PrimalSolution SolverBase::primalSolution(scalar_t finalTime) const {
   PrimalSolution primalSolution;
   getPrimalSolution(finalTime, &primalSolution);

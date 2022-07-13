@@ -53,7 +53,7 @@ namespace ocs2 {
 class LevenbergMarquardtStrategy final : public SearchStrategyBase {
  public:
   /**
-   * constructor.
+   * Constructor.
    *
    * @param [in] baseSettings: The basic settings for the search strategy algorithms.
    * @param [in] settings: The Levenberg Marquardt settings.
@@ -64,11 +64,7 @@ class LevenbergMarquardtStrategy final : public SearchStrategyBase {
   LevenbergMarquardtStrategy(search_strategy::Settings baseSettings, levenberg_marquardt::Settings settings, RolloutBase& rolloutRefStock,
                              OptimalControlProblem& optimalControlProblemRef, std::function<scalar_t(const PerformanceIndex&)> meritFunc);
 
-  /**
-   * Default destructor.
-   */
   ~LevenbergMarquardtStrategy() override = default;
-
   LevenbergMarquardtStrategy(const LevenbergMarquardtStrategy&) = delete;
   LevenbergMarquardtStrategy& operator=(const LevenbergMarquardtStrategy&) = delete;
 

@@ -86,7 +86,7 @@ TEST(HybridSlqTest, state_rollout_slq) {
     settings.useFeedbackPolicy_ = true;
     settings.debugPrintRollout_ = false;
     settings.strategy_ = search_strategy::Type::LINE_SEARCH;
-    settings.lineSearch_.minStepLength_ = 1e-3;
+    settings.lineSearch_.minStepLength = 1e-3;
 
     return settings;
   }();

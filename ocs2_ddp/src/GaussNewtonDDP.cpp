@@ -705,8 +705,8 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
 
         // shift Hessian
         if (ddpSettings_.strategy_ == search_strategy::Type::LINE_SEARCH) {
-          hessian_correction::shiftHessian(ddpSettings_.lineSearch_.hessianCorrectionStrategy_, modelData.cost.dfdxx,
-                                           ddpSettings_.lineSearch_.hessianCorrectionMultiple_);
+          hessian_correction::shiftHessian(ddpSettings_.lineSearch_.hessianCorrectionStrategy, modelData.cost.dfdxx,
+                                           ddpSettings_.lineSearch_.hessianCorrectionMultiple);
         }
       }
     };
@@ -734,8 +734,8 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
 
     // shift Hessian for final time
     if (ddpSettings_.strategy_ == search_strategy::Type::LINE_SEARCH) {
-      hessian_correction::shiftHessian(ddpSettings_.lineSearch_.hessianCorrectionStrategy_, modelData.cost.dfdxx,
-                                       ddpSettings_.lineSearch_.hessianCorrectionMultiple_);
+      hessian_correction::shiftHessian(ddpSettings_.lineSearch_.hessianCorrectionStrategy, modelData.cost.dfdxx,
+                                       ddpSettings_.lineSearch_.hessianCorrectionMultiple);
     }
   }
 }

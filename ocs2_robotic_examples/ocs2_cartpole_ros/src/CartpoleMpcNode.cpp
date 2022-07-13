@@ -73,9 +73,10 @@ int main(int argc, char** argv) {
   }
   std::unique_ptr<ocs2::AugmentedLagrangianObserver> stateInputBoundsObserverPtr(
       new ocs2::AugmentedLagrangianObserver(observingLagrangianTerm));
-  stateInputBoundsObserverPtr->setMetricsCallback(ocs2::ros::createMetricsCallback(nodeHandle, observingTimePoints, metricsTopicNames));
-  stateInputBoundsObserverPtr->setMultiplierCallback(
-      ocs2::ros::createMultiplierCallback(nodeHandle, observingTimePoints, multiplierTopicNames));
+  stateInputBoundsObserverPtr->setMetricsCallback(ocs2::ros::createMetricsCallback(
+      nodeHandle, observingTimePoints, metricsTopicNames, ocs2::ros::CallbackInterpolationStrategy::linear_interpolation));
+  stateInputBoundsObserverPtr->setMultiplierCallback(ocs2::ros::createMultiplierCallback(
+      nodeHandle, observingTimePoints, multiplierTopicNames, ocs2::ros::CallbackInterpolationStrategy::linear_interpolation));
   mpc.getSolverPtr()->addAugmentedLagrangianObserver(std::move(stateInputBoundsObserverPtr));
 
   // Launch MPC ROS node

@@ -31,10 +31,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
-#include <ocs2_core/model_data/Multiplier.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
+#include <ocs2_core/model_data/Multiplier.h>
 
 namespace ocs2 {
+namespace {
+
 /**
  * Linearly interpolates a trajectory of MultiplierCollections.
  *
@@ -42,7 +44,8 @@ namespace ocs2 {
  * @param [in] dataArray : A trajectory of MultiplierCollections.
  * @return The interpolated MultiplierCollection at indexAlpha.
  */
-inline MultiplierCollection interpolateNew(const LinearInterpolation::index_alpha_t& indexAlpha, const std::vector<MultiplierCollection>& dataArray) {
+inline MultiplierCollection interpolateNew(const LinearInterpolation::index_alpha_t& indexAlpha,
+                                           const std::vector<MultiplierCollection>& dataArray) {
   assert(dataArray.size() > 0);
   if (dataArray.size() > 1) {
     // Normal interpolation case
@@ -84,13 +87,13 @@ inline MultiplierCollection interpolateNew(const LinearInterpolation::index_alph
   }
 }
 
-void random(const ocs2::size_array_t& termsSize, vector_t& serializedMultiplier, std::vector<Multiplier>& multiplier) {
+void random(const size_array_t& termsSize, vector_t& serializedMultiplier, std::vector<Multiplier>& multiplier) {
   const size_t length = std::accumulate(termsSize.begin(), termsSize.end(), termsSize.size());
-  serializedMultiplier = ocs2::vector_t::Random(length);
-  multiplier = ocs2::toMultipliers(termsSize, serializedMultiplier);
+  serializedMultiplier = vector_t::Random(length);
+  multiplier = toMultipliers(termsSize, serializedMultiplier);
 }
 
-bool isApprox(const ocs2::MultiplierCollection& lhs, const ocs2::MultiplierCollection& rhs, scalar_t prec) {
+bool isApprox(const MultiplierCollection& lhs, const MultiplierCollection& rhs, scalar_t prec) {
   bool flag = toVector(lhs.stateEq).isApprox(toVector(rhs.stateEq), prec);
   flag = flag && toVector(lhs.stateIneq).isApprox(toVector(rhs.stateIneq), prec);
   flag = flag && toVector(lhs.stateInputEq).isApprox(toVector(rhs.stateInputEq), prec);
@@ -98,10 +101,11 @@ bool isApprox(const ocs2::MultiplierCollection& lhs, const ocs2::MultiplierColle
   return flag;
 }
 
+}  // unnamed namespace
 }  // namespace ocs2
 
 TEST(TestMultiplier, testSerialization) {
-  const ocs2::size_array_t termsSize {0, 2, 0, 0, 3, 5};
+  const ocs2::size_array_t termsSize{0, 2, 0, 0, 3, 5};
   const size_t numConstraint = termsSize.size();
   const size_t length = std::accumulate(termsSize.begin(), termsSize.end(), numConstraint);
 
@@ -115,7 +119,7 @@ TEST(TestMultiplier, testSerialization) {
 }
 
 TEST(TestMultiplier, testSwap) {
-  const ocs2::size_array_t termsSize {0, 2, 0, 0, 3, 5};
+  const ocs2::size_array_t termsSize{0, 2, 0, 0, 3, 5};
 
   ocs2::vector_t serializedStateEq, serializedStateIneq, serializedStateInputEq, serializedStateInputIneq;
 
@@ -129,18 +133,18 @@ TEST(TestMultiplier, testSwap) {
   ocs2::MultiplierCollection termsMultiplierNew;
   termsMultiplier.swap(termsMultiplierNew);
 
-  EXPECT_TRUE(isApprox(termsMultiplierNew, termsMultiplierRef, 1e-10));
+  EXPECT_TRUE(ocs2::isApprox(termsMultiplierNew, termsMultiplierRef, 1e-10));
 
   termsMultiplierRef.clear();
-  EXPECT_TRUE(isApprox(termsMultiplier, termsMultiplierRef, 1e-10));
+  EXPECT_TRUE(ocs2::isApprox(termsMultiplier, termsMultiplierRef, 1e-10));
 }
 
 TEST(TestMultiplier, testInterpolation) {
   // terms size
-  const ocs2::size_array_t stateEqTermsSize {0, 0};
-  const ocs2::size_array_t stateIneqTermsSize {2};
-  const ocs2::size_array_t stateInputEqTermsSize {};
-  const ocs2::size_array_t stateInputIneqTermsSize {0, 2, 0, 0, 3, 5};
+  const ocs2::size_array_t stateEqTermsSize{0, 0};
+  const ocs2::size_array_t stateIneqTermsSize{2};
+  const ocs2::size_array_t stateInputEqTermsSize{};
+  const ocs2::size_array_t stateInputIneqTermsSize{0, 2, 0, 0, 3, 5};
 
   // construct trajectories of length N
   const size_t N = 11;
@@ -159,7 +163,7 @@ TEST(TestMultiplier, testInterpolation) {
   }  // end of i loop
 
   constexpr ocs2::scalar_t prec = 1e-8;
-  const ocs2::scalar_array_t timeTrajectoryTest {-1.0, 0.0, 4.0, 4.6, 8.7, 10.0, 11.0, 100.0};
+  const ocs2::scalar_array_t timeTrajectoryTest{-1.0, 0.0, 4.0, 4.6, 8.7, 10.0, 11.0, 100.0};
   for (size_t i = 0; i < timeTrajectoryTest.size(); i++) {
     const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(timeTrajectoryTest[i], timeTrajectory);
 
@@ -168,12 +172,12 @@ TEST(TestMultiplier, testInterpolation) {
     const auto stateInputEq = ocs2::LinearInterpolation::interpolate(indexAlpha, stateInputEqTrajectory);
     const auto stateInputIneq = ocs2::LinearInterpolation::interpolate(indexAlpha, stateInputIneqTrajectory);
     const auto multiplierCollection = ocs2::LinearInterpolation::interpolate(indexAlpha, multiplierCollectionTrajectory);
-    const auto multiplierCollectionNew = interpolateNew(indexAlpha, multiplierCollectionTrajectory);
+    const auto multiplierCollectionNew = ocs2::interpolateNew(indexAlpha, multiplierCollectionTrajectory);
 
     EXPECT_TRUE(stateEq.isApprox(toVector(multiplierCollection.stateEq), prec));
     EXPECT_TRUE(stateIneq.isApprox(toVector(multiplierCollection.stateIneq), prec));
     EXPECT_TRUE(stateInputEq.isApprox(toVector(multiplierCollection.stateInputEq), prec));
     EXPECT_TRUE(stateInputIneq.isApprox(toVector(multiplierCollection.stateInputIneq), prec));
-    EXPECT_TRUE(isApprox(multiplierCollection, multiplierCollectionNew, prec));
+    EXPECT_TRUE(ocs2::isApprox(multiplierCollection, multiplierCollectionNew, prec));
   }  // end of i loop
 }

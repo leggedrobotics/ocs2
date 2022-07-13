@@ -30,6 +30,55 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_core/model_data/Metrics.h"
 
 namespace ocs2 {
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+vector_t toVector(const std::vector<LagrangianMetrics>& termsLagrangianMetrics) {
+  size_t n = 0;
+  std::for_each(termsLagrangianMetrics.begin(), termsLagrangianMetrics.end(),
+                [&n](const LagrangianMetrics& m) { n += (1 + m.constraint.size()); });
+
+  vector_t vec(n);
+  size_t head = 0;
+  for (const auto& m : termsLagrangianMetrics) {
+    vec(head) = m.penalty;
+    vec.segment(head + 1, m.constraint.size()) = m.constraint;
+    head += 1 + m.constraint.size();
+  }  // end of i loop
+
+  return vec;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::vector<LagrangianMetrics> toLagrangianMetrics(const size_array_t& termsSize, const vector_t& vec) {
+  std::vector<LagrangianMetrics> lagrangianMetrics;
+  lagrangianMetrics.reserve(termsSize.size());
+
+  size_t head = 0;
+  for (const auto& l : termsSize) {
+    lagrangianMetrics.emplace_back(vec(head), vec.segment(head + 1, l));
+    head += 1 + l;
+  }  // end of i loop
+
+  return lagrangianMetrics;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+size_array_t getSizes(const std::vector<LagrangianMetrics>& termsLagrangianMetrics) {
+  size_array_t s(termsLagrangianMetrics.size());
+  std::transform(termsLagrangianMetrics.begin(), termsLagrangianMetrics.end(), s.begin(),
+                 [](const LagrangianMetrics& m) { return static_cast<size_t>(m.constraint.size()); });
+  return s;
+}
+
+}  // namespace ocs2
+
+namespace ocs2 {
 namespace LinearInterpolation {
 
 /******************************************************************************************************/

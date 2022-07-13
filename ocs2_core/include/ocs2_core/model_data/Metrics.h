@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+/** The structure contains a term's constraint vector and its associated penalty */
 struct LagrangianMetrics {
   LagrangianMetrics() : LagrangianMetrics(0.0, vector_t()) {}
   LagrangianMetrics(scalar_t penaltyArg, vector_t constraintArg) : penalty(penaltyArg), constraint(std::move(constraintArg)) {}
@@ -50,6 +51,17 @@ struct LagrangianMetricsConstRef {
   const vector_t& constraint;
 };
 
+/**
+ * The collection of cost, equality constraints, and LagrangianMetrics structure for all possible constraint terms (handled by
+ * Lagrangian method) in a particular time point.
+ * cost : The total cost in a particular time point.
+ * stateEqConstraint : A vector of all active state equality constraints.
+ * stateInputEqConstraint : A vector of all active state-input equality constraints.
+ * stateEqLagrangian : An array of state equality constraint terms handled by Lagrangian method.
+ * stateIneqLagrangian : An array of state inequality constraint terms handled by Lagrangian method.
+ * stateInputEqLagrangian : An array of state-input equality constraint terms handled by Lagrangian method.
+ * stateInputIneqLagrangian : An array of state-input inequality constraint terms handled by Lagrangian method.
+ */
 struct MetricsCollection {
   // Cost
   scalar_t cost;
@@ -100,6 +112,42 @@ inline scalar_t sumPenalties(const std::vector<LagrangianMetrics>& metricsArray)
   return s;
 }
 
+/** Computes the sum of squared norm of constraints of an array of LagrangianMetrics */
+inline scalar_t constraintsSquaredNorm(const std::vector<LagrangianMetrics>& metricsArray) {
+  scalar_t s = 0.0;
+  std::for_each(metricsArray.begin(), metricsArray.end(), [&s](const LagrangianMetrics& m) { s += m.constraint.squaredNorm(); });
+  return s;
+}
+
+/**
+ * Serializes an array of LagrangianMetrics structures associated to an array of constraint terms.
+ *
+ * @ param [in] termsLagrangianMetrics : LagrangianMetrics associated to an array of constraint terms.
+ * @return Serialized vector of the format : (..., termsMultiplier[i].penalty, termsMultiplier[i].constraint, ...).
+ */
+vector_t toVector(const std::vector<LagrangianMetrics>& termsLagrangianMetrics);
+
+/**
+ * Gets the size of constraint terms.
+ *
+ * @ param [in] termsLagrangianMetrics : LagrangianMetrics associated to an array of constraint terms.
+ * @return An array of constraint terms size. It has the same size as the input array.
+ */
+size_array_t getSizes(const std::vector<LagrangianMetrics>& termsLagrangianMetrics);
+
+/**
+ * Deserializes the vector to an array of LagrangianMetrics structures based on size of constraint terms.
+ *
+ * @param [in] termsSize : An array of constraint terms size. It as the same size as the output array.
+ * @param [in] vec : Serialized array of LagrangianMetrics structures of the format :
+ *                   (..., termsMultiplier[i].penalty, termsMultiplier[i].constraint, ...)
+ * @return An array of LagrangianMetrics structures associated to an array of constraint terms
+ */
+std::vector<LagrangianMetrics> toLagrangianMetrics(const size_array_t& termsSize, const vector_t& vec);
+
+}  // namespace ocs2
+
+namespace ocs2 {
 namespace LinearInterpolation {
 
 /**
@@ -121,5 +169,4 @@ LagrangianMetrics interpolate(const index_alpha_t& indexAlpha, const std::vector
 MetricsCollection interpolate(const index_alpha_t& indexAlpha, const std::vector<MetricsCollection>& dataArray);
 
 }  // namespace LinearInterpolation
-
 }  // namespace ocs2

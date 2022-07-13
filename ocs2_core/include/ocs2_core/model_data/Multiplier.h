@@ -97,7 +97,7 @@ struct MultiplierCollection {
 /**
  * Serializes an array of Multiplier structures associated to an array of constraint terms.
  *
- * @ param [in]termsMultiplier : Multipliers associated to an array of constraint terms.
+ * @ param [in] termsMultiplier : Multipliers associated to an array of constraint terms.
  * @return Serialized vector of the format : (..., termsMultiplier[i].penalty, termsMultiplier[i].lagrangian, ...).
  */
 vector_t toVector(const std::vector<Multiplier>& termsMultiplier);
@@ -105,7 +105,7 @@ vector_t toVector(const std::vector<Multiplier>& termsMultiplier);
 /**
  * Gets the size of constraint terms.
  *
- * @ param [in]termsMultiplier : Multipliers associated to an array of constraint terms.
+ * @ param [in] termsMultiplier : Multipliers associated to an array of constraint terms.
  * @return An array of constraint terms size. It has the same size as the input array.
  */
 size_array_t getSizes(const std::vector<Multiplier>& termsMultiplier);
@@ -114,12 +114,15 @@ size_array_t getSizes(const std::vector<Multiplier>& termsMultiplier);
  * Deserializes the vector to an array of Multiplier structures based on size of constraint terms.
  *
  * @param [in] termsSize : An array of constraint terms size. It as the same size as the output array.
- * @param [in] vec : Serialized array of Multiplier structures of the format : (..., termsMultiplier[i].penalty,
- * termsMultiplier[i].lagrangian, ...)
+ * @param [in] vec : Serialized array of Multiplier structures of the format :
+ *                   (..., termsMultiplier[i].penalty, termsMultiplier[i].lagrangian, ...)
  * @return An array of Multiplier structures associated to an array of constraint terms
  */
 std::vector<Multiplier> toMultipliers(const size_array_t& termsSize, const vector_t& vec);
 
+}  // namespace ocs2
+
+namespace ocs2 {
 namespace LinearInterpolation {
 
 /**
@@ -141,5 +144,4 @@ Multiplier interpolate(const index_alpha_t& indexAlpha, const std::vector<Multip
 MultiplierCollection interpolate(const index_alpha_t& indexAlpha, const std::vector<MultiplierCollection>& dataArray);
 
 }  // namespace LinearInterpolation
-
 }  // namespace ocs2

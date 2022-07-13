@@ -340,6 +340,15 @@ target_link_libraries(test_constraint
   gtest_main
 )
 
+catkin_add_gtest(test_metrics
+  test/model_data/testMetrics.cpp
+)
+target_link_libraries(test_metrics
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
+
 catkin_add_gtest(test_multiplier
   test/model_data/testMultiplier.cpp
 )

@@ -150,15 +150,6 @@ class LeggedRobotRaisimConversions final {
    */
   Eigen::VectorXd rbdTorqueToRaisimGeneralizedForce(const vector_t& rbdTorque);
 
-  /**
-   * @brief Find yaw angle that is closest to continuous reference yaw angle.
-   * @note Copied from ocs2_anymal_commands/TerrainAdaptation.h.
-   * @param [in] yaw : The yaw angle from the unique Euler angles.
-   * @param [in] reference : The continuous reference yaw angle.
-   * @return A yaw angle (yaw + k*2*pi) with k such that the result is within [reference - pi, reference + pi].
-   */
-  scalar_t findOrientationClostestToReference(scalar_t yaw, scalar_t reference);
-
  private:
   const bool check_;
   Eigen::Vector3d continuousOrientation_;

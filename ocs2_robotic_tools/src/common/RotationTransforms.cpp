@@ -67,4 +67,35 @@ Eigen::Quaternion<ad_scalar_t> matrixToQuaternion(const Eigen::Matrix<ad_scalar_
   return Eigen::Quaternion<ad_scalar_t>(q(3), q(0), q(1), q(2));
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+namespace {  // helper functions to select the right modulo
+template <typename SCALAR_T>
+SCALAR_T scalarMod(SCALAR_T, SCALAR_T);
+
+template <>
+float scalarMod<float>(float x, float y) {
+  return fmodf(x, y);
+}
+
+template <>
+double scalarMod<double>(double x, double y) {
+  return fmod(x, y);
+}
+}  // namespace
+
+scalar_t moduloAngleWithReference(scalar_t x, scalar_t reference) {
+  const scalar_t ub = reference + M_PI;  // upper bound
+  const scalar_t lb = reference - M_PI;  // lower bound
+
+  if (x > ub) {
+    x = lb + scalarMod(x - lb, 2.0 * M_PI);
+  } else if (x < lb) {
+    x = ub - scalarMod(ub - x, 2.0 * M_PI);
+  }
+
+  return x;
+}
+
 }  // namespace ocs2

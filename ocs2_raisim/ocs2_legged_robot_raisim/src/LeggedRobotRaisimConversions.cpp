@@ -153,7 +153,7 @@ vector_t LeggedRobotRaisimConversions::raisimGenCoordGenVelToRbdState(const Eige
   const Eigen::Quaterniond quaternion(q(3), q(4), q(5), q(6));
   Eigen::Vector3d orientation = quaternion.toRotationMatrix().eulerAngles(2, 1, 0);
   ocs2::makeEulerAnglesUnique(orientation);
-  const auto yaw = findOrientationClostestToReference(orientation[0], continuousOrientation_[0]);
+  const auto yaw = moduloAngleWithReference(orientation[0], continuousOrientation_[0]);
   continuousOrientation_ << yaw, orientation[1], orientation[2];
 
   // convert to RBD state
@@ -186,16 +186,6 @@ Eigen::VectorXd LeggedRobotRaisimConversions::rbdTorqueToRaisimGeneralizedForce(
   }
 
   return generalizedForce;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-scalar_t LeggedRobotRaisimConversions::findOrientationClostestToReference(scalar_t yaw, scalar_t reference) {
-  while (std::abs(reference - yaw) > M_PI) {
-    yaw += std::copysign(scalar_t(2.0 * M_PI), reference - yaw);
-  }
-  return yaw;
 }
 
 }  // namespace legged_robot

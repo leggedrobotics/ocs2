@@ -52,6 +52,7 @@ struct Multiplier {
 /** A const reference view to Multiplier. This is useful for having an array of references to Multipliers. */
 struct MultiplierConstRef {
   MultiplierConstRef(const Multiplier& multiplierArg) : penalty(multiplierArg.penalty), lagrangian(multiplierArg.lagrangian) {}
+  operator Multiplier() const { return {penalty, lagrangian}; }
 
   const scalar_t& penalty;
   const vector_t& lagrangian;

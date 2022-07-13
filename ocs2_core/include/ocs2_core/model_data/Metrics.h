@@ -46,6 +46,7 @@ struct LagrangianMetrics {
 /** A const reference view to LagrangianMetrics. This is useful for having an array of references to LagrangianMetrics. */
 struct LagrangianMetricsConstRef {
   LagrangianMetricsConstRef(const LagrangianMetrics& metricsArg) : penalty(metricsArg.penalty), constraint(metricsArg.constraint) {}
+  operator LagrangianMetrics() const { return {penalty, constraint}; }
 
   const scalar_t& penalty;
   const vector_t& constraint;

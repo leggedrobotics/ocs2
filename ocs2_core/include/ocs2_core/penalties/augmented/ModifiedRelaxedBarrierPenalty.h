@@ -114,9 +114,9 @@ class ModifiedRelaxedBarrierPenalty final : public AugmentedPenaltyBase {
     const scalar_t v = vFunc(l, h);
     constexpr scalar_t lambdaMin = 1e-4;
     if (v > config_.relaxation) {
-      return std::max(lambdaMin, config_.stepSize * config_.scale * wFunc(l) / (1 + v));
+      return std::max(lambdaMin, wFunc(l) * dvdhFunc(l) / (1 + v));
     } else {
-      return std::max(lambdaMin, config_.stepSize * config_.scale * wFunc(l) * (-quadCoeff_.c2 * (v - config_.relaxation) - quadCoeff_.c1));
+      return std::max(lambdaMin, config_.stepSize * wFunc(l) * (-quadCoeff_.c2 * (v - config_.relaxation) - quadCoeff_.c1) * dvdhFunc(l));
     }
   }
 

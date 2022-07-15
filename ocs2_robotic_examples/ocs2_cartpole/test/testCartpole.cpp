@@ -219,7 +219,7 @@ TEST_P(TestCartpole, testDDP) {
 /* Test name printed in gtest results */
 std::string testName(const testing::TestParamInfo<TestCartpole::ParamType>& info) {
   std::string name;
-  name += ddp::toAlgorithmName(std::get<0>(info.param)) + "__";
+  name += ddp::toAlgorithmName(std::get<0>(info.param)) + "_";
 
   switch (std::get<1>(info.param)) {
     case PenaltyType::SlacknessSquaredHingePenalty:
@@ -238,5 +238,6 @@ std::string testName(const testing::TestParamInfo<TestCartpole::ParamType>& info
 /******************************************************************************************************/
 INSTANTIATE_TEST_CASE_P(TestCaseCartpole, TestCartpole,
                         testing::Combine(testing::ValuesIn({ddp::Algorithm::SLQ, ddp::Algorithm::ILQR}),
-                                         testing::ValuesIn({PenaltyType::SlacknessSquaredHingePenalty})),
+                                         testing::ValuesIn({PenaltyType::SlacknessSquaredHingePenalty,
+                                                            PenaltyType::ModifiedRelaxedBarrierPenalty})),
                         testName);

@@ -40,7 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * Adjusts in-place a linear controller based on the last changes in model schedule using a TrajectorySpreading strategy.
+ * Adjusts in-place a linear controller based on the last changes in mode schedule using a TrajectorySpreading strategy.
  *
  * @param [in] oldModeSchedule: The old mode schedule associated to the trajectories which should be adjusted.
  * @param [in] newModeSchedule: The new mode schedule that should be adapted to.
@@ -63,7 +63,7 @@ inline TrajectorySpreading::Status trajectorySpread(const ModeSchedule& oldModeS
 }
 
 /**
- * Adjusts in-place a dual solution based on the last changes in model schedule using a TrajectorySpreading strategy.
+ * Adjusts in-place a dual solution based on the last changes in mode schedule using a TrajectorySpreading strategy.
  *
  * @param [in] oldModeSchedule: The old mode schedule associated to the trajectories which should be adjusted.
  * @param [in] newModeSchedule: The new mode schedule that should be adapted to.
@@ -90,7 +90,7 @@ inline TrajectorySpreading::Status trajectorySpread(const ModeSchedule& oldModeS
 }
 
 /**
- * Adjusts a dual solution based on the last changes in model schedule using a TrajectorySpreading strategy.
+ * Adjusts a dual solution based on the last changes in mode schedule using a TrajectorySpreading strategy.
  *
  * @param [in] trajectorySpreading: An updated trajectorySpreading instance. In order to update trajectorySpreading
  *                                  call TrajectorySpreading::set.
@@ -116,7 +116,7 @@ inline void trajectorySpread(const TrajectorySpreading& trajectorySpreading, con
 }
 
 /**
- * Adjusts in-place a primal solution based on the last changes in model schedule using a TrajectorySpreading strategy.
+ * Adjusts in-place a primal solution based on the last changes in mode schedule using a TrajectorySpreading strategy.
  * Note: PrimalSolution::controllerPtr_ will not be adjusted.
  *
  * @param [in] oldModeSchedule: The old mode schedule associated to the trajectories which should be adjusted.

@@ -1,7 +1,7 @@
 model_settings
 {
   algorithm                     SQP
-  recompileLibraries            true
+  recompileLibraries            false
 
   frictionCoefficient           0.5
   gripperForce                  0.0   ; [N] negative gripper force -> minimum force in normal direction
@@ -17,7 +17,7 @@ model_settings
   muJointsPosition              0.1
   deltaJointsPosition           0.01
   muJointsVelocity              0.1
-  deltaJointsVelocity           0.01
+  deltaJointsVelocity           0.1
   muJointsTorque                1.0
   deltaJointsTorque             1.0
 

@@ -6,6 +6,7 @@
 
 #include <ocs2_core/misc/Display.h>
 #include <ocs2_core/misc/LoadData.h>
+#include <ocs2_core/soft_constraint/StateInputSoftBoxConstraint.h>
 #include <ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraint.h>
 #include <ocs2_switched_model_interface/constraint/FootNormalConstraint.h>
 #include <ocs2_switched_model_interface/constraint/FrictionConeConstraint.h>
@@ -14,7 +15,6 @@
 #include <ocs2_switched_model_interface/cost/CollisionAvoidanceCost.h>
 #include <ocs2_switched_model_interface/cost/FootPlacementCost.h>
 #include <ocs2_switched_model_interface/cost/FrictionConeCost.h>
-#include <ocs2_switched_model_interface/cost/JointLimitsSoftConstraint.h>
 #include <ocs2_switched_model_interface/cost/MotionTrackingCost.h>
 #include <ocs2_switched_model_interface/cost/MotionTrackingTerminalCost.h>
 #include <ocs2_switched_model_interface/cost/TorqueLimitsSoftConstraint.h>
@@ -80,10 +80,36 @@ std::unique_ptr<ocs2::StateCost> QuadrupedInterface::createCollisionAvoidanceCos
 }
 
 std::unique_ptr<ocs2::StateInputCost> QuadrupedInterface::createJointLimitsSoftConstraint() const {
-  return std::unique_ptr<ocs2::StateInputCost>(new JointLimitsSoftConstraint(
-      {modelSettings().lowerJointLimits_, modelSettings().upperJointLimits_}, modelSettings().jointVelocityLimits,
-      {modelSettings().muJointsPosition_, modelSettings().deltaJointsPosition_},
-      {modelSettings().muJointsVelocity_, modelSettings().muJointsVelocity_}));
+  // Joint position constraints
+  std::vector<ocs2::StateInputSoftBoxConstraint::BoxConstraint> stateConstraints;
+  stateConstraints.reserve(JOINT_COORDINATE_SIZE);
+  for (int j = 0; j < JOINT_COORDINATE_SIZE; ++j) {
+    ocs2::StateInputSoftBoxConstraint::BoxConstraint jointPositionConstraint;
+    jointPositionConstraint.index = 2 * BASE_COORDINATE_SIZE + j;
+    jointPositionConstraint.penaltyPtr.reset(
+        new ocs2::RelaxedBarrierPenalty({modelSettings().muJointsPosition_, modelSettings().deltaJointsPosition_}));
+    jointPositionConstraint.lowerBound = modelSettings().lowerJointLimits_[j];
+    jointPositionConstraint.upperBound = modelSettings().upperJointLimits_[j];
+    stateConstraints.push_back(std::move(jointPositionConstraint));
+  }
+
+  // Joint velocity constraints
+  std::vector<ocs2::StateInputSoftBoxConstraint::BoxConstraint> inputConstraints;
+  inputConstraints.reserve(JOINT_COORDINATE_SIZE);
+  for (int j = 0; j < JOINT_COORDINATE_SIZE; ++j) {
+    ocs2::StateInputSoftBoxConstraint::BoxConstraint jointVelocityConstraint;
+    jointVelocityConstraint.index = 3 * NUM_CONTACT_POINTS + j;
+    jointVelocityConstraint.penaltyPtr.reset(
+        new ocs2::RelaxedBarrierPenalty({modelSettings().muJointsVelocity_, modelSettings().deltaJointsVelocity_}));
+    jointVelocityConstraint.lowerBound = -modelSettings().jointVelocityLimits[j];
+    jointVelocityConstraint.upperBound = modelSettings().jointVelocityLimits[j];
+    inputConstraints.push_back(std::move(jointVelocityConstraint));
+  }
+
+  std::unique_ptr<ocs2::StateInputSoftBoxConstraint> jointLimitSoftConstraintPtr(
+      new ocs2::StateInputSoftBoxConstraint(std::move(stateConstraints), std::move(inputConstraints)));
+  jointLimitSoftConstraintPtr->initializeOffset(0.0, getInitialState(), input_vector_t::Zero());
+  return jointLimitSoftConstraintPtr;
 }
 
 std::unique_ptr<ocs2::StateInputCost> QuadrupedInterface::createTorqueLimitsSoftConstraint(const joint_coordinate_t& nominalTorques) const {

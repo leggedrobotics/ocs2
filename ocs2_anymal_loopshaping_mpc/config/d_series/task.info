@@ -17,7 +17,7 @@ model_settings
   muJointsPosition              0.1
   deltaJointsPosition           0.01
   muJointsVelocity              0.1
-  deltaJointsVelocity           0.01
+  deltaJointsVelocity           0.1
   muJointsTorque                1.0
   deltaJointsTorque             1.0
 

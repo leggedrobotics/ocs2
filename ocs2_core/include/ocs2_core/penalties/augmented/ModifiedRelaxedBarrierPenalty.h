@@ -43,6 +43,8 @@ namespace augmented {
  *  \f]
  *
  *  where \f$ \pho \f$ is the scale. \f$ \psi(.) \f$ is defined as a shifted quadratically-relaxed log barrier function.
+ *  Unlike the relaxed log barrier penalty, this function is defined over the domain \f$ x > -1 \f$. Therefore, the value of the
+ *  relaxation parameter has to also belong to this domain.
  *
  *  This is then minimized by the solver, while the maximization of the approximate dual function is done by updating the Lagrange
  *  multipliers with the following update rule:

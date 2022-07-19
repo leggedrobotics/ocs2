@@ -31,8 +31,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/control/LinearController.h>
+#include <ocs2_core/model_data/Metrics.h>
 #include <ocs2_core/penalties/MultidimensionalPenalty.h>
-#include <ocs2_oc/oc_data/Metrics.h>
+#include <ocs2_oc/oc_data/DualSolution.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
@@ -46,19 +47,21 @@ namespace ocs2 {
  *
  * @param [in] problem: A reference to the optimal control problem.
  * @param [in] primalSolution: The primal solution.
- * @param [out] metrics: The cost, soft constraints and constraints values of the primalSolution rollout.
+ * @param [in] dualSolution: Const reference view to the dual solution
+ * @param [out] problemMetrics: The cost, soft constraints and constraints values of the rollout.
  */
-void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution& primalSolution, MetricsCollection& metrics);
+void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution& primalSolution, DualSolutionConstRef dualSolution,
+                           ProblemMetrics& problemMetrics);
 
 /**
- * Calculates the PerformanceIndex associated to the input Metrics.
+ * Calculates the PerformanceIndex associated to the given ProblemMetrics.
  *
  * @param [in] timeTrajectory: Time stamp of the rollout.
- * @param [in] metrics: The cost, soft constraints and constraints values of the primalSolution rollout.
+ * @param [in] problemMetrics: The cost, soft constraints and constraints values of the rollout.
  *
  * @return The PerformanceIndex of the trajectory.
  */
-PerformanceIndex computeRolloutPerformanceIndex(const scalar_array_t& timeTrajectory, const MetricsCollection& metrics);
+PerformanceIndex computeRolloutPerformanceIndex(const scalar_array_t& timeTrajectory, const ProblemMetrics& problemMetrics);
 
 /**
  * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,

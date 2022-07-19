@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,50 +27,24 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#pragma once
+#include "testLoopshapingAugmentedLagrangian.h"
 
-#include <ocs2_core/Types.h>
-#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
+#include <ocs2_core/test/testTools.h>
 
-namespace ocs2 {
+using namespace ocs2;
 
-struct Metrics {
-  using value_t = std::pair<vector_t, scalar_t>;
+TEST(TestFixtureLoopShapingAugmentedLagrangian, testStateInputApproximation) {
+  for (const auto config : configNames) {
+    TestFixtureLoopShapingAugmentedLagrangian test(config);
+    test.testStateInputEvaluation();
+    test.testStateInputApproximation();
+  }
+}
 
-  // Cost
-  scalar_t cost;
-
-  // Equality constraints
-  vector_t stateEqConstraint;
-  vector_t stateInputEqConstraint;
-
-  // Lagrangians
-  //  std::vector<value_t> stateEqLagrangian;
-  //  std::vector<value_t> stateIneqLagrangian;
-  //  std::vector<value_t> stateInputEqLagrangian;
-  //  std::vector<value_t> stateInputIneqLagrangian;
-  scalar_t stateEqLagrangian;
-  scalar_t stateIneqLagrangian;
-  scalar_t stateInputEqLagrangian;
-  scalar_t stateInputIneqLagrangian;
-};
-
-struct MetricsCollection {
-  Metrics final;
-  std::vector<Metrics> preJumps;
-  std::vector<Metrics> intermediates;
-};
-
-/** Exchanges the given values of Metrics */
-void swap(Metrics& lhs, Metrics& rhs);
-
-/** Clears the value of the given Metrics */
-void clear(Metrics& m);
-
-/** Exchanges the given values of MetricsCollection */
-void swap(MetricsCollection& lhs, MetricsCollection& rhs);
-
-/** Clears the value of the given MetricsCollection */
-void clear(MetricsCollection& m);
-
-}  // namespace ocs2
+TEST(TestFixtureLoopShapingAugmentedLagrangian, testStateApproximation) {
+  for (const auto config : configNames) {
+    TestFixtureLoopShapingAugmentedLagrangian test(config);
+    test.testStateEvaluation();
+    test.testStateApproximation();
+  }
+}

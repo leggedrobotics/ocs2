@@ -53,7 +53,7 @@ namespace ocs2 {
 class LevenbergMarquardtStrategy final : public SearchStrategyBase {
  public:
   /**
-   * constructor.
+   * Constructor.
    *
    * @param [in] baseSettings: The basic settings for the search strategy algorithms.
    * @param [in] settings: The Levenberg Marquardt settings.
@@ -64,18 +64,15 @@ class LevenbergMarquardtStrategy final : public SearchStrategyBase {
   LevenbergMarquardtStrategy(search_strategy::Settings baseSettings, levenberg_marquardt::Settings settings, RolloutBase& rolloutRefStock,
                              OptimalControlProblem& optimalControlProblemRef, std::function<scalar_t(const PerformanceIndex&)> meritFunc);
 
-  /**
-   * Default destructor.
-   */
   ~LevenbergMarquardtStrategy() override = default;
-
   LevenbergMarquardtStrategy(const LevenbergMarquardtStrategy&) = delete;
   LevenbergMarquardtStrategy& operator=(const LevenbergMarquardtStrategy&) = delete;
 
   void reset() override;
 
   bool run(const std::pair<scalar_t, scalar_t>& timePeriod, const vector_t& initState, const scalar_t expectedCost,
-           const LinearController& unoptimizedController, const ModeSchedule& modeSchedule, search_strategy::SolutionRef solution) override;
+           const LinearController& unoptimizedController, const DualSolution& dualSolution, const ModeSchedule& modeSchedule,
+           search_strategy::SolutionRef solution) override;
 
   std::pair<bool, std::string> checkConvergence(bool unreliableControllerIncrement, const PerformanceIndex& previousPerformanceIndex,
                                                 const PerformanceIndex& currentPerformanceIndex) const override;
@@ -101,7 +98,7 @@ class LevenbergMarquardtStrategy final : public SearchStrategyBase {
   OptimalControlProblem& optimalControlProblemRef_;
   std::function<scalar_t(PerformanceIndex)> meritFunc_;
 
-  scalar_t avgTimeStepFP_ = 0.0;
+  DualSolution tempDualSolution_;
 };
 
 }  // namespace ocs2

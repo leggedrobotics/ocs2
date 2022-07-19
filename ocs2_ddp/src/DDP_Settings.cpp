@@ -78,7 +78,6 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   loadData::loadPtreeValue(pt, settings.displayShortSummary_, fieldName + ".displayShortSummary", verbose);
   loadData::loadPtreeValue(pt, settings.checkNumericalStability_, fieldName + ".checkNumericalStability", verbose);
   loadData::loadPtreeValue(pt, settings.debugPrintRollout_, fieldName + ".debugPrintRollout", verbose);
-  loadData::loadPtreeValue(pt, settings.debugCaching_, fieldName + ".debugCaching", verbose);
 
   loadData::loadPtreeValue(pt, settings.absTolODE_, fieldName + ".AbsTolODE", verbose);
   loadData::loadPtreeValue(pt, settings.relTolODE_, fieldName + ".RelTolODE", verbose);

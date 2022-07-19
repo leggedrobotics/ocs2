@@ -33,13 +33,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/reference/ModeSchedule.h>
 
+#include "ocs2_oc/oc_data/DualSolution.h"
 #include "ocs2_oc/oc_data/PrimalSolution.h"
 #include "ocs2_oc/trajectory_adjustment/TrajectorySpreading.h"
 
 namespace ocs2 {
 
 /**
- * Adjusts a linear controller based on the last changes in model schedule using a TrajectorySpreading strategy.
+ * Adjusts in-place a linear controller based on the last changes in mode schedule using a TrajectorySpreading strategy.
  *
  * @param [in] oldModeSchedule: The old mode schedule associated to the trajectories which should be adjusted.
  * @param [in] newModeSchedule: The new mode schedule that should be adapted to.
@@ -62,7 +63,60 @@ inline TrajectorySpreading::Status trajectorySpread(const ModeSchedule& oldModeS
 }
 
 /**
- * Adjusts a primal solution based on the last changes in model schedule using a TrajectorySpreading strategy.
+ * Adjusts in-place a dual solution based on the last changes in mode schedule using a TrajectorySpreading strategy.
+ *
+ * @param [in] oldModeSchedule: The old mode schedule associated to the trajectories which should be adjusted.
+ * @param [in] newModeSchedule: The new mode schedule that should be adapted to.
+ * @param [in, out] dualSolution: The dual solution that is associated with the old mode schedule.
+ * @returns the status of the devised trajectory spreading strategy.
+ */
+inline TrajectorySpreading::Status trajectorySpread(const ModeSchedule& oldModeSchedule, const ModeSchedule& newModeSchedule,
+                                                    DualSolution& dualSolution) {
+  // trajectory spreading
+  constexpr bool debugPrint = false;
+  TrajectorySpreading trajectorySpreading(debugPrint);
+  const auto status = trajectorySpreading.set(oldModeSchedule, newModeSchedule, dualSolution.timeTrajectory);
+
+  // adjust final, pre-jump, intermediate, time, postEventIndices
+  if (status.willTruncate) {
+    dualSolution.final.clear();
+  }
+  dualSolution.preJumps = trajectorySpreading.extractEventsArray(dualSolution.preJumps);
+  trajectorySpreading.adjustTrajectory(dualSolution.intermediates);
+  trajectorySpreading.adjustTimeTrajectory(dualSolution.timeTrajectory);
+  dualSolution.postEventIndices = trajectorySpreading.getPostEventIndices();
+
+  return status;
+}
+
+/**
+ * Adjusts a dual solution based on the last changes in mode schedule using a TrajectorySpreading strategy.
+ *
+ * @param [in] trajectorySpreading: An updated trajectorySpreading instance. In order to update trajectorySpreading
+ *                                  call TrajectorySpreading::set.
+ * @param [in] oldDualSolution: The dual solution that is associated with the old mode schedule.
+ * @param [out] newDualSolution: The updated dual solution that is associated with the new mode schedule.
+ */
+inline void trajectorySpread(const TrajectorySpreading& trajectorySpreading, const DualSolution& oldDualSolution,
+                             DualSolution& newDualSolution) {
+  newDualSolution.clear();
+
+  // adjust time and postEventIndices
+  newDualSolution.timeTrajectory = oldDualSolution.timeTrajectory;
+  trajectorySpreading.adjustTimeTrajectory(newDualSolution.timeTrajectory);
+  newDualSolution.postEventIndices = trajectorySpreading.getPostEventIndices();
+
+  // adjust final, pre-jump and intermediate
+  if (!trajectorySpreading.getStatus().willTruncate) {
+    newDualSolution.final = oldDualSolution.final;
+  }
+  newDualSolution.preJumps = trajectorySpreading.extractEventsArray(oldDualSolution.preJumps);
+  newDualSolution.intermediates = oldDualSolution.intermediates;
+  trajectorySpreading.adjustTrajectory(newDualSolution.intermediates);
+}
+
+/**
+ * Adjusts in-place a primal solution based on the last changes in mode schedule using a TrajectorySpreading strategy.
  * Note: PrimalSolution::controllerPtr_ will not be adjusted.
  *
  * @param [in] oldModeSchedule: The old mode schedule associated to the trajectories which should be adjusted.

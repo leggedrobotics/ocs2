@@ -32,6 +32,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_ddp/DDP_HelperFunctions.h"
 #include "ocs2_ddp/HessianCorrection.h"
 
+#include <ocs2_oc/oc_problem/OptimalControlProblemHelperFunction.h>
+#include <ocs2_oc/trajectory_adjustment/TrajectorySpreadingHelperFunctions.h>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
@@ -58,7 +61,8 @@ void LevenbergMarquardtStrategy::reset() {
 /******************************************************************************************************/
 bool LevenbergMarquardtStrategy::run(const std::pair<scalar_t, scalar_t>& timePeriod, const vector_t& initState,
                                      const scalar_t expectedCost, const LinearController& unoptimizedController,
-                                     const ModeSchedule& modeSchedule, search_strategy::SolutionRef solution) {
+                                     const DualSolution& dualSolution, const ModeSchedule& modeSchedule,
+                                     search_strategy::SolutionRef solution) {
   constexpr size_t taskId = 0;
 
   // previous merit and the expected reduction
@@ -74,11 +78,27 @@ bool LevenbergMarquardtStrategy::run(const std::pair<scalar_t, scalar_t>& timePe
     incrementController(stepLength, unoptimizedController, getLinearController(solution.primalSolution));
     solution.avgTimeStep = rolloutTrajectory(rolloutRef_, timePeriod.first, initState, timePeriod.second, solution.primalSolution);
 
-    // compute metrics
-    computeRolloutMetrics(optimalControlProblemRef_, solution.primalSolution, solution.metrics);
+    // adjust dual solution only if it is required
+    const DualSolution* adjustedDualSolutionPtr = &dualSolution;
+    if (!dualSolution.timeTrajectory.empty()) {
+      // trajectory spreading
+      constexpr bool debugPrint = false;
+      TrajectorySpreading trajectorySpreading(debugPrint);
+      const auto status = trajectorySpreading.set(modeSchedule, solution.primalSolution.modeSchedule_, dualSolution.timeTrajectory);
+      if (status.willTruncate || status.willPerformTrajectorySpreading) {
+        trajectorySpread(trajectorySpreading, dualSolution, tempDualSolution_);
+        adjustedDualSolutionPtr = &tempDualSolution_;
+      }
+    }
+
+    // initialize dual solution
+    initializeDualSolution(optimalControlProblemRef_, solution.primalSolution, *adjustedDualSolutionPtr, solution.dualSolution);
+
+    // compute problem metrics
+    computeRolloutMetrics(optimalControlProblemRef_, solution.primalSolution, solution.dualSolution, solution.problemMetrics);
 
     // compute performanceIndex
-    solution.performanceIndex = computeRolloutPerformanceIndex(solution.primalSolution.timeTrajectory_, solution.metrics);
+    solution.performanceIndex = computeRolloutPerformanceIndex(solution.primalSolution.timeTrajectory_, solution.problemMetrics);
     solution.performanceIndex.merit = meritFunc_(solution.performanceIndex);
 
     // display
@@ -117,24 +137,24 @@ bool LevenbergMarquardtStrategy::run(const std::pair<scalar_t, scalar_t>& timePe
   if (levenbergMarquardtModule_.pho < 0.25) {
     // increase riccatiMultipleAdaptiveRatio
     levenbergMarquardtModule_.riccatiMultipleAdaptiveRatio =
-        std::max(1.0, levenbergMarquardtModule_.riccatiMultipleAdaptiveRatio) * settings_.riccatiMultipleDefaultRatio_;
+        std::max(1.0, levenbergMarquardtModule_.riccatiMultipleAdaptiveRatio) * settings_.riccatiMultipleDefaultRatio;
 
     // increase riccatiMultiple
     auto riccatiMultipleTemp = levenbergMarquardtModule_.riccatiMultipleAdaptiveRatio * levenbergMarquardtModule_.riccatiMultiple;
-    if (riccatiMultipleTemp > settings_.riccatiMultipleDefaultFactor_) {
+    if (riccatiMultipleTemp > settings_.riccatiMultipleDefaultFactor) {
       levenbergMarquardtModule_.riccatiMultiple = riccatiMultipleTemp;
     } else {
-      levenbergMarquardtModule_.riccatiMultiple = settings_.riccatiMultipleDefaultFactor_;
+      levenbergMarquardtModule_.riccatiMultiple = settings_.riccatiMultipleDefaultFactor;
     }
 
   } else if (levenbergMarquardtModule_.pho > 0.75) {
     // decrease riccatiMultipleAdaptiveRatio
     levenbergMarquardtModule_.riccatiMultipleAdaptiveRatio =
-        std::min(1.0, levenbergMarquardtModule_.riccatiMultipleAdaptiveRatio) / settings_.riccatiMultipleDefaultRatio_;
+        std::min(1.0, levenbergMarquardtModule_.riccatiMultipleAdaptiveRatio) / settings_.riccatiMultipleDefaultRatio;
 
     // decrease riccatiMultiple
     auto riccatiMultipleTemp = levenbergMarquardtModule_.riccatiMultipleAdaptiveRatio * levenbergMarquardtModule_.riccatiMultiple;
-    if (riccatiMultipleTemp > settings_.riccatiMultipleDefaultFactor_) {
+    if (riccatiMultipleTemp > settings_.riccatiMultipleDefaultFactor) {
       levenbergMarquardtModule_.riccatiMultiple = riccatiMultipleTemp;
     } else {
       levenbergMarquardtModule_.riccatiMultiple = 0.0;
@@ -151,7 +171,7 @@ bool LevenbergMarquardtStrategy::run(const std::pair<scalar_t, scalar_t>& timePe
       displayInfo << "The step is accepted with pho: " << levenbergMarquardtModule_.pho << ". ";
     } else {
       displayInfo << "The step is rejected with pho: " << levenbergMarquardtModule_.pho << " ("
-                  << levenbergMarquardtModule_.numSuccessiveRejections << " out of " << settings_.maxNumSuccessiveRejections_ << "). ";
+                  << levenbergMarquardtModule_.numSuccessiveRejections << " out of " << settings_.maxNumSuccessiveRejections << "). ";
     }
 
     if (numerics::almost_eq(levenbergMarquardtModule_.riccatiMultipleAdaptiveRatio, 1.0)) {
@@ -168,12 +188,12 @@ bool LevenbergMarquardtStrategy::run(const std::pair<scalar_t, scalar_t>& timePe
   }
 
   // max accepted number of successive rejections
-  if (levenbergMarquardtModule_.numSuccessiveRejections > settings_.maxNumSuccessiveRejections_) {
+  if (levenbergMarquardtModule_.numSuccessiveRejections > settings_.maxNumSuccessiveRejections) {
     throw std::runtime_error("The maximum number of successive solution rejections has been reached!");
   }
 
   // accept or reject the step and modify numSuccessiveRejections
-  if (levenbergMarquardtModule_.pho >= settings_.minAcceptedPho_) {
+  if (levenbergMarquardtModule_.pho >= settings_.minAcceptedPho) {
     // accept the solution
     levenbergMarquardtModule_.numSuccessiveRejections = 0;
     return true;

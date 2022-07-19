@@ -115,9 +115,9 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
     ddpSettings.constraintPenaltyIncreaseRate_ = 1.5;
     ddpSettings.preComputeRiccatiTerms_ = false;
     ddpSettings.strategy_ = strategy;
-    ddpSettings.lineSearch_.minStepLength_ = 0.01;
-    ddpSettings.lineSearch_.hessianCorrectionStrategy_ = ocs2::hessian_correction::Strategy::CHOLESKY_MODIFICATION;
-    ddpSettings.lineSearch_.hessianCorrectionMultiple_ = 1e-3;
+    ddpSettings.lineSearch_.minStepLength = 0.01;
+    ddpSettings.lineSearch_.hessianCorrectionStrategy = ocs2::hessian_correction::Strategy::CHOLESKY_MODIFICATION;
+    ddpSettings.lineSearch_.hessianCorrectionMultiple = 1e-3;
     return ddpSettings;
   }
 

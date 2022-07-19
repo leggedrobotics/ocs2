@@ -213,5 +213,39 @@ TargetTrajectories readTargetTrajectoriesMsg(const ocs2_msgs::mpc_target_traject
   return {desiredTimeTrajectory, desiredStateTrajectory, desiredInputTrajectory};
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ocs2_msgs::lagrangian_metrics createMetricsMsg(scalar_t time, LagrangianMetricsConstRef metrics) {
+  ocs2_msgs::lagrangian_metrics metricsMsg;
+
+  metricsMsg.time = time;
+  metricsMsg.penalty = metrics.penalty;
+
+  metricsMsg.constraint.resize(metrics.constraint.size());
+  for (size_t i = 0; i < metrics.constraint.size(); i++) {
+    metricsMsg.constraint[i] = metrics.constraint(i);
+  }  // end of i loop
+
+  return metricsMsg;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ocs2_msgs::multiplier createMultiplierMsg(scalar_t time, MultiplierConstRef multiplier) {
+  ocs2_msgs::multiplier multiplierMsg;
+
+  multiplierMsg.time = time;
+  multiplierMsg.penalty = multiplier.penalty;
+
+  multiplierMsg.lagrangian.resize(multiplier.lagrangian.size());
+  for (size_t i = 0; i < multiplier.lagrangian.size(); i++) {
+    multiplierMsg.lagrangian[i] = multiplier.lagrangian(i);
+  }  // end of i loop
+
+  return multiplierMsg;
+}
+
 }  // namespace ros_msg_conversions
 }  // namespace ocs2

@@ -43,8 +43,9 @@ namespace cartpole {
  */
 class CartPoleSytemDynamics : public SystemDynamicsBaseAD {
  public:
-  CartPoleSytemDynamics(const CartPoleParameters& cartPoleParameters, const std::string& libraryFolder) : param_(cartPoleParameters) {
-    initialize(STATE_DIM, INPUT_DIM, "cartpole_dynamics", libraryFolder, true, true);
+  CartPoleSytemDynamics(const CartPoleParameters& cartPoleParameters, const std::string& libraryFolder, bool verbose)
+      : param_(cartPoleParameters) {
+    initialize(STATE_DIM, INPUT_DIM, "cartpole_dynamics", libraryFolder, true, verbose);
   }
 
   ~CartPoleSytemDynamics() override = default;

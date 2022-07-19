@@ -1,0 +1,59 @@
+name: Build and Test OCS2
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    # build both Debug and Release mode
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [ Debug, Release ]
+
+    # environment: regular Ubuntu with a vanilla ROS container
+    runs-on: ubuntu-latest
+    container: 
+      image: ros:noetic
+
+    steps:
+    - name: Environment Info
+      run: |
+        pwd
+        uname -r
+        lsb_release -a
+
+    - name: System deps
+      run: |
+        apt-get update
+        apt-get install -y git ninja-build liburdfdom-dev liboctomap-dev libassimp-dev
+
+    - uses: actions/checkout@v2
+      with: 
+        path: src/ocs2 
+
+    - name: Rosdep
+      run: |
+        rosdep update
+        rosdep install --from-paths src --ignore-src -r -y
+
+    - name: Checkout dependencies
+      run: |
+        git clone --recurse-submodules https://github.com/leggedrobotics/pinocchio.git src/pinocchio
+        git clone --recurse-submodules https://github.com/leggedrobotics/hpp-fcl.git src/hpp-fcl
+        git clone https://github.com/leggedrobotics/ocs2_robotic_assets.git src/ocs2_robotic_assets
+    - name: Build (${{ matrix.build_type }})
+      shell: bash
+      run: |
+        source /opt/ros/noetic/setup.bash
+        catkin_make_isolated --use-ninja --merge --only-pkg-with-deps ocs2 --ignore-pkg ocs2_raisim --cmake-args -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} 
+        
+    - name: Test
+      shell: bash
+      run: |
+        source devel_isolated/setup.bash
+        catkin_make_isolated --use-ninja --merge --only-pkg-with-deps ocs2 --catkin-make-args run_tests

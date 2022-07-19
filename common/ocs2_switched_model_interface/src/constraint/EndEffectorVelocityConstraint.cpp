@@ -26,8 +26,7 @@ size_t EndEffectorVelocityConstraint::getNumConstraints(scalar_t time) const {
 vector_t EndEffectorVelocityConstraint::getValue(scalar_t time, const vector_t& state, const vector_t& input,
                                                  const ocs2::PreComputation& preComp) const {
   const auto& switchedModelPreComp = ocs2::cast<SwitchedModelPreComputation>(preComp);
-  const auto& footPhase = switchedModelPreComp.getFootPhase(legNumber_);
-  const auto tangentBasis = tangentialBasisFromSurfaceNormal(footPhase.normalDirectionInWorldFrame(time));
+  const auto tangentBasis = tangentialBasisFromSurfaceNormal(switchedModelPreComp.getSurfaceNormalInOriginFrame(legNumber_));
 
   const auto& o_footVelocity = switchedModelPreComp.footVelocityInOriginFrame(legNumber_);
   return tangentBasis * o_footVelocity;
@@ -37,8 +36,7 @@ VectorFunctionLinearApproximation EndEffectorVelocityConstraint::getLinearApprox
                                                                                         const vector_t& input,
                                                                                         const ocs2::PreComputation& preComp) const {
   const auto& switchedModelPreComp = ocs2::cast<SwitchedModelPreComputation>(preComp);
-  const auto& footPhase = switchedModelPreComp.getFootPhase(legNumber_);
-  const auto tangentBasis = tangentialBasisFromSurfaceNormal(footPhase.normalDirectionInWorldFrame(time));
+  const auto tangentBasis = tangentialBasisFromSurfaceNormal(switchedModelPreComp.getSurfaceNormalInOriginFrame(legNumber_));
 
   const auto& o_footVelocity = switchedModelPreComp.footVelocityInOriginFrame(legNumber_);
   const auto& o_footVelocityDerivative = switchedModelPreComp.footVelocityInOriginFrameDerivative(legNumber_);

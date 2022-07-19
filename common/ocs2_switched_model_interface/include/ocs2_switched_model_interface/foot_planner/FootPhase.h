@@ -130,7 +130,6 @@ class SwingPhase final : public FootPhase {
    * @param SwingProfile : Settings to shape the swing profile
    * @param terrainModel : (optional) Pointer to the terrain model. Terrain model should be kept alive externall as long as the swingphase
    * object exists. Will extract SDF and obstacle information from the terrain.
-   * @param positionGain : Position feedback in the normal direction making the swing leg follow the reference profile in that direction.
    */
   SwingPhase(SwingEvent liftOff, SwingEvent touchDown, const SwingProfile& swingProfile, const TerrainModel* terrainModel = nullptr);
   ~SwingPhase() override = default;
@@ -151,10 +150,32 @@ class SwingPhase final : public FootPhase {
 
   SwingEvent liftOff_;
   SwingEvent touchDown_;
-  scalar_t positionGain_;
 
   std::unique_ptr<SwingSpline3d> motion_;
   std::unique_ptr<QuinticSwing> terrainClearanceMotion_;
+};
+
+/**
+ * Encodes a swing trajectory derived directly from the reference motion
+ */
+class ExternalSwingPhase final : public FootPhase {
+ public:
+  ExternalSwingPhase(std::vector<scalar_t> timeTrajectory, std::vector<vector3_t> positionTrajectory,
+                     std::vector<vector3_t> velocityTrajectory);
+  ~ExternalSwingPhase() override = default;
+
+  bool contactFlag() const override { return false; };
+  vector3_t normalDirectionInWorldFrame(scalar_t time) const override { return {0.0, 0.0, 1.0}; }
+  vector3_t nominalFootholdLocation() const override { return positionTrajectory_.back(); }
+  vector3_t getPositionInWorld(scalar_t time) const override;
+  vector3_t getVelocityInWorld(scalar_t time) const override;
+  vector3_t getAccelerationInWorld(scalar_t time) const override { return vector3_t::Zero(); }
+  scalar_t getMinimumFootClearance(scalar_t time) const override { return 0.0; }
+
+ private:
+  std::vector<scalar_t> timeTrajectory_;
+  std::vector<vector3_t> positionTrajectory_;
+  std::vector<vector3_t> velocityTrajectory_;
 };
 
 }  // namespace switched_model

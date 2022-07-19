@@ -35,10 +35,10 @@ void SwingTrajectoryPlanner::updateSwingMotions(scalar_t initTime, scalar_t fina
     throw std::runtime_error("[SwingTrajectoryPlanner] terrain cannot be null. Update the terrain before planning swing motions");
   }
 
-  const feet_array_t<std::vector<ContactTiming>> contactTimingsPerLeg = extractContactTimingsPerLeg(modeSchedule);
-
   // Need a copy to provide joint references later (possibly adapted with inverse kinematics)
   targetTrajectories_ = targetTrajectories;
+
+  const feet_array_t<std::vector<ContactTiming>> contactTimingsPerLeg = extractContactTimingsPerLeg(modeSchedule);
 
   const auto basePose = getBasePose(currentState);
   const auto feetPositions = kinematicsModel_->feetPositionsInOriginFrame(basePose, getJointPositions(currentState));
@@ -138,6 +138,64 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
     SwingPhase::SwingProfile swingProfile = getDefaultSwingProfile();
     applySwingMotionScaling(liftOff, touchDown, swingProfile);
 
+    eventTimes.push_back(currentContactTiming.end);
+    footPhases.emplace_back(new SwingPhase(liftOff, touchDown, swingProfile, terrainModel_.get()));
+  }
+
+  return std::make_pair(eventTimes, std::move(footPhases));
+}
+
+std::pair<std::vector<scalar_t>, std::vector<std::unique_ptr<FootPhase>>> SwingTrajectoryPlanner::extractSwingTrajectoriesFromReference(
+    int leg, const std::vector<ContactTiming>& contactTimings, scalar_t finalTime) const {
+  std::vector<scalar_t> eventTimes;
+  std::vector<std::unique_ptr<FootPhase>> footPhases;
+
+  // First swing phase
+  if (startsWithSwingPhase(contactTimings)) {
+    scalar_t liftOffTime{lastContacts_[leg].first};
+    scalar_t touchDownTime = [&] {
+      if (touchesDownAtLeastOnce(contactTimings)) {
+        return contactTimings.front().start;
+      } else {
+        return finalTime + settings_.referenceExtensionAfterHorizon;
+      }
+    }();
+
+    footPhases.emplace_back(new SwingPhase(liftOff, touchDown, swingProfile, terrainModel_.get()));
+  }
+
+  // Loop through contact phases
+  for (int i = 0; i < contactTimings.size(); ++i) {
+    const auto& currentContactTiming = contactTimings[i];
+    const ConvexTerrain& nominalFoothold = nominalFootholdsPerLeg_[leg][i];
+
+    // If phase starts after the horizon, we don't need to plan for it
+    if (currentContactTiming.start > finalTime) {
+      break;
+    }
+
+    // generate contact phase
+    if (hasStartTime(currentContactTiming)) {
+      eventTimes.push_back(currentContactTiming.start);
+    }
+    footPhases.emplace_back(new StancePhase(nominalFoothold, settings_.terrainMargin));
+
+    // If contact phase extends beyond the horizon, we can stop planning.
+    if (!hasEndTime(currentContactTiming) || currentContactTiming.end > finalTime) {
+      break;
+    }
+
+    // generate swing phase afterwards
+    scalar_t liftOffTime{currentContactTiming.end};
+    scalar_t touchDownTime = [&] {
+      const bool nextContactExists = (i + 1) < contactTimings.size();
+      if (nextContactExists) {
+        return contactTimings[i + 1].start;
+      } else {
+        return finalTime + settings_.referenceExtensionAfterHorizon;
+      }
+    }();
+    
     eventTimes.push_back(currentContactTiming.end);
     footPhases.emplace_back(new SwingPhase(liftOff, touchDown, swingProfile, terrainModel_.get()));
   }
@@ -343,63 +401,6 @@ void SwingTrajectoryPlanner::updateLastContact(int leg, scalar_t expectedLiftOff
   lastContacts_[leg] = {expectedLiftOff, lastContactTerrain};
 }
 
-std::vector<SwingPhase::SwingProfile::Node> SwingTrajectoryPlanner::extractSwingProfileFromReference(
-    int leg, const SwingPhase::SwingEvent& liftoff, const SwingPhase::SwingEvent& touchdown) const {
-  const scalar_t swingDuration = touchdown.time - liftoff.time;
-
-  vector3_t touchDownLocation = liftoff.terrainPlane->positionInWorld;
-  if (touchdown.terrainPlane != nullptr) {
-    touchDownLocation = touchdown.terrainPlane->positionInWorld;
-  }
-
-  const vector3_t swingVector = touchDownLocation - liftoff.terrainPlane->positionInWorld;
-  const scalar_t swingDistance = swingVector.norm();
-  vector3_t swingTrajectoryNormal = swingVector.cross(vector3_t(0.0, 0.0, 1.0).cross(swingVector)).normalized();
-
-  // degenerate normal if there is no horizontal displacement
-  if (swingVector.head<2>().norm() < 0.01) {
-    swingTrajectoryNormal = vector3_t::UnitZ();
-  }
-
-  // Define where to sample the reference
-  std::vector<scalar_t> samplingPhases = {0.25, 0.5, 0.75};
-
-  std::vector<SwingPhase::SwingProfile::Node> swingNodes;
-  for (const scalar_t phase : samplingPhases) {
-    const scalar_t t = liftoff.time + phase * swingDuration;
-    const auto& state = targetTrajectories_.getDesiredState(t);
-    const auto& input = targetTrajectories_.getDesiredInput(t);
-
-    // Compute foot position and velocity from reference desired trajectory
-    const base_coordinate_t desiredBasePose = state.head<BASE_COORDINATE_SIZE>();
-    const base_coordinate_t desiredBaseTwist = state.segment<BASE_COORDINATE_SIZE>(BASE_COORDINATE_SIZE);
-    const joint_coordinate_t desiredJointPositions = state.segment<JOINT_COORDINATE_SIZE>(2 * BASE_COORDINATE_SIZE);
-    const joint_coordinate_t desiredJointVelocities = input.segment<JOINT_COORDINATE_SIZE>(3 * NUM_CONTACT_POINTS);
-    const vector3_t referenceFootpositionInWorld = kinematicsModel_->footPositionInOriginFrame(leg, desiredBasePose, desiredJointPositions);
-    const vector3_t footpositionRelativeToLiftoff = referenceFootpositionInWorld - liftoff.terrainPlane->positionInWorld;
-    const vector3_t referenceFootvelocityInWorld =
-        kinematicsModel_->footVelocityInOriginFrame(leg, desiredBasePose, desiredBaseTwist, desiredJointPositions, desiredJointVelocities);
-
-    // Convert to the swing profile relative coordinates
-    SwingPhase::SwingProfile::Node node;
-    node.phase = phase;
-    if (swingDistance > 0.01) {
-      node.tangentialProgress = footpositionRelativeToLiftoff.dot(swingVector) / (swingDistance * swingDistance);
-      node.tangentialVelocityFactor = referenceFootvelocityInWorld.dot(swingVector) * swingDuration / (swingDistance * swingDistance);
-    } else {
-      node.tangentialProgress = 0.0;
-      node.tangentialVelocityFactor = 0.0;
-    }
-    // position = liftoff + progress towards touchdown + height offset in normal direction. >> solve for height
-    node.swingHeight = swingTrajectoryNormal.dot(footpositionRelativeToLiftoff - node.tangentialProgress * swingVector);
-    node.normalVelocity = referenceFootvelocityInWorld.dot(swingTrajectoryNormal);
-
-    swingNodes.push_back(node);
-  }
-
-  return swingNodes;
-}
-
 SwingPhase::SwingProfile SwingTrajectoryPlanner::getDefaultSwingProfile() const {
   SwingPhase::SwingProfile defaultSwingProfile;
   defaultSwingProfile.sdfMidswingMargin = settings_.sdfMidswingMargin;
@@ -468,6 +469,7 @@ SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& fi
   ocs2::loadData::loadPtreeValue(pt, settings.nominalLegExtension, prefix + "nominalLegExtension", verbose);
   ocs2::loadData::loadPtreeValue(pt, settings.legOverExtensionPenalty, prefix + "legOverExtensionPenalty", verbose);
   ocs2::loadData::loadPtreeValue(pt, settings.referenceExtensionAfterHorizon, prefix + "referenceExtensionAfterHorizon", verbose);
+  ocs2::loadData::loadPtreeValue(pt, settings.swingTrajectoryFromReference, prefix + "swingTrajectoryFromReference", verbose);
 
   if (verbose) {
     std::cerr << " #### ==================================================" << std::endl;

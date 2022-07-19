@@ -37,6 +37,8 @@ struct SwingTrajectoryPlannerSettings {
   scalar_t legOverExtensionPenalty = 5.0;  // Weight of the leg overextension penalty
 
   scalar_t referenceExtensionAfterHorizon = 1.0;  // base and foot references generated for this amount of seconds after the horizon ends.
+
+  bool swingTrajectoryFromReference = false;  // Flag to take the swing trajectory from the reference trajectory
 };
 
 SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& filename, bool verbose = true);
@@ -81,6 +83,9 @@ class SwingTrajectoryPlanner {
   std::pair<std::vector<scalar_t>, std::vector<std::unique_ptr<FootPhase>>> generateSwingTrajectories(
       int leg, const std::vector<ContactTiming>& contactTimings, scalar_t finalTime) const;
 
+  std::pair<std::vector<scalar_t>, std::vector<std::unique_ptr<FootPhase>>> extractSwingTrajectoriesFromReference(
+      int leg, const std::vector<ContactTiming>& contactTimings, scalar_t finalTime) const;
+
   std::vector<vector3_t> selectHeuristicFootholds(int leg, const std::vector<ContactTiming>& contactTimings,
                                                   const ocs2::TargetTrajectories& targetTrajectories, scalar_t initTime,
                                                   const comkino_state_t& currentState, scalar_t finalTime) const;
@@ -93,9 +98,6 @@ class SwingTrajectoryPlanner {
 
   void applySwingMotionScaling(SwingPhase::SwingEvent& liftOff, SwingPhase::SwingEvent& touchDown,
                                SwingPhase::SwingProfile& swingProfile) const;
-
-  std::vector<SwingPhase::SwingProfile::Node> extractSwingProfileFromReference(int leg, const SwingPhase::SwingEvent& liftoff,
-                                                                               const SwingPhase::SwingEvent& touchdown) const;
 
   SwingPhase::SwingProfile getDefaultSwingProfile() const;
 

@@ -3,6 +3,9 @@
 //
 
 #include "ocs2_switched_model_interface/foot_planner/FootPhase.h"
+
+#include <ocs2_core/misc/LinearInterpolation.h>
+
 #include "ocs2_switched_model_interface/foot_planner/CubicSpline.h"
 
 namespace switched_model {
@@ -257,6 +260,20 @@ scalar_t SwingPhase::getScaling(scalar_t time) const {
   } else {
     return 1.0;
   }
+}
+
+ExternalSwingPhase::ExternalSwingPhase(std::vector<scalar_t> timeTrajectory, std::vector<vector3_t> positionTrajectory,
+                                       std::vector<vector3_t> velocityTrajectory)
+    : timeTrajectory_(std::move(timeTrajectory)),
+      positionTrajectory_(std::move(positionTrajectory)),
+      velocityTrajectory_(std::move(velocityTrajectory)) {}
+
+vector3_t ExternalSwingPhase::getPositionInWorld(scalar_t time) const {
+  return ocs2::LinearInterpolation::interpolate(time, timeTrajectory_, positionTrajectory_);
+}
+
+vector3_t ExternalSwingPhase::getVelocityInWorld(scalar_t time) const {
+  return ocs2::LinearInterpolation::interpolate(time, timeTrajectory_, velocityTrajectory_);
 }
 
 }  // namespace switched_model

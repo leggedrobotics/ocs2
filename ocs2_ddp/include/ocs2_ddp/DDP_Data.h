@@ -30,11 +30,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
+#include <ocs2_core/model_data/Metrics.h>
 #include <ocs2_core/model_data/ModelData.h>
+#include <ocs2_oc/oc_data/DualSolution.h>
 #include <ocs2_oc/oc_data/PrimalSolution.h>
-#include "ocs2_ddp/riccati_equations/RiccatiModification.h"
+#include <ocs2_oc/oc_data/ProblemMetrics.h>
 
-#include <ocs2_core/control/LinearController.h>
+#include "ocs2_ddp/riccati_equations/RiccatiModification.h"
 
 namespace ocs2 {
 
@@ -48,22 +50,30 @@ namespace ocs2 {
  * the rest of member variables are not the result of the controller. But they will be cleared and populated when runInit is called.
  */
 struct PrimalDataContainer {
+  // Primal solution
   PrimalSolution primalSolution;
-  // intermediate model data trajectory
-  std::vector<ModelData> modelDataTrajectory;
+  // cost, soft constraints and constraints values of the rollout
+  ProblemMetrics problemMetrics;
+  // final time model data
+  ModelData modelDataFinalTime;
   // event times model data
   std::vector<ModelData> modelDataEventTimes;
+  // intermediate model data trajectory
+  std::vector<ModelData> modelDataTrajectory;
 
   void swap(PrimalDataContainer& other) {
     primalSolution.swap(other.primalSolution);
-    modelDataTrajectory.swap(other.modelDataTrajectory);
+    problemMetrics.swap(other.problemMetrics);
+    std::swap(modelDataFinalTime, other.modelDataFinalTime);
     modelDataEventTimes.swap(other.modelDataEventTimes);
+    modelDataTrajectory.swap(other.modelDataTrajectory);
   }
 
   void clear() {
     primalSolution.clear();
-    modelDataTrajectory.clear();
+    problemMetrics.clear();
     modelDataEventTimes.clear();
+    modelDataTrajectory.clear();
   }
 };
 
@@ -75,22 +85,24 @@ struct PrimalDataContainer {
  *
  */
 struct DualDataContainer {
+  // Dual solution
+  DualSolution dualSolution;
   // projected model data trajectory
   std::vector<ModelData> projectedModelDataTrajectory;
-
   // Riccati modification
   std::vector<riccati_modification::Data> riccatiModificationTrajectory;
-
   // Riccati solution coefficients
   std::vector<ScalarFunctionQuadraticApproximation> valueFunctionTrajectory;
 
-  inline void swap(DualDataContainer& other) {
+  void swap(DualDataContainer& other) {
+    dualSolution.swap(other.dualSolution);
     projectedModelDataTrajectory.swap(other.projectedModelDataTrajectory);
     riccatiModificationTrajectory.swap(other.riccatiModificationTrajectory);
     valueFunctionTrajectory.swap(other.valueFunctionTrajectory);
   }
 
-  inline void clear() {
+  void clear() {
+    dualSolution.clear();
     projectedModelDataTrajectory.clear();
     riccatiModificationTrajectory.clear();
     valueFunctionTrajectory.clear();

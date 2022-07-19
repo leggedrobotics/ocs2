@@ -37,10 +37,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/control/ControllerBase.h>
 
+#include <ocs2_oc/oc_data/DualSolution.h>
 #include <ocs2_oc/oc_data/PrimalSolution.h>
+#include <ocs2_oc/oc_data/ProblemMetrics.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
 #include <ocs2_oc/synchronized_module/ReferenceManagerInterface.h>
 #include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
+#include "ocs2_oc/synchronized_module/AugmentedLagrangianObserver.h"
 
 namespace ocs2 {
 
@@ -130,6 +134,21 @@ class SolverBase {
   }
 
   /**
+   * Adds one observer to the vector of modules that observe solver's dual solution and optimized metrics.
+   * @note: These observer can slow down the MPC. Only employ them during debugging and remove them for deployment.
+   */
+  void addAugmentedLagrangianObserver(std::unique_ptr<AugmentedLagrangianObserver> observerModule) {
+    augmentedLagrangianObservers_.push_back(std::move(observerModule));
+  }
+
+  /**
+   * @brief Returns a const reference to the definition of optimal control problem.
+   *
+   * @return The problem definition.
+   */
+  virtual const OptimalControlProblem& getOptimalControlProblem() const = 0;
+
+  /**
    * Returns the cost, merit function and ISEs of constraints for the latest optimized trajectory.
    *
    * @return PerformanceIndex of the last optimized trajectory.
@@ -174,6 +193,20 @@ class SolverBase {
   PrimalSolution primalSolution(scalar_t finalTime) const;
 
   /**
+   * @brief Returns the optimized dual solution.
+   *
+   * @return: The dual problem's solution.
+   */
+  virtual const DualSolution& getDualSolution() const = 0;
+
+  /**
+   * @brief Returns the optimized value of the Metrics.
+   *
+   * @return: The solution's metrics.
+   */
+  virtual const ProblemMetrics& getSolutionMetrics() const = 0;
+
+  /**
    * Calculates the value function quadratic approximation at the given time and state.
    *
    * @param [in] time: The inquiry time
@@ -200,6 +233,14 @@ class SolverBase {
    * @return The Lagrange multiplier of the state-input equality constraints.
    */
   virtual vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const = 0;
+
+  /**
+   * Returns the intermediate dual solution at the given time.
+   *
+   * @param [in] time: The inquiry time
+   * @return The collection of multipliers associated to state/state-input, equality/inequality Lagrangian terms.
+   */
+  virtual MultiplierCollection getIntermediateDualSolution(scalar_t time) const = 0;
 
   /**
    * Gets benchmarking information.
@@ -230,6 +271,7 @@ class SolverBase {
   mutable std::mutex outputDisplayGuardMutex_;
   std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr_;  // this pointer cannot be nullptr
   std::vector<std::shared_ptr<SolverSynchronizedModule>> synchronizedModules_;
+  std::vector<std::unique_ptr<AugmentedLagrangianObserver>> augmentedLagrangianObservers_;
 };
 
 }  // namespace ocs2

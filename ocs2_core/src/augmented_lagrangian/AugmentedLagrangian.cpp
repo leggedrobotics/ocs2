@@ -1,17 +1,17 @@
 /******************************************************************************
-Copyright (c) 2021, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
- * Redistributions of source code must retain the above copyright notice, this
+* Redistributions of source code must retain the above copyright notice, this
   list of conditions and the following disclaimer.
 
- * Redistributions in binary form must reproduce the above copyright notice,
+* Redistributions in binary form must reproduce the above copyright notice,
   this list of conditions and the following disclaimer in the documentation
   and/or other materials provided with the distribution.
 
- * Neither the name of the copyright holder nor the names of its
+* Neither the name of the copyright holder nor the names of its
   contributors may be used to endorse or promote products derived from
   this software without specific prior written permission.
 
@@ -27,37 +27,41 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_legged_robot/cost/LeggedRobotStateInputQuadraticCost.h"
-
-#include <ocs2_legged_robot/common/utils.h>
+#include "ocs2_core/augmented_lagrangian/AugmentedLagrangian.h"
 
 namespace ocs2 {
-namespace legged_robot {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LeggedRobotStateInputQuadraticCost::LeggedRobotStateInputQuadraticCost(matrix_t Q, matrix_t R, CentroidalModelInfo info,
-                                                                       const SwitchedModelReferenceManager& referenceManager)
-    : QuadraticStateInputCost(std::move(Q), std::move(R)), info_(std::move(info)), referenceManagerPtr_(&referenceManager) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-LeggedRobotStateInputQuadraticCost* LeggedRobotStateInputQuadraticCost::clone() const {
-  return new LeggedRobotStateInputQuadraticCost(*this);
+std::unique_ptr<StateAugmentedLagrangian> create(std::unique_ptr<StateConstraint> constraintPtr,
+                                                 std::vector<std::unique_ptr<augmented::AugmentedPenaltyBase>> penaltyPtrArray) {
+  return std::unique_ptr<StateAugmentedLagrangian>(new StateAugmentedLagrangian(std::move(constraintPtr), std::move(penaltyPtrArray)));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::pair<vector_t, vector_t> LeggedRobotStateInputQuadraticCost::getStateInputDeviation(
-    scalar_t time, const vector_t& state, const vector_t& input, const TargetTrajectories& targetTrajectories) const {
-  const auto contactFlags = referenceManagerPtr_->getContactFlags(time);
-  const vector_t xNominal = targetTrajectories.getDesiredState(time);
-  const vector_t uNominal = weightCompensatingInput(info_, contactFlags);
-  return {state - xNominal, input - uNominal};
+std::unique_ptr<StateAugmentedLagrangian> create(std::unique_ptr<StateConstraint> constraintPtr,
+                                                 std::unique_ptr<augmented::AugmentedPenaltyBase> penaltyPtr) {
+  return std::unique_ptr<StateAugmentedLagrangian>(new StateAugmentedLagrangian(std::move(constraintPtr), std::move(penaltyPtr)));
 }
 
-}  // namespace legged_robot
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::unique_ptr<StateInputAugmentedLagrangian> create(std::unique_ptr<StateInputConstraint> constraintPtr,
+                                                      std::vector<std::unique_ptr<augmented::AugmentedPenaltyBase>> penaltyPtrArray) {
+  return std::unique_ptr<StateInputAugmentedLagrangian>(
+      new StateInputAugmentedLagrangian(std::move(constraintPtr), std::move(penaltyPtrArray)));
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::unique_ptr<StateInputAugmentedLagrangian> create(std::unique_ptr<StateInputConstraint> constraintPtr,
+                                                      std::unique_ptr<augmented::AugmentedPenaltyBase> penaltyPtr) {
+  return std::unique_ptr<StateInputAugmentedLagrangian>(new StateInputAugmentedLagrangian(std::move(constraintPtr), std::move(penaltyPtr)));
+}
+
 }  // namespace ocs2

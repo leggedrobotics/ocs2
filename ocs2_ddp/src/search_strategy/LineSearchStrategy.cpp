@@ -32,6 +32,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_ddp/DDP_HelperFunctions.h"
 #include "ocs2_ddp/HessianCorrection.h"
 
+#include <ocs2_oc/oc_problem/OptimalControlProblemHelperFunction.h>
+#include <ocs2_oc/trajectory_adjustment/TrajectorySpreadingHelperFunctions.h>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
@@ -44,6 +47,7 @@ LineSearchStrategy::LineSearchStrategy(search_strategy::Settings baseSettings, l
     : SearchStrategyBase(std::move(baseSettings)),
       settings_(std::move(settings)),
       threadPoolRef_(threadPoolRef),
+      tempDualSolutions_(threadPoolRef.numThreads() + 1),
       workersSolution_(threadPoolRef.numThreads() + 1),
       rolloutRefStock_(std::move(rolloutRefStock)),
       optimalControlProblemRefStock_(std::move(optimalControlProblemRefStock)),
@@ -89,11 +93,28 @@ void LineSearchStrategy::computeSolution(size_t taskId, scalar_t stepLength, sea
   solution.avgTimeStep = rolloutTrajectory(rollout, lineSearchInputRef_.timePeriodPtr->first, *lineSearchInputRef_.initStatePtr,
                                            lineSearchInputRef_.timePeriodPtr->second, solution.primalSolution);
 
-  // compute metrics
-  computeRolloutMetrics(problem, solution.primalSolution, solution.metrics);
+  // adjust dual solution only if it is required
+  const DualSolution* adjustedDualSolutionPtr = lineSearchInputRef_.dualSolutionPtr;
+  if (!lineSearchInputRef_.dualSolutionPtr->timeTrajectory.empty()) {
+    // trajectory spreading
+    constexpr bool debugPrint = false;
+    TrajectorySpreading trajectorySpreading(debugPrint);
+    const auto status = trajectorySpreading.set(*lineSearchInputRef_.modeSchedulePtr, solution.primalSolution.modeSchedule_,
+                                                lineSearchInputRef_.dualSolutionPtr->timeTrajectory);
+    if (status.willTruncate || status.willPerformTrajectorySpreading) {
+      trajectorySpread(trajectorySpreading, *lineSearchInputRef_.dualSolutionPtr, tempDualSolutions_[taskId]);
+      adjustedDualSolutionPtr = &tempDualSolutions_[taskId];
+    }
+  }
+
+  // initialize dual solution
+  initializeDualSolution(problem, solution.primalSolution, *adjustedDualSolutionPtr, solution.dualSolution);
+
+  // compute problem metrics
+  computeRolloutMetrics(problem, solution.primalSolution, solution.dualSolution, solution.problemMetrics);
 
   // compute performanceIndex
-  solution.performanceIndex = computeRolloutPerformanceIndex(solution.primalSolution.timeTrajectory_, solution.metrics);
+  solution.performanceIndex = computeRolloutPerformanceIndex(solution.primalSolution.timeTrajectory_, solution.problemMetrics);
   solution.performanceIndex.merit = meritFunc_(solution.performanceIndex);
 
   // display
@@ -109,12 +130,13 @@ void LineSearchStrategy::computeSolution(size_t taskId, scalar_t stepLength, sea
 /******************************************************************************************************/
 /******************************************************************************************************/
 bool LineSearchStrategy::run(const std::pair<scalar_t, scalar_t>& timePeriod, const vector_t& initState, const scalar_t expectedCost,
-                             const LinearController& unoptimizedController, const ModeSchedule& modeSchedule,
-                             search_strategy::SolutionRef solutionRef) {
+                             const LinearController& unoptimizedController, const DualSolution& dualSolution,
+                             const ModeSchedule& modeSchedule, search_strategy::SolutionRef solutionRef) {
   // initialize lineSearchModule inputs
   lineSearchInputRef_.timePeriodPtr = &timePeriod;
   lineSearchInputRef_.initStatePtr = &initState;
   lineSearchInputRef_.unoptimizedControllerPtr = &unoptimizedController;
+  lineSearchInputRef_.dualSolutionPtr = &dualSolution;
   lineSearchInputRef_.modeSchedulePtr = &modeSchedule;
   bestSolutionRef_ = &solutionRef;
 

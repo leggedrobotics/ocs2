@@ -98,7 +98,6 @@ model_settings
     previousFootholdDeadzone          0.025
     previousFootholdTimeDeadzone      0.30
     referenceExtensionAfterHorizon    1.0
-    swingTrajectoryFromReference      0
   }
 }
 

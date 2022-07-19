@@ -37,8 +37,6 @@ struct SwingTrajectoryPlannerSettings {
   scalar_t legOverExtensionPenalty = 5.0;  // Weight of the leg overextension penalty
 
   scalar_t referenceExtensionAfterHorizon = 1.0;  // base and foot references generated for this amount of seconds after the horizon ends.
-
-  bool swingTrajectoryFromReference = false;  // Flag to take the swing trajectory from the reference trajectory
 };
 
 SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& filename, bool verbose = true);
@@ -103,7 +101,7 @@ class SwingTrajectoryPlanner {
   std::vector<SwingPhase::SwingProfile::Node> extractSwingProfileFromReference(int leg, const SwingPhase::SwingEvent& liftoff,
                                                                                const SwingPhase::SwingEvent& touchdown) const;
 
-  void setDefaultSwingProfile();
+  SwingPhase::SwingProfile getDefaultSwingProfile() const;
 
   scalar_t getContactEndTime(const ContactTiming& contactPhase, scalar_t finalTime) const;
 
@@ -112,7 +110,6 @@ class SwingTrajectoryPlanner {
   vector3_t filterFoothold(const vector3_t& newFoothold, const vector3_t& previousFoothold) const;
 
   SwingTrajectoryPlannerSettings settings_;
-  SwingPhase::SwingProfile defaultSwingProfile_;
   std::unique_ptr<KinematicsModelBase<scalar_t>> kinematicsModel_;
 
   feet_array_t<std::pair<scalar_t, TerrainPlane>> lastContacts_;

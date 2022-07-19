@@ -229,77 +229,9 @@ class HpipmInterface::Impl {
     qq[N] = cost[N].dfdx.data();
 
     // === Constraints ===
-
-    // Equality constraints for each stage:
-    // C * x + D * u == d
-    // Declare at this scope to keep data alive while HPIPM has the pointers
-    std::vector<matrix_t> C_eq(N + 1);
-    std::vector<matrix_t> D_eq(N + 1);
-    std::vector<vector_t> d_eq(N + 1);
-
-    if (constraints != nullptr) {
-      auto& constr = *constraints;
-
-      // k = 0
-      // No need to specify C_eq[0] since initial state is given
-      if (constr[0].f.size() > 0) {
-        d_eq[0] = -constr[0].f;
-        d_eq[0].noalias() -= constr[0].dfdx * x0;
-        D_eq[0] = constr[0].dfdu;
-      }
-
-      // k = 1 -> (N-1)
-      for (int k = 1; k < N; k++) {
-        if (constr[k].f.size() > 0) {
-          d_eq[k] = -constr[k].f;
-          C_eq[k] = constr[k].dfdx;
-          D_eq[k] = constr[k].dfdu;
-        }
-      }
-
-      // k = N, no inputs
-      if (constr[N].f.size() > 0) {
-        d_eq[N] = -constr[N].f;
-        C_eq[N] = constr[N].dfdx;
-      }
-    }
-
-    // Inequality constraints for each stage:
-    // C * x + D * u >= d
-    std::vector<matrix_t> C_ineq(N + 1);
-    std::vector<matrix_t> D_ineq(N + 1);
-    std::vector<vector_t> d_ineq(N + 1);
-
-    if (ineqConstraints != nullptr) {
-      auto& constr = *ineqConstraints;
-
-      // k = 0
-      if (constr[0].f.size() > 0) {
-        d_ineq[0] = -constr[0].f;
-        d_ineq[0].noalias() -= constr[0].dfdx * x0;
-        D_ineq[0] = constr[0].dfdu;
-      }
-
-      // k = 1 -> (N-1)
-      for (int k = 1; k < N; k++) {
-        if (constr[k].f.size() > 0) {
-          C_ineq[k] = constr[k].dfdx;
-          D_ineq[k] = constr[k].dfdu;
-          d_ineq[k] = -constr[k].f;
-        }
-      }
-
-      // k = N
-      if (constr[N].f.size() > 0) {
-        d_ineq[N] = -constr[N].f;
-        C_ineq[N] = constr[N].dfdx;
-      }
-    }
-
-    // Combined equality and inequality constraints for each stage
-    std::vector<matrix_t> C_con(N + 1);
-    std::vector<matrix_t> D_con(N + 1);
-    std::vector<vector_t> d_con(N + 1);
+    std::vector<matrix_t> C(N + 1);
+    std::vector<matrix_t> D(N + 1);
+    std::vector<vector_t> d(N + 1);
     std::vector<vector_t> upper_bound_mask(N + 1);
 
     // Raw data for each stage
@@ -308,33 +240,85 @@ class HpipmInterface::Impl {
     std::vector<scalar_t*> llg(N + 1, nullptr);
     std::vector<scalar_t*> uug(N + 1, nullptr);
 
-    // Combine equality and inequality constraints and extract raw data
-    for (int k = 0; k <= N; k++) {
-        // Make block diagonal C = [[C_eq, 0     ],
-        //                          [0,    C_ineq]]
-        C_con[k].setZero(C_eq[k].rows() + C_ineq[k].rows(), C_eq[k].cols() + C_ineq[k].cols());
-        C_con[k].topLeftCorner(C_eq[k].rows(), C_eq[k].cols()) = C_eq[k];
-        C_con[k].bottomRightCorner(C_ineq[k].rows(), C_ineq[k].cols()) = C_ineq[k];
-        CC[k] = C_con[k].data();
+    bool hasEqualityConstraints = (constraints != nullptr);
+    bool hasInequalityConstraints = (ineqConstraints != nullptr);
 
-        // Make block diagonal D
-        D_con[k].setZero(D_eq[k].rows() + D_ineq[k].rows(), D_eq[k].cols() + D_ineq[k].cols());
-        D_con[k].topLeftCorner(D_eq[k].rows(), D_eq[k].cols()) = D_eq[k];
-        D_con[k].bottomRightCorner(D_ineq[k].rows(), D_ineq[k].cols()) = D_ineq[k];
-        DD[k] = D_con[k].data();
+    // If we have both constraints, we need to copy the data in order to concatentate it
+    // Equality constraints are of the form
+    //   C * x + D * u == d,
+    // inequalities are
+    //   C * x + D * u >= d.
+    if (hasEqualityConstraints && hasInequalityConstraints) {
+      auto& eqConstr = *constraints;
+      auto& ineqConstr = *ineqConstraints;
 
-        // Equality constraints have both upper and lower bounds (which are the
-        // same). The inequality constraints have only lower bounds: we set it
-        // the same as the lower bound, but then mask out the inequalities
-        // constraints to make them unbounded.
-        d_con[k].setZero(d_eq[k].rows() + d_ineq[k].rows());
-        d_con[k] << d_eq[k], d_ineq[k];
-        llg[k] = d_con[k].data();
-        uug[k] = d_con[k].data();
+      for (int k = 0; k <= N; k++) {
+        size_t ne = eqConstr[k].f.size();
+        size_t ni = ineqConstr[k].f.size();
+        size_t n = ne + ni;
+        if (n == 0) {
+            continue;
+        }
 
-        upper_bound_mask[k].setZero(d_eq[k].rows() + d_ineq[k].rows());
-        upper_bound_mask[k].head(d_eq[k].rows()).setOnes();
+        d[k].resize(n);
+        d[k] << -eqConstr[k].f, -ineqConstr[k].f;
+        if (k == 0) {
+            d[k].head(ne).noalias() -= eqConstr[k].dfdx * x0;
+            d[k].tail(ni).noalias() -= ineqConstr[k].dfdx * x0;
+        }
+        llg[k] = d[k].data();
+        uug[k] = d[k].data();
+
+        // Mask out upper bounds for the inequality constraints
+        upper_bound_mask[k].setZero(n);
+        upper_bound_mask[k].head(ne).setOnes();
         d_ocp_qp_set_ug_mask(k, upper_bound_mask[k].data(), &qp_);
+
+        // No need to give CC[0] since initial state is given
+        if (k > 0) {
+            C[k].resize(n, eqConstr[k].dfdx.cols());
+            C[k] << eqConstr[k].dfdx, ineqConstr[k].dfdx;
+            CC[k] = C[k].data();
+        }
+
+        if (k < N) {
+            D[k].resize(n, eqConstr[k].dfdu.cols());
+            D[k] << eqConstr[k].dfdu, ineqConstr[k].dfdu;
+            DD[k] = D[k].data();
+        }
+      }
+
+    // If we only have one or the other, we can directly take pointers to data
+    } else if (hasEqualityConstraints || hasInequalityConstraints) {
+      auto& constr = hasEqualityConstraints ? *constraints : *ineqConstraints;
+
+      for (int k = 0; k <= N; k++) {
+        if (constr[k].f.size() == 0) {
+            continue;
+        }
+
+        d[k] = -constr[k].f;
+        if (k == 0) {
+            d[k].noalias() -= constr[k].dfdx * x0;
+        }
+        llg[k] = d[k].data();
+        uug[k] = d[k].data();
+
+        // If the constraints are inequalities, mask out the upper bound
+        if (hasInequalityConstraints) {
+            upper_bound_mask[k].setZero(d[k].rows());
+            d_ocp_qp_set_ug_mask(k, upper_bound_mask[k].data(), &qp_);
+        }
+
+        // No need to give CC[0] since initial state is given
+        if (k > 0) {
+            CC[k] = constr[k].dfdx.data();
+        }
+
+        if (k < N) {
+            DD[k] = constr[k].dfdu.data();
+        }
+      }
     }
 
     // === Unused ===

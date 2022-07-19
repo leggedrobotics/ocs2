@@ -52,10 +52,10 @@ class RepeatedTimer {
    *  Reset the timer statistics
    */
   void reset() {
+    numTimedIntervals_ = 0;
     totalTime_ = std::chrono::nanoseconds::zero();
     maxIntervalTime_ = std::chrono::nanoseconds::zero();
     lastIntervalTime_ = std::chrono::nanoseconds::zero();
-    numTimedIntervals_ = 0;
   }
 
   /**

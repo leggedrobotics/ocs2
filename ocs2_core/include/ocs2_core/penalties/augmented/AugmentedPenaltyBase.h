@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 
 namespace ocs2 {
+namespace augmented {
 
 /**
  * The penalty function interface class is used to penalize constraint violation by adding a penalty term to the cost function.
@@ -105,4 +106,5 @@ class AugmentedPenaltyBase {
   AugmentedPenaltyBase(const AugmentedPenaltyBase& other) = default;
 };
 
+}  // namespace augmented
 }  // namespace ocs2

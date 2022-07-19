@@ -32,8 +32,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/penalties/augmented_penalties/AugmentedPenaltyBase.h>
+
 #include <ocs2_core/penalties/penalties/PenaltyBase.h>
+#include "ocs2_core/penalties/augmented/AugmentedPenaltyBase.h"
 
 namespace ocs2 {
 
@@ -123,7 +124,7 @@ class MultidimensionalPenalty final {
  private:
   std::tuple<scalar_t, vector_t, vector_t> getPenaltyValue1stDev2ndDev(scalar_t t, const vector_t& h, const vector_t* l) const;
 
-  std::vector<std::unique_ptr<AugmentedPenaltyBase>> penaltyPtrArray_;
+  std::vector<std::unique_ptr<augmented::AugmentedPenaltyBase>> penaltyPtrArray_;
 };
 
 }  // namespace ocs2

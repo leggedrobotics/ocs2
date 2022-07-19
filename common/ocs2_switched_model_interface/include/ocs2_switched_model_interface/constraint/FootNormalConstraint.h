@@ -19,7 +19,7 @@ namespace switched_model {
  */
 class FootNormalConstraint : public ocs2::StateInputConstraint {
  public:
-  FootNormalConstraint(int legNumber);
+  FootNormalConstraint(int legNumber, scalar_t positionGain);
 
   FootNormalConstraint* clone() const override;
 
@@ -36,6 +36,7 @@ class FootNormalConstraint : public ocs2::StateInputConstraint {
   FootNormalConstraint(const FootNormalConstraint& rhs);
 
   const int legNumber_;
+  const scalar_t positionGain_;
 };
 
 }  // namespace switched_model

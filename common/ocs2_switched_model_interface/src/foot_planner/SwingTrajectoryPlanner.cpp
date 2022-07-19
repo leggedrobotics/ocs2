@@ -100,7 +100,7 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
     SwingPhase::SwingProfile swingProfile = getDefaultSwingProfile();
     applySwingMotionScaling(liftOff, touchDown, swingProfile);
 
-    footPhases.emplace_back(new SwingPhase(liftOff, touchDown, swingProfile, terrainModel_.get(), settings_.errorGain));
+    footPhases.emplace_back(new SwingPhase(liftOff, touchDown, swingProfile, terrainModel_.get()));
   }
 
   // Loop through contact phases
@@ -117,7 +117,7 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
     if (hasStartTime(currentContactTiming)) {
       eventTimes.push_back(currentContactTiming.start);
     }
-    footPhases.emplace_back(new StancePhase(nominalFoothold, settings_.errorGain, settings_.terrainMargin));
+    footPhases.emplace_back(new StancePhase(nominalFoothold, settings_.terrainMargin));
 
     // If contact phase extends beyond the horizon, we can stop planning.
     if (!hasEndTime(currentContactTiming) || currentContactTiming.end > finalTime) {
@@ -139,7 +139,7 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
     applySwingMotionScaling(liftOff, touchDown, swingProfile);
 
     eventTimes.push_back(currentContactTiming.end);
-    footPhases.emplace_back(new SwingPhase(liftOff, touchDown, swingProfile, terrainModel_.get(), settings_.errorGain));
+    footPhases.emplace_back(new SwingPhase(liftOff, touchDown, swingProfile, terrainModel_.get()));
   }
 
   return std::make_pair(eventTimes, std::move(footPhases));

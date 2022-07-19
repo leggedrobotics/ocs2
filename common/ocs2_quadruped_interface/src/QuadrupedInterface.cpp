@@ -125,7 +125,7 @@ std::unique_ptr<ocs2::StateInputConstraint> QuadrupedInterface::createZeroForceC
 }
 
 std::unique_ptr<ocs2::StateInputConstraint> QuadrupedInterface::createFootNormalConstraint(size_t leg) const {
-  return std::unique_ptr<ocs2::StateInputConstraint>(new FootNormalConstraint(leg));
+  return std::unique_ptr<ocs2::StateInputConstraint>(new FootNormalConstraint(leg, settings_.swingTrajectoryPlannerSettings_.errorGain));
 }
 
 std::unique_ptr<ocs2::StateInputConstraint> QuadrupedInterface::createEndEffectorVelocityConstraint(size_t leg) const {

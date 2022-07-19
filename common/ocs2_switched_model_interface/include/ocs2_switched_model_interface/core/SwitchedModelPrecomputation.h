@@ -47,7 +47,6 @@ class SwitchedModelPreComputation : public ocs2::PreComputation {
   const SignedDistanceField* getSignedDistanceField() const { return swingTrajectoryPlannerPtr_->getSignedDistanceField(); }
   const contact_flag_t& getContactFlags() const { return contactFlags_; }
   const vector3_t& getSurfaceNormalInOriginFrame(size_t leg) const { return surfaceNormalsInOriginFrame_[leg]; }
-  const FootNormalConstraintMatrix& getFootNormalConstraintInWorldFrame(size_t leg) const { return footNormalConstraintInWorldFrame_[leg]; }
   const FootTangentialConstraintMatrix* getFootTangentialConstraintInWorldFrame(size_t leg) const {
     return footTangentialConstraintInWorldFrame_[leg];
   }
@@ -96,7 +95,6 @@ class SwitchedModelPreComputation : public ocs2::PreComputation {
   feet_array_t<const FootPhase*> feetPhases_;
   contact_flag_t contactFlags_;
   feet_array_t<vector3_t> surfaceNormalsInOriginFrame_;
-  feet_array_t<FootNormalConstraintMatrix> footNormalConstraintInWorldFrame_;
   feet_array_t<const FootTangentialConstraintMatrix*> footTangentialConstraintInWorldFrame_;
 
   // Precomputation access : any(cost, constraint, softConstraint)

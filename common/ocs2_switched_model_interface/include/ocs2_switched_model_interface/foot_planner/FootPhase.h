@@ -13,16 +13,6 @@
 namespace switched_model {
 
 /**
- * Linear constraint A_p * p_world + A_v * v_world + b = 0
- */
-struct FootNormalConstraintMatrix {
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  Eigen::Matrix<scalar_t, 1, 3> positionMatrix = Eigen::Matrix<scalar_t, 1, 3>::Zero();
-  Eigen::Matrix<scalar_t, 1, 3> velocityMatrix = Eigen::Matrix<scalar_t, 1, 3>::Zero();
-  scalar_t constant = 0.0;
-};
-
-/**
  * Linear inequality constraint A_p * p_world + b >=  0
  */
 struct FootTangentialConstraintMatrix {
@@ -63,9 +53,6 @@ class FootPhase {
   /** Foot reference acceleration in world frame */
   virtual vector3_t getAccelerationInWorld(scalar_t time) const = 0;
 
-  /** Returns the velocity equality constraint formulated in the normal direction */
-  virtual FootNormalConstraintMatrix getFootNormalConstraintInWorldFrame(scalar_t time) const = 0;
-
   /** Returns the position inequality constraints formulated in the tangential direction */
   virtual const FootTangentialConstraintMatrix* getFootTangentialConstraintInWorldFrame() const { return nullptr; };
 
@@ -79,7 +66,7 @@ class FootPhase {
 class StancePhase final : public FootPhase {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  explicit StancePhase(ConvexTerrain stanceTerrain, scalar_t positionGain = 0.0, scalar_t terrainMargin = 0.0);
+  explicit StancePhase(ConvexTerrain stanceTerrain, scalar_t terrainMargin = 0.0);
   ~StancePhase() override = default;
 
   bool contactFlag() const override { return true; };
@@ -89,14 +76,12 @@ class StancePhase final : public FootPhase {
   vector3_t getPositionInWorld(scalar_t time) const override;
   vector3_t getVelocityInWorld(scalar_t time) const override;
   vector3_t getAccelerationInWorld(scalar_t time) const override;
-  FootNormalConstraintMatrix getFootNormalConstraintInWorldFrame(scalar_t time) const override;
   const FootTangentialConstraintMatrix* getFootTangentialConstraintInWorldFrame() const override;
 
  private:
   ConvexTerrain stanceTerrain_;
   const vector3_t nominalFootholdLocation_;
   const vector3_t surfaceNormalInWorldFrame_;
-  const FootNormalConstraintMatrix footNormalConstraint_;
   const FootTangentialConstraintMatrix footTangentialConstraint_;
 };
 
@@ -147,8 +132,7 @@ class SwingPhase final : public FootPhase {
    * object exists. Will extract SDF and obstacle information from the terrain.
    * @param positionGain : Position feedback in the normal direction making the swing leg follow the reference profile in that direction.
    */
-  SwingPhase(SwingEvent liftOff, SwingEvent touchDown, const SwingProfile& swingProfile, const TerrainModel* terrainModel = nullptr,
-             scalar_t positionGain = 0.0);
+  SwingPhase(SwingEvent liftOff, SwingEvent touchDown, const SwingProfile& swingProfile, const TerrainModel* terrainModel = nullptr);
   ~SwingPhase() override = default;
 
   bool contactFlag() const override { return false; };
@@ -157,7 +141,6 @@ class SwingPhase final : public FootPhase {
   vector3_t getPositionInWorld(scalar_t time) const override;
   vector3_t getVelocityInWorld(scalar_t time) const override;
   vector3_t getAccelerationInWorld(scalar_t time) const override;
-  FootNormalConstraintMatrix getFootNormalConstraintInWorldFrame(scalar_t time) const override;
   scalar_t getMinimumFootClearance(scalar_t time) const override;
 
  private:

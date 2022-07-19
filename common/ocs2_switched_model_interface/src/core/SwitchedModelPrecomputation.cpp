@@ -90,7 +90,6 @@ void SwitchedModelPreComputation::updateFeetPhases(scalar_t t) {
     const auto& footPhase = *feetPhases_[leg];
     contactFlags_[leg] = footPhase.contactFlag();
     surfaceNormalsInOriginFrame_[leg] = footPhase.normalDirectionInWorldFrame(t);
-    footNormalConstraintInWorldFrame_[leg] = footPhase.getFootNormalConstraintInWorldFrame(t);
     footTangentialConstraintInWorldFrame_[leg] = footPhase.getFootTangentialConstraintInWorldFrame();
   }
 }

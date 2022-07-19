@@ -21,7 +21,8 @@ class CartesianMotionTrackingCost : public ocs2::StateInputCostGaussNewtonAd {
   ~CartesianMotionTrackingCost() override = default;
   CartesianMotionTrackingCost* clone() const { return new CartesianMotionTrackingCost(*this); }
 
-  ocs2::vector_t getParameters(ocs2::scalar_t time, const ocs2::TargetTrajectories& targetTrajectories) const override;
+  ocs2::vector_t getParameters(ocs2::scalar_t time, const ocs2::TargetTrajectories& targetTrajectories,
+                               const ocs2::PreComputation& preComputation) const override;
 
   void updateTargets(const std::vector<MotionTarget<scalar_t>>& targetFrames) { targetFrames_ = targetFrames; }
 

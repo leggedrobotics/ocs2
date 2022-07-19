@@ -29,7 +29,8 @@ CartesianMotionTrackingCost::CartesianMotionTrackingCost(ModelParentSkeleton<ad_
   initialize(STATE_DIM, INPUT_DIM, paramsPerTarget * targetFrames_.size(), "CartesianMotionTrackingCost", "/tmp/ocs2", recompile);
 }
 
-ocs2::vector_t CartesianMotionTrackingCost::getParameters(ocs2::scalar_t time, const ocs2::TargetTrajectories& targetTrajectories) const {
+ocs2::vector_t CartesianMotionTrackingCost::getParameters(ocs2::scalar_t time, const ocs2::TargetTrajectories& targetTrajectories,
+                                                          const ocs2::PreComputation& preComputation) const {
   ocs2::vector_t parameters(paramsPerTarget * targetFrames_.size());
   for (int i = 0; i < targetFrames_.size(); ++i) {
     addToVector(targetFrames_[i], parameters, i * paramsPerTarget);

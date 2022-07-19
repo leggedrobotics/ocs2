@@ -63,11 +63,7 @@ class SwingTrajectoryPlanner {
   // Main access method for the generated cartesian references.
   const FootPhase& getFootPhase(size_t leg, scalar_t time) const;
 
-  // Access to joint references in the cost function
-  joint_coordinate_t getJointPositionsReference(scalar_t time) const;
-  joint_coordinate_t getJointVelocitiesReference(scalar_t time) const;
-
-  // Accessed by the controller to visualize the generated references
+  // Accessed by precomputation to generate the motion reference, used in the controller to visualize the generated references
   const ocs2::TargetTrajectories& getTargetTrajectories() const { return targetTrajectories_; }
 
   // Accessed by the controller for visualization

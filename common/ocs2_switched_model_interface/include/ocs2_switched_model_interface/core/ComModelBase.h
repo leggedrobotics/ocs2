@@ -57,4 +57,6 @@ extern template class ComModelBase<ocs2::CppAdInterface::ad_scalar_t>;
 comkino_input_t weightCompensatingInputs(const ComModelBase<scalar_t>& comModel, const contact_flag_t& contactFlags,
                                          const vector3_t& baseOrientation);
 
+comkino_input_t weightCompensatingInputs(scalar_t mass, const contact_flag_t& contactFlags, const vector3_t& baseOrientation);
+
 }  // end of namespace switched_model

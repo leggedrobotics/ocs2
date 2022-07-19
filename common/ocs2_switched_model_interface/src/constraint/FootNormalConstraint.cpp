@@ -20,9 +20,7 @@ FootNormalConstraint* FootNormalConstraint::clone() const {
 vector_t FootNormalConstraint::getValue(scalar_t time, const vector_t& state, const vector_t& input,
                                         const ocs2::PreComputation& preComp) const {
   const auto& switchedModelPreComp = ocs2::cast<SwitchedModelPreComputation>(preComp);
-  const auto& footPhase = switchedModelPreComp.getFootPhase(legNumber_);
-  const auto& normalConstraint = footPhase.getFootNormalConstraintInWorldFrame(time);
-
+  const auto& normalConstraint = switchedModelPreComp.getFootNormalConstraintInWorldFrame(legNumber_);
   const auto& o_footPosition = switchedModelPreComp.footPositionInOriginFrame(legNumber_);
   const auto& o_footVelocity = switchedModelPreComp.footVelocityInOriginFrame(legNumber_);
 
@@ -35,9 +33,7 @@ vector_t FootNormalConstraint::getValue(scalar_t time, const vector_t& state, co
 VectorFunctionLinearApproximation FootNormalConstraint::getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input,
                                                                                const ocs2::PreComputation& preComp) const {
   const auto& switchedModelPreComp = ocs2::cast<SwitchedModelPreComputation>(preComp);
-  const auto& footPhase = switchedModelPreComp.getFootPhase(legNumber_);
-  const auto& normalConstraint = footPhase.getFootNormalConstraintInWorldFrame(time);
-
+  const auto& normalConstraint = switchedModelPreComp.getFootNormalConstraintInWorldFrame(legNumber_);
   const auto& o_footPosition = switchedModelPreComp.footPositionInOriginFrame(legNumber_);
   const auto& o_footPositionDerivative = switchedModelPreComp.footPositionInOriginFrameStateDerivative(legNumber_);
   const auto& o_footVelocity = switchedModelPreComp.footVelocityInOriginFrame(legNumber_);

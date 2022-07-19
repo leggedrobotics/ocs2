@@ -16,7 +16,7 @@ namespace switched_model {
 /**
  * Defines a cost over tracking base and feet references
  */
-class MotionTrackingCost : public ocs2::StateInputCostGaussNewtonAd {
+class MotionTrackingCost final : public ocs2::StateInputCostGaussNewtonAd {
  public:
   /**
    * Cost settings per motion target, weights are applied as: cost = sum_i {w_i * (target_i - ref_i)^2}
@@ -40,10 +40,7 @@ class MotionTrackingCost : public ocs2::StateInputCostGaussNewtonAd {
   using com_model_t = ComModelBase<ocs2::scalar_t>;
   using ad_com_model_t = ComModelBase<ocs2::ad_scalar_t>;
 
-  MotionTrackingCost(const Weights& settings, const SwitchedModelModeScheduleManager& modeScheduleManager,
-                     const SwingTrajectoryPlanner& swingTrajectoryPlanner, const kinematic_model_t& kinematicModel,
-                     const ad_kinematic_model_t& adKinematicModel, const com_model_t& comModel, const ad_com_model_t& adComModel,
-                     bool recompile);
+  MotionTrackingCost(const Weights& settings, const ad_kinematic_model_t& adKinematicModel, bool recompile);
 
   ~MotionTrackingCost() override = default;
   MotionTrackingCost* clone() const { return new MotionTrackingCost(*this); }
@@ -58,13 +55,7 @@ class MotionTrackingCost : public ocs2::StateInputCostGaussNewtonAd {
                                        const ocs2::ad_vector_t& parameters) const override;
 
  private:
-  const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
-  const SwingTrajectoryPlanner* swingTrajectoryPlannerPtr_;
-  std::unique_ptr<kinematic_model_t> kinematicModelPtr_;
   std::unique_ptr<ad_kinematic_model_t> adKinematicModelPtr_;
-  std::unique_ptr<com_model_t> comModelPtr_;
-  std::unique_ptr<ad_com_model_t> adComModelPtr_;
-
   ocs2::vector_t sqrtWeights_;
 };
 

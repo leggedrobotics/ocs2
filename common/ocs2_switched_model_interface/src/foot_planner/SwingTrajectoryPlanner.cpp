@@ -32,10 +32,12 @@ const SignedDistanceField* SwingTrajectoryPlanner::getSignedDistanceField() cons
 
 void SwingTrajectoryPlanner::updateSwingMotions(scalar_t initTime, scalar_t finalTime, const comkino_state_t& currentState,
                                                 const ocs2::TargetTrajectories& targetTrajectories,
-                                                const feet_array_t<std::vector<ContactTiming>>& contactTimingsPerLeg) {
+                                                const ocs2::ModeSchedule& modeSchedule) {
   if (!terrainModel_) {
     throw std::runtime_error("[SwingTrajectoryPlanner] terrain cannot be null. Update the terrain before planning swing motions");
   }
+
+  const feet_array_t<std::vector<ContactTiming>> contactTimingsPerLeg = extractContactTimingsPerLeg(modeSchedule);
 
   // Need a copy to provide joint references later (possibly adapted with inverse kinematics)
   targetTrajectories_ = targetTrajectories;

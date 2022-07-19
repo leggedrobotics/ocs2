@@ -49,25 +49,36 @@ class SwingTrajectoryPlanner {
  public:
   SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings, const KinematicsModelBase<scalar_t>& kinematicsModel);
 
+  // Update terrain model
   void updateTerrain(std::unique_ptr<TerrainModel> terrainModel);
 
+  // Access the SDF of the current terrain model
+  const SignedDistanceField* getSignedDistanceField() const;
+
+  // Main interface preparing all swing trajectories in cartesian space (called by reference manager)
   void updateSwingMotions(scalar_t initTime, scalar_t finalTime, const comkino_state_t& currentState,
-                          const ocs2::TargetTrajectories& targetTrajectories,
-                          const feet_array_t<std::vector<ContactTiming>>& contactTimingsPerLeg);
+                          const ocs2::TargetTrajectories& targetTrajectories, const ocs2::ModeSchedule& modeSchedule);
 
+  // Apply IK to cartesian swing motion to update joint references (called by reference manager)
   void adaptJointReferencesWithInverseKinematics(const inverse_kinematics_function_t& inverseKinematicsFunction, scalar_t finalTime);
-  const ocs2::TargetTrajectories& getTargetTrajectories() const { return targetTrajectories_; }
 
+  // Main access method for the generated cartesian references.
   const FootPhase& getFootPhase(size_t leg, scalar_t time) const;
 
+  // Access to joint references in the cost function
   joint_coordinate_t getJointPositionsReference(scalar_t time) const;
   joint_coordinate_t getJointVelocitiesReference(scalar_t time) const;
 
+  // Accessed by the controller to visualize the generated references
+  const ocs2::TargetTrajectories& getTargetTrajectories() const { return targetTrajectories_; }
+
+  // Accessed by the controller for visualization
   std::vector<ConvexTerrain> getNominalFootholds(size_t leg) const { return nominalFootholdsPerLeg_[leg]; }
+
+  // Accessed by the controller for visualization
   std::vector<vector3_t> getHeuristicFootholds(size_t leg) const { return heuristicFootholdsPerLeg_[leg]; }
 
-  const SignedDistanceField* getSignedDistanceField() const;
-
+  // Read settings
   const SwingTrajectoryPlannerSettings& settings() const { return settings_; }
 
  private:

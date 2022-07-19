@@ -106,6 +106,7 @@ CartPoleInterface::CartPoleInterface(const std::string& taskFile, const std::str
 
   // Constraints
   auto getPenalty = [&]() {
+    // one can use either augmented::SlacknessSquaredHingePenalty or augmented::ModifiedRelaxedBarrierPenalty
     using penalty_type = augmented::SlacknessSquaredHingePenalty;
     penalty_type::Config boundsConfig;
     loadData::loadPenaltyConfig(taskFile, "bounds_penalty_config", boundsConfig, verbose);

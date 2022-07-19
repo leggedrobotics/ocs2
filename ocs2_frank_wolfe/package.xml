@@ -44,7 +44,7 @@
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>cmake_modules</build_depend>
   <build_depend>ocs2_core</build_depend>
-  <build_depend>libglpk-dev</build_depend>
+  <build_depend>glpk</build_depend>
   <run_depend>ocs2_core</run_depend>
   <run_depend>libglpk-dev</run_depend>  <!-- required for the buildserver to install libglpk-dev -->
 

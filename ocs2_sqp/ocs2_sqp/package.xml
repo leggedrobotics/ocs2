@@ -8,7 +8,7 @@
 
   <license>TODO</license>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
   <depend>ocs2_core</depend>
   <depend>ocs2_ddp</depend>
   <depend>ocs2_mpc</depend>
@@ -17,4 +17,8 @@
   <depend>blasfeo_catkin</depend>
   <depend>hpipm_catkin</depend>
 
+  <export>
+    <!-- Other tools can request additional information be placed here -->
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>

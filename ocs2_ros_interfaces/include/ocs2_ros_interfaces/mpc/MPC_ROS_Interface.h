@@ -38,15 +38,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <thread>
 #include <vector>
 
-#include <ros/callback_queue.h>
-#include <ros/ros.h>
-#include <ros/transport_hints.h>
+#include <rclcpp/rclcpp.hpp>
 
-#include <ocs2_msgs/mode_schedule.h>
-#include <ocs2_msgs/mpc_flattened_controller.h>
-#include <ocs2_msgs/mpc_observation.h>
-#include <ocs2_msgs/mpc_target_trajectories.h>
-#include <ocs2_msgs/reset.h>
+#include <ocs2_msgs/msg/mode_schedule.hpp>
+#include <ocs2_msgs/msg/mpc_flattened_controller.hpp>
+#include <ocs2_msgs/msg/mpc_observation.hpp>
+#include <ocs2_msgs/msg/mpc_target_trajectories.hpp>
+#include <ocs2_msgs/srv/reset.hpp>
 
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/control/LinearController.h>
@@ -56,7 +54,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mpc/SystemObservation.h>
 #include <ocs2_oc/oc_data/PrimalSolution.h>
 
-#define PUBLISH_THREAD
+// #define PUBLISH_THREAD
 
 namespace ocs2 {
 
@@ -91,16 +89,11 @@ class MPC_ROS_Interface {
   void shutdownNode();
 
   /**
-   * Spins ROS.
-   */
-  void spin();
-
-  /**
    * This is the main routine which launches all the nodes required for MPC to run which includes:
    * (1) The MPC policy publisher (either feedback or feedforward policy).
    * (2) The observation subscriber which gets the current measured state to invoke the MPC run routine.
    */
-  void launchNodes(ros::NodeHandle& nodeHandle);
+  void launchNodes(rclcpp::Node::SharedPtr& nodeHandle);
 
  protected:
   /**
@@ -109,7 +102,8 @@ class MPC_ROS_Interface {
    * @param req: Service request.
    * @param res: Service response.
    */
-  bool resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_msgs::reset::Response& res);
+  bool resetMpcCallback(const std::shared_ptr<ocs2_msgs::srv::Reset::Request> req,
+                         std::shared_ptr<ocs2_msgs::srv::Reset::Response> res);
 
   /**
    * Creates MPC Policy message.
@@ -119,7 +113,7 @@ class MPC_ROS_Interface {
    * @param [in] performanceIndices: The performance indices data of the solver.
    * @return MPC policy message.
    */
-  static ocs2_msgs::mpc_flattened_controller createMpcPolicyMsg(const PrimalSolution& primalSolution, const CommandData& commandData,
+  static ocs2_msgs::msg::MPCFlattenedController createMpcPolicyMsg(const PrimalSolution& primalSolution, const CommandData& commandData,
                                                                 const PerformanceIndex& performanceIndices);
 
   /**
@@ -140,7 +134,7 @@ class MPC_ROS_Interface {
    *
    * @param [in] msg: The observation message.
    */
-  void mpcObservationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg);
+  void mpcObservationCallback(const ocs2_msgs::msg::MPCObservation::SharedPtr msg);
 
  protected:
   /*
@@ -150,13 +144,13 @@ class MPC_ROS_Interface {
 
   std::string topicPrefix_;
 
-  std::shared_ptr<ros::NodeHandle> nodeHandlerPtr_;
+  rclcpp::Node::SharedPtr node_;
 
   // Publishers and subscribers
-  ::ros::Subscriber mpcObservationSubscriber_;
-  ::ros::Subscriber mpcTargetTrajectoriesSubscriber_;
-  ::ros::Publisher mpcPolicyPublisher_;
-  ::ros::ServiceServer mpcResetServiceServer_;
+  ::rclcpp::Subscription<ocs2_msgs::msg::MPCObservation>::SharedPtr mpcObservationSubscriber_;
+  ::rclcpp::Subscription<ocs2_msgs::msg::MPCTargetTrajectories>::SharedPtr mpcTargetTrajectoriesSubscriber_;
+  ::rclcpp::Publisher<ocs2_msgs::msg::MPCFlattenedController>::SharedPtr mpcPolicyPublisher_;
+  ::rclcpp::Service<ocs2_msgs::srv::Reset>::SharedPtr mpcResetServiceServer_;
 
   std::unique_ptr<CommandData> bufferCommandPtr_;
   std::unique_ptr<CommandData> publisherCommandPtr_;

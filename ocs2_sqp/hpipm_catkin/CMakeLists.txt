@@ -2,26 +2,28 @@ cmake_minimum_required(VERSION 3.14)
 project(hpipm_catkin)
 
 ## Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS
-  blasfeo_catkin
-  ocs2_core
-  ocs2_qp_solver
-)
+find_package(ament_cmake REQUIRED)
+find_package(ocs2_core REQUIRED)
+find_package(ocs2_qp_solver REQUIRED)
+find_package(blasfeo REQUIRED)
+find_package(OpenMP REQUIRED)
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+
+find_package(Boost REQUIRED COMPONENTS
+  system
+  filesystem
+  log
+  log_setup
+)
 
 include(FetchContent)
 
 # Define directories
-set(HPIPM_DEVEL_PREFIX ${CATKIN_DEVEL_PREFIX} CACHE STRING "HPIPM install path")
-set(HPIPM_INCLUDE_DIR ${HPIPM_DEVEL_PREFIX}/include)
-set(HPIPM_LIB_DIR ${HPIPM_DEVEL_PREFIX}/lib)
 set(HPIPM_DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}/download)
 set(HPIPM_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/build)
 
 # Create directories if they do not exist
-file(MAKE_DIRECTORY ${HPIPM_INCLUDE_DIR})
-file(MAKE_DIRECTORY ${HPIPM_LIB_DIR})
 file(MAKE_DIRECTORY ${HPIPM_DOWNLOAD_DIR})
 file(MAKE_DIRECTORY ${HPIPM_BUILD_DIR})
 
@@ -45,25 +47,6 @@ FetchContent_Declare(hpipmDownload
   )
 FetchContent_MakeAvailable(hpipmDownload)
 
-# Copy header to where catkin expects them
-file(GLOB_RECURSE HEADERS "${HPIPM_DOWNLOAD_DIR}/include/*.h")
-foreach(HEADER_FILE ${HEADERS})
-  message(STATUS "FOUND HEADER: " ${HEADER_FILE})
-  file(COPY ${HEADER_FILE} DESTINATION ${HPIPM_INCLUDE_DIR})
-endforeach()
-
-# Install the library where catkin expects them
-set_target_properties(hpipm PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${HPIPM_LIB_DIR})
-
-###################################
-## catkin specific configuration ##
-###################################
-
-catkin_package(
-  INCLUDE_DIRS include ${HPIPM_INCLUDE_DIR}
-  CATKIN_DEPENDS blasfeo_catkin
-  LIBRARIES ${PROJECT_NAME} hpipm
-)
 
 ###########
 ## Build ##
@@ -71,8 +54,7 @@ catkin_package(
 
 include_directories(
   include
-  ${catkin_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIRS}
+  blasfeo
 )
 
 # Hpipm interface
@@ -81,11 +63,13 @@ add_library(${PROJECT_NAME}
   src/HpipmInterfaceSettings.cpp
   src/OcpSize.cpp
 )
-add_dependencies(${PROJECT_NAME}
-  ${catkin_EXPORTED_TARGETS}
+
+ament_target_dependencies(${PROJECT_NAME}
+  ocs2_core
+  blasfeo
 )
+
 target_link_libraries(${PROJECT_NAME}
-  ${catkin_LIBRARIES}
   hpipm
 )
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
@@ -110,25 +94,32 @@ endif(cmake_clang_tools_FOUND)
 #############
 install(
   TARGETS ${PROJECT_NAME}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
 )
 
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+install(DIRECTORY include/
+        DESTINATION include
+)
+
+ament_export_include_directories(include)
+ament_export_libraries(hpipm)
+ament_export_libraries(${PROJECT_NAME})
+
+ament_package()
 
 #############
 ## Testing ##
 #############
 
-catkin_add_gtest(test_${PROJECT_NAME}
-  test/testHpipmInterface.cpp
-)
-add_dependencies(test_${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(test_${PROJECT_NAME}
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  hpipm
-  gtest_main
-)
+#catkin_add_gtest(test_${PROJECT_NAME}
+#  test/testHpipmInterface.cpp
+#)
+#add_dependencies(test_${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+#target_link_libraries(test_${PROJECT_NAME}
+#  ${PROJECT_NAME}
+#  ${catkin_LIBRARIES}
+#  hpipm
+#  gtest_main
+#)

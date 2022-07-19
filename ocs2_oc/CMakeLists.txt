@@ -1,15 +1,15 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.10.2)
 project(ocs2_oc)
 
-## Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS
-  cmake_modules
-  ocs2_core
-  # ocs2_qp_solver
-)
+## Find libraries
+find_package(ament_cmake REQUIRED)
+find_package(ocs2_core REQUIRED)
+find_package(OpenMP REQUIRED)
 find_package(Boost REQUIRED COMPONENTS
   system
   filesystem
+  log
+  log_setup
 )
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
@@ -17,34 +17,10 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-###################################
-## catkin specific configuration ##
-###################################
-
-catkin_package(
-  INCLUDE_DIRS
-    include
-    test/include
-    ${EIGEN3_INCLUDE_DIRS}
-  LIBRARIES
-    ${PROJECT_NAME}
-  CATKIN_DEPENDS
-    ocs2_core
-  DEPENDS
-    Boost
-)
 
 ###########
 ## Build ##
 ###########
-
-include_directories(
-  include
-  test/include
-  ${EIGEN3_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS}
-  ${catkin_INCLUDE_DIRS}
-)
 
 add_library(${PROJECT_NAME}
   src/approximate_model/ChangeOfInputVariables.cpp
@@ -67,14 +43,26 @@ add_library(${PROJECT_NAME}
   src/synchronized_module/LoopshapingSynchronizedModule.cpp
   src/trajectory_adjustment/TrajectorySpreading.cpp
 )
-target_link_libraries(${PROJECT_NAME}
-  ${catkin_LIBRARIES}
+ament_target_dependencies(${PROJECT_NAME}
+  ocs2_core
 )
-target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
+target_include_directories(${PROJECT_NAME} PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
 
 add_executable(${PROJECT_NAME}_lintTarget
   src/lintTarget.cpp
+)
+
+ament_target_dependencies(${PROJECT_NAME}_lintTarget
+  ocs2_core
+)
+
+target_include_directories(${PROJECT_NAME}_lintTarget PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
 )
 
 #########################
@@ -95,67 +83,97 @@ endif(cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(
-  TARGETS ${PROJECT_NAME}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+install(TARGETS ${PROJECT_NAME}
+        EXPORT export_${PROJECT_NAME}
+        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin
 )
 
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+install(DIRECTORY include/
+        DESTINATION include
 )
 
-install(DIRECTORY test/include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+install(DIRECTORY test/include/
+        DESTINATION include
 )
+
+ament_export_include_directories(include)
+
+ament_export_libraries(${PROJECT_NAME})
+ament_export_targets(
+  export_${PROJECT_NAME}
+)
+
+ament_export_dependencies(ocs2_core)
 
 #############
 ## Testing ##
 #############
-## Info ==============================
-## to run tests, cd package folder and run
-## $ catkin build -DCMAKE_BUILD_TYPE=RelWithDebInfo --this
-## $ catkin run_tests --no-deps --this
-## to see the summary of unit test results run
-## $ catkin_test_results ../../../build/ocs2_oc
 
-catkin_add_gtest(test_time_triggered_rollout
+if(BUILD_TESTING)
+
+# Include linting tests
+find_package(ament_lint_auto REQUIRED)
+find_package(ament_cmake_gtest REQUIRED)
+ament_lint_auto_find_test_dependencies()
+
+# test_time_triggered_rollout
+ament_add_gtest(test_time_triggered_rollout
    test/rollout/testTimeTriggeredRollout.cpp
 )
 target_link_libraries(test_time_triggered_rollout
   ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   gtest_main
 )
+target_include_directories(test_time_triggered_rollout PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/test/include>
+  $<INSTALL_INTERFACE:include>
+)
 
-catkin_add_gtest(test_state_triggered_rollout
+# test_state_triggered_rollout
+ament_add_gtest(test_state_triggered_rollout
   test/rollout/testStateTriggeredRollout.cpp
 )
 target_link_libraries(test_state_triggered_rollout
   ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   gtest_main
 )
+target_include_directories(test_state_triggered_rollout PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/test/include>
+  $<INSTALL_INTERFACE:include>
+)
 
-catkin_add_gtest(test_change_of_variables
+
+# test_change_of_variables
+ament_add_gtest(test_change_of_variables
   test/testChangeOfInputVariables.cpp
 )
 target_link_libraries(test_change_of_variables
   ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   gtest_main
 )
+target_include_directories(test_change_of_variables PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/test/include>
+  $<INSTALL_INTERFACE:include>
+)
 
-catkin_add_gtest(test_trajectory_spreading
+ament_add_gtest(test_trajectory_spreading
   test/trajectory_adjustment/TrajectorySpreadingTest.cpp
 )
 target_link_libraries(test_trajectory_spreading
   ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   gtest_main
 )
+target_include_directories(test_trajectory_spreading PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/test/include>
+  $<INSTALL_INTERFACE:include>
+)
+
+endif(BUILD_TESTING)
+
+ament_package()

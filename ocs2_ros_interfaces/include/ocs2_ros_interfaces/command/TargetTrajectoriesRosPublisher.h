@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <vector>
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/reference/TargetTrajectories.h>
@@ -51,7 +51,7 @@ class TargetTrajectoriesRosPublisher final {
    * @param [in] nodeHandle: ROS node handle.
    * @param [in] topicPrefix: The TargetTrajectories will be published on "topicPrefix_mpc_target" topic.
    */
-  TargetTrajectoriesRosPublisher(::ros::NodeHandle& nodeHandle, const std::string& topicPrefix = "anonymousRobot");
+  TargetTrajectoriesRosPublisher(::rclcpp::Node::SharedPtr& nodeHandle, const std::string& topicPrefix = "anonymousRobot");
 
   /** Destructor. */
   ~TargetTrajectoriesRosPublisher();
@@ -60,7 +60,7 @@ class TargetTrajectoriesRosPublisher final {
   void publishTargetTrajectories(const TargetTrajectories& targetTrajectories);
 
  private:
-  ::ros::Publisher targetTrajectoriesPublisher_;
+  ::rclcpp::Publisher<ocs2_msgs::msg::MPCTargetTrajectories>::SharedPtr targetTrajectoriesPublisher_;
 };
 
 }  // namespace ocs2

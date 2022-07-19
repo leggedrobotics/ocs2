@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/misc/CommandLine.h>
 #include <ocs2_core/misc/Display.h>
-#include <ocs2_msgs/mpc_observation.h>
+#include <ocs2_msgs/msg/mpc_observation.hpp>
 #include <ocs2_ros_interfaces/common/RosMsgConversions.h>
 
 namespace ocs2 {
@@ -39,17 +39,18 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TargetTrajectoriesKeyboardPublisher::TargetTrajectoriesKeyboardPublisher(::ros::NodeHandle& nodeHandle, const std::string& topicPrefix,
+TargetTrajectoriesKeyboardPublisher::TargetTrajectoriesKeyboardPublisher(::rclcpp::Node::SharedPtr& nodeHandle, const std::string& topicPrefix,
                                                                          const scalar_array_t& targetCommandLimits,
                                                                          CommandLineToTargetTrajectories commandLineToTargetTrajectoriesFun)
     : targetCommandLimits_(Eigen::Map<const vector_t>(targetCommandLimits.data(), targetCommandLimits.size())),
-      commandLineToTargetTrajectoriesFun_(std::move(commandLineToTargetTrajectoriesFun)) {
+      commandLineToTargetTrajectoriesFun_(std::move(commandLineToTargetTrajectoriesFun)),
+      node_(nodeHandle)  {
   // observation subscriber
-  auto observationCallback = [this](const ocs2_msgs::mpc_observation::ConstPtr& msg) {
+  auto observationCallback = [this](const ocs2_msgs::msg::MPCObservation::SharedPtr msg) {
     std::lock_guard<std::mutex> lock(latestObservationMutex_);
     latestObservation_ = ros_msg_conversions::readObservationMsg(*msg);
   };
-  observationSubscriber_ = nodeHandle.subscribe<ocs2_msgs::mpc_observation>(topicPrefix + "_mpc_observation", 1, observationCallback);
+  observationSubscriber_ = nodeHandle->create_subscription<ocs2_msgs::msg::MPCObservation>(topicPrefix + "_mpc_observation", 1, observationCallback);
 
   // Trajectories publisher
   targetTrajectoriesPublisherPtr_.reset(new TargetTrajectoriesRosPublisher(nodeHandle, topicPrefix));
@@ -59,7 +60,7 @@ TargetTrajectoriesKeyboardPublisher::TargetTrajectoriesKeyboardPublisher(::ros::
 /******************************************************************************************************/
 /******************************************************************************************************/
 void TargetTrajectoriesKeyboardPublisher::publishKeyboardCommand(const std::string& commadMsg) {
-  while (ros::ok() && ros::master::check()) {
+  while (rclcpp::ok()) {
     // get command line
     std::cout << commadMsg << ": ";
     const vector_t commandLineInput = getCommandLine().cwiseMin(targetCommandLimits_).cwiseMax(-targetCommandLimits_);
@@ -68,7 +69,7 @@ void TargetTrajectoriesKeyboardPublisher::publishKeyboardCommand(const std::stri
     std::cout << "The following command is published: [" << toDelimitedString(commandLineInput) << "]\n\n";
 
     // get the latest observation
-    ::ros::spinOnce();
+    ::rclcpp::spin_some(node_);
     SystemObservation observation;
     {
       std::lock_guard<std::mutex> lock(latestObservationMutex_);
@@ -88,7 +89,7 @@ void TargetTrajectoriesKeyboardPublisher::publishKeyboardCommand(const std::stri
 /******************************************************************************************************/
 vector_t TargetTrajectoriesKeyboardPublisher::getCommandLine() {
   // get command line as one long string
-  auto shouldTerminate = []() { return !ros::ok() || !ros::master::check(); };
+  auto shouldTerminate = []() { return !rclcpp::ok(); };
   const std::string line = getCommandLineString(shouldTerminate);
 
   // a line to words

@@ -1,45 +1,37 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.10.2)
 project(ocs2_centroidal_model)
 
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CATKIN_PACKAGE_DEPENDENCIES
+set(AMENT_DEPENDENCIES
   ocs2_core
   ocs2_robotic_tools
-  ocs2_robotic_assets
   ocs2_pinocchio_interface
 )
 
-find_package(catkin REQUIRED
-  ${CATKIN_PACKAGE_DEPENDENCIES}
-)
+find_package(ament_cmake REQUIRED)
+find_package(ocs2_core REQUIRED)
+find_package(ocs2_robotic_tools REQUIRED)
+find_package(ocs2_pinocchio_interface REQUIRED)
+find_package(OpenMP REQUIRED)
 
 find_package(Boost REQUIRED COMPONENTS
   system
   filesystem
+  log
+  log_setup
 )
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(pinocchio REQUIRED pinocchio)
+if ( EXISTS "/opt/openrobots/lib/libpinocchio.so")
+else()
+    message(FATAL_ERROR "Install Pinocchio first. Instructions: https://stack-of-tasks.github.io/pinocchio/download.html")
+endif()
 
-###################################
-## catkin specific configuration ##
-###################################
-catkin_package(
-  INCLUDE_DIRS
-    include
-    ${EIGEN3_INCLUDE_DIRS}
-  LIBRARIES
-    ${PROJECT_NAME}
-  CATKIN_DEPENDS
-    ${CATKIN_PACKAGE_DEPENDENCIES}
-  DEPENDS
-    pinocchio
-    Boost
-)
+list(APPEND CMAKE_PREFIX_PATH "/opt/openrobots/")
+find_package(pinocchio REQUIRED)
 
 ###########
 ## Build ##
@@ -54,18 +46,6 @@ set(FLAGS
   -DPINOCCHIO_URDFDOM_USE_STD_SHARED_PTR
 )
 
-include_directories(
-  include
-  ${pinocchio_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIRS}
-  ${catkin_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS}
-)
-
-link_directories(
-  ${pinocchio_LIBRARY_DIRS}
-)
-
 add_library(${PROJECT_NAME}
   src/PinocchioCentroidalDynamics.cpp
   src/PinocchioCentroidalDynamicsAD.cpp
@@ -75,11 +55,22 @@ add_library(${PROJECT_NAME}
   src/FactoryFunctions.cpp
   src/ModelHelperFunctions.cpp
 )
-target_link_libraries(${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  ${pinocchio_LIBRARIES}
+
+target_include_directories(${PROJECT_NAME} PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
 )
+
+ament_target_dependencies(${PROJECT_NAME}
+  pinocchio
+  ocs2_pinocchio_interface
+  ocs2_core
+  ocs2_robotic_tools
+)
+
+set_target_properties(${PROJECT_NAME}
+  PROPERTIES INSTALL_RPATH "/opt/openrobots/lib")
+
 target_compile_options(${PROJECT_NAME} PUBLIC ${FLAGS})
 
 #########################
@@ -99,34 +90,46 @@ endif(cmake_clang_tools_FOUND)
 #############
 ## Install ##
 #############
-install(
-  TARGETS ${PROJECT_NAME}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+install(TARGETS ${PROJECT_NAME}
+        EXPORT export_${PROJECT_NAME}
+        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin
 )
 
-install(
-  DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+install(DIRECTORY include/
+        DESTINATION include
 )
+
+ament_export_include_directories(include)
+ament_export_libraries(${PROJECT_NAME})
+ament_export_targets(
+  export_${PROJECT_NAME}
+)
+
+ament_export_dependencies(ocs2_core)
+ament_export_dependencies(ocs2_robotic_tools)
+ament_export_dependencies(ocs2_thirdparty)
+ament_export_dependencies(ocs2_pinocchio_interface)
 
 #############
 ## Testing ##
 #############
 
-catkin_add_gtest(${PROJECT_NAME}_test
-  # test/testAccessMethods.cpp
-  test/testAnymalCentroidalModel.cpp
-)
-target_include_directories(${PROJECT_NAME}_test PRIVATE
-  test/include
-)
-target_link_libraries(${PROJECT_NAME}_test
-  gtest_main
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  ${pinocchio_LIBRARIES}
-)
-target_compile_options(${PROJECT_NAME}_test PRIVATE ${FLAGS})
+#catkin_add_gtest(${PROJECT_NAME}_test
+#  # test/testAccessMethods.cpp
+#  test/testAnymalCentroidalModel.cpp
+#)
+#target_include_directories(${PROJECT_NAME}_test PRIVATE
+#  test/include
+#)
+#target_link_libraries(${PROJECT_NAME}_test
+#  gtest_main
+#  ${PROJECT_NAME}
+#  ${Boost_LIBRARIES}
+#  ${pinocchio_LIBRARIES}
+#)
+#target_compile_options(${PROJECT_NAME}_test PRIVATE ${FLAGS})
+
+ament_package()
+

@@ -1,43 +1,43 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.10.2)
 project(ocs2_pinocchio_interface)
 
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CATKIN_PACKAGE_DEPENDENCIES
-  ocs2_core
-  ocs2_robotic_tools
+# Default to C++17
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+endif()
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
+find_package(ament_cmake REQUIRED)
+find_package(ament_index_cpp REQUIRED)
+find_package(ocs2_core REQUIRED)
+find_package(ocs2_robotic_tools REQUIRED)
+find_package(ocs2_oc REQUIRED)
+find_package(ocs2_thirdparty REQUIRED)
+find_package(OpenMP REQUIRED)
+
+find_package(Boost REQUIRED COMPONENTS
+  system
+  filesystem
+  log
+  log_setup
 )
 
-find_package(catkin REQUIRED COMPONENTS
-  ${CATKIN_PACKAGE_DEPENDENCIES}
-)
+if ( EXISTS "/opt/openrobots/lib/libpinocchio.so")
+else()
+    message(FATAL_ERROR "Install Pinocchio first. Instructions: https://stack-of-tasks.github.io/pinocchio/download.html")
+endif()
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(pinocchio REQUIRED pinocchio)
+list(APPEND CMAKE_PREFIX_PATH "/opt/openrobots/")
+find_package(pinocchio REQUIRED)
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
-
-# Add pinocchio configurations
-include(cmake/pinocchio_config.cmake)
-
-###################################
-## catkin specific configuration ##
-###################################
-
-catkin_package(
-  INCLUDE_DIRS
-    include
-    ${pinocchio_INCLUDE_DIRS}
-  LIBRARIES
-    ${PROJECT_NAME}
-  CATKIN_DEPENDS
-    ${CATKIN_PACKAGE_DEPENDENCIES}
-  DEPENDS
-    pinocchio
-  CFG_EXTRAS
-    pinocchio_config.cmake
-)
 
 ###########
 ## Build ##
@@ -45,9 +45,16 @@ catkin_package(
 
 include_directories(
   include
-  ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${pinocchio_INCLUDE_DIRS}
+)
+
+set(OCS2_PINOCCHIO_FLAGS
+  ${OCS2_CXX_FLAGS}
+  ${pinocchio_CFLAGS_OTHER}
+  -Wno-ignored-attributes
+  -DPINOCCHIO_URDFDOM_TYPEDEF_SHARED_PTR
+  -DPINOCCHIO_URDFDOM_USE_STD_SHARED_PTR
 )
 
 # ocs2 pinocchio interface library
@@ -58,14 +65,29 @@ add_library(${PROJECT_NAME}
   src/PinocchioEndEffectorKinematicsCppAd.cpp
   src/urdf.cpp
 )
-add_dependencies(${PROJECT_NAME}
-  ${catkin_EXPORTED_TARGETS}
+
+target_include_directories(${PROJECT_NAME} PUBLIC
+  /opt/openrobots/include
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
 )
+
+ament_target_dependencies(${PROJECT_NAME}
+  pinocchio
+  ocs2_core
+  ocs2_oc
+  ocs2_robotic_tools
+)
+
 target_link_libraries(${PROJECT_NAME}
-  ${catkin_LIBRARIES}
   ${pinocchio_LIBRARIES}
 )
+
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_PINOCCHIO_FLAGS})
+
+set_target_properties(${PROJECT_NAME}
+  PROPERTIES INSTALL_RPATH "/opt/openrobots/lib")
+
 
 ####################
 ## Clang tooling ###
@@ -87,24 +109,36 @@ endif (cmake_clang_tools_FOUND)
 #############
 
 install(TARGETS ${PROJECT_NAME}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+        EXPORT export_${PROJECT_NAME}
+        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin
 )
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+
+install(DIRECTORY include/
+        DESTINATION include
 )
+
+ament_export_include_directories(include)
+ament_export_libraries(${PROJECT_NAME})
+ament_export_targets(
+  export_${PROJECT_NAME}
+)
+
+ament_export_dependencies(ocs2_core)
+ament_export_dependencies(ocs2_robotic_tools)
 
 ############
 # Testing ##
 ############
 
-catkin_add_gtest(testPinocchioInterface
-  test/testPinocchioInterface.cpp
-  test/testPinocchioEndEffectorKinematics.cpp
-)
-target_link_libraries(testPinocchioInterface
-  gtest_main
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
+#catkin_add_gtest(testPinocchioInterface
+#  test/testPinocchioInterface.cpp
+#  test/testPinocchioEndEffectorKinematics.cpp
+#)
+#target_link_libraries(testPinocchioInterface
+#  gtest_main
+#  ${PROJECT_NAME}
+#)
+
+ament_package()

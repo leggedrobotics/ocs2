@@ -31,6 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+static auto LOGGER = rclcpp::get_logger("MRT_ROS_Dummy_Loop");
+
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -41,7 +43,7 @@ MRT_ROS_Dummy_Loop::MRT_ROS_Dummy_Loop(MRT_ROS_Interface& mrt, scalar_t mrtDesir
   }
 
   if (mpcDesiredFrequency_ > 0) {
-    ROS_WARN_STREAM("MPC loop is not realtime! For realtime setting, set mpcDesiredFrequency to any negative number.");
+    RCLCPP_WARN_STREAM(LOGGER, "MPC loop is not realtime! For realtime setting, set mpcDesiredFrequency to any negative number.");
   }
 }
 
@@ -49,18 +51,20 @@ MRT_ROS_Dummy_Loop::MRT_ROS_Dummy_Loop(MRT_ROS_Interface& mrt, scalar_t mrtDesir
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MRT_ROS_Dummy_Loop::run(const SystemObservation& initObservation, const TargetTrajectories& initTargetTrajectories) {
-  ROS_INFO_STREAM("Waiting for the initial policy ...");
-
+  RCLCPP_INFO_STREAM(LOGGER, "Waiting for the initial policy ...");
+  const scalar_t timeStep = (1.0 / mrtDesiredFrequency_);
   // Reset MPC node
   mrt_.resetMpcNode(initTargetTrajectories);
 
   // Wait for the initial policy
-  while (!mrt_.initialPolicyReceived() && ros::ok() && ros::master::check()) {
+  while (!mrt_.initialPolicyReceived() && ::rclcpp::ok()) {
     mrt_.spinMRT();
     mrt_.setCurrentObservation(initObservation);
-    ros::Rate(mrtDesiredFrequency_).sleep();
+
+    int16_t sleeptime = rclcpp::Duration(timeStep).nanoseconds();
+    rclcpp::sleep_for(std::chrono::nanoseconds(sleeptime));
   }
-  ROS_INFO_STREAM("Initial policy has been received.");
+  RCLCPP_INFO_STREAM(LOGGER, "Initial policy has been received.");
 
   // Pick simulation loop mode
   if (mpcDesiredFrequency_ > 0.0) {
@@ -88,8 +92,8 @@ void MRT_ROS_Dummy_Loop::synchronizedDummyLoop(const SystemObservation& initObse
     return mrt_.updatePolicy() && std::abs(mrt_.getPolicy().timeTrajectory_.front() - time) < (tol / mpcDesiredFrequency_);
   };
 
-  ros::Rate simRate(mrtDesiredFrequency_);
-  while (ros::ok() && ros::master::check()) {
+  rclcpp::Rate simRate(mrtDesiredFrequency_);
+  while (rclcpp::ok()) {
     std::cout << "### Current time " << currentObservation.time << "\n";
 
     // Trigger MRT callbacks
@@ -98,7 +102,7 @@ void MRT_ROS_Dummy_Loop::synchronizedDummyLoop(const SystemObservation& initObse
     // Update the MPC policy if it is time to do so
     if (loopCounter % mpcUpdateRatio == 0) {
       // Wait for the policy to be updated
-      while (!policyUpdatedForTime(currentObservation.time) && ros::ok() && ros::master::check()) {
+      while (!policyUpdatedForTime(currentObservation.time) && rclcpp::ok()) {
         mrt_.spinMRT();
       }
       std::cout << "<<< New MPC policy starting at " << mrt_.getPolicy().timeTrajectory_.front() << "\n";
@@ -122,7 +126,7 @@ void MRT_ROS_Dummy_Loop::synchronizedDummyLoop(const SystemObservation& initObse
     }
 
     ++loopCounter;
-    ros::spinOnce();
+    // REQUIRED on NOT? rclcpp::spin_some();
     simRate.sleep();
   }
 }
@@ -134,8 +138,8 @@ void MRT_ROS_Dummy_Loop::realtimeDummyLoop(const SystemObservation& initObservat
   // Loop variables
   SystemObservation currentObservation = initObservation;
 
-  ros::Rate simRate(mrtDesiredFrequency_);
-  while (ros::ok() && ros::master::check()) {
+  rclcpp::Rate simRate(mrtDesiredFrequency_);
+  while (rclcpp::ok()) {
     std::cout << "### Current time " << currentObservation.time << "\n";
 
     // Trigger MRT callbacks
@@ -160,7 +164,7 @@ void MRT_ROS_Dummy_Loop::realtimeDummyLoop(const SystemObservation& initObservat
       observer->update(currentObservation, mrt_.getPolicy(), mrt_.getCommand());
     }
 
-    ros::spinOnce();
+    // REQUIRED on NOT? rclcpp::spin_some();
     simRate.sleep();
   }
 }

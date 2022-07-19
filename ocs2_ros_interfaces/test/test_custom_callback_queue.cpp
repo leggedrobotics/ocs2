@@ -53,12 +53,12 @@ int main(int argc, char* argv[]) {
   ros::init(argc, argv, "my_node");
 
   // Publisher
-  ros::NodeHandle nh_pub;
+  rclcpp::Node::SharedPtr nh_pub;
   size_t publish_queue_size = 1000;
   ros::Publisher chatter_pub = nh_pub.advertise<std_msgs::String>("chatter", publish_queue_size);
 
   // Subscriber
-  ros::NodeHandle nh_sub;
+  rclcpp::Node::SharedPtr nh_sub;
   nh_sub.setCallbackQueue(&my_queue);
 
   size_t subscribe_queue_size = 1000;

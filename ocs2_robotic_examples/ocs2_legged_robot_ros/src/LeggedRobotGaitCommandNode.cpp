@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
 
   GaitKeyboardPublisher gaitCommand(nodeHandle, gaitCommandFile, robotName, true);
 
-  while (ros::ok() && ros::master::check()) {
+  while (rclcpp::ok()) {
     gaitCommand.getKeyboardCommand();
   }
 

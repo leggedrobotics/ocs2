@@ -9,24 +9,24 @@
   <maintainer email="rgrandia@ethz.ch">Ruben Grandia</maintainer>
   <license>BSD3</license>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
   <exec_depend>ocs2_core</exec_depend>
   <exec_depend>ocs2_mpc</exec_depend>
-  <exec_depend>ocs2_frank_wolfe</exec_depend>
+<!--  <exec_depend>ocs2_frank_wolfe</exec_depend>-->
   <exec_depend>ocs2_oc</exec_depend>
   <exec_depend>ocs2_qp_solver</exec_depend>
   <exec_depend>ocs2_ddp</exec_depend>
   <exec_depend>ocs2_sqp</exec_depend>
   <exec_depend>ocs2_ros_interfaces</exec_depend>
-  <exec_depend>ocs2_python_interface</exec_depend>
+<!--  <exec_depend>ocs2_python_interface</exec_depend>-->
   <exec_depend>ocs2_pinocchio</exec_depend>
   <exec_depend>ocs2_robotic_tools</exec_depend>
-  <exec_depend>ocs2_robotic_examples</exec_depend>
+<!--  <exec_depend>ocs2_robotic_examples</exec_depend>-->
   <exec_depend>ocs2_thirdparty</exec_depend>
-  <exec_depend>ocs2_raisim</exec_depend>
+<!--  <exec_depend>ocs2_raisim</exec_depend>-->
 
-   <export>
-   	  <metapackage />
-   </export>
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 
 </package>

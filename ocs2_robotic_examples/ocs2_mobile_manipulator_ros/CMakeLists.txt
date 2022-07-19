@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.10.2)
 project(ocs2_mobile_manipulator_ros)
 
 # Generate compile_commands.json for clang tools
@@ -146,8 +146,8 @@ endif (cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+install(DIRECTORY include/
+  DESTINATION include
 )
 install(
   TARGETS 
@@ -155,7 +155,7 @@ install(
     mobile_manipulator_distance_visualization
     mobile_manipulator_dummy_mrt_node 
     mobile_manipulator_target
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  RUNTIME DESTINATION bin
 )
 install(DIRECTORY launch rviz
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}

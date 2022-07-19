@@ -121,7 +121,7 @@ int main(int argc, char** argv) {
   ROS_INFO_STREAM("Waiting for the initial policy ...");
   mpcMrtInterface.setCurrentObservation(initObservation);
   mpcMrtInterface.getReferenceManager().setTargetTrajectories(initTargetTrajectories);
-  while (!mpcMrtInterface.initialPolicyReceived() && ros::ok() && ros::master::check()) {
+  while (!mpcMrtInterface.initialPolicyReceived() && rclcpp::ok()) {
     mpcMrtInterface.advanceMpc();
     ros::WallRate(ballbotInterface.mpcSettings().mrtDesiredFrequency_).sleep();
   }

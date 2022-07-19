@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 #include <mutex>
 
-#include <ros/subscriber.h>
+#include <rclcpp/rclcpp.hpp>
 
 #include <ocs2_mpc/SystemObservation.h>
 #include <ocs2_ros_interfaces/command/TargetTrajectoriesRosPublisher.h>
@@ -57,7 +57,7 @@ class TargetTrajectoriesKeyboardPublisher final {
    * @param [in] targetCommandLimits: The limits of the loaded command from command-line (for safety purposes).
    * @param [in] commandLineToTargetTrajectoriesFun: A function which transforms the command line input to TargetTrajectories.
    */
-  TargetTrajectoriesKeyboardPublisher(::ros::NodeHandle& nodeHandle, const std::string& topicPrefix,
+  TargetTrajectoriesKeyboardPublisher(::rclcpp::Node::SharedPtr& nodeHandle, const std::string& topicPrefix,
                                       const scalar_array_t& targetCommandLimits,
                                       CommandLineToTargetTrajectories commandLineToTargetTrajectoriesFun);
 
@@ -81,9 +81,10 @@ class TargetTrajectoriesKeyboardPublisher final {
 
   std::unique_ptr<TargetTrajectoriesRosPublisher> targetTrajectoriesPublisherPtr_;
 
-  ::ros::Subscriber observationSubscriber_;
+  ::rclcpp::Subscription<ocs2_msgs::msg::MPCObservation>::SharedPtr observationSubscriber_;
   mutable std::mutex latestObservationMutex_;
   SystemObservation latestObservation_;
+  ::rclcpp::Node::SharedPtr node_;
 };
 
 }  // namespace ocs2

@@ -36,31 +36,31 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
 
 // MPC messages
-#include <ocs2_msgs/mode_schedule.h>
-#include <ocs2_msgs/mpc_observation.h>
-#include <ocs2_msgs/mpc_performance_indices.h>
-#include <ocs2_msgs/mpc_target_trajectories.h>
+#include <ocs2_msgs/msg/mode_schedule.hpp>
+#include <ocs2_msgs/msg/mpc_observation.hpp>
+#include <ocs2_msgs/msg/mpc_performance_indices.hpp>
+#include <ocs2_msgs/msg/mpc_target_trajectories.hpp>
 
 namespace ocs2 {
 namespace ros_msg_conversions {
 
 /** Creates the observation message. */
-ocs2_msgs::mpc_observation createObservationMsg(const SystemObservation& observation);
+ocs2_msgs::msg::MPCObservation createObservationMsg(const SystemObservation& observation);
 
 /** Reads the observation message. */
-SystemObservation readObservationMsg(const ocs2_msgs::mpc_observation& observationMsg);
+SystemObservation readObservationMsg(const ocs2_msgs::msg::MPCObservation& observationMsg);
 
 /** Creates the mode sequence message. */
-ocs2_msgs::mode_schedule createModeScheduleMsg(const ModeSchedule& modeSchedule);
+ocs2_msgs::msg::ModeSchedule createModeScheduleMsg(const ModeSchedule& modeSchedule);
 
 /** Reads the mode sequence message. */
-ModeSchedule readModeScheduleMsg(const ocs2_msgs::mode_schedule& modeScheduleMsg);
+ModeSchedule readModeScheduleMsg(const ocs2_msgs::msg::ModeSchedule& modeScheduleMsg);
 
 /** Creates the target trajectories message. */
-ocs2_msgs::mpc_target_trajectories createTargetTrajectoriesMsg(const TargetTrajectories& targetTrajectories);
+ocs2_msgs::msg::MPCTargetTrajectories createTargetTrajectoriesMsg(const TargetTrajectories& targetTrajectories);
 
 /** Returns the TargetTrajectories message. */
-TargetTrajectories readTargetTrajectoriesMsg(const ocs2_msgs::mpc_target_trajectories& targetTrajectoriesMsg);
+TargetTrajectories readTargetTrajectoriesMsg(const ocs2_msgs::msg::MPCTargetTrajectories& targetTrajectoriesMsg);
 
 /**
  * Creates the performance indices message.
@@ -69,10 +69,10 @@ TargetTrajectories readTargetTrajectoriesMsg(const ocs2_msgs::mpc_target_traject
  * @param [in] performanceIndices: The performance indices of the solver.
  * @return The performance indices ROS message.
  */
-ocs2_msgs::mpc_performance_indices createPerformanceIndicesMsg(scalar_t initTime, const PerformanceIndex& performanceIndices);
+ocs2_msgs::msg::MPCPerformanceIndices createPerformanceIndicesMsg(scalar_t initTime, const PerformanceIndex& performanceIndices);
 
 /** Reads the performance indices message. */
-PerformanceIndex readPerformanceIndicesMsg(const ocs2_msgs::mpc_performance_indices& performanceIndicesMsg);
+PerformanceIndex readPerformanceIndicesMsg(const ocs2_msgs::msg::MPCPerformanceIndices& performanceIndicesMsg);
 
 }  // namespace ros_msg_conversions
 }  // namespace ocs2

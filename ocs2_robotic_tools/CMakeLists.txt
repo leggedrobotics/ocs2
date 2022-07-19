@@ -1,30 +1,20 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.10.2)
 project(ocs2_robotic_tools)
 
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-find_package(catkin REQUIRED COMPONENTS
-  ocs2_core
-  ocs2_oc
-)
+find_package(ament_cmake REQUIRED)
+find_package(ocs2_oc REQUIRED)
+find_package(OpenMP REQUIRED)
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-###################################
-## catkin specific configuration ##
-###################################
-
-catkin_package(
-  INCLUDE_DIRS
-    include
-    ${EIGEN3_INCLUDE_DIRS}
-  LIBRARIES
-    ${PROJECT_NAME}
-  CATKIN_DEPENDS
-    ocs2_core
-    ocs2_oc
-  DEPENDS
+find_package(Boost REQUIRED COMPONENTS
+  system
+  filesystem
+  log
+  log_setup
 )
 
 
@@ -32,25 +22,38 @@ catkin_package(
 ## Build ##
 ###########
 
-include_directories(
-  include
-  ${EIGEN3_INCLUDE_DIRS}
-  ${catkin_INCLUDE_DIRS}
-)
-
 add_library(${PROJECT_NAME}
   src/common/RotationTransforms.cpp
   src/common/LoopshapingRobotInterface.cpp
 )
-target_link_libraries(${PROJECT_NAME}
-  ${catkin_LIBRARIES}
+
+target_include_directories(${PROJECT_NAME} PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
 )
+
+ament_target_dependencies(${PROJECT_NAME}
+  ocs2_oc
+  ocs2_core
+  ocs2_thirdparty
+)
+
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
 
 add_executable(${PROJECT_NAME}_lintTarget
   src/lintTarget.cpp
 )
+target_include_directories(${PROJECT_NAME}_lintTarget PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+ament_target_dependencies(${PROJECT_NAME}_lintTarget
+  ocs2_oc
+  ocs2_core
+  ocs2_thirdparty
+)
+
 
 #########################
 ###   CLANG TOOLING   ###
@@ -70,35 +73,43 @@ endif(cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(
-  TARGETS ${PROJECT_NAME}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+install(TARGETS ${PROJECT_NAME}
+        EXPORT export_${PROJECT_NAME}
+        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin
 )
 
-install(DIRECTORY
-            include/${PROJECT_NAME}/
-        DESTINATION
-            ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+install(DIRECTORY include/
+        DESTINATION include
+)
+
+ament_export_include_directories(include)
+ament_export_libraries(${PROJECT_NAME})
+ament_export_targets(
+  export_${PROJECT_NAME}
+)
+
+ament_export_dependencies(ocs2_thirdparty)
+ament_export_dependencies(ocs2_oc)
+ament_export_dependencies(ocs2_core)
 
 #############
 ## Testing ##
 #############
-## Info ==============================
-## to run tests, cd package folder and run
-## $ catkin build -DCMAKE_BUILD_TYPE=RelWithDebInfo --this
-## $ catkin run_tests --no-deps --this
-## to see the summary of unit test results run
-## $ catkin_test_results ../../../build/ocs2_robotic_tools
+find_package(ament_lint_auto REQUIRED)
+find_package(ament_cmake_gtest REQUIRED)
+ament_lint_auto_find_test_dependencies()
 
-catkin_add_gtest(rotation_transform_tests
+ament_add_gtest(rotation_transform_tests
   test/common/TestRotationTransforms.cpp
   test/common/TestRotationDerivativesTransforms.cpp
 )
 target_link_libraries(rotation_transform_tests
   ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
   gtest_main
 )
 target_compile_options(rotation_transform_tests PRIVATE ${OCS2_CXX_FLAGS})
+
+ament_package()
+

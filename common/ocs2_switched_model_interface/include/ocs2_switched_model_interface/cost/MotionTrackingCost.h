@@ -48,7 +48,8 @@ class MotionTrackingCost : public ocs2::StateInputCostGaussNewtonAd {
   ~MotionTrackingCost() override = default;
   MotionTrackingCost* clone() const { return new MotionTrackingCost(*this); }
 
-  ocs2::vector_t getParameters(ocs2::scalar_t time, const ocs2::TargetTrajectories& targetTrajectories) const override;
+  ocs2::vector_t getParameters(ocs2::scalar_t time, const ocs2::TargetTrajectories& targetTrajectories,
+                               const ocs2::PreComputation& preComputation) const override;
 
  protected:
   MotionTrackingCost(const MotionTrackingCost& other);

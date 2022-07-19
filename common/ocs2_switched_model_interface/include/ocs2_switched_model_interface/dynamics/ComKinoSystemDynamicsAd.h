@@ -33,7 +33,7 @@ class ComKinoSystemDynamicsAd : public ocs2::SystemDynamicsBaseAD {
   ocs2::ad_vector_t systemFlowMap(ocs2::ad_scalar_t time, const ocs2::ad_vector_t& state, const ocs2::ad_vector_t& input,
                                   const ocs2::ad_vector_t& parameters) const override;
 
-  ocs2::vector_t getFlowMapParameters(scalar_t time) const override {
+  ocs2::vector_t getFlowMapParameters(scalar_t time, const ocs2::PreComputation& /* preComputation */) const override {
     return dynamicsParametersModulePtr_->getActiveDynamicsParameters().asVector();
   }
 

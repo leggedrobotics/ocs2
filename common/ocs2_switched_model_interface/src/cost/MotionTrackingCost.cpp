@@ -128,7 +128,8 @@ MotionTrackingCost::MotionTrackingCost(const Weights& settings, const SwitchedMo
   initialize(STATE_DIM, INPUT_DIM, costVectorLength + sqrtWeights_.size(), "MotionTrackingCost", "/tmp/ocs2", recompile);
 };
 
-ocs2::vector_t MotionTrackingCost::getParameters(ocs2::scalar_t time, const ocs2::TargetTrajectories& targetTrajectories) const {
+ocs2::vector_t MotionTrackingCost::getParameters(ocs2::scalar_t time, const ocs2::TargetTrajectories& targetTrajectories,
+                                                 const ocs2::PreComputation& preComputation) const {
   // Interpolate reference
   const vector_t xRef = targetTrajectories.getDesiredState(time);
   vector_t uRef = targetTrajectories.getDesiredInput(time);

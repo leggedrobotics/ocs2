@@ -59,14 +59,12 @@ std::unique_ptr<ocs2::PreComputation> QuadrupedInterface::createPrecomputation()
 }
 
 std::unique_ptr<ocs2::StateInputCost> QuadrupedInterface::createMotionTrackingCost() const {
-  return std::unique_ptr<ocs2::StateInputCost>(new MotionTrackingCost(
-      costSettings(), *getSwitchedModelModeScheduleManagerPtr(), getSwitchedModelModeScheduleManagerPtr()->getSwingTrajectoryPlanner(),
-      getKinematicModel(), getKinematicModelAd(), getComModel(), getComModelAd(), modelSettings().recompileLibraries_));
+  return std::unique_ptr<ocs2::StateInputCost>(
+      new MotionTrackingCost(costSettings(), getKinematicModelAd(), modelSettings().recompileLibraries_));
 }
 
 std::unique_ptr<ocs2::StateCost> QuadrupedInterface::createMotionTrackingTerminalCost(matrix_t Q) const {
-  return std::unique_ptr<ocs2::StateCost>(
-      new MotionTrackingTerminalCost(std::move(Q), getSwitchedModelModeScheduleManagerPtr()->getSwingTrajectoryPlanner()));
+  return std::unique_ptr<ocs2::StateCost>(new MotionTrackingTerminalCost(std::move(Q)));
 }
 
 std::unique_ptr<ocs2::StateCost> QuadrupedInterface::createFootPlacementCost() const {

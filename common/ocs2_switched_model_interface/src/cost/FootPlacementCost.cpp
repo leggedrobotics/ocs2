@@ -24,8 +24,7 @@ scalar_t FootPlacementCost::getValue(scalar_t time, const vector_t& state, const
 
   scalar_t cost(0.0);
   for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
-    const auto& footPhase = switchedModelPreComp.getFootPhase(leg);
-    const auto* constraintMatrixPtr = footPhase.getFootTangentialConstraintInWorldFrame();
+    const auto* constraintMatrixPtr = switchedModelPreComp.getFootTangentialConstraintInWorldFrame(leg);
 
     if (constraintMatrixPtr != nullptr) {
       const auto& footPosition = switchedModelPreComp.footPositionInOriginFrame(leg);
@@ -53,8 +52,7 @@ ScalarFunctionQuadraticApproximation FootPlacementCost::getQuadraticApproximatio
   cost.dfdx = vector_t::Zero(STATE_DIM);
   cost.dfdxx = matrix_t::Zero(STATE_DIM, STATE_DIM);
   for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
-    const auto& footPhase = switchedModelPreComp.getFootPhase(leg);
-    const auto* constraintMatrixPtr = footPhase.getFootTangentialConstraintInWorldFrame();
+    const auto* constraintMatrixPtr = switchedModelPreComp.getFootTangentialConstraintInWorldFrame(leg);
 
     if (constraintMatrixPtr != nullptr) {
       const auto& footPosition = switchedModelPreComp.footPositionInOriginFrame(leg);

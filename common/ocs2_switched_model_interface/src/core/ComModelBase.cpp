@@ -13,11 +13,15 @@ namespace switched_model {
 
 comkino_input_t weightCompensatingInputs(const ComModelBase<scalar_t>& comModel, const contact_flag_t& contactFlags,
                                          const vector3_t& baseOrientation) {
+  return weightCompensatingInputs(comModel.totalMass(), contactFlags, baseOrientation);
+}
+
+comkino_input_t weightCompensatingInputs(scalar_t mass, const contact_flag_t& contactFlags, const vector3_t& baseOrientation) {
   const int numStanceLegs = numberOfClosedContacts(contactFlags);
 
   comkino_input_t inputs = comkino_input_t::Zero();
   if (numStanceLegs > 0) {
-    const scalar_t totalWeight = comModel.totalMass() * 9.81;
+    const scalar_t totalWeight = mass * 9.81;
     const vector3_t forceInWorld = vector3_t{0.0, 0.0, totalWeight / numStanceLegs};
     const vector3_t forceInBase = rotateVectorOriginToBase(forceInWorld, baseOrientation);
 

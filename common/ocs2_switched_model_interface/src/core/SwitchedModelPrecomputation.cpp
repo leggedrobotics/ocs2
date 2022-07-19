@@ -4,6 +4,7 @@
 
 #include "ocs2_switched_model_interface/core/SwitchedModelPrecomputation.h"
 
+#include <ocs2_switched_model_interface/core/Rotations.h>
 #include <ocs2_switched_model_interface/core/TorqueApproximation.h>
 
 namespace switched_model {
@@ -12,7 +13,7 @@ SwitchedModelPreComputation::SwitchedModelPreComputation(const SwingTrajectoryPl
                                                          const kinematic_model_t& kinematicModel,
                                                          const ad_kinematic_model_t& adKinematicModel, const com_model_t& comModel,
                                                          const ad_com_model_t& adComModel, ModelSettings settings)
-    : swingTrajectoryPlannerPtr_(&swingTrajectoryPlanner) {
+    : swingTrajectoryPlannerPtr_(&swingTrajectoryPlanner), robotMass_(comModel.totalMass()) {
   std::string libName = "AnymalPrecomputation_intermediateLinearOutputs";
   std::string libFolder = "/tmp/ocs2";
   auto diffFunc = [&](const ad_vector_t& x, ad_vector_t& y) {
@@ -53,12 +54,15 @@ SwitchedModelPreComputation::SwitchedModelPreComputation(const SwitchedModelPreC
       collisionSpheresActive_(other.collisionSpheresActive_),
       collisionSpheresInOriginFrame_(other.collisionSpheresInOriginFrame_),
       collisionSpheresDerivative_(other.collisionSpheresDerivative_),
-      tapedStateInput_(other.tapedStateInput_) {}
+      tapedStateInput_(other.tapedStateInput_),
+      robotMass_(other.robotMass_) {}
 
 void SwitchedModelPreComputation::request(ocs2::RequestSet request, scalar_t t, const vector_t& x, const vector_t& u) {
   updateFeetPhases(t);
 
   if (request.containsAny(ocs2::Request::Cost + ocs2::Request::Constraint + ocs2::Request::SoftConstraint)) {
+    updateMotionReference(t);
+
     tapedStateInput_ << x, u;
 
     updateIntermediateLinearOutputs(t, tapedStateInput_);
@@ -74,13 +78,51 @@ void SwitchedModelPreComputation::requestPreJump(ocs2::RequestSet request, scala
 
 void SwitchedModelPreComputation::requestFinal(ocs2::RequestSet request, scalar_t t, const vector_t& x) {
   updateFeetPhases(t);
+
+  if (request.containsAny(ocs2::Request::Cost + ocs2::Request::Constraint + ocs2::Request::SoftConstraint)) {
+    updateMotionReference(t);
+  }
 }
 
 void SwitchedModelPreComputation::updateFeetPhases(scalar_t t) {
   for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
     feetPhases_[leg] = &swingTrajectoryPlannerPtr_->getFootPhase(leg, t);
-    contactFlags_[leg] = feetPhases_[leg]->contactFlag();
-    surfaceNormalsInOriginFrame_[leg] = feetPhases_[leg]->normalDirectionInWorldFrame(t);
+    const auto& footPhase = *feetPhases_[leg];
+    contactFlags_[leg] = footPhase.contactFlag();
+    surfaceNormalsInOriginFrame_[leg] = footPhase.normalDirectionInWorldFrame(t);
+    footNormalConstraintInWorldFrame_[leg] = footPhase.getFootNormalConstraintInWorldFrame(t);
+    footTangentialConstraintInWorldFrame_[leg] = footPhase.getFootTangentialConstraintInWorldFrame();
+  }
+}
+
+void SwitchedModelPreComputation::updateMotionReference(scalar_t t) {
+  // Interpolate reference
+  stateReference_ = swingTrajectoryPlannerPtr_->getTargetTrajectories().getDesiredState(t);
+  vector_t uRef = swingTrajectoryPlannerPtr_->getTargetTrajectories().getDesiredInput(t);
+
+  // Extract elements from reference
+  const auto basePose = getBasePose(stateReference_);
+  const auto baseTwist = getBaseLocalVelocities(stateReference_);
+  const auto eulerAngles = getOrientation(basePose);
+  const auto qJoints = getJointPositions(stateReference_);
+  const auto dqJoints = getJointVelocities(uRef);
+
+  // If the contact force reference has zero values, overwrite it.
+  if (uRef.head<3 * NUM_CONTACT_POINTS>().isZero()) {
+    uRef.head<3 * NUM_CONTACT_POINTS>() = weightCompensatingInputs(robotMass_, contactFlags_, eulerAngles).head<3 * NUM_CONTACT_POINTS>();
+  }
+
+  motionReference_.eulerXYZ = eulerAngles;
+  motionReference_.comPosition = getPositionInOrigin(basePose);
+  motionReference_.comAngularVelocity = rotateVectorBaseToOrigin(getAngularVelocity(baseTwist), eulerAngles);
+  motionReference_.comLinearVelocity = rotateVectorBaseToOrigin(getLinearVelocity(baseTwist), eulerAngles);
+  for (size_t leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
+    const auto& footPhase = getFootPhase(leg);  // already updated in updateFeetPhases
+    motionReference_.jointPosition[leg] = qJoints.template segment<3>(3 * leg);
+    motionReference_.footPosition[leg] = footPhase.getPositionInWorld(t);
+    motionReference_.jointVelocity[leg] = dqJoints.template segment<3>(3 * leg);
+    motionReference_.footVelocity[leg] = footPhase.getVelocityInWorld(t);
+    motionReference_.contactForce[leg] = uRef.template segment<3>(3 * leg);
   }
 }
 

@@ -52,6 +52,10 @@ class Mpcnet:
     """MPC-Net.
 
     Implements the main methods for the MPC-Net training.
+
+    Takes a specific configuration, interface, memory, policy and loss function(s).
+    The task formulation has to be implemented in a robot-specific class derived from this class.
+    Provides the main training loop for MPC-Net.
     """
 
     def __init__(

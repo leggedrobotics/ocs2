@@ -67,7 +67,7 @@ class Config:
         with open(config_file_path, "r") as stream:
             try:
                 config = yaml.safe_load(stream)
-                for key, value in config["config"].items():
+                for key, value in config.items():
                     setattr(self, key, value)
             except yaml.YAMLError as exception:
                 print(exception)

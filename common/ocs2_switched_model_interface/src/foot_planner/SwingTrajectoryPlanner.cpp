@@ -4,6 +4,7 @@
 
 #include "ocs2_switched_model_interface/foot_planner/SwingTrajectoryPlanner.h"
 
+#include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/Lookup.h>
 
 #include "ocs2_switched_model_interface/core/MotionPhaseDefinition.h"
@@ -71,7 +72,13 @@ void SwingTrajectoryPlanner::updateSwingMotions(scalar_t initTime, scalar_t fina
                                                                 initTime, currentState, finalTime, *terrainModel_);
 
     // Create swing trajectories
-    std::tie(feetNormalTrajectoriesEvents_[leg], feetNormalTrajectories_[leg]) = generateSwingTrajectories(leg, contactTimings, finalTime);
+    if (settings_.swingTrajectoryFromReference) {
+      std::tie(feetNormalTrajectoriesEvents_[leg], feetNormalTrajectories_[leg]) =
+          extractSwingTrajectoriesFromReference(leg, contactTimings, finalTime);
+    } else {
+      std::tie(feetNormalTrajectoriesEvents_[leg], feetNormalTrajectories_[leg]) =
+          generateSwingTrajectories(leg, contactTimings, finalTime);
+    }
   }
 }
 
@@ -161,7 +168,7 @@ std::pair<std::vector<scalar_t>, std::vector<std::unique_ptr<FootPhase>>> SwingT
       }
     }();
 
-    footPhases.emplace_back(new SwingPhase(liftOff, touchDown, swingProfile, terrainModel_.get()));
+    footPhases.push_back(extractExternalSwingPhase(leg, liftOffTime, touchDownTime));
   }
 
   // Loop through contact phases
@@ -195,9 +202,9 @@ std::pair<std::vector<scalar_t>, std::vector<std::unique_ptr<FootPhase>>> SwingT
         return finalTime + settings_.referenceExtensionAfterHorizon;
       }
     }();
-    
+
     eventTimes.push_back(currentContactTiming.end);
-    footPhases.emplace_back(new SwingPhase(liftOff, touchDown, swingProfile, terrainModel_.get()));
+    footPhases.push_back(extractExternalSwingPhase(leg, liftOffTime, touchDownTime));
   }
 
   return std::make_pair(eventTimes, std::move(footPhases));
@@ -222,6 +229,48 @@ void SwingTrajectoryPlanner::applySwingMotionScaling(SwingPhase::SwingEvent& lif
       node.normalVelocity *= scaling;
     }
   }
+}
+
+std::unique_ptr<ExternalSwingPhase> SwingTrajectoryPlanner::extractExternalSwingPhase(int leg, scalar_t liftOffTime,
+                                                                                      scalar_t touchDownTime) const {
+  std::vector<scalar_t> time;
+  std::vector<vector3_t> positions;
+  std::vector<vector3_t> velocities;
+
+  const auto liftoffIndex = ocs2::LinearInterpolation::timeSegment(liftOffTime, targetTrajectories_.timeTrajectory);
+  const auto touchdownIndex = ocs2::LinearInterpolation::timeSegment(touchDownTime, targetTrajectories_.timeTrajectory);
+
+  // liftoff
+  if (liftOffTime < targetTrajectories_.timeTrajectory[liftoffIndex.first + 1]) {
+    const vector_t state = ocs2::LinearInterpolation::interpolate(liftoffIndex, targetTrajectories_.stateTrajectory);
+    const vector_t input = ocs2::LinearInterpolation::interpolate(liftoffIndex, targetTrajectories_.inputTrajectory);
+    time.push_back(liftOffTime);
+    positions.push_back(kinematicsModel_->footPositionInOriginFrame(leg, getBasePose(state), getJointPositions(state)));
+    velocities.push_back(kinematicsModel_->footVelocityInOriginFrame(leg, getBasePose(state), getBaseLocalVelocities(state),
+                                                                     getJointPositions(state), getJointVelocities(input)));
+  }
+
+  // intermediate
+  for (int k = liftoffIndex.first + 1; k < touchdownIndex.first; ++k) {
+    const auto& state = targetTrajectories_.stateTrajectory[k];
+    time.push_back(targetTrajectories_.timeTrajectory[k]);
+    positions.push_back(kinematicsModel_->footPositionInOriginFrame(leg, getBasePose(state), getJointPositions(state)));
+    velocities.push_back(kinematicsModel_->footVelocityInOriginFrame(leg, getBasePose(state), getBaseLocalVelocities(state),
+                                                                     getJointPositions(state),
+                                                                     getJointVelocities(targetTrajectories_.inputTrajectory[k])));
+  }
+
+  // touchdown
+  if (time.back() < touchDownTime) {
+    const vector_t state = ocs2::LinearInterpolation::interpolate(touchdownIndex, targetTrajectories_.stateTrajectory);
+    const vector_t input = ocs2::LinearInterpolation::interpolate(touchdownIndex, targetTrajectories_.inputTrajectory);
+    time.push_back(touchDownTime);
+    positions.push_back(kinematicsModel_->footPositionInOriginFrame(leg, getBasePose(state), getJointPositions(state)));
+    velocities.push_back(kinematicsModel_->footVelocityInOriginFrame(leg, getBasePose(state), getBaseLocalVelocities(state),
+                                                                     getJointPositions(state), getJointVelocities(input)));
+  }
+
+  return std::unique_ptr<ExternalSwingPhase>(new ExternalSwingPhase(move(time), move(positions), move(velocities)));
 }
 
 std::vector<vector3_t> SwingTrajectoryPlanner::selectHeuristicFootholds(int leg, const std::vector<ContactTiming>& contactTimings,
@@ -370,6 +419,10 @@ std::vector<ConvexTerrain> SwingTrajectoryPlanner::selectNominalFootholdTerrain(
 
 void SwingTrajectoryPlanner::adaptJointReferencesWithInverseKinematics(const inverse_kinematics_function_t& inverseKinematicsFunction,
                                                                        scalar_t finalTime) {
+  if (settings_.swingTrajectoryFromReference) {
+    return;  // Skip this if we are using the reference trajectory
+  }
+
   for (int k = 0; k < targetTrajectories_.timeTrajectory.size(); ++k) {
     const scalar_t t = targetTrajectories_.timeTrajectory[k];
 

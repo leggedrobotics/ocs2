@@ -99,6 +99,8 @@ class SwingTrajectoryPlanner {
   void applySwingMotionScaling(SwingPhase::SwingEvent& liftOff, SwingPhase::SwingEvent& touchDown,
                                SwingPhase::SwingProfile& swingProfile) const;
 
+  std::unique_ptr<ExternalSwingPhase> extractExternalSwingPhase(int leg, scalar_t liftOffTime, scalar_t touchDownTime) const;
+
   SwingPhase::SwingProfile getDefaultSwingProfile() const;
 
   scalar_t getContactEndTime(const ContactTiming& contactPhase, scalar_t finalTime) const;

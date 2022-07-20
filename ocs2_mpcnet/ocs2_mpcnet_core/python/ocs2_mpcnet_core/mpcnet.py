@@ -43,9 +43,9 @@ from torch.utils.tensorboard import SummaryWriter
 from ocs2_mpcnet_core import helper
 from ocs2_mpcnet_core import SystemObservationArray, ModeScheduleArray, TargetTrajectoriesArray
 from ocs2_mpcnet_core.config import Config
-from ocs2_mpcnet_core.loss.base import BaseLoss
-from ocs2_mpcnet_core.memory.base import BaseMemory
-from ocs2_mpcnet_core.policy.base import BasePolicy
+from ocs2_mpcnet_core.loss import BaseLoss
+from ocs2_mpcnet_core.memory import BaseMemory
+from ocs2_mpcnet_core.policy import BasePolicy
 
 
 class Mpcnet:

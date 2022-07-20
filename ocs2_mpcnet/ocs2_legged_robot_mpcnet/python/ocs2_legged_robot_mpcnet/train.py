@@ -38,12 +38,12 @@ import sys
 import os
 
 from ocs2_mpcnet_core.config import Config
-from ocs2_mpcnet_core.loss.hamiltonian import HamiltonianLoss
-from ocs2_mpcnet_core.loss.cross_entropy import CrossEntropyLoss
-from ocs2_mpcnet_core.memory.circular import CircularMemory
-from ocs2_mpcnet_core.policy.mixture_of_nonlinear_experts import MixtureOfNonlinearExpertsPolicy
+from ocs2_mpcnet_core.loss import HamiltonianLoss
+from ocs2_mpcnet_core.loss import CrossEntropyLoss
+from ocs2_mpcnet_core.memory import CircularMemory
+from ocs2_mpcnet_core.policy import MixtureOfNonlinearExpertsPolicy
 
-from ocs2_legged_robot_mpcnet.mpcnet import LeggedRobotMpcnet
+from ocs2_legged_robot_mpcnet import LeggedRobotMpcnet
 from ocs2_legged_robot_mpcnet import MpcnetInterface
 
 

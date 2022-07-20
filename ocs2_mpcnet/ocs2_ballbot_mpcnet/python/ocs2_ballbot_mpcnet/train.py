@@ -38,11 +38,11 @@ import sys
 import os
 
 from ocs2_mpcnet_core.config import Config
-from ocs2_mpcnet_core.loss.hamiltonian import HamiltonianLoss
-from ocs2_mpcnet_core.memory.circular import CircularMemory
-from ocs2_mpcnet_core.policy.linear import LinearPolicy
+from ocs2_mpcnet_core.loss import HamiltonianLoss
+from ocs2_mpcnet_core.memory import CircularMemory
+from ocs2_mpcnet_core.policy import LinearPolicy
 
-from ocs2_ballbot_mpcnet.mpcnet import BallbotMpcnet
+from ocs2_ballbot_mpcnet import BallbotMpcnet
 from ocs2_ballbot_mpcnet import MpcnetInterface
 
 

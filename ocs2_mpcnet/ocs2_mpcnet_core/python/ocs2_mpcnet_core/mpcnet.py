@@ -56,6 +56,7 @@ class Mpcnet:
 
     def __init__(
         self,
+        root_dir: str,
         config: Config,
         interface: object,
         memory: BaseMemory,
@@ -68,6 +69,7 @@ class Mpcnet:
         Initializes the Mpcnet class by setting fixed and variable attributes.
 
         Args:
+            root_dir: The absolute path to the root directory.
             config: An instance of the configuration class.
             interface: An instance of the interface class.
             memory: An instance of a memory class.
@@ -81,7 +83,8 @@ class Mpcnet:
         self.interface = interface
         # logging
         self.log_dir = (
-            "./runs/"
+            root_dir
+            + "/runs/"
             + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             + "_"
             + config.NAME

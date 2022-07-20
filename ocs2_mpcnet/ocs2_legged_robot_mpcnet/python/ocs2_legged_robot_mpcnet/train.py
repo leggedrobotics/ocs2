@@ -47,9 +47,9 @@ from ocs2_legged_robot_mpcnet.mpcnet import LeggedRobotMpcnet
 from ocs2_legged_robot_mpcnet import MpcnetInterface
 
 
-def main(config_file_path: str) -> None:
+def main(root_dir: str, config_file_name: str) -> None:
     # config
-    config = Config(config_file_path)
+    config = Config(os.path.join(root_dir, "config", config_file_name))
     # interface
     interface = MpcnetInterface(config.DATA_GENERATION_THREADS, config.POLICY_EVALUATION_THREADS, config.RAISIM)
     # loss
@@ -60,13 +60,14 @@ def main(config_file_path: str) -> None:
     # policy
     policy = MixtureOfNonlinearExpertsPolicy(config)
     # mpcnet
-    mpcnet = LeggedRobotMpcnet(config, interface, memory, policy, experts_loss, gating_loss)
+    mpcnet = LeggedRobotMpcnet(root_dir, config, interface, memory, policy, experts_loss, gating_loss)
     # train
     mpcnet.train()
 
 
 if __name__ == "__main__":
+    root_dir = os.path.dirname(os.path.abspath(__file__))
     if len(sys.argv) > 1:
-        main(sys.argv[1])
+        main(root_dir, sys.argv[1])
     else:
-        main(os.path.join(os.path.dirname(os.path.abspath(__file__)), "config/legged_robot.yaml"))
+        main(root_dir, "legged_robot.yaml")

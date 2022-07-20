@@ -87,8 +87,13 @@ Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlP
     // C_{k} * dx_{k} + D_{k} * du_{k} + e_{k} >= 0
     ineqConstraints = optimalControlProblem.inequalityConstraintPtr->getLinearApproximation(t, x, u, *optimalControlProblem.preComputationPtr);
     if (ineqConstraints.f.size() > 0) {
-      // constraint is only a violation if negative
+      // Constraint is only a violation if negative
       performance.inequalityConstraintsSSE = dt * ineqConstraints.f.cwiseMin(0.0).squaredNorm();
+
+      // Adapt if using projection
+      if (projectStateInputEqualityConstraints) {
+        changeOfInputVariables(ineqConstraints, projection.dfdu, projection.dfdx, projection.f);
+      }
     }
   }
 

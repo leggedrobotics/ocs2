@@ -248,14 +248,22 @@ MultipleShootingSolver::OcpSubproblemSolution MultipleShootingSolver::getOCPSolu
   auto& deltaXSol = solution.deltaXSol;
   auto& deltaUSol = solution.deltaUSol;
   hpipm_status status;
+
+  std::vector<VectorFunctionLinearApproximation>* eqConstraintPtr = nullptr;
+  std::vector<VectorFunctionLinearApproximation>* ineqConstraintPtr = nullptr;
+
   const bool hasStateInputConstraints = !ocpDefinitions_.front().equalityConstraintPtr->empty();
   if (hasStateInputConstraints && !settings_.projectStateInputEqualityConstraints) {
-    hpipmInterface_.resize(hpipm_interface::extractSizesFromProblem(dynamics_, cost_, &constraints_, &ineqConstraints_));
-    status = hpipmInterface_.solve(delta_x0, dynamics_, cost_, &constraints_, &ineqConstraints_, deltaXSol, deltaUSol, settings_.printSolverStatus);
-  } else {  // without constraints, or when using projection, we have an unconstrained QP.
-    hpipmInterface_.resize(hpipm_interface::extractSizesFromProblem(dynamics_, cost_, nullptr, nullptr));
-    status = hpipmInterface_.solve(delta_x0, dynamics_, cost_, nullptr, nullptr, deltaXSol, deltaUSol, settings_.printSolverStatus);
+    eqConstraintPtr = &constraints_;
   }
+
+  const bool hasInequalityConstraints = !ocpDefinitions_.front().inequalityConstraintPtr->empty();
+  if (hasInequalityConstraints) {
+    ineqConstraintPtr = &ineqConstraints_;
+  }
+
+  hpipmInterface_.resize(hpipm_interface::extractSizesFromProblem(dynamics_, cost_, &constraints_, &ineqConstraints_));
+  status = hpipmInterface_.solve(delta_x0, dynamics_, cost_, &constraints_, &ineqConstraints_, deltaXSol, deltaUSol, settings_.printSolverStatus);
 
   if (status != hpipm_status::SUCCESS) {
     throw std::runtime_error("[MultipleShootingSolver] Failed to solve QP");

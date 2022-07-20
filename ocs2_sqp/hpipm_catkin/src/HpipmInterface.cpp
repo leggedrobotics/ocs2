@@ -321,6 +321,55 @@ class HpipmInterface::Impl {
       }
     }
 
+    // === Slacks ===
+    // L2 slack penalties - only diagonal is stored
+    std::vector<vector_t> Zl(N + 1);
+    std::vector<vector_t> Zu(N + 1);
+
+    // L1 slack penalties
+    std::vector<vector_t> zl(N + 1);
+    std::vector<vector_t> zu(N + 1);
+
+    // Lower bounds on lower and upper slacks
+    std::vector<vector_t> sl(N + 1);
+    std::vector<vector_t> su(N + 1);
+
+    // Slack index variables: used to control which constraints we actually
+    // want to apply the slacks to.
+    std::vector<Eigen::VectorXi> idxs(N + 1);
+
+    // Raw slack data
+    std::vector<scalar_t*> ZZl(N + 1, nullptr);
+    std::vector<scalar_t*> ZZu(N + 1, nullptr);
+    std::vector<scalar_t*> zzu(N + 1, nullptr);
+    std::vector<scalar_t*> zzl(N + 1, nullptr);
+    std::vector<scalar_t*> lls(N + 1, nullptr);
+    std::vector<scalar_t*> lus(N + 1, nullptr);
+    std::vector<int*> iidxs(N + 1, nullptr);
+
+    if (settings_.use_slack) {
+        for (int k = 0; k <= N; k++) {
+          size_t n = ocpSize_.numIneqSlack[k];
+          Zl[k].setConstant(n, settings_.slack_lower_L2_penalty);
+          Zu[k].setConstant(n, settings_.slack_upper_L2_penalty);
+          zl[k].setConstant(n, settings_.slack_lower_L1_penalty);
+          zu[k].setConstant(n, settings_.slack_upper_L1_penalty);
+          sl[k].setConstant(n, settings_.slack_lower_low_bound);
+          su[k].setConstant(n, settings_.slack_upper_low_bound);
+
+          // set indices to [0, ..., n - 1]
+          idxs[k].setLinSpaced(n, 0, n - 1);
+
+          ZZl[k] = Zl[k].data();
+          ZZu[k] = Zu[k].data();
+          zzl[k] = zl[k].data();
+          zzu[k] = zu[k].data();
+          lls[k] = sl[k].data();
+          lus[k] = su[k].data();
+          iidxs[k] = idxs[k].data();
+        }
+    }
+
     // === Unused ===
     int** hidxbx = nullptr;
     scalar_t** hlbx = nullptr;
@@ -328,17 +377,10 @@ class HpipmInterface::Impl {
     int** hidxbu = nullptr;
     scalar_t** hlbu = nullptr;
     scalar_t** hubu = nullptr;
-    scalar_t** hZl = nullptr;
-    scalar_t** hZu = nullptr;
-    scalar_t** hzl = nullptr;
-    scalar_t** hzu = nullptr;
-    int** hidxs = nullptr;
-    scalar_t** hlls = nullptr;
-    scalar_t** hlus = nullptr;
 
     // === Set and solve ===
     d_ocp_qp_set_all(AA.data(), BB.data(), bb.data(), QQ.data(), SS.data(), RR.data(), qq.data(), rr.data(), hidxbx, hlbx, hubx, hidxbu,
-                     hlbu, hubu, CC.data(), DD.data(), llg.data(), uug.data(), hZl, hZu, hzl, hzu, hidxs, hlls, hlus, &qp_);
+                     hlbu, hubu, CC.data(), DD.data(), llg.data(), uug.data(), ZZl.data(), ZZu.data(), zzl.data(), zzu.data(), iidxs.data(), lls.data(), lus.data(), &qp_);
     d_ocp_qp_ipm_solve(&qp_, &qpSol_, &arg_, &workspace_);
 
     if (verbose) {

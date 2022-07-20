@@ -49,7 +49,8 @@ bool operator==(const OcpSize& lhs, const OcpSize& rhs) noexcept {
 OcpSize extractSizesFromProblem(const std::vector<VectorFunctionLinearApproximation>& dynamics,
                                 const std::vector<ScalarFunctionQuadraticApproximation>& cost,
                                 const std::vector<VectorFunctionLinearApproximation>* constraints,
-                                const std::vector<VectorFunctionLinearApproximation>* ineqConstraints) {
+                                const std::vector<VectorFunctionLinearApproximation>* ineqConstraints,
+                                bool useSlack) {
   const int numStages = dynamics.size();
 
   OcpSize problemSize(dynamics.size());
@@ -71,6 +72,13 @@ OcpSize extractSizesFromProblem(const std::vector<VectorFunctionLinearApproximat
   if (ineqConstraints != nullptr) {
     for (int k = 0; k < numStages + 1; k++) {
       problemSize.numIneqConstraints[k] += (*ineqConstraints)[k].f.size();
+    }
+  }
+
+  // Slack variables
+  if (useSlack) {
+    for (int k = 0; k < numStages + 1; k++) {
+      problemSize.numIneqSlack[k] = problemSize.numIneqConstraints[k];
     }
   }
 

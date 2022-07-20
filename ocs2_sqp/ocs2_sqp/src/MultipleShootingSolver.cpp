@@ -262,8 +262,8 @@ MultipleShootingSolver::OcpSubproblemSolution MultipleShootingSolver::getOCPSolu
     ineqConstraintPtr = &ineqConstraints_;
   }
 
-  hpipmInterface_.resize(hpipm_interface::extractSizesFromProblem(dynamics_, cost_, &constraints_, &ineqConstraints_));
-  status = hpipmInterface_.solve(delta_x0, dynamics_, cost_, &constraints_, &ineqConstraints_, deltaXSol, deltaUSol, settings_.printSolverStatus);
+  hpipmInterface_.resize(hpipm_interface::extractSizesFromProblem(dynamics_, cost_, eqConstraintPtr, ineqConstraintPtr, settings_.hpipmSettings.use_slack));
+  status = hpipmInterface_.solve(delta_x0, dynamics_, cost_, eqConstraintPtr, ineqConstraintPtr, deltaXSol, deltaUSol, settings_.printSolverStatus);
 
   if (status != hpipm_status::SUCCESS) {
     throw std::runtime_error("[MultipleShootingSolver] Failed to solve QP");

@@ -33,6 +33,7 @@ Provides a base class for all policy classes.
 """
 
 import torch
+from typing import Tuple
 
 from ocs2_mpcnet_core.config import Config
 from ocs2_mpcnet_core.helper import bmv
@@ -63,6 +64,19 @@ class BasePolicy(torch.nn.Module):
         self.action_scaling = (
             torch.tensor(config.ACTION_SCALING, device=config.DEVICE, dtype=config.DTYPE).diag().unsqueeze(dim=0)
         )
+
+    def forward(self, observation: torch.Tensor) -> Tuple[torch.Tensor, ...]:
+        """Forward method.
+
+        Defines the computation performed at every call. Computes the output tensors from the input tensors.
+
+        Args:
+            observation: A (B,O) tensor with the observations.
+
+        Returns:
+            tuple: A tuple with the predictions, e.g. containing a (B,A) tensor with the predicted actions.
+        """
+        raise NotImplementedError()
 
     def scale_observation(self, observation: torch.Tensor) -> torch.Tensor:
         """Scale observation.

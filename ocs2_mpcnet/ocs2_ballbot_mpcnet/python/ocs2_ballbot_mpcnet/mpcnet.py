@@ -89,9 +89,7 @@ def main(config_file_path: str) -> None:
         policy_file_path = "/tmp/data_generation_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".onnx"
         torch.onnx.export(model=policy, args=dummy_observation, f=policy_file_path)
         initial_observations, mode_schedules, target_trajectories = helper.get_tasks(
-            config,
-            config.DATA_GENERATION_TASKS,
-            config.DATA_GENERATION_DURATION,
+            config, config.DATA_GENERATION_TASKS, config.DATA_GENERATION_DURATION
         )
         mpcnet_interface.startDataGeneration(
             alpha,
@@ -109,9 +107,7 @@ def main(config_file_path: str) -> None:
         policy_file_path = "/tmp/policy_evaluation_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".onnx"
         torch.onnx.export(model=policy, args=dummy_observation, f=policy_file_path)
         initial_observations, mode_schedules, target_trajectories = helper.get_tasks(
-            config,
-            config.POLICY_EVALUATION_TASKS,
-            config.POLICY_EVALUATION_DURATION,
+            config, config.POLICY_EVALUATION_TASKS, config.POLICY_EVALUATION_DURATION
         )
         mpcnet_interface.startPolicyEvaluation(
             alpha,

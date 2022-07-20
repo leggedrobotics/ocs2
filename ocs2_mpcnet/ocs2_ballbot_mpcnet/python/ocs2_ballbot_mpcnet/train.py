@@ -35,6 +35,7 @@ Main script for training an MPC-Net policy for ballbot.
 """
 
 import sys
+import os
 
 from ocs2_mpcnet_core.config import Config
 from ocs2_mpcnet_core.loss.hamiltonian import HamiltonianLoss
@@ -66,4 +67,4 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         main(sys.argv[1])
     else:
-        main("./config/ballbot.yaml")
+        main(os.path.join(os.path.dirname(os.path.abspath(__file__)), "config/ballbot.yaml"))

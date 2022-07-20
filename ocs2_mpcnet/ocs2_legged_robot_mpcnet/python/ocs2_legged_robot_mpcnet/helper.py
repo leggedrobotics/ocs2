@@ -221,6 +221,8 @@ def get_tasks(
             - mode_schedules: The desired mode schedules given by an OCS2 mode schedule array.
             - target_trajectories: The desired target trajectories given by an OCS2 target trajectories array.
     """
+    initial_mode = 15
+    initial_time = 0.0
     initial_observations = helper.get_system_observation_array(tasks_number)
     mode_schedules = helper.get_mode_schedule_array(tasks_number)
     target_trajectories = helper.get_target_trajectories_array(tasks_number)
@@ -230,8 +232,8 @@ def get_tasks(
     for i in range(tasks_number):
         if choices[i] == "stance":
             initial_observations[i] = helper.get_system_observation(
-                15,
-                0.0,
+                initial_mode,
+                initial_time,
                 get_random_initial_state_stance(config.STATE_DIM, config.DEFAULT_STATE),
                 np.zeros(config.INPUT_DIM),
             )
@@ -245,8 +247,8 @@ def get_tasks(
             )
         elif choices[i] == "trot_1":
             initial_observations[i] = helper.get_system_observation(
-                15,
-                0.0,
+                initial_mode,
+                initial_time,
                 get_random_initial_state_trot(config.STATE_DIM, config.DEFAULT_STATE),
                 np.zeros(config.INPUT_DIM),
             )
@@ -260,8 +262,8 @@ def get_tasks(
             )
         elif choices[i] == "trot_2":
             initial_observations[i] = helper.get_system_observation(
-                15,
-                0.0,
+                initial_mode,
+                initial_time,
                 get_random_initial_state_trot(config.STATE_DIM, config.DEFAULT_STATE),
                 np.zeros(config.INPUT_DIM),
             )

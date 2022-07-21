@@ -60,7 +60,7 @@ def bdot(bv1: torch.Tensor, bv2: torch.Tensor) -> torch.Tensor:
         bv2: A (B,N) tensor containing a batch of vectors.
 
     Returns:
-        A (B,N) tensor containing the batch-wise dot product.
+        A (B) tensor containing the batch-wise dot product.
     """
     return torch.sum(torch.mul(bv1, bv2), dim=1)
 

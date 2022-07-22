@@ -89,23 +89,6 @@ class SLQ final : public GaussNewtonDDP {
                                            scalar_array_t& SsNormalizedTime, size_array_t& SsNormalizedPostEventIndices,
                                            vector_array_t& allSsTrajectory);
 
-  /**
-   * Integrates the riccati equation and freely selects the time nodes for the value function.
-   *
-   * @param riccatiIntegrator [in] : Riccati integrator object
-   * @param riccatiEquation [in] : Riccati equation object
-   * @param nominalTimeTrajectory [in] : time trajectory produced in the forward rollout.
-   * @param nominalEventsPastTheEndIndices [in] : Indices into nominalTimeTrajectory to point to times right after event times
-   * @param allSsFinal [in] : Final value of the value function.
-   * @param SsNormalizedTime [out] : Time trajectory of the value function.
-   * @param SsNormalizedPostEventIndices [out] : Indices into SsNormalizedTime to point to times right after event times
-   * @param allSsTrajectory [out] : Value function in vector format.
-   */
-  void integrateRiccatiEquationAdaptiveTime(IntegratorBase& riccatiIntegrator, ContinuousTimeRiccatiEquations& riccatiEquation,
-                                            const scalar_array_t& nominalTimeTrajectory, const size_array_t& nominalEventsPastTheEndIndices,
-                                            vector_t allSsFinal, scalar_array_t& SsNormalizedTime,
-                                            size_array_t& SsNormalizedPostEventIndices, vector_array_t& allSsTrajectory);
-
   /****************
    *** Variables **
    ****************/

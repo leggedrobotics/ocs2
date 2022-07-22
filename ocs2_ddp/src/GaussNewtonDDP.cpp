@@ -1063,14 +1063,6 @@ void GaussNewtonDDP::runIteration(scalar_t lqModelExpectedCost) {
 /******************************************************************************************************/
 void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime,
                              const ControllerBase* externalControllerPtr) {
-  if (ddpSettings_.displayInfo_) {
-    std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
-    std::cerr << "\n+++++++++++++ " + ddp::toAlgorithmName(ddpSettings_.algorithm_) + " solver is initialized ++++++++++++++";
-    std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
-    std::cerr << "\nSolver starts from initial time " << initTime << " to final time " << finalTime << ".\n";
-    std::cerr << this->getReferenceManager().getModeSchedule() << "\n";
-  }
-
   // Use the input controller if it is not empty otherwise use the internal controller. In the later case two scenarios are
   // possible: either the internal controller is already set (such as the MPC case where the warm starting option is set true)
   // or the internal controller is empty in which instead of performing a rollout the operating trajectories will be used.
@@ -1081,6 +1073,21 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
       throw std::runtime_error("[GaussNewtonDDP::run] controller must be a LinearController type!");
     }
     *optimizedPrimalSolution_.controllerPtr_ = *linearControllerPtr;
+  }
+
+  runImpl(initTime, initState, finalTime);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
+  if (ddpSettings_.displayInfo_) {
+    std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+    std::cerr << "\n+++++++++++++ " + ddp::toAlgorithmName(ddpSettings_.algorithm_) + " solver is initialized ++++++++++++++";
+    std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+    std::cerr << "\nSolver starts from initial time " << initTime << " to final time " << finalTime << ".\n";
+    std::cerr << this->getReferenceManager().getModeSchedule() << "\n";
   }
 
   initState_ = initState;

@@ -364,9 +364,7 @@ class GaussNewtonDDP : public SolverBase {
   std::pair<bool, std::string> checkConvergence(bool isInitalControllerEmpty, const PerformanceIndex& previousPerformanceIndex,
                                                 const PerformanceIndex& currentPerformanceIndex) const;
 
-  void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override {
-    runImpl(initTime, initState, finalTime, nullptr);
-  }
+  void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override;
 
   void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const ControllerBase* externalControllerPtr) override;
 

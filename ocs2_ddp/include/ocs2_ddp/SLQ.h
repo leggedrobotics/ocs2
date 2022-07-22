@@ -32,8 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/integration/SystemEventHandler.h>
 
-#include "GaussNewtonDDP.h"
-#include "riccati_equations/ContinuousTimeRiccatiEquations.h"
+#include "ocs2_ddp/GaussNewtonDDP.h"
+#include "ocs2_ddp/riccati_equations/ContinuousTimeRiccatiEquations.h"
 
 namespace ocs2 {
 

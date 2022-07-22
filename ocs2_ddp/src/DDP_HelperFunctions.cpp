@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/PreComputation.h>
 #include <ocs2_core/integration/TrapezoidalIntegration.h>
+#include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
 
 namespace ocs2 {

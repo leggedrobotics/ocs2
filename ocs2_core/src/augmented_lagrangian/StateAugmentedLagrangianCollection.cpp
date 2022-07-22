@@ -80,7 +80,7 @@ ScalarFunctionQuadraticApproximation StateAugmentedLagrangianCollection::getQuad
 
   // no active terms (or terms is empty).
   if (firstActiveItr == terms_.end()) {
-    return ScalarFunctionQuadraticApproximation::Zero(state.size(), 0);
+    return ScalarFunctionQuadraticApproximation::Zero(state.size());
   }
 
   // initialize with first active term

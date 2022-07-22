@@ -289,7 +289,7 @@ std::string checkSize(int stateDim, int inputDim, const ScalarFunctionQuadraticA
   if (data.dfdux.rows() != inputDim) {
     errorDescription << dataName << ".dfdux.rows() != " << inputDim << "\n";
   }
-  if (data.dfdux.cols() != stateDim) {
+  if (data.dfdux.cols() != stateDim && inputDim > 0) {
     errorDescription << dataName << ".dfdux.cols() != " << stateDim << "\n";
   }
 
@@ -379,10 +379,10 @@ std::string checkSize(int vectorDim, int stateDim, int inputDim, const VectorFun
   if (vectorDim > 0 && data.dfdx.cols() != stateDim) {
     errorDescription << dataName << ".dfdx.cols() != " << stateDim << "\n";
   }
-  if (vectorDim > 0 && data.dfdu.rows() != vectorDim) {
+  if (vectorDim > 0 && inputDim > 0 && data.dfdu.rows() != vectorDim) {
     errorDescription << dataName << ".dfdu.rows() != " << vectorDim << "\n";
   }
-  if (vectorDim > 0 && data.dfdu.cols() != inputDim) {
+  if (vectorDim > 0 && inputDim > 0 && data.dfdu.cols() != inputDim) {
     errorDescription << dataName << ".dfdu.cols() != " << inputDim << "\n";
   }
 

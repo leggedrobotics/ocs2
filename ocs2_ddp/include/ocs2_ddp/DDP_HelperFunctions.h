@@ -81,6 +81,20 @@ scalar_t rolloutTrajectory(RolloutBase& rollout, scalar_t initTime, const vector
                            PrimalSolution& primalSolution);
 
 /**
+ * Extract a primal solution for the range [initTime, finalTime] from a given primal solution. It assumes that the
+ * given range is within the solution time of input primal solution.
+ *
+ * @note: The controller field is ignored.
+ * @note: The extracted primal solution can have an event time at final time but ignores it at initial time.
+ *
+ * @param [in] timePeriod: The time period for which the solution should be extracted.
+ * @param [in] inputPrimalSolution: The input PrimalSolution
+ * @param [out] outputPrimalSolution: The output PrimalSolution.
+ */
+void extractPrimalSolution(const std::pair<scalar_t, scalar_t>& timePeriod, const PrimalSolution& inputPrimalSolution,
+                           PrimalSolution& outputPrimalSolution);
+
+/**
  * Computes the integral of the squared (IS) norm of the controller update.
  *
  * @param [in] controller: Input controller.

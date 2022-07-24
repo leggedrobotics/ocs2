@@ -250,19 +250,15 @@ class GaussNewtonDDP : public SolverBase {
   std::vector<std::pair<int, int>> getPartitionIntervalsFromTimeTrajectory(const scalar_array_t& timeTrajectory, int numWorkers);
 
   /**
-   * Forward integrate the system dynamics with given controller and operating trajectories. In general, it uses the
-   * given control policies and initial state, to integrate the system dynamics in the time period [initTime, finalTime].
-   * However, if the provided controller does not cover the period [initTime, finalTime], it extrapolates (zero-order)
-   * the controller until the next event time where after it uses the operating trajectories.
+   * Forward integrate the system dynamics with given controller in primalSolution and operating trajectories. In general, it uses
+   * the given control policies and initial state, to integrate the system dynamics in the time period [initTime, finalTime].
+   * However, if the provided controller does not cover the period [initTime, finalTime], it will use the controller till the
+   * final time of the controller and after it uses the operating trajectories.
    *
-   * Attention: Do NOT pass the controllerPtr of the same primalData used for the first parameter to the second parameter, as all
-   * member variables(including controller) of primal data will be cleared.
-   *
-   * @param [out] primalData: primalData
-   * @param [in] controller: nominal controller used to rollout (time, state, input...) trajectories
-   * @param [in] workerIndex: working thread (default is 0).
+   * @param [in, out] primalSolution: The resulting state-input trajectory. The primal solution is initialized with the controller
+   *                                  and the modeSchedule. However, for StateTriggered Rollout the modeSchedule can be overwritten.
    */
-  void rolloutInitialTrajectory(PrimalDataContainer& primalData, ControllerBase* controller, size_t workerIndex = 0);
+  void rolloutInitialTrajectory(PrimalSolution& primalSolution);
 
   /**
    * Calculates the controller. This method uses the following variables. The method modifies unoptimizedController_.
@@ -364,9 +360,7 @@ class GaussNewtonDDP : public SolverBase {
   std::pair<bool, std::string> checkConvergence(bool isInitalControllerEmpty, const PerformanceIndex& previousPerformanceIndex,
                                                 const PerformanceIndex& currentPerformanceIndex) const;
 
-  void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override {
-    runImpl(initTime, initState, finalTime, nullptr);
-  }
+  void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override;
 
   void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const ControllerBase* externalControllerPtr) override;
 
@@ -407,8 +401,8 @@ class GaussNewtonDDP : public SolverBase {
   PerformanceIndex performanceIndex_;
   std::vector<PerformanceIndex> performanceIndexHistory_;
 
+  std::unique_ptr<RolloutBase> initializerRolloutPtr_;
   std::vector<std::unique_ptr<RolloutBase>> dynamicsForwardRolloutPtrStock_;
-  std::vector<std::unique_ptr<RolloutBase>> initializerRolloutPtrStock_;
 
   // optimized data
   DualSolution optimizedDualSolution_;

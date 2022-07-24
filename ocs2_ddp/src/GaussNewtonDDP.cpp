@@ -72,20 +72,15 @@ GaussNewtonDDP::GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rol
         "method!");
   }
 
-  // Dynamics, Constraints, derivatives, and cost
-  dynamicsForwardRolloutPtrStock_.reserve(ddpSettings_.nThreads_);
-  initializerRolloutPtrStock_.reserve(ddpSettings_.nThreads_);
-  optimalControlProblemStock_.reserve(ddpSettings_.nThreads_);
+  // initializer Rollout
+  initializerRolloutPtr_.reset(new InitializerRollout(initializer, rollout.settings()));
 
-  // initialize all subsystems, etc.
+  // initialize rollout and OCP instances for multi-thread compuation
+  optimalControlProblemStock_.reserve(ddpSettings_.nThreads_);
+  dynamicsForwardRolloutPtrStock_.reserve(ddpSettings_.nThreads_);
   for (size_t i = 0; i < ddpSettings_.nThreads_; i++) {
     optimalControlProblemStock_.push_back(optimalControlProblem);
-
-    // initialize rollout
     dynamicsForwardRolloutPtrStock_.emplace_back(rollout.clone());
-
-    // initialize initializerRollout
-    initializerRolloutPtrStock_.emplace_back(new InitializerRollout(initializer, rollout.settings()));
   }  // end of i loop
 
   // search strategy method
@@ -413,22 +408,18 @@ void GaussNewtonDDP::runParallel(std::function<void(void)> taskFunction, size_t 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::rolloutInitialTrajectory(PrimalDataContainer& primalData, ControllerBase* controller, size_t workerIndex /*= 0*/) {
-  assert(primalData.primalSolution.controllerPtr_.get() != controller);
-  // clear output
-  primalData.clear();
-  // for non-StateTriggeredRollout initialize modeSchedule
-  primalData.primalSolution.modeSchedule_ = this->getReferenceManager().getModeSchedule();
-
+void GaussNewtonDDP::rolloutInitialTrajectory(PrimalSolution& primalSolution) {
   // create alias
-  auto& modeSchedule = primalData.primalSolution.modeSchedule_;
-  auto& timeTrajectory = primalData.primalSolution.timeTrajectory_;
-  auto& stateTrajectory = primalData.primalSolution.stateTrajectory_;
-  auto& inputTrajectory = primalData.primalSolution.inputTrajectory_;
-  auto& postEventIndices = primalData.primalSolution.postEventIndices_;
+  auto* controllerPtr = primalSolution.controllerPtr_.get();
+  auto& modeSchedule = primalSolution.modeSchedule_;
+  auto& timeTrajectory = primalSolution.timeTrajectory_;
+  auto& stateTrajectory = primalSolution.stateTrajectory_;
+  auto& inputTrajectory = primalSolution.inputTrajectory_;
+  auto& postEventIndices = primalSolution.postEventIndices_;
 
   // divide the rollout segment in controller rollout and operating points
-  const auto controllerAvailableTill = controller->empty() ? initTime_ : static_cast<LinearController*>(controller)->timeStamp_.back();
+  const auto controllerAvailableTill =
+      controllerPtr->empty() ? initTime_ : static_cast<LinearController*>(controllerPtr)->timeStamp_.back();
   const auto controllerRolloutFromTo = std::make_pair(initTime_, std::max(initTime_, std::min(controllerAvailableTill, finalTime_)));
   const auto operatingPointsFromTo = std::make_pair(controllerRolloutFromTo.second, finalTime_);
 
@@ -447,8 +438,9 @@ void GaussNewtonDDP::rolloutInitialTrajectory(PrimalDataContainer& primalData, C
   // rollout with controller
   vector_t xCurrent = initState_;
   if (controllerRolloutFromTo.first < controllerRolloutFromTo.second) {
+    constexpr size_t workerIndex = 0;
     xCurrent = dynamicsForwardRolloutPtrStock_[workerIndex]->run(controllerRolloutFromTo.first, initState_, controllerRolloutFromTo.second,
-                                                                 controller, modeSchedule, timeTrajectory, postEventIndices,
+                                                                 controllerPtr, modeSchedule, timeTrajectory, postEventIndices,
                                                                  stateTrajectory, inputTrajectory);
   }
 
@@ -468,9 +460,8 @@ void GaussNewtonDDP::rolloutInitialTrajectory(PrimalDataContainer& primalData, C
     size_array_t eventsPastTheEndIndecesTail;
     vector_array_t stateTrajectoryTail;
     vector_array_t inputTrajectoryTail;
-    xCurrent = initializerRolloutPtrStock_[workerIndex]->run(operatingPointsFromTo.first, xCurrent, operatingPointsFromTo.second, nullptr,
-                                                             modeSchedule, timeTrajectoryTail, eventsPastTheEndIndecesTail,
-                                                             stateTrajectoryTail, inputTrajectoryTail);
+    xCurrent = initializerRolloutPtr_->run(operatingPointsFromTo.first, xCurrent, operatingPointsFromTo.second, nullptr, modeSchedule,
+                                           timeTrajectoryTail, eventsPastTheEndIndecesTail, stateTrajectoryTail, inputTrajectoryTail);
 
     // Add controller rollout length to event past the indeces
     for (auto& eventIndex : eventsPastTheEndIndecesTail) {
@@ -905,16 +896,20 @@ void GaussNewtonDDP::runInit() {
   nominalDualData_.swap(cachedDualData_);
   nominalPrimalData_.swap(cachedPrimalData_);
 
-  // initial controller rollout
   try {
     constexpr size_t taskId = 0;
     constexpr scalar_t stepLength = 0.0;
-    // perform a rollout
-    // Nominal controller is stored in the optimized primal data as it is either the result of previous solve or it is provided by user and
+
+    // clear before starting to fill nominalPrimalData_
+    nominalPrimalData_.clear();
+
+    // for non-StateTriggeredRollout initialize modeSchedule
+    nominalPrimalData_.primalSolution.modeSchedule_ = this->getReferenceManager().getModeSchedule();
+    // nominal controller is stored in the optimized primal data as it is either the result of previous solve or it is provided by user and
     // copied to optimized data container manually at the beginning of runImpl
-    rolloutInitialTrajectory(nominalPrimalData_, optimizedPrimalSolution_.controllerPtr_.get(), taskId);
-    // swap controller used to rollout the nominal trajectories back to nominal data container.
     nominalPrimalData_.primalSolution.controllerPtr_.swap(optimizedPrimalSolution_.controllerPtr_);
+    // perform a rollout
+    rolloutInitialTrajectory(nominalPrimalData_.primalSolution);
 
     // adjust dual solution
     totalDualSolutionTimer_.startTimer();
@@ -1063,14 +1058,6 @@ void GaussNewtonDDP::runIteration(scalar_t lqModelExpectedCost) {
 /******************************************************************************************************/
 void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime,
                              const ControllerBase* externalControllerPtr) {
-  if (ddpSettings_.displayInfo_) {
-    std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
-    std::cerr << "\n+++++++++++++ " + ddp::toAlgorithmName(ddpSettings_.algorithm_) + " solver is initialized ++++++++++++++";
-    std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
-    std::cerr << "\nSolver starts from initial time " << initTime << " to final time " << finalTime << ".\n";
-    std::cerr << this->getReferenceManager().getModeSchedule() << "\n";
-  }
-
   // Use the input controller if it is not empty otherwise use the internal controller. In the later case two scenarios are
   // possible: either the internal controller is already set (such as the MPC case where the warm starting option is set true)
   // or the internal controller is empty in which instead of performing a rollout the operating trajectories will be used.
@@ -1081,6 +1068,21 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
       throw std::runtime_error("[GaussNewtonDDP::run] controller must be a LinearController type!");
     }
     *optimizedPrimalSolution_.controllerPtr_ = *linearControllerPtr;
+  }
+
+  runImpl(initTime, initState, finalTime);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
+  if (ddpSettings_.displayInfo_) {
+    std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+    std::cerr << "\n+++++++++++++ " + ddp::toAlgorithmName(ddpSettings_.algorithm_) + " solver is initialized ++++++++++++++";
+    std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+    std::cerr << "\nSolver starts from initial time " << initTime << " to final time " << finalTime << ".\n";
+    std::cerr << this->getReferenceManager().getModeSchedule() << "\n";
   }
 
   initState_ = initState;

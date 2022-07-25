@@ -126,7 +126,7 @@ class TestDummyStateConstraint final : public ocs2::StateConstraint {
   LinearApproximation_t getLinearApproximation(ocs2::scalar_t time, const ocs2::vector_t& state,
                                                const ocs2::PreComputation&) const override {
     LinearApproximation_t linearApproximation;
-    linearApproximation.setZero(2, state.rows(), 0);
+    linearApproximation.setZero(2, state.rows());
     linearApproximation.f = getValue(time, state, ocs2::PreComputation());
     linearApproximation.dfdx.row(1).setOnes();
     return linearApproximation;
@@ -135,7 +135,7 @@ class TestDummyStateConstraint final : public ocs2::StateConstraint {
   QuadraticApproximation_t getQuadraticApproximation(ocs2::scalar_t time, const ocs2::vector_t& state,
                                                      const ocs2::PreComputation&) const override {
     QuadraticApproximation_t quadraticApproximation;
-    quadraticApproximation.setZero(2, state.rows(), 0);
+    quadraticApproximation.setZero(2, state.rows());
     quadraticApproximation.f = getValue(time, state, ocs2::PreComputation());
     quadraticApproximation.dfdx.row(1).setOnes();
     quadraticApproximation.dfdxx[1].setOnes();

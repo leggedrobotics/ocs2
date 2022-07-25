@@ -124,7 +124,7 @@ TerminalTranscription setupTerminalNode(const OptimalControlProblem& optimalCont
   cost = approximateFinalCost(optimalControlProblem, t, x);
   performance.cost = cost.f;
 
-  constraints = VectorFunctionLinearApproximation::Zero(0, x.size(), 0);
+  constraints = VectorFunctionLinearApproximation::Zero(0, x.size());
 
   return transcription;
 }
@@ -162,7 +162,7 @@ EventTranscription setupEventNode(const OptimalControlProblem& optimalControlPro
   cost = approximateEventCost(optimalControlProblem, t, x);
   performance.cost = cost.f;
 
-  constraints = VectorFunctionLinearApproximation::Zero(0, x.size(), 0);
+  constraints = VectorFunctionLinearApproximation::Zero(0, x.size());
   return transcription;
 }
 

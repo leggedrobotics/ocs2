@@ -14,15 +14,18 @@ SwitchedModelPreComputation::SwitchedModelPreComputation(const SwingTrajectoryPl
                                                          const ad_kinematic_model_t& adKinematicModel, const com_model_t& comModel,
                                                          const ad_com_model_t& adComModel, ModelSettings settings)
     : swingTrajectoryPlannerPtr_(&swingTrajectoryPlanner), robotMass_(comModel.totalMass()) {
-  std::string libName = "AnymalPrecomputation_intermediateLinearOutputs";
   std::string libFolder = "/tmp/ocs2";
-  auto diffFunc = [&](const ad_vector_t& x, ad_vector_t& y) {
+
+  // intermediate linear outputs
+  std::string intermediateLibName = "AnymalPrecomputation_intermediateLinearOutputs";
+  auto intermediateDiffFunc = [&](const ad_vector_t& x, ad_vector_t& y) {
     // Extract elements from taped input
     comkino_state_ad_t state = x.segment(0, STATE_DIM);
     comkino_input_ad_t input = x.segment(STATE_DIM, INPUT_DIM);
     intermediateLinearOutputs(adComModel, adKinematicModel, state, input, y);
   };
-  intermediateLinearOutputAdInterface_.reset(new ocs2::CppAdInterface(diffFunc, STATE_DIM + INPUT_DIM, libName, libFolder));
+  intermediateLinearOutputAdInterface_.reset(
+      new ocs2::CppAdInterface(intermediateDiffFunc, STATE_DIM + INPUT_DIM, intermediateLibName, libFolder));
   tapedStateInput_.resize(STATE_DIM + INPUT_DIM);
 
   const auto initCollisions = kinematicModel.collisionSpheresInBaseFrame(joint_coordinate_t::Zero());
@@ -36,13 +39,20 @@ SwitchedModelPreComputation::SwitchedModelPreComputation(const SwingTrajectoryPl
   collisionSpheresInOriginFrame_.resize(maxNumCollisions);
   collisionSpheresDerivative_.resize(maxNumCollisions);
 
-  // Generate the model
+  // pre jump linear outputs
+  std::string prejumpLibName = "AnymalPrecomputation_prejumpLinearOutputs";
+  auto prejumpDiffFunc = [&](const ad_vector_t& x, ad_vector_t& y) { prejumpLinearOutputs(adComModel, adKinematicModel, x, y); };
+  prejumpLinearOutputAdInterface_.reset(new ocs2::CppAdInterface(prejumpDiffFunc, STATE_DIM, prejumpLibName, libFolder));
+
+  // Generate the models
   const bool verbose = true;
   const auto order = ocs2::CppAdInterface::ApproximationOrder::First;
   if (settings.recompileLibraries_) {
     intermediateLinearOutputAdInterface_->createModels(order, verbose);
+    prejumpLinearOutputAdInterface_->createModels(order, verbose);
   } else {
     intermediateLinearOutputAdInterface_->loadModelsIfAvailable(order, verbose);
+    prejumpLinearOutputAdInterface_->loadModelsIfAvailable(order, verbose);
   }
 }
 
@@ -50,6 +60,7 @@ SwitchedModelPreComputation::SwitchedModelPreComputation(const SwitchedModelPreC
     : ocs2::PreComputation(other),
       swingTrajectoryPlannerPtr_(other.swingTrajectoryPlannerPtr_),
       intermediateLinearOutputAdInterface_(new ocs2::CppAdInterface(*other.intermediateLinearOutputAdInterface_)),
+      prejumpLinearOutputAdInterface_(new ocs2::CppAdInterface(*other.prejumpLinearOutputAdInterface_)),
       collisionRadii_(other.collisionRadii_),
       collisionSpheresActive_(other.collisionSpheresActive_),
       collisionSpheresInOriginFrame_(other.collisionSpheresInOriginFrame_),
@@ -74,6 +85,15 @@ void SwitchedModelPreComputation::request(ocs2::RequestSet request, scalar_t t, 
 
 void SwitchedModelPreComputation::requestPreJump(ocs2::RequestSet request, scalar_t t, const vector_t& x) {
   updateFeetPhases(t);
+
+  if (request.containsAny(ocs2::Request::Cost + ocs2::Request::Constraint + ocs2::Request::SoftConstraint)) {
+    updateMotionReference(t);
+
+    updatePrejumpLinearOutputs(t, x);
+    if (request.contains(ocs2::Request::Approximation)) {
+      updatePrejumpLinearOutputDerivatives(t, x);
+    }
+  }
 }
 
 void SwitchedModelPreComputation::requestFinal(ocs2::RequestSet request, scalar_t t, const vector_t& x) {
@@ -227,6 +247,44 @@ void SwitchedModelPreComputation::updateIntermediateLinearOutputDerivatives(scal
     const auto collisionGlobalId = NUM_CONTACT_POINTS + collisionIndex;
     collisionSpheresActive_[collisionGlobalId] = true;
     collisionSpheresDerivative_[collisionGlobalId] = intermediateLinearOutputDerivatives.block<3, STATE_DIM>(indexInOutputs, 0);
+  }
+}
+
+void SwitchedModelPreComputation::prejumpLinearOutputs(const ad_com_model_t& adComModel, const ad_kinematic_model_t& adKinematicsModel,
+                                                       const ad_vector_t& state, ad_vector_t& outputs) {
+  // Copy to fixed size
+  comkino_state_ad_t x = state;
+
+  // Extract elements from state
+  const base_coordinate_ad_t basePose = getBasePose(x);
+  const joint_coordinate_ad_t qJoints = getJointPositions(x);
+
+  const auto o_feetPositionsAsArray = adKinematicsModel.feetPositionsInOriginFrame(basePose, qJoints);
+
+  const int numberOfOutputs = 3 * NUM_CONTACT_POINTS;
+  outputs.resize(numberOfOutputs);
+
+  outputs.head<3 * NUM_CONTACT_POINTS>() = fromArray(o_feetPositionsAsArray);
+}
+
+void SwitchedModelPreComputation::updatePrejumpLinearOutputs(scalar_t t, const vector_t& state) {
+  // Evaluate autodiff
+  const auto prejumpLinearOutputs = prejumpLinearOutputAdInterface_->getFunctionValue(state);
+
+  // Read feet positions, add swing feet as collision bodies
+  for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
+    const int indexInOutputs = 3 * leg;
+    feetPositionInOriginFrame_[leg] = prejumpLinearOutputs.segment<3>(indexInOutputs);
+  }
+}
+
+void SwitchedModelPreComputation::updatePrejumpLinearOutputDerivatives(scalar_t t, const vector_t& state) {
+  // Evaluate autodiff
+  const auto prejumpLinearOutputDerivatives = prejumpLinearOutputAdInterface_->getJacobian(state);
+
+  for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
+    const int indexInOutputs = 3 * leg;
+    feetPositionInOriginFrameStateDerivative_[leg] = prejumpLinearOutputDerivatives.block<3, STATE_DIM>(indexInOutputs, 0);
   }
 }
 

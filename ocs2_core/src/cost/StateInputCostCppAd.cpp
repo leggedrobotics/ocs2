@@ -63,10 +63,10 @@ StateInputCostCppAd::StateInputCostCppAd(const StateInputCostCppAd& rhs)
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t StateInputCostCppAd::getValue(scalar_t time, const vector_t& state, const vector_t& input,
-                                       const TargetTrajectories& targetTrajectories, const PreComputation&) const {
+                                       const TargetTrajectories& targetTrajectories, const PreComputation& preComputation) const {
   vector_t tapedTimeStateInput(1 + state.rows() + input.rows());
   tapedTimeStateInput << time, state, input;
-  return adInterfacePtr_->getFunctionValue(tapedTimeStateInput, getParameters(time, targetTrajectories))(0);
+  return adInterfacePtr_->getFunctionValue(tapedTimeStateInput, getParameters(time, targetTrajectories, preComputation))(0);
 }
 
 /******************************************************************************************************/
@@ -75,12 +75,12 @@ scalar_t StateInputCostCppAd::getValue(scalar_t time, const vector_t& state, con
 ScalarFunctionQuadraticApproximation StateInputCostCppAd::getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                                     const vector_t& input,
                                                                                     const TargetTrajectories& targetTrajectories,
-                                                                                    const PreComputation&) const {
+                                                                                    const PreComputation& preComputation) const {
   ScalarFunctionQuadraticApproximation cost;
 
   const size_t stateDim = state.rows();
   const size_t inputDim = input.rows();
-  const vector_t params = getParameters(time, targetTrajectories);
+  const vector_t params = getParameters(time, targetTrajectories, preComputation);
   vector_t tapedTimeStateInput(1 + stateDim + inputDim);
   tapedTimeStateInput << time, state, input;
 

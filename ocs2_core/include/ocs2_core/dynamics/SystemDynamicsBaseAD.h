@@ -63,15 +63,16 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
   void initialize(size_t stateDim, size_t inputDim, const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2",
                   bool recompileLibraries = true, bool verbose = true);
 
-  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) final;
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation& preComputation) final;
 
-  vector_t computeJumpMap(scalar_t t, const vector_t& x, const PreComputation&) final;
+  vector_t computeJumpMap(scalar_t t, const vector_t& x, const PreComputation& preComputation) final;
 
   vector_t computeGuardSurfaces(scalar_t t, const vector_t& x) final;
 
-  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) final;
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
+                                                        const PreComputation& preComputation) final;
 
-  VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const PreComputation&) final;
+  VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const PreComputation& preComputation) final;
 
   VectorFunctionLinearApproximation guardSurfacesLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) final;
 
@@ -106,7 +107,7 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
    * @param [in] time: Current time.
    * @return The parameters to be set in the flow map at the start of the horizon
    */
-  virtual vector_t getFlowMapParameters(scalar_t time) const { return vector_t(0); }
+  virtual vector_t getFlowMapParameters(scalar_t time, const PreComputation& /* preComputation */) const { return vector_t(0); }
 
   /**
    * Number of parameters for system flow map.
@@ -131,7 +132,7 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
    * @param [in] time: Current time.
    * @return The parameters to be set in the jump map
    */
-  virtual vector_t getJumpMapParameters(scalar_t time) const { return vector_t(0); }
+  virtual vector_t getJumpMapParameters(scalar_t time, const PreComputation& /* preComputation */) const { return vector_t(0); }
 
   /**
    * Number of parameters for jump map.

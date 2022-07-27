@@ -83,8 +83,14 @@ class SwitchedModelPreComputation : public ocs2::PreComputation {
   void updateIntermediateLinearOutputs(scalar_t t, const vector_t& tapedStateInput);
   void updateIntermediateLinearOutputDerivatives(scalar_t t, const vector_t& tapedStateInput);
 
+  static void prejumpLinearOutputs(const ad_com_model_t& adComModel, const ad_kinematic_model_t& adKinematicsModel,
+                                   const ad_vector_t& state, ad_vector_t& outputs);
+  void updatePrejumpLinearOutputs(scalar_t t, const vector_t& state);
+  void updatePrejumpLinearOutputDerivatives(scalar_t t, const vector_t& state);
+
   const SwingTrajectoryPlanner* swingTrajectoryPlannerPtr_;
   std::unique_ptr<ocs2::CppAdInterface> intermediateLinearOutputAdInterface_;
+  std::unique_ptr<ocs2::CppAdInterface> prejumpLinearOutputAdInterface_;
   std::vector<scalar_t> collisionRadii_;  // Does not include those for the feet
 
   // ===== Storage for the precomputation ===

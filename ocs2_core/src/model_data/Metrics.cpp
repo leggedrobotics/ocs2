@@ -53,6 +53,23 @@ vector_t toVector(const std::vector<LagrangianMetrics>& termsLagrangianMetrics) 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+vector_t toVector(const vector_array_t& constraintArray) {
+  size_t n = 0;
+  std::for_each(constraintArray.begin(), constraintArray.end(), [&n](const vector_t& v) { n += v.size(); });
+
+  vector_t vec(n);
+  size_t head = 0;
+  for (const auto& v : constraintArray) {
+    vec.segment(head, v.size()) = v;
+    head += v.size();
+  }  // end of i loop
+
+  return vec;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 std::vector<LagrangianMetrics> toLagrangianMetrics(const size_array_t& termsSize, const vector_t& vec) {
   std::vector<LagrangianMetrics> lagrangianMetrics;
   lagrangianMetrics.reserve(termsSize.size());
@@ -69,10 +86,36 @@ std::vector<LagrangianMetrics> toLagrangianMetrics(const size_array_t& termsSize
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+vector_array_t toConstraintArray(const size_array_t& termsSize, const vector_t& vec) {
+  vector_array_t constraintArray;
+  constraintArray.reserve(termsSize.size());
+
+  size_t head = 0;
+  for (const auto& l : termsSize) {
+    constraintArray.emplace_back(vec.segment(head, l));
+    head += l;
+  }  // end of i loop
+
+  return constraintArray;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 size_array_t getSizes(const std::vector<LagrangianMetrics>& termsLagrangianMetrics) {
   size_array_t s(termsLagrangianMetrics.size());
   std::transform(termsLagrangianMetrics.begin(), termsLagrangianMetrics.end(), s.begin(),
                  [](const LagrangianMetrics& m) { return static_cast<size_t>(m.constraint.size()); });
+  return s;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+size_array_t getSizes(const vector_array_t& constraintArray) {
+  size_array_t s(constraintArray.size());
+  std::transform(constraintArray.begin(), constraintArray.end(), s.begin(),
+                 [](const vector_t& v) { return static_cast<size_t>(v.size()); });
   return s;
 }
 
@@ -102,10 +145,12 @@ LagrangianMetrics interpolate(const index_alpha_t& indexAlpha, const std::vector
 MetricsCollection interpolate(const index_alpha_t& indexAlpha, const std::vector<MetricsCollection>& dataArray) {
   // number of terms
   const auto ind = indexAlpha.second > 0.5 ? indexAlpha.first : indexAlpha.first + 1;
-  const size_t mumStateEq = dataArray[ind].stateEqLagrangian.size();
-  const size_t mumStateIneq = dataArray[ind].stateIneqLagrangian.size();
-  const size_t mumStateInputEq = dataArray[ind].stateInputEqLagrangian.size();
-  const size_t mumStateInputIneq = dataArray[ind].stateInputIneqLagrangian.size();
+  const size_t mumStateEqConst = dataArray[ind].stateEqConstraint.size();
+  const size_t mumStateInputEqCost = dataArray[ind].stateInputEqConstraint.size();
+  const size_t mumStateEqLag = dataArray[ind].stateEqLagrangian.size();
+  const size_t mumStateIneqLag = dataArray[ind].stateIneqLagrangian.size();
+  const size_t mumStateInputEqLag = dataArray[ind].stateInputEqLagrangian.size();
+  const size_t mumStateInputIneqLag = dataArray[ind].stateInputIneqLagrangian.size();
 
   MetricsCollection out;
 
@@ -114,16 +159,24 @@ MetricsCollection interpolate(const index_alpha_t& indexAlpha, const std::vector
                          [](const std::vector<MetricsCollection>& array, size_t t) -> const scalar_t& { return array[t].cost; });
 
   // constraints
-  out.stateEqConstraint = interpolate(indexAlpha, dataArray, [](const std::vector<MetricsCollection>& array, size_t t) -> const vector_t& {
-    return array[t].stateEqConstraint;
-  });
-  out.stateInputEqConstraint =
-      interpolate(indexAlpha, dataArray,
-                  [](const std::vector<MetricsCollection>& array, size_t t) -> const vector_t& { return array[t].stateInputEqConstraint; });
+  out.stateEqConstraint.reserve(mumStateEqConst);
+  for (size_t i = 0; i < mumStateEqConst; i++) {
+    auto constraint = interpolate(indexAlpha, dataArray, [i](const std::vector<MetricsCollection>& array, size_t t) -> const vector_t& {
+      return array[t].stateEqConstraint[i];
+    });
+    out.stateEqConstraint.emplace_back(std::move(constraint));
+  }
+  out.stateInputEqConstraint.reserve(mumStateInputEqCost);
+  for (size_t i = 0; i < mumStateInputEqCost; i++) {
+    auto constraint = interpolate(indexAlpha, dataArray, [i](const std::vector<MetricsCollection>& array, size_t t) -> const vector_t& {
+      return array[t].stateInputEqConstraint[i];
+    });
+    out.stateInputEqConstraint.emplace_back(std::move(constraint));
+  }
 
   // state equality Lagrangian
-  out.stateEqLagrangian.reserve(mumStateEq);
-  for (size_t i = 0; i < mumStateEq; i++) {
+  out.stateEqLagrangian.reserve(mumStateEqLag);
+  for (size_t i = 0; i < mumStateEqLag; i++) {
     auto penalty = interpolate(indexAlpha, dataArray, [i](const std::vector<MetricsCollection>& array, size_t t) -> const scalar_t& {
       return array[t].stateEqLagrangian[i].penalty;
     });
@@ -134,8 +187,8 @@ MetricsCollection interpolate(const index_alpha_t& indexAlpha, const std::vector
   }  // end of i loop
 
   // state inequality Lagrangian
-  out.stateIneqLagrangian.reserve(mumStateIneq);
-  for (size_t i = 0; i < mumStateIneq; i++) {
+  out.stateIneqLagrangian.reserve(mumStateIneqLag);
+  for (size_t i = 0; i < mumStateIneqLag; i++) {
     auto penalty = interpolate(indexAlpha, dataArray, [i](const std::vector<MetricsCollection>& array, size_t t) -> const scalar_t& {
       return array[t].stateIneqLagrangian[i].penalty;
     });
@@ -146,8 +199,8 @@ MetricsCollection interpolate(const index_alpha_t& indexAlpha, const std::vector
   }  // end of i loop
 
   // state-input equality Lagrangian
-  out.stateInputEqLagrangian.reserve(mumStateInputEq);
-  for (size_t i = 0; i < mumStateInputEq; i++) {
+  out.stateInputEqLagrangian.reserve(mumStateInputEqLag);
+  for (size_t i = 0; i < mumStateInputEqLag; i++) {
     auto penalty = interpolate(indexAlpha, dataArray, [i](const std::vector<MetricsCollection>& array, size_t t) -> const scalar_t& {
       return array[t].stateInputEqLagrangian[i].penalty;
     });
@@ -158,8 +211,8 @@ MetricsCollection interpolate(const index_alpha_t& indexAlpha, const std::vector
   }  // end of i loop
 
   // state-input inequality Lagrangian
-  out.stateInputIneqLagrangian.reserve(mumStateInputIneq);
-  for (size_t i = 0; i < mumStateInputIneq; i++) {
+  out.stateInputIneqLagrangian.reserve(mumStateInputIneqLag);
+  for (size_t i = 0; i < mumStateInputIneqLag; i++) {
     auto penalty = interpolate(indexAlpha, dataArray, [i](const std::vector<MetricsCollection>& array, size_t t) -> const scalar_t& {
       return array[t].stateInputIneqLagrangian[i].penalty;
     });

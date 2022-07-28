@@ -68,8 +68,8 @@ struct MetricsCollection {
   scalar_t cost;
 
   // Equality constraints
-  vector_t stateEqConstraint;
-  vector_t stateInputEqConstraint;
+  vector_array_t stateEqConstraint;
+  vector_array_t stateInputEqConstraint;
 
   // Lagrangians
   std::vector<LagrangianMetrics> stateEqLagrangian;
@@ -96,8 +96,8 @@ struct MetricsCollection {
     // Cost
     cost = 0.0;
     // Equality constraints
-    stateEqConstraint = vector_t();
-    stateInputEqConstraint = vector_t();
+    stateEqConstraint.clear();
+    stateInputEqConstraint.clear();
     // Lagrangians
     stateEqLagrangian.clear();
     stateIneqLagrangian.clear();
@@ -120,6 +120,13 @@ inline scalar_t constraintsSquaredNorm(const std::vector<LagrangianMetrics>& met
   return s;
 }
 
+/** Computes the sum of squared norm of an array of constraint terms */
+inline scalar_t constraintsSquaredNorm(const vector_array_t& constraintArray) {
+  scalar_t s = 0.0;
+  std::for_each(constraintArray.begin(), constraintArray.end(), [&s](const vector_t& v) { s += v.squaredNorm(); });
+  return s;
+}
+
 /**
  * Serializes an array of LagrangianMetrics structures associated to an array of constraint terms.
  *
@@ -127,6 +134,14 @@ inline scalar_t constraintsSquaredNorm(const std::vector<LagrangianMetrics>& met
  * @return Serialized vector of the format : (..., termsMultiplier[i].penalty, termsMultiplier[i].constraint, ...).
  */
 vector_t toVector(const std::vector<LagrangianMetrics>& termsLagrangianMetrics);
+
+/**
+ * Serializes an array of constraint terms.
+ *
+ * @ param [in] constraintArray : An array of constraint terms.
+ * @return Serialized vector of the format : (...,  constraintArray[i], ...).
+ */
+vector_t toVector(const vector_array_t& constraintArray);
 
 /**
  * Gets the size of constraint terms.
@@ -137,6 +152,14 @@ vector_t toVector(const std::vector<LagrangianMetrics>& termsLagrangianMetrics);
 size_array_t getSizes(const std::vector<LagrangianMetrics>& termsLagrangianMetrics);
 
 /**
+ * Gets the size of constraint terms.
+ *
+ * @ param [in] constraintArray : An array of constraint terms.
+ * @return An array of constraint terms size. It has the same size as the input array.
+ */
+size_array_t getSizes(const vector_array_t& constraintArray);
+
+/**
  * Deserializes the vector to an array of LagrangianMetrics structures based on size of constraint terms.
  *
  * @param [in] termsSize : An array of constraint terms size. It as the same size as the output array.
@@ -145,6 +168,16 @@ size_array_t getSizes(const std::vector<LagrangianMetrics>& termsLagrangianMetri
  * @return An array of LagrangianMetrics structures associated to an array of constraint terms
  */
 std::vector<LagrangianMetrics> toLagrangianMetrics(const size_array_t& termsSize, const vector_t& vec);
+
+/**
+ * Deserializes the vector to an array of constraint terms.
+ *
+ * @param [in] termsSize : An array of constraint terms size. It as the same size as the output array.
+ * @param [in] vec : Serialized array of constraint terms of the format :
+ *                   (..., constraintArray[i], ...)
+ * @return An array of LagrangianMetrics structures associated to an array of constraint terms
+ */
+vector_array_t toConstraintArray(const size_array_t& termsSize, const vector_t& vec);
 
 }  // namespace ocs2
 

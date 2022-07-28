@@ -107,13 +107,12 @@ TEST(TestConstraintCollection, getValue) {
   std::unique_ptr<TestDummyConstraint> constraintTerm2(new TestDummyConstraint());
   constraintCollection.add("Constraint1", std::move(constraintTerm1));
   constraintCollection.add("Constraint2", std::move(constraintTerm2));
-
+  const ocs2::vector_t expectedValue = (ocs2::vector_t(2) << 1.0, 2.0).finished();
   constraintValues = constraintCollection.getValue(t, x, u, ocs2::PreComputation());
-  ASSERT_EQ(constraintValues.rows(), 4);
-  EXPECT_EQ(constraintValues[0], 1.0);
-  EXPECT_EQ(constraintValues[1], 2.0);
-  EXPECT_EQ(constraintValues[2], 1.0);
-  EXPECT_EQ(constraintValues[3], 2.0);
+
+  ASSERT_EQ(constraintValues.size(), 2);
+  EXPECT_TRUE(constraintValues[0].isApprox(expectedValue));
+  EXPECT_TRUE(constraintValues[1].isApprox(expectedValue));
 }
 
 TEST(TestConstraintCollection, getLinearApproximation) {

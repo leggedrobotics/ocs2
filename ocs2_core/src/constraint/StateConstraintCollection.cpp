@@ -62,20 +62,13 @@ size_t StateConstraintCollection::getNumConstraints(scalar_t time) const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t StateConstraintCollection::getValue(scalar_t time, const vector_t& state, const PreComputation& preComp) const {
-  vector_t constraintValues;
-  constraintValues.resize(getNumConstraints(time));
-
-  // append vectors of constraint values from each constraintTerm
-  size_t i = 0;
-  for (const auto& constraintTerm : this->terms_) {
-    if (constraintTerm->isActive(time)) {
-      const auto constraintTermValues = constraintTerm->getValue(time, state, preComp);
-      constraintValues.segment(i, constraintTermValues.rows()) = constraintTermValues;
-      i += constraintTermValues.rows();
+vector_array_t StateConstraintCollection::getValue(scalar_t time, const vector_t& state, const PreComputation& preComp) const {
+  vector_array_t constraintValues(this->terms_.size());
+  for (size_t i = 0; i < this->terms_.size(); ++i) {
+    if (this->terms_[i]->isActive(time)) {
+      constraintValues[i] = this->terms_[i]->getValue(time, state, preComp);
     }
-  }
-
+  }  // end of i loop
   return constraintValues;
 }
 

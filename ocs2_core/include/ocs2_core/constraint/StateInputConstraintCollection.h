@@ -52,8 +52,8 @@ class StateInputConstraintCollection : public Collection<StateInputConstraint> {
   /** Returns the number of active constraints at given time. */
   virtual size_t getNumConstraints(scalar_t time) const;
 
-  /** Get the constraint vector value */
-  virtual vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation& preComp) const;
+  /** Get an array of all constraints */
+  virtual vector_array_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation& preComp) const;
 
   /** Get the constraint linear approximation */
   virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input,

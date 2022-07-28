@@ -64,6 +64,14 @@ target_link_libraries(${PROJECT_NAME}_dummy_mrt_node
   ${catkin_LIBRARIES}
 )
 
+add_executable(${PROJECT_NAME}_perceptive_demo
+  src/PerceptiveMpcDemo.cpp
+  )
+target_link_libraries(${PROJECT_NAME}_perceptive_demo
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  )
+
 #########################
 ###   CLANG TOOLING   ###
 #########################
@@ -90,7 +98,7 @@ install(TARGETS ${PROJECT_NAME}
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
-install(TARGETS ${PROJECT_NAME}_mpc_node ${PROJECT_NAME}_dummy_mrt_node
+install(TARGETS ${PROJECT_NAME}_mpc_node ${PROJECT_NAME}_dummy_mrt_node ${PROJECT_NAME}_perceptive_demo
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 install(DIRECTORY config launch

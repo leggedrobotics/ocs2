@@ -68,6 +68,26 @@ Eigen::Matrix<SCALAR_T, 3, 3> rotationMatrixOriginToBase(const Eigen::Matrix<SCA
 }
 
 template <typename SCALAR_T>
+void rotateInPlace2d(Eigen::Matrix<SCALAR_T, 2, 1>& v, SCALAR_T angle) {
+  const SCALAR_T c = cos(angle);
+  const SCALAR_T s = sin(angle);
+  const SCALAR_T vx = v.x();
+  const SCALAR_T vy = v.y();
+  v.x() = c * vx - s * vy;
+  v.y() = s * vx + c * vy;
+}
+
+template <typename SCALAR_T>
+void invRotateInPlace2d(Eigen::Matrix<SCALAR_T, 2, 1>& v, SCALAR_T angle) {
+  const SCALAR_T c = cos(angle);
+  const SCALAR_T s = sin(angle);
+  const SCALAR_T vx = v.x();
+  const SCALAR_T vy = v.y();
+  v.x() = c * vx + s * vy;
+  v.y() = -s * vx + c * vy;
+}
+
+template <typename SCALAR_T>
 void rotateInPlaceZ(Eigen::Matrix<SCALAR_T, 3, 1>& v, SCALAR_T angle) {
   const SCALAR_T c = cos(angle);
   const SCALAR_T s = sin(angle);

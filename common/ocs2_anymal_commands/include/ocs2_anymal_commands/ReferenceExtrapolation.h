@@ -28,11 +28,11 @@ struct BaseReferenceCommand {
   double baseHeight;
 };
 
-struct BasePoseReferenceTrajectory {
+struct Base2dReferenceTrajectory {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   std::vector<double> time;
-  std::vector<Eigen::Vector3d> eulerXyz;
-  std::vector<Eigen::Vector3d> positionInWorld;
+  std::vector<double> yaw;
+  std::vector<Eigen::Vector2d> positionInWorld;
 };
 
 struct BaseReferenceTrajectory {
@@ -44,11 +44,9 @@ struct BaseReferenceTrajectory {
   std::vector<Eigen::Vector3d> angularVelocityInWorld;
 };
 
-Eigen::Vector3d velocityCommandInWorld(double headingVelocity, double lateralVelocity, double yaw);
+Eigen::Vector2d velocityCommand2dInWorld(double headingVelocity, double lateralVelocity, double yaw);
 
-Eigen::Vector3d velocityCommandInWorld(double headingVelocity, double lateralVelocity, const Eigen::Vector3d& eulerXyz);
-
-BasePoseReferenceTrajectory generate2DExtrapolatedBaseReference(const BaseReferenceHorizon& horizon, const BaseReferenceState& initialState,
+Base2dReferenceTrajectory generate2DExtrapolatedBaseReference(const BaseReferenceHorizon& horizon, const BaseReferenceState& initialState,
                                                                 const BaseReferenceCommand& command);
 
 BaseReferenceTrajectory generateExtrapolatedBaseReference(const BaseReferenceHorizon& horizon, const BaseReferenceState& initialState,

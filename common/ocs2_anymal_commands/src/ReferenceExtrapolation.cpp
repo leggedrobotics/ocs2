@@ -35,51 +35,39 @@ void addVelocitiesFromFiniteDifference(BaseReferenceTrajectory& baseRef) {
 }
 }  // namespace
 
-Eigen::Vector3d velocityCommandInWorld(double headingVelocity, double lateralVelocity, double yaw) {
-  Eigen::Vector3d headingReference = Eigen::Vector3d::UnitX();
-  Eigen::Vector3d lateralHeadingRef = Eigen::Vector3d::UnitY();
-  rotateInPlaceZ(headingReference, yaw);
-  rotateInPlaceZ(lateralHeadingRef, yaw);
-
-  return headingVelocity * headingReference + lateralVelocity * lateralHeadingRef;
+Eigen::Vector2d velocityCommand2dInWorld(double headingVelocity, double lateralVelocity, double yaw) {
+  Eigen::Vector2d commandInBase{headingVelocity, lateralVelocity};
+  rotateInPlace2d(commandInBase, yaw);
+  return commandInBase;
 }
 
-Eigen::Vector3d velocityCommandInWorld(double headingVelocity, double lateralVelocity, const Eigen::Vector3d& eulerXyz) {
-  // Project to horizontal plane while preserving heading.
-  const auto yaw = alignDesiredOrientationToTerrain(eulerXyz, TerrainPlane()).z();
-  return velocityCommandInWorld(headingVelocity, lateralVelocity, yaw);
-}
-
-BasePoseReferenceTrajectory generate2DExtrapolatedBaseReference(const BaseReferenceHorizon& horizon, const BaseReferenceState& initialState,
-                                                                const BaseReferenceCommand& command) {
+Base2dReferenceTrajectory generate2DExtrapolatedBaseReference(const BaseReferenceHorizon& horizon, const BaseReferenceState& initialState,
+                                                              const BaseReferenceCommand& command) {
   const double dt = horizon.dt;
 
-  BasePoseReferenceTrajectory baseRef;
+  Base2dReferenceTrajectory baseRef;
   baseRef.time.reserve(horizon.N);
-  baseRef.eulerXyz.reserve(horizon.N);
+  baseRef.yaw.reserve(horizon.N);
   baseRef.positionInWorld.reserve(horizon.N);
 
   baseRef.time.push_back(initialState.t0);
 
   // Project position and orientation to horizontal plane
-  baseRef.positionInWorld.emplace_back(initialState.positionInWorld.x(), initialState.positionInWorld.y(), 0.0);
-  baseRef.eulerXyz.emplace_back(alignDesiredOrientationToTerrain(initialState.eulerXyz, TerrainPlane()));
+  baseRef.positionInWorld.emplace_back(initialState.positionInWorld.x(), initialState.positionInWorld.y());
+  baseRef.yaw.emplace_back(alignDesiredOrientationToTerrain(initialState.eulerXyz, TerrainPlane()).z());
 
   for (int k = 1; k < horizon.N; ++k) {
     baseRef.time.push_back(baseRef.time.back() + dt);
 
     // Express command in world
     const auto commandedLinearVelocityInWorld =
-        velocityCommandInWorld(command.headingVelocity, command.lateralVelocity, baseRef.eulerXyz.back().z() + 0.5 * dt * command.yawRate);
+        velocityCommand2dInWorld(command.headingVelocity, command.lateralVelocity, baseRef.yaw.back() + 0.5 * dt * command.yawRate);
 
     // Advance position
-    baseRef.positionInWorld.push_back(baseRef.positionInWorld.back());
-    baseRef.positionInWorld.back() += dt * commandedLinearVelocityInWorld;
-    baseRef.positionInWorld.back().z() = 0;
+    baseRef.positionInWorld.push_back(baseRef.positionInWorld.back() + dt * commandedLinearVelocityInWorld);
 
     // Advance orientation
-    baseRef.eulerXyz.push_back(baseRef.eulerXyz.back());
-    baseRef.eulerXyz.back().z() += dt * command.yawRate;
+    baseRef.yaw.push_back(baseRef.yaw.back() + dt * command.yawRate);
   }
 
   return baseRef;
@@ -98,7 +86,7 @@ BaseReferenceTrajectory generateExtrapolatedBaseReference(const BaseReferenceHor
   for (int k = 0; k < horizon.N; ++k) {
     baseRef.positionInWorld.push_back(
         adaptDesiredPositionHeightToTerrain(reference2d.positionInWorld[k], projectedHeadingFrame, command.baseHeight));
-    baseRef.eulerXyz.emplace_back(alignDesiredOrientationToTerrain(reference2d.eulerXyz[k], projectedHeadingFrame));
+    baseRef.eulerXyz.emplace_back(alignDesiredOrientationToTerrain({0.0, 0.0, reference2d.yaw[k]}, projectedHeadingFrame));
   }
 
   addVelocitiesFromFiniteDifference(baseRef);
@@ -111,24 +99,23 @@ BaseReferenceTrajectory generateExtrapolatedBaseReference(const BaseReferenceHor
   const auto& baseReferenceLayer = gridMap.get("smooth_planar");
 
   // Helper to get a projected heading frame derived from the terrain.
-  auto getLocalHeadingFrame = [&](const vector3_t& basePosition, const vector3_t& eulerXYZ) {
-    // eulerXYZ only has Z component, due to 2d generation step.
-    vector3_t lfOffset(nominalStanceWidthInHeading / 2.0, nominalStanceWidthLateral / 2.0, 0.0);
-    vector3_t rfOffset(nominalStanceWidthInHeading / 2.0, -nominalStanceWidthLateral / 2.0, 0.0);
-    vector3_t lhOffset(-nominalStanceWidthInHeading / 2.0, nominalStanceWidthLateral / 2.0, 0.0);
-    vector3_t rhOffset(-nominalStanceWidthInHeading / 2.0, -nominalStanceWidthLateral / 2.0, 0.0);
+  auto getLocalHeadingFrame = [&](const vector2_t& baseXYPosition, scalar_t yaw) {
+    vector2_t lfOffset(nominalStanceWidthInHeading / 2.0, nominalStanceWidthLateral / 2.0);
+    vector2_t rfOffset(nominalStanceWidthInHeading / 2.0, -nominalStanceWidthLateral / 2.0);
+    vector2_t lhOffset(-nominalStanceWidthInHeading / 2.0, nominalStanceWidthLateral / 2.0);
+    vector2_t rhOffset(-nominalStanceWidthInHeading / 2.0, -nominalStanceWidthLateral / 2.0);
     // Rotate from heading to world frame
-    rotateInPlaceZ(lfOffset, eulerXYZ.z());
-    rotateInPlaceZ(rfOffset, eulerXYZ.z());
-    rotateInPlaceZ(lhOffset, eulerXYZ.z());
-    rotateInPlaceZ(rhOffset, eulerXYZ.z());
+    rotateInPlace2d(lfOffset, yaw);
+    rotateInPlace2d(rfOffset, yaw);
+    rotateInPlace2d(lhOffset, yaw);
+    rotateInPlace2d(rhOffset, yaw);
     // shift by base center
-    lfOffset += basePosition;
-    rfOffset += basePosition;
-    lhOffset += basePosition;
-    rhOffset += basePosition;
+    lfOffset += baseXYPosition;
+    rfOffset += baseXYPosition;
+    lhOffset += baseXYPosition;
+    rhOffset += baseXYPosition;
 
-    auto interp = [&](const vector3_t& offset) {
+    auto interp = [&](const vector2_t& offset) -> vector3_t {
       auto projection = grid_map::lookup::projectToMapWithMargin(gridMap, grid_map::Position(offset.x(), offset.y()));
 
       try {
@@ -150,7 +137,7 @@ BaseReferenceTrajectory generateExtrapolatedBaseReference(const BaseReferenceHor
     const auto normalAndPosition = estimatePlane({lfVerticalProjection, rfVerticalProjection, lhVerticalProjection, rhVerticalProjection});
 
     TerrainPlane terrainPlane(normalAndPosition.position, orientationWorldToTerrainFromSurfaceNormalInWorld(normalAndPosition.normal));
-    return getProjectedHeadingFrame(eulerXYZ, terrainPlane);
+    return getProjectedHeadingFrame({0.0, 0.0, yaw}, terrainPlane);
   };
 
   auto reference2d = generate2DExtrapolatedBaseReference(horizon, initialState, command);
@@ -162,11 +149,11 @@ BaseReferenceTrajectory generateExtrapolatedBaseReference(const BaseReferenceHor
 
   // Adapt poses
   for (int k = 0; k < horizon.N; ++k) {
-    const auto projectedHeadingFrame = getLocalHeadingFrame(reference2d.positionInWorld[k], reference2d.eulerXyz[k]);
+    const auto projectedHeadingFrame = getLocalHeadingFrame(reference2d.positionInWorld[k], reference2d.yaw[k]);
 
     baseRef.positionInWorld.push_back(
         adaptDesiredPositionHeightToTerrain(reference2d.positionInWorld[k], projectedHeadingFrame, command.baseHeight));
-    baseRef.eulerXyz.emplace_back(alignDesiredOrientationToTerrain(reference2d.eulerXyz[k], projectedHeadingFrame));
+    baseRef.eulerXyz.emplace_back(alignDesiredOrientationToTerrain({0.0, 0.0, reference2d.yaw[k]}, projectedHeadingFrame));
   }
 
   addVelocitiesFromFiniteDifference(baseRef);

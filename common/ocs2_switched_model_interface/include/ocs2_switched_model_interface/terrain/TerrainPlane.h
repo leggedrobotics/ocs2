@@ -91,15 +91,15 @@ inline scalar_t terrainSignedDistanceFromPositionInWorld(const vector3_t& positi
   return surfaceNormal.dot(positionWorld - terrainPlane.positionInWorld);
 }
 
-/** Returns the vertical distance between the terrain a 3D point represented in world frame. */
-inline scalar_t terrainGravityAlignedDistanceFromPositionInWorld(const vector3_t& positionWorld, const TerrainPlane& terrainPlane) {
+/** Returns the projection along gravity onto the terrain plane for a 2D position in world. The returned position is in world frame */
+inline vector3_t projectPositionInWorldOntoPlaneAlongGravity(const vector2_t& positionXYWorld, const TerrainPlane& terrainPlane) {
   // solve surfaceNormal.dot(projectedPosition - terrainPlane.positionInWorld) = 0
   // Distance = positionWorld.z() - projectedPosition.z()
   const vector3_t surfaceNormal = surfaceNormalInWorld(terrainPlane);
-  const scalar_t projectedPositionZ =
-      (surfaceNormal.dot(terrainPlane.positionInWorld) - positionWorld.x() * surfaceNormal.x() - positionWorld.y() * surfaceNormal.y()) /
-      surfaceNormal.z();
-  return positionWorld.z() - projectedPositionZ;
+  const scalar_t projectedPositionZ = (surfaceNormal.dot(terrainPlane.positionInWorld) - positionXYWorld.x() * surfaceNormal.x() -
+                                       positionXYWorld.y() * surfaceNormal.y()) /
+                                      surfaceNormal.z();
+  return {positionXYWorld.x(), positionXYWorld.y(), projectedPositionZ};
 }
 
 /** Returns the orthogonal projection onto the terrain plane for a 3D position in world. The returned position is in world frame */
@@ -110,9 +110,7 @@ inline vector3_t projectPositionInWorldOntoPlane(const vector3_t& positionWorld,
 
 /** Returns the projection along gravity onto the terrain plane for a 3D position in world. The returned position is in world frame */
 inline vector3_t projectPositionInWorldOntoPlaneAlongGravity(const vector3_t& positionWorld, const TerrainPlane& terrainPlane) {
-  vector3_t projectedPosition = positionWorld;
-  projectedPosition.z() = positionWorld.z() - terrainGravityAlignedDistanceFromPositionInWorld(positionWorld, terrainPlane);
-  return projectedPosition;
+  return projectPositionInWorldOntoPlaneAlongGravity(vector2_t{positionWorld.x(), positionWorld.y()}, terrainPlane);
 }
 
 /**

@@ -7,8 +7,13 @@
 namespace switched_model {
 
 vector3_t adaptDesiredPositionHeightToTerrain(const vector3_t& desiredPosition, const TerrainPlane& terrainPlane, scalar_t desiredHeight) {
-  const auto adaptedHeight = projectPositionInWorldOntoPlaneAlongGravity(desiredPosition, terrainPlane).z() + desiredHeight;
-  return {desiredPosition.x(), desiredPosition.y(), adaptedHeight};
+  return adaptDesiredPositionHeightToTerrain(vector2_t{desiredPosition.x(), desiredPosition.y()}, terrainPlane, desiredHeight);
+}
+
+vector3_t adaptDesiredPositionHeightToTerrain(const vector2_t& desiredXYPosition, const TerrainPlane& terrainPlane,
+                                              scalar_t desiredHeight) {
+  const auto adaptedHeight = projectPositionInWorldOntoPlaneAlongGravity(desiredXYPosition, terrainPlane).z() + desiredHeight;
+  return {desiredXYPosition.x(), desiredXYPosition.y(), adaptedHeight};
 }
 
 vector3_t eulerXYZFromRotationMatrix(const matrix3_t& orientationTargetToWorld, scalar_t referenceYaw) {

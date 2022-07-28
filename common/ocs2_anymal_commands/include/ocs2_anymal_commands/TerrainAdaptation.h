@@ -17,6 +17,11 @@ namespace switched_model {
 vector3_t adaptDesiredPositionHeightToTerrain(const vector3_t& desiredPosition, const TerrainPlane& terrainPlane, scalar_t desiredHeight);
 
 /**
+ * Creates a desired position at a height above the given terrain. The x-y coordinated remain the same
+ */
+vector3_t adaptDesiredPositionHeightToTerrain(const vector2_t& desiredXYPosition, const TerrainPlane& terrainPlane, scalar_t desiredHeight);
+
+/**
  * Return euler angles XYZ from a rotation matrix. When a reference yaw is given, the yaw angle is chosen as close as possible to the
  * reference.
  */

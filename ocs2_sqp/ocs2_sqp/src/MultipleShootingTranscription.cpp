@@ -102,10 +102,8 @@ PerformanceIndex computeIntermediatePerformance(const OptimalControlProblem& opt
 
   // Constraints
   if (!optimalControlProblem.equalityConstraintPtr->empty()) {
-    const vector_t constraints = optimalControlProblem.equalityConstraintPtr->getValue(t, x, u, *optimalControlProblem.preComputationPtr);
-    if (constraints.size() > 0) {
-      performance.equalityConstraintsSSE = dt * constraints.squaredNorm();
-    }
+    const auto constraints = optimalControlProblem.equalityConstraintPtr->getValue(t, x, u, *optimalControlProblem.preComputationPtr);
+    performance.equalityConstraintsSSE = dt * constraintsSquaredNorm(constraints);
   }
 
   return performance;

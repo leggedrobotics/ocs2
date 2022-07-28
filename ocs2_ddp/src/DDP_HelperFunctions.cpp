@@ -124,14 +124,17 @@ PerformanceIndex computeRolloutPerformanceIndex(const scalar_array_t& timeTrajec
   // - Final: state equality constraints
   // - PreJumps: state equality constraints
   // - Intermediates: state/state-input equality constraints
-  performanceIndex.equalityConstraintsSSE = problemMetrics.final.stateEqConstraint.squaredNorm();
+  performanceIndex.equalityConstraintsSSE = constraintsSquaredNorm(problemMetrics.final.stateEqConstraint);
 
-  std::for_each(problemMetrics.preJumps.begin(), problemMetrics.preJumps.end(),
-                [&](const MetricsCollection& m) { performanceIndex.equalityConstraintsSSE += m.stateEqConstraint.squaredNorm(); });
+  std::for_each(problemMetrics.preJumps.begin(), problemMetrics.preJumps.end(), [&](const MetricsCollection& m) {
+    performanceIndex.equalityConstraintsSSE += constraintsSquaredNorm(m.stateEqConstraint);
+  });
 
   scalar_array_t equalityNorm2Trajectory(timeTrajectory.size());
   std::transform(problemMetrics.intermediates.begin(), problemMetrics.intermediates.end(), equalityNorm2Trajectory.begin(),
-                 [](const MetricsCollection& m) { return m.stateEqConstraint.squaredNorm() + m.stateInputEqConstraint.squaredNorm(); });
+                 [](const MetricsCollection& m) {
+                   return constraintsSquaredNorm(m.stateEqConstraint) + constraintsSquaredNorm(m.stateInputEqConstraint);
+                 });
   performanceIndex.equalityConstraintsSSE += trapezoidalIntegration(timeTrajectory, equalityNorm2Trajectory);
 
   // Equality Lagrangians penalty

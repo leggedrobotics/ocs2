@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   ocs2_ros_interfaces
   ocs2_robotic_tools
   ocs2_switched_model_interface
+  grid_map_filters_rsl
 )
 
 ## Eigen3
@@ -47,13 +48,14 @@ include_directories(
 
 # Declare a C++ library
 add_library(${PROJECT_NAME}
-  src/PoseCommandToCostDesiredRos.cpp
-  src/TerrainAdaptation.cpp
   src/LoadMotions.cpp
   src/ModeSequenceKeyboard.cpp
-  src/MotionCommandInterface.cpp
-  src/MotionCommandDummy.cpp
   src/MotionCommandController.cpp
+  src/MotionCommandDummy.cpp
+  src/MotionCommandInterface.cpp
+  src/PoseCommandToCostDesiredRos.cpp
+  src/ReferenceExtrapolation.cpp
+  src/TerrainAdaptation.cpp
   )
 add_dependencies(${PROJECT_NAME}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
@@ -129,6 +131,7 @@ install(DIRECTORY config
 
 catkin_add_gtest(test_${PROJECT_NAME}
   test/testLoadMotions.cpp
+  test/testReferenceExtrapolation.cpp
   test/testTerrainAdaptation.cpp
 )
 target_link_libraries(test_${PROJECT_NAME}

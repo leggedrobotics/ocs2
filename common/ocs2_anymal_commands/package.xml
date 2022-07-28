@@ -16,5 +16,6 @@
   <depend>ocs2_ros_interfaces</depend>
   <depend>ocs2_robotic_tools</depend>
   <depend>ocs2_switched_model_interface</depend>
+  <depend>grid_map_filters_rsl</depend>
 
 </package>

@@ -148,7 +148,7 @@ int main(int argc, char* argv[]) {
   std::unique_ptr<ocs2::MPC_BASE> mpcPtr;
   switch (anymalInterface->modelSettings().algorithm_) {
     case switched_model::Algorithm::DDP: {
-      const auto ddpSettings = ocs2::ddp::loadSettings(taskFolder + configName);
+      const auto ddpSettings = ocs2::ddp::loadSettings(taskFolder + configName + "/task.info");
       mpcPtr = getDdpMpc(*anymalInterface, mpcSettings, ddpSettings);
       break;
     }

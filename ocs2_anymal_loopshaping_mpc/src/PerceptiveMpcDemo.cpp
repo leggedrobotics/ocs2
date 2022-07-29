@@ -64,32 +64,43 @@ int main(int argc, char* argv[]) {
   const ocs2::vector_t initSystemState = anymalInterface->getInitialState().head(switched_model::STATE_DIM);
 
   // ====== Scenario settings ========
+  ocs2::scalar_t forwardVelocity{0.1};
+  ocs2::scalar_t forwardDistance{0.1};
+
   ocs2::scalar_t initTime = 0.0;
-  ocs2::scalar_t finalTime = 5.0;
+  ocs2::scalar_t stanceTime = 1.0;
+  ocs2::scalar_t finalTime = forwardDistance / forwardVelocity + stanceTime;
   ocs2::scalar_t f_mpc = 100;  // hz
 
   // Load a map
   const std::string elevationLayer{"elevation"};
   const std::string frameId{"world"};
-  std::string terrainFile = "demo_terrain.png";
-  double heightScale = 0.30;
+  std::string terrainFile = "step.png";
+  double heightScale = 0.00;
   const auto gridMap = convex_plane_decomposition::loadGridmapFromImage(terrainFolder + "/" + terrainFile, elevationLayer, frameId,
                                                                         perceptionConfig.preprocessingParameters.resolution, heightScale);
 
   // Gait
-  switched_model::Gait gait;
-  gait.duration = 1.0;
-  gait.eventPhases = {0.45, 0.5, 0.95};
   using MN = switched_model::ModeNumber;
+  switched_model::Gait stance;
+  stance.duration = stanceTime;
+  stance.eventPhases = {};
+  stance.modeSequence = {MN::STANCE};
+
+  switched_model::Gait gait;
+  gait.duration = 0.8;
+  gait.eventPhases = {0.45, 0.5, 0.95};
   gait.modeSequence = {MN::LF_RH, MN::STANCE, MN::RF_LH, MN::STANCE};
+
+  GaitSchedule::GaitSequence gaitSequence{stance, gait};
 
   // Reference trajectory
   const double dtRef = 0.1;
-  const BaseReferenceHorizon commandHorizon{dtRef, size_t(finalTime / dtRef) + 1};
+  const BaseReferenceHorizon commandHorizon{dtRef, size_t((finalTime - stanceTime) / dtRef) + 1};
   BaseReferenceCommand command;
   command.baseHeight = getPositionInOrigin(getBasePose(initSystemState)).z();
-  command.yawRate = -0.4;
-  command.headingVelocity = -0.6;
+  command.yawRate = 0.0;
+  command.headingVelocity = 0.6;
   command.lateralVelocity = 0.0;
 
   // ====== Run the perception pipeline ========
@@ -110,13 +121,19 @@ int main(int argc, char* argv[]) {
   const double nominalStanceWidthInHeading = 2.0 * (std::abs(baseToHipInBase.x()) + 0.15);
   const double nominalStanceWidthLateral = 2.0 * (std::abs(baseToHipInBase.y()) + 0.10);
 
-  BaseReferenceState initialBaseState{initTime, getPositionInOrigin(getBasePose(initSystemState)),
+  BaseReferenceState initialBaseState{stanceTime, getPositionInOrigin(getBasePose(initSystemState)),
                                       getOrientation(getBasePose(initSystemState))};
 
   const auto terrainAdaptedBaseReference = generateExtrapolatedBaseReference(
       commandHorizon, initialBaseState, command, planarTerrain.gridMap, nominalStanceWidthInHeading, nominalStanceWidthLateral);
 
   ocs2::TargetTrajectories targetTrajectories;
+  targetTrajectories.timeTrajectory.push_back(initTime);
+  targetTrajectories.timeTrajectory.push_back(stanceTime);
+  targetTrajectories.stateTrajectory.push_back(initSystemState);
+  targetTrajectories.stateTrajectory.push_back(initSystemState);
+  targetTrajectories.inputTrajectory.push_back(vector_t::Zero(INPUT_DIM));
+  targetTrajectories.inputTrajectory.push_back(vector_t::Zero(INPUT_DIM));
   for (int k = 0; k < terrainAdaptedBaseReference.time.size(); ++k) {
     targetTrajectories.timeTrajectory.push_back(terrainAdaptedBaseReference.time[k]);
 
@@ -137,7 +154,7 @@ int main(int argc, char* argv[]) {
   referenceManager->getTerrainModel().reset(std::move(terrainModel));
 
   // Register the gait
-  referenceManager->getGaitSchedule()->setGaitAtTime(gait, initTime);
+  referenceManager->getGaitSchedule()->setGaitSequenceAtTime(gaitSequence, initTime);
 
   // Register the target trajectory
   referenceManager->setTargetTrajectories(targetTrajectories);
@@ -175,6 +192,7 @@ int main(int argc, char* argv[]) {
   // run MPC till final time
   ocs2::PrimalSolution closedLoopSolution;
   while (observation.time < finalTime) {
+    std::cout << "t: " << observation.time << "\n";
     // run MPC at current observation
     mpcInterface.setCurrentObservation(observation);
     mpcInterface.advanceMpc();

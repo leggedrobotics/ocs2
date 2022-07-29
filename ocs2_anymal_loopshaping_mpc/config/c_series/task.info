@@ -1,6 +1,6 @@
 model_settings
 {
-  algorithm                     SQP
+  algorithm                     DDP
   recompileLibraries            false
 
   frictionCoefficient           0.5
@@ -147,7 +147,6 @@ ddp
   displayShortSummary             false
   checkNumericalStability         false
   debugPrintRollout               false
-  debugCaching                    false
 
   AbsTolODE                       1e-5
   RelTolODE                       1e-3
@@ -165,22 +164,22 @@ ddp
   strategy                        LINE_SEARCH
   lineSearch
   {
-      minStepLength                 1e-4
-      maxStepLength                 1.0
-      hessianCorrectionStrategy     DIAGONAL_SHIFT
-      hessianCorrectionMultiple     1e-5
+    minStepLength                 1e-4
+    maxStepLength                 1.0
+    hessianCorrectionStrategy     DIAGONAL_SHIFT
+    hessianCorrectionMultiple     1e-5
   }
 }
 
 ; Rollout settings
 rollout
 {
-  AbsTolODE                     1e-5
-  RelTolODE                     1e-3
-  timeStep                      0.015
-  integratorType                ODE45
-  maxNumStepsPerSecond          10000
-  checkNumericalStability       false
+  AbsTolODE                       1e-5
+  RelTolODE                       1e-3
+  timeStep                        0.015
+  integratorType                  ODE45
+  maxNumStepsPerSecond            10000
+  checkNumericalStability         false
 }
 
 mpc

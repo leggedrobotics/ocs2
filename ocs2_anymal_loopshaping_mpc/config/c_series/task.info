@@ -1,6 +1,6 @@
 model_settings
 {
-  algorithm                     DDP
+  algorithm                     SQP
   recompileLibraries            false
 
   frictionCoefficient           0.5

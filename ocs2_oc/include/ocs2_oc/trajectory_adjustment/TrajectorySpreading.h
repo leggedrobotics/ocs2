@@ -57,6 +57,9 @@ class TrajectorySpreading final {
    */
   Status set(const ModeSchedule& oldModeSchedule, const ModeSchedule& newModeSchedule, const scalar_array_t& oldTimeTrajectory);
 
+  /** Gets the trajectory-spreading strategy report. */
+  const Status& getStatus() const { return status_; }
+
   /**
    * Adjust continuous-time trajectory.
    *
@@ -135,6 +138,7 @@ class TrajectorySpreading final {
    ***********/
   const bool debugPrint_;
 
+  Status status_;
   size_t eraseFromIndex_;                             /**< The first index to erase **/
   std::pair<size_t, size_t> keepEventDataInInterval_; /**< Keep event data within [first, second) **/
 

@@ -50,9 +50,9 @@ add_library(${PROJECT_NAME}
   src/approximate_model/ChangeOfInputVariables.cpp
   src/approximate_model/LinearQuadraticApproximator.cpp
   src/oc_data/LoopshapingPrimalSolution.cpp
-  src/oc_data/Metrics.cpp
   src/oc_problem/OptimalControlProblem.cpp
   src/oc_problem/LoopshapingOptimalControlProblem.cpp
+  src/oc_problem/OptimalControlProblemHelperFunction.cpp
   src/oc_solver/SolverBase.cpp
   src/oc_problem/OptimalControlProblem.cpp
   src/rollout/PerformanceIndicesRollout.cpp
@@ -65,6 +65,7 @@ add_library(${PROJECT_NAME}
   src/synchronized_module/ReferenceManager.cpp
   src/synchronized_module/LoopshapingReferenceManager.cpp
   src/synchronized_module/LoopshapingSynchronizedModule.cpp
+  src/synchronized_module/AugmentedLagrangianObserver.cpp
   src/trajectory_adjustment/TrajectorySpreading.cpp
 )
 target_link_libraries(${PROJECT_NAME}

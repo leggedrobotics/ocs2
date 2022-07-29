@@ -38,8 +38,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_core/misc/LoadData.h>
+#include <ocs2_core/misc/LoadStdVectorOfPair.h>
 #include <ocs2_core/penalties/Penalties.h>
-#include <ocs2_core/soft_constraint/StateInputSoftConstraint.h>
+#include <ocs2_core/soft_constraint/StateInputSoftBoxConstraint.h>
 #include <ocs2_core/soft_constraint/StateSoftConstraint.h>
 #include <ocs2_oc/synchronized_module/ReferenceManager.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
@@ -47,12 +48,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_pinocchio_interface/urdf.h>
 #include <ocs2_self_collision/SelfCollisionConstraint.h>
 #include <ocs2_self_collision/SelfCollisionConstraintCppAd.h>
-#include <ocs2_self_collision/loadStdVectorOfPair.h>
 
 #include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
 #include "ocs2_mobile_manipulator/MobileManipulatorPreComputation.h"
 #include "ocs2_mobile_manipulator/constraint/EndEffectorConstraint.h"
-#include "ocs2_mobile_manipulator/constraint/JointVelocityLimits.h"
 #include "ocs2_mobile_manipulator/constraint/MobileManipulatorSelfCollisionConstraint.h"
 #include "ocs2_mobile_manipulator/cost/QuadraticInputCost.h"
 #include "ocs2_mobile_manipulator/dynamics/DefaultManipulatorDynamics.h"
@@ -164,8 +163,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   problem_.costPtr->add("inputCost", getQuadraticInputCost(taskFile));
 
   // Constraints
-  // input limits constraint
-  problem_.softConstraintPtr->add("jointVelocityLimit", getJointVelocityLimitConstraint(taskFile));
+  // joint limits constraint
+  problem_.softConstraintPtr->add("jointLimits", getJointLimitSoftConstraint(*pinocchioInterfacePtr_, taskFile));
   // end-effector state constraint
   problem_.stateSoftConstraintPtr->add("endEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "endEffector",
                                                                                usePreComputation, libraryFolder, recompileLibraries));
@@ -175,8 +174,9 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   bool activateSelfCollision = true;
   loadData::loadPtreeValue(pt, activateSelfCollision, "selfCollision.activate", true);
   if (activateSelfCollision) {
-    problem_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint(*pinocchioInterfacePtr_, taskFile, urdfFile,
-                                                                                     usePreComputation, libraryFolder, recompileLibraries));
+    problem_.stateSoftConstraintPtr->add(
+        "selfCollision", getSelfCollisionConstraint(*pinocchioInterfacePtr_, taskFile, urdfFile, "selfCollision", usePreComputation,
+                                                    libraryFolder, recompileLibraries));
   }
 
   // Dynamics
@@ -296,7 +296,8 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
 /******************************************************************************************************/
 std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstraint(const PinocchioInterface& pinocchioInterface,
                                                                                   const std::string& taskFile, const std::string& urdfFile,
-                                                                                  bool usePreComputation, const std::string& libraryFolder,
+                                                                                  const std::string& prefix, bool usePreComputation,
+                                                                                  const std::string& libraryFolder,
                                                                                   bool recompileLibraries) {
   std::vector<std::pair<size_t, size_t>> collisionObjectPairs;
   std::vector<std::pair<std::string, std::string>> collisionLinkPairs;
@@ -306,14 +307,13 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstrain
 
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile, pt);
-  const std::string prefix = "selfCollision.";
   std::cerr << "\n #### SelfCollision Settings: ";
   std::cerr << "\n #### =============================================================================\n";
-  loadData::loadPtreeValue(pt, mu, prefix + "mu", true);
-  loadData::loadPtreeValue(pt, delta, prefix + "delta", true);
-  loadData::loadPtreeValue(pt, minimumDistance, prefix + "minimumDistance", true);
-  loadData::loadStdVectorOfPair(taskFile, prefix + "collisionObjectPairs", collisionObjectPairs, true);
-  loadData::loadStdVectorOfPair(taskFile, prefix + "collisionLinkPairs", collisionLinkPairs, true);
+  loadData::loadPtreeValue(pt, mu, prefix + ".mu", true);
+  loadData::loadPtreeValue(pt, delta, prefix + ".delta", true);
+  loadData::loadPtreeValue(pt, minimumDistance, prefix + ".minimumDistance", true);
+  loadData::loadStdVectorOfPair(taskFile, prefix + ".collisionObjectPairs", collisionObjectPairs, true);
+  loadData::loadStdVectorOfPair(taskFile, prefix + ".collisionLinkPairs", collisionLinkPairs, true);
   std::cerr << " #### =============================================================================\n";
 
   PinocchioGeometryInterface geometryInterface(pinocchioInterface, collisionLinkPairs, collisionObjectPairs);
@@ -339,58 +339,101 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstrain
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointVelocityLimitConstraint(const std::string& taskFile) {
-  const int baseInputDim = manipulatorModelInfo_.inputDim - manipulatorModelInfo_.armDim;
-  const int armInputDim = manipulatorModelInfo_.armDim;
-  vector_t lowerBound = vector_t::Zero(manipulatorModelInfo_.inputDim);
-  vector_t upperBound = vector_t::Zero(manipulatorModelInfo_.inputDim);
-  scalar_t mu = 1e-2;
-  scalar_t delta = 1e-3;
-
-  // arm base DOFs velocity limits
-  if (baseInputDim > 0) {
-    vector_t lowerBoundBase = vector_t::Zero(baseInputDim);
-    vector_t upperBoundBase = vector_t::Zero(baseInputDim);
-
-    loadData::loadEigenMatrix(taskFile,
-                              "jointVelocityLimits.lowerBound.base." + modelTypeEnumToString(manipulatorModelInfo_.manipulatorModelType),
-                              lowerBoundBase);
-    loadData::loadEigenMatrix(taskFile,
-                              "jointVelocityLimits.upperBound.base." + modelTypeEnumToString(manipulatorModelInfo_.manipulatorModelType),
-                              upperBoundBase);
-    lowerBound.head(baseInputDim) = lowerBoundBase;
-    upperBound.head(baseInputDim) = upperBoundBase;
-  }
-
-  // arm joint DOFs velocity limits
-  vector_t lowerBoundArm = vector_t::Zero(armInputDim);
-  vector_t upperBoundArm = vector_t::Zero(armInputDim);
-  loadData::loadEigenMatrix(taskFile, "jointVelocityLimits.lowerBound.arm", lowerBoundArm);
-  loadData::loadEigenMatrix(taskFile, "jointVelocityLimits.upperBound.arm", upperBoundArm);
-  lowerBound.tail(armInputDim) = lowerBoundArm;
-  upperBound.tail(armInputDim) = upperBoundArm;
-
+std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointLimitSoftConstraint(const PinocchioInterface& pinocchioInterface,
+                                                                                        const std::string& taskFile) {
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile, pt);
-  const std::string prefix = "jointVelocityLimits.";
-  std::cerr << "\n #### JointVelocityLimits Settings: ";
-  std::cerr << "\n #### =============================================================================\n";
-  std::cerr << " #### 'lowerBound':  " << lowerBound.transpose() << std::endl;
-  std::cerr << " #### 'upperBound':  " << upperBound.transpose() << std::endl;
-  loadData::loadPtreeValue(pt, mu, prefix + "mu", true);
-  loadData::loadPtreeValue(pt, delta, prefix + "delta", true);
-  std::cerr << " #### =============================================================================\n";
 
-  std::unique_ptr<StateInputConstraint> constraint(new JointVelocityLimits(manipulatorModelInfo_.inputDim));
+  bool activateJointPositionLimit = true;
+  loadData::loadPtreeValue(pt, activateJointPositionLimit, "jointPositionLimits.activate", true);
 
-  std::unique_ptr<PenaltyBase> barrierFunction;
-  std::vector<std::unique_ptr<PenaltyBase>> penaltyArray(manipulatorModelInfo_.inputDim);
-  for (int i = 0; i < manipulatorModelInfo_.inputDim; i++) {
-    barrierFunction.reset(new RelaxedBarrierPenalty({mu, delta}));
-    penaltyArray[i].reset(new DoubleSidedPenalty(lowerBound(i), upperBound(i), std::move(barrierFunction)));
+  const int baseStateDim = manipulatorModelInfo_.stateDim - manipulatorModelInfo_.armDim;
+  const int armStateDim = manipulatorModelInfo_.armDim;
+  const int baseInputDim = manipulatorModelInfo_.inputDim - manipulatorModelInfo_.armDim;
+  const int armInputDim = manipulatorModelInfo_.armDim;
+  const auto& model = pinocchioInterface.getModel();
+
+  // Load position limits
+  std::vector<StateInputSoftBoxConstraint::BoxConstraint> stateLimits;
+  if (activateJointPositionLimit) {
+    scalar_t muPositionLimits = 1e-2;
+    scalar_t deltaPositionLimits = 1e-3;
+
+    // arm joint DOF limits from the parsed URDF
+    const vector_t lowerBound = model.lowerPositionLimit.tail(armStateDim);
+    const vector_t upperBound = model.upperPositionLimit.tail(armStateDim);
+
+    std::cerr << "\n #### JointPositionLimits Settings: ";
+    std::cerr << "\n #### =============================================================================\n";
+    std::cerr << " #### lowerBound: " << lowerBound.transpose() << '\n';
+    std::cerr << " #### upperBound: " << upperBound.transpose() << '\n';
+    loadData::loadPtreeValue(pt, muPositionLimits, "jointPositionLimits.mu", true);
+    loadData::loadPtreeValue(pt, deltaPositionLimits, "jointPositionLimits.delta", true);
+    std::cerr << " #### =============================================================================\n";
+
+    stateLimits.reserve(armStateDim);
+    for (int i = 0; i < armStateDim; ++i) {
+      StateInputSoftBoxConstraint::BoxConstraint boxConstraint;
+      boxConstraint.index = baseStateDim + i;
+      boxConstraint.lowerBound = lowerBound(i);
+      boxConstraint.upperBound = upperBound(i);
+      boxConstraint.penaltyPtr.reset(new RelaxedBarrierPenalty({muPositionLimits, deltaPositionLimits}));
+      stateLimits.push_back(std::move(boxConstraint));
+    }
   }
 
-  return std::unique_ptr<StateInputCost>(new StateInputSoftConstraint(std::move(constraint), std::move(penaltyArray)));
+  // load velocity limits
+  std::vector<StateInputSoftBoxConstraint::BoxConstraint> inputLimits;
+  {
+    vector_t lowerBound = vector_t::Zero(manipulatorModelInfo_.inputDim);
+    vector_t upperBound = vector_t::Zero(manipulatorModelInfo_.inputDim);
+    scalar_t muVelocityLimits = 1e-2;
+    scalar_t deltaVelocityLimits = 1e-3;
+
+    // Base DOFs velocity limits
+    if (baseInputDim > 0) {
+      vector_t lowerBoundBase = vector_t::Zero(baseInputDim);
+      vector_t upperBoundBase = vector_t::Zero(baseInputDim);
+      loadData::loadEigenMatrix(taskFile,
+                                "jointVelocityLimits.lowerBound.base." + modelTypeEnumToString(manipulatorModelInfo_.manipulatorModelType),
+                                lowerBoundBase);
+      loadData::loadEigenMatrix(taskFile,
+                                "jointVelocityLimits.upperBound.base." + modelTypeEnumToString(manipulatorModelInfo_.manipulatorModelType),
+                                upperBoundBase);
+      lowerBound.head(baseInputDim) = lowerBoundBase;
+      upperBound.head(baseInputDim) = upperBoundBase;
+    }
+
+    // arm joint DOFs velocity limits
+    vector_t lowerBoundArm = vector_t::Zero(armInputDim);
+    vector_t upperBoundArm = vector_t::Zero(armInputDim);
+    loadData::loadEigenMatrix(taskFile, "jointVelocityLimits.lowerBound.arm", lowerBoundArm);
+    loadData::loadEigenMatrix(taskFile, "jointVelocityLimits.upperBound.arm", upperBoundArm);
+    lowerBound.tail(armInputDim) = lowerBoundArm;
+    upperBound.tail(armInputDim) = upperBoundArm;
+
+    std::cerr << "\n #### JointVelocityLimits Settings: ";
+    std::cerr << "\n #### =============================================================================\n";
+    std::cerr << " #### 'lowerBound':  " << lowerBound.transpose() << std::endl;
+    std::cerr << " #### 'upperBound':  " << upperBound.transpose() << std::endl;
+    loadData::loadPtreeValue(pt, muVelocityLimits, "jointVelocityLimits.mu", true);
+    loadData::loadPtreeValue(pt, deltaVelocityLimits, "jointVelocityLimits.delta", true);
+    std::cerr << " #### =============================================================================\n";
+
+    inputLimits.reserve(manipulatorModelInfo_.inputDim);
+    for (int i = 0; i < manipulatorModelInfo_.inputDim; ++i) {
+      StateInputSoftBoxConstraint::BoxConstraint boxConstraint;
+      boxConstraint.index = i;
+      boxConstraint.lowerBound = lowerBound(i);
+      boxConstraint.upperBound = upperBound(i);
+      boxConstraint.penaltyPtr.reset(new RelaxedBarrierPenalty({muVelocityLimits, deltaVelocityLimits}));
+      inputLimits.push_back(std::move(boxConstraint));
+    }
+  }
+
+  auto boxConstraints = std::unique_ptr<StateInputSoftBoxConstraint>(new StateInputSoftBoxConstraint(stateLimits, inputLimits));
+  boxConstraints->initializeOffset(0.0, vector_t::Zero(manipulatorModelInfo_.stateDim), vector_t::Zero(manipulatorModelInfo_.inputDim));
+  return boxConstraints;
 }
 
 }  // namespace mobile_manipulator

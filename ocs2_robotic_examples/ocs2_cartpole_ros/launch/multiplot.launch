@@ -1,9 +1,14 @@
 <launch>
-  <arg name="multiplot_config" default="$(find ocs2_cartpole)/config/multiplot/mpc_observation.xml" />
+  <arg name="observation_config"  default="$(find ocs2_cartpole)/config/multiplot/mpc_observation.xml" />
+  <arg name="metrics_config"      default="$(find ocs2_cartpole)/config/multiplot/mpc_metrics.xml" />
 
   <!-- Launch RQT Multi-plot -->
   <node name="mpc_observation" pkg="rqt_multiplot" type="rqt_multiplot" 
-    args="--multiplot-run-all --multiplot-config $(arg multiplot_config)"
+    args="--multiplot-run-all --multiplot-config $(arg observation_config)"
+    output="screen"/>
+
+  <node name="mpc_metrics" pkg="rqt_multiplot" type="rqt_multiplot"
+    args="--multiplot-run-all --multiplot-config $(arg metrics_config)"
     output="screen"/>
 
   <!-- Launch Performance Indices Multi-plot -->

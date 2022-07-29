@@ -69,7 +69,7 @@ class ILQR : public GaussNewtonDDP {
 
   matrix_t computeHamiltonianHessian(const ModelData& modelData, const matrix_t& Sm) const override;
 
-  void approximateIntermediateLQ(PrimalDataContainer& primalData) override;
+  void approximateIntermediateLQ(const DualSolution& dualSolution, PrimalDataContainer& primalData) override;
 
   /**
    * Calculates the discrete-time LQ approximation from the continuous-time LQ approximation.

@@ -1,0 +1,20 @@
+<?xml version="1.0" ?>
+
+<launch>
+    <!-- The URDF model of the robot -->
+    <arg name="urdfFile"   />
+    <!-- Publishes joint state publisher for testing. -->
+    <arg name="test"        default="false"/>
+    <!-- Enable rviz visualization. -->
+    <arg name="rviz"        default="true"/>
+    <!-- The rviz configuration file to load. -->
+    <arg name="rvizconfig"  default="$(find ocs2_mobile_manipulator_ros)/rviz/mobile_manipulator.rviz"/>
+
+    <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg urdfFile)"/>
+    <param name="use_gui" value="true"/>
+
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+    <node if="$(arg test)" name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+    <node if="$(arg rviz)" name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" output="screen" />
+
+</launch>

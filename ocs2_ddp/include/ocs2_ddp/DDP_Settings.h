@@ -84,8 +84,6 @@ struct Settings {
   bool checkNumericalStability_ = true;
   /** Printing rollout trajectory for debugging. */
   bool debugPrintRollout_ = false;
-  /** Debugs the cached nominal trajectories. */
-  bool debugCaching_ = false;
 
   /** This value determines the absolute tolerance error for ode solvers. */
   scalar_t absTolODE_ = 1e-9;

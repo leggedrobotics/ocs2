@@ -40,8 +40,8 @@ PrimalSolution loopshapingToSystemPrimalSolution(const PrimalSolution& primalSol
   systemPrimalSolution.inputTrajectory_.reserve(primalSolution.inputTrajectory_.size());
   for (size_t k = 0; k < primalSolution.stateTrajectory_.size(); ++k) {
     systemPrimalSolution.stateTrajectory_.push_back(loopshapingDefinition.getSystemState(primalSolution.stateTrajectory_[k]));
-    const auto& systemState = systemPrimalSolution.stateTrajectory_.back();
-    systemPrimalSolution.inputTrajectory_.push_back(loopshapingDefinition.getSystemInput(systemState, primalSolution.inputTrajectory_[k]));
+    systemPrimalSolution.inputTrajectory_.push_back(
+        loopshapingDefinition.getSystemInput(primalSolution.stateTrajectory_[k], primalSolution.inputTrajectory_[k]));
   }
   return systemPrimalSolution;
 }

@@ -75,12 +75,13 @@ SLQ::SLQ(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalCon
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SLQ::approximateIntermediateLQ(PrimalDataContainer& primalData) {
+void SLQ::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalDataContainer& primalData) {
   // create alias
   const auto& timeTrajectory = primalData.primalSolution.timeTrajectory_;
   const auto& stateTrajectory = primalData.primalSolution.stateTrajectory_;
   const auto& inputTrajectory = primalData.primalSolution.inputTrajectory_;
   const auto& postEventIndices = primalData.primalSolution.postEventIndices_;
+  const auto& multiplierTrajectory = dualSolution.intermediates;
   auto& modelDataTrajectory = primalData.modelDataTrajectory;
 
   modelDataTrajectory.clear();
@@ -96,7 +97,7 @@ void SLQ::approximateIntermediateLQ(PrimalDataContainer& primalData) {
     while ((timeIndex = nextTimeIndex_++) < timeTrajectory.size()) {
       // approximate LQ for the given time index
       ocs2::approximateIntermediateLQ(optimalControlProblemStock_[taskId], timeTrajectory[timeIndex], stateTrajectory[timeIndex],
-                                      inputTrajectory[timeIndex], modelDataTrajectory[timeIndex]);
+                                      inputTrajectory[timeIndex], multiplierTrajectory[timeIndex], modelDataTrajectory[timeIndex]);
 
       // checking the numerical properties
       if (settings().checkNumericalStability_) {
@@ -175,8 +176,8 @@ scalar_t SLQ::solveSequentialRiccatiEquations(const ScalarFunctionQuadraticAppro
   // number of the intermediate LQ variables
   const size_t N = nominalPrimalData_.primalSolution.timeTrajectory_.size();
 
-  dualData_.riccatiModificationTrajectory.resize(N);
-  dualData_.projectedModelDataTrajectory.resize(N);
+  nominalDualData_.riccatiModificationTrajectory.resize(N);
+  nominalDualData_.projectedModelDataTrajectory.resize(N);
 
   if (N > 0) {
     // perform the computeRiccatiModificationTerms for partition i
@@ -189,8 +190,8 @@ scalar_t SLQ::solveSequentialRiccatiEquations(const ScalarFunctionQuadraticAppro
       // get next time index is atomic
       while ((timeIndex = nextTimeIndex_++) < N) {
         computeProjectionAndRiccatiModification(nominalPrimalData_.modelDataTrajectory[timeIndex], SmDummy,
-                                                dualData_.projectedModelDataTrajectory[timeIndex],
-                                                dualData_.riccatiModificationTrajectory[timeIndex]);
+                                                nominalDualData_.projectedModelDataTrajectory[timeIndex],
+                                                nominalDualData_.riccatiModificationTrajectory[timeIndex]);
       }
     };
     runParallel(task, settings().nThreads_);
@@ -213,15 +214,15 @@ void SLQ::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& 
                                  const ScalarFunctionQuadraticApproximation& finalValueFunction) {
   // set data for Riccati equations
   riccatiEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
-  riccatiEquationsPtrStock_[workerIndex]->setData(&(nominalPrimalData_.primalSolution.timeTrajectory_),
-                                                  &(dualData_.projectedModelDataTrajectory),
-                                                  &(nominalPrimalData_.primalSolution.postEventIndices_),
-                                                  &(nominalPrimalData_.modelDataEventTimes), &(dualData_.riccatiModificationTrajectory));
+  riccatiEquationsPtrStock_[workerIndex]->setData(
+      &(nominalPrimalData_.primalSolution.timeTrajectory_), &(nominalDualData_.projectedModelDataTrajectory),
+      &(nominalPrimalData_.primalSolution.postEventIndices_), &(nominalPrimalData_.modelDataEventTimes),
+      &(nominalDualData_.riccatiModificationTrajectory));
 
   const auto& nominalTimeTrajectory = nominalPrimalData_.primalSolution.timeTrajectory_;
   const auto& nominalEventsPastTheEndIndices = nominalPrimalData_.primalSolution.postEventIndices_;
 
-  auto& valueFunctionTrajectory = dualData_.valueFunctionTrajectory;
+  auto& valueFunctionTrajectory = nominalDualData_.valueFunctionTrajectory;
 
   // Convert final value of value function in vector format
   vector_t allSsFinal = ContinuousTimeRiccatiEquations::convert2Vector(finalValueFunction);
@@ -243,7 +244,7 @@ void SLQ::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& 
                                       nominalTimeTrajectory, nominalEventsPastTheEndIndices, std::move(allSsFinal), SsNormalizedTime,
                                       SsNormalizedPostEventIndices, allSsTrajectory);
 
-  // De-normalize time and convert value function to matrix format
+  // Convert value function to matrix format
   size_t outputN = SsNormalizedTime.size();
   for (size_t k = partitionInterval.first; k < partitionInterval.second; k++) {
     ContinuousTimeRiccatiEquations::convert2Matrix(allSsTrajectory[outputN - 1 - k + partitionInterval.first], valueFunctionTrajectory[k]);
@@ -265,7 +266,7 @@ void SLQ::integrateRiccatiEquationNominalTime(IntegratorBase& riccatiIntegrator,
   const int nominalTimeSize = SsNormalizedTime.size();
   const int numEvents = SsNormalizedPostEventIndices.size();
   auto partitionDuration = nominalTimeTrajectory[partitionInterval.second] - nominalTimeTrajectory[partitionInterval.first];
-  const auto maxNumSteps = static_cast<size_t>(settings().maxNumStepsPerSecond_ * std::max(1.0, partitionDuration));
+  const auto numTimeSteps = static_cast<size_t>(settings().maxNumStepsPerSecond_ * std::max(1.0, partitionDuration));
 
   // Normalized switching time indices, start and end of the partition are added at the beginning and end
   using iterator_t = scalar_array_t::const_iterator;
@@ -279,7 +280,8 @@ void SLQ::integrateRiccatiEquationNominalTime(IntegratorBase& riccatiIntegrator,
   SsNormalizedSwitchingTimesIndices.back().second = SsNormalizedTime.cend();
 
   // integrating the Riccati equations
-  allSsTrajectory.reserve(maxNumSteps);
+  allSsTrajectory.clear();
+  allSsTrajectory.reserve(numTimeSteps);
   for (int i = 0; i <= numEvents; i++) {
     iterator_t beginTimeItr = SsNormalizedSwitchingTimesIndices[i].first;
     iterator_t endTimeItr = SsNormalizedSwitchingTimesIndices[i].second;
@@ -287,7 +289,7 @@ void SLQ::integrateRiccatiEquationNominalTime(IntegratorBase& riccatiIntegrator,
     Observer observer(&allSsTrajectory);
     // solve Riccati equations
     riccatiIntegrator.integrateTimes(riccatiEquation, observer, allSsFinal, beginTimeItr, endTimeItr, settings().timeStep_,
-                                     settings().absTolODE_, settings().relTolODE_, maxNumSteps);
+                                     settings().absTolODE_, settings().relTolODE_, numTimeSteps);
 
     if (i < numEvents) {
       allSsFinal = riccatiEquation.computeJumpMap(*endTimeItr, allSsTrajectory.back());
@@ -296,54 +298,8 @@ void SLQ::integrateRiccatiEquationNominalTime(IntegratorBase& riccatiIntegrator,
 
   // check size
   if (allSsTrajectory.size() != nominalTimeSize) {
-    throw std::runtime_error("allSsTrajectory size is incorrect.");
+    throw std::runtime_error("[SLQ::integrateRiccatiEquationNominalTim] allSsTrajectory size is incorrect.");
   }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void SLQ::integrateRiccatiEquationAdaptiveTime(IntegratorBase& riccatiIntegrator, ContinuousTimeRiccatiEquations& riccatiEquation,
-                                               const scalar_array_t& nominalTimeTrajectory,
-                                               const size_array_t& nominalEventsPastTheEndIndices, vector_t allSsFinal,
-                                               scalar_array_t& SsNormalizedTime, size_array_t& SsNormalizedPostEventIndices,
-                                               vector_array_t& allSsTrajectory) {
-  // Extract sizes
-  const int nominalTimeSize = nominalTimeTrajectory.size();
-  const int numEvents = nominalEventsPastTheEndIndices.size();
-  auto partitionDuration = nominalTimeTrajectory.back() - nominalTimeTrajectory.front();
-  const auto maxNumSteps = static_cast<size_t>(settings().maxNumStepsPerSecond_ * std::max(1.0, partitionDuration));
-
-  // Extract switching times from eventIndices and normalize them
-  std::vector<std::pair<scalar_t, scalar_t>> SsNormalizedSwitchingTimes;
-  SsNormalizedSwitchingTimes.reserve(numEvents + 1);
-  SsNormalizedSwitchingTimes.emplace_back(-nominalTimeTrajectory.back(), 0.0);
-  for (auto itr = nominalEventsPastTheEndIndices.rbegin(); itr != nominalEventsPastTheEndIndices.rend(); ++itr) {
-    SsNormalizedSwitchingTimes.back().second = -nominalTimeTrajectory[*itr];
-    SsNormalizedSwitchingTimes.emplace_back(-nominalTimeTrajectory[(*itr) - 1], 0.0);
-  }
-  SsNormalizedSwitchingTimes.back().second = -nominalTimeTrajectory.front();
-
-  // integrating the Riccati equations
-  SsNormalizedTime.reserve(maxNumSteps);
-  SsNormalizedPostEventIndices.reserve(numEvents);
-  allSsTrajectory.reserve(maxNumSteps);
-  for (int i = 0; i <= numEvents; i++) {
-    const scalar_t beginTime = SsNormalizedSwitchingTimes[i].first;
-    const scalar_t endTime = SsNormalizedSwitchingTimes[i].second;
-
-    Observer observer(&allSsTrajectory, &SsNormalizedTime);
-    // solve Riccati equations
-    riccatiIntegrator.integrateAdaptive(riccatiEquation, observer, allSsFinal, beginTime, endTime, settings().timeStep_,
-                                        settings().absTolODE_, settings().relTolODE_, maxNumSteps);
-
-    // if not the last interval which definitely does not have any event at
-    // its final time (there is no even at the beginning of partition)
-    if (i < numEvents) {
-      SsNormalizedPostEventIndices.push_back(allSsTrajectory.size());
-      allSsFinal = riccatiEquation.computeJumpMap(endTime, allSsTrajectory.back());
-    }
-  }  // end of i loop
 }
 
 }  // namespace ocs2

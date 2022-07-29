@@ -177,12 +177,8 @@ auto TrajectorySpreading::set(const ModeSchedule& oldModeSchedule, const ModeSch
   computeSpreadingStrategy(oldTimeTrajectory, oldMatchedEventTimes, newMatchedEventTimes);
 
   // status
-  const auto reportStatus = [&]() -> Status {
-    Status status;
-    status.willTruncate = (eraseFromIndex_ < oldTimeTrajectory.size());
-    status.willPerformTrajectorySpreading = !spreadingValueIndices_.empty();
-    return status;
-  };
+  status_.willTruncate = (eraseFromIndex_ < oldTimeTrajectory.size());
+  status_.willPerformTrajectorySpreading = !spreadingValueIndices_.empty();
 
   // debug print
   if (debugPrint_) {
@@ -294,7 +290,7 @@ auto TrajectorySpreading::set(const ModeSchedule& oldModeSchedule, const ModeSch
     }
   }
 
-  return reportStatus();
+  return status_;
 }
 
 /******************************************************************************************************/

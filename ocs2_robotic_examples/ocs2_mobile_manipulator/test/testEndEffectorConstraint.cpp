@@ -35,9 +35,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <gtest/gtest.h>
 
 #include <ocs2_core/misc/LoadData.h>
+#include <ocs2_core/misc/LoadStdVectorOfPair.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
 #include <ocs2_robotic_assets/package_path.h>
-#include <ocs2_self_collision/loadStdVectorOfPair.h>
 
 #include "ocs2_mobile_manipulator/FactoryFunctions.h"
 #include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
@@ -81,7 +81,7 @@ class testEndEffectorConstraint : public ::testing::Test {
  protected:
   ManipulatorModelInfo loadManipulatorModelInfo() {
     // files
-    const std::string taskFile = ocs2::mobile_manipulator::getPath() + "/config/mpc/task.info";
+    const std::string taskFile = ocs2::mobile_manipulator::getPath() + "/config/mabi_mobile/task.info";
     // read the task file
     boost::property_tree::ptree pt;
     boost::property_tree::read_info(taskFile, pt);
@@ -98,8 +98,8 @@ class testEndEffectorConstraint : public ::testing::Test {
 
   PinocchioInterface createMobileManipulatorPinocchioInterface() {
     // files
-    const std::string urdfPath = ocs2::robotic_assets::getPath() + "/resources/mobile_manipulator/urdf/mobile_manipulator.urdf";
-    const std::string taskFile = ocs2::mobile_manipulator::getPath() + "/config/mpc/task.info";
+    const std::string urdfPath = ocs2::robotic_assets::getPath() + "/resources/mobile_manipulator/mabi_mobile/urdf/mabi_mobile.urdf";
+    const std::string taskFile = ocs2::mobile_manipulator::getPath() + "/config/mabi_mobile/task.info";
     // read manipulator type
     ManipulatorModelType modelType = mobile_manipulator::loadManipulatorType(taskFile, "model_information.manipulatorModelType");
     // read the joints to make fixed

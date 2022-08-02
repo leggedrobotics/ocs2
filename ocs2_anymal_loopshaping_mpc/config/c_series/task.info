@@ -1,6 +1,6 @@
 model_settings
 {
-  algorithm                     DDP
+  algorithm                     SQP
   recompileLibraries            false
 
   analyticalInverseKinematics   true
@@ -136,7 +136,7 @@ defaultModeSequenceTemplate
 ; DDP settings
 ddp
 {
-  algorithm                       ILQR
+  algorithm                       SLQ
 
   nThreads                        4
   threadPriority                  50

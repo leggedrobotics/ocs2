@@ -16,11 +16,19 @@ template <typename SCALAR_T>
 QuadrupedKinematics<SCALAR_T>::QuadrupedKinematics(const FrameDeclaration& frameDeclaration,
                                                    const ocs2::PinocchioInterface& pinocchioInterface)
     : pinocchioInterfacePtr_(new PinocchioInterface_s_t(castPinocchioInterface(pinocchioInterface))),
-      pinocchioMapping_(frameDeclaration, pinocchioInterface) {}
+      pinocchioMapping_(frameDeclaration, pinocchioInterface) {
+  for (size_t footIndex = 0; footIndex < switched_model::NUM_CONTACT_POINTS; ++footIndex) {
+    switched_model::joint_coordinate_s_t<SCALAR_T> zeroConfiguration;
+    zeroConfiguration.setZero();
+    baseToLegRootInBaseFrame_[footIndex] = relativeTranslationInBaseFrame(zeroConfiguration, pinocchioMapping_.getHipFrameId(footIndex));
+  }
+}
 
 template <typename SCALAR_T>
 QuadrupedKinematics<SCALAR_T>::QuadrupedKinematics(const QuadrupedKinematics& rhs)
-    : pinocchioInterfacePtr_(new PinocchioInterface_s_t(*rhs.pinocchioInterfacePtr_)), pinocchioMapping_(rhs.pinocchioMapping_){};
+    : pinocchioInterfacePtr_(new PinocchioInterface_s_t(*rhs.pinocchioInterfacePtr_)),
+      pinocchioMapping_(rhs.pinocchioMapping_),
+      baseToLegRootInBaseFrame_(rhs.baseToLegRootInBaseFrame_){};
 
 template <typename SCALAR_T>
 QuadrupedKinematics<SCALAR_T>* QuadrupedKinematics<SCALAR_T>::clone() const {
@@ -29,10 +37,7 @@ QuadrupedKinematics<SCALAR_T>* QuadrupedKinematics<SCALAR_T>::clone() const {
 
 template <typename SCALAR_T>
 switched_model::vector3_s_t<SCALAR_T> QuadrupedKinematics<SCALAR_T>::baseToLegRootInBaseFrame(size_t footIndex) const {
-  switched_model::joint_coordinate_s_t<SCALAR_T> zeroConfiguration;
-  zeroConfiguration.setZero();
-  pinocchio::FrameIndex frameId = pinocchioMapping_.getHipFrameId(footIndex);
-  return relativeTranslationInBaseFrame(zeroConfiguration, frameId);
+  return baseToLegRootInBaseFrame_[footIndex];
 }
 
 template <typename SCALAR_T>

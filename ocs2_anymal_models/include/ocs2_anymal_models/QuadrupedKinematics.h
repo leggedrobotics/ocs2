@@ -68,6 +68,7 @@ class QuadrupedKinematics final : public switched_model::KinematicsModelBase<SCA
 
   std::unique_ptr<PinocchioInterface_s_t> pinocchioInterfacePtr_;
   QuadrupedPinocchioMapping pinocchioMapping_;
+  switched_model::feet_array_t<switched_model::vector3_s_t<SCALAR_T>> baseToLegRootInBaseFrame_;
 };
 
 }  // namespace tpl

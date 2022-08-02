@@ -33,8 +33,9 @@ class QuadrupedPinocchioMapping {
 
   const std::vector<std::string>& getPinocchioJointNames() const { return pinocchioJointNames_; }
 
+  static size_t getBodyId(const std::string& bodyName, const ocs2::PinocchioInterface& pinocchioInterface);
+
  private:
-  size_t getBodyId(const std::string& bodyName, const ocs2::PinocchioInterface& pinocchioInterface) const;
   void extractPinocchioJointNames(const ocs2::PinocchioInterface& pinocchioInterface);
   void extractFeetOrdering(const ocs2::PinocchioInterface& pinocchioInterface);
 

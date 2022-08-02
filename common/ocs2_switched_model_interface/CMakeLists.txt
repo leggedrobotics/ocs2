@@ -45,6 +45,8 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
+	src/analytical_inverse_kinematics/AnalyticalInverseKinematics.cpp
+	src/analytical_inverse_kinematics/LegInverseKinematicParameters.cpp
 	src/constraint/EndEffectorVelocityConstraint.cpp
 	src/constraint/FootNormalConstraint.cpp
 	src/constraint/FrictionConeConstraint.cpp

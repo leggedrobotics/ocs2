@@ -8,10 +8,8 @@ void getLimbJointPositionsFromPositionBaseToFootInBaseFrame(Eigen::Vector3d& leg
                                                             const LegInverseKinematicParameters& parameters, size_t limb) {
   Eigen::Vector3d positionHAAToFootInBaseFrame = positionBaseToFootInBaseFrame - parameters.positionBaseToHaaCenterInBaseFrame_;
 
-  double positionYzSquared{positionHAAToFootInBaseFrame.tail<2>().squaredNorm()};
-
   /// Rescaling target
-  const double reachSquared{positionYzSquared + positionHAAToFootInBaseFrame[0] * positionHAAToFootInBaseFrame[0]};
+  const double reachSquared{positionHAAToFootInBaseFrame.squaredNorm()};
   if (reachSquared > parameters.maxReachSquared_) {
     positionHAAToFootInBaseFrame.array() *= parameters.maxReach_ / std::sqrt(reachSquared);
   } else if (reachSquared < parameters.minReachSquared_ && reachSquared > 0.0) {
@@ -19,6 +17,7 @@ void getLimbJointPositionsFromPositionBaseToFootInBaseFrame(Eigen::Vector3d& leg
   }
 
   /// Rescaling Yz
+  double positionYzSquared{positionHAAToFootInBaseFrame.tail<2>().squaredNorm()};
   if (positionYzSquared < parameters.positionHipToFootYoffsetSquared_ && positionYzSquared > 0.0) {
     positionHAAToFootInBaseFrame.tail<2>().array() *= std::sqrt(parameters.positionHipToFootYoffsetSquared_ / positionYzSquared);
     positionYzSquared = parameters.positionHipToFootYoffsetSquared_;

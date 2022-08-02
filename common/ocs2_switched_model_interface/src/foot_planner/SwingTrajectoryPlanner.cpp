@@ -430,6 +430,8 @@ std::vector<ConvexTerrain> SwingTrajectoryPlanner::selectNominalFootholdTerrain(
 }
 
 void SwingTrajectoryPlanner::adaptJointReferencesWithInverseKinematics(scalar_t finalTime) {
+  const scalar_t damping = 0.01;  // Quite some damping on the IK to get well conditions references.
+
   for (int k = 0; k < targetTrajectories_.timeTrajectory.size(); ++k) {
     const scalar_t t = targetTrajectories_.timeTrajectory[k];
 
@@ -439,12 +441,28 @@ void SwingTrajectoryPlanner::adaptJointReferencesWithInverseKinematics(scalar_t 
 
     for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
       const auto& footPhase = this->getFootPhase(leg, t);
-      const vector3_t PositionBaseToFootInWorldFrame = footPhase.getPositionInWorld(t) - basePositionInWorld;
-      const vector3_t PositionBaseToFootInBaseFrame = rotateVectorOriginToBase(PositionBaseToFootInWorldFrame, eulerXYZ);
 
-      const size_t offset = 2 * BASE_COORDINATE_SIZE + 3 * leg;
-      targetTrajectories_.stateTrajectory[k].segment(offset, 3) =
-          inverseKinematicsModelPtr_->getLimbJointPositionsFromPositionBaseToFootInBaseFrame(leg, PositionBaseToFootInBaseFrame);
+      // Joint positions
+      const vector3_t positionBaseToFootInWorldFrame = footPhase.getPositionInWorld(t) - basePositionInWorld;
+      const vector3_t positionBaseToFootInBaseFrame = rotateVectorOriginToBase(positionBaseToFootInWorldFrame, eulerXYZ);
+
+      const size_t stateOffset = 2 * BASE_COORDINATE_SIZE + 3 * leg;
+      targetTrajectories_.stateTrajectory[k].segment(stateOffset, 3) =
+          inverseKinematicsModelPtr_->getLimbJointPositionsFromPositionBaseToFootInBaseFrame(leg, positionBaseToFootInBaseFrame);
+
+      // Joint velocities
+      auto jointPositions = getJointPositions(targetTrajectories_.stateTrajectory[k]);
+      auto baseTwistInBaseFrame = getBaseLocalVelocities(targetTrajectories_.stateTrajectory[k]);
+
+      const vector3_t b_baseToFoot = kinematicsModel_->positionBaseToFootInBaseFrame(leg, jointPositions);
+      const vector3_t footVelocityInBaseFrame = rotateVectorOriginToBase(footPhase.getVelocityInWorld(t), eulerXYZ);
+      const vector3_t footRelativeVelocityInBaseFrame =
+          footVelocityInBaseFrame - getLinearVelocity(baseTwistInBaseFrame) - getAngularVelocity(baseTwistInBaseFrame).cross(b_baseToFoot);
+
+      const size_t inputOffset = 3 * NUM_CONTACT_POINTS + 3 * leg;
+      targetTrajectories_.inputTrajectory[k].segment(inputOffset, 3) =
+          inverseKinematicsModelPtr_->getLimbVelocitiesFromFootVelocityRelativeToBaseInBaseFrame(
+              leg, footRelativeVelocityInBaseFrame, kinematicsModel_->baseToFootJacobianBlockInBaseFrame(leg, jointPositions), damping);
     }
 
     // Can stop adaptation as soon as we have processed a point beyond the horizon.

@@ -45,4 +45,15 @@ switched_model::vector3_t QuadrupedInverseKinematics::getLimbJointPositionsFromP
   return jointAngles;
 }
 
+switched_model::vector3_t QuadrupedInverseKinematics::getLimbVelocitiesFromFootVelocityRelativeToBaseInBaseFrame(
+    size_t footIndex, const switched_model::vector3_t& footVelocityRelativeToBaseInBaseFrame, const joint_jacobian_block_t& jointJacobian,
+    switched_model::scalar_t damping) const {
+  // v = J * dq, (bottom 3 rows = translational part)
+  switched_model::matrix3_t Jtranslational = jointJacobian.block<3, 3>(3, 0);
+  switched_model::matrix3_t JTJ = Jtranslational.transpose() * Jtranslational;
+  JTJ.diagonal().array() += damping;  // regularize
+
+  return JTJ.ldlt().solve(Jtranslational.transpose() * footVelocityRelativeToBaseInBaseFrame);
+}
+
 }  // namespace anymal

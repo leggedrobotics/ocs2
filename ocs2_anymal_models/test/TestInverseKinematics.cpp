@@ -14,6 +14,7 @@
 #include <ocs2_switched_model_interface/analytical_inverse_kinematics/AnalyticalInverseKinematics.h>
 
 #include <ocs2_anymal_models/AnymalModels.h>
+#include <ocs2_anymal_models/QuadrupedInverseKinematics.h>
 #include <ocs2_anymal_models/QuadrupedKinematics.h>
 #include <ocs2_anymal_models/package_path.h>
 
@@ -27,31 +28,15 @@ class QuadrupedInverseKinematicsTest : public ::testing::Test {
   QuadrupedInverseKinematicsTest()
       : frameDeclaration(frameDeclarationFromFile(getPath() + "/urdf/frame_declaration_anymal_c.info")),
         pinocchioInterface(ocs2::getPinocchioInterfaceFromUrdfString(getUrdfString(AnymalModel::Camel))),
-        kinematics_(frameDeclaration, pinocchioInterface) {
+        kinematics_(frameDeclaration, pinocchioInterface),
+        inverseKinematics_(frameDeclaration, pinocchioInterface) {
     srand(10);
-
-    auto& data = pinocchioInterface.getData();
-    const auto& model = pinocchioInterface.getModel();
-
-    switched_model::joint_coordinate_t zeroConfiguration(switched_model::joint_coordinate_t::Zero());
-    pinocchio::forwardKinematics(model, data, zeroConfiguration);
-    pinocchio::updateFramePlacements(model, data);
-
-    for (size_t leg = 0; leg < switched_model::NUM_CONTACT_POINTS; ++leg) {
-      const auto& hipTransform = data.oMf[QuadrupedPinocchioMapping::getBodyId(frameDeclaration.legs[leg].joints[0], pinocchioInterface)];
-      const auto& thighTransform = data.oMf[QuadrupedPinocchioMapping::getBodyId(frameDeclaration.legs[leg].joints[1], pinocchioInterface)];
-      const auto& shankTransform = data.oMf[QuadrupedPinocchioMapping::getBodyId(frameDeclaration.legs[leg].joints[2], pinocchioInterface)];
-      const auto& footTransform = data.oMf[QuadrupedPinocchioMapping::getBodyId(frameDeclaration.legs[leg].tip, pinocchioInterface)];
-
-      legParametersPerLeg[leg] = switched_model::analytical_inverse_kinematics::LegInverseKinematicParameters(
-          hipTransform.translation(), thighTransform.translation() - hipTransform.translation(),
-          shankTransform.translation() - thighTransform.translation(), footTransform.translation() - shankTransform.translation());
-    }
   }
 
   FrameDeclaration frameDeclaration;
   ocs2::PinocchioInterface pinocchioInterface;
   QuadrupedKinematics kinematics_;
+  QuadrupedInverseKinematics inverseKinematics_;
   switched_model::feet_array_t<switched_model::analytical_inverse_kinematics::LegInverseKinematicParameters> legParametersPerLeg;
 };
 
@@ -63,9 +48,8 @@ TEST_F(QuadrupedInverseKinematicsTest, defaultJointAngles) {
   for (size_t footIndex = 0; footIndex < switched_model::NUM_CONTACT_POINTS; ++footIndex) {
     switched_model::vector3_t positionBaseToFootInBaseFrame = kinematics_.positionBaseToFootInBaseFrame(footIndex, jointPositions);
 
-    switched_model::vector3_t legJoints;
-    getLimbJointPositionsFromPositionBaseToFootInBaseFrame(legJoints, positionBaseToFootInBaseFrame, legParametersPerLeg[footIndex],
-                                                           footIndex);
+    switched_model::vector3_t legJoints =
+        inverseKinematics_.getLimbJointPositionsFromPositionBaseToFootInBaseFrame(footIndex, positionBaseToFootInBaseFrame);
     EXPECT_TRUE(jointsPerLeg[footIndex].isApprox(legJoints));
   }
 }
@@ -87,9 +71,8 @@ TEST_F(QuadrupedInverseKinematicsTest, randomJointAngles) {
           kinematics_.positionBaseToFootInBaseFrame(footIndex, switched_model::fromArray(jointsPerLeg));
 
       // Inverse kinematics
-      switched_model::vector3_t legJoints;
-      getLimbJointPositionsFromPositionBaseToFootInBaseFrame(legJoints, positionBaseToFootInBaseFrame, legParametersPerLeg[footIndex],
-                                                             footIndex);
+      switched_model::vector3_t legJoints =
+          inverseKinematics_.getLimbJointPositionsFromPositionBaseToFootInBaseFrame(footIndex, positionBaseToFootInBaseFrame);
 
       EXPECT_TRUE(jointsPerLeg[footIndex].isApprox(legJoints))
           << "Foot: " << footIndex << ", True angles: " << jointsPerLeg[footIndex].transpose() << ", IK: " << legJoints.transpose();
@@ -99,14 +82,15 @@ TEST_F(QuadrupedInverseKinematicsTest, randomJointAngles) {
 
 TEST_F(QuadrupedInverseKinematicsTest, outOfRange) {
   const int Ntest = 100;
+  const double tol = 1e-6;
 
   for (size_t footIndex = 0; footIndex < switched_model::NUM_CONTACT_POINTS; ++footIndex) {
     for (int i = 0; i < Ntest; ++i) {
       const switched_model::vector3_t outOfRangeTarget = 1000.0 * switched_model::vector3_t::Random();
 
       // Inverse kinematics
-      switched_model::vector3_t legJoints;
-      getLimbJointPositionsFromPositionBaseToFootInBaseFrame(legJoints, outOfRangeTarget, legParametersPerLeg[footIndex], footIndex);
+      switched_model::vector3_t legJoints =
+          inverseKinematics_.getLimbJointPositionsFromPositionBaseToFootInBaseFrame(footIndex, outOfRangeTarget);
 
       // Forward kinematics
       switched_model::feet_array_t<switched_model::vector3_t> jointsPerLeg =
@@ -117,12 +101,12 @@ TEST_F(QuadrupedInverseKinematicsTest, outOfRange) {
           kinematics_.positionBaseToFootInBaseFrame(footIndex, switched_model::fromArray(jointsPerLeg));
 
       // Inverse kinematics
-      getLimbJointPositionsFromPositionBaseToFootInBaseFrame(legJoints, outOfRangeTarget, legParametersPerLeg[footIndex], footIndex);
+      legJoints = inverseKinematics_.getLimbJointPositionsFromPositionBaseToFootInBaseFrame(footIndex, positionBaseToFootInBaseFrame);
 
       EXPECT_TRUE(jointsPerLeg[footIndex].allFinite())
           << "Foot: " << footIndex << " First IK not finite! " << jointsPerLeg[footIndex].transpose();
       EXPECT_TRUE(legJoints.allFinite()) << "Foot: " << footIndex << " Second IK not finite! " << legJoints.transpose();
-      EXPECT_TRUE(jointsPerLeg[footIndex].isApprox(legJoints))
+      EXPECT_TRUE(jointsPerLeg[footIndex].isApprox(legJoints, tol))
           << "Foot: " << footIndex << ", First IK: " << jointsPerLeg[footIndex].transpose() << ", second IK: " << legJoints.transpose();
     }
   }
@@ -130,6 +114,7 @@ TEST_F(QuadrupedInverseKinematicsTest, outOfRange) {
 
 TEST_F(QuadrupedInverseKinematicsTest, closeToHip) {
   const int Ntest = 100;
+  const double tol = 1e-6;
 
   for (size_t footIndex = 0; footIndex < switched_model::NUM_CONTACT_POINTS; ++footIndex) {
     for (int i = 0; i < Ntest; ++i) {
@@ -139,8 +124,8 @@ TEST_F(QuadrupedInverseKinematicsTest, closeToHip) {
       }
 
       // Inverse kinematics
-      switched_model::vector3_t legJoints;
-      getLimbJointPositionsFromPositionBaseToFootInBaseFrame(legJoints, outOfRangeTarget, legParametersPerLeg[footIndex], footIndex);
+      switched_model::vector3_t legJoints =
+          inverseKinematics_.getLimbJointPositionsFromPositionBaseToFootInBaseFrame(footIndex, outOfRangeTarget);
 
       // Forward kinematics
       switched_model::feet_array_t<switched_model::vector3_t> jointsPerLeg =
@@ -151,13 +136,73 @@ TEST_F(QuadrupedInverseKinematicsTest, closeToHip) {
           kinematics_.positionBaseToFootInBaseFrame(footIndex, switched_model::fromArray(jointsPerLeg));
 
       // Inverse kinematics
-      getLimbJointPositionsFromPositionBaseToFootInBaseFrame(legJoints, outOfRangeTarget, legParametersPerLeg[footIndex], footIndex);
+      legJoints = inverseKinematics_.getLimbJointPositionsFromPositionBaseToFootInBaseFrame(footIndex, positionBaseToFootInBaseFrame);
 
       EXPECT_TRUE(jointsPerLeg[footIndex].allFinite())
           << "Foot: " << footIndex << " First IK not finite! " << jointsPerLeg[footIndex].transpose();
       EXPECT_TRUE(legJoints.allFinite()) << "Foot: " << footIndex << " Second IK not finite! " << legJoints.transpose();
-      EXPECT_TRUE(jointsPerLeg[footIndex].isApprox(legJoints))
+      EXPECT_TRUE(jointsPerLeg[footIndex].isApprox(legJoints, tol))
           << "Foot: " << footIndex << ", First IK: " << jointsPerLeg[footIndex].transpose() << ", second IK: " << legJoints.transpose();
+    }
+  }
+}
+
+TEST_F(QuadrupedInverseKinematicsTest, defaultJointAnglesVelocity) {
+  const double tol = 1e-6;
+  const double damping = 1e-9;
+
+  switched_model::joint_coordinate_t jointPositions;
+  jointPositions << -0.25, 0.60, -0.85, 0.25, 0.60, -0.85, -0.25, -0.60, 0.85, 0.25, -0.60, 0.85;
+
+  switched_model::joint_coordinate_t jointVelocities;
+  jointVelocities.setRandom();
+  auto jointVelocitiesPerLeg = switched_model::toArray(jointVelocities);
+
+  for (size_t footIndex = 0; footIndex < switched_model::NUM_CONTACT_POINTS; ++footIndex) {
+    switched_model::vector3_t footVelocity = kinematics_.footVelocityRelativeToBaseInBaseFrame(footIndex, jointPositions, jointVelocities);
+
+    switched_model::vector3_t legJointVelocities = inverseKinematics_.getLimbVelocitiesFromFootVelocityRelativeToBaseInBaseFrame(
+        footIndex, footVelocity, kinematics_.baseToFootJacobianBlockInBaseFrame(footIndex, jointPositions), damping);
+    EXPECT_TRUE(jointVelocitiesPerLeg[footIndex].isApprox(legJointVelocities, tol));
+  }
+}
+
+TEST_F(QuadrupedInverseKinematicsTest, singularityJointAnglesVelocity) {
+  const int Ntest = 100;
+
+  const double tol = 1e-6;
+  const double damping = 1e-9;
+
+  switched_model::joint_coordinate_t jointVelocities;
+  jointVelocities.setRandom();
+  auto jointVelocitiesPerLeg = switched_model::toArray(jointVelocities);
+
+  for (size_t footIndex = 0; footIndex < switched_model::NUM_CONTACT_POINTS; ++footIndex) {
+    for (int i = 0; i < Ntest; ++i) {
+      // Inverse kinematics to create singular configuration
+      const switched_model::vector3_t outOfRangeTarget = 1000.0 * switched_model::vector3_t::Random();
+      switched_model::vector3_t legJoints =
+          inverseKinematics_.getLimbJointPositionsFromPositionBaseToFootInBaseFrame(footIndex, outOfRangeTarget);
+
+      // Set joint positions
+      switched_model::feet_array_t<switched_model::vector3_t> jointsPerLeg =
+          switched_model::constantFeetArray<switched_model::vector3_t>(switched_model::vector3_t::Zero());
+      jointsPerLeg[footIndex] = legJoints;
+      auto jointPositions = switched_model::fromArray(jointsPerLeg);
+
+      switched_model::vector3_t footVelocity =
+          kinematics_.footVelocityRelativeToBaseInBaseFrame(footIndex, jointPositions, jointVelocities);
+
+      auto J = kinematics_.baseToFootJacobianBlockInBaseFrame(footIndex, jointPositions);
+
+      switched_model::vector3_t legJointVelocities =
+          inverseKinematics_.getLimbVelocitiesFromFootVelocityRelativeToBaseInBaseFrame(footIndex, footVelocity, J, damping);
+      EXPECT_TRUE(legJointVelocities.allFinite());
+
+      // Compare on the achieved foot velocity
+      EXPECT_TRUE(footVelocity.isApprox(J.block<3, 3>(3, 0) * legJointVelocities, tol))
+          << "Foot: " << footIndex << ", Velocities: " << jointVelocitiesPerLeg[footIndex].transpose()
+          << ", IK: " << legJointVelocities.transpose();
     }
   }
 }

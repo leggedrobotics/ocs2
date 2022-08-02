@@ -64,21 +64,24 @@ int main(int argc, char* argv[]) {
   const ocs2::vector_t initSystemState = anymalInterface->getInitialState().head(switched_model::STATE_DIM);
 
   // ====== Scenario settings ========
-  ocs2::scalar_t forwardVelocity{0.1};
-  ocs2::scalar_t forwardDistance{0.1};
+  ocs2::scalar_t forwardVelocity{0.6};
+  ocs2::scalar_t forwardDistance{8.0};
 
   ocs2::scalar_t initTime = 0.0;
-  ocs2::scalar_t stanceTime = 1.0;
+  ocs2::scalar_t stanceTime = 1.5;
   ocs2::scalar_t finalTime = forwardDistance / forwardVelocity + stanceTime;
   ocs2::scalar_t f_mpc = 100;  // hz
 
   // Load a map
   const std::string elevationLayer{"elevation"};
   const std::string frameId{"world"};
-  std::string terrainFile = "step.png";
-  double heightScale = 0.00;
-  const auto gridMap = convex_plane_decomposition::loadGridmapFromImage(terrainFolder + "/" + terrainFile, elevationLayer, frameId,
-                                                                        perceptionConfig.preprocessingParameters.resolution, heightScale);
+  std::string terrainFile = "gaps.png";
+  double heightScale = 1.0;
+  auto gridMap = convex_plane_decomposition::loadGridmapFromImage(terrainFolder + "/" + terrainFile, elevationLayer, frameId,
+                                                                  perceptionConfig.preprocessingParameters.resolution, heightScale);
+  if (terrainFile == "gaps.png") {
+    gridMap.get(elevationLayer).array() -= static_cast<float>(heightScale);
+  }
 
   // Gait
   using MN = switched_model::ModeNumber;
@@ -124,8 +127,13 @@ int main(int argc, char* argv[]) {
   BaseReferenceState initialBaseState{stanceTime, getPositionInOrigin(getBasePose(initSystemState)),
                                       getOrientation(getBasePose(initSystemState))};
 
-  const auto terrainAdaptedBaseReference = generateExtrapolatedBaseReference(
-      commandHorizon, initialBaseState, command, planarTerrain.gridMap, nominalStanceWidthInHeading, nominalStanceWidthLateral);
+  BaseReferenceTrajectory terrainAdaptedBaseReference;
+  if (terrainFile == "gaps.png") {
+    terrainAdaptedBaseReference = generateExtrapolatedBaseReference(commandHorizon, initialBaseState, command, TerrainPlane());
+  } else {
+    terrainAdaptedBaseReference = generateExtrapolatedBaseReference(commandHorizon, initialBaseState, command, planarTerrain.gridMap,
+                                                                    nominalStanceWidthInHeading, nominalStanceWidthLateral);
+  }
 
   ocs2::TargetTrajectories targetTrajectories;
   targetTrajectories.timeTrajectory.push_back(initTime);
@@ -193,31 +201,37 @@ int main(int argc, char* argv[]) {
   ocs2::PrimalSolution closedLoopSolution;
   while (observation.time < finalTime) {
     std::cout << "t: " << observation.time << "\n";
-    // run MPC at current observation
-    mpcInterface.setCurrentObservation(observation);
-    mpcInterface.advanceMpc();
-    mpcInterface.updatePolicy();
+    try {
+      // run MPC at current observation
+      mpcInterface.setCurrentObservation(observation);
+      mpcInterface.advanceMpc();
+      mpcInterface.updatePolicy();
 
-    // Evaluate the optimized solution
-    ocs2::vector_t tmp;
-    mpcInterface.evaluatePolicy(observation.time, observation.state, tmp, observation.input, observation.mode);
+      // Evaluate the optimized solution
+      ocs2::vector_t tmp;
+      mpcInterface.evaluatePolicy(observation.time, observation.state, tmp, observation.input, observation.mode);
 
-    closedLoopSolution.timeTrajectory_.push_back(observation.time);
-    closedLoopSolution.stateTrajectory_.push_back(observation.state);
-    closedLoopSolution.inputTrajectory_.push_back(observation.input);
-    if (closedLoopSolution.modeSchedule_.modeSequence.empty()) {
-      closedLoopSolution.modeSchedule_.modeSequence.push_back(observation.mode);
-    } else if (closedLoopSolution.modeSchedule_.modeSequence.back() != observation.mode) {
-      closedLoopSolution.modeSchedule_.modeSequence.push_back(observation.mode);
-      closedLoopSolution.modeSchedule_.eventTimes.push_back(observation.time - 0.5 / f_mpc);
+      closedLoopSolution.timeTrajectory_.push_back(observation.time);
+      closedLoopSolution.stateTrajectory_.push_back(observation.state);
+      closedLoopSolution.inputTrajectory_.push_back(observation.input);
+      if (closedLoopSolution.modeSchedule_.modeSequence.empty()) {
+        closedLoopSolution.modeSchedule_.modeSequence.push_back(observation.mode);
+      } else if (closedLoopSolution.modeSchedule_.modeSequence.back() != observation.mode) {
+        closedLoopSolution.modeSchedule_.modeSequence.push_back(observation.mode);
+        closedLoopSolution.modeSchedule_.eventTimes.push_back(observation.time - 0.5 / f_mpc);
+      }
+
+      // Forward stepping: use optimal state for the next observation:
+      observation.time += 1.0 / f_mpc;
+      size_t tmpMode;
+      mpcInterface.evaluatePolicy(observation.time, ocs2::vector_t::Zero(switched_model_loopshaping::STATE_DIM), observation.state, tmp,
+                                  tmpMode);
+      observation.input.setZero(switched_model_loopshaping::INPUT_DIM);  // reset
+    } catch (std::exception& e) {
+      std::cout << "MPC failed\n";
+      std::cout << e.what() << "\n";
+      break;
     }
-
-    // Forward stepping: use optimal state for the next observation:
-    observation.time += 1.0 / f_mpc;
-    size_t tmpMode;
-    mpcInterface.evaluatePolicy(observation.time, ocs2::vector_t::Zero(switched_model_loopshaping::STATE_DIM), observation.state, tmp,
-                                tmpMode);
-    observation.input.setZero(switched_model_loopshaping::INPUT_DIM);  // reset
   }
   const auto closedLoopSystemSolution =
       ocs2::loopshapingToSystemPrimalSolution(closedLoopSolution, *anymalInterface->getLoopshapingDefinition());

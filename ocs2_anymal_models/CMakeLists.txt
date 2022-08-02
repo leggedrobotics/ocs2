@@ -49,6 +49,7 @@ add_library(${PROJECT_NAME}
   src/AnymalModels.cpp
   src/FrameDeclaration.cpp
   src/QuadrupedPinocchioMapping.cpp
+  src/QuadrupedInverseKinematics.cpp
   src/QuadrupedKinematics.cpp
   src/QuadrupedCom.cpp
 )

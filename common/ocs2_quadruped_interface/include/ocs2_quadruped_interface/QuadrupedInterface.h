@@ -13,6 +13,7 @@
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
 #include <ocs2_switched_model_interface/core/ComModelBase.h>
+#include <ocs2_switched_model_interface/core/InverseKinematicsModelBase.h>
 #include <ocs2_switched_model_interface/core/KinematicsModelBase.h>
 #include <ocs2_switched_model_interface/core/ModelSettings.h>
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
@@ -57,7 +58,8 @@ class QuadrupedInterface : public ocs2::RobotInterface {
    * @param baseName : names of the model root frame
    */
   QuadrupedInterface(const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel, const com_model_t& comModel,
-                     const ad_com_model_t& adComModel, Settings settings, std::vector<std::string> jointNames, std::string baseName);
+                     const ad_com_model_t& adComModel, const InverseKinematicsModelBase* inverseKinematics, Settings settings,
+                     std::vector<std::string> jointNames, std::string baseName);
 
   /** Destructor */
   ~QuadrupedInterface() override = default;
@@ -74,6 +76,9 @@ class QuadrupedInterface : public ocs2::RobotInterface {
   }
 
   const ocs2::OptimalControlProblem& getOptimalControlProblem() const override { return *problemPtr_; }
+
+  /** Gets inverse kinematic model */
+  const InverseKinematicsModelBase* getInverseKinematicModelPtr() const { return inverseKinematicModelPtr_.get(); }
 
   /** Gets kinematic model */
   const kinematic_model_t& getKinematicModel() const { return *kinematicModelPtr_; }
@@ -134,6 +139,7 @@ class QuadrupedInterface : public ocs2::RobotInterface {
   Settings settings_;
   std::vector<std::string> jointNames_;
   std::string baseName_;
+  std::unique_ptr<InverseKinematicsModelBase> inverseKinematicModelPtr_;
   std::unique_ptr<kinematic_model_t> kinematicModelPtr_;
   std::unique_ptr<ad_kinematic_model_t> adKinematicModelPtr_;
   std::unique_ptr<com_model_t> comModelPtr_;

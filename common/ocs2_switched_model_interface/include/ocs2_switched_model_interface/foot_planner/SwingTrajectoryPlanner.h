@@ -7,6 +7,7 @@
 #include <ocs2_core/Types.h>
 #include <ocs2_core/reference/TargetTrajectories.h>
 
+#include "ocs2_switched_model_interface/core/InverseKinematicsModelBase.h"
 #include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/foot_planner/FootPhase.h"
@@ -47,7 +48,8 @@ using inverse_kinematics_function_t = std::function<vector3_t(int, const vector3
 
 class SwingTrajectoryPlanner {
  public:
-  SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings, const KinematicsModelBase<scalar_t>& kinematicsModel);
+  SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings, const KinematicsModelBase<scalar_t>& kinematicsModel,
+                         const InverseKinematicsModelBase* inverseKinematicsModelPtr);
 
   // Update terrain model
   void updateTerrain(std::unique_ptr<TerrainModel> terrainModel);
@@ -58,9 +60,6 @@ class SwingTrajectoryPlanner {
   // Main interface preparing all swing trajectories in cartesian space (called by reference manager)
   void updateSwingMotions(scalar_t initTime, scalar_t finalTime, const comkino_state_t& currentState,
                           const ocs2::TargetTrajectories& targetTrajectories, const ocs2::ModeSchedule& modeSchedule);
-
-  // Apply IK to cartesian swing motion to update joint references (called by reference manager)
-  void adaptJointReferencesWithInverseKinematics(const inverse_kinematics_function_t& inverseKinematicsFunction, scalar_t finalTime);
 
   // Main access method for the generated cartesian references.
   const FootPhase& getFootPhase(size_t leg, scalar_t time) const;
@@ -99,6 +98,9 @@ class SwingTrajectoryPlanner {
   void applySwingMotionScaling(SwingPhase::SwingEvent& liftOff, SwingPhase::SwingEvent& touchDown,
                                SwingPhase::SwingProfile& swingProfile) const;
 
+  // Apply IK to cartesian swing motion to update joint references
+  void adaptJointReferencesWithInverseKinematics(scalar_t finalTime);
+
   std::unique_ptr<ExternalSwingPhase> extractExternalSwingPhase(int leg, scalar_t liftOffTime, scalar_t touchDownTime) const;
 
   SwingPhase::SwingProfile getDefaultSwingProfile() const;
@@ -111,6 +113,7 @@ class SwingTrajectoryPlanner {
 
   SwingTrajectoryPlannerSettings settings_;
   std::unique_ptr<KinematicsModelBase<scalar_t>> kinematicsModel_;
+  std::unique_ptr<InverseKinematicsModelBase> inverseKinematicsModelPtr_;
 
   feet_array_t<std::pair<scalar_t, TerrainPlane>> lastContacts_;
   feet_array_t<std::vector<std::unique_ptr<FootPhase>>> feetNormalTrajectories_;

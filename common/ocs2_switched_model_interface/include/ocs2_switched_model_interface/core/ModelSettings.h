@@ -16,6 +16,9 @@ struct ModelSettings {
 
   scalar_t phaseTransitionStanceTime_ = 0.4;
 
+  // Analytical IK
+  bool analyticalInverseKinematics_ = false;
+
   // Friction Cone
   scalar_t frictionCoefficient_ = 1.0;
   scalar_t coneRegularization_ = 25.0;

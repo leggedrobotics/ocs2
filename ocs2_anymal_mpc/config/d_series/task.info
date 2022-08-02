@@ -3,6 +3,8 @@ model_settings
   algorithm                     SQP
   recompileLibraries            true
 
+  analyticalInverseKinematics   true
+
   frictionCoefficient           0.5
   gripperForce                  0.0   ; [N] negative gripper force -> minimum force in normal direction
   muFrictionCone                0.1

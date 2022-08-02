@@ -11,7 +11,7 @@
 #include <pinocchio/algorithm/jacobian.hpp>
 #include <pinocchio/algorithm/kinematics.hpp>
 
-#include <ocs2_switched_model_interface/analytical_inverse_kinematics/AnalyticalInverseKinematics.hpp>
+#include <ocs2_switched_model_interface/analytical_inverse_kinematics/AnalyticalInverseKinematics.h>
 
 #include <ocs2_anymal_models/AnymalModels.h>
 #include <ocs2_anymal_models/QuadrupedKinematics.h>

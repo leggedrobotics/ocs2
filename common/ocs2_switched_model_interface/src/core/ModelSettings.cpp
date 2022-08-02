@@ -44,6 +44,7 @@ ModelSettings loadModelSettings(const std::string& filename, bool verbose) {
 
   ocs2::loadData::loadPtreeValue(pt, modelSettings.phaseTransitionStanceTime_, prefix + "phaseTransitionStanceTime", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.recompileLibraries_, prefix + "recompileLibraries", verbose);
+  ocs2::loadData::loadPtreeValue(pt, modelSettings.analyticalInverseKinematics_, prefix + "analyticalInverseKinematics", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.frictionCoefficient_, prefix + "frictionCoefficient", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.coneRegularization_, prefix + "coneRegularization", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.gripperForce_, prefix + "gripperForce", verbose);

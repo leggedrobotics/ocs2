@@ -31,10 +31,6 @@ class SwitchedModelModeScheduleManager : public ocs2::ReferenceManager {
   ocs2::Synchronized<TerrainModel>& getTerrainModel() { return terrainModel_; }
   const ocs2::Synchronized<TerrainModel>& getTerrainModel() const { return terrainModel_; }
 
-  void setInverseKinematics(inverse_kinematics_function_t inverseKinematicsFunction) {
-    inverseKinematicsFunction_ = inverseKinematicsFunction;
-  }
-
  private:
   void modifyReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState, ocs2::TargetTrajectories& targetTrajectories,
                         ocs2::ModeSchedule& modeSchedule) override;
@@ -42,7 +38,6 @@ class SwitchedModelModeScheduleManager : public ocs2::ReferenceManager {
   ocs2::Synchronized<GaitSchedule> gaitSchedule_;
   std::unique_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr_;
   ocs2::Synchronized<TerrainModel> terrainModel_;
-  inverse_kinematics_function_t inverseKinematicsFunction_;
 };
 
 }  // namespace switched_model

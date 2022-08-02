@@ -9,6 +9,7 @@
 #include <ocs2_pinocchio_interface/urdf.h>
 
 #include <ocs2_anymal_models/QuadrupedCom.h>
+#include <ocs2_anymal_models/QuadrupedInverseKinematics.h>
 #include <ocs2_anymal_models/QuadrupedKinematics.h>
 
 #include <ocs2_anymal_models/package_path.h>
@@ -49,6 +50,12 @@ std::string getUrdfString(AnymalModel model) {
 
   std::string xml_str((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
   return xml_str;
+}
+
+std::unique_ptr<switched_model::InverseKinematicsModelBase> getAnymalInverseKinematics(const FrameDeclaration& frameDeclaration,
+                                                                                       const std::string& urdf) {
+  return std::unique_ptr<switched_model::InverseKinematicsModelBase>(
+      new QuadrupedInverseKinematics(frameDeclaration, ocs2::getPinocchioInterfaceFromUrdfString(urdf)));
 }
 
 std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>> getAnymalKinematics(const FrameDeclaration& frameDeclaration,

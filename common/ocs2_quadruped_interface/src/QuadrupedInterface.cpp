@@ -27,20 +27,26 @@
 namespace switched_model {
 
 QuadrupedInterface::QuadrupedInterface(const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel,
-                                       const com_model_t& comModel, const ad_com_model_t& adComModel, Settings settings,
+                                       const com_model_t& comModel, const ad_com_model_t& adComModel,
+                                       const InverseKinematicsModelBase* inverseKinematics, Settings settings,
                                        std::vector<std::string> jointNames, std::string baseName)
     : settings_(std::move(settings)),
       jointNames_(std::move(jointNames)),
       baseName_(std::move(baseName)),
+      inverseKinematicModelPtr_(nullptr),
       kinematicModelPtr_(kinematicModel.clone()),
       adKinematicModelPtr_(adKinematicModel.clone()),
       comModelPtr_(comModel.clone()),
       adComModelPtr_(adComModel.clone()),
       problemPtr_(new ocs2::OptimalControlProblem) {
+  if (inverseKinematics != nullptr) {
+    inverseKinematicModelPtr_.reset(inverseKinematics->clone());
+  }
+
   std::unique_ptr<GaitSchedule> gaitSchedule(new GaitSchedule(0.0, settings_.defaultGait_));
 
   std::unique_ptr<SwingTrajectoryPlanner> swingTrajectoryPlanner(
-      new SwingTrajectoryPlanner(settings_.swingTrajectoryPlannerSettings_, getKinematicModel()));
+      new SwingTrajectoryPlanner(settings_.swingTrajectoryPlannerSettings_, getKinematicModel(), getInverseKinematicModelPtr()));
 
   std::unique_ptr<TerrainModel> terrainModel(new PlanarTerrainModel(std::move(settings_.terrainPlane_)));
 

@@ -1,4 +1,4 @@
-#include "ocs2_switched_model_interface/analytical_inverse_kinematics/AnalyticalInverseKinematics.hpp"
+#include "ocs2_switched_model_interface/analytical_inverse_kinematics/AnalyticalInverseKinematics.h"
 
 namespace switched_model {
 namespace analytical_inverse_kinematics {

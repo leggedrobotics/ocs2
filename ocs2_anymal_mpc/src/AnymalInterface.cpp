@@ -20,6 +20,10 @@ std::unique_ptr<switched_model::QuadrupedInterface> getAnymalInterface(const std
 std::unique_ptr<switched_model::QuadrupedInterface> getAnymalInterface(const std::string& urdf,
                                                                        switched_model::QuadrupedInterface::Settings settings,
                                                                        const FrameDeclaration& frameDeclaration) {
+  std::unique_ptr<switched_model::InverseKinematicsModelBase> invKin{nullptr};
+  if (settings.modelSettings_.analyticalInverseKinematics_) {
+    invKin = getAnymalInverseKinematics(frameDeclaration, urdf);
+  }
   auto kin = getAnymalKinematics(frameDeclaration, urdf);
   auto kinAd = getAnymalKinematicsAd(frameDeclaration, urdf);
   auto com = getAnymalComModel(frameDeclaration, urdf);
@@ -28,7 +32,7 @@ std::unique_ptr<switched_model::QuadrupedInterface> getAnymalInterface(const std
   auto baseName = frameDeclaration.root;
 
   return std::unique_ptr<switched_model::QuadrupedInterface>(new switched_model::QuadrupedPointfootInterface(
-      *kin, *kinAd, *com, *comAd, std::move(settings), std::move(jointNames), std::move(baseName)));
+      *kin, *kinAd, *com, *comAd, invKin.get(), std::move(settings), std::move(jointNames), std::move(baseName)));
 }
 
 std::string getConfigFolder(const std::string& configName) {

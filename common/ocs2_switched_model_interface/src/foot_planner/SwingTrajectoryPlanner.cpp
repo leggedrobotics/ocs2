@@ -14,8 +14,16 @@
 namespace switched_model {
 
 SwingTrajectoryPlanner::SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings,
-                                               const KinematicsModelBase<scalar_t>& kinematicsModel)
-    : settings_(std::move(settings)), kinematicsModel_(kinematicsModel.clone()), terrainModel_(nullptr) {}
+                                               const KinematicsModelBase<scalar_t>& kinematicsModel,
+                                               const InverseKinematicsModelBase* inverseKinematicsModelPtr)
+    : settings_(std::move(settings)),
+      kinematicsModel_(kinematicsModel.clone()),
+      inverseKinematicsModelPtr_(nullptr),
+      terrainModel_(nullptr) {
+  if (inverseKinematicsModelPtr != nullptr) {
+    inverseKinematicsModelPtr_.reset(inverseKinematicsModelPtr->clone());
+  }
+}
 
 void SwingTrajectoryPlanner::updateTerrain(std::unique_ptr<TerrainModel> terrainModel) {
   terrainModel_ = std::move(terrainModel);
@@ -79,6 +87,10 @@ void SwingTrajectoryPlanner::updateSwingMotions(scalar_t initTime, scalar_t fina
       std::tie(feetNormalTrajectoriesEvents_[leg], feetNormalTrajectories_[leg]) =
           generateSwingTrajectories(leg, contactTimings, finalTime);
     }
+  }
+
+  if (inverseKinematicsModelPtr_ && !settings_.swingTrajectoryFromReference) {
+    adaptJointReferencesWithInverseKinematics(finalTime);
   }
 }
 
@@ -417,12 +429,7 @@ std::vector<ConvexTerrain> SwingTrajectoryPlanner::selectNominalFootholdTerrain(
   return nominalFootholdTerrain;
 }
 
-void SwingTrajectoryPlanner::adaptJointReferencesWithInverseKinematics(const inverse_kinematics_function_t& inverseKinematicsFunction,
-                                                                       scalar_t finalTime) {
-  if (settings_.swingTrajectoryFromReference) {
-    return;  // Skip this if we are using the reference trajectory
-  }
-
+void SwingTrajectoryPlanner::adaptJointReferencesWithInverseKinematics(scalar_t finalTime) {
   for (int k = 0; k < targetTrajectories_.timeTrajectory.size(); ++k) {
     const scalar_t t = targetTrajectories_.timeTrajectory[k];
 
@@ -436,7 +443,8 @@ void SwingTrajectoryPlanner::adaptJointReferencesWithInverseKinematics(const inv
       const vector3_t PositionBaseToFootInBaseFrame = rotateVectorOriginToBase(PositionBaseToFootInWorldFrame, eulerXYZ);
 
       const size_t offset = 2 * BASE_COORDINATE_SIZE + 3 * leg;
-      targetTrajectories_.stateTrajectory[k].segment(offset, 3) = inverseKinematicsFunction(leg, PositionBaseToFootInBaseFrame);
+      targetTrajectories_.stateTrajectory[k].segment(offset, 3) =
+          inverseKinematicsModelPtr_->getLimbJointPositionsFromPositionBaseToFootInBaseFrame(leg, PositionBaseToFootInBaseFrame);
     }
 
     // Can stop adaptation as soon as we have processed a point beyond the horizon.

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ocs2_switched_model_interface/analytical_inverse_kinematics/LegInverseKinematicParameters.hpp"
+#include "ocs2_switched_model_interface/analytical_inverse_kinematics/LegInverseKinematicParameters.h"
 
 namespace switched_model {
 namespace analytical_inverse_kinematics {

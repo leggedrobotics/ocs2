@@ -95,9 +95,10 @@ target_link_libraries(${PROJECT_NAME}_switched_model_test
 catkin_add_gtest(TestQuadrupedPinocchio
   test/camel/AnymalCamelCom.cpp
   test/camel/AnymalCamelKinematics.cpp
+  test/TestFrameDeclaration.cpp
+  test/TestInverseKinematics.cpp
   test/TestQuadrupedPinocchioCom.cpp
   test/TestQuadrupedPinocchioKinematics.cpp
-  test/TestFrameDeclaration.cpp
 )
 target_link_libraries(TestQuadrupedPinocchio
   ${PROJECT_NAME}

@@ -51,7 +51,7 @@ switched_model::joint_coordinate_ad_t QuadrupedPinocchioMapping::getPinocchioJoi
   return getPinocchioJointVectorImpl(jointPositions, mapFeetOrderOcs2ToPinocchio_);
 }
 
-size_t QuadrupedPinocchioMapping::getBodyId(const std::string& bodyName, const ocs2::PinocchioInterface& pinocchioInterface) const {
+size_t QuadrupedPinocchioMapping::getBodyId(const std::string& bodyName, const ocs2::PinocchioInterface& pinocchioInterface) {
   const auto& model = pinocchioInterface.getModel();
   // Try as body first, to prevent a conflict when a body and joint have the same name
   if (model.existBodyName(bodyName)) {

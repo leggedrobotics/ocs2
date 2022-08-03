@@ -74,11 +74,11 @@ auto TrajectorySpreading::set(const ModeSchedule& oldModeSchedule, const ModeSch
 
   // note: sizeof(eventTimes) + 1 == sizeof(modeSequence)
   const int oldFirstActiveModeIndex = upperBoundIndex(oldModeSchedule.eventTimes, oldInitTime);  // no event at initial time
-  const int oldLastActiveModeIndex = lowerBoundIndex(oldModeSchedule.eventTimes, oldFinalTime);  // no event at final time
+  const int oldLastActiveModeIndex = upperBoundIndex(oldModeSchedule.eventTimes, oldFinalTime);  // can be an event at final time
 
   // step 2: What modes do the new mode schedule need?
   const int newFirstActiveModeIndex = upperBoundIndex(newModeSchedule.eventTimes, oldInitTime);  // no event at initial time
-  const int newLastActiveModeIndex = lowerBoundIndex(newModeSchedule.eventTimes, oldFinalTime);  // no event at final time
+  const int newLastActiveModeIndex = upperBoundIndex(newModeSchedule.eventTimes, oldFinalTime);  // can be an event at final time
 
   // the starting mode of the matched sequence may differ from the leading mode of the old mode schedule.
   auto oldStartIndexOfMatchedSequence = oldFirstActiveModeIndex;
@@ -170,19 +170,15 @@ auto TrajectorySpreading::set(const ModeSchedule& oldModeSchedule, const ModeSch
   // if last mode of the new mode sequence is NOT matched
   else if (!isLastActiveModeOfNewModeSequenceMatched) {
     const auto mismatchEventTime = newModeSchedule.eventTimes[newStartIndexOfMatchedSequence + w - 1];
-    eraseFromIndex_ = upperBoundIndex(oldTimeTrajectory, mismatchEventTime);
+    eraseFromIndex_ = lowerBoundIndex(oldTimeTrajectory, mismatchEventTime);
   }
 
   // computes the index of the spreading values and intervals
   computeSpreadingStrategy(oldTimeTrajectory, oldMatchedEventTimes, newMatchedEventTimes);
 
   // status
-  const auto reportStatus = [&]() -> Status {
-    Status status;
-    status.willTruncate = (eraseFromIndex_ < oldTimeTrajectory.size());
-    status.willPerformTrajectorySpreading = !spreadingValueIndices_.empty();
-    return status;
-  };
+  status_.willTruncate = (eraseFromIndex_ < oldTimeTrajectory.size());
+  status_.willPerformTrajectorySpreading = !spreadingValueIndices_.empty();
 
   // debug print
   if (debugPrint_) {
@@ -294,7 +290,7 @@ auto TrajectorySpreading::set(const ModeSchedule& oldModeSchedule, const ModeSch
     }
   }
 
-  return reportStatus();
+  return status_;
 }
 
 /******************************************************************************************************/

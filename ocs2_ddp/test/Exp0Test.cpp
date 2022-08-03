@@ -91,7 +91,7 @@ class Exp0 : public testing::Test {
     ddpSettings.useFeedbackPolicy_ = true;
     ddpSettings.debugPrintRollout_ = false;
     ddpSettings.strategy_ = strategy;
-    ddpSettings.lineSearch_.minStepLength_ = 0.0001;
+    ddpSettings.lineSearch_.minStepLength = 0.0001;
     return ddpSettings;
   }
 
@@ -361,7 +361,6 @@ TEST_P(Exp0Param, ILQR) {
   // performanceIndeces test
   performanceIndexTest(ddpSettings, performanceIndex);
 }
-
 
 /******************************************************************************************************/
 /******************************************************************************************************/

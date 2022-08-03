@@ -191,3 +191,13 @@ target_link_libraries(testContinuousTimeLqr
   ${PROJECT_NAME}
   gtest_main
 )
+
+catkin_add_gtest(testDdpHelperFunction
+  test/testDdpHelperFunction.cpp
+)
+target_link_libraries(testDdpHelperFunction
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  ${PROJECT_NAME}
+  gtest_main
+)

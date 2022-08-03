@@ -45,7 +45,7 @@ std::vector<std::pair<scalar_t, scalar_t>> RolloutBase::findActiveModesTimeInter
                                                                                     const scalar_array_t& eventTimes) const {
   // switching times
   const auto firstIndex = std::upper_bound(eventTimes.cbegin(), eventTimes.cend(), initTime);  // no event at initial time
-  const auto lastIndex = std::lower_bound(eventTimes.cbegin(), eventTimes.cend(), finalTime);  // no event at final time
+  const auto lastIndex = std::upper_bound(eventTimes.cbegin(), eventTimes.cend(), finalTime);  // can be an event at final time
   scalar_array_t switchingTimes;
   switchingTimes.push_back(initTime);
   switchingTimes.insert(switchingTimes.end(), firstIndex, lastIndex);

@@ -52,6 +52,16 @@ struct Result {
   ocs2::size_array_t preEventModeTrajectory;
 };
 
+std::size_t modeAtTime(const ocs2::ModeSchedule& modeSchedule, ocs2::scalar_t time, bool isFinalTime) {
+  if (isFinalTime) {
+    auto timeItr = std::upper_bound(modeSchedule.eventTimes.begin(), modeSchedule.eventTimes.end(), time);
+    int modeIndex = std::distance(modeSchedule.eventTimes.begin(), timeItr);
+    return modeSchedule.modeSequence[modeIndex];
+  } else {
+    return modeSchedule.modeAtTime(time);
+  }
+}
+
 class TrajectorySpreadingTest : public testing::Test {
  protected:
   static constexpr size_t STATE_DIM = 2;
@@ -99,8 +109,9 @@ class TrajectorySpreadingTest : public testing::Test {
                    [&out](size_t eventIndex) { return out.stateTrajectory[eventIndex - 1]; });
 
     out.modeTrajectory.resize(out.timeTrajectory.size());
-    std::transform(out.timeTrajectory.begin(), out.timeTrajectory.end(), out.modeTrajectory.begin(),
-                   [&modeSchedule](ocs2::scalar_t time) { return modeSchedule.modeAtTime(time); });
+    for (int i = 0; i < out.modeTrajectory.size(); i++) {
+      out.modeTrajectory[i] = modeAtTime(modeSchedule, out.timeTrajectory[i], i == out.modeTrajectory.size() - 1 ? true : false);
+    }
 
     out.preEventModeTrajectory.resize(out.postEventsIndeces.size());
     std::transform(out.postEventsIndeces.begin(), out.postEventsIndeces.end(), out.preEventModeTrajectory.begin(),
@@ -129,11 +140,6 @@ class TrajectorySpreadingTest : public testing::Test {
   /******************************************************************************************************/
   ocs2::TrajectorySpreading::Status checkResults(const ocs2::ModeSchedule& modeSchedule, const ocs2::ModeSchedule& updatedModeSchedule,
                                                  const std::pair<ocs2::scalar_t, ocs2::scalar_t>& period, bool display = true) {
-    // helper function
-    auto upperBoundIndex = [](const ocs2::scalar_array_t& timeTrajectory, ocs2::scalar_t queryTime) -> int {
-      return std::distance(timeTrajectory.begin(), std::upper_bound(timeTrajectory.begin(), timeTrajectory.end(), queryTime));
-    };
-
     // rollout
     const auto result = rollout(modeSchedule, period);
 
@@ -199,17 +205,22 @@ class TrajectorySpreadingTest : public testing::Test {
       const ocs2::scalar_t finalTime = spreadResult.timeTrajectory.back();
 
       const auto startEventItr = std::upper_bound(updatedModeSchedule.eventTimes.begin(), updatedModeSchedule.eventTimes.end(), initTime);
-      // If a time point is aligned with(the same as) an event time, it belongs to the pre-mode.
-      const auto endEventItr = std::lower_bound(updatedModeSchedule.eventTimes.begin(), updatedModeSchedule.eventTimes.end(), finalTime);
+      // If the final time is aligned with(the same as) an event time, it belongs to the post-mode.
+      const auto endEventItr = std::upper_bound(updatedModeSchedule.eventTimes.begin(), updatedModeSchedule.eventTimes.end(), finalTime);
 
-      ocs2::size_array_t postEventIndice(endEventItr - startEventItr);
-      std::transform(startEventItr, endEventItr, postEventIndice.begin(), [&spreadResult](ocs2::scalar_t time) {
-        auto timeItr = std::upper_bound(spreadResult.timeTrajectory.begin(), spreadResult.timeTrajectory.end(), time);
-        return std::distance(spreadResult.timeTrajectory.begin(), timeItr);
-      });
+      ocs2::size_array_t postEventIndices(endEventItr - startEventItr);
+      for (auto itr = startEventItr; itr != endEventItr; itr++) {
+        int index = std::distance(startEventItr, itr);
+        if (itr == endEventItr - 1 && *itr == spreadResult.timeTrajectory.back()) {
+          postEventIndices[index] = spreadResult.timeTrajectory.size() - 1;
+        } else {
+          auto timeItr = std::upper_bound(spreadResult.timeTrajectory.begin(), spreadResult.timeTrajectory.end(), *itr);
+          postEventIndices[index] = std::distance(spreadResult.timeTrajectory.begin(), timeItr);
+        }
+      }
 
-      EXPECT_TRUE(spreadResult.postEventsIndeces.size() == postEventIndice.size());
-      EXPECT_TRUE(std::equal(postEventIndice.begin(), postEventIndice.end(), spreadResult.postEventsIndeces.begin()));
+      EXPECT_TRUE(spreadResult.postEventsIndeces.size() == postEventIndices.size());
+      EXPECT_TRUE(std::equal(postEventIndices.begin(), postEventIndices.end(), spreadResult.postEventsIndeces.begin()));
 
     } else {
       EXPECT_EQ(spreadResult.postEventsIndeces.size(), 0);
@@ -223,11 +234,12 @@ class TrajectorySpreadingTest : public testing::Test {
     }
 
     auto eventIndexActualItr = spreadResult.postEventsIndeces.begin();
-    auto eventTimeReferenceInd = upperBoundIndex(updatedModeSchedule.eventTimes, period.first);
+    auto eventTimeReferenceInd = ocs2::lookup::findIndexInTimeArray(updatedModeSchedule.eventTimes, period.first);
     for (size_t k = 0; k < spreadResult.timeTrajectory.size(); k++) {
-      // time should be monotonic sequence
-      if (k > 0) {
-        EXPECT_TRUE(spreadResult.timeTrajectory[k - 1] < spreadResult.timeTrajectory[k]);
+      // Time should be monotonic sequence except the final time. It is possible that the last two time points have the same time, but one
+      // stands for pre-mode and the other stands for post-mode.
+      if (k > 0 && k < spreadResult.timeTrajectory.size() - 1) {
+        EXPECT_TRUE(spreadResult.timeTrajectory[k - 1] < spreadResult.timeTrajectory[k]) << "TimeIndex: " << k;
       }
 
       // Pre-event time should be equal to the event time
@@ -242,16 +254,10 @@ class TrajectorySpreadingTest : public testing::Test {
         eventTimeReferenceInd++;
         eventIndexActualItr++;
       }
-      // Mode should match the given modeSchedule
-      // The current convention is, the exact event times belong to pre-mode except for the first time point. For the first time point, if
-      // it is the same as an event-time, then it belongs to the post-event.
-      int modeAtTime =
-          k == 0 ? updatedModeSchedule.modeSequence[upperBoundIndex(updatedModeSchedule.eventTimes, spreadResult.timeTrajectory[k])]
-                 : updatedModeSchedule.modeAtTime(spreadResult.timeTrajectory[k]);
-      EXPECT_TRUE(modeAtTime == spreadResult.modeTrajectory[k])
-          << "Time Index: " << k << "\nThe mode should be \033[0;33m(" << modeAtTime << ")\033[0m but it is \033[0;33m("
-          << spreadResult.modeTrajectory[k] << ")\033[0m";
-
+      // mode should match the given modeSchedule
+      auto updatedMode =
+          modeAtTime(updatedModeSchedule, spreadResult.timeTrajectory[k], k == spreadResult.timeTrajectory.size() - 1 ? true : false);
+      EXPECT_TRUE(updatedMode == spreadResult.modeTrajectory[k]);
     }  // end of k loop
 
     // test postEventsIndeces
@@ -332,6 +338,48 @@ TEST_F(TrajectorySpreadingTest, partially_matching_modes) {
   EXPECT_TRUE(status.willPerformTrajectorySpreading);
 }
 
+TEST_F(TrajectorySpreadingTest, final_time_is_the_same_as_event_time_1) {
+  const ocs2::scalar_array_t eventTimes{1.1, 1.3};
+  const ocs2::size_array_t modeSequence{0, 1, 2};
+
+  const ocs2::scalar_array_t updatedEventTimes{1.1, 2.1};
+  const ocs2::size_array_t updatedModeSequence{0, 1, 2};
+
+  const std::pair<ocs2::scalar_t, ocs2::scalar_t> period{0.2, 2.1};
+  const auto status = checkResults({eventTimes, modeSequence}, {updatedEventTimes, updatedModeSequence}, period);
+
+  EXPECT_FALSE(status.willTruncate);
+  EXPECT_TRUE(status.willPerformTrajectorySpreading);
+}
+
+TEST_F(TrajectorySpreadingTest, final_time_is_the_same_as_event_time_2) {
+  const ocs2::scalar_array_t eventTimes{1.1, 2.1};
+  const ocs2::size_array_t modeSequence{0, 1, 2};
+
+  const ocs2::scalar_array_t updatedEventTimes{1.1, 1.3};
+  const ocs2::size_array_t updatedModeSequence{0, 1, 2};
+
+  const std::pair<ocs2::scalar_t, ocs2::scalar_t> period{0.2, 2.1};
+  const auto status = checkResults({eventTimes, modeSequence}, {updatedEventTimes, updatedModeSequence}, period);
+
+  EXPECT_FALSE(status.willTruncate);
+  EXPECT_TRUE(status.willPerformTrajectorySpreading);
+}
+
+TEST_F(TrajectorySpreadingTest, erase_trajectory) {
+  const ocs2::scalar_array_t eventTimes{1.1, 1.3};
+  const ocs2::size_array_t modeSequence{0, 1, 2};
+
+  const ocs2::scalar_array_t updatedEventTimes{1.1, 1.3};
+  const ocs2::size_array_t updatedModeSequence{0, 1, 3};
+
+  const std::pair<ocs2::scalar_t, ocs2::scalar_t> period{0.2, 2.1};
+  const auto status = checkResults({eventTimes, modeSequence}, {updatedEventTimes, updatedModeSequence}, period);
+
+  EXPECT_TRUE(status.willTruncate);
+  EXPECT_FALSE(status.willPerformTrajectorySpreading);
+}
+
 TEST_F(TrajectorySpreadingTest, fully_matched_modes) {
   const ocs2::scalar_array_t eventTimes{1.1, 1.3};
   const ocs2::size_array_t modeSequence{0, 1, 2};
@@ -340,34 +388,6 @@ TEST_F(TrajectorySpreadingTest, fully_matched_modes) {
   const ocs2::size_array_t updatedModeSequence{0, 1, 2};
 
   const std::pair<ocs2::scalar_t, ocs2::scalar_t> period{0.0, 2.5};
-  const auto status = checkResults({eventTimes, modeSequence}, {updatedEventTimes, updatedModeSequence}, period);
-
-  EXPECT_FALSE(status.willTruncate);
-  EXPECT_TRUE(status.willPerformTrajectorySpreading);
-}
-
-TEST_F(TrajectorySpreadingTest, init_time_is_the_same_as_event_time) {
-  const ocs2::scalar_array_t eventTimes{1.1, 1.3};
-  const ocs2::size_array_t modeSequence{0, 1, 2};
-
-  const ocs2::scalar_array_t updatedEventTimes{0.5, 2.1};
-  const ocs2::size_array_t updatedModeSequence{0, 1, 2};
-
-  const std::pair<ocs2::scalar_t, ocs2::scalar_t> period{0.5, 2.5};
-  const auto status = checkResults({eventTimes, modeSequence}, {updatedEventTimes, updatedModeSequence}, period);
-
-  EXPECT_FALSE(status.willTruncate);
-  EXPECT_TRUE(status.willPerformTrajectorySpreading);
-}
-
-TEST_F(TrajectorySpreadingTest, final_time_is_the_same_as_event_time) {
-  const ocs2::scalar_array_t eventTimes{1.1, 1.3};
-  const ocs2::size_array_t modeSequence{0, 1, 2};
-
-  const ocs2::scalar_array_t updatedEventTimes{0.5, 2.1};
-  const ocs2::size_array_t updatedModeSequence{0, 1, 2};
-
-  const std::pair<ocs2::scalar_t, ocs2::scalar_t> period{0.2, 2.1};
   const auto status = checkResults({eventTimes, modeSequence}, {updatedEventTimes, updatedModeSequence}, period);
 
   EXPECT_FALSE(status.willTruncate);

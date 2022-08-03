@@ -51,14 +51,14 @@ OptimalControlProblem::OptimalControlProblem()
       preJumpEqualityConstraintPtr(new StateConstraintCollection),
       finalEqualityConstraintPtr(new StateConstraintCollection),
       /* Lagrangians */
-      equalityLagrangianPtr(new StateInputCostCollection),
-      stateEqualityLagrangianPtr(new StateCostCollection),
-      inequalityLagrangianPtr(new StateInputCostCollection),
-      stateInequalityLagrangianPtr(new StateCostCollection),
-      preJumpEqualityLagrangianPtr(new StateCostCollection),
-      preJumpInequalityLagrangianPtr(new StateCostCollection),
-      finalEqualityLagrangianPtr(new StateCostCollection),
-      finalInequalityLagrangianPtr(new StateCostCollection),
+      equalityLagrangianPtr(new StateInputAugmentedLagrangianCollection),
+      stateEqualityLagrangianPtr(new StateAugmentedLagrangianCollection),
+      inequalityLagrangianPtr(new StateInputAugmentedLagrangianCollection),
+      stateInequalityLagrangianPtr(new StateAugmentedLagrangianCollection),
+      preJumpEqualityLagrangianPtr(new StateAugmentedLagrangianCollection),
+      preJumpInequalityLagrangianPtr(new StateAugmentedLagrangianCollection),
+      finalEqualityLagrangianPtr(new StateAugmentedLagrangianCollection),
+      finalInequalityLagrangianPtr(new StateAugmentedLagrangianCollection),
       /* Misc. */
       preComputationPtr(new PreComputation),
       targetTrajectoriesPtr(nullptr) {}

@@ -372,35 +372,6 @@ vector_t GaussNewtonDDP::getStateInputEqualityConstraintLagrangianImpl(scalar_t 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::vector<std::pair<int, int>> GaussNewtonDDP::getPartitionIntervalsFromTimeTrajectory(const scalar_array_t& timeTrajectory,
-                                                                                         int numWorkers) {
-  scalar_array_t desiredPartitionPoints(numWorkers + 1);
-  desiredPartitionPoints.front() = timeTrajectory.front();
-
-  const scalar_t increment = (timeTrajectory.back() - timeTrajectory.front()) / static_cast<scalar_t>(numWorkers);
-  for (size_t i = 1u; i < desiredPartitionPoints.size() - 1; i++) {
-    desiredPartitionPoints[i] = desiredPartitionPoints[i - 1] + increment;
-  }
-  desiredPartitionPoints.back() = timeTrajectory.back();
-
-  std::vector<std::pair<int, int>> partitionIntervals;
-  partitionIntervals.reserve(desiredPartitionPoints.size());
-
-  int endPos, startPos = 0;
-  for (size_t i = 1u; i < desiredPartitionPoints.size(); i++) {
-    const scalar_t& time = desiredPartitionPoints[i];
-    endPos = std::distance(timeTrajectory.begin(), std::lower_bound(timeTrajectory.begin(), timeTrajectory.end(), time));
-    if (endPos != startPos) {
-      partitionIntervals.emplace_back(startPos, endPos);
-      startPos = endPos;
-    }
-  }
-
-  return partitionIntervals;
-}
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 void GaussNewtonDDP::runParallel(std::function<void(void)> taskFunction, size_t N) {
   threadPool_.runParallel([&](int) { taskFunction(); }, N);
 }
@@ -534,8 +505,7 @@ scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const ScalarFunctio
     riccatiEquationsWorker(0, partitionInterval, finalValueFunction);
   } else {  // solve it in parallel
     // do equal-time partitions based on available thread resource
-    std::vector<std::pair<int, int>> partitionIntervals =
-        getPartitionIntervalsFromTimeTrajectory(nominalPrimalData_.primalSolution.timeTrajectory_, ddpSettings_.nThreads_);
+    const auto partitionIntervals = computePartitionIntervals(nominalPrimalData_.primalSolution.timeTrajectory_, ddpSettings_.nThreads_);
 
     // hold the final value function of each partition
     std::vector<ScalarFunctionQuadraticApproximation> finalValueFunctionOfEachPartition(partitionIntervals.size());
@@ -559,7 +529,14 @@ scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const ScalarFunctio
   if (ddpSettings_.checkNumericalStability_) {
     const int N = nominalPrimalData_.primalSolution.timeTrajectory_.size();
     for (int k = N - 1; k >= 0; k--) {
-      const auto errorDescription = checkBeingPSD(nominalDualData_.valueFunctionTrajectory[k], "ValueFunction");
+      // check size
+      auto errorDescription = checkSize(nominalPrimalData_.primalSolution.stateTrajectory_[k].size(), 0,
+                                        nominalDualData_.valueFunctionTrajectory[k], "ValueFunction");
+      if (!errorDescription.empty()) {
+        throw std::runtime_error(errorDescription);
+      }
+      // check PSD
+      errorDescription = checkBeingPSD(nominalDualData_.valueFunctionTrajectory[k], "ValueFunction");
       if (!errorDescription.empty()) {
         std::stringstream throwMsg;
         throwMsg << "at time " << nominalPrimalData_.primalSolution.timeTrajectory_[k] << ":\n";

@@ -53,14 +53,14 @@ jobs:
         cd src/raisim_tech
         mkdir build
         cd build
-        cmake .. -DRAISIM_EXAMPLE=ON -DRAISIM_PY=ON -DPYTHON_EXECUTABLE=$(python3 -c "import sys; print(sys.executable)")
+        cmake .. -DPYTHON_EXECUTABLE=$(python3 -c "import sys; print(sys.executable)")
         make -j4 && checkinstall
         
     - name: Build (${{ matrix.build_type }})
       shell: bash
       run: |
         source /opt/ros/noetic/setup.bash
-        catkin_make_isolated --use-ninja --merge --only-pkg-with-deps ocs2 --ignore-pkg ocs2_raisim --cmake-args -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} 
+        catkin_make_isolated --use-ninja --merge --only-pkg-with-deps ocs2 --cmake-args -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} 
         
     - name: Test
       shell: bash

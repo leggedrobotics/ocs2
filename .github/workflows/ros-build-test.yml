@@ -30,7 +30,7 @@ jobs:
     - name: System deps
       run: |
         apt-get update
-        apt-get install -y git ninja-build liburdfdom-dev liboctomap-dev libassimp-dev
+        apt-get install -y git ninja-build liburdfdom-dev liboctomap-dev libassimp-dev checkinstall
 
     - uses: actions/checkout@v2
       with: 
@@ -46,6 +46,17 @@ jobs:
         git clone --recurse-submodules https://github.com/leggedrobotics/pinocchio.git src/pinocchio
         git clone --recurse-submodules https://github.com/leggedrobotics/hpp-fcl.git src/hpp-fcl
         git clone https://github.com/leggedrobotics/ocs2_robotic_assets.git src/ocs2_robotic_assets
+        
+    - name: Install RaiSim
+      run: |
+        git clone --depth 1 https://github.com/raisimTech/raisimLib.git -b v1.1.01 src/raisim_tech
+        cd ./raisim_tech | 
+        mkdir build |
+        cd build |
+        cmake .. -DRAISIM_EXAMPLE=ON -DRAISIM_PY=ON -DPYTHON_EXECUTABLE=$(python3 -c "import sys; print(sys.executable)") |
+        make -j4 && checkinstall
+        
+        
     - name: Build (${{ matrix.build_type }})
       shell: bash
       run: |

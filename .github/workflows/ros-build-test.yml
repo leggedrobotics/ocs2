@@ -53,7 +53,7 @@ jobs:
         cd src/raisim_tech
         mkdir build
         cd build
-        cmake .. -DRAISIM_EXAMPLE=ON -DRAISIM_PY=ON -DPYTHON_EXECUTABLE=$(python3 -c "import sys; print(sys.executable)") |
+        cmake .. -DRAISIM_EXAMPLE=ON -DRAISIM_PY=ON -DPYTHON_EXECUTABLE=$(python3 -c "import sys; print(sys.executable)")
         make -j4 && checkinstall
         
     - name: Build (${{ matrix.build_type }})

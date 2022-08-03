@@ -35,10 +35,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_oc/test/circular_kinematics.h>
 
-TEST(test_circular_kinematics, solve_projected_EqConstraints) {
-  // optimal control problem
-  ocs2::OptimalControlProblem problem = ocs2::createCircularKinematicsProblem("/tmp/sqp_test_generated");
 
+void circular_kinematics_test(const ocs2::OptimalControlProblem& problem, bool useProjection) {
   // Initializer
   ocs2::DefaultInitializer zeroInitializer(2);
 
@@ -46,12 +44,13 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints) {
   ocs2::multiple_shooting::Settings settings;
   settings.dt = 0.01;
   settings.sqpIteration = 20;
-  settings.projectStateInputEqualityConstraints = true;
+  settings.projectStateInputEqualityConstraints = useProjection;
   settings.useFeedbackPolicy = true;
   settings.printSolverStatistics = true;
   settings.printSolverStatus = true;
   settings.printLinesearch = true;
   settings.nThreads = 1;
+  settings.hpipmSettings.use_slack = true;
 
   // Additional problem definitions
   const ocs2::scalar_t startTime = 0.0;
@@ -78,6 +77,7 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints) {
   const auto performance = solver.getPerformanceIndeces();
   ASSERT_LT(performance.dynamicsViolationSSE, 1e-6);
   ASSERT_LT(performance.equalityConstraintsSSE, 1e-6);
+  ASSERT_LT(performance.inequalityConstraintsSSE, 1e-6);
 
   // Check feedback controller
   for (int i = 0; i < primalSolution.timeTrajectory_.size() - 1; i++) {
@@ -89,55 +89,26 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints) {
   }
 }
 
-TEST(test_circular_kinematics, solve_EqConstraints_inQPSubproblem) {
-  // optimal control problem
+TEST(test_circular_kinematics, solve_projected_EqConstraints) {
+  const bool useProjection = true;
   ocs2::OptimalControlProblem problem = ocs2::createCircularKinematicsProblem("/tmp/sqp_test_generated");
+  circular_kinematics_test(problem, useProjection);
+}
 
-  // Initializer
-  ocs2::DefaultInitializer zeroInitializer(2);
+TEST(test_circular_kinematics, solve_EqConstraints_inQPSubproblem) {
+  const bool useProjection = false;
+  ocs2::OptimalControlProblem problem = ocs2::createCircularKinematicsProblem("/tmp/sqp_test_generated");
+  circular_kinematics_test(problem, useProjection);
+}
 
-  // Solver settings
-  ocs2::multiple_shooting::Settings settings;
-  settings.dt = 0.01;
-  settings.sqpIteration = 20;
-  settings.projectStateInputEqualityConstraints = false;  // <- false to turn off projection of state-input equalities
-  settings.useFeedbackPolicy = true;
-  settings.printSolverStatistics = true;
-  settings.printSolverStatus = true;
-  settings.printLinesearch = true;
+TEST(test_circular_kinematics, solve_projected_EqConstraints_with_IneqConstraints) {
+  const bool useProjection = true;
+  ocs2::OptimalControlProblem problem = ocs2::createCircularKinematicsProblemWithInequality("/tmp/sqp_test_generated");
+  circular_kinematics_test(problem, useProjection);
+}
 
-  // Additional problem definitions
-  const ocs2::scalar_t startTime = 0.0;
-  const ocs2::scalar_t finalTime = 1.0;
-  const ocs2::vector_t initState = (ocs2::vector_t(2) << 1.0, 0.0).finished();  // radius 1.0
-
-  // Solve
-  ocs2::MultipleShootingSolver solver(settings, problem, zeroInitializer);
-  solver.run(startTime, initState, finalTime);
-
-  // Inspect solution
-  const auto primalSolution = solver.primalSolution(finalTime);
-  for (int i = 0; i < primalSolution.timeTrajectory_.size(); i++) {
-    std::cout << "time: " << primalSolution.timeTrajectory_[i] << "\t state: " << primalSolution.stateTrajectory_[i].transpose()
-              << "\t input: " << primalSolution.inputTrajectory_[i].transpose() << std::endl;
-  }
-
-  // Check initial condition
-  ASSERT_TRUE(primalSolution.stateTrajectory_.front().isApprox(initState));
-  ASSERT_DOUBLE_EQ(primalSolution.timeTrajectory_.front(), startTime);
-  ASSERT_DOUBLE_EQ(primalSolution.timeTrajectory_.back(), finalTime);
-
-  // Check constraint satisfaction.
-  const auto performance = solver.getPerformanceIndeces();
-  ASSERT_LT(performance.dynamicsViolationSSE, 1e-6);
-  ASSERT_LT(performance.equalityConstraintsSSE, 1e-6);
-
-  // Check feedback controller
-  for (int i = 0; i < primalSolution.timeTrajectory_.size() - 1; i++) {
-    const auto t = primalSolution.timeTrajectory_[i];
-    const auto& x = primalSolution.stateTrajectory_[i];
-    const auto& u = primalSolution.inputTrajectory_[i];
-    // Feed forward part
-    ASSERT_TRUE(u.isApprox(primalSolution.controllerPtr_->computeInput(t, x)));
-  }
+TEST(test_circular_kinematics, solve_EqConstraints_with_IneqConstraints) {
+  const bool useProjection = false;
+  ocs2::OptimalControlProblem problem = ocs2::createCircularKinematicsProblemWithInequality("/tmp/sqp_test_generated");
+  circular_kinematics_test(problem, useProjection);
 }

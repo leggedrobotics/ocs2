@@ -56,6 +56,11 @@ struct PerformanceIndex {
    */
   scalar_t equalityConstraintsSSE = 0.0;
 
+  /** Sum of Squared Error (SSE) of hard inequality constraints, used by the SQP solver.
+   * Inequality constraints are satisfied if positive, so there is only error if the constraints are negative.
+   */
+  scalar_t inequalityConstraintsSSE = 0.0;
+
   /** Sum of equality Lagrangians:
    * - Final: penalty for violation in state equality constraints
    * - PreJumps: penalty for violation in state equality constraints
@@ -76,6 +81,7 @@ struct PerformanceIndex {
     this->cost += rhs.cost;
     this->dynamicsViolationSSE += rhs.dynamicsViolationSSE;
     this->equalityConstraintsSSE += rhs.equalityConstraintsSSE;
+    this->inequalityConstraintsSSE += rhs.inequalityConstraintsSSE;
     this->equalityLagrangian += rhs.equalityLagrangian;
     this->inequalityLagrangian += rhs.inequalityLagrangian;
     return *this;
@@ -93,6 +99,7 @@ inline void swap(PerformanceIndex& lhs, PerformanceIndex& rhs) {
   std::swap(lhs.cost, rhs.cost);
   std::swap(lhs.dynamicsViolationSSE, rhs.dynamicsViolationSSE);
   std::swap(lhs.equalityConstraintsSSE, rhs.equalityConstraintsSSE);
+  std::swap(lhs.inequalityConstraintsSSE, rhs.inequalityConstraintsSSE);
   std::swap(lhs.equalityLagrangian, rhs.equalityLagrangian);
   std::swap(lhs.inequalityLagrangian, rhs.inequalityLagrangian);
 }
@@ -109,6 +116,7 @@ inline std::ostream& operator<<(std::ostream& stream, const PerformanceIndex& pe
   stream << std::setw(indentation) << "";
   stream << "Dynamics violation SSE:     " << std::setw(tabSpace) << performanceIndex.dynamicsViolationSSE;
   stream << "Equality constraints SSE:   " << std::setw(tabSpace) << performanceIndex.equalityConstraintsSSE << '\n';
+  stream << "Inequality constraints SSE: " << std::setw(tabSpace) << performanceIndex.inequalityConstraintsSSE << '\n';
 
   stream << std::setw(indentation) << "";
   stream << "Equality Lagrangian:        " << std::setw(tabSpace) << performanceIndex.equalityLagrangian;

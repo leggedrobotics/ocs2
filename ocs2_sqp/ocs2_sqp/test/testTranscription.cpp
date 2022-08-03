@@ -38,8 +38,8 @@ namespace {
 /** Helper to compare if two performance indices are identical */
 bool areIdentical(const ocs2::PerformanceIndex& lhs, const ocs2::PerformanceIndex& rhs) {
   return lhs.merit == rhs.merit && lhs.cost == rhs.cost && lhs.dynamicsViolationSSE == rhs.dynamicsViolationSSE &&
-         lhs.equalityConstraintsSSE == rhs.equalityConstraintsSSE && lhs.equalityLagrangian == rhs.equalityLagrangian &&
-         lhs.inequalityLagrangian == rhs.inequalityLagrangian;
+         lhs.equalityConstraintsSSE == rhs.equalityConstraintsSSE && lhs.inequalityConstraintsSSE == rhs.inequalityConstraintsSSE &&
+         lhs.equalityLagrangian == rhs.equalityLagrangian && lhs.inequalityLagrangian == rhs.inequalityLagrangian;
 }
 }  // namespace
 

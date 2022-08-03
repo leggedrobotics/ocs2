@@ -120,6 +120,39 @@ class CircularKinematicsConstraints final : public StateInputConstraint {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+/**
+ * Adds a constraint on the state, such that the first coordinate x(0) >= 0.75, which causes the
+ * trajectory to deviate from the unconstrained version.
+ */
+class CircularKinematicsInequalityConstraints final : public StateInputConstraint {
+ public:
+  CircularKinematicsInequalityConstraints() : StateInputConstraint(ConstraintOrder::Linear) {}
+  ~CircularKinematicsInequalityConstraints() override = default;
+
+  CircularKinematicsInequalityConstraints* clone() const override { return new CircularKinematicsInequalityConstraints(*this); }
+
+  size_t getNumConstraints(scalar_t time) const override { return 1; }
+
+  vector_t getValue(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) const override {
+    vector_t e(1);
+    e << x(0) - 0.75;
+    return e;
+  }
+
+  VectorFunctionLinearApproximation getLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
+                                                           const PreComputation& preComp) const override {
+    VectorFunctionLinearApproximation e;
+    e.f = getValue(t, x, u, preComp);
+    e.dfdx.setZero(1, 2);
+    e.dfdx(0, 0) = 1;
+    e.dfdu.setZero(1, 2);
+    return e;
+  }
+};
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 inline OptimalControlProblem createCircularKinematicsProblem(const std::string& libraryFolder) {
   // optimal control problem
   OptimalControlProblem problem;
@@ -133,6 +166,17 @@ inline OptimalControlProblem createCircularKinematicsProblem(const std::string& 
   std::unique_ptr<StateInputConstraint> constraint(new CircularKinematicsConstraints());
   problem.equalityConstraintPtr->add("constraint", std::move(constraint));
 
+  return problem;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+inline OptimalControlProblem createCircularKinematicsProblemWithInequality(const std::string& libraryFolder) {
+  // Add an inequality constraint to the problem
+  OptimalControlProblem problem = createCircularKinematicsProblem(libraryFolder);
+  std::unique_ptr<StateInputConstraint> constraint(new CircularKinematicsInequalityConstraints());
+  problem.inequalityConstraintPtr->add("ineqConstraint", std::move(constraint));
   return problem;
 }
 

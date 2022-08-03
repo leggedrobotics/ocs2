@@ -54,6 +54,17 @@ struct Settings {
   int warm_start = 0;
   int pred_corr = 1;
   int ric_alg = 0;  // square root ricatti recursion
+
+  // Slacks - soften constraints
+  // TODO we probably want more control over which constraints get slacks,
+  // perhaps in its own structure
+  bool use_slack = false;
+  scalar_t slack_upper_L2_penalty = 1e2;
+  scalar_t slack_lower_L2_penalty = 1e2;
+  scalar_t slack_upper_L1_penalty = 0;
+  scalar_t slack_lower_L1_penalty = 0;
+  scalar_t slack_upper_low_bound = 0;
+  scalar_t slack_lower_low_bound = 0;
 };
 
 std::ostream& operator<<(std::ostream& stream, const Settings& settings);

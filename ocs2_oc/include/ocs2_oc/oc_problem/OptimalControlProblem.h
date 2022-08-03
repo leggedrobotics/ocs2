@@ -75,6 +75,8 @@ struct OptimalControlProblem {
   std::unique_ptr<StateConstraintCollection> preJumpEqualityConstraintPtr;
   /** Final equality constraints */
   std::unique_ptr<StateConstraintCollection> finalEqualityConstraintPtr;
+  /** (Hard) inequality constraints **/
+  std::unique_ptr<StateInputConstraintCollection> inequalityConstraintPtr;
 
   /* Lagrangians */
   /** Lagrangian for intermediate equality constraints */

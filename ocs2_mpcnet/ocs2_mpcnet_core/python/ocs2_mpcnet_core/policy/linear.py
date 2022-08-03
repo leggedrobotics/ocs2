@@ -33,6 +33,10 @@ Provides a class that implements a linear policy.
 """
 
 import torch
+import numpy as np
+
+from ocs2_mpcnet_core import config
+from ocs2_mpcnet_core.helper import bmv
 
 
 class LinearPolicy(torch.nn.Module):
@@ -42,37 +46,54 @@ class LinearPolicy(torch.nn.Module):
 
     Attributes:
         name: A string with the name of the policy.
-        dim_in: An integer defining the input dimension of the policy.
-        dim_out: An integer defining the output dimension of the policy.
+        observation_dimension: An integer defining the observation (i.e. input) dimension of the policy.
+        action_dimension: An integer defining the action (i.e. output) dimension of the policy.
+        observation_scaling: A (1,O,O) tensor for the observation scaling.
+        action_scaling: A (1,A,A) tensor for the action scaling.
         linear: The linear neural network layer.
     """
 
-    def __init__(self, dim_t: int, dim_x: int, dim_u: int) -> None:
+    def __init__(
+        self,
+        observation_dimension: int,
+        action_dimension: int,
+        observation_scaling: np.ndarray,
+        action_scaling: np.ndarray,
+    ) -> None:
         """Initializes the LinearPolicy class.
 
         Initializes the LinearPolicy class by setting fixed and variable attributes.
 
         Args:
-            dim_t: An integer defining the generalized time dimension.
-            dim_x: An integer defining the relative state dimension.
-            dim_u: An integer defining the control input dimension.
+            observation_dimension: An integer defining the observation dimension.
+            action_dimension: An integer defining the action dimension.
+            observation_scaling: A NumPy array of shape (O) defining the observation scaling.
+            action_scaling: A NumPy array of shape (A) defining the action scaling.
         """
         super().__init__()
         self.name = "LinearPolicy"
-        self.dim_in = dim_t + dim_x
-        self.dim_out = dim_u
-        self.linear = torch.nn.Linear(self.dim_in, self.dim_out)
+        self.observation_dimension = observation_dimension
+        self.action_dimension = action_dimension
+        self.observation_scaling = (
+            torch.tensor(observation_scaling, device=config.DEVICE, dtype=config.DTYPE).diag().unsqueeze(dim=0)
+        )
+        self.action_scaling = (
+            torch.tensor(action_scaling, device=config.DEVICE, dtype=config.DTYPE).diag().unsqueeze(dim=0)
+        )
+        self.linear = torch.nn.Linear(self.observation_dimension, self.action_dimension)
 
-    def forward(self, t: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, observation: torch.Tensor) -> torch.Tensor:
         """Forward method.
 
         Defines the computation performed at every call. Computes the output tensors from the input tensors.
 
         Args:
-            t: A (B,T) tensor with the generalized times.
-            x: A (B,X) tensor with the relative states.
+            observation: A (B,O) tensor with the observations.
 
         Returns:
-            u: A (B,U) tensor with the predicted control inputs.
+            action: A (B,A) tensor with the predicted actions.
         """
-        return self.linear(torch.cat((t, x), dim=1))
+        scaled_observation = bmv(self.observation_scaling, observation)
+        unscaled_action = self.linear(scaled_observation)
+        action = bmv(self.action_scaling, unscaled_action)
+        return action

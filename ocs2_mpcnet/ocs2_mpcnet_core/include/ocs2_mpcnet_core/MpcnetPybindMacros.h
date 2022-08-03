@@ -100,9 +100,8 @@ using namespace pybind11::literals;
         .def_readwrite("t", &ocs2::mpcnet::data_point_t::t)                                                 \
         .def_readwrite("x", &ocs2::mpcnet::data_point_t::x)                                                 \
         .def_readwrite("u", &ocs2::mpcnet::data_point_t::u)                                                 \
-        .def_readwrite("generalizedTime", &ocs2::mpcnet::data_point_t::generalizedTime)                     \
-        .def_readwrite("relativeState", &ocs2::mpcnet::data_point_t::relativeState)                         \
-        .def_readwrite("inputTransformation", &ocs2::mpcnet::data_point_t::inputTransformation)             \
+        .def_readwrite("observation", &ocs2::mpcnet::data_point_t::observation)                             \
+        .def_readwrite("actionTransformation", &ocs2::mpcnet::data_point_t::actionTransformation)           \
         .def_readwrite("hamiltonian", &ocs2::mpcnet::data_point_t::hamiltonian);                            \
     /* bind metrics struct */                                                                               \
     pybind11::class_<ocs2::mpcnet::metrics_t>(m, "Metrics")                                                 \

@@ -97,7 +97,7 @@ def get_random_target_state_stance() -> np.ndarray:
     max_orientation_z = 25.0 * np.pi / 180.0
     max_orientation_y = 15.0 * np.pi / 180.0
     max_orientation_x = 25.0 * np.pi / 180.0
-    random_deviation = np.zeros(config.STATE_DIM)
+    random_deviation = np.zeros(config.TARGET_STATE_DIM)
     random_deviation[8] = np.random.uniform(-max_position_z, max_position_z)
     random_deviation[9] = np.random.uniform(-max_orientation_z, max_orientation_z)
     random_deviation[10] = np.random.uniform(-max_orientation_y, max_orientation_y)
@@ -180,7 +180,7 @@ def get_random_target_state_trot() -> np.ndarray:
     max_position_x = 0.3
     max_position_y = 0.15
     max_orientation_z = 30.0 * np.pi / 180.0
-    random_deviation = np.zeros(config.STATE_DIM)
+    random_deviation = np.zeros(config.TARGET_STATE_DIM)
     random_deviation[6] = np.random.uniform(-max_position_x, max_position_x)
     random_deviation[7] = np.random.uniform(-max_position_y, max_position_y)
     random_deviation[9] = np.random.uniform(-max_orientation_z, max_orientation_z)
@@ -216,8 +216,8 @@ def get_tasks(
             mode_schedules[i] = helper.get_mode_schedule(*get_stance(duration))
             target_trajectories[i] = helper.get_target_trajectories(
                 duration * np.ones((1, 1)),
-                get_random_target_state_stance().reshape((1, config.STATE_DIM)),
-                np.zeros((1, config.INPUT_DIM)),
+                get_random_target_state_stance().reshape((1, config.TARGET_STATE_DIM)),
+                np.zeros((1, config.TARGET_INPUT_DIM)),
             )
         elif choices[i] == "trot_1":
             initial_observations[i] = helper.get_system_observation(
@@ -226,8 +226,8 @@ def get_tasks(
             mode_schedules[i] = helper.get_mode_schedule(*get_trot_1(duration))
             target_trajectories[i] = helper.get_target_trajectories(
                 duration * np.ones((1, 1)),
-                get_random_target_state_trot().reshape((1, config.STATE_DIM)),
-                np.zeros((1, config.INPUT_DIM)),
+                get_random_target_state_trot().reshape((1, config.TARGET_STATE_DIM)),
+                np.zeros((1, config.TARGET_INPUT_DIM)),
             )
         elif choices[i] == "trot_2":
             initial_observations[i] = helper.get_system_observation(
@@ -236,8 +236,8 @@ def get_tasks(
             mode_schedules[i] = helper.get_mode_schedule(*get_trot_2(duration))
             target_trajectories[i] = helper.get_target_trajectories(
                 duration * np.ones((1, 1)),
-                get_random_target_state_trot().reshape((1, config.STATE_DIM)),
-                np.zeros((1, config.INPUT_DIM)),
+                get_random_target_state_trot().reshape((1, config.TARGET_STATE_DIM)),
+                np.zeros((1, config.TARGET_INPUT_DIM)),
             )
     return initial_observations, mode_schedules, target_trajectories
 

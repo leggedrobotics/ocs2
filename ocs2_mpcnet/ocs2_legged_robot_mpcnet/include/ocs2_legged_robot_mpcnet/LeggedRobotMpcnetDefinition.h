@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <ocs2_legged_robot/LeggedRobotInterface.h>
 #include <ocs2_mpcnet_core/MpcnetDefinitionBase.h>
 
 namespace ocs2 {
@@ -41,9 +42,10 @@ class LeggedRobotMpcnetDefinition final : public ocs2::mpcnet::MpcnetDefinitionB
  public:
   /**
    * Constructor.
-   * @param [in] defaultState : Default state.
+   * @param [in] leggedRobotInterface : Legged robot interface.
    */
-  LeggedRobotMpcnetDefinition(const vector_t& defaultState) : defaultState_(defaultState) {}
+  LeggedRobotMpcnetDefinition(const LeggedRobotInterface& leggedRobotInterface)
+      : defaultState_(leggedRobotInterface.getInitialState()), centroidalModelInfo_(leggedRobotInterface.getCentroidalModelInfo()) {}
 
   /**
    * Default destructor.
@@ -51,30 +53,28 @@ class LeggedRobotMpcnetDefinition final : public ocs2::mpcnet::MpcnetDefinitionB
   ~LeggedRobotMpcnetDefinition() override = default;
 
   /**
-   * @see MpcnetDefinitionBase::getGeneralizedTime
+   * @see MpcnetDefinitionBase::getObservation
    */
-  vector_t getGeneralizedTime(scalar_t t, const ModeSchedule& modeSchedule) override;
+  vector_t getObservation(scalar_t t, const vector_t& x, const ModeSchedule& modeSchedule,
+                          const TargetTrajectories& targetTrajectories) override;
 
   /**
-   * @see MpcnetDefinitionBase::getRelativeState
+   * @see MpcnetDefinitionBase::getActionTransformation
    */
-  vector_t getRelativeState(scalar_t t, const vector_t& x, const TargetTrajectories& targetTrajectories) override;
+  std::pair<matrix_t, vector_t> getActionTransformation(scalar_t t, const vector_t& x, const ModeSchedule& modeSchedule,
+                                                        const TargetTrajectories& targetTrajectories) override;
 
   /**
-   * @see MpcnetDefinitionBase::getInputTransformation
+   * @see MpcnetDefinitionBase::isValid
    */
-  matrix_t getInputTransformation(scalar_t t, const vector_t& x) override;
-
-  /**
-   * @see MpcnetDefinitionBase::validState
-   */
-  bool validState(const vector_t& x) override;
+  bool isValid(scalar_t t, const vector_t& x, const ModeSchedule& modeSchedule, const TargetTrajectories& targetTrajectories) override;
 
  private:
   const scalar_t allowedHeightDeviation_ = 0.2;
   const scalar_t allowedPitchDeviation_ = 30.0 * M_PI / 180.0;
   const scalar_t allowedRollDeviation_ = 30.0 * M_PI / 180.0;
   const vector_t defaultState_;
+  const CentroidalModelInfo centroidalModelInfo_;
 };
 
 }  // namespace legged_robot

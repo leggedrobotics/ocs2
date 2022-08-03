@@ -60,6 +60,18 @@ STATE_DIM = 24
 # input dimension
 INPUT_DIM = 24
 
+# target trajectories state dimension
+TARGET_STATE_DIM = STATE_DIM
+
+# target trajectories input dimension
+TARGET_INPUT_DIM = INPUT_DIM
+
+# observation dimension
+OBSERVATION_DIM = 12 + STATE_DIM
+
+# action dimension
+ACTION_DIM = INPUT_DIM
+
 # expert number
 EXPERT_NUM = 3
 
@@ -77,23 +89,26 @@ DEFAULT_STATE = [
 ]
 # fmt: on
 
-# input bias
+# observation scaling
 # fmt: off
-INPUT_BIAS = [
-    0.0, 0.0, 127.861,  # contact forces LF
-    0.0, 0.0, 127.861,  # contact forces LH
-    0.0, 0.0, 127.861,  # contact forces RF
-    0.0, 0.0, 127.861,  # contact forces RH
-    0.0, 0.0, 0.0,      # joint velocities LF
-    0.0, 0.0, 0.0,      # joint velocities LH
-    0.0, 0.0, 0.0,      # joint velocities RF
-    0.0, 0.0, 0.0       # joint velocities RH
+OBSERVATION_SCALING = [
+    1.0, 1.0, 1.0, 1.0,  # swing phases
+    1.0, 1.0, 1.0, 1.0,  # swing phase rates
+    1.0, 1.0, 1.0, 1.0,  # sinusoidal bumps
+    1.0, 1.0, 1.0,       # normalized linear momentum
+    1.0, 1.0, 1.0,       # normalized angular momentum
+    1.0, 1.0, 1.0,       # position
+    1.0, 1.0, 1.0,       # orientation
+    1.0, 1.0, 1.0,       # joint positions LF
+    1.0, 1.0, 1.0,       # joint positions LH
+    1.0, 1.0, 1.0,       # joint positions RF
+    1.0, 1.0, 1.0        # joint positions RH
 ]
 # fmt: on
 
-# input scaling
+# action scaling
 # fmt: off
-INPUT_SCALING = [
+ACTION_SCALING = [
     100.0, 100.0, 100.0,  # contact forces LF
     100.0, 100.0, 100.0,  # contact forces LH
     100.0, 100.0, 100.0,  # contact forces RF

@@ -33,8 +33,10 @@ Provides classes that implement a mixture of linear experts policy.
 """
 
 import torch
+import numpy as np
 from typing import Tuple
 
+from ocs2_mpcnet_core import config
 from ocs2_mpcnet_core.helper import bmv
 
 
@@ -45,53 +47,74 @@ class MixtureOfLinearExpertsPolicy(torch.nn.Module):
 
     Attributes:
         name: A string with the name of the policy.
-        dim_in: An integer defining the input dimension of the policy.
-        dim_out: An integer defining the output dimension of the policy.
-        num_experts: An integer defining the number of experts.
+        observation_dimension: An integer defining the observation (i.e. input) dimension of the policy.
+        action_dimension: An integer defining the action (i.e. output) dimension of the policy.
+        expert_number: An integer defining the number of experts.
+        observation_scaling: A (1,O,O) tensor for the observation scaling.
+        action_scaling: A (1,A,A) tensor for the action scaling.
         gating_net: The gating network.
         expert_nets: The expert networks.
     """
 
-    def __init__(self, dim_t: int, dim_x: int, dim_u: int, num_experts: int) -> None:
+    def __init__(
+        self,
+        observation_dimension: int,
+        action_dimension: int,
+        expert_number: int,
+        observation_scaling: np.ndarray,
+        action_scaling: np.ndarray,
+    ) -> None:
         """Initializes the MixtureOfLinearExpertsPolicy class.
 
         Initializes the MixtureOfLinearExpertsPolicy class by setting fixed and variable attributes.
 
         Args:
-            dim_t: An integer defining the generalized time dimension.
-            dim_x: An integer defining the relative state dimension.
-            dim_u: An integer defining the control input dimension.
-            num_experts: An integer defining the number of experts.
+            observation_dimension: An integer defining the observation dimension.
+            action_dimension: An integer defining the action dimension.
+            expert_number: An integer defining the number of experts.
+            observation_scaling: A NumPy array of shape (O) defining the observation scaling.
+            action_scaling: A NumPy array of shape (A) defining the action scaling.
         """
         super().__init__()
         self.name = "MixtureOfLinearExpertsPolicy"
-        self.dim_in = dim_t + dim_x
-        self.dim_out = dim_u
-        self.num_experts = num_experts
+        self.observation_dimension = observation_dimension
+        self.action_dimension = action_dimension
+        self.expert_number = expert_number
+        self.observation_scaling = (
+            torch.tensor(observation_scaling, device=config.DEVICE, dtype=config.DTYPE).diag().unsqueeze(dim=0)
+        )
+        self.action_scaling = (
+            torch.tensor(action_scaling, device=config.DEVICE, dtype=config.DTYPE).diag().unsqueeze(dim=0)
+        )
         # gating
-        self.gating_net = torch.nn.Sequential(torch.nn.Linear(self.dim_in, self.num_experts), torch.nn.Softmax(dim=1))
+        self.gating_net = torch.nn.Sequential(
+            torch.nn.Linear(self.observation_dimension, self.expert_number), torch.nn.Softmax(dim=1)
+        )
         # experts
         self.expert_nets = torch.nn.ModuleList(
-            [_LinearExpert(i, self.dim_in, self.dim_out) for i in range(self.num_experts)]
+            [_LinearExpert(i, self.observation_dimension, self.action_dimension) for i in range(self.expert_number)]
         )
 
-    def forward(self, t: torch.Tensor, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, observation: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """Forward method.
 
         Defines the computation performed at every call. Computes the output tensors from the input tensors.
 
         Args:
-            t: A (B,T) tensor with the generalized times.
-            x: A (B,X) tensor with the relative states.
+            observation: A (B,O) tensor with the observations.
 
         Returns:
-            u: A (B,U) tensor with the predicted control inputs.
-            p: A (B,E) tensor with the predicted expert weights.
+            action: A (B,A) tensor with the predicted actions.
+            expert_weights: A (B,E) tensor with the predicted expert weights.
         """
-        p = self.gating_net(torch.cat((t, x), dim=1))
-        U = torch.stack([self.expert_nets[i](torch.cat((t, x), dim=1)) for i in range(self.num_experts)], dim=2)
-        u = bmv(U, p)
-        return u, p
+        scaled_observation = bmv(self.observation_scaling, observation)
+        expert_weights = self.gating_net(scaled_observation)
+        expert_actions = torch.stack(
+            [self.expert_nets[i](scaled_observation) for i in range(self.expert_number)], dim=2
+        )
+        unscaled_action = bmv(expert_actions, expert_weights)
+        action = bmv(self.action_scaling, unscaled_action)
+        return action, expert_weights
 
 
 class _LinearExpert(torch.nn.Module):
@@ -101,26 +124,26 @@ class _LinearExpert(torch.nn.Module):
 
     Attributes:
         name: A string with the name of the expert.
-        dim_in: An integer defining the input dimension of the expert.
-        dim_out: An integer defining the output dimension of the expert.
+        input_dimension: An integer defining the input dimension of the expert.
+        output_dimension: An integer defining the output dimension of the expert.
         linear: The linear neural network layer.
     """
 
-    def __init__(self, index: int, dim_in: int, dim_out: int) -> None:
+    def __init__(self, index: int, input_dimension: int, output_dimension: int) -> None:
         """Initializes the _LinearExpert class.
 
         Initializes the _LinearExpert class by setting fixed and variable attributes.
 
         Args:
             index: An integer with the index of the expert.
-            dim_in: An integer defining the input dimension of the expert.
-            dim_out: An integer defining the output dimension of the expert.
+            input_dimension: An integer defining the input dimension of the expert.
+            output_dimension: An integer defining the output dimension of the expert.
         """
         super().__init__()
         self.name = "LinearExpert" + str(index)
-        self.dim_in = dim_in
-        self.dim_out = dim_out
-        self.linear = torch.nn.Linear(self.dim_in, self.dim_out)
+        self.input_dimension = input_dimension
+        self.output_dimension = output_dimension
+        self.linear = torch.nn.Linear(self.input_dimension, self.output_dimension)
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         """Forward method.

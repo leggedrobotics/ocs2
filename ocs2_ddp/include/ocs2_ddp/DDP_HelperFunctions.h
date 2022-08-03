@@ -136,6 +136,26 @@ void retrieveActiveNormalizedTime(const std::pair<int, int>& partitionInterval, 
                                   size_array_t& normalizedPostEventIndices);
 
 /**
+ * Get the Partition Intervals From Time Trajectory. Intervals are defined as [start, end).
+ *
+ * Pay attention, the rightmost index of the end partition is (..., timeArray.size() - 1) , as the last value function is filled manually.
+ * The reason is though we don’t write to the end index, we do have to read it. Adding the last index to the final partition will
+ * cause a segmentation fault. There is no trivial method to distinguish the final partition from other partitions because, by design,
+ * partitions should be treated equally.
+ *
+ * Every time point that is equal or larger to the desiredPartitionPoint should be included in that partition. This logic here is the same
+ * as the event times.
+ *
+ * The last time of desiredPartitionPoints is filled manually. There is no round-off error involved. So it is safe to use == for
+ * floating-point numbers. The last time point is naturally included by using std::lower_bound.
+ *
+ * @param [in] timeTrajectory: time trajectory that will be divided
+ * @param [in] numWorkers: number of worker i.e. number of partitions
+ * @return array of index pairs indicating the start and end of each partition
+ */
+std::vector<std::pair<int, int>> computePartitionIntervals(const scalar_array_t& timeTrajectory, int numWorkers);
+
+/**
  * Gets a reference to the linear controller from the given primal solution.
  */
 inline LinearController& getLinearController(PrimalSolution& primalSolution) {

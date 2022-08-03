@@ -300,4 +300,33 @@ void retrieveActiveNormalizedTime(const std::pair<int, int>& partitionInterval, 
                  [N, &partitionInterval](size_t i) -> size_t { return N - i + partitionInterval.first; });
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::vector<std::pair<int, int>> computePartitionIntervals(const scalar_array_t& timeTrajectory, int numWorkers) {
+  const scalar_t increment = (timeTrajectory.back() - timeTrajectory.front()) / static_cast<scalar_t>(numWorkers);
+
+  scalar_array_t desiredPartitionPoints(numWorkers + 1);
+  desiredPartitionPoints.front() = timeTrajectory.front();
+  for (size_t i = 1u; i < desiredPartitionPoints.size() - 1; i++) {
+    desiredPartitionPoints[i] = desiredPartitionPoints[i - 1] + increment;
+  }
+  desiredPartitionPoints.back() = timeTrajectory.back();
+
+  std::vector<std::pair<int, int>> partitionIntervals;
+  partitionIntervals.reserve(desiredPartitionPoints.size());
+
+  int endPos, startPos = 0;
+  for (size_t i = 1u; i < desiredPartitionPoints.size(); i++) {
+    const auto itr = std::upper_bound(timeTrajectory.begin(), timeTrajectory.end(), desiredPartitionPoints[i]);
+    endPos = (itr != timeTrajectory.end()) ? std::distance(timeTrajectory.begin(), itr) : (timeTrajectory.size() - 1);
+    if (endPos != startPos) {
+      partitionIntervals.emplace_back(startPos, endPos);
+      startPos = endPos;
+    }
+  }
+
+  return partitionIntervals;
+}
+
 }  // namespace ocs2

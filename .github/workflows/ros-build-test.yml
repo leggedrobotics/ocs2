@@ -50,7 +50,7 @@ jobs:
     - name: Install RaiSim
       run: |
         git clone --depth 1 https://github.com/raisimTech/raisimLib.git -b v1.1.01 src/raisim_tech
-        cd ./raisim_tech | 
+        cd src/raisim_tech | 
         mkdir build |
         cd build |
         cmake .. -DRAISIM_EXAMPLE=ON -DRAISIM_PY=ON -DPYTHON_EXECUTABLE=$(python3 -c "import sys; print(sys.executable)") |

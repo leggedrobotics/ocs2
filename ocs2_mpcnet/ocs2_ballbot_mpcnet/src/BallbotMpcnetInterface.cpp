@@ -97,7 +97,6 @@ std::unique_ptr<MPC_BASE> BallbotMpcnetInterface::getMpc(BallbotInterface& ballb
     settings.displayShortSummary_ = false;
     settings.checkNumericalStability_ = false;
     settings.debugPrintRollout_ = false;
-    settings.debugCaching_ = false;
     settings.useFeedbackPolicy_ = true;
     return settings;
   }();

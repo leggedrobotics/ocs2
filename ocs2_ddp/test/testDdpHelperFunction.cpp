@@ -57,7 +57,7 @@ TEST(extractPrimalSolution, eventAtInitTime) {
     primalSolution.postEventIndices_.push_back(primalSolution.timeTrajectory_.size());
     primalSolution.modeSchedule_.modeSequence.push_back(s + 1);
     primalSolution.modeSchedule_.eventTimes.push_back(primalSolution.timeTrajectory_.back());
-  }    // end of s
+  }  // end of s
 
   // an extra event at final time
   primalSolution.timeTrajectory_.push_back(primalSolution.timeTrajectory_.back());

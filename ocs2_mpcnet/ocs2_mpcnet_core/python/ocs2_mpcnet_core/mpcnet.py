@@ -270,6 +270,9 @@ class Mpcnet(metaclass=ABCMeta):
                     empirical_loss = self.experts_loss(x, x, input, u, p, p, dHdxx, dHdux, dHduu, dHdx, dHdu, H)
                     # compute the gradients
                     empirical_loss.backward()
+                    # clip the gradients
+                    if self.config.GRADIENT_CLIPPING:
+                        torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.config.GRADIENT_CLIPPING_VALUE)
                     # logging
                     self.writer.add_scalar("objective/empirical_loss", empirical_loss.item(), iteration)
                     # return empirical loss
@@ -288,6 +291,9 @@ class Mpcnet(metaclass=ABCMeta):
                     empirical_loss = empirical_experts_loss + self.config.LAMBDA * empirical_gating_loss
                     # compute the gradients
                     empirical_loss.backward()
+                    # clip the gradients
+                    if self.config.GRADIENT_CLIPPING:
+                        torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.config.GRADIENT_CLIPPING_VALUE)
                     # logging
                     self.writer.add_scalar("objective/empirical_experts_loss", empirical_experts_loss.item(), iteration)
                     self.writer.add_scalar("objective/empirical_gating_loss", empirical_gating_loss.item(), iteration)

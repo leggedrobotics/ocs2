@@ -35,12 +35,13 @@ Provides a base class for all memory classes.
 import torch
 import numpy as np
 from typing import Tuple, List
+from abc import ABCMeta, abstractmethod
 
 from ocs2_mpcnet_core.config import Config
 from ocs2_mpcnet_core import ScalarFunctionQuadraticApproximation
 
 
-class BaseMemory:
+class BaseMemory(metaclass=ABCMeta):
     """Base memory.
 
     Provides the interface to all memory classes.
@@ -56,6 +57,7 @@ class BaseMemory:
         """
         pass
 
+    @abstractmethod
     def push(
         self,
         t: float,
@@ -79,8 +81,9 @@ class BaseMemory:
             action_transformation: A list containing NumPy arrays of shape (U,A) and (U) with the action transformation.
             hamiltonian: An OCS2 scalar function quadratic approximation representing the Hamiltonian around x and u.
         """
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def sample(self, batch_size: int) -> Tuple[torch.Tensor, ...]:
         """Samples data from the memory.
 
@@ -105,8 +108,9 @@ class BaseMemory:
             - dHdu_batch: A (B,U) tensor with the input gradients of the Hamiltonian approximations.
             - H_batch: A (B) tensor with the Hamiltonians at the development/expansion points.
         """
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def __len__(self) -> int:
         """The length of the memory.
 
@@ -115,4 +119,4 @@ class BaseMemory:
         Returns:
             An integer describing the length of the memory.
         """
-        raise NotImplementedError()
+        pass

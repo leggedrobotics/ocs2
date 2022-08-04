@@ -38,6 +38,7 @@ import datetime
 import torch
 import numpy as np
 from typing import Optional, Tuple
+from abc import ABCMeta, abstractmethod
 from torch.utils.tensorboard import SummaryWriter
 
 
@@ -49,7 +50,7 @@ from ocs2_mpcnet_core.memory import BaseMemory
 from ocs2_mpcnet_core.policy import BasePolicy
 
 
-class Mpcnet:
+class Mpcnet(metaclass=ABCMeta):
     """MPC-Net.
 
     Implements the main methods for the MPC-Net training.
@@ -102,6 +103,7 @@ class Mpcnet:
         # optimizer
         self.optimizer = torch.optim.Adam(self.policy.parameters(), lr=config.LEARNING_RATE)
 
+    @abstractmethod
     def get_tasks(
         self, tasks_number: int, duration: float
     ) -> Tuple[SystemObservationArray, ModeScheduleArray, TargetTrajectoriesArray]:
@@ -119,7 +121,7 @@ class Mpcnet:
                 - mode_schedules: The desired mode schedules given by an OCS2 mode schedule array.
                 - target_trajectories: The desired target trajectories given by an OCS2 target trajectories array.
         """
-        raise NotImplementedError()
+        pass
 
     def start_data_generation(self, policy: BasePolicy, alpha: float = 1.0):
         """Start data generation.

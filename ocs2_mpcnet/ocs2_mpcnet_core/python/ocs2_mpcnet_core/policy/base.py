@@ -34,12 +34,13 @@ Provides a base class for all policy classes.
 
 import torch
 from typing import Tuple
+from abc import ABCMeta, abstractmethod
 
 from ocs2_mpcnet_core.config import Config
 from ocs2_mpcnet_core.helper import bmv
 
 
-class BasePolicy(torch.nn.Module):
+class BasePolicy(torch.nn.Module, metaclass=ABCMeta):
     """Base policy.
 
     Provides the interface to all policy classes.
@@ -65,6 +66,7 @@ class BasePolicy(torch.nn.Module):
             torch.tensor(config.ACTION_SCALING, device=config.DEVICE, dtype=config.DTYPE).diag().unsqueeze(dim=0)
         )
 
+    @abstractmethod
     def forward(self, observation: torch.Tensor) -> Tuple[torch.Tensor, ...]:
         """Forward method.
 
@@ -76,7 +78,7 @@ class BasePolicy(torch.nn.Module):
         Returns:
             tuple: A tuple with the predictions, e.g. containing a (B,A) tensor with the predicted actions.
         """
-        raise NotImplementedError()
+        pass
 
     def scale_observation(self, observation: torch.Tensor) -> torch.Tensor:
         """Scale observation.

@@ -33,11 +33,12 @@ Provides a base class for all loss classes.
 """
 
 import torch
+from abc import ABCMeta, abstractmethod
 
 from ocs2_mpcnet_core.config import Config
 
 
-class BaseLoss:
+class BaseLoss(metaclass=ABCMeta):
     """Base loss.
 
     Provides the interface to all loss classes.
@@ -53,6 +54,7 @@ class BaseLoss:
         """
         pass
 
+    @abstractmethod
     def __call__(
         self,
         x_query: torch.Tensor,
@@ -89,4 +91,4 @@ class BaseLoss:
         Returns:
             A (1) tensor containing the mean loss.
         """
-        raise NotImplementedError()
+        pass

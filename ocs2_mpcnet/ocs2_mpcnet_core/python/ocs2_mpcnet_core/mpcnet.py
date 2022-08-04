@@ -32,30 +32,37 @@
 Provides a class that handles the MPC-Net training.
 """
 
+import os
 import time
 import datetime
 import torch
 import numpy as np
 from typing import Optional, Tuple
+from abc import ABCMeta, abstractmethod
 from torch.utils.tensorboard import SummaryWriter
 
 
 from ocs2_mpcnet_core import helper
 from ocs2_mpcnet_core import SystemObservationArray, ModeScheduleArray, TargetTrajectoriesArray
 from ocs2_mpcnet_core.config import Config
-from ocs2_mpcnet_core.loss.base import BaseLoss
-from ocs2_mpcnet_core.memory.base import BaseMemory
-from ocs2_mpcnet_core.policy.base import BasePolicy
+from ocs2_mpcnet_core.loss import BaseLoss
+from ocs2_mpcnet_core.memory import BaseMemory
+from ocs2_mpcnet_core.policy import BasePolicy
 
 
-class Mpcnet:
+class Mpcnet(metaclass=ABCMeta):
     """MPC-Net.
 
     Implements the main methods for the MPC-Net training.
+
+    Takes a specific configuration, interface, memory, policy and loss function(s).
+    The task formulation has to be implemented in a robot-specific class derived from this class.
+    Provides the main training loop for MPC-Net.
     """
 
     def __init__(
         self,
+        root_dir: str,
         config: Config,
         interface: object,
         memory: BaseMemory,
@@ -68,6 +75,7 @@ class Mpcnet:
         Initializes the Mpcnet class by setting fixed and variable attributes.
 
         Args:
+            root_dir: The absolute path to the root directory.
             config: An instance of the configuration class.
             interface: An instance of the interface class.
             memory: An instance of a memory class.
@@ -80,14 +88,8 @@ class Mpcnet:
         # interface
         self.interface = interface
         # logging
-        self.log_dir = (
-            "./runs/"
-            + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            + "_"
-            + config.NAME
-            + "_"
-            + config.DESCRIPTION
-        )
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        self.log_dir = os.path.join(root_dir, "runs", f"{timestamp}_{config.NAME}_{config.DESCRIPTION}")
         self.writer = SummaryWriter(self.log_dir)
         # loss
         self.experts_loss = experts_loss
@@ -101,6 +103,7 @@ class Mpcnet:
         # optimizer
         self.optimizer = torch.optim.Adam(self.policy.parameters(), lr=config.LEARNING_RATE)
 
+    @abstractmethod
     def get_tasks(
         self, tasks_number: int, duration: float
     ) -> Tuple[SystemObservationArray, ModeScheduleArray, TargetTrajectoriesArray]:
@@ -118,7 +121,7 @@ class Mpcnet:
                 - mode_schedules: The desired mode schedules given by an OCS2 mode schedule array.
                 - target_trajectories: The desired target trajectories given by an OCS2 target trajectories array.
         """
-        raise NotImplementedError()
+        pass
 
     def start_data_generation(self, policy: BasePolicy, alpha: float = 1.0):
         """Start data generation.

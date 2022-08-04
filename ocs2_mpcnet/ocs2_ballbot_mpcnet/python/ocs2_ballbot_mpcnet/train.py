@@ -35,19 +35,20 @@ Main script for training an MPC-Net policy for ballbot.
 """
 
 import sys
+import os
 
 from ocs2_mpcnet_core.config import Config
-from ocs2_mpcnet_core.loss.hamiltonian import HamiltonianLoss
-from ocs2_mpcnet_core.memory.circular import CircularMemory
-from ocs2_mpcnet_core.policy.linear import LinearPolicy
+from ocs2_mpcnet_core.loss import HamiltonianLoss
+from ocs2_mpcnet_core.memory import CircularMemory
+from ocs2_mpcnet_core.policy import LinearPolicy
 
-from ocs2_ballbot_mpcnet.mpcnet import BallbotMpcnet
+from ocs2_ballbot_mpcnet import BallbotMpcnet
 from ocs2_ballbot_mpcnet import MpcnetInterface
 
 
-def main(config_file_path: str) -> None:
+def main(root_dir: str, config_file_name: str) -> None:
     # config
-    config = Config(config_file_path)
+    config = Config(os.path.join(root_dir, "config", config_file_name))
     # interface
     interface = MpcnetInterface(config.DATA_GENERATION_THREADS, config.POLICY_EVALUATION_THREADS, config.RAISIM)
     # loss
@@ -57,13 +58,14 @@ def main(config_file_path: str) -> None:
     # policy
     policy = LinearPolicy(config)
     # mpcnet
-    mpcnet = BallbotMpcnet(config, interface, memory, policy, loss)
+    mpcnet = BallbotMpcnet(root_dir, config, interface, memory, policy, loss)
     # train
     mpcnet.train()
 
 
 if __name__ == "__main__":
+    root_dir = os.path.dirname(os.path.abspath(__file__))
     if len(sys.argv) > 1:
-        main(sys.argv[1])
+        main(root_dir, sys.argv[1])
     else:
-        main("./config/ballbot.yaml")
+        main(root_dir, "ballbot.yaml")

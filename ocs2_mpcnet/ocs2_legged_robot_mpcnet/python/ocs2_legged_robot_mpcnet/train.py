@@ -35,20 +35,21 @@ Main script for training an MPC-Net policy for legged robot.
 """
 
 import sys
+import os
 
 from ocs2_mpcnet_core.config import Config
-from ocs2_mpcnet_core.loss.hamiltonian import HamiltonianLoss
-from ocs2_mpcnet_core.loss.cross_entropy import CrossEntropyLoss
-from ocs2_mpcnet_core.memory.circular import CircularMemory
-from ocs2_mpcnet_core.policy.mixture_of_nonlinear_experts import MixtureOfNonlinearExpertsPolicy
+from ocs2_mpcnet_core.loss import HamiltonianLoss
+from ocs2_mpcnet_core.loss import CrossEntropyLoss
+from ocs2_mpcnet_core.memory import CircularMemory
+from ocs2_mpcnet_core.policy import MixtureOfNonlinearExpertsPolicy
 
-from ocs2_legged_robot_mpcnet.mpcnet import LeggedRobotMpcnet
+from ocs2_legged_robot_mpcnet import LeggedRobotMpcnet
 from ocs2_legged_robot_mpcnet import MpcnetInterface
 
 
-def main(config_file_path: str) -> None:
+def main(root_dir: str, config_file_name: str) -> None:
     # config
-    config = Config(config_file_path)
+    config = Config(os.path.join(root_dir, "config", config_file_name))
     # interface
     interface = MpcnetInterface(config.DATA_GENERATION_THREADS, config.POLICY_EVALUATION_THREADS, config.RAISIM)
     # loss
@@ -59,13 +60,14 @@ def main(config_file_path: str) -> None:
     # policy
     policy = MixtureOfNonlinearExpertsPolicy(config)
     # mpcnet
-    mpcnet = LeggedRobotMpcnet(config, interface, memory, policy, experts_loss, gating_loss)
+    mpcnet = LeggedRobotMpcnet(root_dir, config, interface, memory, policy, experts_loss, gating_loss)
     # train
     mpcnet.train()
 
 
 if __name__ == "__main__":
+    root_dir = os.path.dirname(os.path.abspath(__file__))
     if len(sys.argv) > 1:
-        main(sys.argv[1])
+        main(root_dir, sys.argv[1])
     else:
-        main("./config/legged_robot.yaml")
+        main(root_dir, "legged_robot.yaml")

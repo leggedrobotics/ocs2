@@ -4,6 +4,7 @@
 ###### Requirements without version specifiers ######
 black
 numpy
+pyyaml
 tensorboard
 torch
 #

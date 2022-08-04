@@ -33,53 +33,57 @@ Provides a class that implements a nonlinear policy.
 """
 
 import torch
+from typing import Tuple
+
+from ocs2_mpcnet_core.config import Config
+from ocs2_mpcnet_core.policy.base import BasePolicy
 
 
-class NonlinearPolicy(torch.nn.Module):
+class NonlinearPolicy(BasePolicy):
     """Nonlinear policy.
 
-    Class for a simple nonlinear neural network policy, where the hidden layer is the mean of the input and output
-    layer.
+    Class for a simple nonlinear neural network policy, where the hidden layer dimension is the mean of the input and
+    output dimensions.
 
     Attributes:
         name: A string with the name of the policy.
-        dim_in: An integer defining the input dimension of the policy.
-        dim_hidden: An integer defining the dimension of the hidden layer.
-        dim_out: An integer defining the output dimension of the policy.
+        observation_dimension: An integer defining the observation (i.e. input) dimension of the policy.
+        hidden_dimension: An integer defining the dimension of the hidden layer.
+        action_dimension: An integer defining the action (i.e. output) dimension of the policy.
         linear1: The first linear neural network layer.
         activation: The activation to get the hidden layer.
         linear2: The second linear neural network layer.
     """
 
-    def __init__(self, dim_t: int, dim_x: int, dim_u: int) -> None:
+    def __init__(self, config: Config) -> None:
         """Initializes the NonlinearPolicy class.
 
         Initializes the NonlinearPolicy class by setting fixed and variable attributes.
 
         Args:
-            dim_t: An integer defining the generalized time dimension.
-            dim_x: An integer defining the relative state dimension.
-            dim_u: An integer defining the control input dimension.
+            config: An instance of the configuration class.
         """
-        super().__init__()
+        super().__init__(config)
         self.name = "NonlinearPolicy"
-        self.dim_in = dim_t + dim_x
-        self.dim_hidden = int((dim_t + dim_x + dim_u) / 2)
-        self.dim_out = dim_u
-        self.linear1 = torch.nn.Linear(self.dim_in, self.dim_hidden)
+        self.observation_dimension = config.OBSERVATION_DIM
+        self.hidden_dimension = int((config.OBSERVATION_DIM + config.ACTION_DIM) / 2)
+        self.action_dimension = config.ACTION_DIM
+        self.linear1 = torch.nn.Linear(self.observation_dimension, self.hidden_dimension)
         self.activation = torch.nn.Tanh()
-        self.linear2 = torch.nn.Linear(self.dim_hidden, self.dim_out)
+        self.linear2 = torch.nn.Linear(self.hidden_dimension, self.action_dimension)
 
-    def forward(self, t: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, observation: torch.Tensor) -> Tuple[torch.Tensor]:
         """Forward method.
 
         Defines the computation performed at every call. Computes the output tensors from the input tensors.
 
         Args:
-            t: A (B,T) tensor with the generalized times.
-            x: A (B,X) tensor with the relative states.
+            observation: A (B,O) tensor with the observations.
 
         Returns:
-            u: A (B,U) tensor with the predicted control inputs.
+            action: A (B,A) tensor with the predicted actions.
         """
-        return self.linear2(self.activation(self.linear1(torch.cat((t, x), dim=1))))
+        scaled_observation = self.scale_observation(observation)
+        unscaled_action = self.linear2(self.activation(self.linear1(scaled_observation)))
+        action = self.scale_action(unscaled_action)
+        return (action,)

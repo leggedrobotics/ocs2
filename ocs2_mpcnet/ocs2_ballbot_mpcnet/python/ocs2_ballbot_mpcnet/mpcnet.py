@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 ###############################################################################
 # Copyright (c) 2022, Farbod Farshidian. All rights reserved.
 #
@@ -29,248 +27,111 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###############################################################################
 
-"""Ballbot MPC-Net.
+"""Ballbot MPC-Net class.
 
-Main script for training an MPC-Net policy for ballbot.
+Provides a class that handles the MPC-Net training for ballbot.
 """
 
-import os
-import time
-import datetime
-import torch
 import numpy as np
+from typing import Tuple
 
-from torch.utils.tensorboard import SummaryWriter
-
-from ocs2_mpcnet_core.helper import bmv, bmm
-from ocs2_mpcnet_core.loss.hamiltonian import HamiltonianLoss as Loss
-from ocs2_mpcnet_core.memory.circular import CircularMemory as Memory
-from ocs2_mpcnet_core.policy.linear import LinearPolicy as Policy
-
-from ocs2_ballbot_mpcnet import config
-from ocs2_ballbot_mpcnet import helper
-from ocs2_ballbot_mpcnet import MpcnetInterface
+from ocs2_mpcnet_core import helper
+from ocs2_mpcnet_core import mpcnet
+from ocs2_mpcnet_core import SystemObservationArray, ModeScheduleArray, TargetTrajectoriesArray
 
 
-def main():
-    # settings for data generation by applying behavioral policy
-    data_generation_time_step = 0.1
-    data_generation_duration = 3.0
-    data_generation_data_decimation = 1
-    data_generation_n_threads = 2
-    data_generation_n_tasks = 10
-    data_generation_n_samples = 2
-    data_generation_sampling_covariance = np.zeros((config.STATE_DIM, config.STATE_DIM), order="F")
-    for i in range(0, 2):
-        data_generation_sampling_covariance[i, i] = 0.01**2  # position
-    for i in range(2, 5):
-        data_generation_sampling_covariance[i, i] = (1.0 * np.pi / 180.0) ** 2  # orientation
-    for i in range(5, 7):
-        data_generation_sampling_covariance[i, i] = 0.05**2  # linear velocity
-    for i in range(7, 10):
-        data_generation_sampling_covariance[i, i] = (5.0 * np.pi / 180.0) ** 2  # angular velocity
+class BallbotMpcnet(mpcnet.Mpcnet):
+    """Ballbot MPC-Net.
 
-    # settings for computing metrics by applying learned policy
-    policy_evaluation_time_step = 0.1
-    policy_evaluation_duration = 3.0
-    policy_evaluation_n_threads = 1
-    policy_evaluation_n_tasks = 5
+    Adds robot-specific methods for the MPC-Net training.
+    """
 
-    # rollout settings for data generation and policy evaluation
-    raisim = False
+    @staticmethod
+    def get_default_event_times_and_mode_sequence(duration: float) -> Tuple[np.ndarray, np.ndarray]:
+        """Get the event times and mode sequence describing the default mode schedule.
 
-    # mpcnet interface
-    mpcnet_interface = MpcnetInterface(data_generation_n_threads, policy_evaluation_n_threads, raisim)
+        Creates the default event times and mode sequence for a certain time duration.
 
-    # logging
-    description = "description"
-    folder = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_" + config.NAME + "_" + description
-    writer = SummaryWriter("runs/" + folder)
-    os.makedirs(name="policies/" + folder)
+        Args:
+            duration: The duration of the mode schedule given by a float.
 
-    # loss
-    loss = Loss()
+        Returns:
+            A tuple containing the components of the mode schedule.
+                - event_times: The event times given by a NumPy array of shape (K-1) containing floats.
+                - mode_sequence: The mode sequence given by a NumPy array of shape (K) containing integers.
+        """
+        event_times_template = np.array([1.0], dtype=np.float64)
+        mode_sequence_template = np.array([0], dtype=np.uintp)
+        return helper.get_event_times_and_mode_sequence(0, duration, event_times_template, mode_sequence_template)
 
-    # memory
-    memory_capacity = 100000
-    memory = Memory(memory_capacity, config.TIME_DIM, config.STATE_DIM, config.INPUT_DIM)
+    def get_random_initial_state(self) -> np.ndarray:
+        """Get a random initial state.
 
-    # policy
-    policy = Policy(config.TIME_DIM, config.STATE_DIM, config.INPUT_DIM)
-    policy.to(config.DEVICE)
-    print("Initial policy parameters:")
-    print(list(policy.named_parameters()))
-    dummy_input = (
-        torch.randn(1, config.TIME_DIM, device=config.DEVICE, dtype=config.DTYPE),
-        torch.randn(1, config.STATE_DIM, device=config.DEVICE, dtype=config.DTYPE),
-    )
-    print("Saving initial policy.")
-    save_path = "policies/" + folder + "/initial_policy"
-    torch.onnx.export(model=policy, args=dummy_input, f=save_path + ".onnx")
-    torch.save(obj=policy, f=save_path + ".pt")
+        Samples a random initial state for the robot.
 
-    # optimizer
-    batch_size = 2**5
-    learning_rate = 1e-2
-    learning_iterations = 10000
-    optimizer = torch.optim.Adam(policy.parameters(), lr=learning_rate)
+        Returns:
+            x: A random initial state given by a NumPy array containing floats.
+        """
+        max_linear_velocity_x = 0.5
+        max_linear_velocity_y = 0.5
+        max_euler_angle_derivative_z = 45.0 / 180.0 * np.pi
+        max_euler_angle_derivative_y = 45.0 / 180.0 * np.pi
+        max_euler_angle_derivative_x = 45.0 / 180.0 * np.pi
+        random_deviation = np.zeros(self.config.STATE_DIM)
+        random_deviation[5] = np.random.uniform(-max_linear_velocity_x, max_linear_velocity_x)
+        random_deviation[6] = np.random.uniform(-max_linear_velocity_y, max_linear_velocity_y)
+        random_deviation[7] = np.random.uniform(-max_euler_angle_derivative_z, max_euler_angle_derivative_z)
+        random_deviation[8] = np.random.uniform(-max_euler_angle_derivative_y, max_euler_angle_derivative_y)
+        random_deviation[9] = np.random.uniform(-max_euler_angle_derivative_x, max_euler_angle_derivative_x)
+        return np.array(self.config.DEFAULT_STATE) + random_deviation
 
-    def start_data_generation(policy, alpha=1.0):
-        policy_file_path = "/tmp/data_generation_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".onnx"
-        torch.onnx.export(model=policy, args=dummy_input, f=policy_file_path)
-        initial_observations, mode_schedules, target_trajectories = helper.get_tasks(
-            data_generation_n_tasks, data_generation_duration
-        )
-        mpcnet_interface.startDataGeneration(
-            alpha,
-            policy_file_path,
-            data_generation_time_step,
-            data_generation_data_decimation,
-            data_generation_n_samples,
-            data_generation_sampling_covariance,
-            initial_observations,
-            mode_schedules,
-            target_trajectories,
-        )
+    def get_random_target_state(self) -> np.ndarray:
+        """Get a random target state.
 
-    def start_policy_evaluation(policy, alpha=0.0):
-        policy_file_path = "/tmp/policy_evaluation_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".onnx"
-        torch.onnx.export(model=policy, args=dummy_input, f=policy_file_path)
-        initial_observations, mode_schedules, target_trajectories = helper.get_tasks(
-            policy_evaluation_n_tasks, policy_evaluation_duration
-        )
-        mpcnet_interface.startPolicyEvaluation(
-            alpha,
-            policy_file_path,
-            policy_evaluation_time_step,
-            initial_observations,
-            mode_schedules,
-            target_trajectories,
-        )
+        Samples a random target state for the robot.
 
-    try:
-        print("==============\nWaiting for first data.\n==============")
-        start_data_generation(policy)
-        start_policy_evaluation(policy)
-        while not mpcnet_interface.isDataGenerationDone():
-            time.sleep(1.0)
+        Returns:
+            x: A random target state given by a NumPy array containing floats.
+        """
+        max_position_x = 1.0
+        max_position_y = 1.0
+        max_orientation_z = 45.0 / 180.0 * np.pi
+        random_deviation = np.zeros(self.config.TARGET_STATE_DIM)
+        random_deviation[0] = np.random.uniform(-max_position_x, max_position_x)
+        random_deviation[1] = np.random.uniform(-max_position_y, max_position_y)
+        random_deviation[2] = np.random.uniform(-max_orientation_z, max_orientation_z)
+        return np.array(self.config.DEFAULT_TARGET_STATE) + random_deviation
 
-        print("==============\nStarting training.\n==============")
-        for iteration in range(learning_iterations):
-            alpha = 1.0 - 1.0 * iteration / learning_iterations
+    def get_tasks(
+        self, tasks_number: int, duration: float
+    ) -> Tuple[SystemObservationArray, ModeScheduleArray, TargetTrajectoriesArray]:
+        """Get tasks.
 
-            # data generation
-            if mpcnet_interface.isDataGenerationDone():
-                # get generated data
-                data = mpcnet_interface.getGeneratedData()
-                for i in range(len(data)):
-                    # push t, x, u, p, generalized time, relative state, input_transformation, Hamiltonian into memory
-                    memory.push(
-                        data[i].t,
-                        data[i].x,
-                        data[i].u,
-                        torch.ones(1, device=config.DEVICE, dtype=config.DTYPE),
-                        data[i].generalizedTime,
-                        data[i].relativeState,
-                        data[i].inputTransformation,
-                        data[i].hamiltonian,
-                    )
-                # logging
-                writer.add_scalar("data/new_data_points", len(data), iteration)
-                writer.add_scalar("data/total_data_points", len(memory), iteration)
-                print("iteration", iteration, "received data points", len(data), "requesting with alpha", alpha)
-                # start new data generation
-                start_data_generation(policy, alpha)
+        Get a random set of task that should be executed by the data generation or policy evaluation.
 
-            # policy evaluation
-            if mpcnet_interface.isPolicyEvaluationDone():
-                # get computed metrics
-                metrics = mpcnet_interface.getComputedMetrics()
-                survival_time = np.mean([metrics[i].survivalTime for i in range(len(metrics))])
-                incurred_hamiltonian = np.mean([metrics[i].incurredHamiltonian for i in range(len(metrics))])
-                # logging
-                writer.add_scalar("metric/survival_time", survival_time, iteration)
-                writer.add_scalar("metric/incurred_hamiltonian", incurred_hamiltonian, iteration)
-                print(
-                    "iteration",
-                    iteration,
-                    "received metrics:",
-                    "incurred_hamiltonian",
-                    incurred_hamiltonian,
-                    "survival_time",
-                    survival_time,
-                )
-                # start new policy evaluation
-                start_policy_evaluation(policy)
+        Args:
+            tasks_number: Number of tasks given by an integer.
+            duration: Duration of each task given by a float.
 
-            # intermediate policies
-            if (iteration % 1000 == 0) and (iteration > 0):
-                print("Saving intermediate policy for iteration", iteration)
-                save_path = "policies/" + folder + "/intermediate_policy_" + str(iteration)
-                torch.onnx.export(model=policy, args=dummy_input, f=save_path + ".onnx")
-                torch.save(obj=policy, f=save_path + ".pt")
-
-            # extract batch from memory
-            (
-                t,
-                x,
-                u,
-                p,
-                generalized_time,
-                relative_state,
-                input_transformation,
-                dHdxx,
-                dHdux,
-                dHduu,
-                dHdx,
-                dHdu,
-                H,
-            ) = memory.sample(batch_size)
-
-            # take an optimization step
-            def closure():
-                # clear the gradients
-                optimizer.zero_grad()
-                # prediction
-                u_predicted = policy(generalized_time, relative_state)
-                u_predicted = bmv(input_transformation, u_predicted)
-                # compute the empirical loss
-                empirical_loss = loss(x, x, u_predicted, u, dHdxx, dHdux, dHduu, dHdx, dHdu, H)
-                # compute the gradients
-                empirical_loss.backward()
-                # logging
-                writer.add_scalar("objective/empirical_loss", empirical_loss.item(), iteration)
-                # return empirical loss
-                return empirical_loss
-
-            optimizer.step(closure)
-
-            # let data generation and policy evaluation finish in last iteration (to avoid a segmentation fault)
-            if iteration == learning_iterations - 1:
-                while (not mpcnet_interface.isDataGenerationDone()) or (not mpcnet_interface.isPolicyEvaluationDone()):
-                    time.sleep(1.0)
-
-        print("==============\nTraining completed.\n==============")
-
-    except KeyboardInterrupt:
-        # let data generation and policy evaluation finish (to avoid a segmentation fault)
-        while (not mpcnet_interface.isDataGenerationDone()) or (not mpcnet_interface.isPolicyEvaluationDone()):
-            time.sleep(1.0)
-        print("==============\nTraining interrupted.\n==============")
-        pass
-
-    print("Final policy parameters:")
-    print(list(policy.named_parameters()))
-
-    print("Saving final policy.")
-    save_path = "policies/" + folder + "/final_policy"
-    torch.onnx.export(model=policy, args=dummy_input, f=save_path + ".onnx")
-    torch.save(obj=policy, f=save_path + ".pt")
-
-    writer.close()
-
-    print("Done. Exiting now.")
-
-
-if __name__ == '__main__':
-    main()
+        Returns:
+            A tuple containing the components of the task.
+                - initial_observations: The initial observations given by an OCS2 system observation array.
+                - mode_schedules: The desired mode schedules given by an OCS2 mode schedule array.
+                - target_trajectories: The desired target trajectories given by an OCS2 target trajectories array.
+        """
+        initial_mode = 0
+        initial_time = 0.0
+        initial_observations = helper.get_system_observation_array(tasks_number)
+        mode_schedules = helper.get_mode_schedule_array(tasks_number)
+        target_trajectories = helper.get_target_trajectories_array(tasks_number)
+        for i in range(tasks_number):
+            initial_observations[i] = helper.get_system_observation(
+                initial_mode, initial_time, self.get_random_initial_state(), np.zeros(self.config.INPUT_DIM)
+            )
+            mode_schedules[i] = helper.get_mode_schedule(*self.get_default_event_times_and_mode_sequence(duration))
+            target_trajectories[i] = helper.get_target_trajectories(
+                duration * np.ones((1, 1)),
+                self.get_random_target_state().reshape((1, self.config.TARGET_STATE_DIM)),
+                np.zeros((1, self.config.TARGET_INPUT_DIM)),
+            )
+        return initial_observations, mode_schedules, target_trajectories

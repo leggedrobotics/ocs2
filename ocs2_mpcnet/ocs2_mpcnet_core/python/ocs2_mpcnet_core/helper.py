@@ -34,7 +34,7 @@ Provides helper functions, such as convenience functions for batch-wise operatio
 
 import torch
 import numpy as np
-from typing import Tuple
+from typing import Tuple, Dict
 
 from ocs2_mpcnet_core import (
     size_array,
@@ -60,7 +60,7 @@ def bdot(bv1: torch.Tensor, bv2: torch.Tensor) -> torch.Tensor:
         bv2: A (B,N) tensor containing a batch of vectors.
 
     Returns:
-        A (B,N) tensor containing the batch-wise dot product.
+        A (B) tensor containing the batch-wise dot product.
     """
     return torch.sum(torch.mul(bv1, bv2), dim=1)
 
@@ -288,3 +288,22 @@ def get_event_times_and_mode_sequence(
         mode_sequence = np.append(mode_sequence, mode_sequence_template)
     mode_sequence = np.append(mode_sequence, np.array([default_mode], dtype=np.uintp))
     return event_times, mode_sequence
+
+
+def get_one_hot(mode: int, expert_number: int, expert_for_mode: Dict[int, int]) -> np.ndarray:
+    """Get one hot encoding of mode.
+
+    Get a one hot encoding of a mode represented by a discrete probability distribution, where the sample space is the
+    set of P individually identified items given by the set of E individually identified experts.
+
+    Args:
+        mode: The mode of the system given by an integer.
+        expert_number: The number of experts given by an integer.
+        expert_for_mode: A dictionary that assigns modes to experts.
+
+    Returns:
+        p: Discrete probability distribution given by a NumPy array of shape (P) containing floats.
+    """
+    one_hot = np.zeros(expert_number)
+    one_hot[expert_for_mode[mode]] = 1.0
+    return one_hot

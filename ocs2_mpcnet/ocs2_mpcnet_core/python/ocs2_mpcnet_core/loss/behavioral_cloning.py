@@ -33,13 +33,13 @@ Provides a class that implements a simple behavioral cloning loss for benchmarki
 """
 
 import torch
-import numpy as np
 
-from ocs2_mpcnet_core import config
+from ocs2_mpcnet_core.config import Config
+from ocs2_mpcnet_core.loss.base import BaseLoss
 from ocs2_mpcnet_core.helper import bdot, bmv
 
 
-class BehavioralCloningLoss:
+class BehavioralCloningLoss(BaseLoss):
     r"""Behavioral cloning loss.
 
     Uses a simple quadratic function as loss:
@@ -54,29 +54,54 @@ class BehavioralCloningLoss:
         R: A (1,U,U) tensor with the input cost matrix.
     """
 
-    def __init__(self, R: np.ndarray) -> None:
+    def __init__(self, config: Config) -> None:
         """Initializes the BehavioralCloningLoss class.
 
         Initializes the BehavioralCloningLoss class by setting fixed attributes.
 
         Args:
-            R: A NumPy array of shape (U, U) with the input cost matrix.
+            config: An instance of the configuration class.
         """
-        self.R = torch.tensor(R, device=config.DEVICE, dtype=config.DTYPE).unsqueeze(dim=0)
+        super().__init__(config)
+        self.R = torch.tensor(config.R, device=config.DEVICE, dtype=config.DTYPE).diag().unsqueeze(dim=0)
 
-    def __call__(self, u_predicted: torch.Tensor, u_target: torch.Tensor) -> torch.Tensor:
-        """Computes the mean behavioral cloning loss.
+    def __call__(
+        self,
+        x_query: torch.Tensor,
+        x_nominal: torch.Tensor,
+        u_query: torch.Tensor,
+        u_nominal: torch.Tensor,
+        p_query: torch.Tensor,
+        p_nominal: torch.Tensor,
+        dHdxx: torch.Tensor,
+        dHdux: torch.Tensor,
+        dHduu: torch.Tensor,
+        dHdx: torch.Tensor,
+        dHdu: torch.Tensor,
+        H: torch.Tensor,
+    ) -> torch.Tensor:
+        """Computes the loss.
 
-        Computes the mean behavioral cloning loss for a batch of size B using the cost matrix.
+        Computes the mean loss for a batch.
 
         Args:
-            u_predicted: A (B, U) tensor with the predicted inputs.
-            u_target: A (B, U) tensor with the target inputs.
+            x_query: A (B,X) tensor with the query (e.g. predicted) states.
+            x_nominal: A (B,X) tensor with the nominal (e.g. target) states.
+            u_query: A (B,U) tensor with the query (e.g. predicted) inputs.
+            u_nominal: A (B,U) tensor with the nominal (e.g. target) inputs.
+            p_query: A (B,P) tensor with the query (e.g. predicted) discrete probability distributions.
+            p_nominal: A (B,P) tensor with the nominal (e.g. target) discrete probability distributions.
+            dHdxx: A (B,X,X) tensor with the state-state Hessians of the Hamiltonian approximations.
+            dHdux: A (B,U,X) tensor with the input-state Hessians of the Hamiltonian approximations.
+            dHduu: A (B,U,U) tensor with the input-input Hessians of the Hamiltonian approximations.
+            dHdx: A (B,X) tensor with the state gradients of the Hamiltonian approximations.
+            dHdu: A (B,U) tensor with the input gradients of the Hamiltonian approximations.
+            H: A (B) tensor with the Hamiltonians at the nominal points.
 
         Returns:
-            A (1) tensor containing the mean behavioral cloning loss.
+            A (1) tensor containing the mean loss.
         """
-        return torch.mean(self.compute(u_predicted, u_target))
+        return torch.mean(self.compute(u_query, u_nominal))
 
     def compute(self, u_predicted: torch.Tensor, u_target: torch.Tensor) -> torch.Tensor:
         """Computes the behavioral cloning losses for a batch.

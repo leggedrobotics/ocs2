@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 ###############################################################################
 # Copyright (c) 2022, Farbod Farshidian. All rights reserved.
 #
@@ -27,44 +29,45 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###############################################################################
 
-"""Configuration class.
+"""Legged robot MPC-Net.
 
-Provides a class that handles the configuration parameters.
+Main script for training an MPC-Net policy for legged robot.
 """
 
-import yaml
-import torch
+import sys
+import os
+
+from ocs2_mpcnet_core.config import Config
+from ocs2_mpcnet_core.loss import HamiltonianLoss
+from ocs2_mpcnet_core.loss import CrossEntropyLoss
+from ocs2_mpcnet_core.memory import CircularMemory
+from ocs2_mpcnet_core.policy import MixtureOfNonlinearExpertsPolicy
+
+from ocs2_legged_robot_mpcnet import LeggedRobotMpcnet
+from ocs2_legged_robot_mpcnet import MpcnetInterface
 
 
-class Config:
-    """Config.
+def main(root_dir: str, config_file_name: str) -> None:
+    # config
+    config = Config(os.path.join(root_dir, "config", config_file_name))
+    # interface
+    interface = MpcnetInterface(config.DATA_GENERATION_THREADS, config.POLICY_EVALUATION_THREADS, config.RAISIM)
+    # loss
+    experts_loss = HamiltonianLoss(config)
+    gating_loss = CrossEntropyLoss(config)
+    # memory
+    memory = CircularMemory(config)
+    # policy
+    policy = MixtureOfNonlinearExpertsPolicy(config)
+    # mpcnet
+    mpcnet = LeggedRobotMpcnet(root_dir, config, interface, memory, policy, experts_loss, gating_loss)
+    # train
+    mpcnet.train()
 
-    Loads configuration parameters from a YAML file and provides access to them as attributes of this class.
 
-    Attributes:
-        DTYPE: The PyTorch data type.
-        DEVICE: The PyTorch device to select.
-    """
-
-    def __init__(self, config_file_path: str) -> None:
-        """Initializes the Config class.
-
-        Initializes the Config class by setting fixed attributes and by loading attributes from a YAML file.
-
-        Args:
-            config_file_path: A string with the path to the configuration file.
-        """
-        #
-        # class config
-        #
-        # data type for tensor elements
-        self.DTYPE = torch.float
-        # device on which tensors will be allocated
-        self.DEVICE = torch.device("cuda")
-        #
-        # yaml config
-        #
-        with open(config_file_path, "r") as stream:
-            config = yaml.safe_load(stream)
-            for key, value in config.items():
-                setattr(self, key, value)
+if __name__ == "__main__":
+    root_dir = os.path.dirname(os.path.abspath(__file__))
+    if len(sys.argv) > 1:
+        main(root_dir, sys.argv[1])
+    else:
+        main(root_dir, "legged_robot.yaml")

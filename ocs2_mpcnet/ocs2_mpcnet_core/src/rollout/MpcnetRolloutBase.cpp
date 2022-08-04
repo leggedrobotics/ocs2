@@ -90,9 +90,10 @@ void MpcnetRolloutBase::step(scalar_t timeStep) {
   systemObservation_.input = inputTrajectory.back();
   systemObservation_.mode = primalSolution_.modeSchedule_.modeAtTime(systemObservation_.time);
 
-  // check if forward simulated system diverged
-  if (!mpcnetDefinitionPtr_->validState(systemObservation_.state)) {
-    throw std::runtime_error("[MpcnetRolloutBase::step] state is not valid.");
+  // check forward simulated system
+  if (!mpcnetDefinitionPtr_->isValid(systemObservation_.time, systemObservation_.state, referenceManagerPtr_->getModeSchedule(),
+                                     referenceManagerPtr_->getTargetTrajectories())) {
+    throw std::runtime_error("MpcnetDataGeneration::run Tuple (time, state, modeSchedule, targetTrajectories) is not valid.");
   }
 }
 

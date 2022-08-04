@@ -79,8 +79,7 @@ int main(int argc, char** argv) {
 
   // policy (MPC-Net controller)
   auto onnxEnvironmentPtr = ocs2::mpcnet::createOnnxEnvironment();
-  std::shared_ptr<ocs2::mpcnet::MpcnetDefinitionBase> mpcnetDefinitionPtr(
-      new LeggedRobotMpcnetDefinition(leggedRobotInterface.getInitialState()));
+  std::shared_ptr<ocs2::mpcnet::MpcnetDefinitionBase> mpcnetDefinitionPtr(new LeggedRobotMpcnetDefinition(leggedRobotInterface));
   std::unique_ptr<ocs2::mpcnet::MpcnetControllerBase> mpcnetControllerPtr(
       new ocs2::mpcnet::MpcnetOnnxController(mpcnetDefinitionPtr, rosReferenceManagerPtr, onnxEnvironmentPtr));
   mpcnetControllerPtr->loadPolicyModel(policyFile);

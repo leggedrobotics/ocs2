@@ -49,12 +49,10 @@ struct DataPoint {
   vector_t x;
   /** Optimal control input. */
   vector_t u;
-  /** Generalized time as defined by the robot-specific MPC-Net definitions. */
-  vector_t generalizedTime;
-  /** Relative state as defined by the robot-specific MPC-Net definitions. */
-  vector_t relativeState;
-  /** Input transformation as defined by the robot-specific MPC-Net definitions. */
-  matrix_t inputTransformation;
+  /** Observation given as input to the policy. */
+  vector_t observation;
+  /** Action transformation applied to the output of the policy. */
+  std::pair<matrix_t, vector_t> actionTransformation;
   /** Linear-quadratic approximation of the Hamiltonian, using x and u as development/expansion points. */
   ScalarFunctionQuadraticApproximation hamiltonian;
 };
@@ -76,9 +74,10 @@ inline data_point_t getDataPoint(MPC_BASE& mpc, MpcnetDefinitionBase& mpcnetDefi
   dataPoint.x = primalSolution.stateTrajectory_.front() + deviation;
   dataPoint.u = primalSolution.controllerPtr_->computeInput(dataPoint.t, dataPoint.x);
   dataPoint.mode = primalSolution.modeSchedule_.modeAtTime(dataPoint.t);
-  dataPoint.generalizedTime = mpcnetDefinition.getGeneralizedTime(dataPoint.t, referenceManager.getModeSchedule());
-  dataPoint.relativeState = mpcnetDefinition.getRelativeState(dataPoint.t, dataPoint.x, referenceManager.getTargetTrajectories());
-  dataPoint.inputTransformation = mpcnetDefinition.getInputTransformation(dataPoint.t, dataPoint.x);
+  dataPoint.observation = mpcnetDefinition.getObservation(dataPoint.t, dataPoint.x, referenceManager.getModeSchedule(),
+                                                          referenceManager.getTargetTrajectories());
+  dataPoint.actionTransformation = mpcnetDefinition.getActionTransformation(dataPoint.t, dataPoint.x, referenceManager.getModeSchedule(),
+                                                                            referenceManager.getTargetTrajectories());
   dataPoint.hamiltonian = mpc.getSolverPtr()->getHamiltonian(dataPoint.t, dataPoint.x, dataPoint.u);
   return dataPoint;
 }

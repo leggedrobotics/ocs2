@@ -27,45 +27,47 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###############################################################################
 
-"""Linear policy.
+"""Base policy.
 
-Provides a class that implements a linear policy.
+Provides a base class for all policy classes.
 """
 
 import torch
 from typing import Tuple
+from abc import ABCMeta, abstractmethod
 
 from ocs2_mpcnet_core.config import Config
-from ocs2_mpcnet_core.policy.base import BasePolicy
+from ocs2_mpcnet_core.helper import bmv
 
 
-class LinearPolicy(BasePolicy):
-    """Linear policy.
+class BasePolicy(torch.nn.Module, metaclass=ABCMeta):
+    """Base policy.
 
-    Class for a simple linear neural network policy.
+    Provides the interface to all policy classes.
 
     Attributes:
-        name: A string with the name of the policy.
-        observation_dimension: An integer defining the observation (i.e. input) dimension of the policy.
-        action_dimension: An integer defining the action (i.e. output) dimension of the policy.
-        linear: The linear neural network layer.
+        observation_scaling: A (1,O,O) tensor for the observation scaling.
+        action_scaling: A (1,A,A) tensor for the action scaling.
     """
 
     def __init__(self, config: Config) -> None:
-        """Initializes the LinearPolicy class.
+        """Initializes the BasePolicy class.
 
-        Initializes the LinearPolicy class by setting fixed and variable attributes.
+        Initializes the BasePolicy class.
 
         Args:
             config: An instance of the configuration class.
         """
-        super().__init__(config)
-        self.name = "LinearPolicy"
-        self.observation_dimension = config.OBSERVATION_DIM
-        self.action_dimension = config.ACTION_DIM
-        self.linear = torch.nn.Linear(self.observation_dimension, self.action_dimension)
+        super().__init__()
+        self.observation_scaling = (
+            torch.tensor(config.OBSERVATION_SCALING, device=config.DEVICE, dtype=config.DTYPE).diag().unsqueeze(dim=0)
+        )
+        self.action_scaling = (
+            torch.tensor(config.ACTION_SCALING, device=config.DEVICE, dtype=config.DTYPE).diag().unsqueeze(dim=0)
+        )
 
-    def forward(self, observation: torch.Tensor) -> Tuple[torch.Tensor]:
+    @abstractmethod
+    def forward(self, observation: torch.Tensor) -> Tuple[torch.Tensor, ...]:
         """Forward method.
 
         Defines the computation performed at every call. Computes the output tensors from the input tensors.
@@ -74,9 +76,32 @@ class LinearPolicy(BasePolicy):
             observation: A (B,O) tensor with the observations.
 
         Returns:
-            action: A (B,A) tensor with the predicted actions.
+            tuple: A tuple with the predictions, e.g. containing a (B,A) tensor with the predicted actions.
         """
-        scaled_observation = self.scale_observation(observation)
-        unscaled_action = self.linear(scaled_observation)
-        action = self.scale_action(unscaled_action)
-        return (action,)
+        pass
+
+    def scale_observation(self, observation: torch.Tensor) -> torch.Tensor:
+        """Scale observation.
+
+        Scale the observation with a fixed diagonal matrix.
+
+        Args:
+            observation: A (B,O) tensor with the observations.
+
+        Returns:
+            scaled_observation: A (B,O) tensor with the scaled observations.
+        """
+        return bmv(self.observation_scaling, observation)
+
+    def scale_action(self, action: torch.Tensor) -> torch.Tensor:
+        """Scale action.
+
+        Scale the action with a fixed diagonal matrix.
+
+        Args:
+            action: A (B,A) tensor with the actions.
+
+        Returns:
+            scaled_action: A (B,A) tensor with the scaled actions.
+        """
+        return bmv(self.action_scaling, action)

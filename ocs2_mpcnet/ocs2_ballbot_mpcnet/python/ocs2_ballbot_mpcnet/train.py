@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 ###############################################################################
 # Copyright (c) 2022, Farbod Farshidian. All rights reserved.
 #
@@ -27,38 +29,43 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###############################################################################
 
-"""Ballbot configuration variables.
+"""Ballbot MPC-Net.
 
-Sets robot-specific configuration variables for ballbot.
+Main script for training an MPC-Net policy for ballbot.
 """
 
-from ocs2_mpcnet_core import config
+import sys
+import os
 
-#
-# config
-#
+from ocs2_mpcnet_core.config import Config
+from ocs2_mpcnet_core.loss import HamiltonianLoss
+from ocs2_mpcnet_core.memory import CircularMemory
+from ocs2_mpcnet_core.policy import LinearPolicy
 
-# data type for tensor elements
-DTYPE = config.DTYPE
+from ocs2_ballbot_mpcnet import BallbotMpcnet
+from ocs2_ballbot_mpcnet import MpcnetInterface
 
-# device on which tensors will be allocated
-DEVICE = config.DEVICE
 
-#
-# ballbot_config
-#
+def main(root_dir: str, config_file_name: str) -> None:
+    # config
+    config = Config(os.path.join(root_dir, "config", config_file_name))
+    # interface
+    interface = MpcnetInterface(config.DATA_GENERATION_THREADS, config.POLICY_EVALUATION_THREADS, config.RAISIM)
+    # loss
+    loss = HamiltonianLoss(config)
+    # memory
+    memory = CircularMemory(config)
+    # policy
+    policy = LinearPolicy(config)
+    # mpcnet
+    mpcnet = BallbotMpcnet(root_dir, config, interface, memory, policy, loss)
+    # train
+    mpcnet.train()
 
-# name of the robot
-NAME = "ballbot"
 
-# (generalized) time dimension
-TIME_DIM = 1
-
-# state dimension
-STATE_DIM = 10
-
-# input dimension
-INPUT_DIM = 3
-
-# input cost for behavioral cloning
-R = [2.0, 2.0, 2.0]
+if __name__ == "__main__":
+    root_dir = os.path.dirname(os.path.abspath(__file__))
+    if len(sys.argv) > 1:
+        main(root_dir, sys.argv[1])
+    else:
+        main(root_dir, "ballbot.yaml")

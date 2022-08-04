@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <functional>
+
 #include <ocs2_core/model_data/Metrics.h>
 #include <ocs2_core/model_data/Multiplier.h>
 
@@ -135,39 +137,71 @@ void updateIntermediateMultiplierCollection(const OptimalControlProblem& ocp, sc
                                             MetricsCollection& metricsCollection, MultiplierCollection& multiplierCollection);
 
 /**
- * Extracts a requested final Term LagrangianMetrics from the input MetricsCollection.
+ * Extracts a requested final constraint term vector from the input MetricsCollection.
+ * @param [in] ocp : A const reference to the optimal control problem.
+ * @param [in] name : The name of the term.
+ * @param [in] metricsColl : MetricsCollection.
+ * @param [out] metrics : A const pointer to the constraint term value.
+ */
+const vector_t* extractFinalTermConstraint(const OptimalControlProblem& ocp, const std::string& name, const MetricsCollection& metricsColl);
+
+/**
+ * Extracts a requested final term LagrangianMetrics from the input MetricsCollection.
  * @param [in] ocp : A const reference to the optimal control problem.
  * @param [in] name : The name of the term.
  * @param [in] metricsColl : MetricsCollection.
  * @param [out] metrics : A const pointer to the term LagrangianMetrics.
- * @return True if the term found in the final collection.
  */
-const LagrangianMetrics* extractFinalTermMetrics(const OptimalControlProblem& ocp, const std::string& name,
-                                                 const MetricsCollection& metricsColl);
+const LagrangianMetrics* extractFinalTermLagrangianMetrics(const OptimalControlProblem& ocp, const std::string& name,
+                                                           const MetricsCollection& metricsColl);
 
 /**
- * Extracts a requested pre-jump Term LagrangianMetrics array from the input MetricsCollection array.
+ * Extracts an array of the requested pre-jump constraint term from the input MetricsCollection array.
+ * @param [in] ocp : A const reference to the optimal control problem.
+ * @param [in] name : The name of the term.
+ * @param [in] metricsCollArray : MetricsCollection array.
+ * @param [out] metricsArray : Array of const references to constraint term values.
+ * @return True if the term found in the pre-jump collection.
+ */
+bool extractPreJumpTermConstraint(const OptimalControlProblem& ocp, const std::string& name,
+                                  const std::vector<MetricsCollection>& metricsCollArray,
+                                  std::vector<std::reference_wrapper<const vector_t>>& metricsArray);
+
+/**
+ * Extracts a requested pre-jump term LagrangianMetrics array from the input MetricsCollection array.
  * @param [in] ocp : A const reference to the optimal control problem.
  * @param [in] name : The name of the term.
  * @param [in] metricsCollArray : MetricsCollection array.
  * @param [out] metricsArray : Array of const references to term LagrangianMetrics.
  * @return True if the term found in the pre-jump collection.
  */
-bool extractPreJumpTermMetrics(const OptimalControlProblem& ocp, const std::string& name,
-                               const std::vector<MetricsCollection>& metricsCollArray,
-                               std::vector<LagrangianMetricsConstRef>& metricsArray);
+bool extractPreJumpTermLagrangianMetrics(const OptimalControlProblem& ocp, const std::string& name,
+                                         const std::vector<MetricsCollection>& metricsCollArray,
+                                         std::vector<LagrangianMetricsConstRef>& metricsArray);
 
 /**
- * Extracts a requested intermediate Term LagrangianMetrics trajectory from the input MetricsCollection trajectory.
+ * Extracts a trajectory of the requested intermediate constraint term from the input MetricsCollection trajectory.
+ * @param [in] ocp : A const reference to the optimal control problem.
+ * @param [in] name : The name of the term.
+ * @param [in] metricsCollTraj : MetricsCollection trajectory.
+ * @param [out] metricsTrajectory : Trajectory of const references to constraint term values.
+ * @return True if the term found in the intermediate collection.
+ */
+bool extractIntermediateTermConstraint(const OptimalControlProblem& ocp, const std::string& name,
+                                       const std::vector<MetricsCollection>& metricsCollTraj,
+                                       std::vector<std::reference_wrapper<const vector_t>>& metricsTrajectory);
+
+/**
+ * Extracts a requested intermediate term LagrangianMetrics trajectory from the input MetricsCollection trajectory.
  * @param [in] ocp : A const reference to the optimal control problem.
  * @param [in] name : The name of the term.
  * @param [in] metricsCollTraj : MetricsCollection trajectory.
  * @param [out] metricsTrajectory : Trajectory of const references to term LagrangianMetrics.
  * @return True if the term found in the intermediate collection.
  */
-bool extractIntermediateTermMetrics(const OptimalControlProblem& ocp, const std::string& name,
-                                    const std::vector<MetricsCollection>& metricsCollTraj,
-                                    std::vector<LagrangianMetricsConstRef>& metricsTrajectory);
+bool extractIntermediateTermLagrangianMetrics(const OptimalControlProblem& ocp, const std::string& name,
+                                              const std::vector<MetricsCollection>& metricsCollTraj,
+                                              std::vector<LagrangianMetricsConstRef>& metricsTrajectory);
 
 /**
  * Extracts a requested final Term Multiplier from the input MultiplierCollection.

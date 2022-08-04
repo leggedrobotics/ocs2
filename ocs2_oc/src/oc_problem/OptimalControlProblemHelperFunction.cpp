@@ -186,8 +186,22 @@ void updateIntermediateMultiplierCollection(const OptimalControlProblem& ocp, sc
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-const LagrangianMetrics* extractFinalTermMetrics(const OptimalControlProblem& ocp, const std::string& name,
-                                                 const MetricsCollection& metricsColl) {
+const vector_t* extractFinalTermConstraint(const OptimalControlProblem& ocp, const std::string& name,
+                                           const MetricsCollection& metricsColl) {
+  size_t index;
+  if (ocp.finalEqualityConstraintPtr->getTermIndex(name, index)) {
+    return &metricsColl.stateEqConstraint[index];
+
+  } else {
+    return nullptr;
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+const LagrangianMetrics* extractFinalTermLagrangianMetrics(const OptimalControlProblem& ocp, const std::string& name,
+                                                           const MetricsCollection& metricsColl) {
   size_t index;
   if (ocp.finalEqualityLagrangianPtr->getTermIndex(name, index)) {
     return &metricsColl.stateEqLagrangian[index];
@@ -203,9 +217,30 @@ const LagrangianMetrics* extractFinalTermMetrics(const OptimalControlProblem& oc
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-bool extractPreJumpTermMetrics(const OptimalControlProblem& ocp, const std::string& name,
-                               const std::vector<MetricsCollection>& metricsCollArray,
-                               std::vector<LagrangianMetricsConstRef>& metricsArray) {
+bool extractPreJumpTermConstraint(const OptimalControlProblem& ocp, const std::string& name,
+                                  const std::vector<MetricsCollection>& metricsCollArray,
+                                  std::vector<std::reference_wrapper<const vector_t>>& metricsArray) {
+  metricsArray.clear();
+
+  size_t index;
+  if (ocp.preJumpEqualityConstraintPtr->getTermIndex(name, index)) {
+    metricsArray.reserve(metricsCollArray.size());
+    for (const auto& metricsColl : metricsCollArray) {
+      metricsArray.emplace_back(metricsColl.stateEqConstraint[index]);
+    }
+    return true;
+
+  } else {
+    return false;
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+bool extractPreJumpTermLagrangianMetrics(const OptimalControlProblem& ocp, const std::string& name,
+                                         const std::vector<MetricsCollection>& metricsCollArray,
+                                         std::vector<LagrangianMetricsConstRef>& metricsArray) {
   metricsArray.clear();
 
   size_t index;
@@ -231,9 +266,37 @@ bool extractPreJumpTermMetrics(const OptimalControlProblem& ocp, const std::stri
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-bool extractIntermediateTermMetrics(const OptimalControlProblem& ocp, const std::string& name,
-                                    const std::vector<MetricsCollection>& metricsCollTraj,
-                                    std::vector<LagrangianMetricsConstRef>& metricsTrajectory) {
+bool extractIntermediateTermConstraint(const OptimalControlProblem& ocp, const std::string& name,
+                                       const std::vector<MetricsCollection>& metricsCollTraj,
+                                       std::vector<std::reference_wrapper<const vector_t>>& metricsTrajectory) {
+  metricsTrajectory.clear();
+
+  size_t index;
+  if (ocp.equalityConstraintPtr->getTermIndex(name, index)) {
+    metricsTrajectory.reserve(metricsCollTraj.size());
+    for (const auto& metricsColl : metricsCollTraj) {
+      metricsTrajectory.emplace_back(metricsColl.stateInputEqConstraint[index]);
+    }
+    return true;
+
+  } else if (ocp.stateEqualityConstraintPtr->getTermIndex(name, index)) {
+    metricsTrajectory.reserve(metricsCollTraj.size());
+    for (const auto& metricsColl : metricsCollTraj) {
+      metricsTrajectory.emplace_back(metricsColl.stateEqConstraint[index]);
+    }
+    return true;
+
+  } else {
+    return false;
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+bool extractIntermediateTermLagrangianMetrics(const OptimalControlProblem& ocp, const std::string& name,
+                                              const std::vector<MetricsCollection>& metricsCollTraj,
+                                              std::vector<LagrangianMetricsConstRef>& metricsTrajectory) {
   metricsTrajectory.clear();
 
   size_t index;

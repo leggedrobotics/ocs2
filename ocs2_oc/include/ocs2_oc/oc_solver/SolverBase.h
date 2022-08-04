@@ -44,7 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
 #include <ocs2_oc/synchronized_module/ReferenceManagerInterface.h>
 #include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
-#include "ocs2_oc/synchronized_module/AugmentedLagrangianObserver.h"
+#include "ocs2_oc/synchronized_module/SolverObserver.h"
 
 namespace ocs2 {
 
@@ -137,9 +137,7 @@ class SolverBase {
    * Adds one observer to the vector of modules that observe solver's dual solution and optimized metrics.
    * @note: These observer can slow down the MPC. Only employ them during debugging and remove them for deployment.
    */
-  void addAugmentedLagrangianObserver(std::unique_ptr<AugmentedLagrangianObserver> observerModule) {
-    augmentedLagrangianObservers_.push_back(std::move(observerModule));
-  }
+  void addSolverObserver(std::unique_ptr<SolverObserver> observerModule) { solverObservers_.push_back(std::move(observerModule)); }
 
   /**
    * @brief Returns a const reference to the definition of optimal control problem.
@@ -271,7 +269,7 @@ class SolverBase {
   mutable std::mutex outputDisplayGuardMutex_;
   std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr_;  // this pointer cannot be nullptr
   std::vector<std::shared_ptr<SolverSynchronizedModule>> synchronizedModules_;
-  std::vector<std::unique_ptr<AugmentedLagrangianObserver>> augmentedLagrangianObservers_;
+  std::vector<std::unique_ptr<SolverObserver>> solverObservers_;
 };
 
 }  // namespace ocs2

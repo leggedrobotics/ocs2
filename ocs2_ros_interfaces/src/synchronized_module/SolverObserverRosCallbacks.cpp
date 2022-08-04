@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_ros_interfaces/synchronized_module/RosAugmentedLagrangianCallbacks.h"
+#include "ocs2_ros_interfaces/synchronized_module/SolverObserverRosCallbacks.h"
 
 #include "ocs2_core/misc/LinearInterpolation.h"
 #include "ocs2_ros_interfaces/common/RosMsgConversions.h"
@@ -38,12 +38,11 @@ namespace ros {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-AugmentedLagrangianObserver::metrics_callback_t createMetricsCallback(::ros::NodeHandle& nodeHandle,
-                                                                      const scalar_array_t& observingTimePoints,
-                                                                      const std::vector<std::string>& topicNames,
-                                                                      CallbackInterpolationStrategy interpolationStrategy) {
+SolverObserver::lagrangian_callback_t createLagrangiancallback(::ros::NodeHandle& nodeHandle, const scalar_array_t& observingTimePoints,
+                                                               const std::vector<std::string>& topicNames,
+                                                               CallbackInterpolationStrategy interpolationStrategy) {
   if (observingTimePoints.size() != topicNames.size()) {
-    throw std::runtime_error("[createMetricsCallback] For each observing time points, you should provide a unique topic name!");
+    throw std::runtime_error("[createLagrangiancallback] For each observing time points, you should provide a unique topic name!");
   }
 
   std::vector<::ros::Publisher> metricsPublishers;
@@ -67,7 +66,7 @@ AugmentedLagrangianObserver::metrics_callback_t createMetricsCallback(::ros::Nod
             case CallbackInterpolationStrategy::linear_interpolation:
               return LinearInterpolation::interpolate(indexAlpha, termMetricsArray);
             default:
-              throw std::runtime_error("[createMetricsCallback] This CallbackInterpolationStrategy is not implemented!");
+              throw std::runtime_error("[createLagrangiancallback] This CallbackInterpolationStrategy is not implemented!");
           }
         }();
         metricsPublishers[i].publish(ros_msg_conversions::createMetricsMsg(t, metrics));
@@ -79,12 +78,11 @@ AugmentedLagrangianObserver::metrics_callback_t createMetricsCallback(::ros::Nod
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-AugmentedLagrangianObserver::multiplier_callback_t createMultiplierCallback(::ros::NodeHandle& nodeHandle,
-                                                                            const scalar_array_t& observingTimePoints,
-                                                                            const std::vector<std::string>& topicNames,
-                                                                            CallbackInterpolationStrategy interpolationStrategy) {
+SolverObserver::multiplier_callback_t createMultiplierCallback(::ros::NodeHandle& nodeHandle, const scalar_array_t& observingTimePoints,
+                                                               const std::vector<std::string>& topicNames,
+                                                               CallbackInterpolationStrategy interpolationStrategy) {
   if (observingTimePoints.size() != topicNames.size()) {
-    throw std::runtime_error("[createMetricsCallback] For each observing time points, you should provide a unique topic name!");
+    throw std::runtime_error("[createMultiplierCallback] For each observing time points, you should provide a unique topic name!");
   }
 
   std::vector<::ros::Publisher> multiplierPublishers;
@@ -108,7 +106,7 @@ AugmentedLagrangianObserver::multiplier_callback_t createMultiplierCallback(::ro
             case CallbackInterpolationStrategy::linear_interpolation:
               return LinearInterpolation::interpolate(indexAlpha, termMultiplierArray);
             default:
-              throw std::runtime_error("[createMetricsCallback] This CallbackInterpolationStrategy is not implemented!");
+              throw std::runtime_error("[createMultiplierCallback] This CallbackInterpolationStrategy is not implemented!");
           }
         }();
         multiplierPublishers[i].publish(ros_msg_conversions::createMultiplierMsg(t, multiplier));

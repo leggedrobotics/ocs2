@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_cartpole/CartPoleInterface.h>
 #include <ocs2_ddp/GaussNewtonDDP_MPC.h>
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
-#include <ocs2_ros_interfaces/synchronized_module/RosAugmentedLagrangianCallbacks.h>
+#include <ocs2_ros_interfaces/synchronized_module/SolverObserverRosCallbacks.h>
 
 int main(int argc, char** argv) {
   const std::string robotName = "cartpole";
@@ -62,22 +62,24 @@ int main(int argc, char** argv) {
                                cartPoleInterface.getOptimalControlProblem(), cartPoleInterface.getInitializer());
 
   // observer for the input limits constraints
-  const std::string observingLagrangianTerm = "InputLimits";
-  const ocs2::scalar_array_t observingTimePoints{0.0, 0.5};
-  std::vector<std::string> metricsTopicNames;
-  std::vector<std::string> multiplierTopicNames;
-  for (const auto& t : observingTimePoints) {
-    const int timeMs = static_cast<int>(t * 1000.0);
-    metricsTopicNames.push_back("metrics/" + observingLagrangianTerm + "/" + std::to_string(timeMs) + "MsLookAhead");
-    multiplierTopicNames.push_back("multipliers/" + observingLagrangianTerm + "/" + std::to_string(timeMs) + "MsLookAhead");
-  }
-  std::unique_ptr<ocs2::AugmentedLagrangianObserver> stateInputBoundsObserverPtr(
-      new ocs2::AugmentedLagrangianObserver(observingLagrangianTerm));
-  stateInputBoundsObserverPtr->setMetricsCallback(ocs2::ros::createMetricsCallback(
-      nodeHandle, observingTimePoints, metricsTopicNames, ocs2::ros::CallbackInterpolationStrategy::linear_interpolation));
-  stateInputBoundsObserverPtr->setMultiplierCallback(ocs2::ros::createMultiplierCallback(
-      nodeHandle, observingTimePoints, multiplierTopicNames, ocs2::ros::CallbackInterpolationStrategy::linear_interpolation));
-  mpc.getSolverPtr()->addAugmentedLagrangianObserver(std::move(stateInputBoundsObserverPtr));
+  auto createStateInputBoundsObserver = [&]() {
+    const std::string observingLagrangianTerm = "InputLimits";
+    const ocs2::scalar_array_t observingTimePoints{0.0, 0.5};
+    std::vector<std::string> metricsTopicNames;
+    std::vector<std::string> multiplierTopicNames;
+    for (const auto& t : observingTimePoints) {
+      const int timeMs = static_cast<int>(t * 1000.0);
+      metricsTopicNames.push_back("metrics/" + observingLagrangianTerm + "/" + std::to_string(timeMs) + "MsLookAhead");
+      multiplierTopicNames.push_back("multipliers/" + observingLagrangianTerm + "/" + std::to_string(timeMs) + "MsLookAhead");
+    }
+    auto lagrangianCallback = ocs2::ros::createLagrangiancallback(nodeHandle, observingTimePoints, metricsTopicNames,
+                                                                  ocs2::ros::CallbackInterpolationStrategy::linear_interpolation);
+    auto multiplierCallback = ocs2::ros::createMultiplierCallback(nodeHandle, observingTimePoints, multiplierTopicNames,
+                                                                  ocs2::ros::CallbackInterpolationStrategy::linear_interpolation);
+    return ocs2::SolverObserver::LagrangianTermObserver(ocs2::SolverObserver::Type::Intermediate, observingLagrangianTerm,
+                                                        std::move(lagrangianCallback), std::move(multiplierCallback));
+  };
+  mpc.getSolverPtr()->addSolverObserver(createStateInputBoundsObserver());
 
   // Launch MPC ROS node
   ocs2::MPC_ROS_Interface mpcNode(mpc, robotName);

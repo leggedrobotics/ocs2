@@ -32,6 +32,7 @@
 Provides a class that handles the MPC-Net training.
 """
 
+import os
 import time
 import datetime
 import torch
@@ -86,15 +87,8 @@ class Mpcnet:
         # interface
         self.interface = interface
         # logging
-        self.log_dir = (
-            root_dir
-            + "/runs/"
-            + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            + "_"
-            + config.NAME
-            + "_"
-            + config.DESCRIPTION
-        )
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        self.log_dir = os.path.join(root_dir, "runs", f"{timestamp}_{config.NAME}_{config.DESCRIPTION}")
         self.writer = SummaryWriter(self.log_dir)
         # loss
         self.experts_loss = experts_loss

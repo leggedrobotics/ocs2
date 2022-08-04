@@ -31,8 +31,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/control/LinearController.h>
+#include <ocs2_core/model_data/Metrics.h>
 #include <ocs2_core/penalties/MultidimensionalPenalty.h>
-#include <ocs2_oc/oc_data/Metrics.h>
+#include <ocs2_oc/oc_data/DualSolution.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
@@ -46,19 +47,21 @@ namespace ocs2 {
  *
  * @param [in] problem: A reference to the optimal control problem.
  * @param [in] primalSolution: The primal solution.
- * @param [out] metrics: The cost, soft constraints and constraints values of the primalSolution rollout.
+ * @param [in] dualSolution: Const reference view to the dual solution
+ * @param [out] problemMetrics: The cost, soft constraints and constraints values of the rollout.
  */
-void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution& primalSolution, MetricsCollection& metrics);
+void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution& primalSolution, DualSolutionConstRef dualSolution,
+                           ProblemMetrics& problemMetrics);
 
 /**
- * Calculates the PerformanceIndex associated to the input Metrics.
+ * Calculates the PerformanceIndex associated to the given ProblemMetrics.
  *
  * @param [in] timeTrajectory: Time stamp of the rollout.
- * @param [in] metrics: The cost, soft constraints and constraints values of the primalSolution rollout.
+ * @param [in] problemMetrics: The cost, soft constraints and constraints values of the rollout.
  *
  * @return The PerformanceIndex of the trajectory.
  */
-PerformanceIndex computeRolloutPerformanceIndex(const scalar_array_t& timeTrajectory, const MetricsCollection& metrics);
+PerformanceIndex computeRolloutPerformanceIndex(const scalar_array_t& timeTrajectory, const ProblemMetrics& problemMetrics);
 
 /**
  * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
@@ -76,6 +79,20 @@ PerformanceIndex computeRolloutPerformanceIndex(const scalar_array_t& timeTrajec
  */
 scalar_t rolloutTrajectory(RolloutBase& rollout, scalar_t initTime, const vector_t& initState, scalar_t finalTime,
                            PrimalSolution& primalSolution);
+
+/**
+ * Extract a primal solution for the range [initTime, finalTime] from a given primal solution. It assumes that the
+ * given range is within the solution time of input primal solution.
+ *
+ * @note: The controller field is ignored.
+ * @note: The extracted primal solution can have an event time at final time but ignores it at initial time.
+ *
+ * @param [in] timePeriod: The time period for which the solution should be extracted.
+ * @param [in] inputPrimalSolution: The input PrimalSolution
+ * @param [out] outputPrimalSolution: The output PrimalSolution.
+ */
+void extractPrimalSolution(const std::pair<scalar_t, scalar_t>& timePeriod, const PrimalSolution& inputPrimalSolution,
+                           PrimalSolution& outputPrimalSolution);
 
 /**
  * Computes the integral of the squared (IS) norm of the controller update.
@@ -117,6 +134,26 @@ void incrementController(scalar_t stepLength, const LinearController& unoptimize
 void retrieveActiveNormalizedTime(const std::pair<int, int>& partitionInterval, const scalar_array_t& timeTrajectory,
                                   const size_array_t& postEventIndices, scalar_array_t& normalizedTimeTrajectory,
                                   size_array_t& normalizedPostEventIndices);
+
+/**
+ * Get the Partition Intervals From Time Trajectory. Intervals are defined as [start, end).
+ *
+ * Pay attention, the rightmost index of the end partition is (..., timeArray.size() - 1) , as the last value function is filled manually.
+ * The reason is though we don’t write to the end index, we do have to read it. Adding the last index to the final partition will
+ * cause a segmentation fault. There is no trivial method to distinguish the final partition from other partitions because, by design,
+ * partitions should be treated equally.
+ *
+ * Every time point that is equal or larger to the desiredPartitionPoint should be included in that partition. This logic here is the same
+ * as the event times.
+ *
+ * The last time of desiredPartitionPoints is filled manually. There is no round-off error involved. So it is safe to use == for
+ * floating-point numbers. The last time point is naturally included by using std::lower_bound.
+ *
+ * @param [in] timeTrajectory: time trajectory that will be divided
+ * @param [in] numWorkers: number of worker i.e. number of partitions
+ * @return array of index pairs indicating the start and end of each partition
+ */
+std::vector<std::pair<int, int>> computePartitionIntervals(const scalar_array_t& timeTrajectory, int numWorkers);
 
 /**
  * Gets a reference to the linear controller from the given primal solution.

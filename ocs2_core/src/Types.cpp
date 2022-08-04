@@ -189,7 +189,7 @@ std::string checkSize(int stateDim, int inputDim, const ScalarFunctionQuadraticA
   if (data.dfdux.rows() != inputDim) {
     errorDescription << dataName << ".dfdux.rows() != " << inputDim << "\n";
   }
-  if (data.dfdux.cols() != stateDim) {
+  if (data.dfdux.cols() != stateDim && inputDim > 0) {
     errorDescription << dataName << ".dfdux.cols() != " << stateDim << "\n";
   }
 

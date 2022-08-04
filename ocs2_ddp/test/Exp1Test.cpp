@@ -93,7 +93,7 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
     ddpSettings.useFeedbackPolicy_ = false;
     ddpSettings.debugPrintRollout_ = false;
     ddpSettings.strategy_ = strategy;
-    ddpSettings.lineSearch_.minStepLength_ = 0.0001;
+    ddpSettings.lineSearch_.minStepLength = 0.0001;
     return ddpSettings;
   }
 

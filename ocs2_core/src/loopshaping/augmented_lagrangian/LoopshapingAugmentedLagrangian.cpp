@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,72 +27,40 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_oc/oc_data/Metrics.h"
+#include <ocs2_core/loopshaping/augmented_lagrangian/LoopshapingAugmentedLagrangian.h>
+#include <ocs2_core/loopshaping/augmented_lagrangian/LoopshapingAugmentedLagrangianEliminatePattern.h>
+#include <ocs2_core/loopshaping/augmented_lagrangian/LoopshapingAugmentedLagrangianOutputPattern.h>
+#include <ocs2_core/loopshaping/augmented_lagrangian/LoopshapingStateAugmentedLagrangian.h>
+#include <ocs2_core/loopshaping/augmented_lagrangian/LoopshapingStateInputAugmentedLagrangian.h>
 
 namespace ocs2 {
+namespace LoopshapingAugmentedLagrangian {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void swap(Metrics& lhs, Metrics& rhs) {
-  // Cost
-  std::swap(lhs.cost, rhs.cost);
-
-  // Equality constraints
-  lhs.stateEqConstraint.swap(rhs.stateEqConstraint);
-  lhs.stateInputEqConstraint.swap(rhs.stateInputEqConstraint);
-
-  // Lagrangians
-  //  lhs.stateEqLagrangian.swap(rhs.stateEqLagrangian);
-  //  lhs.stateIneqLagrangian.swap(rhs.stateIneqLagrangian);
-  //  lhs.stateInputEqLagrangian.swap(rhs.stateInputEqLagrangian);
-  //  lhs.stateInputIneqLagrangian.swap(rhs.stateInputIneqLagrangian);
-
-  std::swap(lhs.stateEqLagrangian, rhs.stateEqLagrangian);
-  std::swap(lhs.stateIneqLagrangian, rhs.stateIneqLagrangian);
-  std::swap(lhs.stateInputEqLagrangian, rhs.stateInputEqLagrangian);
-  std::swap(lhs.stateInputIneqLagrangian, rhs.stateInputIneqLagrangian);
+std::unique_ptr<StateAugmentedLagrangianCollection> create(const StateAugmentedLagrangianCollection& systemAugmentedLagrangian,
+                                                           std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
+  return std::unique_ptr<StateAugmentedLagrangianCollection>(
+      new LoopshapingStateAugmentedLagrangian(systemAugmentedLagrangian, std::move(loopshapingDefinition)));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void clear(Metrics& m) {
-  // Cost
-  m.cost = 0.0;
-
-  // Equality constraints
-  m.stateEqConstraint = vector_t();
-  m.stateInputEqConstraint = vector_t();
-
-  // Lagrangians
-  //  m.stateEqLagrangian.clear();
-  //  m.stateIneqLagrangian.clear();
-  //  m.stateInputEqLagrangian.clear();
-  //  m.stateInputIneqLagrangian.clear();
-
-  m.stateEqLagrangian = 0.0;
-  m.stateIneqLagrangian = 0.0;
-  m.stateInputEqLagrangian = 0.0;
-  m.stateInputIneqLagrangian = 0.0;
+std::unique_ptr<StateInputAugmentedLagrangianCollection> create(const StateInputAugmentedLagrangianCollection& systemAugmentedLagrangian,
+                                                                std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
+  switch (loopshapingDefinition->getType()) {
+    case LoopshapingType::outputpattern:
+      return std::unique_ptr<StateInputAugmentedLagrangianCollection>(
+          new LoopshapingAugmentedLagrangianOutputPattern(systemAugmentedLagrangian, std::move(loopshapingDefinition)));
+    case LoopshapingType::eliminatepattern:
+      return std::unique_ptr<StateInputAugmentedLagrangianCollection>(
+          new LoopshapingAugmentedLagrangianEliminatePattern(systemAugmentedLagrangian, std::move(loopshapingDefinition)));
+    default:
+      throw std::runtime_error("[LoopshapingAugmentedLagrangian::create] invalid loopshaping type");
+  }
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void swap(MetricsCollection& lhs, MetricsCollection& rhs) {
-  swap(lhs.final, rhs.final);
-  lhs.preJumps.swap(rhs.preJumps);
-  lhs.intermediates.swap(rhs.intermediates);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void clear(MetricsCollection& m) {
-  clear(m.final);
-  m.preJumps.clear();
-  m.intermediates.clear();
-}
-
+}  // namespace LoopshapingAugmentedLagrangian
 }  // namespace ocs2

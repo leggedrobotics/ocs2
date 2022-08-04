@@ -66,15 +66,23 @@ class MultipleShootingSolver : public SolverBase {
 
   void getPrimalSolution(scalar_t finalTime, PrimalSolution* primalSolutionPtr) const override { *primalSolutionPtr = primalSolution_; }
 
+  const DualSolution& getDualSolution() const override {
+    throw std::runtime_error("[MultipleShootingSolver] getDualSolution() not available yet.");
+  }
+
+  const ProblemMetrics& getSolutionMetrics() const override {
+    throw std::runtime_error("[MultipleShootingSolver] getSolutionMetrics() not available yet.");
+  }
+
   size_t getNumIterations() const override { return totalNumIterations_; }
+
+  const OptimalControlProblem& getOptimalControlProblem() const override { return ocpDefinitions_.front(); }
 
   const PerformanceIndex& getPerformanceIndeces() const override { return getIterationsLog().back(); };
 
   const std::vector<PerformanceIndex>& getIterationsLog() const override;
 
-  ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const override {
-    throw std::runtime_error("[MultipleShootingSolver] getValueFunction() not available yet.");
-  };
+  ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const override;
 
   ScalarFunctionQuadraticApproximation getHamiltonian(scalar_t time, const vector_t& state, const vector_t& input) override {
     throw std::runtime_error("[MultipleShootingSolver] getHamiltonian() not available yet.");
@@ -82,6 +90,10 @@ class MultipleShootingSolver : public SolverBase {
 
   vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const override {
     throw std::runtime_error("[MultipleShootingSolver] getStateInputEqualityConstraintLagrangian() not available yet.");
+  }
+
+  MultiplierCollection getIntermediateDualSolution(scalar_t time) const override {
+    throw std::runtime_error("[MultipleShootingSolver] getIntermediateDualSolution() not available yet.");
   }
 
  private:
@@ -93,6 +105,16 @@ class MultipleShootingSolver : public SolverBase {
     } else {
       throw std::runtime_error("[MultipleShootingSolver::run] This solver does not support external controller!");
     }
+  }
+
+  void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const PrimalSolution& primalSolution) override {
+    // Copy all except the controller
+    primalSolution_.timeTrajectory_ = primalSolution.timeTrajectory_;
+    primalSolution_.stateTrajectory_ = primalSolution.stateTrajectory_;
+    primalSolution_.inputTrajectory_ = primalSolution.inputTrajectory_;
+    primalSolution_.postEventIndices_ = primalSolution.postEventIndices_;
+    primalSolution_.modeSchedule_ = primalSolution.modeSchedule_;
+    runImpl(initTime, initState, finalTime);
   }
 
   /** Run a task in parallel with settings.nThreads */
@@ -120,6 +142,9 @@ class MultipleShootingSolver : public SolverBase {
     scalar_t armijoDescentMetric;  // inner product of the cost gradient and decision variable step
   };
   OcpSubproblemSolution getOCPSolution(const vector_t& delta_x0);
+
+  /** Extract the value function based on the last solved QP */
+  void extractValueFunction(const std::vector<AnnotatedTime>& time, const vector_array_t& x);
 
   /** Set up the primal solution based on the optimized state and input trajectories */
   void setPrimalSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& x, vector_array_t&& u);
@@ -151,6 +176,9 @@ class MultipleShootingSolver : public SolverBase {
 
   // Solution
   PrimalSolution primalSolution_;
+
+  // Value function in absolute state coordinates (without the constant value)
+  std::vector<ScalarFunctionQuadraticApproximation> valueFunction_;
 
   // Solver interface
   HpipmInterface hpipmInterface_;

@@ -51,7 +51,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_legged_robot/constraint/NormalVelocityConstraintCppAd.h"
 #include "ocs2_legged_robot/constraint/ZeroForceConstraint.h"
 #include "ocs2_legged_robot/constraint/ZeroVelocityConstraintCppAd.h"
-#include "ocs2_legged_robot/cost/LeggedRobotStateInputQuadraticCost.h"
+#include "ocs2_legged_robot/cost/LeggedRobotQuadraticTrackingCost.h"
 #include "ocs2_legged_robot/dynamics/LeggedRobotDynamicsAD.h"
 
 // Boost

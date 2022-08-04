@@ -35,6 +35,7 @@ Main script for training an MPC-Net policy for ballbot.
 """
 
 import os
+import sys
 import time
 import datetime
 import torch
@@ -42,49 +43,25 @@ import numpy as np
 
 from torch.utils.tensorboard import SummaryWriter
 
+from ocs2_mpcnet_core.config import Config
 from ocs2_mpcnet_core.helper import bmv, bmm
 from ocs2_mpcnet_core.loss.hamiltonian import HamiltonianLoss as Loss
 from ocs2_mpcnet_core.memory.circular import CircularMemory as Memory
 from ocs2_mpcnet_core.policy.linear import LinearPolicy as Policy
 
-from ocs2_ballbot_mpcnet import config
 from ocs2_ballbot_mpcnet import helper
 from ocs2_ballbot_mpcnet import MpcnetInterface
 
 
-def main():
-    # settings for data generation by applying behavioral policy
-    data_generation_time_step = 0.1
-    data_generation_duration = 3.0
-    data_generation_data_decimation = 1
-    data_generation_n_threads = 2
-    data_generation_n_tasks = 10
-    data_generation_n_samples = 2
-    data_generation_sampling_covariance = np.zeros((config.STATE_DIM, config.STATE_DIM), order="F")
-    for i in range(0, 2):
-        data_generation_sampling_covariance[i, i] = 0.01**2  # position
-    for i in range(2, 5):
-        data_generation_sampling_covariance[i, i] = (1.0 * np.pi / 180.0) ** 2  # orientation
-    for i in range(5, 7):
-        data_generation_sampling_covariance[i, i] = 0.05**2  # linear velocity
-    for i in range(7, 10):
-        data_generation_sampling_covariance[i, i] = (5.0 * np.pi / 180.0) ** 2  # angular velocity
-
-    # settings for computing metrics by applying learned policy
-    policy_evaluation_time_step = 0.1
-    policy_evaluation_duration = 3.0
-    policy_evaluation_n_threads = 1
-    policy_evaluation_n_tasks = 5
-
-    # rollout settings for data generation and policy evaluation
-    raisim = False
+def main(config_file_path: str) -> None:
+    # config
+    config = Config(config_file_path)
 
     # mpcnet interface
-    mpcnet_interface = MpcnetInterface(data_generation_n_threads, policy_evaluation_n_threads, raisim)
+    mpcnet_interface = MpcnetInterface(config.DATA_GENERATION_THREADS, config.POLICY_EVALUATION_THREADS, config.RAISIM)
 
     # logging
-    description = "description"
-    folder = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_" + config.NAME + "_" + description
+    folder = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_" + config.NAME + "_" + config.DESCRIPTION
     writer = SummaryWriter("runs/" + folder)
     os.makedirs(name="policies/" + folder)
 
@@ -92,11 +69,10 @@ def main():
     loss = Loss()
 
     # memory
-    memory_capacity = 100000
-    memory = Memory(memory_capacity, config.STATE_DIM, config.INPUT_DIM, config.OBSERVATION_DIM, config.ACTION_DIM)
+    memory = Memory(config)
 
     # policy
-    policy = Policy(config.OBSERVATION_DIM, config.ACTION_DIM, config.OBSERVATION_SCALING, config.ACTION_SCALING)
+    policy = Policy(config)
     policy.to(config.DEVICE)
     print("Initial policy parameters:")
     print(list(policy.named_parameters()))
@@ -107,24 +83,21 @@ def main():
     torch.save(obj=policy, f=save_path + ".pt")
 
     # optimizer
-    batch_size = 2**5
-    learning_rate = 1e-2
-    learning_iterations = 10000
-    optimizer = torch.optim.Adam(policy.parameters(), lr=learning_rate)
+    optimizer = torch.optim.Adam(policy.parameters(), lr=config.LEARNING_RATE)
 
     def start_data_generation(policy, alpha=1.0):
         policy_file_path = "/tmp/data_generation_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".onnx"
         torch.onnx.export(model=policy, args=dummy_observation, f=policy_file_path)
         initial_observations, mode_schedules, target_trajectories = helper.get_tasks(
-            data_generation_n_tasks, data_generation_duration
+            config, config.DATA_GENERATION_TASKS, config.DATA_GENERATION_DURATION
         )
         mpcnet_interface.startDataGeneration(
             alpha,
             policy_file_path,
-            data_generation_time_step,
-            data_generation_data_decimation,
-            data_generation_n_samples,
-            data_generation_sampling_covariance,
+            config.DATA_GENERATION_TIME_STEP,
+            config.DATA_GENERATION_DATA_DECIMATION,
+            config.DATA_GENERATION_SAMPLES,
+            np.diag(np.power(np.array(config.DATA_GENERATION_SAMPLING_VARIANCE), 2)),
             initial_observations,
             mode_schedules,
             target_trajectories,
@@ -134,12 +107,12 @@ def main():
         policy_file_path = "/tmp/policy_evaluation_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".onnx"
         torch.onnx.export(model=policy, args=dummy_observation, f=policy_file_path)
         initial_observations, mode_schedules, target_trajectories = helper.get_tasks(
-            policy_evaluation_n_tasks, policy_evaluation_duration
+            config, config.POLICY_EVALUATION_TASKS, config.POLICY_EVALUATION_DURATION
         )
         mpcnet_interface.startPolicyEvaluation(
             alpha,
             policy_file_path,
-            policy_evaluation_time_step,
+            config.POLICY_EVALUATION_TIME_STEP,
             initial_observations,
             mode_schedules,
             target_trajectories,
@@ -153,8 +126,8 @@ def main():
             time.sleep(1.0)
 
         print("==============\nStarting training.\n==============")
-        for iteration in range(learning_iterations):
-            alpha = 1.0 - 1.0 * iteration / learning_iterations
+        for iteration in range(config.LEARNING_ITERATIONS):
+            alpha = 1.0 - 1.0 * iteration / config.LEARNING_ITERATIONS
 
             # data generation
             if mpcnet_interface.isDataGenerationDone():
@@ -221,7 +194,7 @@ def main():
                 dHdx,
                 dHdu,
                 H,
-            ) = memory.sample(batch_size)
+            ) = memory.sample(config.BATCH_SIZE)
 
             # take an optimization step
             def closure():
@@ -242,7 +215,7 @@ def main():
             optimizer.step(closure)
 
             # let data generation and policy evaluation finish in last iteration (to avoid a segmentation fault)
-            if iteration == learning_iterations - 1:
+            if iteration == config.LEARNING_ITERATIONS - 1:
                 while (not mpcnet_interface.isDataGenerationDone()) or (not mpcnet_interface.isPolicyEvaluationDone()):
                     time.sleep(1.0)
 
@@ -269,4 +242,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 1:
+        main(sys.argv[1])
+    else:
+        main(os.path.join(os.path.dirname(os.path.abspath(__file__)), "config/ballbot.yaml"))

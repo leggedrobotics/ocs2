@@ -56,35 +56,24 @@ class MixtureOfLinearExpertsPolicy(torch.nn.Module):
         expert_nets: The expert networks.
     """
 
-    def __init__(
-        self,
-        observation_dimension: int,
-        action_dimension: int,
-        expert_number: int,
-        observation_scaling: np.ndarray,
-        action_scaling: np.ndarray,
-    ) -> None:
+    def __init__(self, config: config.Config) -> None:
         """Initializes the MixtureOfLinearExpertsPolicy class.
 
         Initializes the MixtureOfLinearExpertsPolicy class by setting fixed and variable attributes.
 
         Args:
-            observation_dimension: An integer defining the observation dimension.
-            action_dimension: An integer defining the action dimension.
-            expert_number: An integer defining the number of experts.
-            observation_scaling: A NumPy array of shape (O) defining the observation scaling.
-            action_scaling: A NumPy array of shape (A) defining the action scaling.
+            config: An instance of the configuration class.
         """
         super().__init__()
         self.name = "MixtureOfLinearExpertsPolicy"
-        self.observation_dimension = observation_dimension
-        self.action_dimension = action_dimension
-        self.expert_number = expert_number
+        self.observation_dimension = config.OBSERVATION_DIM
+        self.action_dimension = config.ACTION_DIM
+        self.expert_number = config.EXPERT_NUM
         self.observation_scaling = (
-            torch.tensor(observation_scaling, device=config.DEVICE, dtype=config.DTYPE).diag().unsqueeze(dim=0)
+            torch.tensor(config.OBSERVATION_SCALING, device=config.DEVICE, dtype=config.DTYPE).diag().unsqueeze(dim=0)
         )
         self.action_scaling = (
-            torch.tensor(action_scaling, device=config.DEVICE, dtype=config.DTYPE).diag().unsqueeze(dim=0)
+            torch.tensor(config.ACTION_SCALING, device=config.DEVICE, dtype=config.DTYPE).diag().unsqueeze(dim=0)
         )
         # gating
         self.gating_net = torch.nn.Sequential(

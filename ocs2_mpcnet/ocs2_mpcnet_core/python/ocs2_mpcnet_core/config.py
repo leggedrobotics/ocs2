@@ -27,15 +27,44 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###############################################################################
 
-"""Configuration variables.
+"""Configuration class.
 
-Sets general configuration variables.
+Provides a class that handles the configuration parameters.
 """
 
+import yaml
 import torch
 
-# data type for tensor elements
-DTYPE = torch.float
 
-# device on which tensors will be allocated
-DEVICE = torch.device("cuda")
+class Config:
+    """Config.
+
+    Loads configuration parameters from a YAML file and provides access to them as attributes of this class.
+
+    Attributes:
+        DTYPE: The PyTorch data type.
+        DEVICE: The PyTorch device to select.
+    """
+
+    def __init__(self, config_file_path: str) -> None:
+        """Initializes the Config class.
+
+        Initializes the Config class by setting fixed attributes and by loading attributes from a YAML file.
+
+        Args:
+            config_file_path: A string with the path to the configuration file.
+        """
+        #
+        # class config
+        #
+        # data type for tensor elements
+        self.DTYPE = torch.float
+        # device on which tensors will be allocated
+        self.DEVICE = torch.device("cuda")
+        #
+        # yaml config
+        #
+        with open(config_file_path, "r") as stream:
+            config = yaml.safe_load(stream)
+            for key, value in config.items():
+                setattr(self, key, value)

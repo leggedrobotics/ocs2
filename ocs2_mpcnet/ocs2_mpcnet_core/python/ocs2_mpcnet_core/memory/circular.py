@@ -64,51 +64,46 @@ class CircularMemory:
         H: A (C) tensor for the Hamiltonians at the development/expansion points.
     """
 
-    def __init__(
-        self,
-        capacity: int,
-        state_dimension: int,
-        input_dimension: int,
-        observation_dimension: int,
-        action_dimension: int,
-        expert_number: int = 1,
-    ) -> None:
+    def __init__(self, config: config.Config) -> None:
         """Initializes the CircularMemory class.
 
         Initializes the CircularMemory class by setting fixed attributes, initializing variable attributes and
         pre-allocating memory.
 
         Args:
-            capacity: An integer defining the capacity, i.e. maximum size, C of the memory.
-            state_dimension: An integer defining the dimension X of the state.
-            input_dimension: An integer defining the dimension U of the input.
-            observation_dimension: An integer defining the dimension O of the observation.
-            action_dimension: An integer defining the dimension A of the action.
-            expert_number: An integer defining the number of experts E equal to the number of individually identifiable
-              items P in the sample space of the discrete probability distributions of the modes.
+            config: An instance of the configuration class.
         """
         # init variables
-        self.capacity = capacity
+        self.device = config.DEVICE
+        self.capacity = config.CAPACITY
         self.size = 0
         self.position = 0
         # pre-allocate memory
-        self.t = torch.zeros(capacity, device=config.DEVICE, dtype=config.DTYPE)
-        self.x = torch.zeros(capacity, state_dimension, device=config.DEVICE, dtype=config.DTYPE)
-        self.u = torch.zeros(capacity, input_dimension, device=config.DEVICE, dtype=config.DTYPE)
-        self.p = torch.zeros(capacity, expert_number, device=config.DEVICE, dtype=config.DTYPE)
-        self.observation = torch.zeros(capacity, observation_dimension, device=config.DEVICE, dtype=config.DTYPE)
+        self.t = torch.zeros(config.CAPACITY, device=config.DEVICE, dtype=config.DTYPE)
+        self.x = torch.zeros(config.CAPACITY, config.STATE_DIM, device=config.DEVICE, dtype=config.DTYPE)
+        self.u = torch.zeros(config.CAPACITY, config.INPUT_DIM, device=config.DEVICE, dtype=config.DTYPE)
+        self.p = torch.zeros(config.CAPACITY, config.EXPERT_NUM, device=config.DEVICE, dtype=config.DTYPE)
+        self.observation = torch.zeros(
+            config.CAPACITY, config.OBSERVATION_DIM, device=config.DEVICE, dtype=config.DTYPE
+        )
         self.action_transformation_matrix = torch.zeros(
-            capacity, input_dimension, action_dimension, device=config.DEVICE, dtype=config.DTYPE
+            config.CAPACITY, config.INPUT_DIM, config.ACTION_DIM, device=config.DEVICE, dtype=config.DTYPE
         )
         self.action_transformation_vector = torch.zeros(
-            capacity, input_dimension, device=config.DEVICE, dtype=config.DTYPE
+            config.CAPACITY, config.INPUT_DIM, device=config.DEVICE, dtype=config.DTYPE
         )
-        self.dHdxx = torch.zeros(capacity, state_dimension, state_dimension, device=config.DEVICE, dtype=config.DTYPE)
-        self.dHdux = torch.zeros(capacity, input_dimension, state_dimension, device=config.DEVICE, dtype=config.DTYPE)
-        self.dHduu = torch.zeros(capacity, input_dimension, input_dimension, device=config.DEVICE, dtype=config.DTYPE)
-        self.dHdx = torch.zeros(capacity, state_dimension, device=config.DEVICE, dtype=config.DTYPE)
-        self.dHdu = torch.zeros(capacity, input_dimension, device=config.DEVICE, dtype=config.DTYPE)
-        self.H = torch.zeros(capacity, device=config.DEVICE, dtype=config.DTYPE)
+        self.dHdxx = torch.zeros(
+            config.CAPACITY, config.STATE_DIM, config.STATE_DIM, device=config.DEVICE, dtype=config.DTYPE
+        )
+        self.dHdux = torch.zeros(
+            config.CAPACITY, config.INPUT_DIM, config.STATE_DIM, device=config.DEVICE, dtype=config.DTYPE
+        )
+        self.dHduu = torch.zeros(
+            config.CAPACITY, config.INPUT_DIM, config.INPUT_DIM, device=config.DEVICE, dtype=config.DTYPE
+        )
+        self.dHdx = torch.zeros(config.CAPACITY, config.STATE_DIM, device=config.DEVICE, dtype=config.DTYPE)
+        self.dHdu = torch.zeros(config.CAPACITY, config.INPUT_DIM, device=config.DEVICE, dtype=config.DTYPE)
+        self.H = torch.zeros(config.CAPACITY, device=config.DEVICE, dtype=config.DTYPE)
 
     def push(
         self,
@@ -181,7 +176,7 @@ class CircularMemory:
             - dHdu_batch: A (B,U) tensor with the input gradients of the Hamiltonian approximations.
             - H_batch: A (B) tensor with the Hamiltonians at the development/expansion points.
         """
-        indices = torch.randint(0, self.size, (batch_size,), device=config.DEVICE)
+        indices = torch.randint(low=0, high=self.size, size=(batch_size,), device=self.device)
         t_batch = self.t[indices]
         x_batch = self.x[indices]
         u_batch = self.u[indices]

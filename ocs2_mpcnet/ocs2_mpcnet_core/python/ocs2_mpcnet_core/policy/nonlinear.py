@@ -57,33 +57,24 @@ class NonlinearPolicy(torch.nn.Module):
         linear2: The second linear neural network layer.
     """
 
-    def __init__(
-        self,
-        observation_dimension: int,
-        action_dimension: int,
-        observation_scaling: np.ndarray,
-        action_scaling: np.ndarray,
-    ) -> None:
+    def __init__(self, config: config.Config) -> None:
         """Initializes the NonlinearPolicy class.
 
         Initializes the NonlinearPolicy class by setting fixed and variable attributes.
 
         Args:
-            observation_dimension: An integer defining the observation dimension.
-            action_dimension: An integer defining the action dimension.
-            observation_scaling: A NumPy array of shape (O) defining the observation scaling.
-            action_scaling: A NumPy array of shape (A) defining the action scaling.
+            config: An instance of the configuration class.
         """
         super().__init__()
         self.name = "NonlinearPolicy"
-        self.observation_dimension = observation_dimension
-        self.hidden_dimension = int((observation_dimension + action_dimension) / 2)
-        self.action_dimension = action_dimension
+        self.observation_dimension = config.OBSERVATION_DIM
+        self.hidden_dimension = int((config.OBSERVATION_DIM + config.ACTION_DIM) / 2)
+        self.action_dimension = config.ACTION_DIM
         self.observation_scaling = (
-            torch.tensor(observation_scaling, device=config.DEVICE, dtype=config.DTYPE).diag().unsqueeze(dim=0)
+            torch.tensor(config.OBSERVATION_SCALING, device=config.DEVICE, dtype=config.DTYPE).diag().unsqueeze(dim=0)
         )
         self.action_scaling = (
-            torch.tensor(action_scaling, device=config.DEVICE, dtype=config.DTYPE).diag().unsqueeze(dim=0)
+            torch.tensor(config.ACTION_SCALING, device=config.DEVICE, dtype=config.DTYPE).diag().unsqueeze(dim=0)
         )
         self.linear1 = torch.nn.Linear(self.observation_dimension, self.hidden_dimension)
         self.activation = torch.nn.Tanh()

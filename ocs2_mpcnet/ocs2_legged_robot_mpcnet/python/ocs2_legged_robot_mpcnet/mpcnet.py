@@ -223,10 +223,7 @@ class LeggedRobotMpcnet(mpcnet.Mpcnet):
         for i in range(tasks_number):
             if choices[i] == "stance":
                 initial_observations[i] = helper.get_system_observation(
-                    initial_mode,
-                    initial_time,
-                    self.get_random_initial_state_stance(),
-                    np.zeros(self.config.INPUT_DIM),
+                    initial_mode, initial_time, self.get_random_initial_state_stance(), np.zeros(self.config.INPUT_DIM)
                 )
                 mode_schedules[i] = helper.get_mode_schedule(*self.get_stance(duration))
                 target_trajectories[i] = helper.get_target_trajectories(
@@ -236,10 +233,7 @@ class LeggedRobotMpcnet(mpcnet.Mpcnet):
                 )
             elif choices[i] == "trot_1":
                 initial_observations[i] = helper.get_system_observation(
-                    initial_mode,
-                    initial_time,
-                    self.get_random_initial_state_trot(),
-                    np.zeros(self.config.INPUT_DIM),
+                    initial_mode, initial_time, self.get_random_initial_state_trot(), np.zeros(self.config.INPUT_DIM)
                 )
                 mode_schedules[i] = helper.get_mode_schedule(*self.get_trot_1(duration))
                 target_trajectories[i] = helper.get_target_trajectories(
@@ -249,10 +243,7 @@ class LeggedRobotMpcnet(mpcnet.Mpcnet):
                 )
             elif choices[i] == "trot_2":
                 initial_observations[i] = helper.get_system_observation(
-                    initial_mode,
-                    initial_time,
-                    self.get_random_initial_state_trot(),
-                    np.zeros(self.config.INPUT_DIM),
+                    initial_mode, initial_time, self.get_random_initial_state_trot(), np.zeros(self.config.INPUT_DIM)
                 )
                 mode_schedules[i] = helper.get_mode_schedule(*self.get_trot_2(duration))
                 target_trajectories[i] = helper.get_target_trajectories(

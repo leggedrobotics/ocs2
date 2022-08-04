@@ -135,8 +135,7 @@ class Mpcnet(metaclass=ABCMeta):
         policy_file_path = "/tmp/data_generation_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".onnx"
         torch.onnx.export(model=policy, args=self.dummy_observation, f=policy_file_path)
         initial_observations, mode_schedules, target_trajectories = self.get_tasks(
-            self.config.DATA_GENERATION_TASKS,
-            self.config.DATA_GENERATION_DURATION,
+            self.config.DATA_GENERATION_TASKS, self.config.DATA_GENERATION_DURATION
         )
         self.interface.startDataGeneration(
             alpha,
@@ -162,8 +161,7 @@ class Mpcnet(metaclass=ABCMeta):
         policy_file_path = "/tmp/policy_evaluation_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".onnx"
         torch.onnx.export(model=policy, args=self.dummy_observation, f=policy_file_path)
         initial_observations, mode_schedules, target_trajectories = self.get_tasks(
-            self.config.POLICY_EVALUATION_TASKS,
-            self.config.POLICY_EVALUATION_DURATION,
+            self.config.POLICY_EVALUATION_TASKS, self.config.POLICY_EVALUATION_DURATION
         )
         self.interface.startPolicyEvaluation(
             alpha,

@@ -66,13 +66,13 @@ To train an MPC-Net policy, run:
     cd <path_to_ocs2_repo>/ocs2_mpcnet/ocs2_<robot>_mpcnet/python/ocs2_<robot>_mpcnet
     source <path_to_catkin_ws>/devel/setup.bash
     source <path_to_venvs>/mpcnet/bin/activate
-    python3 <robot>_mpcnet.py
+    python3 train.py
 
     # Example:
     cd ~/git/ocs2/ocs2_mpcnet/ocs2_ballbot_mpcnet/python/ocs2_ballbot_mpcnet
     source ~/catkin_ws/devel/setup.bash
     source ~/venvs/mpcnet/bin/activate
-    python3 ballbot_mpcnet.py
+    python3 train.py
 
 To monitor the training progress with Tensorboard, run:
 
@@ -112,7 +112,7 @@ To deploy the default policy stored in the robot-specific package's :code:`polic
     source devel/setup.bash
     roslaunch ocs2_ballbot_mpcnet ballbot_mpcnet.launch
 
-To deploy a new policy stored in the robot-specific package's :code:`python/ocs2_<robot>_mpcnet/policies` folder, replace :code:`<path>` with the absolute file path to the final policy and run:
+To deploy a new policy stored in the robot-specific package's :code:`python/ocs2_<robot>_mpcnet/runs` folder, replace :code:`<path>` with the absolute file path to the final policy and run:
 
 .. code-block:: bash
 
@@ -123,7 +123,7 @@ To deploy a new policy stored in the robot-specific package's :code:`python/ocs2
     # Example:
     cd ~/catkin_ws
     source devel/setup.bash
-    roslaunch ocs2_ballbot_mpcnet ballbot_mpcnet.launch policyFile:='/home/user/git/ocs2/ocs2_mpcnet/ocs2_ballbot_mpcnet/python/ocs2_ballbot_mpcnet/policies/2022-04-01_12-00-00_ballbot_description/final_policy.onnx'
+    roslaunch ocs2_ballbot_mpcnet ballbot_mpcnet.launch policyFile:='/home/user/git/ocs2/ocs2_mpcnet/ocs2_ballbot_mpcnet/python/ocs2_ballbot_mpcnet/runs/2022-04-01_12-00-00_ballbot_description/final_policy.onnx'
 
 How to Set Up a New Robot
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -141,7 +141,9 @@ The most important classes/files that have to be implemented are:
 
 * **<Robot>MpcnetDefinition**: Defines how OCS2 state variables are transformed to the policy observations. and how policy actions are transformed to OCS2 control inputs.
 * **<Robot>MpcnetInterface**: Provides the interface between C++ and Python, allowing to exchange data and policies.
-* **<robot>_mpcnet.py**: Implements the main training script.
+* **<robot>.yaml**: Stores the configuration parameters.
+* **mpcnet.py**: Adds robot-specific methods, e.g. implements the tasks that the robot should execute, for the MPC-Net training.
+* **train.py**: Starts the main training script.
 
 References
 ~~~~~~~~~~

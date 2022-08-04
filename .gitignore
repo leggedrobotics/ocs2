@@ -25,5 +25,4 @@ ocs2_ddp/test/ddp_test_generated/
 *.out
 *.synctex.gz
 .vscode/
-policies/
 runs/

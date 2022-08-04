@@ -33,13 +33,13 @@ Provides a class that implements a nonlinear policy.
 """
 
 import torch
-import numpy as np
+from typing import Tuple
 
-from ocs2_mpcnet_core import config
-from ocs2_mpcnet_core.helper import bmv
+from ocs2_mpcnet_core.config import Config
+from ocs2_mpcnet_core.policy.base import BasePolicy
 
 
-class NonlinearPolicy(torch.nn.Module):
+class NonlinearPolicy(BasePolicy):
     """Nonlinear policy.
 
     Class for a simple nonlinear neural network policy, where the hidden layer dimension is the mean of the input and
@@ -50,14 +50,12 @@ class NonlinearPolicy(torch.nn.Module):
         observation_dimension: An integer defining the observation (i.e. input) dimension of the policy.
         hidden_dimension: An integer defining the dimension of the hidden layer.
         action_dimension: An integer defining the action (i.e. output) dimension of the policy.
-        observation_scaling: A (1,O,O) tensor for the observation scaling.
-        action_scaling: A (1,A,A) tensor for the action scaling.
         linear1: The first linear neural network layer.
         activation: The activation to get the hidden layer.
         linear2: The second linear neural network layer.
     """
 
-    def __init__(self, config: config.Config) -> None:
+    def __init__(self, config: Config) -> None:
         """Initializes the NonlinearPolicy class.
 
         Initializes the NonlinearPolicy class by setting fixed and variable attributes.
@@ -65,22 +63,16 @@ class NonlinearPolicy(torch.nn.Module):
         Args:
             config: An instance of the configuration class.
         """
-        super().__init__()
+        super().__init__(config)
         self.name = "NonlinearPolicy"
         self.observation_dimension = config.OBSERVATION_DIM
         self.hidden_dimension = int((config.OBSERVATION_DIM + config.ACTION_DIM) / 2)
         self.action_dimension = config.ACTION_DIM
-        self.observation_scaling = (
-            torch.tensor(config.OBSERVATION_SCALING, device=config.DEVICE, dtype=config.DTYPE).diag().unsqueeze(dim=0)
-        )
-        self.action_scaling = (
-            torch.tensor(config.ACTION_SCALING, device=config.DEVICE, dtype=config.DTYPE).diag().unsqueeze(dim=0)
-        )
         self.linear1 = torch.nn.Linear(self.observation_dimension, self.hidden_dimension)
         self.activation = torch.nn.Tanh()
         self.linear2 = torch.nn.Linear(self.hidden_dimension, self.action_dimension)
 
-    def forward(self, observation: torch.Tensor) -> torch.Tensor:
+    def forward(self, observation: torch.Tensor) -> Tuple[torch.Tensor]:
         """Forward method.
 
         Defines the computation performed at every call. Computes the output tensors from the input tensors.
@@ -91,7 +83,7 @@ class NonlinearPolicy(torch.nn.Module):
         Returns:
             action: A (B,A) tensor with the predicted actions.
         """
-        scaled_observation = bmv(self.observation_scaling, observation)
+        scaled_observation = self.scale_observation(observation)
         unscaled_action = self.linear2(self.activation(self.linear1(scaled_observation)))
-        action = bmv(self.action_scaling, unscaled_action)
-        return action
+        action = self.scale_action(unscaled_action)
+        return (action,)

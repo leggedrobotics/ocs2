@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 ###############################################################################
 # Copyright (c) 2022, Farbod Farshidian. All rights reserved.
 #
@@ -27,56 +29,43 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###############################################################################
 
-"""Linear policy.
+"""Ballbot MPC-Net.
 
-Provides a class that implements a linear policy.
+Main script for training an MPC-Net policy for ballbot.
 """
 
-import torch
-from typing import Tuple
+import sys
+import os
 
 from ocs2_mpcnet_core.config import Config
-from ocs2_mpcnet_core.policy.base import BasePolicy
+from ocs2_mpcnet_core.loss import HamiltonianLoss
+from ocs2_mpcnet_core.memory import CircularMemory
+from ocs2_mpcnet_core.policy import LinearPolicy
+
+from ocs2_ballbot_mpcnet import BallbotMpcnet
+from ocs2_ballbot_mpcnet import MpcnetInterface
 
 
-class LinearPolicy(BasePolicy):
-    """Linear policy.
+def main(root_dir: str, config_file_name: str) -> None:
+    # config
+    config = Config(os.path.join(root_dir, "config", config_file_name))
+    # interface
+    interface = MpcnetInterface(config.DATA_GENERATION_THREADS, config.POLICY_EVALUATION_THREADS, config.RAISIM)
+    # loss
+    loss = HamiltonianLoss(config)
+    # memory
+    memory = CircularMemory(config)
+    # policy
+    policy = LinearPolicy(config)
+    # mpcnet
+    mpcnet = BallbotMpcnet(root_dir, config, interface, memory, policy, loss)
+    # train
+    mpcnet.train()
 
-    Class for a simple linear neural network policy.
 
-    Attributes:
-        name: A string with the name of the policy.
-        observation_dimension: An integer defining the observation (i.e. input) dimension of the policy.
-        action_dimension: An integer defining the action (i.e. output) dimension of the policy.
-        linear: The linear neural network layer.
-    """
-
-    def __init__(self, config: Config) -> None:
-        """Initializes the LinearPolicy class.
-
-        Initializes the LinearPolicy class by setting fixed and variable attributes.
-
-        Args:
-            config: An instance of the configuration class.
-        """
-        super().__init__(config)
-        self.name = "LinearPolicy"
-        self.observation_dimension = config.OBSERVATION_DIM
-        self.action_dimension = config.ACTION_DIM
-        self.linear = torch.nn.Linear(self.observation_dimension, self.action_dimension)
-
-    def forward(self, observation: torch.Tensor) -> Tuple[torch.Tensor]:
-        """Forward method.
-
-        Defines the computation performed at every call. Computes the output tensors from the input tensors.
-
-        Args:
-            observation: A (B,O) tensor with the observations.
-
-        Returns:
-            action: A (B,A) tensor with the predicted actions.
-        """
-        scaled_observation = self.scale_observation(observation)
-        unscaled_action = self.linear(scaled_observation)
-        action = self.scale_action(unscaled_action)
-        return (action,)
+if __name__ == "__main__":
+    root_dir = os.path.dirname(os.path.abspath(__file__))
+    if len(sys.argv) > 1:
+        main(root_dir, sys.argv[1])
+    else:
+        main(root_dir, "ballbot.yaml")

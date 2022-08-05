@@ -63,7 +63,7 @@ class RiccatiInitializer {
     projectedModelData.cost.dfduu.setIdentity(inputDim,
                                               inputDim);  // Important: It is identity since it is a projected projectedModelData!
     projectedModelData.cost.dfdux = ocs2::matrix_t::Random(inputDim, stateDim);
-    projectedModelData.stateEqConstraint.setZero(0, stateDim, 0);
+    projectedModelData.stateEqConstraint.setZero(0, stateDim);
     projectedModelData.stateInputEqConstraint.setZero(inputDim, stateDim, inputDim);
 
     projectedModelDataTrajectory = std::vector<ocs2::ModelData>{projectedModelData, projectedModelData};

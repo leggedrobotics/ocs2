@@ -446,6 +446,8 @@ VectorFunctionQuadraticApproximation& VectorFunctionQuadraticApproximation::setZ
     }
   } else {
     dfdu = matrix_t();
+    dfdux.resize(nv);
+    dfduu.resize(nv);
     for (size_t i = 0; i < nv; i++) {
       dfdux[i] = matrix_t();
       dfduu[i] = matrix_t();

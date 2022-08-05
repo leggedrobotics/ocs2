@@ -48,7 +48,7 @@ inline ScalarFunctionQuadraticApproximation getRandomCost(int n, int m) {
   ScalarFunctionQuadraticApproximation cost;
   cost.dfdxx = QPPR.topLeftCorner(n, n);
   cost.dfdx = vector_t::Random(n);
-  if (m > 0) {
+  if (m >= 0) {
     cost.dfdux = QPPR.bottomLeftCorner(m, n);
     cost.dfduu = QPPR.bottomRightCorner(m, m);
     cost.dfdu = vector_t::Random(m);
@@ -69,7 +69,7 @@ inline std::unique_ptr<ocs2::StateCost> getOcs2StateCost(const ScalarFunctionQua
 inline VectorFunctionLinearApproximation getRandomDynamics(int n, int m) {
   VectorFunctionLinearApproximation dynamics;
   dynamics.dfdx = matrix_t::Random(n, n);
-  if (m > 0) {
+  if (m >= 0) {
     dynamics.dfdu = matrix_t::Random(n, m);
   }
   dynamics.f = vector_t::Random(n);
@@ -84,7 +84,7 @@ inline std::unique_ptr<ocs2::LinearSystemDynamics> getOcs2Dynamics(const VectorF
 inline VectorFunctionLinearApproximation getRandomConstraints(int n, int m, int nc) {
   VectorFunctionLinearApproximation constraints;
   constraints.dfdx = matrix_t::Random(nc, n);
-  if (m > 0) {
+  if (m >= 0) {
     constraints.dfdu = matrix_t::Random(nc, m);
   }
   constraints.f = vector_t::Random(nc);

@@ -56,7 +56,7 @@ TEST(test_hpiphm_interface, solve_and_check_dynamic) {
   // Solve!
   std::vector<ocs2::vector_t> xSol;
   std::vector<ocs2::vector_t> uSol;
-  const auto status = hpipmInterface.solve(x0, system, cost, nullptr, xSol, uSol, true);
+  const auto status = hpipmInterface.solve(x0, system, cost, nullptr, nullptr, xSol, uSol, true);
   ASSERT_EQ(status, hpipm_status::SUCCESS);
 
   // Initial condition
@@ -93,11 +93,11 @@ TEST(test_hpiphm_interface, solve_after_resize) {
   // Solve!
   std::vector<ocs2::vector_t> xSol;
   std::vector<ocs2::vector_t> uSol;
-  hpipmInterface.solve(x0, system, cost, nullptr, xSol, uSol, true);
+  hpipmInterface.solve(x0, system, cost, nullptr, nullptr, xSol, uSol, true);
 
   // Solve again!
   hpipmInterface.resize(ocpSize);
-  const auto status = hpipmInterface.solve(x0, system, cost, nullptr, xSol, uSol, true);
+  const auto status = hpipmInterface.solve(x0, system, cost, nullptr, nullptr, xSol, uSol, true);
   ASSERT_EQ(status, hpipm_status::SUCCESS);
 
   // Initial condition
@@ -143,7 +143,7 @@ TEST(test_hpiphm_interface, knownSolution) {
   // Solve!
   std::vector<ocs2::vector_t> xSol;
   std::vector<ocs2::vector_t> uSol;
-  const auto status = hpipmInterface.solve(xSolGiven[0], system, cost, nullptr, xSol, uSol, true);
+  const auto status = hpipmInterface.solve(xSolGiven[0], system, cost, nullptr, nullptr, xSol, uSol, true);
   ASSERT_EQ(status, hpipm_status::SUCCESS);
 
   // Check!
@@ -151,7 +151,7 @@ TEST(test_hpiphm_interface, knownSolution) {
   ASSERT_TRUE(ocs2::isEqual(uSolGiven, uSol, 1e-9));
 }
 
-TEST(test_hpiphm_interface, with_constraints) {
+TEST(test_hpiphm_interface, with_equality_constraints) {
   // Initialize without size
   ocs2::HpipmInterface hpipmInterface;
 
@@ -186,7 +186,7 @@ TEST(test_hpiphm_interface, with_constraints) {
   // Solve!
   std::vector<ocs2::vector_t> xSol;
   std::vector<ocs2::vector_t> uSol;
-  const auto status = hpipmInterface.solve(x0, system, cost, &constraints, xSol, uSol, true);
+  const auto status = hpipmInterface.solve(x0, system, cost, &constraints, nullptr, xSol, uSol, true);
   ASSERT_EQ(status, hpipm_status::SUCCESS);
 
   // Initial condition
@@ -201,6 +201,62 @@ TEST(test_hpiphm_interface, with_constraints) {
   for (int k = 0; k < N; k++) {
     if (constraints[k].f.size() > 0) {
       ASSERT_TRUE(constraints[k].f.isApprox(-constraints[k].dfdx * xSol[k] - constraints[k].dfdu * uSol[k], 1e-9));
+    }
+  }
+}
+
+TEST(test_hpiphm_interface, with_inequality_constraints) {
+  // Initialize without size
+  ocs2::HpipmInterface hpipmInterface;
+
+  int nx = 3;
+  int nu = 2;
+  int nc = 1;
+  int N = 5;
+
+  // Problem setup
+  ocs2::vector_t x0 = ocs2::vector_t::Random(nx);
+  std::vector<ocs2::VectorFunctionLinearApproximation> system;
+  std::vector<ocs2::VectorFunctionLinearApproximation> ineqConstraints;
+  std::vector<ocs2::ScalarFunctionQuadraticApproximation> cost;
+  for (int k = 0; k < N; k++) {
+    system.emplace_back(ocs2::getRandomDynamics(nx, nu));
+    cost.emplace_back(ocs2::getRandomCost(nx, nu));
+    ineqConstraints.emplace_back(ocs2::getRandomConstraints(nx, nu, nc));
+  }
+  cost.emplace_back(ocs2::getRandomCost(nx, 0));
+  ineqConstraints.emplace_back(ocs2::getRandomConstraints(nx, 0, nc));
+
+  // Resize Interface
+  ocs2::HpipmInterface::OcpSize ocpSize(N, nx, nu);
+  std::fill(ocpSize.numIneqConstraints.begin(), ocpSize.numIneqConstraints.end(), nc);
+
+  // Set one of the constraints to empty
+  ineqConstraints[1] = ocs2::VectorFunctionLinearApproximation();
+  ocpSize.numIneqConstraints[1] = 0;
+
+  hpipmInterface.resize(ocpSize);
+
+  // Solve!
+  std::vector<ocs2::vector_t> xSol;
+  std::vector<ocs2::vector_t> uSol;
+  const auto status = hpipmInterface.solve(x0, system, cost, nullptr, &ineqConstraints, xSol, uSol, true);
+  ASSERT_EQ(status, hpipm_status::SUCCESS);
+
+  // Initial condition
+  ASSERT_TRUE(xSol[0].isApprox(x0));
+
+  // Check dynamic feasibility
+  for (int k = 0; k < N; k++) {
+    ASSERT_TRUE(xSol[k + 1].isApprox(system[k].dfdx * xSol[k] + system[k].dfdu * uSol[k] + system[k].f, 1e-9));
+  }
+
+  // Check constraints
+  for (int k = 0; k < N; k++) {
+    if (ineqConstraints[k].f.size() > 0) {
+      ocs2::vector_t lhs = -ineqConstraints[k].f;
+      ocs2::vector_t rhs = ineqConstraints[k].dfdx * xSol[k] + ineqConstraints[k].dfdu * uSol[k];
+      ASSERT_TRUE((lhs.array() <= rhs.array() + 1e-9).all());
     }
   }
 }
@@ -241,13 +297,13 @@ TEST(test_hpiphm_interface, noInputs) {
   cost.emplace_back(ocs2::getRandomCost(nx, 0));
   cost[N].dfdx = -cost[N].dfdxx * xSolGiven[N];
 
-  const auto ocpSize = ocs2::hpipm_interface::extractSizesFromProblem(system, cost, nullptr);
+  const auto ocpSize = ocs2::hpipm_interface::extractSizesFromProblem(system, cost, nullptr, nullptr, false);
   hpipmInterface.resize(ocpSize);
 
   // Solve!
   std::vector<ocs2::vector_t> xSol;
   std::vector<ocs2::vector_t> uSol;
-  const auto status = hpipmInterface.solve(xSolGiven.front(), system, cost, nullptr, xSol, uSol, true);
+  const auto status = hpipmInterface.solve(xSolGiven.front(), system, cost, nullptr, nullptr, xSol, uSol, true);
   ASSERT_EQ(status, hpipm_status::SUCCESS);
 
   // Check!
@@ -310,7 +366,7 @@ TEST(test_hpiphm_interface, retrieveRiccati) {
   // Solve!
   std::vector<ocs2::vector_t> xSol;
   std::vector<ocs2::vector_t> uSol;
-  const auto status = hpipmInterface.solve(x0, system, cost, nullptr, xSol, uSol, true);
+  const auto status = hpipmInterface.solve(x0, system, cost, nullptr, nullptr, xSol, uSol, true);
   ASSERT_EQ(status, hpipm_status::SUCCESS);
 
   // Get Riccati info from hpipm interface

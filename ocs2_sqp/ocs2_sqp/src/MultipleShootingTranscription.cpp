@@ -46,6 +46,7 @@ Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlP
   auto& performance = transcription.performance;
   auto& cost = transcription.cost;
   auto& constraints = transcription.constraints;
+  auto& ineqConstraints = transcription.ineqConstraints;
   auto& projection = transcription.constraintsProjection;
 
   // Dynamics
@@ -63,7 +64,7 @@ Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlP
   cost *= dt;
   performance.cost = cost.f;
 
-  // Constraints
+  // Equality constraints
   if (!optimalControlProblem.equalityConstraintPtr->empty()) {
     // C_{k} * dx_{k} + D_{k} * du_{k} + e_{k} = 0
     constraints = optimalControlProblem.equalityConstraintPtr->getLinearApproximation(t, x, u, *optimalControlProblem.preComputationPtr);
@@ -77,6 +78,21 @@ Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlP
         // Adapt dynamics and cost
         changeOfInputVariables(dynamics, projection.dfdu, projection.dfdx, projection.f);
         changeOfInputVariables(cost, projection.dfdu, projection.dfdx, projection.f);
+      }
+    }
+  }
+
+  // Inequality constraints
+  if (!optimalControlProblem.inequalityConstraintPtr->empty()) {
+    // C_{k} * dx_{k} + D_{k} * du_{k} + e_{k} >= 0
+    ineqConstraints = optimalControlProblem.inequalityConstraintPtr->getLinearApproximation(t, x, u, *optimalControlProblem.preComputationPtr);
+    if (ineqConstraints.f.size() > 0) {
+      // Constraint is only a violation if negative
+      performance.inequalityConstraintsSSE = dt * ineqConstraints.f.cwiseMin(0.0).squaredNorm();
+
+      // Adapt if using projection
+      if (projectStateInputEqualityConstraints) {
+        changeOfInputVariables(ineqConstraints, projection.dfdu, projection.dfdx, projection.f);
       }
     }
   }
@@ -100,11 +116,20 @@ PerformanceIndex computeIntermediatePerformance(const OptimalControlProblem& opt
   // Costs
   performance.cost = dt * computeCost(optimalControlProblem, t, x, u);
 
-  // Constraints
+  // Equality constraints
   if (!optimalControlProblem.equalityConstraintPtr->empty()) {
     const vector_t constraints = optimalControlProblem.equalityConstraintPtr->getValue(t, x, u, *optimalControlProblem.preComputationPtr);
     if (constraints.size() > 0) {
       performance.equalityConstraintsSSE = dt * constraints.squaredNorm();
+    }
+  }
+
+  // Inequality constraints
+  if (!optimalControlProblem.inequalityConstraintPtr->empty()) {
+    const vector_t ineqConstraints = optimalControlProblem.inequalityConstraintPtr->getValue(t, x, u, *optimalControlProblem.preComputationPtr);
+    if (ineqConstraints.size() > 0) {
+      // constraint is only a violation if negative
+      performance.inequalityConstraintsSSE += dt * ineqConstraints.cwiseMin(0.0).squaredNorm();
     }
   }
 
@@ -117,6 +142,7 @@ TerminalTranscription setupTerminalNode(const OptimalControlProblem& optimalCont
   auto& performance = transcription.performance;
   auto& cost = transcription.cost;
   auto& constraints = transcription.constraints;
+  auto& ineqConstraints = transcription.ineqConstraints;
 
   constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Approximation;
   optimalControlProblem.preComputationPtr->requestFinal(request, t, x);
@@ -125,6 +151,7 @@ TerminalTranscription setupTerminalNode(const OptimalControlProblem& optimalCont
   performance.cost = cost.f;
 
   constraints = VectorFunctionLinearApproximation::Zero(0, x.size(), 0);
+  ineqConstraints = VectorFunctionLinearApproximation::Zero(0, x.size(), 0);
 
   return transcription;
 }
@@ -148,6 +175,7 @@ EventTranscription setupEventNode(const OptimalControlProblem& optimalControlPro
   auto& dynamics = transcription.dynamics;
   auto& cost = transcription.cost;
   auto& constraints = transcription.constraints;
+  auto& ineqConstraints = transcription.ineqConstraints;
 
   constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Dynamics + Request::Approximation;
   optimalControlProblem.preComputationPtr->requestPreJump(request, t, x);
@@ -163,6 +191,7 @@ EventTranscription setupEventNode(const OptimalControlProblem& optimalControlPro
   performance.cost = cost.f;
 
   constraints = VectorFunctionLinearApproximation::Zero(0, x.size(), 0);
+  ineqConstraints = VectorFunctionLinearApproximation::Zero(0, x.size(), 0);
   return transcription;
 }
 

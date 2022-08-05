@@ -102,6 +102,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 catkin_add_gtest(test_${PROJECT_NAME}
   test/testCircularKinematics.cpp
+  test/testConstrained.cpp
   test/testDiscretization.cpp
   test/testProjection.cpp
   test/testSwitchedProblem.cpp

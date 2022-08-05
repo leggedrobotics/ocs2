@@ -45,6 +45,7 @@ struct Transcription {
   VectorFunctionLinearApproximation dynamics;
   ScalarFunctionQuadraticApproximation cost;
   VectorFunctionLinearApproximation constraints;
+  VectorFunctionLinearApproximation ineqConstraints;
   VectorFunctionLinearApproximation constraintsProjection;
 };
 
@@ -79,6 +80,7 @@ struct TerminalTranscription {
   PerformanceIndex performance;
   ScalarFunctionQuadraticApproximation cost;
   VectorFunctionLinearApproximation constraints;
+  VectorFunctionLinearApproximation ineqConstraints;
 };
 
 /**
@@ -105,6 +107,7 @@ struct EventTranscription {
   VectorFunctionLinearApproximation dynamics;
   ScalarFunctionQuadraticApproximation cost;
   VectorFunctionLinearApproximation constraints;
+  VectorFunctionLinearApproximation ineqConstraints;
 };
 
 /**

@@ -81,7 +81,7 @@ void CentroidalModelRbdConversions::computeBaseKinematicsFromCentroidalModel(con
   const Vector3 derivativeEulerAnglesZyx = vPinocchio.segment<3>(3);
   baseVelocity.tail<3>() = getGlobalAngularVelocityFromEulerAnglesZyxDerivatives<scalar_t>(baseOrientation, derivativeEulerAnglesZyx);
 
-  const Matrix6 Adot = pinocchio::dccrba(model, data, qPinocchio, vPinocchio);
+  const auto Adot = pinocchio::dccrba(model, data, qPinocchio, vPinocchio);
   Vector6 centroidalMomentumRate = info.robotMass * getNormalizedCentroidalMomentumRate(pinocchioInterface_, info, input);
   centroidalMomentumRate.noalias() -= Adot * vPinocchio;
   centroidalMomentumRate.noalias() -= Aj * jointAccelerations.head(info.actuatedDofNum);

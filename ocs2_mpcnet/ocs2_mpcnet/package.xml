@@ -13,9 +13,9 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
+  <exec_depend>ocs2_mpcnet_core</exec_depend>
   <exec_depend>ocs2_ballbot_mpcnet</exec_depend>
   <exec_depend>ocs2_legged_robot_mpcnet</exec_depend>
-  <exec_depend>ocs2_mpcnet_core</exec_depend>
 
   <export>
     <metapackage />

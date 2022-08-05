@@ -24,6 +24,7 @@
   <exec_depend>ocs2_robotic_examples</exec_depend>
   <exec_depend>ocs2_thirdparty</exec_depend>
   <exec_depend>ocs2_raisim</exec_depend>
+  <exec_depend>ocs2_mpcnet</exec_depend>
 
    <export>
    	  <metapackage />

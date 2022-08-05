@@ -58,12 +58,11 @@ jobs:
         
     - name: Install ONNX Runtime
       run: |
-        cd /tmp
-        wget https://github.com/microsoft/onnxruntime/releases/download/v1.7.0/onnxruntime-linux-x64-1.7.0.tgz
-        tar xf onnxruntime-linux-x64-1.7.0.tgz
-        rsync -a /tmp/onnxruntime-linux-x64-1.7.0/include/ /usr/local/include/onnxruntime
-        rsync -a /tmp/onnxruntime-linux-x64-1.7.0/lib/ /usr/local/lib
-        rsync -a /src/ocs2/ocs2_mpcnet/ocs2_mpcnet_core/misc/onnxruntime/cmake/ /usr/local/share/cmake/onnxruntime
+        wget https://github.com/microsoft/onnxruntime/releases/download/v1.7.0/onnxruntime-linux-x64-1.7.0.tgz -P tmp/microsoft
+        tar xf tmp/microsoft/onnxruntime-linux-x64-1.7.0.tgz -C tmp/microsoft
+        rsync -a tmp/microsoft/onnxruntime-linux-x64-1.7.0/include/ /usr/local/include/onnxruntime
+        rsync -a tmp/microsoft/onnxruntime-linux-x64-1.7.0/lib/ /usr/local/lib
+        rsync -a src/ocs2/ocs2_mpcnet/ocs2_mpcnet_core/misc/onnxruntime/cmake/ /usr/local/share/onnxruntime
 
     - name: Build (${{ matrix.build_type }})
       shell: bash

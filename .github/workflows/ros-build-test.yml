@@ -30,7 +30,7 @@ jobs:
     - name: System deps
       run: |
         apt-get update
-        apt-get install -y git ninja-build liburdfdom-dev liboctomap-dev libassimp-dev checkinstall
+        apt-get install -y git ninja-build liburdfdom-dev liboctomap-dev libassimp-dev checkinstall wget rsync
 
     - uses: actions/checkout@v2
       with: 
@@ -58,12 +58,12 @@ jobs:
         
     - name: Install ONNX Runtime
       run: |
-        wget https://github.com/microsoft/onnxruntime/releases/download/v1.7.0/onnxruntime-linux-x64-1.7.0.tgz -P src/microsoft
-        cd src/microsoft
+        cd /tmp
+        wget https://github.com/microsoft/onnxruntime/releases/download/v1.7.0/onnxruntime-linux-x64-1.7.0.tgz
         tar xf onnxruntime-linux-x64-1.7.0.tgz
-        rsync -a onnxruntime-linux-x64-1.7.0/include/ /usr/local/include/onnxruntime
-        rsync -a onnxruntime-linux-x64-1.7.0/lib/ /usr/local/lib
-        rsync -a src/ocs2/ocs2_mpcnet/ocs2_mpcnet_core/misc/onnxruntime/cmake/ /usr/local/share/cmake/onnxruntime
+        rsync -a /tmp/onnxruntime-linux-x64-1.7.0/include/ /usr/local/include/onnxruntime
+        rsync -a /tmp/onnxruntime-linux-x64-1.7.0/lib/ /usr/local/lib
+        rsync -a /src/ocs2/ocs2_mpcnet/ocs2_mpcnet_core/misc/onnxruntime/cmake/ /usr/local/share/cmake/onnxruntime
 
     - name: Build (${{ matrix.build_type }})
       shell: bash

@@ -67,3 +67,4 @@ jobs:
       run: |
         source devel_isolated/setup.bash
         catkin_make_isolated --use-ninja --merge --only-pkg-with-deps ocs2 --catkin-make-args run_tests
+        catkin_test_results

@@ -41,7 +41,7 @@ ddp
 
   useFeedbackPolicy            true
   
-  strategy                       LINE_SEARCH
+  strategy                     LINE_SEARCH
   lineSearch
   {
     minStepLength              0.1

@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,48 +29,36 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/Types.h>
-#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
+#include <memory>
+
+#include <ocs2_core/augmented_lagrangian/StateInputAugmentedLagrangianCollection.h>
+#include <ocs2_core/loopshaping/LoopshapingDefinition.h>
 
 namespace ocs2 {
 
-struct Metrics {
-  using value_t = std::pair<vector_t, scalar_t>;
+/**
+ * Loopshaping state-input augmented Lagrangian decorator base class
+ */
+class LoopshapingStateInputAugmentedLagrangian : public StateInputAugmentedLagrangianCollection {
+ public:
+  ~LoopshapingStateInputAugmentedLagrangian() override = default;
 
-  // Cost
-  scalar_t cost;
+  std::vector<LagrangianMetrics> getValue(scalar_t t, const vector_t& x, const vector_t& u, const std::vector<Multiplier>& termsMultiplier,
+                                          const PreComputation& preComp) const final override;
 
-  // Equality constraints
-  vector_t stateEqConstraint;
-  vector_t stateInputEqConstraint;
+  void updateLagrangian(scalar_t t, const vector_t& x, const vector_t& u, std::vector<LagrangianMetrics>& termsMetrics,
+                        std::vector<Multiplier>& termsMultiplier) const final override;
 
-  // Lagrangians
-  //  std::vector<value_t> stateEqLagrangian;
-  //  std::vector<value_t> stateIneqLagrangian;
-  //  std::vector<value_t> stateInputEqLagrangian;
-  //  std::vector<value_t> stateInputIneqLagrangian;
-  scalar_t stateEqLagrangian;
-  scalar_t stateIneqLagrangian;
-  scalar_t stateInputEqLagrangian;
-  scalar_t stateInputIneqLagrangian;
+ protected:
+  /** Constructor */
+  LoopshapingStateInputAugmentedLagrangian(const StateInputAugmentedLagrangianCollection& lagrangianCollection,
+                                           std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
+      : StateInputAugmentedLagrangianCollection(lagrangianCollection), loopshapingDefinition_(std::move(loopshapingDefinition)) {}
+
+  /** Copy constructor */
+  LoopshapingStateInputAugmentedLagrangian(const LoopshapingStateInputAugmentedLagrangian& other) = default;
+
+  std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
 };
-
-struct MetricsCollection {
-  Metrics final;
-  std::vector<Metrics> preJumps;
-  std::vector<Metrics> intermediates;
-};
-
-/** Exchanges the given values of Metrics */
-void swap(Metrics& lhs, Metrics& rhs);
-
-/** Clears the value of the given Metrics */
-void clear(Metrics& m);
-
-/** Exchanges the given values of MetricsCollection */
-void swap(MetricsCollection& lhs, MetricsCollection& rhs);
-
-/** Clears the value of the given MetricsCollection */
-void clear(MetricsCollection& m);
 
 }  // namespace ocs2

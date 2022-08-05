@@ -63,68 +63,27 @@ Eigen::Matrix<SCALAR_T, 4, 3> angularVelocityToQuaternionTimeDerivative(const Ei
  * @brief Computes the matrix which transforms derivatives of angular velocities in the body frame to euler angles derivatives
  * WARNING: matrix is singular when rotation around y axis is +/- 90 degrees
  *
- * @param[in] eulerAngles: euler angles in xyz convention
+ * @param[in] eulerAngles: euler angles in XYZ convention
  * @return M: matrix that does the transformation
  */
 template <typename SCALAR_T>
-inline Eigen::Matrix<SCALAR_T, 3, 3> AngularVelocitiesToEulerAngleDerivativesMatrix(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
-  Eigen::Matrix<SCALAR_T, 3, 3> M;
-  SCALAR_T sinPsi = sin(eulerAngles(2));
-  SCALAR_T cosPsi = cos(eulerAngles(2));
-  SCALAR_T sinTheta = sin(eulerAngles(1));
-  SCALAR_T cosTheta = cos(eulerAngles(1));
+Eigen::Matrix<SCALAR_T, 3, 3> getMappingFromLocalAngularVelocityToEulerAnglesXyzDerivative(
+    const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
+  const SCALAR_T sy = sin(eulerAngles(1));
+  const SCALAR_T cy = cos(eulerAngles(1));
+  const SCALAR_T sz = sin(eulerAngles(2));
+  const SCALAR_T cz = cos(eulerAngles(2));
+  const SCALAR_T cz_cy = cz / cy;
+  const SCALAR_T sz_cy = sz / cy;
 
-  M << cosPsi / cosTheta, -sinPsi / cosTheta, 0, sinPsi, cosPsi, 0, -cosPsi * sinTheta / cosTheta, sinTheta * sinPsi / cosTheta, 1;
+  Eigen::Matrix<SCALAR_T, 3, 3> M;
+  // clang-format off
+  M <<      cz_cy,       -sz_cy,   SCALAR_T(0.0),
+               sz,           cz,   SCALAR_T(0.0),
+      -sy * cz_cy,   sy * sz_cy,   SCALAR_T(1.0);
+  // clang-format on
 
   return M;
-}
-
-/**
- * @brief Convert derivatives of ZYX euler angles to angular velocity
- * @param[in] The current orientation (ZYX euler angles)
- * @param[in] The derivatives of the ZYX euler angles
- * @return The angular velocity in world frame
- */
-template <typename SCALAR_T>
-inline Eigen::Matrix<SCALAR_T, 3, 1> eulerAngleZyxDerivativesToAngularVelocityInWorld(
-    const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles, const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAnglesTimeDerivative) {
-  const double cyaw = cos(eulerAngles(0));
-  const double cpitch = cos(eulerAngles(1));
-
-  const double syaw = sin(eulerAngles(0));
-  const double spitch = sin(eulerAngles(1));
-
-  Eigen::Matrix3d transform;
-  transform << 0, -syaw, cpitch * cyaw,  // clang-format off
-               0,  cyaw, cpitch * syaw,
-               1,     0,       -spitch;  // clang-format on
-
-  return transform * eulerAnglesTimeDerivative;
-}
-
-/**
- * @brief Convert angular velocity to derivatives of ZYX euler angles
- * @param[in] The current orientation (ZYX euler angles)
- * @param[in] The derivatives of the ZYX euler angles
- * @return The angular velocity in world frame
- */
-template <typename SCALAR_T>
-inline Eigen::Matrix<SCALAR_T, 3, 1> angularVelocityInWorldToEulerAngleZyxDerivatives(
-    const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles, const Eigen::Matrix<SCALAR_T, 3, 1>& omega_world_base_inWorld) {
-  const double cyaw = cos(eulerAngles(0));
-  const double cpitch = cos(eulerAngles(1));
-
-  const double syaw = sin(eulerAngles(0));
-  const double spitch = sin(eulerAngles(1));
-
-  assert(abs(cpitch) > 1e-8);  // test for singularity in debug mode
-
-  Eigen::Matrix<SCALAR_T, 3, 3> transform;
-  transform << cyaw * spitch / cpitch, spitch * syaw / cpitch, 1,  // clang-format off
-                                -syaw,                   cyaw, 0,
-                        cyaw / cpitch,            syaw/cpitch, 0;  // clang-format on
-
-  return transform * omega_world_base_inWorld;
 }
 
 /**

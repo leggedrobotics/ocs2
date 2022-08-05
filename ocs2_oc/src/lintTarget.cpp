@@ -2,7 +2,14 @@
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
 
 // oc_data
+#include <ocs2_oc/oc_data/DualSolution.h>
+#include <ocs2_oc/oc_data/LoopshapingPrimalSolution.h>
 #include <ocs2_oc/oc_data/PrimalSolution.h>
+
+// oc_problem
+#include <ocs2_oc/oc_problem/LoopshapingOptimalControlProblem.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblemHelperFunction.h>
 
 // oc_solver
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>

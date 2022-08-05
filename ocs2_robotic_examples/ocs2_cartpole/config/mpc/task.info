@@ -1,9 +1,10 @@
 ; cartpole parameters
-CartPoleParameters
+cartpole_parameters
 {
   cartMass     2.0
   poleMass     0.2
   poleLength   1.0
+  maxInput     5.0
   gravity      9.81
 }
 
@@ -25,7 +26,7 @@ ddp
   AbsTolODE                      1e-9
   RelTolODE                      1e-6
   maxNumStepsPerSecond           100000
-  timeStep                       1e-3
+  timeStep                       1e-2
   backwardPassIntegratorType     ODE45
 
   inequalityConstraintMu         100.0
@@ -38,10 +39,10 @@ ddp
   strategy                       LINE_SEARCH
   lineSearch
   {
-    minStepLength              0.1
-    maxStepLength              1.0
-    hessianCorrectionStrategy  EIGENVALUE_MODIFICATION
-    hessianCorrectionMultiple  1e-6
+    minStepLength                1e-3
+    maxStepLength                1.0
+    hessianCorrectionStrategy    EIGENVALUE_MODIFICATION
+    hessianCorrectionMultiple    1e-6
   }
 }
 
@@ -53,12 +54,13 @@ rollout
   timeStep                     1e-2
   maxNumStepsPerSecond         100000
   checkNumericalStability      false
+  integratorType               ODE45
 }
 
 ; MPC settings
 mpc
 {
-  timeHorizon                 2.0   ; [s]
+  timeHorizon                 5.0   ; [s]
   solutionTimeWindow          -1    ; maximum [s]
   coldStart                   false
 
@@ -68,6 +70,11 @@ mpc
   mrtDesiredFrequency         400   ; [Hz]
 }
 
+bounds_penalty_config
+{
+  scale                       0.1
+  stepSize                    1.0
+}
 
 ; initial state
 initialState

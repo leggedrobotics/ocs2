@@ -37,10 +37,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/control/ControllerBase.h>
 
+#include <ocs2_oc/oc_data/DualSolution.h>
 #include <ocs2_oc/oc_data/PrimalSolution.h>
+#include <ocs2_oc/oc_data/ProblemMetrics.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
 #include <ocs2_oc/synchronized_module/ReferenceManagerInterface.h>
 #include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
+#include "ocs2_oc/synchronized_module/AugmentedLagrangianObserver.h"
 
 namespace ocs2 {
 
@@ -80,13 +84,23 @@ class SolverBase {
    * @param [in] initTime: The initial time.
    * @param [in] initState: The initial state.
    * @param [in] finalTime: The final time.
-   * @param [in] partitioningTimes: The time partitioning.
    * @param [in] externalControllerPtr: A pointer to the initial control policies. If you want to use the control policy which was designed
    * by the previous call of the "run" routine, you should either pass nullptr or use the other run method. In either cases, two scenarios
    * are possible: either the internal controller is already available (such as the MPC case where the warm starting option is set true) or
    * the internal controller is empty in which instead of performing a rollout the operating trajectories will be used.
    */
   void run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const ControllerBase* externalControllerPtr);
+
+  /**
+   * The main routine of solver which runs the optimizer for a given initial state, initial time, final time, and
+   * initial primal solution.
+   *
+   * @param [in] initTime: The initial time.
+   * @param [in] initState: The initial state.
+   * @param [in] finalTime: The final time.
+   * @param [in] primalSolution: The primal solution to initialize the solver with.
+   */
+  void run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const PrimalSolution& primalSolution);
 
   /**
    * Sets the ReferenceManager which manages both ModeSchedule and TargetTrajectories. This module updates before SynchronizedModules.
@@ -118,6 +132,21 @@ class SolverBase {
   void addSynchronizedModule(std::shared_ptr<SolverSynchronizedModule> synchronizedModule) {
     synchronizedModules_.push_back(std::move(synchronizedModule));
   }
+
+  /**
+   * Adds one observer to the vector of modules that observe solver's dual solution and optimized metrics.
+   * @note: These observer can slow down the MPC. Only employ them during debugging and remove them for deployment.
+   */
+  void addAugmentedLagrangianObserver(std::unique_ptr<AugmentedLagrangianObserver> observerModule) {
+    augmentedLagrangianObservers_.push_back(std::move(observerModule));
+  }
+
+  /**
+   * @brief Returns a const reference to the definition of optimal control problem.
+   *
+   * @return The problem definition.
+   */
+  virtual const OptimalControlProblem& getOptimalControlProblem() const = 0;
 
   /**
    * Returns the cost, merit function and ISEs of constraints for the latest optimized trajectory.
@@ -164,6 +193,20 @@ class SolverBase {
   PrimalSolution primalSolution(scalar_t finalTime) const;
 
   /**
+   * @brief Returns the optimized dual solution.
+   *
+   * @return: The dual problem's solution.
+   */
+  virtual const DualSolution& getDualSolution() const = 0;
+
+  /**
+   * @brief Returns the optimized value of the Metrics.
+   *
+   * @return: The solution's metrics.
+   */
+  virtual const ProblemMetrics& getSolutionMetrics() const = 0;
+
+  /**
    * Calculates the value function quadratic approximation at the given time and state.
    *
    * @param [in] time: The inquiry time
@@ -192,6 +235,14 @@ class SolverBase {
   virtual vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const = 0;
 
   /**
+   * Returns the intermediate dual solution at the given time.
+   *
+   * @param [in] time: The inquiry time
+   * @return The collection of multipliers associated to state/state-input, equality/inequality Lagrangian terms.
+   */
+  virtual MultiplierCollection getIntermediateDualSolution(scalar_t time) const = 0;
+
+  /**
    * Gets benchmarking information.
    */
   virtual std::string getBenchmarkingInfo() const { return {}; }
@@ -208,6 +259,8 @@ class SolverBase {
 
   virtual void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const ControllerBase* externalControllerPtr) = 0;
 
+  virtual void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const PrimalSolution& primalSolution) = 0;
+
   void preRun(scalar_t initTime, const vector_t& initState, scalar_t finalTime);
 
   void postRun();
@@ -218,6 +271,7 @@ class SolverBase {
   mutable std::mutex outputDisplayGuardMutex_;
   std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr_;  // this pointer cannot be nullptr
   std::vector<std::shared_ptr<SolverSynchronizedModule>> synchronizedModules_;
+  std::vector<std::unique_ptr<AugmentedLagrangianObserver>> augmentedLagrangianObservers_;
 };
 
 }  // namespace ocs2

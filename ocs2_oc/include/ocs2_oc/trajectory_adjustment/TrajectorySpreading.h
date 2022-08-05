@@ -57,6 +57,9 @@ class TrajectorySpreading final {
    */
   Status set(const ModeSchedule& oldModeSchedule, const ModeSchedule& newModeSchedule, const scalar_array_t& oldTimeTrajectory);
 
+  /** Gets the trajectory-spreading strategy report. */
+  const Status& getStatus() const { return status_; }
+
   /**
    * Adjust continuous-time trajectory.
    *
@@ -120,8 +123,13 @@ class TrajectorySpreading final {
    */
   size_array_t findPostEventIndices(const scalar_array_t& eventTimes, const scalar_array_t& timeTrajectory) const {
     size_array_t postEventIndices(eventTimes.size());
-    std::transform(eventTimes.cbegin(), eventTimes.cend(), postEventIndices.begin(),
-                   [this, &timeTrajectory](scalar_t time) -> int { return upperBoundIndex(timeTrajectory, time); });
+    for (std::size_t i = 0; i < eventTimes.size(); i++) {
+      if (i == eventTimes.size() - 1 && eventTimes[i] == timeTrajectory.back()) {
+        postEventIndices[i] = timeTrajectory.size() - 1;
+      } else {
+        postEventIndices[i] = upperBoundIndex(timeTrajectory, eventTimes[i]);
+      }
+    }
     return postEventIndices;
   }
 
@@ -130,6 +138,7 @@ class TrajectorySpreading final {
    ***********/
   const bool debugPrint_;
 
+  Status status_;
   size_t eraseFromIndex_;                             /**< The first index to erase **/
   std::pair<size_t, size_t> keepEventDataInInterval_; /**< Keep event data within [first, second) **/
 

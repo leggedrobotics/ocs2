@@ -185,7 +185,7 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
     ddpSettings.nThreads_ = numThreads;
     ddpSettings.maxNumIterations_ = 2 + (numThreads - 1);  // need an extra iteration for each added time partition
     ddpSettings.strategy_ = strategy;
-    ddpSettings.lineSearch_.minStepLength_ = 1e-4;
+    ddpSettings.lineSearch_.minStepLength = 1e-4;
     return ddpSettings;
   }
 

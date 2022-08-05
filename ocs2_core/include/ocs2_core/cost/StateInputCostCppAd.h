@@ -57,14 +57,17 @@ class StateInputCostCppAd : public StateInputCost {
                   const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true, bool verbose = true);
 
   /** Get the parameter vector */
-  virtual vector_t getParameters(scalar_t time, const TargetTrajectories& targetTrajectories) const { return vector_t(0); };
+  virtual vector_t getParameters(scalar_t time, const TargetTrajectories& targetTrajectories,
+                                 const PreComputation& /* preComputation */) const {
+    return vector_t(0);
+  };
 
   /** Cost evaluation */
   scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const TargetTrajectories& targetTrajectories,
-                    const PreComputation&) const override;
+                    const PreComputation& preComputation) const override;
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
                                                                  const TargetTrajectories& targetTrajectories,
-                                                                 const PreComputation&) const override;
+                                                                 const PreComputation& preComputation) const override;
 
  protected:
   StateInputCostCppAd(const StateInputCostCppAd& rhs);

@@ -34,9 +34,28 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/PreComputation.h>
 #include <ocs2_core/integration/TrapezoidalIntegration.h>
+#include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
 
 namespace ocs2 {
+
+namespace {
+template <typename DataType>
+void copySegment(const LinearInterpolation::index_alpha_t& indexAlpha0, const LinearInterpolation::index_alpha_t& indexAlpha1,
+                 const std::vector<DataType>& inputTrajectory, std::vector<DataType>& outputTrajectory) {
+  outputTrajectory.clear();
+  outputTrajectory.resize(2 + indexAlpha1.first - indexAlpha0.first);
+
+  if (!outputTrajectory.empty()) {
+    outputTrajectory.front() = LinearInterpolation::interpolate(indexAlpha0, inputTrajectory);
+    if (indexAlpha1.first >= indexAlpha0.first) {
+      std::copy(inputTrajectory.begin() + indexAlpha0.first + 1, inputTrajectory.begin() + indexAlpha1.first + 1,
+                outputTrajectory.begin() + 1);
+    }
+    outputTrajectory.back() = LinearInterpolation::interpolate(indexAlpha1, inputTrajectory);
+  }
+}
+}  // unnamed namespace
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -168,6 +187,74 @@ scalar_t rolloutTrajectory(RolloutBase& rollout, scalar_t initTime, const vector
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+void extractPrimalSolution(const std::pair<scalar_t, scalar_t>& timePeriod, const PrimalSolution& inputPrimalSolution,
+                           PrimalSolution& outputPrimalSolution) {
+  // no controller
+  if (outputPrimalSolution.controllerPtr_ != nullptr) {
+    outputPrimalSolution.controllerPtr_->clear();
+  }
+  // for none StateTriggeredRollout initialize modeSchedule
+  outputPrimalSolution.modeSchedule_ = inputPrimalSolution.modeSchedule_;
+
+  // create alias
+  auto& timeTrajectory = outputPrimalSolution.timeTrajectory_;
+  auto& stateTrajectory = outputPrimalSolution.stateTrajectory_;
+  auto& inputTrajectory = outputPrimalSolution.inputTrajectory_;
+  auto& postEventIndices = outputPrimalSolution.postEventIndices_;
+
+  /*
+   * Find the indexAlpha pair for interpolation. The interpolation function uses the std::lower_bound while ignoring the initial
+   * time event, we should use std::upper_bound. Therefore at the first step, we check if for the case where std::upper_bound
+   * would have give a different solution (index_alpha_t::second = 0) and correct the pair. Then, in the second step, we check
+   * whether the index_alpha_t::first is a pre-event index. If yes, we move index_alpha_t::first to the post-event index.
+   */
+  const auto indexAlpha0 = [&]() {
+    const auto lowerBoundIndexAlpha = LinearInterpolation::timeSegment(timePeriod.first, inputPrimalSolution.timeTrajectory_);
+
+    const auto upperBoundIndexAlpha = numerics::almost_eq(lowerBoundIndexAlpha.second, 0.0)
+                                          ? LinearInterpolation::index_alpha_t{lowerBoundIndexAlpha.first + 1, 1.0}
+                                          : lowerBoundIndexAlpha;
+    const auto it = std::find(inputPrimalSolution.postEventIndices_.cbegin(), inputPrimalSolution.postEventIndices_.cend(),
+                              upperBoundIndexAlpha.first + 1);
+    if (it == inputPrimalSolution.postEventIndices_.cend()) {
+      return upperBoundIndexAlpha;
+    } else {
+      return LinearInterpolation::index_alpha_t{upperBoundIndexAlpha.first + 1, 1.0};
+    }
+  }();
+  const auto indexAlpha1 = LinearInterpolation::timeSegment(timePeriod.second, inputPrimalSolution.timeTrajectory_);
+
+  // time
+  copySegment(indexAlpha0, indexAlpha1, inputPrimalSolution.timeTrajectory_, timeTrajectory);
+
+  // state
+  copySegment(indexAlpha0, indexAlpha1, inputPrimalSolution.stateTrajectory_, stateTrajectory);
+
+  // input
+  copySegment(indexAlpha0, indexAlpha1, inputPrimalSolution.inputTrajectory_, inputTrajectory);
+
+  // If the pre-event index is within the range we accept the event
+  postEventIndices.clear();
+  for (const auto& postIndex : inputPrimalSolution.postEventIndices_) {
+    if (postIndex > static_cast<size_t>(indexAlpha0.first) && inputPrimalSolution.timeTrajectory_[postIndex - 1] <= timePeriod.second) {
+      postEventIndices.push_back(postIndex - static_cast<size_t>(indexAlpha0.first));
+    }
+  }
+
+  // If there is an event at final time, it misses its pair (due to indexAlpha1 and copySegment)
+  if (!postEventIndices.empty() && postEventIndices.back() == timeTrajectory.size()) {
+    constexpr auto eps = numeric_traits::weakEpsilon<scalar_t>();
+    const auto indexAlpha2 = LinearInterpolation::timeSegment(timePeriod.second + eps, inputPrimalSolution.timeTrajectory_);
+
+    timeTrajectory.push_back(std::min(timePeriod.second + eps, timePeriod.second));
+    stateTrajectory.push_back(LinearInterpolation::interpolate(indexAlpha2, inputPrimalSolution.stateTrajectory_));
+    inputTrajectory.push_back(LinearInterpolation::interpolate(indexAlpha2, inputPrimalSolution.inputTrajectory_));
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 scalar_t computeControllerUpdateIS(const LinearController& controller) {
   scalar_array_t biasArraySquaredNorm(controller.timeStamp_.size());
   std::transform(controller.deltaBiasArray_.begin(), controller.deltaBiasArray_.end(), biasArraySquaredNorm.begin(),
@@ -211,6 +298,35 @@ void retrieveActiveNormalizedTime(const std::pair<int, int>& partitionInterval, 
   normalizedPostEventIndices.resize(NE);
   std::transform(firstEventItr, lastEventItr, normalizedPostEventIndices.rbegin(),
                  [N, &partitionInterval](size_t i) -> size_t { return N - i + partitionInterval.first; });
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::vector<std::pair<int, int>> computePartitionIntervals(const scalar_array_t& timeTrajectory, int numWorkers) {
+  const scalar_t increment = (timeTrajectory.back() - timeTrajectory.front()) / static_cast<scalar_t>(numWorkers);
+
+  scalar_array_t desiredPartitionPoints(numWorkers + 1);
+  desiredPartitionPoints.front() = timeTrajectory.front();
+  for (size_t i = 1u; i < desiredPartitionPoints.size() - 1; i++) {
+    desiredPartitionPoints[i] = desiredPartitionPoints[i - 1] + increment;
+  }
+  desiredPartitionPoints.back() = timeTrajectory.back();
+
+  std::vector<std::pair<int, int>> partitionIntervals;
+  partitionIntervals.reserve(desiredPartitionPoints.size());
+
+  int endPos, startPos = 0;
+  for (size_t i = 1u; i < desiredPartitionPoints.size(); i++) {
+    const auto itr = std::upper_bound(timeTrajectory.begin(), timeTrajectory.end(), desiredPartitionPoints[i]);
+    endPos = (itr != timeTrajectory.end()) ? std::distance(timeTrajectory.begin(), itr) : (timeTrajectory.size() - 1);
+    if (endPos != startPos) {
+      partitionIntervals.emplace_back(startPos, endPos);
+      startPos = endPos;
+    }
+  }
+
+  return partitionIntervals;
 }
 
 }  // namespace ocs2

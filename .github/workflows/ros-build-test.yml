@@ -30,7 +30,7 @@ jobs:
     - name: System deps
       run: |
         apt-get update
-        apt-get install -y git ninja-build liburdfdom-dev liboctomap-dev libassimp-dev
+        apt-get install -y git ninja-build liburdfdom-dev liboctomap-dev libassimp-dev checkinstall
 
     - uses: actions/checkout@v2
       with: 
@@ -46,14 +46,25 @@ jobs:
         git clone --recurse-submodules https://github.com/leggedrobotics/pinocchio.git src/pinocchio
         git clone --recurse-submodules https://github.com/leggedrobotics/hpp-fcl.git src/hpp-fcl
         git clone https://github.com/leggedrobotics/ocs2_robotic_assets.git src/ocs2_robotic_assets
+        
+    - name: Install RaiSim
+      run: |
+        git clone --depth 1 https://github.com/raisimTech/raisimLib.git -b v1.1.01 src/raisim_tech
+        cd src/raisim_tech
+        mkdir build
+        cd build
+        cmake .. -DPYTHON_EXECUTABLE=$(python3 -c "import sys; print(sys.executable)")
+        make -j4 && checkinstall
+        
     - name: Build (${{ matrix.build_type }})
       shell: bash
       run: |
         source /opt/ros/noetic/setup.bash
-        catkin_make_isolated --use-ninja --merge --only-pkg-with-deps ocs2 --ignore-pkg ocs2_raisim --cmake-args -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} 
+        catkin_make_isolated --use-ninja --merge --only-pkg-with-deps ocs2 --cmake-args -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} 
         
     - name: Test
       shell: bash
       run: |
         source devel_isolated/setup.bash
         catkin_make_isolated --use-ninja --merge --only-pkg-with-deps ocs2 --catkin-make-args run_tests
+        catkin_test_results

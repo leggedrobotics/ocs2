@@ -105,8 +105,7 @@ void initializePreJumpMultiplierCollection(const OptimalControlProblem& ocp, sca
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void initializeIntermediateMultiplierCollection(const OptimalControlProblem& ocp, scalar_t time,
-                                                MultiplierCollection& multipliers) {
+void initializeIntermediateMultiplierCollection(const OptimalControlProblem& ocp, scalar_t time, MultiplierCollection& multipliers) {
   ocp.stateEqualityLagrangianPtr->initializeLagrangian(time, multipliers.stateEq);
   ocp.stateInequalityLagrangianPtr->initializeLagrangian(time, multipliers.stateIneq);
   ocp.equalityLagrangianPtr->initializeLagrangian(time, multipliers.stateInputEq);

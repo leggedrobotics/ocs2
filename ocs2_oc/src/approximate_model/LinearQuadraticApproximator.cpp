@@ -270,13 +270,16 @@ ScalarFunctionQuadraticApproximation approximateFinalCost(const OptimalControlPr
 /******************************************************************************************************/
 /******************************************************************************************************/
 Metrics computeIntermediateMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state, const vector_t& input,
-                                   const MultiplierCollection& multipliers) {
+                                   const MultiplierCollection& multipliers, const vector_t& dynamicsViolation) {
   auto& preComputation = *problem.preComputationPtr;
 
   Metrics metrics;
 
   // Cost
   metrics.cost = computeCost(problem, time, state, input);
+
+  // Dynamics violation
+  metrics.dynamicsViolation = dynamicsViolation;
 
   // Equality constraints
   metrics.stateEqConstraint = problem.stateEqualityConstraintPtr->getValue(time, state, preComputation);
@@ -304,6 +307,9 @@ Metrics computePreJumpMetrics(OptimalControlProblem& problem, const scalar_t tim
   // Cost
   metrics.cost = computeEventCost(problem, time, state);
 
+  // Dynamics violation
+  // metrics.dynamicsViolation = vector_t();
+
   // Equality constraint
   metrics.stateEqConstraint = problem.preJumpEqualityConstraintPtr->getValue(time, state, preComputation);
 
@@ -325,6 +331,9 @@ Metrics computeFinalMetrics(OptimalControlProblem& problem, const scalar_t time,
 
   // Cost
   metrics.cost = computeFinalCost(problem, time, state);
+
+  // Dynamics violation
+  // metrics.dynamicsViolation = vector_t();
 
   // Equality constraint
   metrics.stateEqConstraint = problem.finalEqualityConstraintPtr->getValue(time, state, preComputation);

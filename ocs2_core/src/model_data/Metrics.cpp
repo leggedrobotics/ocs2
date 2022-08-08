@@ -34,6 +34,22 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+/** Returns true if *this is approximately equal to other, within the precision determined by prec. */
+bool Metrics::isApprox(const Metrics& other, scalar_t prec) const {
+  bool flag = std::abs(this->cost - other.cost) < prec * std::min(std::abs(this->cost), std::abs(other.cost));
+  flag = flag && this->dynamicsViolation.isApprox(other.dynamicsViolation, prec);
+  flag = flag && toVector(this->stateEqConstraint).isApprox(toVector(other.stateEqConstraint), prec);
+  flag = flag && toVector(this->stateInputEqConstraint).isApprox(toVector(other.stateInputEqConstraint), prec);
+  flag = flag && toVector(this->stateEqLagrangian).isApprox(toVector(other.stateEqLagrangian), prec);
+  flag = flag && toVector(this->stateIneqLagrangian).isApprox(toVector(other.stateIneqLagrangian), prec);
+  flag = flag && toVector(this->stateInputEqLagrangian).isApprox(toVector(other.stateInputEqLagrangian), prec);
+  flag = flag && toVector(this->stateInputIneqLagrangian).isApprox(toVector(other.stateInputIneqLagrangian), prec);
+  return flag;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 vector_t toVector(const std::vector<LagrangianMetrics>& termsLagrangianMetrics) {
   size_t n = 0;
   std::for_each(termsLagrangianMetrics.begin(), termsLagrangianMetrics.end(),
@@ -142,7 +158,7 @@ LagrangianMetrics interpolate(const index_alpha_t& indexAlpha, const std::vector
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MetricsCollection interpolate(const index_alpha_t& indexAlpha, const std::vector<MetricsCollection>& dataArray) {
+Metrics interpolate(const index_alpha_t& indexAlpha, const std::vector<Metrics>& dataArray) {
   // number of terms
   const auto ind = indexAlpha.second > 0.5 ? indexAlpha.first : indexAlpha.first + 1;
   const size_t mumStateEqConst = dataArray[ind].stateEqConstraint.size();
@@ -152,23 +168,27 @@ MetricsCollection interpolate(const index_alpha_t& indexAlpha, const std::vector
   const size_t mumStateInputEqLag = dataArray[ind].stateInputEqLagrangian.size();
   const size_t mumStateInputIneqLag = dataArray[ind].stateInputIneqLagrangian.size();
 
-  MetricsCollection out;
+  Metrics out;
 
   // cost
-  out.cost = interpolate(indexAlpha, dataArray,
-                         [](const std::vector<MetricsCollection>& array, size_t t) -> const scalar_t& { return array[t].cost; });
+  out.cost =
+      interpolate(indexAlpha, dataArray, [](const std::vector<Metrics>& array, size_t t) -> const scalar_t& { return array[t].cost; });
+
+  // dynamics violation
+  out.dynamicsViolation = interpolate(
+      indexAlpha, dataArray, [](const std::vector<Metrics>& array, size_t t) -> const vector_t& { return array[t].dynamicsViolation; });
 
   // constraints
   out.stateEqConstraint.reserve(mumStateEqConst);
   for (size_t i = 0; i < mumStateEqConst; i++) {
-    auto constraint = interpolate(indexAlpha, dataArray, [i](const std::vector<MetricsCollection>& array, size_t t) -> const vector_t& {
+    auto constraint = interpolate(indexAlpha, dataArray, [i](const std::vector<Metrics>& array, size_t t) -> const vector_t& {
       return array[t].stateEqConstraint[i];
     });
     out.stateEqConstraint.emplace_back(std::move(constraint));
   }
   out.stateInputEqConstraint.reserve(mumStateInputEqCost);
   for (size_t i = 0; i < mumStateInputEqCost; i++) {
-    auto constraint = interpolate(indexAlpha, dataArray, [i](const std::vector<MetricsCollection>& array, size_t t) -> const vector_t& {
+    auto constraint = interpolate(indexAlpha, dataArray, [i](const std::vector<Metrics>& array, size_t t) -> const vector_t& {
       return array[t].stateInputEqConstraint[i];
     });
     out.stateInputEqConstraint.emplace_back(std::move(constraint));
@@ -177,10 +197,10 @@ MetricsCollection interpolate(const index_alpha_t& indexAlpha, const std::vector
   // state equality Lagrangian
   out.stateEqLagrangian.reserve(mumStateEqLag);
   for (size_t i = 0; i < mumStateEqLag; i++) {
-    auto penalty = interpolate(indexAlpha, dataArray, [i](const std::vector<MetricsCollection>& array, size_t t) -> const scalar_t& {
+    auto penalty = interpolate(indexAlpha, dataArray, [i](const std::vector<Metrics>& array, size_t t) -> const scalar_t& {
       return array[t].stateEqLagrangian[i].penalty;
     });
-    auto constraint = interpolate(indexAlpha, dataArray, [i](const std::vector<MetricsCollection>& array, size_t t) -> const vector_t& {
+    auto constraint = interpolate(indexAlpha, dataArray, [i](const std::vector<Metrics>& array, size_t t) -> const vector_t& {
       return array[t].stateEqLagrangian[i].constraint;
     });
     out.stateEqLagrangian.emplace_back(penalty, std::move(constraint));
@@ -189,10 +209,10 @@ MetricsCollection interpolate(const index_alpha_t& indexAlpha, const std::vector
   // state inequality Lagrangian
   out.stateIneqLagrangian.reserve(mumStateIneqLag);
   for (size_t i = 0; i < mumStateIneqLag; i++) {
-    auto penalty = interpolate(indexAlpha, dataArray, [i](const std::vector<MetricsCollection>& array, size_t t) -> const scalar_t& {
+    auto penalty = interpolate(indexAlpha, dataArray, [i](const std::vector<Metrics>& array, size_t t) -> const scalar_t& {
       return array[t].stateIneqLagrangian[i].penalty;
     });
-    auto constraint = interpolate(indexAlpha, dataArray, [i](const std::vector<MetricsCollection>& array, size_t t) -> const vector_t& {
+    auto constraint = interpolate(indexAlpha, dataArray, [i](const std::vector<Metrics>& array, size_t t) -> const vector_t& {
       return array[t].stateIneqLagrangian[i].constraint;
     });
     out.stateIneqLagrangian.emplace_back(penalty, std::move(constraint));
@@ -201,10 +221,10 @@ MetricsCollection interpolate(const index_alpha_t& indexAlpha, const std::vector
   // state-input equality Lagrangian
   out.stateInputEqLagrangian.reserve(mumStateInputEqLag);
   for (size_t i = 0; i < mumStateInputEqLag; i++) {
-    auto penalty = interpolate(indexAlpha, dataArray, [i](const std::vector<MetricsCollection>& array, size_t t) -> const scalar_t& {
+    auto penalty = interpolate(indexAlpha, dataArray, [i](const std::vector<Metrics>& array, size_t t) -> const scalar_t& {
       return array[t].stateInputEqLagrangian[i].penalty;
     });
-    auto constraint = interpolate(indexAlpha, dataArray, [i](const std::vector<MetricsCollection>& array, size_t t) -> const vector_t& {
+    auto constraint = interpolate(indexAlpha, dataArray, [i](const std::vector<Metrics>& array, size_t t) -> const vector_t& {
       return array[t].stateInputEqLagrangian[i].constraint;
     });
     out.stateInputEqLagrangian.emplace_back(penalty, std::move(constraint));
@@ -213,10 +233,10 @@ MetricsCollection interpolate(const index_alpha_t& indexAlpha, const std::vector
   // state-input inequality Lagrangian
   out.stateInputIneqLagrangian.reserve(mumStateInputIneqLag);
   for (size_t i = 0; i < mumStateInputIneqLag; i++) {
-    auto penalty = interpolate(indexAlpha, dataArray, [i](const std::vector<MetricsCollection>& array, size_t t) -> const scalar_t& {
+    auto penalty = interpolate(indexAlpha, dataArray, [i](const std::vector<Metrics>& array, size_t t) -> const scalar_t& {
       return array[t].stateInputIneqLagrangian[i].penalty;
     });
-    auto constraint = interpolate(indexAlpha, dataArray, [i](const std::vector<MetricsCollection>& array, size_t t) -> const vector_t& {
+    auto constraint = interpolate(indexAlpha, dataArray, [i](const std::vector<Metrics>& array, size_t t) -> const vector_t& {
       return array[t].stateInputIneqLagrangian[i].constraint;
     });
     out.stateInputIneqLagrangian.emplace_back(penalty, std::move(constraint));

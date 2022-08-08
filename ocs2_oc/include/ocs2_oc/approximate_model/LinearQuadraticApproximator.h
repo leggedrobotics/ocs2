@@ -161,7 +161,7 @@ ScalarFunctionQuadraticApproximation approximateFinalCost(const OptimalControlPr
                                                           const vector_t& state);
 
 /**
- * Compute the intermediate-time MetricsCollection (i.e. cost, softConstraints, and constraints).
+ * Compute the intermediate-time Metrics (i.e. cost, softConstraints, and constraints).
  *
  * @note It is assumed that the precomputation request is already made.
  * problem.preComputationPtr->request(Request::Cost + Request::Constraint + Request::SoftConstraint, t, x, u)
@@ -171,13 +171,13 @@ ScalarFunctionQuadraticApproximation approximateFinalCost(const OptimalControlPr
  * @param [in] state: The current state.
  * @param [in] input: The current input.
  * @param [in] multipliers: The current multipliers associated to the equality and inequality Lagrangians.
- * @return The output MetricsCollection.
+ * @return The output Metrics.
  */
-MetricsCollection computeIntermediateMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
-                                             const vector_t& input, const MultiplierCollection& multipliers);
+Metrics computeIntermediateMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state, const vector_t& input,
+                                   const MultiplierCollection& multipliers);
 
 /**
- * Compute the event-time MetricsCollection based on pre-jump state value (i.e. cost, softConstraints, and constraints).
+ * Compute the event-time Metrics based on pre-jump state value (i.e. cost, softConstraints, and constraints).
  *
  * @note It is assumed that the precomputation request is already made.
  * problem.preComputationPtr->requestPreJump(Request::Cost + Request::Constraint + Request::SoftConstraint, t, x)
@@ -186,13 +186,13 @@ MetricsCollection computeIntermediateMetrics(OptimalControlProblem& problem, con
  * @param [in] time: The current time.
  * @param [in] state: The current state.
  * @param [in] multipliers: The current multipliers associated to the equality and inequality Lagrangians.
- * @return The output MetricsCollection.
+ * @return The output Metrics.
  */
-MetricsCollection computePreJumpMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
-                                        const MultiplierCollection& multipliers);
+Metrics computePreJumpMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
+                              const MultiplierCollection& multipliers);
 
 /**
- * Compute the final-time MetricsCollection (i.e. cost, softConstraints, and constraints).
+ * Compute the final-time Metrics (i.e. cost, softConstraints, and constraints).
  *
  * @note It is assumed that the precomputation request is already made.
  * problem.preComputationPtr->requestFinal(Request::Cost + Request::Constraint + Request::SoftConstraint, t, x)
@@ -201,9 +201,9 @@ MetricsCollection computePreJumpMetrics(OptimalControlProblem& problem, const sc
  * @param [in] time: The current time.
  * @param [in] state: The current state.
  * @param [in] multipliers: The current multipliers associated to the equality and inequality Lagrangians.
- * @return The output MetricsCollection.
+ * @return The output Metrics.
  */
-MetricsCollection computeFinalMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
-                                      const MultiplierCollection& multipliers);
+Metrics computeFinalMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
+                            const MultiplierCollection& multipliers);
 
 }  // namespace ocs2

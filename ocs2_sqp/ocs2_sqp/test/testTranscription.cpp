@@ -34,15 +34,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/test/circular_kinematics.h>
 #include <ocs2_oc/test/testProblemsGeneration.h>
 
-namespace {
-/** Helper to compare if two performance indices are identical */
-bool areIdentical(const ocs2::PerformanceIndex& lhs, const ocs2::PerformanceIndex& rhs) {
-  return lhs.merit == rhs.merit && lhs.cost == rhs.cost && lhs.dynamicsViolationSSE == rhs.dynamicsViolationSSE &&
-         lhs.equalityConstraintsSSE == rhs.equalityConstraintsSSE && lhs.equalityLagrangian == rhs.equalityLagrangian &&
-         lhs.inequalityLagrangian == rhs.inequalityLagrangian;
-}
-}  // namespace
-
 using namespace ocs2;
 using namespace ocs2::multiple_shooting;
 
@@ -62,7 +53,7 @@ TEST(test_transcription, intermediate_performance) {
 
   const auto performance = computeIntermediatePerformance(problem, discretizer, t, dt, x, x_next, u);
 
-  ASSERT_TRUE(areIdentical(performance, transcription.performance));
+  ASSERT_TRUE(performance.isApprox(transcription.performance, 1e-12));
 }
 
 TEST(test_transcription, terminal_performance) {
@@ -82,7 +73,7 @@ TEST(test_transcription, terminal_performance) {
   const auto transcription = setupTerminalNode(problem, t, x);
   const auto performance = computeTerminalPerformance(problem, t, x);
 
-  ASSERT_TRUE(areIdentical(performance, transcription.performance));
+  ASSERT_TRUE(performance.isApprox(transcription.performance, 1e-12));
 }
 
 TEST(test_transcription, event_performance) {
@@ -107,5 +98,5 @@ TEST(test_transcription, event_performance) {
   const auto transcription = setupEventNode(problem, t, x, x_next);
   const auto performance = computeEventPerformance(problem, t, x, x_next);
 
-  ASSERT_TRUE(areIdentical(performance, transcription.performance));
+  ASSERT_TRUE(performance.isApprox(transcription.performance, 1e-12));
 }

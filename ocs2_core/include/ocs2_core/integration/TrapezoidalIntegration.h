@@ -29,22 +29,32 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <cassert>
 #include <vector>
 
 namespace ocs2 {
 
-template <typename SCALAR_T>
-SCALAR_T trapezoidalIntegration(const std::vector<SCALAR_T>& timeTrajectory, const std::vector<SCALAR_T>& valueTrajectory) {
+/**
+ * Compute the trapezoidal integration of a trajectory of VALUE_T given the time stamp timeTrajectory and initial value initialValue.
+ *
+ * @note It requires that the VALUE_T has overwrite operator+(VALUE_T, VALUE_T) and define VALUE_T::operator*(SCALAR_T)
+ */
+template <typename SCALAR_T, typename VALUE_T>
+VALUE_T trapezoidalIntegration(const std::vector<SCALAR_T>& timeTrajectory, const std::vector<VALUE_T>& valueTrajectory,
+                               VALUE_T initialValue) {
+  assert(timeTrajectory.size() == valueTrajectory.size());
+
   if (timeTrajectory.size() < 2) {
-    return 0.0;
+    return initialValue;
   }
 
-  SCALAR_T areaUnderCurve = 0.0;
   for (size_t k = 1; k < timeTrajectory.size(); k++) {
-    areaUnderCurve += 0.5 * (valueTrajectory[k] + valueTrajectory[k - 1]) * (timeTrajectory[k] - timeTrajectory[k - 1]);
+    auto temp = valueTrajectory[k - 1] + valueTrajectory[k];
+    temp *= (0.5 * (timeTrajectory[k] - timeTrajectory[k - 1]));
+    initialValue += temp;
   }  // end of k loop
 
-  return areaUnderCurve;
+  return initialValue;
 }
 
 }  // namespace ocs2

@@ -38,11 +38,55 @@ namespace ros {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SolverObserver::lagrangian_callback_t createLagrangiancallback(::ros::NodeHandle& nodeHandle, const scalar_array_t& observingTimePoints,
+SolverObserver::constraint_callback_t createConstraintCallback(::ros::NodeHandle& nodeHandle, const scalar_array_t& observingTimePoints,
+                                                               const std::vector<std::string>& topicNames,
+                                                               CallbackInterpolationStrategy interpolationStrategy) {
+  using vector_ref_array_t = std::vector<std::reference_wrapper<const vector_t>>;
+
+  if (observingTimePoints.size() != topicNames.size()) {
+    throw std::runtime_error("[createConstraintCallback] For each observing time points, you should provide a unique topic name!");
+  }
+
+  std::vector<::ros::Publisher> constraintPublishers;
+  for (const auto& name : topicNames) {
+    constraintPublishers.push_back(nodeHandle.advertise<ocs2_msgs::constraint>(name, 1, true));
+  }
+
+  // note that we need to copy the publishers as the local ones will go out of scope. Good news is that ROS publisher
+  // behaves like std::sharted_ptr ("Once all copies of a specific Publisher go out of scope, any subscriber status callbacks
+  // associated with that handle will stop being called.")
+  return [=](const scalar_array_t& timeTrajectory, const vector_ref_array_t& termConstraintArray) {
+    if (!timeTrajectory.empty()) {
+      for (size_t i = 0; i < observingTimePoints.size(); i++) {
+        const auto t = timeTrajectory.front() + observingTimePoints[i];
+        const auto indexAlpha = LinearInterpolation::timeSegment(t, timeTrajectory);
+        const auto constraint = [&]() -> vector_t {
+          switch (interpolationStrategy) {
+            case CallbackInterpolationStrategy::nearest_time:
+              return (indexAlpha.second > 0.5) ? termConstraintArray[indexAlpha.first].get()
+                                               : termConstraintArray[indexAlpha.first + 1].get();
+            case CallbackInterpolationStrategy::linear_interpolation:
+              return LinearInterpolation::interpolate(
+                  indexAlpha, termConstraintArray,
+                  [](const vector_ref_array_t& array, size_t t) -> const vector_t& { return array[t].get(); });
+            default:
+              throw std::runtime_error("[createConstraintCallback] This CallbackInterpolationStrategy is not implemented!");
+          }
+        }();
+        constraintPublishers[i].publish(ros_msg_conversions::createConstraintMsg(t, constraint));
+      }
+    }
+  };
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+SolverObserver::lagrangian_callback_t createLagrangianCallback(::ros::NodeHandle& nodeHandle, const scalar_array_t& observingTimePoints,
                                                                const std::vector<std::string>& topicNames,
                                                                CallbackInterpolationStrategy interpolationStrategy) {
   if (observingTimePoints.size() != topicNames.size()) {
-    throw std::runtime_error("[createLagrangiancallback] For each observing time points, you should provide a unique topic name!");
+    throw std::runtime_error("[createLagrangianCallback] For each observing time points, you should provide a unique topic name!");
   }
 
   std::vector<::ros::Publisher> metricsPublishers;
@@ -51,8 +95,8 @@ SolverObserver::lagrangian_callback_t createLagrangiancallback(::ros::NodeHandle
   }
 
   // note that we need to copy the publishers as the local ones will go out of scope. Good news is that ROS publisher
-  // has internal ("Once all copies of a specific Publisher go out of scope, any subscriber status callbacks associated
-  // with that handle will stop being called.")
+  // behaves like std::sharted_ptr ("Once all copies of a specific Publisher go out of scope, any subscriber status callbacks
+  // associated with that handle will stop being called.")
   return [=](const scalar_array_t& timeTrajectory, const std::vector<LagrangianMetricsConstRef>& termMetricsArray) {
     if (!timeTrajectory.empty()) {
       for (size_t i = 0; i < observingTimePoints.size(); i++) {
@@ -66,10 +110,10 @@ SolverObserver::lagrangian_callback_t createLagrangiancallback(::ros::NodeHandle
             case CallbackInterpolationStrategy::linear_interpolation:
               return LinearInterpolation::interpolate(indexAlpha, termMetricsArray);
             default:
-              throw std::runtime_error("[createLagrangiancallback] This CallbackInterpolationStrategy is not implemented!");
+              throw std::runtime_error("[createLagrangianCallback] This CallbackInterpolationStrategy is not implemented!");
           }
         }();
-        metricsPublishers[i].publish(ros_msg_conversions::createMetricsMsg(t, metrics));
+        metricsPublishers[i].publish(ros_msg_conversions::createLagrangianMetricsMsg(t, metrics));
       }
     }
   };
@@ -91,8 +135,8 @@ SolverObserver::multiplier_callback_t createMultiplierCallback(::ros::NodeHandle
   }
 
   // note that we need to copy the publishers as the local ones will go out of scope. Good news is that ROS publisher
-  // has internal ("Once all copies of a specific Publisher go out of scope, any subscriber status callbacks associated
-  // with that handle will stop being called.")
+  // behaves like std::sharted_ptr ("Once all copies of a specific Publisher go out of scope, any subscriber status callbacks
+  // associated with that handle will stop being called.")
   return [=](const scalar_array_t& timeTrajectory, const std::vector<MultiplierConstRef>& termMultiplierArray) {
     if (!timeTrajectory.empty()) {
       for (size_t i = 0; i < observingTimePoints.size(); i++) {

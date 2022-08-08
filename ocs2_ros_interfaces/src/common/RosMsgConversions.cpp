@@ -216,7 +216,22 @@ TargetTrajectories readTargetTrajectoriesMsg(const ocs2_msgs::mpc_target_traject
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ocs2_msgs::lagrangian_metrics createMetricsMsg(scalar_t time, LagrangianMetricsConstRef metrics) {
+ocs2_msgs::constraint createConstraintMsg(scalar_t time, const vector_t& constraint) {
+  ocs2_msgs::constraint constraintMsg;
+
+  constraintMsg.time = time;
+  constraintMsg.value.resize(constraint.size());
+  for (size_t i = 0; i < constraint.size(); i++) {
+    constraintMsg.value[i] = constraint(i);
+  }  // end of i loop
+
+  return constraintMsg;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ocs2_msgs::lagrangian_metrics createLagrangianMetricsMsg(scalar_t time, LagrangianMetricsConstRef metrics) {
   ocs2_msgs::lagrangian_metrics metricsMsg;
 
   metricsMsg.time = time;

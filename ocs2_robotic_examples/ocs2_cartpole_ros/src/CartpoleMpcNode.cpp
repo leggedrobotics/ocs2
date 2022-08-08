@@ -72,7 +72,7 @@ int main(int argc, char** argv) {
       metricsTopicNames.push_back("metrics/" + observingLagrangianTerm + "/" + std::to_string(timeMs) + "MsLookAhead");
       multiplierTopicNames.push_back("multipliers/" + observingLagrangianTerm + "/" + std::to_string(timeMs) + "MsLookAhead");
     }
-    auto lagrangianCallback = ocs2::ros::createLagrangiancallback(nodeHandle, observingTimePoints, metricsTopicNames,
+    auto lagrangianCallback = ocs2::ros::createLagrangianCallback(nodeHandle, observingTimePoints, metricsTopicNames,
                                                                   ocs2::ros::CallbackInterpolationStrategy::linear_interpolation);
     auto multiplierCallback = ocs2::ros::createMultiplierCallback(nodeHandle, observingTimePoints, multiplierTopicNames,
                                                                   ocs2::ros::CallbackInterpolationStrategy::linear_interpolation);

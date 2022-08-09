@@ -84,6 +84,9 @@ inline Metrics interpolateNew(const LinearInterpolation::index_alpha_t& indexAlp
       // cost
       out.cost = LinearInterpolation::interpolate(
           indexAlpha, dataArray, [](const std::vector<Metrics>& array, size_t t) -> const scalar_t& { return array[t].cost; });
+      // dynamics violation
+      out.dynamicsViolation = LinearInterpolation::interpolate(
+          indexAlpha, dataArray, [](const std::vector<Metrics>& array, size_t t) -> const vector_t& { return array[t].dynamicsViolation; });
       // constraints
       out.stateEqConstraint = toConstraintArray(getSizes(dataArray[index].stateEqConstraint), f(lhs_stateEqConst, rhs_stateEqConst));
       out.stateInputEqConstraint = toConstraintArray(getSizes(dataArray[index].stateInputEqConstraint), f(lhs_stateInputEqConst, rhs_stateInputEqConst));

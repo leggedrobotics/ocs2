@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_core/model_data/Metrics.h"
 
+#include <limits>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
@@ -36,7 +38,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /** Returns true if *this is approximately equal to other, within the precision determined by prec. */
 bool Metrics::isApprox(const Metrics& other, scalar_t prec) const {
-  bool flag = std::abs(this->cost - other.cost) < prec * std::min(std::abs(this->cost), std::abs(other.cost));
+  bool flag = std::abs(this->cost - other.cost) <= prec * std::min(std::abs(this->cost), std::abs(other.cost)) ||
+               std::abs(this->cost - other.cost) < std::numeric_limits<scalar_t>::min();
   flag = flag && this->dynamicsViolation.isApprox(other.dynamicsViolation, prec);
   flag = flag && toVector(this->stateEqConstraint).isApprox(toVector(other.stateEqConstraint), prec);
   flag = flag && toVector(this->stateInputEqConstraint).isApprox(toVector(other.stateInputEqConstraint), prec);

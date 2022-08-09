@@ -96,7 +96,7 @@ struct PerformanceIndex {
 
   /** Returns true if *this is approximately equal to other, within the precision determined by prec. */
   bool isApprox(const PerformanceIndex other, const scalar_t prec = 1e-8) const {
-    auto fuzzyCompares = [&](const scalar_t a, const scalar_t b) { return std::abs(a - b) < prec * std::min(std::abs(a), std::abs(b)); };
+    auto fuzzyCompares = [&](const scalar_t a, const scalar_t b) { return std::abs(a - b) <= prec * std::min(std::abs(a), std::abs(b)); };
     bool isEqual = fuzzyCompares(this->merit, other.merit);
     isEqual = isEqual && fuzzyCompares(this->cost, other.cost);
     isEqual = isEqual && fuzzyCompares(this->dynamicsViolationSSE, other.dynamicsViolationSSE);

@@ -187,7 +187,7 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
 
     // Apply step
     linesearchTimer_.startTimer();
-    const auto stepInfo = takeStep(baselinePerformance, timeDiscretization, initState, deltaSolution, x, u);
+    const auto stepInfo = takeStep(baselinePerformance, timeDiscretization, initState, deltaSolution, x, u, problemMetrics_);
     performanceIndeces_.push_back(stepInfo.performanceAfterStep);
     linesearchTimer_.endTimer();
 
@@ -449,27 +449,43 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
 }
 
 PerformanceIndex MultipleShootingSolver::computePerformance(const std::vector<AnnotatedTime>& time, const vector_t& initState,
-                                                            const vector_array_t& x, const vector_array_t& u) {
+                                                            const vector_array_t& x, const vector_array_t& u,
+                                                            ProblemMetrics& problemMetrics) {
   // Problem horizon
   const int N = static_cast<int>(time.size()) - 1;
+
+  // extract indices for setting up problemMetrics
+  int numEvents = 0, numIntermediates = 0;
+  std::vector<int> indices(N);
+  for (int i = 0; i < N; ++i) {
+    indices[i] = (time[i].event == AnnotatedTime::Event::PreEvent) ? numEvents++ : numIntermediates++;
+  }
+
+  // resize
+  problemMetrics.clear();
+  problemMetrics.preJumps.resize(numEvents);
+  problemMetrics.intermediates.resize(numIntermediates);
 
   std::vector<PerformanceIndex> performance(settings_.nThreads, PerformanceIndex());
   std::atomic_int timeIndex{0};
   auto parallelTask = [&](int workerId) {
     // Get worker specific resources
     OptimalControlProblem& ocpDefinition = ocpDefinitions_[workerId];
-    PerformanceIndex workerPerformance;  // Accumulate performance in local variable
 
     int i = timeIndex++;
     while (i < N) {
+      const auto problemMetricsIndex = indices[i];
       if (time[i].event == AnnotatedTime::Event::PreEvent) {
         // Event node
-        workerPerformance += multiple_shooting::computeEventPerformance(ocpDefinition, time[i].time, x[i], x[i + 1]);
+        problemMetrics.preJumps[problemMetricsIndex] = multiple_shooting::computeEventMetrics(ocpDefinition, time[i].time, x[i], x[i + 1]);
+        performance[workerId] += toPerformanceIndex(problemMetrics.preJumps[problemMetricsIndex]);
       } else {
         // Normal, intermediate node
         const scalar_t ti = getIntervalStart(time[i]);
         const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
-        workerPerformance += multiple_shooting::computeIntermediatePerformance(ocpDefinition, discretizer_, ti, dt, x[i], x[i + 1], u[i]);
+        problemMetrics.intermediates[problemMetricsIndex] =
+            multiple_shooting::computeIntermediateMetrics(ocpDefinition, discretizer_, ti, dt, x[i], x[i + 1], u[i]);
+        performance[workerId] += dt * toPerformanceIndex(problemMetrics.intermediates[problemMetricsIndex]);
       }
 
       i = timeIndex++;
@@ -477,20 +493,20 @@ PerformanceIndex MultipleShootingSolver::computePerformance(const std::vector<An
 
     if (i == N) {  // Only one worker will execute this
       const scalar_t tN = getIntervalStart(time[N]);
-      workerPerformance += multiple_shooting::computeTerminalPerformance(ocpDefinition, tN, x[N]);
+      problemMetrics.final = multiple_shooting::computeTerminalMetrics(ocpDefinition, tN, x[N]);
+      performance[workerId] += toPerformanceIndex(problemMetrics.final);
     }
-
-    // Accumulate! Same worker might run multiple tasks
-    performance[workerId] += workerPerformance;
   };
   runParallel(std::move(parallelTask));
 
-  // Account for init state in performance
+  // Account for initial state in performance
+  problemMetrics.intermediates.front().dynamicsViolation += (initState - x.front());
   performance.front().dynamicsViolationSSE += (initState - x.front()).squaredNorm();
 
   // Sum performance of the threads
   PerformanceIndex totalPerformance = std::accumulate(std::next(performance.begin()), performance.end(), performance.front());
   totalPerformance.merit = totalPerformance.cost + totalPerformance.equalityLagrangian + totalPerformance.inequalityLagrangian;
+
   return totalPerformance;
 }
 
@@ -509,7 +525,7 @@ scalar_t MultipleShootingSolver::totalConstraintViolation(const PerformanceIndex
 multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIndex& baseline,
                                                              const std::vector<AnnotatedTime>& timeDiscretization,
                                                              const vector_t& initState, const OcpSubproblemSolution& subproblemSolution,
-                                                             vector_array_t& x, vector_array_t& u) {
+                                                             vector_array_t& x, vector_array_t& u, ProblemMetrics& problemMetrics) {
   using StepType = multiple_shooting::StepInfo::StepType;
 
   /*
@@ -550,7 +566,7 @@ multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIn
     }
 
     // Compute cost and constraints
-    const PerformanceIndex performanceNew = computePerformance(timeDiscretization, initState, xNew, uNew);
+    const PerformanceIndex performanceNew = computePerformance(timeDiscretization, initState, xNew, uNew, problemMetricsNew_);
     const scalar_t newConstraintViolation = totalConstraintViolation(performanceNew);
 
     // Step acceptance and record step type
@@ -582,6 +598,7 @@ multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIn
     if (stepAccepted) {  // Return if step accepted
       x = std::move(xNew);
       u = std::move(uNew);
+      problemMetrics.swap(problemMetricsNew_);
 
       stepInfo.stepSize = alpha;
       stepInfo.dx_norm = alpha * deltaXnorm;
@@ -604,6 +621,8 @@ multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIn
   } while (alpha >= settings_.alpha_min);
 
   // Alpha_min reached -> Don't take a step
+  std::ignore = computePerformance(timeDiscretization, initState, xNew, uNew, problemMetrics);
+
   stepInfo.stepSize = 0.0;
   stepInfo.stepType = StepType::ZERO;
   stepInfo.dx_norm = 0.0;

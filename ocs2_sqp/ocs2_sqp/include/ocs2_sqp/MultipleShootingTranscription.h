@@ -66,11 +66,10 @@ Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlP
                                     scalar_t t, scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u);
 
 /**
- * Compute only the performance index for a single intermediate node.
- * Corresponds to the performance index returned by "setupIntermediateNode"
+ * Compute only the Metrics for a single intermediate node.
  */
-PerformanceIndex computeIntermediatePerformance(const OptimalControlProblem& optimalControlProblem, DynamicsDiscretizer& discretizer,
-                                                scalar_t t, scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u);
+Metrics computeIntermediateMetrics(const OptimalControlProblem& optimalControlProblem, DynamicsDiscretizer& discretizer, scalar_t t,
+                                   scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u);
 
 /**
  * Results of the transcription at a terminal node
@@ -92,10 +91,9 @@ struct TerminalTranscription {
 TerminalTranscription setupTerminalNode(const OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x);
 
 /**
- * Compute only the performance index for the terminal node.
- * Corresponds to the performance index returned by "setTerminalNode"
+ * Compute only the Metrics for the terminal node.
  */
-PerformanceIndex computeTerminalPerformance(const OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x);
+Metrics computeTerminalMetrics(const OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x);
 
 /**
  * Results of the transcription at an event
@@ -120,11 +118,9 @@ EventTranscription setupEventNode(const OptimalControlProblem& optimalControlPro
                                   const vector_t& x_next);
 
 /**
- * Compute only the performance index for the event node.
- * Corresponds to the performance index returned by "setupEventNode"
+ * Compute only the Metrics for the event node.
  */
-PerformanceIndex computeEventPerformance(const OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x,
-                                         const vector_t& x_next);
+Metrics computeEventMetrics(const OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x, const vector_t& x_next);
 
 }  // namespace multiple_shooting
 }  // namespace ocs2

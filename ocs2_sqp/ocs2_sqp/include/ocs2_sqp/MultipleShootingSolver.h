@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/initialization/Initializer.h>
 #include <ocs2_core/integration/SensitivityIntegrator.h>
 #include <ocs2_core/misc/Benchmark.h>
+#include <ocs2_core/model_data/Metrics.h>
 #include <ocs2_core/thread_support/ThreadPool.h>
 
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
@@ -68,9 +69,7 @@ class MultipleShootingSolver : public SolverBase {
 
   const DualSolution* getDualSolution() const override { return nullptr; }
 
-  const ProblemMetrics& getSolutionMetrics() const override {
-    throw std::runtime_error("[MultipleShootingSolver] getSolutionMetrics() not available yet.");
-  }
+  const ProblemMetrics& getSolutionMetrics() const override { return problemMetrics_; }
 
   size_t getNumIterations() const override { return totalNumIterations_; }
 
@@ -131,7 +130,7 @@ class MultipleShootingSolver : public SolverBase {
 
   /** Computes only the performance metrics at the current {t, x(t), u(t)} */
   PerformanceIndex computePerformance(const std::vector<AnnotatedTime>& time, const vector_t& initState, const vector_array_t& x,
-                                      const vector_array_t& u);
+                                      const vector_array_t& u, ProblemMetrics& problemMetrics);
 
   /** Returns solution of the QP subproblem in delta coordinates: */
   struct OcpSubproblemSolution {
@@ -156,7 +155,7 @@ class MultipleShootingSolver : public SolverBase {
   /** Decides on the step to take and overrides given trajectories {x(t), u(t)} <- {x(t) + a*dx(t), u(t) + a*du(t)} */
   multiple_shooting::StepInfo takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization,
                                        const vector_t& initState, const OcpSubproblemSolution& subproblemSolution, vector_array_t& x,
-                                       vector_array_t& u);
+                                       vector_array_t& u, ProblemMetrics& problemMetrics);
 
   /** Determine convergence after a step */
   multiple_shooting::Convergence checkConvergence(int iteration, const PerformanceIndex& baseline,
@@ -189,6 +188,11 @@ class MultipleShootingSolver : public SolverBase {
 
   // Iteration performance log
   std::vector<PerformanceIndex> performanceIndeces_;
+
+  // The ProblemMetrics associated to primalSolution_
+  ProblemMetrics problemMetrics_;
+  // Memory used within the search strategy
+  ProblemMetrics problemMetricsNew_;
 
   // Benchmarking
   size_t numProblems_{0};

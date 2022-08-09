@@ -187,10 +187,11 @@ Metrics computeIntermediateMetrics(OptimalControlProblem& problem, const scalar_
  * @param [in] time: The current time.
  * @param [in] state: The current state.
  * @param [in] multipliers: The current multipliers associated to the equality and inequality Lagrangians.
+ * @param [in] dynamicsViolation: The violation dynamics. It depends on the transcription method.
  * @return The output Metrics.
  */
 Metrics computePreJumpMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
-                              const MultiplierCollection& multipliers);
+                              const MultiplierCollection& multipliers, const vector_t& dynamicsViolation = vector_t());
 
 /**
  * Compute the final-time Metrics (i.e. cost, softConstraints, and constraints).

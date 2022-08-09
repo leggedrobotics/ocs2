@@ -48,7 +48,9 @@ int main(int argc, char** argv) {
   ::ros::init(argc, argv, robotName + "_mpc");
   ::ros::NodeHandle nodeHandle;
   // Get node parameters
+  bool multiplot = false;
   std::string taskFile, urdfFile, referenceFile;
+  nodeHandle.getParam("/multiplot", multiplot);
   nodeHandle.getParam("/taskFile", taskFile);
   nodeHandle.getParam("/referenceFile", referenceFile);
   nodeHandle.getParam("/urdfFile", urdfFile);
@@ -70,17 +72,19 @@ int main(int argc, char** argv) {
   mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
   mpc.getSolverPtr()->addSynchronizedModule(gaitReceiverPtr);
 
-  // observer for zero velocity constraints
-  auto createStateInputBoundsObserver = [&](const std::string& termName) {
-    const ocs2::scalar_array_t observingTimePoints{0.0};
-    const std::vector<std::string> topicNames{"metrics/" + termName + "/0MsLookAhead"};
-    auto callback =
-        ocs2::ros::createConstraintCallback(nodeHandle, {0.0}, topicNames, ocs2::ros::CallbackInterpolationStrategy::linear_interpolation);
-    return ocs2::SolverObserver::ConstraintTermObserver(ocs2::SolverObserver::Type::Intermediate, termName, std::move(callback));
-  };
-  for (size_t i = 0; i < interface.getCentroidalModelInfo().numThreeDofContacts; i++) {
-    const std::string& footName = interface.modelSettings().contactNames3DoF[i];
-    mpc.getSolverPtr()->addSolverObserver(createStateInputBoundsObserver(footName + "_zeroVelocity"));
+  // observer for zero velocity constraints (only add this for debugging as it slows down the solver)
+  if (multiplot) {
+    auto createStateInputBoundsObserver = [&](const std::string& termName) {
+      const ocs2::scalar_array_t observingTimePoints{0.0};
+      const std::vector<std::string> topicNames{"metrics/" + termName + "/0MsLookAhead"};
+      auto callback = ocs2::ros::createConstraintCallback(nodeHandle, {0.0}, topicNames,
+                                                          ocs2::ros::CallbackInterpolationStrategy::linear_interpolation);
+      return ocs2::SolverObserver::ConstraintTermObserver(ocs2::SolverObserver::Type::Intermediate, termName, std::move(callback));
+    };
+    for (size_t i = 0; i < interface.getCentroidalModelInfo().numThreeDofContacts; i++) {
+      const std::string& footName = interface.modelSettings().contactNames3DoF[i];
+      mpc.getSolverPtr()->addSolverObserver(createStateInputBoundsObserver(footName + "_zeroVelocity"));
+    }
   }
 
   // Launch MPC ROS node

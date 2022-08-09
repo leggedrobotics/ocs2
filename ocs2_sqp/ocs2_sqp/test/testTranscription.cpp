@@ -51,7 +51,7 @@ TEST(test_transcription, intermediate_performance) {
   const vector_t u = (vector_t(2) << 0.1, 1.3).finished();
   const auto transcription = setupIntermediateNode(problem, sensitivityDiscretizer, true, t, dt, x, x_next, u);
 
-  const auto performance = computeIntermediatePerformance(problem, discretizer, t, dt, x, x_next, u);
+  const auto performance = dt * toPerformanceIndex(computeIntermediateMetrics(problem, discretizer, t, dt, x, x_next, u));
 
   ASSERT_TRUE(performance.isApprox(transcription.performance, 1e-12));
 }
@@ -71,7 +71,7 @@ TEST(test_transcription, terminal_performance) {
   scalar_t t = 0.5;
   const vector_t x = vector_t::Random(nx);
   const auto transcription = setupTerminalNode(problem, t, x);
-  const auto performance = computeTerminalPerformance(problem, t, x);
+  const auto performance = toPerformanceIndex(computeTerminalMetrics(problem, t, x));
 
   ASSERT_TRUE(performance.isApprox(transcription.performance, 1e-12));
 }
@@ -96,7 +96,7 @@ TEST(test_transcription, event_performance) {
   const vector_t x = (vector_t(nx) << 1.0, 0.1).finished();
   const vector_t x_next = (vector_t(nx) << 1.1, 0.2).finished();
   const auto transcription = setupEventNode(problem, t, x, x_next);
-  const auto performance = computeEventPerformance(problem, t, x, x_next);
+  const auto performance = toPerformanceIndex(computeEventMetrics(problem, t, x, x_next));
 
   ASSERT_TRUE(performance.isApprox(transcription.performance, 1e-12));
 }

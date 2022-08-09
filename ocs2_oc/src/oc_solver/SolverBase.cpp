@@ -110,7 +110,9 @@ void SolverBase::postRun() {
     for (auto& observer : solverObservers_) {
       observer->extractTermConstraint(getOptimalControlProblem(), solution, getSolutionMetrics());
       observer->extractTermLagrangianMetrics(getOptimalControlProblem(), solution, getSolutionMetrics());
-      observer->extractTermMultipliers(getOptimalControlProblem(), getDualSolution());
+      if (getDualSolution() != nullptr) {
+        observer->extractTermMultipliers(getOptimalControlProblem(), *getDualSolution());
+      }
     }
   }
 }

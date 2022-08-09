@@ -89,7 +89,7 @@ class GaussNewtonDDP : public SolverBase {
 
   void getPrimalSolution(scalar_t finalTime, PrimalSolution* primalSolutionPtr) const final;
 
-  const DualSolution& getDualSolution() const override { return optimizedDualSolution_; }
+  const DualSolution* getDualSolution() const override { return &optimizedDualSolution_; }
 
   const ProblemMetrics& getSolutionMetrics() const override { return optimizedProblemMetrics_; }
 

@@ -195,7 +195,7 @@ class SolverBase {
    *
    * @return: The dual problem's solution.
    */
-  virtual const DualSolution& getDualSolution() const = 0;
+  virtual const DualSolution* getDualSolution() const = 0;
 
   /**
    * @brief Returns the optimized value of the Metrics.

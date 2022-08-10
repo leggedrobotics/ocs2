@@ -307,9 +307,7 @@ class GaussNewtonDDP : public SolverBase {
   void projectLQ(const ModelData& modelData, const matrix_t& constraintRangeProjector, const matrix_t& constraintNullProjector,
                  ModelData& projectedModelData) const;
 
-  /**
-   * Initialize the constraint penalty coefficients.
-   */
+  /** Initialize the constraint penalty coefficients. */
   void initializeConstraintPenalties();
 
   /**
@@ -318,16 +316,14 @@ class GaussNewtonDDP : public SolverBase {
    */
   void updateConstraintPenalties(scalar_t equalityConstraintsSSE);
 
-  /**
-   * Runs the initialization method for Gauss-Newton DDP.
-   */
-  void runInit();
+  /** Initializes the nominal primal and dual solutions based on the optimized ones. */
+  void initializeDualPrimal();
 
-  /**
-   * Runs a single iteration of Gauss-Newton DDP.
-   * @param [in] lqModelExpectedCost: The expected cost based on the LQ model optimization.
-   */
-  void runIteration(scalar_t lqModelExpectedCost);
+  /** Constructs and solves the LQ problem around the nominal trajectories. */
+  void constructAndSolveLQ();
+
+  /** Based on the current LQ solution updates the optimized primal and dual solutions. */
+  void takePrimalDualStep(scalar_t lqModelExpectedCost);
 
   /**
    * Checks convergence of the main loop of DDP.

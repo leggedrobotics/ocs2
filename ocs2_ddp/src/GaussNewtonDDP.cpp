@@ -836,6 +836,15 @@ void GaussNewtonDDP::initializeConstraintPenalties() {
 
   constraintPenaltyCoefficients_.penaltyCoeff = ddpSettings_.constraintPenaltyInitialValue_;
   constraintPenaltyCoefficients_.penaltyTol = 1.0 / std::pow(constraintPenaltyCoefficients_.penaltyCoeff, 0.1);
+
+  // display
+  if (ddpSettings_.displayInfo_) {
+    std::string displayText = "Initial equality Constraints Penalty Parameters:\n";
+    displayText += "    Penalty Tolerance: " + std::to_string(constraintPenaltyCoefficients_.penaltyTol);
+    displayText += "    Penalty Coefficient: " + std::to_string(constraintPenaltyCoefficients_.penaltyCoeff) + ".\n";
+
+    this->printString(displayText);
+  }
 }
 
 /******************************************************************************************************/
@@ -867,9 +876,6 @@ void GaussNewtonDDP::updateConstraintPenalties(scalar_t equalityConstraintsSSE) 
 /******************************************************************************************************/
 /******************************************************************************************************/
 void GaussNewtonDDP::initializeDualPrimal() {
-  constexpr size_t taskId = 0;
-  constexpr scalar_t stepLength = 0.0;
-
   try {
     // adjust controller
     if (!optimizedPrimalSolution_.controllerPtr_->empty()) {
@@ -900,7 +906,7 @@ void GaussNewtonDDP::initializeDualPrimal() {
                                  nominalDualData_.dualSolution);
     totalDualSolutionTimer_.endTimer();
 
-    computeRolloutMetrics(optimalControlProblemStock_[taskId], nominalPrimalData_.primalSolution, nominalDualData_.dualSolution,
+    computeRolloutMetrics(optimalControlProblemStock_[0], nominalPrimalData_.primalSolution, nominalDualData_.dualSolution,
                           nominalPrimalData_.problemMetrics);
 
     // update dual
@@ -914,16 +920,8 @@ void GaussNewtonDDP::initializeDualPrimal() {
         computeRolloutPerformanceIndex(nominalPrimalData_.primalSolution.timeTrajectory_, nominalPrimalData_.problemMetrics);
     performanceIndex_.merit = calculateRolloutMerit(performanceIndex_);
 
-    // display
-    if (ddpSettings_.displayInfo_) {
-      std::stringstream infoDisplay;
-      infoDisplay << "    [Thread " << taskId << "] - step length " << stepLength << '\n';
-      infoDisplay << std::setw(4) << performanceIndex_ << '\n';
-      printString(infoDisplay.str());
-    }
-
   } catch (const std::exception& error) {
-    const std::string msg = "[GaussNewtonDDP::initializeDualPrimal] Initial controller does not generate a stable rollout.\n";
+    const std::string msg = "[GaussNewtonDDP::initializeDualPrimal] the initial rollout is unstable!\n";
     throw std::runtime_error(msg + error.what());
   }
 }
@@ -1032,7 +1030,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   // display
   if (ddpSettings_.displayInfo_) {
     std::cerr << "\n###################";
-    std::cerr << "\n#### Iteration " << (totalNumIterations_ - initIteration) << " (Dynamics might have been violated)";
+    std::cerr << "\n#### Initial Rollout";
     std::cerr << "\n###################\n";
   }
 
@@ -1049,14 +1047,21 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   // check if the rollout is a result of an empty controller
   bool unreliableValueFunction = nominalPrimalData_.primalSolution.controllerPtr_->empty();
 
+  // display
+  if (ddpSettings_.displayInfo_) {
+    if (unreliableValueFunction) {
+      std::cerr << "Note: system dynamics might have been violated in during initialization!\n";
+    }
+    std::cerr << performanceIndex_ << '\n';
+  }
+
   // convergence variables of the main loop
   bool isConverged = false;
   std::string convergenceInfo;
 
   // DDP main loop
   while (true) {
-    // display the iteration's input update norm (before caching the old nominals)
-    if (ddpSettings_.displayInfo_ && totalNumIterations_ > initIteration) {
+    if (ddpSettings_.displayInfo_) {
       std::cerr << "\n###################";
       std::cerr << "\n#### Iteration " << (totalNumIterations_ - initIteration);
       std::cerr << "\n###################\n";
@@ -1113,6 +1118,8 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
     std::cerr << "Time Period:          [" << initTime_ << " ," << finalTime_ << "]\n";
     std::cerr << "Number of Iterations: " << (totalNumIterations_ - initIteration) << " out of " << ddpSettings_.maxNumIterations_ << "\n";
+
+    printRolloutInfo();
 
     if (isConverged) {
       std::cerr << convergenceInfo << std::endl;

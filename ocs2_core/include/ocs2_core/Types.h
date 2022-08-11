@@ -71,15 +71,6 @@ using matrix_array2_t = std::vector<matrix_array_t>;
 /** Array of arrays of dynamic matrix trajectory type. */
 using matrix_array3_t = std::vector<matrix_array2_t>;
 
-/** Eigen scalar type. */
-using eigen_scalar_t = Eigen::Matrix<scalar_t, 1, 1>;
-/** Eigen scalar trajectory type. */
-using eigen_scalar_array_t = std::vector<eigen_scalar_t>;
-/** Array of eigen scalar trajectory type. */
-using eigen_scalar_array2_t = std::vector<eigen_scalar_array_t>;
-/** Array of arrays of eigen scalar trajectory type. */
-using eigen_scalar_array3_t = std::vector<eigen_scalar_array2_t>;
-
 /**
  * Defines the linear approximation of a scalar function
  * f(x,u) = dfdx' dx + dfdu' du + f

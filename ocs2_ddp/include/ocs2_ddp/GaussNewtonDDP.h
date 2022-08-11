@@ -232,15 +232,33 @@ class GaussNewtonDDP : public SolverBase {
   }
 
   /**
-   * Forward integrate the system dynamics with given controller in primalSolution and operating trajectories. In general, it uses
-   * the given control policies and initial state, to integrate the system dynamics in the time period [initTime, finalTime].
-   * However, if the provided controller does not cover the period [initTime, finalTime], it will use the controller till the
-   * final time of the controller and after it uses the operating trajectories.
+   * Forward integrate the system dynamics with the controller in inputPrimalSolution. In general, it uses the given
+   * control policies and the initial state, to integrate the system dynamics in the time period [initTime, finalTime].
+   * However, if inputPrimalSolution's controller does not cover the period [initTime, finalTime], it will use the
+   * controller till the final time of the controller
    *
-   * @param [in, out] primalSolution: The resulting state-input trajectory. The primal solution is initialized with the controller
-   *                                  and the modeSchedule. However, for StateTriggered Rollout the modeSchedule can be overwritten.
+   * @param [in] inputPrimalSolution: Its controller will be used for rollout.
+   * @param [out] outputPrimalSolution: The resulting PrimalSolution.
+   * @return True if the rollout was successful.
    */
-  void rolloutInitialTrajectory(PrimalSolution& primalSolution);
+  bool rolloutInitialController(PrimalSolution& inputPrimalSolution, PrimalSolution& outputPrimalSolution);
+
+  /**
+   * Extracts the PrimalSolution trajectories from inputPrimalSolution. In general, it will try to extract in time period
+   * [initTime, finalTime]. However, if inputPrimalSolution's timeTrajectory does not cover the period [initTime, finalTime],
+   * it will extract the solution until the last time of the timeTrajectory
+   *
+   * @param [in] inputPrimalSolution: Its controller will be used for rollout.
+   * @param [out] outputPrimalSolution: The resulting PrimalSolution.
+   * @return True if the extraction was successful.
+   */
+  bool extractInitialTrajectories(PrimalSolution& inputPrimalSolution, PrimalSolution& outputPrimalSolution);
+
+  /**
+   * It will check the content of the primalSolution, and if its final time is smaller than the current solver finalTime_,
+   * it will concatenate it with the result of Initializer.
+   */
+  void rolloutInitializer(PrimalSolution& primalSolution);
 
   /**
    * Calculates the controller. This method uses the following variables. The method modifies unoptimizedController_.
@@ -292,8 +310,8 @@ class GaussNewtonDDP : public SolverBase {
    */
   void updateConstraintPenalties(scalar_t equalityConstraintsSSE);
 
-  /** Initializes the nominal primal based on the optimized ones. \
-   * @return whether the rollout is a result of Initializer since the optimized controller was empty.
+  /** Initializes the nominal primal based on the optimized ones.
+   * @return True if the rollout is not purely from the Initializer.
    */
   bool initializePrimalSolution();
 
@@ -321,13 +339,7 @@ class GaussNewtonDDP : public SolverBase {
 
   void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const ControllerBase* externalControllerPtr) override;
 
-  void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const PrimalSolution& primalSolution) override {
-    if (primalSolution.controllerPtr_ == nullptr) {
-      std::cerr
-          << "[GaussNewtonDDP] DDP cannot be warm started without a controller in the primal solution. Will revert to a cold start.\n";
-    }
-    runImpl(initTime, initState, finalTime, primalSolution.controllerPtr_.get());
-  }
+  void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const PrimalSolution& primalSolution) override;
 
  protected:
   // nominal data

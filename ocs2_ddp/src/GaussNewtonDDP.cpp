@@ -36,7 +36,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/integration/TrapezoidalIntegration.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
 
-#include <ocs2_oc/approximate_model/ChangeOfInputVariables.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblemHelperFunction.h>
 #include <ocs2_oc/rollout/InitializerRollout.h>
 #include <ocs2_oc/trajectory_adjustment/TrajectorySpreadingHelperFunctions.h>
@@ -55,6 +54,9 @@ namespace ocs2 {
 GaussNewtonDDP::GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalControlProblem& optimalControlProblem,
                                const Initializer& initializer)
     : ddpSettings_(std::move(ddpSettings)), threadPool_(std::max(ddpSettings_.nThreads_, size_t(1)) - 1, ddpSettings_.threadPriority_) {
+  Eigen::setNbThreads(1);  // no multithreading within Eigen.
+  Eigen::initParallel();
+
   // check OCP
   if (!optimalControlProblem.stateEqualityConstraintPtr->empty()) {
     throw std::runtime_error(
@@ -372,13 +374,6 @@ vector_t GaussNewtonDDP::getStateInputEqualityConstraintLagrangianImpl(scalar_t 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::runParallel(std::function<void(void)> taskFunction, size_t N) {
-  threadPool_.runParallel([&](int) { taskFunction(); }, N);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 void GaussNewtonDDP::rolloutInitialTrajectory(PrimalSolution& primalSolution) {
   // create alias
   auto* controllerPtr = primalSolution.controllerPtr_.get();
@@ -608,17 +603,11 @@ void GaussNewtonDDP::calculateController() {
       }
     }
   }
-}
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-scalar_t GaussNewtonDDP::maxControllerUpdateNorm(const LinearController& controller) const {
-  scalar_t maxDeltaUffNorm = 0.0;
-  for (const auto& deltaBias : controller.deltaBiasArray_) {
-    maxDeltaUffNorm = std::max(maxDeltaUffNorm, deltaBias.norm());
+  // display
+  if (ddpSettings_.displayInfo_) {
+    std::cerr << "max feedforward norm: " << maxControllerUpdateNorm(unoptimizedController_) << "\n";
   }
-  return maxDeltaUffNorm;
 }
 
 /******************************************************************************************************/
@@ -764,75 +753,21 @@ void GaussNewtonDDP::computeProjections(const matrix_t& Hm, const matrix_t& Dm, 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::projectLQ(const ModelData& modelData, const matrix_t& constraintRangeProjector,
-                               const matrix_t& constraintNullProjector, ModelData& projectedModelData) const {
-  // dimensions and time
-  projectedModelData.time = modelData.time;
-  projectedModelData.stateDim = modelData.stateDim;
-  projectedModelData.inputDim = modelData.inputDim - modelData.stateInputEqConstraint.f.rows();
-
-  // unhandled constraints
-  projectedModelData.stateEqConstraint.f = vector_t();
-
-  if (modelData.stateInputEqConstraint.f.rows() == 0) {
-    // Change of variables u = Pu * tilde{u}
-    // Pu = constraintNullProjector;
-
-    // projected state-input equality constraints
-    projectedModelData.stateInputEqConstraint.f.setZero(projectedModelData.inputDim);
-    projectedModelData.stateInputEqConstraint.dfdx.setZero(projectedModelData.inputDim, projectedModelData.stateDim);
-    projectedModelData.stateInputEqConstraint.dfdu.setZero(modelData.inputDim, modelData.inputDim);
-
-    // dynamics
-    projectedModelData.dynamics = modelData.dynamics;
-    changeOfInputVariables(projectedModelData.dynamics, constraintNullProjector);
-
-    // dynamics bias
-    projectedModelData.dynamicsBias = modelData.dynamicsBias;
-
-    // cost
-    projectedModelData.cost = modelData.cost;
-    changeOfInputVariables(projectedModelData.cost, constraintNullProjector);
-
-  } else {
-    // Change of variables u = Pu * tilde{u} + Px * x + u0
-    // Pu = constraintNullProjector;
-    // Px (= -CmProjected) = -constraintRangeProjector * C
-    // u0 (= -EvProjected) = -constraintRangeProjector * e
-
-    /* projected state-input equality constraints */
-    projectedModelData.stateInputEqConstraint.f.noalias() = constraintRangeProjector * modelData.stateInputEqConstraint.f;
-    projectedModelData.stateInputEqConstraint.dfdx.noalias() = constraintRangeProjector * modelData.stateInputEqConstraint.dfdx;
-    projectedModelData.stateInputEqConstraint.dfdu.noalias() = constraintRangeProjector * modelData.stateInputEqConstraint.dfdu;
-
-    // Change of variable matrices
-    const auto& Pu = constraintNullProjector;
-    const matrix_t Px = -projectedModelData.stateInputEqConstraint.dfdx;
-    const matrix_t u0 = -projectedModelData.stateInputEqConstraint.f;
-
-    // dynamics
-    projectedModelData.dynamics = modelData.dynamics;
-    changeOfInputVariables(projectedModelData.dynamics, Pu, Px, u0);
-
-    // dynamics bias
-    projectedModelData.dynamicsBias = modelData.dynamicsBias;
-    projectedModelData.dynamicsBias.noalias() += modelData.dynamics.dfdu * u0;
-
-    // cost
-    projectedModelData.cost = modelData.cost;
-    changeOfInputVariables(projectedModelData.cost, Pu, Px, u0);
-  }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 void GaussNewtonDDP::initializeConstraintPenalties() {
   assert(ddpSettings_.constraintPenaltyInitialValue_ > 1.0);
   assert(ddpSettings_.constraintPenaltyIncreaseRate_ > 1.0);
 
   constraintPenaltyCoefficients_.penaltyCoeff = ddpSettings_.constraintPenaltyInitialValue_;
   constraintPenaltyCoefficients_.penaltyTol = 1.0 / std::pow(constraintPenaltyCoefficients_.penaltyCoeff, 0.1);
+
+  // display
+  if (ddpSettings_.displayInfo_) {
+    std::string displayText = "Initial equality Constraints Penalty Parameters:\n";
+    displayText += "    Penalty Tolerance: " + std::to_string(constraintPenaltyCoefficients_.penaltyTol);
+    displayText += "    Penalty Coefficient: " + std::to_string(constraintPenaltyCoefficients_.penaltyCoeff) + ".\n";
+
+    this->printString(displayText);
+  }
 }
 
 /******************************************************************************************************/
@@ -863,19 +798,13 @@ void GaussNewtonDDP::updateConstraintPenalties(scalar_t equalityConstraintsSSE) 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::runInit() {
-  // disable Eigen multi-threading
-  Eigen::setNbThreads(1);
-
-  initializationTimer_.startTimer();
-
-  // swap primal and dual data to cache
-  nominalDualData_.swap(cachedDualData_);
-  nominalPrimalData_.swap(cachedPrimalData_);
-
+bool GaussNewtonDDP::initializePrimalSolution() {
   try {
-    constexpr size_t taskId = 0;
-    constexpr scalar_t stepLength = 0.0;
+    // adjust controller
+    if (!optimizedPrimalSolution_.controllerPtr_->empty()) {
+      std::ignore = trajectorySpread(optimizedPrimalSolution_.modeSchedule_, getReferenceManager().getModeSchedule(),
+                                     getLinearController(optimizedPrimalSolution_));
+    }
 
     // clear before starting to fill nominalPrimalData_
     nominalPrimalData_.clear();
@@ -888,146 +817,79 @@ void GaussNewtonDDP::runInit() {
     // perform a rollout
     rolloutInitialTrajectory(nominalPrimalData_.primalSolution);
 
-    // adjust dual solution
-    totalDualSolutionTimer_.startTimer();
-    if (!optimizedDualSolution_.timeTrajectory.empty()) {
-      const auto status =
-          trajectorySpread(optimizedPrimalSolution_.modeSchedule_, nominalPrimalData_.primalSolution.modeSchedule_, optimizedDualSolution_);
-    }
-
-    // initialize dual solution
-    ocs2::initializeDualSolution(optimalControlProblemStock_[0], nominalPrimalData_.primalSolution, optimizedDualSolution_,
-                                 nominalDualData_.dualSolution);
-    totalDualSolutionTimer_.endTimer();
-
-    computeRolloutMetrics(optimalControlProblemStock_[taskId], nominalPrimalData_.primalSolution, nominalDualData_.dualSolution,
-                          nominalPrimalData_.problemMetrics);
-
-    // update dual
-    totalDualSolutionTimer_.startTimer();
-    //  ocs2::updateDualSolution(optimalControlProblemStock_[0], nominalPrimalData_.primalSolution, nominalPrimalData_.problemMetrics,
-    //  nominalDualData_.dualSolution);
-    totalDualSolutionTimer_.endTimer();
-
-    // calculates rollout merit
-    performanceIndex_ =
-        computeRolloutPerformanceIndex(nominalPrimalData_.primalSolution.timeTrajectory_, nominalPrimalData_.problemMetrics);
-    performanceIndex_.merit = calculateRolloutMerit(performanceIndex_);
-
-    // display
-    if (ddpSettings_.displayInfo_) {
-      std::stringstream infoDisplay;
-      infoDisplay << "    [Thread " << taskId << "] - step length " << stepLength << '\n';
-      infoDisplay << std::setw(4) << performanceIndex_ << '\n';
-      printString(infoDisplay.str());
-    }
-
   } catch (const std::exception& error) {
-    const std::string msg = "[GaussNewtonDDP::runInit] Initial controller does not generate a stable rollout.\n";
+    const std::string msg = "[GaussNewtonDDP::initializePrimalSolution] the initial rollout is unstable!\n";
     throw std::runtime_error(msg + error.what());
   }
-  initializationTimer_.endTimer();
 
-  // initialize penalty coefficients
-  initializeConstraintPenalties();
-
-  // linearizing the dynamics and quadratizing the cost function along nominal trajectories
-  linearQuadraticApproximationTimer_.startTimer();
-  approximateOptimalControlProblem();
-  linearQuadraticApproximationTimer_.endTimer();
-
-  // solve Riccati equations
-  backwardPassTimer_.startTimer();
-  avgTimeStepBP_ = solveSequentialRiccatiEquations(nominalPrimalData_.modelDataFinalTime.cost);
-  backwardPassTimer_.endTimer();
-
-  // calculate controller
-  computeControllerTimer_.startTimer();
-  // calculate controller. Result is stored in an intermediate variable. The optimized controller, the one after searching, will be
-  // swapped back to corresponding primalDataContainer in the search stage
-  calculateController();
-  computeControllerTimer_.endTimer();
-
-  // display
-  if (ddpSettings_.displayInfo_) {
-    printRolloutInfo();
-  }
-
-  // TODO(mspieler): this is not exception safe
-  // restore default Eigen thread number
-  Eigen::setNbThreads(0);
+  // check if the rollout is a result of an empty controller
+  return nominalPrimalData_.primalSolution.controllerPtr_->empty();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::runIteration(scalar_t lqModelExpectedCost) {
-  // disable Eigen multi-threading
-  Eigen::setNbThreads(1);
-
-  // finding the optimal stepLength
-  searchStrategyTimer_.startTimer();
-
-  // swap primal and dual data to cache before running search strategy
-  nominalDualData_.swap(cachedDualData_);
-  nominalPrimalData_.swap(cachedPrimalData_);
-
-  // run search strategy
-  scalar_t avgTimeStep;
-  const auto& modeSchedule = this->getReferenceManager().getModeSchedule();
-  search_strategy::SolutionRef solution(avgTimeStep, nominalDualData_.dualSolution, nominalPrimalData_.primalSolution,
-                                        nominalPrimalData_.problemMetrics, performanceIndex_);
-  const bool success = searchStrategyPtr_->run({initTime_, finalTime_}, initState_, lqModelExpectedCost, unoptimizedController_,
-                                               cachedDualData_.dualSolution, modeSchedule, solution);
-
-  // revert to the old solution if search failed
-  if (success) {
-    avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStep;
-
-  } else {  // If fail, copy the entire cache back. To keep the consistency of cached data, all cache should be left untouched.
-    nominalDualData_ = cachedDualData_;
-    nominalPrimalData_ = cachedPrimalData_;
-    performanceIndex_ = performanceIndexHistory_.back();
+void GaussNewtonDDP::initializeDualSolutionAndMetrics() {
+  // adjust dual solution
+  totalDualSolutionTimer_.startTimer();
+  if (!optimizedDualSolution_.timeTrajectory.empty()) {
+    const auto status =
+        trajectorySpread(optimizedPrimalSolution_.modeSchedule_, nominalPrimalData_.primalSolution.modeSchedule_, optimizedDualSolution_);
   }
 
+  // initialize dual solution
+  ocs2::initializeDualSolution(optimalControlProblemStock_[0], nominalPrimalData_.primalSolution, optimizedDualSolution_,
+                               nominalDualData_.dualSolution);
+  totalDualSolutionTimer_.endTimer();
+
+  computeRolloutMetrics(optimalControlProblemStock_[0], nominalPrimalData_.primalSolution, nominalDualData_.dualSolution,
+                        nominalPrimalData_.problemMetrics);
+
+  // update dual
+  //  totalDualSolutionTimer_.startTimer();
+  //  ocs2::updateDualSolution(optimalControlProblemStock_[0], nominalPrimalData_.primalSolution, nominalPrimalData_.problemMetrics,
+  //  nominalDualData_.dualSolution);
+  //  totalDualSolutionTimer_.endTimer();
+
+  // calculates rollout merit
+  performanceIndex_ = computeRolloutPerformanceIndex(nominalPrimalData_.primalSolution.timeTrajectory_, nominalPrimalData_.problemMetrics);
+  performanceIndex_.merit = calculateRolloutMerit(performanceIndex_);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void GaussNewtonDDP::takePrimalDualStep(scalar_t lqModelExpectedCost) {
+  // update primal: run search strategy and find the optimal stepLength
+  searchStrategyTimer_.startTimer();
+  scalar_t avgTimeStep;
+  const auto& modeSchedule = this->getReferenceManager().getModeSchedule();
+  search_strategy::SolutionRef solution(avgTimeStep, optimizedDualSolution_, optimizedPrimalSolution_, optimizedProblemMetrics_,
+                                        performanceIndex_);
+  const bool success = searchStrategyPtr_->run({initTime_, finalTime_}, initState_, lqModelExpectedCost, unoptimizedController_,
+                                               nominalDualData_.dualSolution, modeSchedule, solution);
+
+  if (success) {
+    avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStep;
+  }
   searchStrategyTimer_.endTimer();
 
   // update dual
   totalDualSolutionTimer_.startTimer();
-  ocs2::updateDualSolution(optimalControlProblemStock_[0], nominalPrimalData_.primalSolution, nominalPrimalData_.problemMetrics,
-                           nominalDualData_.dualSolution);
-  performanceIndex_ = computeRolloutPerformanceIndex(nominalPrimalData_.primalSolution.timeTrajectory_, nominalPrimalData_.problemMetrics);
-  performanceIndex_.merit = calculateRolloutMerit(performanceIndex_);
+  if (success) {
+    ocs2::updateDualSolution(optimalControlProblemStock_[0], optimizedPrimalSolution_, optimizedProblemMetrics_, optimizedDualSolution_);
+    performanceIndex_ = computeRolloutPerformanceIndex(optimizedPrimalSolution_.timeTrajectory_, optimizedProblemMetrics_);
+    performanceIndex_.merit = calculateRolloutMerit(performanceIndex_);
+  }
   totalDualSolutionTimer_.endTimer();
 
-  // update the constraint penalty coefficients
-  updateConstraintPenalties(performanceIndex_.equalityConstraintsSSE);
-
-  // linearizing the dynamics and quadratizing the cost function along nominal trajectories
-  linearQuadraticApproximationTimer_.startTimer();
-  approximateOptimalControlProblem();
-  linearQuadraticApproximationTimer_.endTimer();
-
-  // solve Riccati equations
-  backwardPassTimer_.startTimer();
-  avgTimeStepBP_ = solveSequentialRiccatiEquations(nominalPrimalData_.modelDataFinalTime.cost);
-  backwardPassTimer_.endTimer();
-
-  // calculate controller
-  computeControllerTimer_.startTimer();
-  // calculate controller. Result is stored in an intermediate variable. The optimized controller, the one after searching, will be
-  // swapped back to corresponding primalDataContainer in the search stage
-  calculateController();
-  computeControllerTimer_.endTimer();
-
-  // display
-  if (ddpSettings_.displayInfo_) {
-    printRolloutInfo();
+  // if failed, use nominal and to keep the consistency of cached data, all cache should be left untouched
+  if (!success) {
+    optimizedDualSolution_ = nominalDualData_.dualSolution;
+    optimizedPrimalSolution_ = nominalPrimalData_.primalSolution;
+    optimizedProblemMetrics_ = nominalPrimalData_.problemMetrics;
+    performanceIndex_ = performanceIndexHistory_.back();
   }
-
-  // TODO(mspieler): this is not exception safe
-  // restore default Eigen thread number
-  Eigen::setNbThreads(0);
 }
 
 /******************************************************************************************************/
@@ -1062,117 +924,107 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
     std::cerr << this->getReferenceManager().getModeSchedule() << "\n";
   }
 
-  initState_ = initState;
+  // set cost desired trajectories
+  for (auto& ocp : optimalControlProblemStock_) {
+    ocp.targetTrajectoriesPtr = &this->getReferenceManager().getTargetTrajectories();
+  }
+
+  // initialize parameters
   initTime_ = initTime;
+  initState_ = initState;
   finalTime_ = finalTime;
   performanceIndexHistory_.clear();
   const auto initIteration = totalNumIterations_;
-
-  // adjust controller
-  if (!optimizedPrimalSolution_.controllerPtr_->empty()) {
-    std::ignore = trajectorySpread(optimizedPrimalSolution_.modeSchedule_, getReferenceManager().getModeSchedule(),
-                                   getLinearController(optimizedPrimalSolution_));
-  }
-
-  // check if after the truncation the internal controller is empty
-  bool unreliableControllerIncrement = optimizedPrimalSolution_.controllerPtr_->empty();
-
-  // set cost desired trajectories
-  for (size_t i = 0; i < ddpSettings_.nThreads_; i++) {
-    const auto& targetTrajectories = this->getReferenceManager().getTargetTrajectories();
-    optimalControlProblemStock_[i].targetTrajectoriesPtr = &targetTrajectories;
-  }
+  initializeConstraintPenalties();  // initialize penalty coefficients
 
   // display
   if (ddpSettings_.displayInfo_) {
     std::cerr << "\n###################";
-    std::cerr << "\n#### Iteration " << (totalNumIterations_ - initIteration) << " (Dynamics might have been violated)";
+    std::cerr << "\n#### Initial Rollout";
     std::cerr << "\n###################\n";
   }
 
-  // run DDP initializer and update the member variables
-  runInit();
+  // swap primal and dual data to cache
+  nominalDualData_.swap(cachedDualData_);
+  nominalPrimalData_.swap(cachedPrimalData_);
 
-  // increment iteration counter
-  totalNumIterations_++;
+  // optimized --> nominal: initializes the nominal primal and dual solutions based on the optimized ones
+  initializationTimer_.startTimer();
+  bool unreliableValueFunction = initializePrimalSolution();  // true if the rollout is purely from the Initializer
+  initializeDualSolutionAndMetrics();
+  performanceIndexHistory_.push_back(performanceIndex_);
+  initializationTimer_.endTimer();
+
+  // display
+  if (ddpSettings_.displayInfo_) {
+    if (unreliableValueFunction) {
+      std::cerr << "Note: system dynamics might have been violated during the initialization!\n";
+    }
+    std::cerr << performanceIndex_ << '\n';
+  }
 
   // convergence variables of the main loop
   bool isConverged = false;
   std::string convergenceInfo;
 
   // DDP main loop
-  while (!isConverged && (totalNumIterations_ - initIteration) < ddpSettings_.maxNumIterations_) {
-    // display the iteration's input update norm (before caching the old nominals)
+  while (true) {
     if (ddpSettings_.displayInfo_) {
       std::cerr << "\n###################";
       std::cerr << "\n#### Iteration " << (totalNumIterations_ - initIteration);
       std::cerr << "\n###################\n";
-      std::cerr << "max feedforward norm: " << maxControllerUpdateNorm(unoptimizedController_) << "\n";
     }
 
+    // nominal --> nominal: constructs the LQ problem around the nominal trajectories
+    linearQuadraticApproximationTimer_.startTimer();
+    approximateOptimalControlProblem();
+    linearQuadraticApproximationTimer_.endTimer();
+
+    // nominal --> nominal: solves the LQ problem
+    backwardPassTimer_.startTimer();
+    avgTimeStepBP_ = solveSequentialRiccatiEquations(nominalPrimalData_.modelDataFinalTime.cost);
+    backwardPassTimer_.endTimer();
+
+    // calculate controller and store the result in unoptimizedController_
+    computeControllerTimer_.startTimer();
+    calculateController();
+    computeControllerTimer_.endTimer();
+
+    // the expected cost/merit calculated by the Riccati solution is not reliable
+    const auto lqModelExpectedCost = unreliableValueFunction ? performanceIndex_.merit : nominalDualData_.valueFunctionTrajectory.front().f;
+
+    // nominal --> optimized: based on the current LQ solution updates the optimized primal and dual solutions
+    takePrimalDualStep(lqModelExpectedCost);
+
+    // iteration info
+    ++totalNumIterations_;
     performanceIndexHistory_.push_back(performanceIndex_);
 
-    // run the an iteration of the DDP algorithm and update the member variables
-    // the controller which is designed solely based on operation trajectories possibly has invalid feedforward.
-    // Therefore the expected cost/merit (calculated by the Riccati solution) is not reliable as well.
-    const scalar_t lqModelExpectedCost =
-        unreliableControllerIncrement ? performanceIndex_.merit : nominalDualData_.valueFunctionTrajectory.front().f;
-
-    // run a DDP iteration and update the member variables
-    runIteration(lqModelExpectedCost);
-
-    // increment iteration counter
-    totalNumIterations_++;
+    // display
+    if (ddpSettings_.displayInfo_) {
+      printRolloutInfo();
+    }
 
     // check convergence
-    std::tie(isConverged, convergenceInfo) =
-        searchStrategyPtr_->checkConvergence(unreliableControllerIncrement, performanceIndexHistory_.back(), performanceIndex_);
-    unreliableControllerIncrement = false;
+    std::tie(isConverged, convergenceInfo) = searchStrategyPtr_->checkConvergence(
+        unreliableValueFunction, *std::prev(performanceIndexHistory_.end(), 2), performanceIndexHistory_.back());
+    unreliableValueFunction = false;
+
+    if (isConverged || (totalNumIterations_ - initIteration) == ddpSettings_.maxNumIterations_) {
+      break;
+
+    } else {
+      // update the constraint penalty coefficients
+      updateConstraintPenalties(performanceIndex_.equalityConstraintsSSE);
+
+      // optimized --> nominal: use the optimized solution as the nominal for the next iteration
+      nominalDualData_.swap(cachedDualData_);
+      nominalPrimalData_.swap(cachedPrimalData_);
+      optimizedDualSolution_.swap(nominalDualData_.dualSolution);
+      optimizedPrimalSolution_.swap(nominalPrimalData_.primalSolution);
+      optimizedProblemMetrics_.swap(nominalPrimalData_.problemMetrics);
+    }
   }  // end of while loop
-
-  // display the final iteration's input update norm (before caching the old nominals)
-  if (ddpSettings_.displayInfo_) {
-    std::cerr << "\n###################";
-    std::cerr << "\n#### Final Rollout";
-    std::cerr << "\n###################\n";
-    std::cerr << "max feedforward norm: " << maxControllerUpdateNorm(unoptimizedController_) << "\n";
-  }
-
-  performanceIndexHistory_.push_back(performanceIndex_);
-
-  // finding the final optimal stepLength and getting the optimal trajectories and controller
-  searchStrategyTimer_.startTimer();
-
-  // run search strategy
-  scalar_t avgTimeStep;
-  const auto& modeSchedule = this->getReferenceManager().getModeSchedule();
-  const auto lqModelExpectedCost = nominalDualData_.valueFunctionTrajectory.front().f;
-  search_strategy::SolutionRef solution(avgTimeStep, optimizedDualSolution_, optimizedPrimalSolution_, optimizedProblemMetrics_,
-                                        performanceIndex_);
-  const bool success = searchStrategyPtr_->run({initTime_, finalTime_}, initState_, lqModelExpectedCost, unoptimizedController_,
-                                               nominalDualData_.dualSolution, modeSchedule, solution);
-
-  // revert to the old solution if search failed
-  if (success) {
-    avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStep;
-
-  } else {  // If fail, copy the entire cache back. To keep the consistency of cached data, all cache should be left untouched.
-    optimizedDualSolution_ = nominalDualData_.dualSolution;
-    optimizedPrimalSolution_ = nominalPrimalData_.primalSolution;
-    optimizedProblemMetrics_ = nominalPrimalData_.problemMetrics;
-    performanceIndex_ = performanceIndexHistory_.back();
-  }
-
-  searchStrategyTimer_.endTimer();
-
-  // update dual
-  totalDualSolutionTimer_.startTimer();
-  ocs2::updateDualSolution(optimalControlProblemStock_[0], optimizedPrimalSolution_, optimizedProblemMetrics_, optimizedDualSolution_);
-  performanceIndex_ = computeRolloutPerformanceIndex(optimizedPrimalSolution_.timeTrajectory_, optimizedProblemMetrics_);
-  performanceIndex_.merit = calculateRolloutMerit(performanceIndex_);
-  totalDualSolutionTimer_.endTimer();
-
-  performanceIndexHistory_.push_back(performanceIndex_);
 
   // display
   if (ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_) {

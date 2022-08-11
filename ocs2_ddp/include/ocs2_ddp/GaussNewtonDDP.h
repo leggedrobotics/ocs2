@@ -121,7 +121,9 @@ class GaussNewtonDDP : public SolverBase {
    * @param [in] taskFunction: task function
    * @param [in] N: number of times to run taskFunction, if N = 1 it is run in the main thread
    */
-  void runParallel(std::function<void(void)> taskFunction, size_t N);
+  void runParallel(std::function<void(void)> taskFunction, size_t N) {
+    threadPool_.runParallel([&](int) { taskFunction(); }, N);
+  }
 
   /**
    * Takes the following steps: (1) Computes the Hessian of the Hamiltonian (i.e., Hm) (2) Based on Hm, it calculates
@@ -168,7 +170,7 @@ class GaussNewtonDDP : public SolverBase {
   /**
    * Solves Riccati equations.
    *
-   * @param [in] finalValueFunction The final Sm(dfdxx), Sv(dfdx), s(f), for Riccati equation.
+   * @param [in] finalValueFunction: The final value of Sm (dfdxx), Sv (dfdx), s (f), for Riccati equation.
    * @return average time step
    */
   virtual scalar_t solveSequentialRiccatiEquations(const ScalarFunctionQuadraticApproximation& finalValueFunction) = 0;
@@ -259,21 +261,6 @@ class GaussNewtonDDP : public SolverBase {
   scalar_t calculateRolloutMerit(const PerformanceIndex& performanceIndex) const;
 
   /**
-   * Calculates max feedforward update norm and max type-1 error update norm.
-   *
-   * @param maxDeltaUffNorm: max feedforward update norm.
-   * @param maxDeltaUeeNorm: max type-1 error update norm.
-   */
-
-  /**
-   * Calculates max feedforward update norm of the controller.
-   *
-   * @param [in] controller: Control policy
-   * @return max feedforward update norm.
-   */
-  scalar_t maxControllerUpdateNorm(const LinearController& controller) const;
-
-  /**
    * Approximates the nonlinear problem as a linear-quadratic problem around the
    * nominal state and control trajectories. This method updates the following
    * variables:
@@ -296,20 +283,7 @@ class GaussNewtonDDP : public SolverBase {
   void computeProjections(const matrix_t& Hm, const matrix_t& Dm, matrix_t& constraintRangeProjector,
                           matrix_t& constraintNullProjector) const;
 
-  /**
-   * Projects the unconstrained LQ coefficients to constrained ones.
-   *
-   * @param [in] modelData: The model data.
-   * @param [in] constraintRangeProjector: The projection matrix to the constrained subspace.
-   * @param [in] constraintNullProjector: The projection matrix to the null space of constrained.
-   * @param [out] projectedModelData: The projected model data.
-   */
-  void projectLQ(const ModelData& modelData, const matrix_t& constraintRangeProjector, const matrix_t& constraintNullProjector,
-                 ModelData& projectedModelData) const;
-
-  /**
-   * Initialize the constraint penalty coefficients.
-   */
+  /** Initialize the constraint penalty coefficients. */
   void initializeConstraintPenalties();
 
   /**
@@ -318,16 +292,19 @@ class GaussNewtonDDP : public SolverBase {
    */
   void updateConstraintPenalties(scalar_t equalityConstraintsSSE);
 
-  /**
-   * Runs the initialization method for Gauss-Newton DDP.
+  /** Initializes the nominal primal based on the optimized ones. \
+   * @return whether the rollout is a result of Initializer since the optimized controller was empty.
    */
-  void runInit();
+  bool initializePrimalSolution();
 
   /**
-   * Runs a single iteration of Gauss-Newton DDP.
-   * @param [in] lqModelExpectedCost: The expected cost based on the LQ model optimization.
+   * Initializes the nominal dual solutions based on the optimized ones and nominal primal solution.
+   * Moreover, it updates ProblemMetrics.
    */
-  void runIteration(scalar_t lqModelExpectedCost);
+  void initializeDualSolutionAndMetrics();
+
+  /** Based on the current LQ solution updates the optimized primal and dual solutions. */
+  void takePrimalDualStep(scalar_t lqModelExpectedCost);
 
   /**
    * Checks convergence of the main loop of DDP.

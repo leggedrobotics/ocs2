@@ -818,7 +818,7 @@ bool GaussNewtonDDP::initializePrimalSolution() {
     rolloutInitialTrajectory(nominalPrimalData_.primalSolution);
 
   } catch (const std::exception& error) {
-    const std::string msg = "[GaussNewtonDDP::initializeDualPrimal] the initial rollout is unstable!\n";
+    const std::string msg = "[GaussNewtonDDP::initializePrimalSolution] the initial rollout is unstable!\n";
     throw std::runtime_error(msg + error.what());
   }
 

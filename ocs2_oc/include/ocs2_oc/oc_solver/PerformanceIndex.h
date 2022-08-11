@@ -160,7 +160,7 @@ inline std::ostream& operator<<(std::ostream& stream, const PerformanceIndex& pe
 /** Computes the PerformanceIndex based on a given Metrics */
 inline PerformanceIndex toPerformanceIndex(const Metrics& m) {
   PerformanceIndex performanceIndex;
-  performanceIndex.merit = 0.0;
+  performanceIndex.merit = 0.0;  // left for the solver to fill
   performanceIndex.cost = m.cost;
   performanceIndex.dynamicsViolationSSE = m.dynamicsViolation.squaredNorm();
   performanceIndex.equalityConstraintsSSE = constraintsSquaredNorm(m.stateEqConstraint) + constraintsSquaredNorm(m.stateInputEqConstraint);

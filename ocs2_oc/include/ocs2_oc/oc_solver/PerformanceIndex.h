@@ -111,19 +111,19 @@ struct PerformanceIndex {
 };
 
 inline PerformanceIndex operator+(PerformanceIndex lhs, const PerformanceIndex& rhs) {
-  lhs += rhs;  // Copied lhs, add rhs to it.
+  lhs += rhs;  // copied lhs, add rhs to it.
   return lhs;
 }
 
 template <typename SCALAR_T>
-inline PerformanceIndex operator*(PerformanceIndex lhs, const SCALAR_T c) {
-  lhs *= c;  // Copied lhs
+PerformanceIndex operator*(PerformanceIndex lhs, const SCALAR_T c) {
+  lhs *= c;  // copied lhs
   return lhs;
 }
 
 template <typename SCALAR_T>
-inline PerformanceIndex operator*(const SCALAR_T c, PerformanceIndex rhs) {
-  rhs *= c;  // Copied rhs
+PerformanceIndex operator*(const SCALAR_T c, PerformanceIndex rhs) {
+  rhs *= c;  // copied rhs
   return rhs;
 }
 

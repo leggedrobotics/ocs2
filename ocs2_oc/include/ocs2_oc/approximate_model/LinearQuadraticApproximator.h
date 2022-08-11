@@ -171,7 +171,7 @@ ScalarFunctionQuadraticApproximation approximateFinalCost(const OptimalControlPr
  * @param [in] state: The current state.
  * @param [in] input: The current input.
  * @param [in] multipliers: The current multipliers associated to the equality and inequality Lagrangians.
- * @param [in] dynamicsViolation: The violation dynamics. It depends on the transcription method.
+ * @param [in] dynamicsViolation: The violation of dynamics. It depends on the transcription method.
  * @return The output Metrics.
  */
 Metrics computeIntermediateMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state, const vector_t& input,
@@ -187,7 +187,7 @@ Metrics computeIntermediateMetrics(OptimalControlProblem& problem, const scalar_
  * @param [in] time: The current time.
  * @param [in] state: The current state.
  * @param [in] multipliers: The current multipliers associated to the equality and inequality Lagrangians.
- * @param [in] dynamicsViolation: The violation dynamics. It depends on the transcription method.
+ * @param [in] dynamicsViolation: The violation of dynamics. It depends on the transcription method.
  * @return The output Metrics.
  */
 Metrics computePreJumpMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,

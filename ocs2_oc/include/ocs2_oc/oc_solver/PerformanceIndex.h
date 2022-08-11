@@ -111,7 +111,13 @@ struct PerformanceIndex {
 };
 
 inline PerformanceIndex operator+(PerformanceIndex lhs, const PerformanceIndex& rhs) {
-  lhs += rhs;  // Copied lhs, add rhs to it.
+  lhs += rhs;  // copied lhs, add rhs to it.
+  return lhs;
+}
+
+template <typename SCALAR_T>
+PerformanceIndex operator*(PerformanceIndex lhs, const SCALAR_T c) {
+  lhs *= c;  // copied lhs
   return lhs;
 }
 
@@ -123,7 +129,7 @@ inline PerformanceIndex operator*(PerformanceIndex lhs, const SCALAR_T c) {
 
 template <typename SCALAR_T>
 PerformanceIndex operator*(const SCALAR_T c, PerformanceIndex rhs) {
-  rhs *= c;  // Copied rhs
+  rhs *= c;  // copied rhs
   return rhs;
 }
 
@@ -160,7 +166,7 @@ inline std::ostream& operator<<(std::ostream& stream, const PerformanceIndex& pe
 /** Computes the PerformanceIndex based on a given Metrics */
 inline PerformanceIndex toPerformanceIndex(const Metrics& m) {
   PerformanceIndex performanceIndex;
-  performanceIndex.merit = 0.0;
+  performanceIndex.merit = 0.0;  // left for the solver to fill
   performanceIndex.cost = m.cost;
   performanceIndex.dynamicsViolationSSE = m.dynamicsViolation.squaredNorm();
   performanceIndex.equalityConstraintsSSE = constraintsSquaredNorm(m.stateEqConstraint) + constraintsSquaredNorm(m.stateInputEqConstraint);

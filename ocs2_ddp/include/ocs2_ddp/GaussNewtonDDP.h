@@ -170,7 +170,7 @@ class GaussNewtonDDP : public SolverBase {
   /**
    * Solves Riccati equations.
    *
-   * @param [in] finalValueFunction The final Sm(dfdxx), Sv(dfdx), s(f), for Riccati equation.
+   * @param [in] finalValueFunction: The final value of Sm (dfdxx), Sv (dfdx), s (f), for Riccati equation.
    * @return average time step
    */
   virtual scalar_t solveSequentialRiccatiEquations(const ScalarFunctionQuadraticApproximation& finalValueFunction) = 0;
@@ -292,11 +292,16 @@ class GaussNewtonDDP : public SolverBase {
    */
   void updateConstraintPenalties(scalar_t equalityConstraintsSSE);
 
-  /** Initializes the nominal primal and dual solutions based on the optimized ones. */
-  void initializeDualPrimal();
+  /** Initializes the nominal primal based on the optimized ones. \
+   * @return whether the rollout is a result of Initializer since the optimized controller was empty.
+   */
+  bool initializePrimalSolution();
 
-  /** Constructs and solves the LQ problem around the nominal trajectories. */
-  void constructAndSolveLQ();
+  /**
+   * Initializes the nominal dual solutions based on the optimized ones and nominal primal solution.
+   * Moreover, it updates ProblemMetrics.
+   */
+  void initializeDualSolutionAndMetrics();
 
   /** Based on the current LQ solution updates the optimized primal and dual solutions. */
   void takePrimalDualStep(scalar_t lqModelExpectedCost);

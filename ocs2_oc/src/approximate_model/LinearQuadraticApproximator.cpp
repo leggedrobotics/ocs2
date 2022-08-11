@@ -299,7 +299,7 @@ Metrics computeIntermediateMetrics(OptimalControlProblem& problem, const scalar_
 /******************************************************************************************************/
 /******************************************************************************************************/
 Metrics computePreJumpMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
-                              const MultiplierCollection& multipliers) {
+                              const MultiplierCollection& multipliers, const vector_t& dynamicsViolation) {
   auto& preComputation = *problem.preComputationPtr;
 
   Metrics metrics;
@@ -308,7 +308,7 @@ Metrics computePreJumpMetrics(OptimalControlProblem& problem, const scalar_t tim
   metrics.cost = computeEventCost(problem, time, state);
 
   // Dynamics violation
-  // metrics.dynamicsViolation = vector_t();
+  metrics.dynamicsViolation = dynamicsViolation;
 
   // Equality constraint
   metrics.stateEqConstraint = problem.preJumpEqualityConstraintPtr->getValue(time, state, preComputation);

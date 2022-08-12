@@ -840,7 +840,7 @@ bool GaussNewtonDDP::initializePrimalSolution() {
     // try to initialize with controller
     bool initialSolutionExists = rolloutInitialController(optimizedPrimalSolution_, nominalPrimalData_.primalSolution);
 
-    // try to initialize with PrimalSolution trajectories
+    // if rolloutInitialController failed, try to initialize with PrimalSolution's state-input trajectories
     if (!initialSolutionExists) {
       // display
       if (ddpSettings_.displayInfo_) {
@@ -947,7 +947,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
     if (linearControllerPtr == nullptr) {
       throw std::runtime_error("[GaussNewtonDDP::run] controller must be a LinearController type!");
     }
-    *optimizedPrimalSolution_.controllerPtr_ = *linearControllerPtr;
+    optimizedPrimalSolution_.controllerPtr_.reset(linearControllerPtr->clone());
   }
 
   runImpl(initTime, initState, finalTime);
@@ -957,15 +957,21 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 /******************************************************************************************************/
 /******************************************************************************************************/
 void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const PrimalSolution& primalSolution) {
-  // use the given primalSolution
-  optimizedPrimalSolution_.controllerPtr_->clear();
-  optimizedPrimalSolution_.modeSchedule_ = primalSolution.modeSchedule_;
-  optimizedPrimalSolution_.timeTrajectory_ = primalSolution.timeTrajectory_;
-  optimizedPrimalSolution_.postEventIndices_ = primalSolution.postEventIndices_;
-  optimizedPrimalSolution_.stateTrajectory_ = primalSolution.stateTrajectory_;
-  optimizedPrimalSolution_.inputTrajectory_ = primalSolution.inputTrajectory_;
+  // if PrimalSolution's controller exists, use it for initialization
+  if (primalSolution.controllerPtr_ != nullptr && !primalSolution.controllerPtr_->empty()) {
+    optimizedPrimalSolution_.modeSchedule_ = primalSolution.modeSchedule_;
+    runImpl(initTime, initState, finalTime, primalSolution.controllerPtr_.get());
 
-  runImpl(initTime, initState, finalTime);
+  } else {
+    // otherwise initialize with PrimalSolution's state-input trajectories
+    optimizedPrimalSolution_.controllerPtr_->clear();
+    optimizedPrimalSolution_.modeSchedule_ = primalSolution.modeSchedule_;
+    optimizedPrimalSolution_.timeTrajectory_ = primalSolution.timeTrajectory_;
+    optimizedPrimalSolution_.postEventIndices_ = primalSolution.postEventIndices_;
+    optimizedPrimalSolution_.stateTrajectory_ = primalSolution.stateTrajectory_;
+    optimizedPrimalSolution_.inputTrajectory_ = primalSolution.inputTrajectory_;
+    runImpl(initTime, initState, finalTime);
+  }
 }
 
 /******************************************************************************************************/

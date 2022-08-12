@@ -460,24 +460,26 @@ void GaussNewtonDDP::rolloutInitializer(PrimalSolution& primalSolution) {
       inputTrajectory.pop_back();
       // eventsPastTheEndIndeces is not removed because we need to mark the start of the operatingPointTrajectory as being after an event.
 
-      initTime = std::min(initTime + numeric_traits::weakEpsilon<scalar_t>(), finalTime_);
+      // adjusting the start time to correct for subsystem recognition
+      constexpr auto eps = numeric_traits::weakEpsilon<scalar_t>();
+      initTime = std::min(initTime + eps, finalTime_);
     }
 
     scalar_array_t timeTrajectoryTail;
-    size_array_t eventsPastTheEndIndecesTail;
+    size_array_t postEventIndicesTail;
     vector_array_t stateTrajectoryTail;
     vector_array_t inputTrajectoryTail;
     std::ignore = initializerRolloutPtr_->run(initTime, initState, finalTime_, nullptr, modeSchedule, timeTrajectoryTail,
-                                              eventsPastTheEndIndecesTail, stateTrajectoryTail, inputTrajectoryTail);
+                                              postEventIndicesTail, stateTrajectoryTail, inputTrajectoryTail);
 
     // Add controller rollout length to event past the indeces
-    for (auto& eventIndex : eventsPastTheEndIndecesTail) {
-      eventIndex += stateTrajectory.size();  // This size of this trajectory part was missing when counting events in the tail
+    for (auto& eventIndex : postEventIndicesTail) {
+      eventIndex += stateTrajectory.size();  // the size of the old trajectory is missing when counting event's index
     }
 
-    // Concatenate the operating points to the rollout
+    // Concatenate
     timeTrajectory.insert(timeTrajectory.end(), timeTrajectoryTail.begin(), timeTrajectoryTail.end());
-    postEventIndices.insert(postEventIndices.end(), eventsPastTheEndIndecesTail.begin(), eventsPastTheEndIndecesTail.end());
+    postEventIndices.insert(postEventIndices.end(), postEventIndicesTail.begin(), postEventIndicesTail.end());
     stateTrajectory.insert(stateTrajectory.end(), stateTrajectoryTail.begin(), stateTrajectoryTail.end());
     inputTrajectory.insert(inputTrajectory.end(), inputTrajectoryTail.begin(), inputTrajectoryTail.end());
   }

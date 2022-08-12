@@ -122,12 +122,6 @@ PerformanceIndex operator*(PerformanceIndex lhs, const SCALAR_T c) {
 }
 
 template <typename SCALAR_T>
-inline PerformanceIndex operator*(PerformanceIndex lhs, const SCALAR_T c) {
-  lhs *= c;  // Copied lhs
-  return lhs;
-}
-
-template <typename SCALAR_T>
 PerformanceIndex operator*(const SCALAR_T c, PerformanceIndex rhs) {
   rhs *= c;  // copied rhs
   return rhs;

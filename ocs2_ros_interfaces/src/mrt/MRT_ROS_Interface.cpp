@@ -252,6 +252,8 @@ Redistribution and use in source and binary forms, with or without
   void MRT_ROS_Interface::launchNodes(rclcpp::Node::SharedPtr& nodeHandle) {
     this->reset();
 
+    node_ = nodeHandle;
+
     // display
     RCLCPP_INFO_STREAM(LOGGER, "MRT node is setting up ...");
 

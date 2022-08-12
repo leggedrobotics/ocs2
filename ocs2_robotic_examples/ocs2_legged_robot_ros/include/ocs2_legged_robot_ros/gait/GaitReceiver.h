@@ -31,10 +31,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <mutex>
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_msgs/mode_schedule.h>
+#include <ocs2_msgs/msg/mode_schedule.hpp>
+
 #include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 
 #include <ocs2_legged_robot/gait/GaitSchedule.h>
@@ -45,7 +46,7 @@ namespace ocs2 {
 namespace legged_robot {
 class GaitReceiver : public SolverSynchronizedModule {
  public:
-  GaitReceiver(ros::NodeHandle nodeHandle, std::shared_ptr<GaitSchedule> gaitSchedulePtr, const std::string& robotName);
+  GaitReceiver(rclcpp::Node::SharedPtr &nodeHandle, std::shared_ptr<GaitSchedule> gaitSchedulePtr, const std::string& robotName);
 
   void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
                     const ReferenceManagerInterface& referenceManager) override;
@@ -53,11 +54,11 @@ class GaitReceiver : public SolverSynchronizedModule {
   void postSolverRun(const PrimalSolution& primalSolution) override{};
 
  private:
-  void mpcModeSequenceCallback(const ocs2_msgs::mode_schedule::ConstPtr& msg);
+  void mpcModeSequenceCallback(const ocs2_msgs::msg::ModeSchedule::SharedPtr msg);
 
   std::shared_ptr<GaitSchedule> gaitSchedulePtr_;
 
-  ros::Subscriber mpcModeSequenceSubscriber_;
+  rclcpp::Subscription<ocs2_msgs::msg::ModeSchedule>::SharedPtr mpcModeSequenceSubscriber_;
 
   std::mutex receivedGaitMutex_;
   std::atomic_bool gaitUpdated_;

@@ -37,10 +37,10 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-GaitReceiver::GaitReceiver(ros::NodeHandle nodeHandle, std::shared_ptr<GaitSchedule> gaitSchedulePtr, const std::string& robotName)
+GaitReceiver::GaitReceiver(rclcpp::Node::SharedPtr &nodeHandle, std::shared_ptr<GaitSchedule> gaitSchedulePtr, const std::string& robotName)
     : gaitSchedulePtr_(std::move(gaitSchedulePtr)), receivedGait_({0.0, 1.0}, {ModeNumber::STANCE}), gaitUpdated_(false) {
-  mpcModeSequenceSubscriber_ = nodeHandle.subscribe(robotName + "_mpc_mode_schedule", 1, &GaitReceiver::mpcModeSequenceCallback, this,
-                                                    ::ros::TransportHints().udp());
+  mpcModeSequenceSubscriber_ = nodeHandle->create_subscription<ocs2_msgs::msg::ModeSchedule>(robotName + "_mpc_mode_schedule", 
+      1, std::bind(&GaitReceiver::mpcModeSequenceCallback, this, std::placeholders::_1));
 }
 
 /******************************************************************************************************/
@@ -61,7 +61,7 @@ void GaitReceiver::preSolverRun(scalar_t initTime, scalar_t finalTime, const vec
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaitReceiver::mpcModeSequenceCallback(const ocs2_msgs::mode_schedule::ConstPtr& msg) {
+void GaitReceiver::mpcModeSequenceCallback(const ocs2_msgs::msg::ModeSchedule::SharedPtr msg) {
   std::lock_guard<std::mutex> lock(receivedGaitMutex_);
   receivedGait_ = readModeSequenceTemplateMsg(*msg);
   gaitUpdated_ = true;

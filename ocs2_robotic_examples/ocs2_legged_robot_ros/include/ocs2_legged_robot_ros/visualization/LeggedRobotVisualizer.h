@@ -29,9 +29,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <robot_state_publisher/robot_state_publisher.h>
-#include <ros/node_handle.h>
-#include <tf/transform_broadcaster.h>
+#include <robot_state_publisher/robot_state_publisher.hpp>
+#include <tf2_ros/transform_broadcaster.h>
+#include <visualization_msgs/msg/marker.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
 #include <ocs2_centroidal_model/CentroidalModelInfo.h>
 #include <ocs2_core/Types.h>
@@ -43,7 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace legged_robot {
 
-class LeggedRobotVisualizer : public DummyObserver {
+class LeggedRobotVisualizer : public DummyObserver, public robot_state_publisher::RobotStatePublisher {
  public:
   /** Visualization settings (publicly available) */
   std::string frameId_ = "odom";              // Frame name all messages are published in
@@ -63,44 +64,44 @@ class LeggedRobotVisualizer : public DummyObserver {
    * @param maxUpdateFrequency : maximum publish frequency measured in MPC time.
    */
   LeggedRobotVisualizer(PinocchioInterface pinocchioInterface, CentroidalModelInfo centroidalModelInfo,
-                        const PinocchioEndEffectorKinematics& endEffectorKinematics, ros::NodeHandle& nodeHandle,
-                        scalar_t maxUpdateFrequency = 100.0);
+                        const PinocchioEndEffectorKinematics& endEffectorKinematics, rclcpp::Node::SharedPtr& nodeHandle,
+                        const std::string &urdf_xml, scalar_t maxUpdateFrequency = 100.0);
 
   ~LeggedRobotVisualizer() override = default;
 
   void update(const SystemObservation& observation, const PrimalSolution& primalSolution, const CommandData& command) override;
 
-  void launchVisualizerNode(ros::NodeHandle& nodeHandle);
+  void launchVisualizerNode(rclcpp::Node::SharedPtr& nodeHandle, const std::string &urdf_xml);
 
   void publishTrajectory(const std::vector<SystemObservation>& system_observation_array, scalar_t speed = 1.0);
 
-  void publishObservation(ros::Time timeStamp, const SystemObservation& observation);
+  void publishObservation(rclcpp::Time timeStamp, const SystemObservation& observation);
 
-  void publishDesiredTrajectory(ros::Time timeStamp, const TargetTrajectories& targetTrajectories);
+  void publishDesiredTrajectory(rclcpp::Time timeStamp, const TargetTrajectories& targetTrajectories);
 
-  void publishOptimizedStateTrajectory(ros::Time timeStamp, const scalar_array_t& mpcTimeTrajectory,
+  void publishOptimizedStateTrajectory(rclcpp::Time timeStamp, const scalar_array_t& mpcTimeTrajectory,
                                        const vector_array_t& mpcStateTrajectory, const ModeSchedule& modeSchedule);
 
  private:
   LeggedRobotVisualizer(const LeggedRobotVisualizer&) = delete;
-  void publishJointTransforms(ros::Time timeStamp, const vector_t& jointAngles) const;
-  void publishBaseTransform(ros::Time timeStamp, const vector_t& basePose);
-  void publishCartesianMarkers(ros::Time timeStamp, const contact_flag_t& contactFlags, const std::vector<vector3_t>& feetPositions,
+  void publishJointTransforms(rclcpp::Time timeStamp, const vector_t& jointAngles);
+  void publishBaseTransform(rclcpp::Time timeStamp, const vector_t& basePose);
+  void publishCartesianMarkers(rclcpp::Time timeStamp, const contact_flag_t& contactFlags, const std::vector<vector3_t>& feetPositions,
                                const std::vector<vector3_t>& feetForces) const;
 
   PinocchioInterface pinocchioInterface_;
   const CentroidalModelInfo centroidalModelInfo_;
   std::unique_ptr<PinocchioEndEffectorKinematics> endEffectorKinematicsPtr_;
 
-  tf::TransformBroadcaster tfBroadcaster_;
-  std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_;
+  std::unique_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster_;
+  rclcpp::Node::SharedPtr nodeHandle_;
 
-  ros::Publisher costDesiredBasePositionPublisher_;
-  std::vector<ros::Publisher> costDesiredFeetPositionPublishers_;
+  rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr costDesiredBasePositionPublisher_;
+  std::vector<rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr> costDesiredFeetPositionPublishers_;
 
-  ros::Publisher stateOptimizedPublisher_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr stateOptimizedPublisher_;
 
-  ros::Publisher currentStatePublisher_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr currentStatePublisher_;
 
   scalar_t lastTime_;
   scalar_t minPublishTimeDifference_;

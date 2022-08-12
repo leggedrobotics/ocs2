@@ -29,8 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <string>
 
-#include <ros/init.h>
-#include <ros/package.h>
+#include <rclcpp/rclcpp.hpp>
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/misc/LoadData.h>
@@ -94,15 +93,28 @@ TargetTrajectories commandLineToTargetTrajectories(const vector_t& commadLineTar
   return {timeTrajectory, stateTrajectory, inputTrajectory};
 }
 
+static auto LOGGER = rclcpp::get_logger("LeggedRobotPoseCommandNode");
+
+auto declareAndGetStringParam = [] (rclcpp::Node::SharedPtr &node, const std::string &param, std::string &param_value) {
+  if (!node->has_parameter(param))
+  {
+    node->declare_parameter(param, std::string(""));
+  }
+  rclcpp::Parameter parameter;
+  node->get_parameter(param, parameter);
+  param_value = parameter.as_string();
+  RCLCPP_INFO_STREAM(LOGGER, "Retrieved parameter " << param << " with value " << param_value);
+};
+
 int main(int argc, char* argv[]) {
   const std::string robotName = "legged_robot";
 
   // Initialize ros node
-  ::ros::init(argc, argv, robotName + "_target");
-  ::ros::NodeHandle nodeHandle;
+  rclcpp::init(argc, argv);
+  rclcpp::Node::SharedPtr nodeHandle = rclcpp::Node::make_shared(robotName + "_target");
   // Get node parameters
   std::string referenceFile;
-  nodeHandle.getParam("/referenceFile", referenceFile);
+  declareAndGetStringParam(nodeHandle, "reference_file", referenceFile);
 
   loadData::loadCppDataType(referenceFile, "comHeight", comHeight);
   loadData::loadEigenMatrix(referenceFile, "defaultJointState", defaultJointState);

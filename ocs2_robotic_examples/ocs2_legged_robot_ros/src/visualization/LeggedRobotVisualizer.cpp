@@ -44,8 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_legged_robot/gait/MotionPhaseDefinition.h"
 
 // Additional messages not in the helpers file
-#include <geometry_msgs/PoseArray.h>
-#include <visualization_msgs/MarkerArray.h>
+// #include <visualization_msgs/MarkerArray.h>
 
 // URDF related
 #include <urdf/model.h>
@@ -58,41 +57,37 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 LeggedRobotVisualizer::LeggedRobotVisualizer(PinocchioInterface pinocchioInterface, CentroidalModelInfo centroidalModelInfo,
-                                             const PinocchioEndEffectorKinematics& endEffectorKinematics, ros::NodeHandle& nodeHandle,
-                                             scalar_t maxUpdateFrequency)
+                                             const PinocchioEndEffectorKinematics& endEffectorKinematics, rclcpp::Node::SharedPtr& nodeHandle,
+                                             const std::string &urdf_xml, scalar_t maxUpdateFrequency)
     : pinocchioInterface_(std::move(pinocchioInterface)),
       centroidalModelInfo_(std::move(centroidalModelInfo)),
       endEffectorKinematicsPtr_(endEffectorKinematics.clone()),
       lastTime_(std::numeric_limits<scalar_t>::lowest()),
-      minPublishTimeDifference_(1.0 / maxUpdateFrequency) {
+      minPublishTimeDifference_(1.0 / maxUpdateFrequency),
+      robot_state_publisher::RobotStatePublisher(nodeHandle->get_node_options()),
+      nodeHandle_(nodeHandle) {
   endEffectorKinematicsPtr_->setPinocchioInterface(pinocchioInterface_);
-  launchVisualizerNode(nodeHandle);
+  launchVisualizerNode(nodeHandle, urdf_xml);
 };
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LeggedRobotVisualizer::launchVisualizerNode(ros::NodeHandle& nodeHandle) {
-  costDesiredBasePositionPublisher_ = nodeHandle.advertise<visualization_msgs::Marker>("/legged_robot/desiredBaseTrajectory", 1);
+void LeggedRobotVisualizer::launchVisualizerNode(rclcpp::Node::SharedPtr& nodeHandle, const std::string &urdf_xml) {
+  tfBroadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(nodeHandle);
+
+  costDesiredBasePositionPublisher_ = nodeHandle->create_publisher<visualization_msgs::msg::Marker>("/legged_robot/desiredBaseTrajectory", 1);
   costDesiredFeetPositionPublishers_.resize(centroidalModelInfo_.numThreeDofContacts);
-  costDesiredFeetPositionPublishers_[0] = nodeHandle.advertise<visualization_msgs::Marker>("/legged_robot/desiredFeetTrajectory/LF", 1);
-  costDesiredFeetPositionPublishers_[1] = nodeHandle.advertise<visualization_msgs::Marker>("/legged_robot/desiredFeetTrajectory/RF", 1);
-  costDesiredFeetPositionPublishers_[2] = nodeHandle.advertise<visualization_msgs::Marker>("/legged_robot/desiredFeetTrajectory/LH", 1);
-  costDesiredFeetPositionPublishers_[3] = nodeHandle.advertise<visualization_msgs::Marker>("/legged_robot/desiredFeetTrajectory/RH", 1);
-  stateOptimizedPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("/legged_robot/optimizedStateTrajectory", 1);
-  currentStatePublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("/legged_robot/currentState", 1);
+  costDesiredFeetPositionPublishers_[0] = nodeHandle->create_publisher<visualization_msgs::msg::Marker>("/legged_robot/desiredFeetTrajectory/LF", 1);
+  costDesiredFeetPositionPublishers_[1] = nodeHandle->create_publisher<visualization_msgs::msg::Marker>("/legged_robot/desiredFeetTrajectory/RF", 1);
+  costDesiredFeetPositionPublishers_[2] = nodeHandle->create_publisher<visualization_msgs::msg::Marker>("/legged_robot/desiredFeetTrajectory/LH", 1);
+  costDesiredFeetPositionPublishers_[3] = nodeHandle->create_publisher<visualization_msgs::msg::Marker>("/legged_robot/desiredFeetTrajectory/RH", 1);
+  stateOptimizedPublisher_ = nodeHandle->create_publisher<visualization_msgs::msg::MarkerArray>("/legged_robot/optimizedStateTrajectory", 1);
+  currentStatePublisher_ = nodeHandle->create_publisher<visualization_msgs::msg::MarkerArray>("/legged_robot/currentState", 1);
 
   // Load URDF model
-  urdf::Model urdfModel;
-  if (!urdfModel.initParam("legged_robot_description")) {
-    std::cerr << "[LeggedRobotVisualizer] Could not read URDF from: \"legged_robot_description\"" << std::endl;
-  } else {
-    KDL::Tree kdlTree;
-    kdl_parser::treeFromUrdfModel(urdfModel, kdlTree);
-
-    robotStatePublisherPtr_.reset(new robot_state_publisher::RobotStatePublisher(kdlTree));
-    robotStatePublisherPtr_->publishFixedTransforms(true);
-  }
+  this->setupURDF(urdf_xml);
+  this->publishFixedTransforms();
 }
 
 /******************************************************************************************************/
@@ -105,7 +100,7 @@ void LeggedRobotVisualizer::update(const SystemObservation& observation, const P
     pinocchio::forwardKinematics(model, data, centroidal_model::getGeneralizedCoordinates(observation.state, centroidalModelInfo_));
     pinocchio::updateFramePlacements(model, data);
 
-    const auto timeStamp = ros::Time::now();
+    const auto timeStamp = nodeHandle_->now();
     publishObservation(timeStamp, observation);
     publishDesiredTrajectory(timeStamp, command.mpcTargetTrajectories_);
     publishOptimizedStateTrajectory(timeStamp, primalSolution.timeTrajectory_, primalSolution.stateTrajectory_,
@@ -117,7 +112,7 @@ void LeggedRobotVisualizer::update(const SystemObservation& observation, const P
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LeggedRobotVisualizer::publishObservation(ros::Time timeStamp, const SystemObservation& observation) {
+void LeggedRobotVisualizer::publishObservation(rclcpp::Time timeStamp, const SystemObservation& observation) {
   // Extract components from state
   const auto basePose = centroidal_model::getBasePose(observation.state, centroidalModelInfo_);
   const auto qJoints = centroidal_model::getJointAngles(observation.state, centroidalModelInfo_);
@@ -138,30 +133,26 @@ void LeggedRobotVisualizer::publishObservation(ros::Time timeStamp, const System
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LeggedRobotVisualizer::publishJointTransforms(ros::Time timeStamp, const vector_t& jointAngles) const {
-  if (robotStatePublisherPtr_ != nullptr) {
-    std::map<std::string, scalar_t> jointPositions{{"LF_HAA", jointAngles[0]}, {"LF_HFE", jointAngles[1]},  {"LF_KFE", jointAngles[2]},
-                                                   {"LH_HAA", jointAngles[3]}, {"LH_HFE", jointAngles[4]},  {"LH_KFE", jointAngles[5]},
-                                                   {"RF_HAA", jointAngles[6]}, {"RF_HFE", jointAngles[7]},  {"RF_KFE", jointAngles[8]},
-                                                   {"RH_HAA", jointAngles[9]}, {"RH_HFE", jointAngles[10]}, {"RH_KFE", jointAngles[11]}};
-    robotStatePublisherPtr_->publishTransforms(jointPositions, timeStamp);
-  }
+void LeggedRobotVisualizer::publishJointTransforms(rclcpp::Time timeStamp, const vector_t& jointAngles) {
+  std::map<std::string, scalar_t> jointPositions{{"LF_HAA", jointAngles[0]}, {"LF_HFE", jointAngles[1]},  {"LF_KFE", jointAngles[2]},
+                                                  {"LH_HAA", jointAngles[3]}, {"LH_HFE", jointAngles[4]},  {"LH_KFE", jointAngles[5]},
+                                                  {"RF_HAA", jointAngles[6]}, {"RF_HFE", jointAngles[7]},  {"RF_KFE", jointAngles[8]},
+                                                  {"RH_HAA", jointAngles[9]}, {"RH_HFE", jointAngles[10]}, {"RH_KFE", jointAngles[11]}};
+  this->publishTransforms(jointPositions, timeStamp);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LeggedRobotVisualizer::publishBaseTransform(ros::Time timeStamp, const vector_t& basePose) {
-  if (robotStatePublisherPtr_ != nullptr) {
-    geometry_msgs::TransformStamped baseToWorldTransform;
-    baseToWorldTransform.header = getHeaderMsg(frameId_, timeStamp);
-    baseToWorldTransform.child_frame_id = "base";
+void LeggedRobotVisualizer::publishBaseTransform(rclcpp::Time timeStamp, const vector_t& basePose) {
+  geometry_msgs::msg::TransformStamped baseToWorldTransform;
+  baseToWorldTransform.header = getHeaderMsg(frameId_, timeStamp);
+  baseToWorldTransform.child_frame_id = "base";
 
-    const Eigen::Quaternion<scalar_t> q_world_base = getQuaternionFromEulerAnglesZyx(vector3_t(basePose.tail<3>()));
-    baseToWorldTransform.transform.rotation = getOrientationMsg(q_world_base);
-    baseToWorldTransform.transform.translation = getVectorMsg(basePose.head<3>());
-    tfBroadcaster_.sendTransform(baseToWorldTransform);
-  }
+  const Eigen::Quaternion<scalar_t> q_world_base = getQuaternionFromEulerAnglesZyx(vector3_t(basePose.tail<3>()));
+  baseToWorldTransform.transform.rotation = getOrientationMsg(q_world_base);
+  baseToWorldTransform.transform.translation = getVectorMsg(basePose.head<3>());
+  tfBroadcaster_->sendTransform(baseToWorldTransform);
 }
 
 /******************************************************************************************************/
@@ -170,9 +161,10 @@ void LeggedRobotVisualizer::publishBaseTransform(ros::Time timeStamp, const vect
 void LeggedRobotVisualizer::publishTrajectory(const std::vector<SystemObservation>& system_observation_array, scalar_t speed) {
   for (size_t k = 0; k < system_observation_array.size() - 1; k++) {
     scalar_t frameDuration = speed * (system_observation_array[k + 1].time - system_observation_array[k].time);
-    scalar_t publishDuration = timedExecutionInSeconds([&]() { publishObservation(ros::Time::now(), system_observation_array[k]); });
+    scalar_t publishDuration = timedExecutionInSeconds([&]() { publishObservation(nodeHandle_->now(), system_observation_array[k]); });
     if (frameDuration > publishDuration) {
-      ros::WallDuration(frameDuration - publishDuration).sleep();
+      rclcpp::Duration dur(frameDuration - publishDuration);
+      rclcpp::sleep_for(std::chrono::nanoseconds(dur.nanoseconds()));
     }
   }
 }
@@ -180,12 +172,12 @@ void LeggedRobotVisualizer::publishTrajectory(const std::vector<SystemObservatio
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LeggedRobotVisualizer::publishCartesianMarkers(ros::Time timeStamp, const contact_flag_t& contactFlags,
+void LeggedRobotVisualizer::publishCartesianMarkers(rclcpp::Time timeStamp, const contact_flag_t& contactFlags,
                                                     const std::vector<vector3_t>& feetPositions,
                                                     const std::vector<vector3_t>& feetForces) const {
   // Reserve message
   const size_t numberOfCartesianMarkers = 10;
-  visualization_msgs::MarkerArray markerArray;
+  visualization_msgs::msg::MarkerArray markerArray;
   markerArray.markers.reserve(numberOfCartesianMarkers);
 
   // Feet positions and Forces
@@ -208,22 +200,22 @@ void LeggedRobotVisualizer::publishCartesianMarkers(ros::Time timeStamp, const c
   assignIncreasingId(markerArray.markers.begin(), markerArray.markers.end());
 
   // Publish cartesian markers (minus the CoM Pose)
-  currentStatePublisher_.publish(markerArray);
+  currentStatePublisher_->publish(markerArray);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LeggedRobotVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const TargetTrajectories& targetTrajectories) {
+void LeggedRobotVisualizer::publishDesiredTrajectory(rclcpp::Time timeStamp, const TargetTrajectories& targetTrajectories) {
   const auto& stateTrajectory = targetTrajectories.stateTrajectory;
   const auto& inputTrajectory = targetTrajectories.inputTrajectory;
 
   // Reserve com messages
-  std::vector<geometry_msgs::Point> desiredBasePositionMsg;
+  std::vector<geometry_msgs::msg::Point> desiredBasePositionMsg;
   desiredBasePositionMsg.reserve(stateTrajectory.size());
 
   // Reserve feet messages
-  feet_array_t<std::vector<geometry_msgs::Point>> desiredFeetPositionMsgs;
+  feet_array_t<std::vector<geometry_msgs::msg::Point>> desiredFeetPositionMsgs;
   for (size_t i = 0; i < centroidalModelInfo_.numThreeDofContacts; i++) {
     desiredFeetPositionMsgs[i].reserve(stateTrajectory.size());
   }
@@ -239,7 +231,7 @@ void LeggedRobotVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const 
 
     // Construct base pose msg
     const auto basePose = centroidal_model::getBasePose(state, centroidalModelInfo_);
-    geometry_msgs::Pose pose;
+    geometry_msgs::msg::Pose pose;
     pose.position = getPointMsg(basePose.head<3>());
 
     // Fill message containers
@@ -253,7 +245,7 @@ void LeggedRobotVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const 
 
     const auto feetPositions = endEffectorKinematicsPtr_->getPosition(state);
     for (size_t i = 0; i < centroidalModelInfo_.numThreeDofContacts; i++) {
-      geometry_msgs::Pose footPose;
+      geometry_msgs::msg::Pose footPose;
       footPose.position = getPointMsg(feetPositions[i]);
       desiredFeetPositionMsgs[i].push_back(footPose.position);
     }
@@ -265,30 +257,30 @@ void LeggedRobotVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const 
   comLineMsg.id = 0;
 
   // Publish
-  costDesiredBasePositionPublisher_.publish(comLineMsg);
+  costDesiredBasePositionPublisher_->publish(comLineMsg);
   for (size_t i = 0; i < centroidalModelInfo_.numThreeDofContacts; i++) {
     auto footLineMsg = getLineMsg(std::move(desiredFeetPositionMsgs[i]), feetColorMap_[i], trajectoryLineWidth_);
     footLineMsg.header = getHeaderMsg(frameId_, timeStamp);
     footLineMsg.id = 0;
-    costDesiredFeetPositionPublishers_[i].publish(footLineMsg);
+    costDesiredFeetPositionPublishers_[i]->publish(footLineMsg);
   }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LeggedRobotVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, const scalar_array_t& mpcTimeTrajectory,
+void LeggedRobotVisualizer::publishOptimizedStateTrajectory(rclcpp::Time timeStamp, const scalar_array_t& mpcTimeTrajectory,
                                                             const vector_array_t& mpcStateTrajectory, const ModeSchedule& modeSchedule) {
   if (mpcTimeTrajectory.empty() || mpcStateTrajectory.empty()) {
     return;  // Nothing to publish
   }
 
   // Reserve Feet msg
-  feet_array_t<std::vector<geometry_msgs::Point>> feetMsgs;
-  std::for_each(feetMsgs.begin(), feetMsgs.end(), [&](std::vector<geometry_msgs::Point>& v) { v.reserve(mpcStateTrajectory.size()); });
+  feet_array_t<std::vector<geometry_msgs::msg::Point>> feetMsgs;
+  std::for_each(feetMsgs.begin(), feetMsgs.end(), [&](std::vector<geometry_msgs::msg::Point>& v) { v.reserve(mpcStateTrajectory.size()); });
 
   // Reserve Com Msg
-  std::vector<geometry_msgs::Point> mpcComPositionMsgs;
+  std::vector<geometry_msgs::msg::Point> mpcComPositionMsgs;
   mpcComPositionMsgs.reserve(mpcStateTrajectory.size());
 
   // Extract Com and Feet from state
@@ -296,7 +288,7 @@ void LeggedRobotVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp,
     const auto basePose = centroidal_model::getBasePose(state, centroidalModelInfo_);
 
     // Fill com position and pose msgs
-    geometry_msgs::Pose pose;
+    geometry_msgs::msg::Pose pose;
     pose.position = getPointMsg(basePose.head<3>());
     mpcComPositionMsgs.push_back(pose.position);
 
@@ -314,7 +306,7 @@ void LeggedRobotVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp,
   });
 
   // Convert feet msgs to Array message
-  visualization_msgs::MarkerArray markerArray;
+  visualization_msgs::msg::MarkerArray markerArray;
   markerArray.markers.reserve(centroidalModelInfo_.numThreeDofContacts +
                               2);  // 1 trajectory per foot + 1 for the future footholds + 1 for the com trajectory
   for (size_t i = 0; i < centroidalModelInfo_.numThreeDofContacts; i++) {
@@ -325,8 +317,8 @@ void LeggedRobotVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp,
   markerArray.markers.back().ns = "CoM Trajectory";
 
   // Future footholds
-  visualization_msgs::Marker sphereList;
-  sphereList.type = visualization_msgs::Marker::SPHERE_LIST;
+  visualization_msgs::msg::Marker sphereList;
+  sphereList.type = visualization_msgs::msg::Marker::SPHERE_LIST;
   sphereList.scale.x = footMarkerDiameter_;
   sphereList.scale.y = footMarkerDiameter_;
   sphereList.scale.z = footMarkerDiameter_;
@@ -362,7 +354,7 @@ void LeggedRobotVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp,
   assignHeader(markerArray.markers.begin(), markerArray.markers.end(), getHeaderMsg(frameId_, timeStamp));
   assignIncreasingId(markerArray.markers.begin(), markerArray.markers.end());
 
-  stateOptimizedPublisher_.publish(markerArray);
+  stateOptimizedPublisher_->publish(markerArray);
 }
 
 }  // namespace legged_robot

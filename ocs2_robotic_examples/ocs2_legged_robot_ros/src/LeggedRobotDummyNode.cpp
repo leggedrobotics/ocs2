@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ros/init.h>
-#include <ros/package.h>
+#include <rclcpp/rclcpp.hpp>
 
 #include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
 #include <ocs2_legged_robot/LeggedRobotInterface.h>
@@ -40,18 +39,41 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace ocs2;
 using namespace legged_robot;
+static auto LOGGER = rclcpp::get_logger("LeggedRobotDummyNode");
+
+auto declareAndGetStringParam = [] (rclcpp::Node::SharedPtr &node, const std::string &param, std::string &param_value) {
+  if (!node->has_parameter(param))
+  {
+    node->declare_parameter(param, std::string(""));
+  }
+  rclcpp::Parameter parameter;
+  node->get_parameter(param, parameter);
+  param_value = parameter.as_string();
+  RCLCPP_INFO_STREAM(LOGGER, "Retrieved parameter " << param << " with value " << param_value);
+};
+
+auto readFile = [] (const std::string &path, std::string &file_content) {
+  std::ifstream stream( path.c_str() );
+  if (!stream)
+  {
+    RCLCPP_ERROR_STREAM(LOGGER, "File " << path << " does not exist");
+    return;
+  }
+  file_content = std::string((std::istreambuf_iterator<char>(stream)),
+                      std::istreambuf_iterator<char>());
+};
 
 int main(int argc, char** argv) {
   const std::string robotName = "legged_robot";
 
   // Initialize ros node
-  ros::init(argc, argv, robotName + "_mrt");
-  ros::NodeHandle nodeHandle;
+  rclcpp::init(argc, argv);
+  rclcpp::Node::SharedPtr nodeHandle = std::make_shared<rclcpp::Node>(robotName + "_mrt");
   // Get node parameters
   std::string taskFile, urdfFile, referenceFile;
-  nodeHandle.getParam("/taskFile", taskFile);
-  nodeHandle.getParam("/urdfFile", urdfFile);
-  nodeHandle.getParam("/referenceFile", referenceFile);
+  declareAndGetStringParam(nodeHandle, "task_file", taskFile);
+  declareAndGetStringParam(nodeHandle, "urdf_file", urdfFile);
+  declareAndGetStringParam(nodeHandle, "reference_file", referenceFile);
 
   // Robot interface
   LeggedRobotInterface interface(taskFile, urdfFile, referenceFile);
@@ -61,12 +83,16 @@ int main(int argc, char** argv) {
   mrt.initRollout(&interface.getRollout());
   mrt.launchNodes(nodeHandle);
 
+  std::string urdf_string;
+  readFile(urdfFile, urdf_string);
+
   // Visualization
   CentroidalModelPinocchioMapping pinocchioMapping(interface.getCentroidalModelInfo());
   PinocchioEndEffectorKinematics endEffectorKinematics(interface.getPinocchioInterface(), pinocchioMapping,
                                                        interface.modelSettings().contactNames3DoF);
   std::shared_ptr<LeggedRobotVisualizer> leggedRobotVisualizer(
-      new LeggedRobotVisualizer(interface.getPinocchioInterface(), interface.getCentroidalModelInfo(), endEffectorKinematics, nodeHandle));
+      new LeggedRobotVisualizer(interface.getPinocchioInterface(), interface.getCentroidalModelInfo(), 
+                                endEffectorKinematics, nodeHandle, urdf_string));
 
   // Dummy legged robot
   MRT_ROS_Dummy_Loop leggedRobotDummySimulator(mrt, interface.mpcSettings().mrtDesiredFrequency_,

@@ -49,11 +49,11 @@ class TestStateConstraint : public ocs2::StateConstraint {
   }
   ocs2::VectorFunctionLinearApproximation getLinearApproximation(ocs2::scalar_t time, const ocs2::vector_t& state,
                                                                  const ocs2::PreComputation&) const override {
-    return ocs2::VectorFunctionLinearApproximation::Zero(numConstraints_, state.size(), 0);
+    return ocs2::VectorFunctionLinearApproximation::Zero(numConstraints_, state.size());
   }
   ocs2::VectorFunctionQuadraticApproximation getQuadraticApproximation(ocs2::scalar_t time, const ocs2::vector_t& state,
                                                                        const ocs2::PreComputation&) const override {
-    return ocs2::VectorFunctionQuadraticApproximation::Zero(numConstraints_, state.size(), 0);
+    return ocs2::VectorFunctionQuadraticApproximation::Zero(numConstraints_, state.size());
   }
 
  private:

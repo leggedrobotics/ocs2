@@ -58,7 +58,6 @@ class SolveBVP {
   using full_ode_vector_t = typename bvp_equations_t::full_ode_vector_t;
   using full_ode_vector_array_t = typename bvp_equations_t::full_ode_vector_array_t;
 
-  using eigen_scalar_t = typename bvp_equations_t::eigen_scalar_t;
   using state_vector_t = typename bvp_equations_t::state_vector_t;
   using input_vector_t = typename bvp_equations_t::input_vector_t;
   using state_state_matrix_t = typename bvp_equations_t::state_state_matrix_t;
@@ -68,7 +67,6 @@ class SolveBVP {
 
   using scalar_t = typename bvp_equations_t::scalar_t;
   using scalar_array_t = typename bvp_equations_t::scalar_array_t;
-  using eigen_scalar_array_t = typename bvp_equations_t::eigen_scalar_array_t;
   using state_vector_array_t = typename bvp_equations_t::state_vector_array_t;
   using input_vector_array_t = typename bvp_equations_t::input_vector_array_t;
   using state_state_matrix_array_t = typename bvp_equations_t::state_state_matrix_array_t;

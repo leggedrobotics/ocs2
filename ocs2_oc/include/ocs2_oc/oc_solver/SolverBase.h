@@ -37,14 +37,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/control/ControllerBase.h>
 
-#include <ocs2_oc/oc_data/DualSolution.h>
-#include <ocs2_oc/oc_data/PrimalSolution.h>
-#include <ocs2_oc/oc_data/ProblemMetrics.h>
-#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
-#include <ocs2_oc/oc_solver/PerformanceIndex.h>
-#include <ocs2_oc/synchronized_module/ReferenceManagerInterface.h>
-#include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
+#include "ocs2_oc/oc_data/DualSolution.h"
+#include "ocs2_oc/oc_data/PerformanceIndex.h"
+#include "ocs2_oc/oc_data/PrimalSolution.h"
+#include "ocs2_oc/oc_data/ProblemMetrics.h"
+#include "ocs2_oc/oc_problem/OptimalControlProblem.h"
+#include "ocs2_oc/synchronized_module/ReferenceManagerInterface.h"
 #include "ocs2_oc/synchronized_module/SolverObserver.h"
+#include "ocs2_oc/synchronized_module/SolverSynchronizedModule.h"
 
 namespace ocs2 {
 

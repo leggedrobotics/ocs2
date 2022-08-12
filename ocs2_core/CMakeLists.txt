@@ -400,10 +400,11 @@ target_link_libraries(${PROJECT_NAME}_test_thread_support
   gtest_main
 )
 
-catkin_add_gtest(${PROJECT_NAME}_test_precomputation
+catkin_add_gtest(${PROJECT_NAME}_test_core
   test/testPrecomputation.cpp
-)
-target_link_libraries(${PROJECT_NAME}_test_precomputation
+  test/testTypes.cpp
+  )
+target_link_libraries(${PROJECT_NAME}_test_core
   ${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}

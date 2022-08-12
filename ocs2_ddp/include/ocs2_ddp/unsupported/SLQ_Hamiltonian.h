@@ -72,9 +72,6 @@ class SLQ_Hamiltonian : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   using scalar_array_t = typename BASE::scalar_array_t;
   using scalar_array2_t = typename BASE::scalar_array2_t;
   using scalar_array3_t = typename BASE::scalar_array3_t;
-  using eigen_scalar_t = typename BASE::eigen_scalar_t;
-  using eigen_scalar_array_t = typename BASE::eigen_scalar_array_t;
-  using eigen_scalar_array2_t = typename BASE::eigen_scalar_array2_t;
   using state_vector_t = typename BASE::state_vector_t;
   using state_vector_array_t = typename BASE::state_vector_array_t;
   using state_vector_array2_t = typename BASE::state_vector_array2_t;
@@ -275,7 +272,7 @@ class SLQ_Hamiltonian : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] sFinal: The final s for Riccati equation.
    */
   void solveRiccatiEquationsWorker(size_t workerIndex, const size_t& partitionIndex, const state_matrix_t& SmFinal,
-                                   const state_vector_t& SvFinal, const eigen_scalar_t& sFinal);
+                                   const state_vector_t& SvFinal, const scalar_t sFinal);
 
   /**
    * Solves a set of Riccati equations for the partition in the given index for nominal time trajectory stamp.
@@ -288,7 +285,7 @@ class SLQ_Hamiltonian : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] sFinal: The final s for the current Riccati equation.
    */
   void solveRiccatiEquationsForNominalTimeWorker(size_t workerIndex, const size_t& partitionIndex, const state_matrix_t& SmFinal,
-                                                 const state_vector_t& SvFinal, const eigen_scalar_t& sFinal);
+                                                 const state_vector_t& SvFinal, const scalar_t sFinal);
 
   /**
    * Type_1 constraints error correction compensation which solves a set of error Riccati equations for the partition in the given index.
@@ -310,7 +307,7 @@ class SLQ_Hamiltonian : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] SveFinal: The final Sve for the current Riccati equation.
    */
   void solveSlqRiccatiEquationsWorker(size_t workerIndex, const size_t& partitionIndex, const state_matrix_t& SmFinal,
-                                      const state_vector_t& SvFinal, const eigen_scalar_t& sFinal, const state_vector_t& SveFinal);
+                                      const state_vector_t& SvFinal, const scalar_t sFinal, const state_vector_t& SveFinal);
 
   /**
    * Full Backward Sweep method uses exponential method instead of ODE to solve Riccati equations.
@@ -324,7 +321,7 @@ class SLQ_Hamiltonian : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] constraintStepSize: type-1 constraint step-size
    */
   void fullRiccatiBackwardSweepWorker(size_t workerIndex, const size_t& partitionIndex, const state_matrix_t& SmFinal,
-                                      const state_vector_t& SvFinal, const state_vector_t& SveFinal, const eigen_scalar_t& sFinal,
+                                      const state_vector_t& SvFinal, const state_vector_t& SveFinal, const scalar_t sFinal,
                                       const scalar_t& constraintStepSize);
 
   template <int DIM1, int DIM2 = 1>

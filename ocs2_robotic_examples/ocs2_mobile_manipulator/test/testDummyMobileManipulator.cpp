@@ -199,6 +199,7 @@ TEST_P(DummyMobileManipulatorParametersTests, synchronousTracking) {
   verifyTrackingQuality(observation.state);
 }
 
+#ifdef NDEBUG
 TEST_P(DummyMobileManipulatorParametersTests, asynchronousTracking) {
   // Obtain mpc
   initialize(getTaskFile(), getLibFolder(), getUrdfFile());
@@ -258,6 +259,7 @@ TEST_P(DummyMobileManipulatorParametersTests, asynchronousTracking) {
 
   verifyTrackingQuality(observation.state);
 }
+#endif
 
 /******************************************************************************************************/
 /******************************************************************************************************/

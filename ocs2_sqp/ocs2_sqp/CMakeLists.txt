@@ -3,7 +3,6 @@ project(ocs2_sqp)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
-  ocs2_ddp
   ocs2_mpc
   ocs2_oc
   ocs2_qp_solver

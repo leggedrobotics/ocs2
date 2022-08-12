@@ -56,8 +56,6 @@ class GSLQSolver {
   typedef typename DIMENSIONS::MP_Options MP_Options_t;
   typedef typename DIMENSIONS::scalar_t scalar_t;
   typedef typename DIMENSIONS::scalar_array_t scalar_array_t;
-  typedef typename DIMENSIONS::eigen_scalar_t eigen_scalar_t;
-  typedef typename DIMENSIONS::eigen_scalar_array_t eigen_scalar_array_t;
   typedef typename DIMENSIONS::state_vector_t state_vector_t;
   typedef typename DIMENSIONS::state_vector_array_t state_vector_array_t;
   typedef typename DIMENSIONS::input_vector_t input_vector_t;

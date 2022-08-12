@@ -34,8 +34,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/model_data/Metrics.h>
 #include <ocs2_core/penalties/MultidimensionalPenalty.h>
 #include <ocs2_oc/oc_data/DualSolution.h>
+#include <ocs2_oc/oc_data/PerformanceIndex.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
-#include <ocs2_oc/oc_solver/PerformanceIndex.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
 
 #include "ocs2_ddp/DDP_Data.h"
@@ -81,6 +81,17 @@ scalar_t rolloutTrajectory(RolloutBase& rollout, scalar_t initTime, const vector
                            PrimalSolution& primalSolution);
 
 /**
+ * Projects the unconstrained LQ coefficients to constrained ones.
+ *
+ * @param [in] modelData: The model data.
+ * @param [in] constraintRangeProjector: The projection matrix to the constrained subspace.
+ * @param [in] constraintNullProjector: The projection matrix to the null space of constrained.
+ * @param [out] projectedModelData: The projected model data.
+ */
+void projectLQ(const ModelData& modelData, const matrix_t& constraintRangeProjector, const matrix_t& constraintNullProjector,
+               ModelData& projectedModelData);
+
+/**
  * Extract a primal solution for the range [initTime, finalTime] from a given primal solution. It assumes that the
  * given range is within the solution time of input primal solution.
  *
@@ -93,6 +104,14 @@ scalar_t rolloutTrajectory(RolloutBase& rollout, scalar_t initTime, const vector
  */
 void extractPrimalSolution(const std::pair<scalar_t, scalar_t>& timePeriod, const PrimalSolution& inputPrimalSolution,
                            PrimalSolution& outputPrimalSolution);
+
+/**
+ * Calculates max feedforward update norm of the controller.
+ *
+ * @param [in] controller: Control policy
+ * @return max feedforward update norm.
+ */
+scalar_t maxControllerUpdateNorm(const LinearController& controller);
 
 /**
  * Computes the integral of the squared (IS) norm of the controller update.
@@ -134,6 +153,26 @@ void incrementController(scalar_t stepLength, const LinearController& unoptimize
 void retrieveActiveNormalizedTime(const std::pair<int, int>& partitionInterval, const scalar_array_t& timeTrajectory,
                                   const size_array_t& postEventIndices, scalar_array_t& normalizedTimeTrajectory,
                                   size_array_t& normalizedPostEventIndices);
+
+/**
+ * Get the Partition Intervals From Time Trajectory. Intervals are defined as [start, end).
+ *
+ * Pay attention, the rightmost index of the end partition is (..., timeArray.size() - 1) , as the last value function is filled manually.
+ * The reason is though we don’t write to the end index, we do have to read it. Adding the last index to the final partition will
+ * cause a segmentation fault. There is no trivial method to distinguish the final partition from other partitions because, by design,
+ * partitions should be treated equally.
+ *
+ * Every time point that is equal or larger to the desiredPartitionPoint should be included in that partition. This logic here is the same
+ * as the event times.
+ *
+ * The last time of desiredPartitionPoints is filled manually. There is no round-off error involved. So it is safe to use == for
+ * floating-point numbers. The last time point is naturally included by using std::lower_bound.
+ *
+ * @param [in] timeTrajectory: time trajectory that will be divided
+ * @param [in] numWorkers: number of worker i.e. number of partitions
+ * @return array of index pairs indicating the start and end of each partition
+ */
+std::vector<std::pair<int, int>> computePartitionIntervals(const scalar_array_t& timeTrajectory, int numWorkers);
 
 /**
  * Gets a reference to the linear controller from the given primal solution.

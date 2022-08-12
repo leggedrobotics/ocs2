@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/PreComputation.h>
 #include <ocs2_core/integration/TrapezoidalIntegration.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
+#include <ocs2_oc/approximate_model/ChangeOfInputVariables.h>
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
 
 namespace ocs2 {
@@ -139,6 +140,69 @@ scalar_t rolloutTrajectory(RolloutBase& rollout, scalar_t initTime, const vector
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+void projectLQ(const ModelData& modelData, const matrix_t& constraintRangeProjector, const matrix_t& constraintNullProjector,
+               ModelData& projectedModelData) {
+  // dimensions and time
+  projectedModelData.time = modelData.time;
+  projectedModelData.stateDim = modelData.stateDim;
+  projectedModelData.inputDim = modelData.inputDim - modelData.stateInputEqConstraint.f.rows();
+
+  // unhandled constraints
+  projectedModelData.stateEqConstraint.f = vector_t();
+
+  if (modelData.stateInputEqConstraint.f.rows() == 0) {
+    // Change of variables u = Pu * tilde{u}
+    // Pu = constraintNullProjector;
+
+    // projected state-input equality constraints
+    projectedModelData.stateInputEqConstraint.f.setZero(projectedModelData.inputDim);
+    projectedModelData.stateInputEqConstraint.dfdx.setZero(projectedModelData.inputDim, projectedModelData.stateDim);
+    projectedModelData.stateInputEqConstraint.dfdu.setZero(modelData.inputDim, modelData.inputDim);
+
+    // dynamics
+    projectedModelData.dynamics = modelData.dynamics;
+    changeOfInputVariables(projectedModelData.dynamics, constraintNullProjector);
+
+    // dynamics bias
+    projectedModelData.dynamicsBias = modelData.dynamicsBias;
+
+    // cost
+    projectedModelData.cost = modelData.cost;
+    changeOfInputVariables(projectedModelData.cost, constraintNullProjector);
+
+  } else {
+    // Change of variables u = Pu * tilde{u} + Px * x + u0
+    // Pu = constraintNullProjector;
+    // Px (= -CmProjected) = -constraintRangeProjector * C
+    // u0 (= -EvProjected) = -constraintRangeProjector * e
+
+    /* projected state-input equality constraints */
+    projectedModelData.stateInputEqConstraint.f.noalias() = constraintRangeProjector * modelData.stateInputEqConstraint.f;
+    projectedModelData.stateInputEqConstraint.dfdx.noalias() = constraintRangeProjector * modelData.stateInputEqConstraint.dfdx;
+    projectedModelData.stateInputEqConstraint.dfdu.noalias() = constraintRangeProjector * modelData.stateInputEqConstraint.dfdu;
+
+    // Change of variable matrices
+    const auto& Pu = constraintNullProjector;
+    const matrix_t Px = -projectedModelData.stateInputEqConstraint.dfdx;
+    const matrix_t u0 = -projectedModelData.stateInputEqConstraint.f;
+
+    // dynamics
+    projectedModelData.dynamics = modelData.dynamics;
+    changeOfInputVariables(projectedModelData.dynamics, Pu, Px, u0);
+
+    // dynamics bias
+    projectedModelData.dynamicsBias = modelData.dynamicsBias;
+    projectedModelData.dynamicsBias.noalias() += modelData.dynamics.dfdu * u0;
+
+    // cost
+    projectedModelData.cost = modelData.cost;
+    changeOfInputVariables(projectedModelData.cost, Pu, Px, u0);
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void extractPrimalSolution(const std::pair<scalar_t, scalar_t>& timePeriod, const PrimalSolution& inputPrimalSolution,
                            PrimalSolution& outputPrimalSolution) {
   // no controller
@@ -207,6 +271,17 @@ void extractPrimalSolution(const std::pair<scalar_t, scalar_t>& timePeriod, cons
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+scalar_t maxControllerUpdateNorm(const LinearController& controller) {
+  scalar_t maxDeltaUffNorm = 0.0;
+  for (const auto& deltaBias : controller.deltaBiasArray_) {
+    maxDeltaUffNorm = std::max(maxDeltaUffNorm, deltaBias.norm());
+  }
+  return maxDeltaUffNorm;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 scalar_t computeControllerUpdateIS(const LinearController& controller) {
   scalar_array_t biasArraySquaredNorm(controller.timeStamp_.size());
   std::transform(controller.deltaBiasArray_.begin(), controller.deltaBiasArray_.end(), biasArraySquaredNorm.begin(),
@@ -250,6 +325,35 @@ void retrieveActiveNormalizedTime(const std::pair<int, int>& partitionInterval, 
   normalizedPostEventIndices.resize(NE);
   std::transform(firstEventItr, lastEventItr, normalizedPostEventIndices.rbegin(),
                  [N, &partitionInterval](size_t i) -> size_t { return N - i + partitionInterval.first; });
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::vector<std::pair<int, int>> computePartitionIntervals(const scalar_array_t& timeTrajectory, int numWorkers) {
+  const scalar_t increment = (timeTrajectory.back() - timeTrajectory.front()) / static_cast<scalar_t>(numWorkers);
+
+  scalar_array_t desiredPartitionPoints(numWorkers + 1);
+  desiredPartitionPoints.front() = timeTrajectory.front();
+  for (size_t i = 1u; i < desiredPartitionPoints.size() - 1; i++) {
+    desiredPartitionPoints[i] = desiredPartitionPoints[i - 1] + increment;
+  }
+  desiredPartitionPoints.back() = timeTrajectory.back();
+
+  std::vector<std::pair<int, int>> partitionIntervals;
+  partitionIntervals.reserve(desiredPartitionPoints.size());
+
+  int endPos, startPos = 0;
+  for (size_t i = 1u; i < desiredPartitionPoints.size(); i++) {
+    const auto itr = std::upper_bound(timeTrajectory.begin(), timeTrajectory.end(), desiredPartitionPoints[i]);
+    endPos = (itr != timeTrajectory.end()) ? std::distance(timeTrajectory.begin(), itr) : (timeTrajectory.size() - 1);
+    if (endPos != startPos) {
+      partitionIntervals.emplace_back(startPos, endPos);
+      startPos = endPos;
+    }
+  }
+
+  return partitionIntervals;
 }
 
 }  // namespace ocs2

@@ -77,7 +77,7 @@ vector_array_t StateConstraintCollection::getValue(scalar_t time, const vector_t
 /******************************************************************************************************/
 VectorFunctionLinearApproximation StateConstraintCollection::getLinearApproximation(scalar_t time, const vector_t& state,
                                                                                     const PreComputation& preComp) const {
-  VectorFunctionLinearApproximation linearApproximation(getNumConstraints(time), state.rows(), 0);
+  VectorFunctionLinearApproximation linearApproximation(getNumConstraints(time), state.rows());
 
   // append linearApproximation of each constraintTerm
   size_t i = 0;

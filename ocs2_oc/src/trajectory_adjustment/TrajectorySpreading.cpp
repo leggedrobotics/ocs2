@@ -170,7 +170,7 @@ auto TrajectorySpreading::set(const ModeSchedule& oldModeSchedule, const ModeSch
   // if last mode of the new mode sequence is NOT matched
   else if (!isLastActiveModeOfNewModeSequenceMatched) {
     const auto mismatchEventTime = newModeSchedule.eventTimes[newStartIndexOfMatchedSequence + w - 1];
-    eraseFromIndex_ = upperBoundIndex(oldTimeTrajectory, mismatchEventTime);
+    eraseFromIndex_ = lowerBoundIndex(oldTimeTrajectory, mismatchEventTime);
   }
 
   // computes the index of the spreading values and intervals

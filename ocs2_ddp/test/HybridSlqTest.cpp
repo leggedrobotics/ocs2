@@ -71,7 +71,6 @@ TEST(HybridSlqTest, state_rollout_slq) {
   using namespace ocs2;
 
   constexpr scalar_t minRelCost = 1e-6;  // to avoid early termination
-  constexpr scalar_t constraintTolerance = 1e-4;
 
   const ddp::Settings ddpSettings = [&]() {
     ddp::Settings settings;

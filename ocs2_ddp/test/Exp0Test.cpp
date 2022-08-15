@@ -47,7 +47,6 @@ class Exp0 : public testing::Test {
   static constexpr ocs2::scalar_t timeStep = 1e-2;
   static constexpr ocs2::scalar_t minRelCost = 1e-3;
   static constexpr ocs2::scalar_t expectedCost = 9.766;
-  static constexpr ocs2::scalar_t expectedStateInputEqConstraintISE = 0.0;
 
   Exp0() {
     // event times
@@ -109,7 +108,7 @@ class Exp0 : public testing::Test {
     const auto testName = getTestName(ddpSettings);
     EXPECT_NEAR(performanceIndex.cost, expectedCost, 10.0 * minRelCost)
         << "MESSAGE: " << testName << ": failed in the total cost test!";
-    EXPECT_NEAR(performanceIndex.equalityConstraintsSSE, expectedStateInputEqConstraintISE, 10.0 * ddpSettings.constraintTolerance_)
+    EXPECT_NEAR(performanceIndex.equalityConstraintsSSE, 0.0, 10.0 * ddpSettings.constraintTolerance_)
         << "MESSAGE: " << testName << ": failed in state-input equality constraint ISE test!";
   }
 
@@ -127,7 +126,6 @@ constexpr size_t Exp0::INPUT_DIM;
 constexpr ocs2::scalar_t Exp0::timeStep;
 constexpr ocs2::scalar_t Exp0::minRelCost;
 constexpr ocs2::scalar_t Exp0::expectedCost;
-constexpr ocs2::scalar_t Exp0::expectedStateInputEqConstraintISE;
 
 /******************************************************************************************************/
 /******************************************************************************************************/

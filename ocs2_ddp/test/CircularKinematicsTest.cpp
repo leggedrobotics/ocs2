@@ -47,8 +47,9 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
   static constexpr size_t STATE_DIM = 2;
   static constexpr size_t INPUT_DIM = 2;
   static constexpr ocs2::scalar_t timeStep = 0.01;
+  static constexpr ocs2::scalar_t minRelCost = 1e-3;
+  static constexpr ocs2::scalar_t constraintTolerance = 1e-5;
   static constexpr ocs2::scalar_t expectedCost = 0.1;
-  static constexpr ocs2::scalar_t expectedStateInputEqConstraintISE = 0.0;
 
   CircularKinematicsTest() {
     // optimal control problem
@@ -109,8 +110,8 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
         throw std::runtime_error("Not supported Algorithm!");
     }
     ddpSettings.maxNumIterations_ = 150;
-    ddpSettings.minRelCost_ = 1e-3;
-    ddpSettings.constraintTolerance_ = 1e-5;
+    ddpSettings.minRelCost_ = minRelCost;
+    ddpSettings.constraintTolerance_ = constraintTolerance;
     ddpSettings.constraintPenaltyInitialValue_ = 2.0;
     ddpSettings.constraintPenaltyIncreaseRate_ = 1.5;
     ddpSettings.preComputeRiccatiTerms_ = false;
@@ -133,7 +134,7 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
   void performanceIndexTest(const ocs2::ddp::Settings& ddpSettings, const ocs2::PerformanceIndex& performanceIndex) const {
     const auto testName = getTestName(ddpSettings);
     EXPECT_LT(performanceIndex.cost - expectedCost, 0.0) << "MESSAGE: " << testName << ": failed in the cost test!";
-    EXPECT_LT(fabs(performanceIndex.equalityConstraintsSSE - expectedStateInputEqConstraintISE), 10 * ddpSettings.constraintTolerance_)
+    EXPECT_NEAR(performanceIndex.equalityConstraintsSSE, 0.0, 10.0 * constraintTolerance)
         << "MESSAGE: " << testName << ": failed in state-input equality constraint ISE test!";
   }
 
@@ -148,8 +149,9 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
 constexpr size_t CircularKinematicsTest::STATE_DIM;
 constexpr size_t CircularKinematicsTest::INPUT_DIM;
 constexpr ocs2::scalar_t CircularKinematicsTest::timeStep;
+constexpr ocs2::scalar_t CircularKinematicsTest::minRelCost;
+constexpr ocs2::scalar_t CircularKinematicsTest::constraintTolerance;
 constexpr ocs2::scalar_t CircularKinematicsTest::expectedCost;
-constexpr ocs2::scalar_t CircularKinematicsTest::expectedStateInputEqConstraintISE;
 
 /******************************************************************************************************/
 /******************************************************************************************************/

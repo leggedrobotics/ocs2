@@ -45,6 +45,7 @@ class Exp0 : public testing::Test {
   static constexpr size_t STATE_DIM = 2;
   static constexpr size_t INPUT_DIM = 1;
   static constexpr ocs2::scalar_t timeStep = 1e-2;
+  static constexpr ocs2::scalar_t minRelCost = 1e-3;
   static constexpr ocs2::scalar_t expectedCost = 9.766;
   static constexpr ocs2::scalar_t expectedStateInputEqConstraintISE = 0.0;
 
@@ -86,7 +87,7 @@ class Exp0 : public testing::Test {
     ddpSettings.backwardPassIntegratorType_ = ocs2::IntegratorType::ODE45;
     ddpSettings.maxNumStepsPerSecond_ = 10000;
     ddpSettings.maxNumIterations_ = 30;
-    ddpSettings.minRelCost_ = 1e-3;
+    ddpSettings.minRelCost_ = minRelCost;
     ddpSettings.checkNumericalStability_ = true;
     ddpSettings.useFeedbackPolicy_ = true;
     ddpSettings.debugPrintRollout_ = false;
@@ -106,9 +107,9 @@ class Exp0 : public testing::Test {
 
   void performanceIndexTest(const ocs2::ddp::Settings& ddpSettings, const ocs2::PerformanceIndex& performanceIndex) const {
     const auto testName = getTestName(ddpSettings);
-    EXPECT_LT(fabs(performanceIndex.cost - expectedCost), 10 * ddpSettings.minRelCost_)
+    EXPECT_NEAR(performanceIndex.cost, expectedCost, 10.0 * minRelCost)
         << "MESSAGE: " << testName << ": failed in the total cost test!";
-    EXPECT_LT(fabs(performanceIndex.equalityConstraintsSSE - expectedStateInputEqConstraintISE), 10 * ddpSettings.constraintTolerance_)
+    EXPECT_NEAR(performanceIndex.equalityConstraintsSSE, expectedStateInputEqConstraintISE, 10.0 * ddpSettings.constraintTolerance_)
         << "MESSAGE: " << testName << ": failed in state-input equality constraint ISE test!";
   }
 
@@ -124,6 +125,7 @@ class Exp0 : public testing::Test {
 constexpr size_t Exp0::STATE_DIM;
 constexpr size_t Exp0::INPUT_DIM;
 constexpr ocs2::scalar_t Exp0::timeStep;
+constexpr ocs2::scalar_t Exp0::minRelCost;
 constexpr ocs2::scalar_t Exp0::expectedCost;
 constexpr ocs2::scalar_t Exp0::expectedStateInputEqConstraintISE;
 
@@ -231,8 +233,8 @@ TEST_F(Exp0, ddp_hamiltonian) {
   constexpr size_t numThreads = 2;
   auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, numThreads, ocs2::search_strategy::Type::LINE_SEARCH);
   ddpSettings.useFeedbackPolicy_ = true;
-  ddpSettings.minRelCost_ = 1e-9;  // to allow more iterations that the effect of final linesearch is negligible
   ddpSettings.maxNumIterations_ = 50;
+  ddpSettings.minRelCost_ = 1e-9;  // to allow more iterations that the effect of final linesearch is negligible
 
   // dynamics and rollout
   ocs2::EXP0_System systemDynamics(referenceManagerPtr);

@@ -207,5 +207,5 @@ TEST(BouncingMassTest, DISABLED_state_rollout_slq) {
   // Test 2: Check of cost function
   auto performanceIndeces = slq.getPerformanceIndeces();
   constexpr scalar_t expectedCost = 7.15;
-  EXPECT_LT(std::fabs(performanceIndeces.cost - expectedCost), 100 * ddpSettings.minRelCost_);
+  EXPECT_NEAR(performanceIndeces.cost, expectedCost, 100.0 * ddpSettings.minRelCost_);
 }

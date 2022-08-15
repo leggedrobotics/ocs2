@@ -45,8 +45,8 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
   static constexpr size_t STATE_DIM = 2;
   static constexpr size_t INPUT_DIM = 1;
   static constexpr ocs2::scalar_t timeStep = 1e-2;
+  static constexpr ocs2::scalar_t minRelCost = 1e-3;
   static constexpr ocs2::scalar_t expectedCost = 5.4399;
-  static constexpr ocs2::scalar_t expectedStateInputEqConstraintISE = 0.0;
 
   Exp1() {
     // event times
@@ -84,6 +84,7 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
     ddpSettings.displayInfo_ = false;
     ddpSettings.displayShortSummary_ = display;
     ddpSettings.maxNumIterations_ = 30;
+    ddpSettings.minRelCost_ = minRelCost;
     ddpSettings.checkNumericalStability_ = true;
     ddpSettings.absTolODE_ = 1e-10;
     ddpSettings.relTolODE_ = 1e-7;
@@ -108,9 +109,9 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
 
   void performanceIndexTest(const ocs2::ddp::Settings& ddpSettings, const ocs2::PerformanceIndex& performanceIndex) const {
     const auto testName = getTestName(ddpSettings);
-    EXPECT_LT(fabs(performanceIndex.cost - expectedCost), 10 * ddpSettings.minRelCost_)
+    EXPECT_NEAR(performanceIndex.cost, expectedCost, 10.0 * minRelCost)
         << "MESSAGE: " << testName << ": failed in the total cost test!";
-    EXPECT_LT(fabs(performanceIndex.equalityConstraintsSSE - expectedStateInputEqConstraintISE), 10 * ddpSettings.constraintTolerance_)
+    EXPECT_NEAR(performanceIndex.equalityConstraintsSSE, 0.0, 10.0 * ddpSettings.constraintTolerance_)
         << "MESSAGE: " << testName << ": failed in state-input equality constraint ISE test!";
   }
 
@@ -126,8 +127,8 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
 constexpr size_t Exp1::STATE_DIM;
 constexpr size_t Exp1::INPUT_DIM;
 constexpr ocs2::scalar_t Exp1::timeStep;
+constexpr ocs2::scalar_t Exp1::minRelCost;
 constexpr ocs2::scalar_t Exp1::expectedCost;
-constexpr ocs2::scalar_t Exp1::expectedStateInputEqConstraintISE;
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -136,8 +137,8 @@ TEST_F(Exp1, ddp_hamiltonian) {
   // ddp settings
   auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, 2, ocs2::search_strategy::Type::LINE_SEARCH);
   ddpSettings.useFeedbackPolicy_ = true;
-  ddpSettings.minRelCost_ = 1e-9;  // to allow more iterations that the effect of final linesearch is negligible
   ddpSettings.maxNumIterations_ = 50;
+  ddpSettings.minRelCost_ = 1e-9;  // to allow more iterations that the effect of final linesearch is negligible
 
   // dynamics and rollout
   ocs2::EXP1_System systemDynamics(referenceManagerPtr);

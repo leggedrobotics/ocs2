@@ -125,12 +125,12 @@ TEST(BouncingMassTest, DISABLED_state_rollout_slq) {
   Q << 50.0, 0.0, 0.0, 0.0, 50.0, 0.0, 0.0, 0.0, 0.0;
   matrix_t R(INPUT_DIM, INPUT_DIM);
   R << 1.0;
-  std::unique_ptr<ocs2::StateInputCost> cost(new BouncingMassCost(reference, Q, R));
+  auto cost = std::make_unique<BouncingMassCost>(reference, Q, R);
 
   matrix_t Qf(STATE_DIM, STATE_DIM);
   Qf << 56.63, 7.07, 0.0, 7.07, 8.01, 0.0, 0.0, 0.0, 0.0;
-  std::unique_ptr<ocs2::StateCost> finalCost(new BouncingMassFinalCost(reference, Qf, finalTime));
-  std::unique_ptr<ocs2::StateCost> preJumpCost(new BouncingMassFinalCost(reference, Qf, finalTime));
+  auto finalCost = std::make_unique<BouncingMassFinalCost>(reference, Qf, finalTime);
+  auto preJumpCost = std::make_unique<BouncingMassFinalCost>(reference, Qf, finalTime);
 
   ocs2::OptimalControlProblem problem;
   problem.dynamicsPtr.reset(systemDynamics.clone());

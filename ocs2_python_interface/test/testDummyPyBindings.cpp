@@ -25,8 +25,8 @@ class DummyInterface final : public RobotInterface {
     const matrix_t Q = (matrix_t(2, 2) << 1, 0, 0, 1).finished();
     const matrix_t R = (matrix_t(1, 1) << 1).finished();
     const matrix_t Qf = (matrix_t(2, 2) << 2, 0, 0, 2).finished();
-    problem_.costPtr->add("cost", std::unique_ptr<StateInputCost>(new QuadraticStateInputCost(Q, R)));
-    problem_.finalCostPtr->add("finalCost", std::unique_ptr<StateCost>(new QuadraticStateCost(Qf)));
+    problem_.costPtr->add("cost", std::make_unique<QuadraticStateInputCost>(Q, R));
+    problem_.finalCostPtr->add("finalCost", std::make_unique<QuadraticStateCost>(Qf));
 
     problem_.targetTrajectoriesPtr = &targetTrajectories_;
 
@@ -41,7 +41,7 @@ class DummyInterface final : public RobotInterface {
     mpc::Settings mpcSettings;
     ddp::Settings ddpSettings;
     ddpSettings.algorithm_ = ddp::Algorithm::SLQ;
-    return std::unique_ptr<GaussNewtonDDP_MPC>(new GaussNewtonDDP_MPC(mpcSettings, ddpSettings, *rolloutPtr_, problem_, *initializerPtr_));
+    return std::make_unique<GaussNewtonDDP_MPC>(mpcSettings, ddpSettings, *rolloutPtr_, problem_, *initializerPtr_);
   }
 
   const OptimalControlProblem& getOptimalControlProblem() const override { return problem_; }

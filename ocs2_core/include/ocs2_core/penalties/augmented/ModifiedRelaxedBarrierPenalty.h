@@ -76,7 +76,7 @@ class ModifiedRelaxedBarrierPenalty final : public AugmentedPenaltyBase {
 
   /** Factory function */
   static std::unique_ptr<ModifiedRelaxedBarrierPenalty> create(Config config) {
-    return std::unique_ptr<ModifiedRelaxedBarrierPenalty>(new ModifiedRelaxedBarrierPenalty(std::move(config)));
+    return std::make_unique<ModifiedRelaxedBarrierPenalty>(std::move(config));
   }
 
   ~ModifiedRelaxedBarrierPenalty() override = default;

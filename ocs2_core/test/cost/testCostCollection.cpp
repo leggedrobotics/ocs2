@@ -82,8 +82,8 @@ class StateInputCost_TestFixture : public ::testing::Test {
     u = ocs2::vector_t::Random(INPUT_DIM);
     t = 0.0;
 
-    auto cost1 = std::unique_ptr<SimpleQuadraticCost>(new SimpleQuadraticCost(Q, R));
-    auto cost2 = std::unique_ptr<SimpleQuadraticCost>(new SimpleQuadraticCost(0.5 * Q, 2.0 * R));
+    auto cost1 = std::make_unique<SimpleQuadraticCost>(Q, R);
+    auto cost2 = std::make_unique<SimpleQuadraticCost>(0.5 * Q, 2.0 * R);
     expectedCost = cost1->getValue(t, x, u, targetTrajectories, {}) + cost2->getValue(t, x, u, targetTrajectories, {});
     expectedCostApproximation = cost1->getQuadraticApproximation(t, x, u, targetTrajectories, {});
     expectedCostApproximation += cost2->getQuadraticApproximation(t, x, u, targetTrajectories, {});
@@ -193,7 +193,7 @@ class StateCost_TestFixture : public ::testing::Test {
     x = ocs2::vector_t::Random(STATE_DIM);
     t = 0.0;
 
-    auto cost = std::unique_ptr<SimpleQuadraticFinalCost>(new SimpleQuadraticFinalCost(std::move(Q)));
+    auto cost = std::make_unique<SimpleQuadraticFinalCost>(std::move(Q));
     expectedCost = cost->getValue(t, x, targetTrajectories, {});
     expectedCostApproximation = cost->getQuadraticApproximation(t, x, targetTrajectories, {});
 

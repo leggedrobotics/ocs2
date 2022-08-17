@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class TestStateConstraint : public ocs2::StateConstraint {
+class TestStateConstraint final : public ocs2::StateConstraint {
  public:
   TestStateConstraint(ocs2::ConstraintOrder constraintOrder, size_t numConstraints)
       : StateConstraint(constraintOrder), numConstraints_(numConstraints) {}
@@ -96,19 +96,19 @@ template <class Constraint, class SoftConstraint>
 std::unique_ptr<SoftConstraint> softConstraintFactory(size_t numConstraints, ocs2::ConstraintOrder constraintOrder,
                                                       bool useSimilarPenalty) {
   // constraint
-  std::unique_ptr<Constraint> constraintPtr(new Constraint(constraintOrder, numConstraints));
+  auto constraintPtr = std::make_unique<Constraint>(constraintOrder, numConstraints);
 
   if (useSimilarPenalty) {
     // penalty function
-    std::unique_ptr<ocs2::RelaxedBarrierPenalty> penaltyFunctionPtr(new ocs2::RelaxedBarrierPenalty({10.0, 1.0}));
-    return std::unique_ptr<SoftConstraint>(new SoftConstraint(std::move(constraintPtr), std::move(penaltyFunctionPtr)));
+    auto penaltyFunctionPtr = std::make_unique<ocs2::RelaxedBarrierPenalty>(ocs2::RelaxedBarrierPenalty::Config{10.0, 1.0});
+    return std::make_unique<SoftConstraint>(std::move(constraintPtr), std::move(penaltyFunctionPtr));
 
   } else {
     std::vector<std::unique_ptr<ocs2::PenaltyBase>> penaltyFunctionPtrArry;
     for (size_t i = 0; i < numConstraints; i++) {
       penaltyFunctionPtrArry.emplace_back(new ocs2::RelaxedBarrierPenalty({10.0, 1.0}));
     }  // end of i loop
-    return std::unique_ptr<SoftConstraint>(new SoftConstraint(std::move(constraintPtr), std::move(penaltyFunctionPtrArry)));
+    return std::make_unique<SoftConstraint>(std::move(constraintPtr), std::move(penaltyFunctionPtrArry));
   }
 }
 
@@ -184,9 +184,9 @@ class ActivityTestStateConstraint : public ocs2::StateConstraint {
 TEST(testSoftConstraint, checkActivityStateConstraint) {
   constexpr size_t numConstraints = 10;
 
-  std::unique_ptr<ActivityTestStateConstraint> constraint(new ActivityTestStateConstraint);
-  std::unique_ptr<ocs2::RelaxedBarrierPenalty> penalty(new ocs2::RelaxedBarrierPenalty({10.0, 1.0}));
-  std::unique_ptr<ocs2::StateSoftConstraint> softConstraint(new ocs2::StateSoftConstraint(std::move(constraint), std::move(penalty)));
+  auto constraint = std::make_unique<ActivityTestStateConstraint>();
+  auto penalty = std::make_unique<ocs2::RelaxedBarrierPenalty>(ocs2::RelaxedBarrierPenalty::Config{10.0, 1.0});
+  auto softConstraint = std::make_unique<ocs2::StateSoftConstraint>(std::move(constraint), std::move(penalty));
 
   softConstraint->get<ActivityTestStateConstraint>().setActivity(true);
   EXPECT_TRUE(std::unique_ptr<ocs2::StateCost>(softConstraint->clone())->isActive(0.0));
@@ -216,10 +216,9 @@ class ActivityTestStateInputConstraint : public ocs2::StateInputConstraint {
 TEST(testSoftConstraint, checkActivityStateInputConstraint) {
   constexpr size_t numConstraints = 10;
 
-  std::unique_ptr<ActivityTestStateInputConstraint> constraint(new ActivityTestStateInputConstraint);
-  std::unique_ptr<ocs2::RelaxedBarrierPenalty> penalty(new ocs2::RelaxedBarrierPenalty({10.0, 1.0}));
-  std::unique_ptr<ocs2::StateInputSoftConstraint> softConstraint(
-      new ocs2::StateInputSoftConstraint(std::move(constraint), std::move(penalty)));
+  auto constraint = std::make_unique<ActivityTestStateInputConstraint>();
+  auto penalty = std::make_unique<ocs2::RelaxedBarrierPenalty>(ocs2::RelaxedBarrierPenalty::Config{10.0, 1.0});
+  auto softConstraint = std::make_unique<ocs2::StateInputSoftConstraint>(std::move(constraint), std::move(penalty));
 
   softConstraint->get<ActivityTestStateInputConstraint>().setActivity(true);
   EXPECT_TRUE(std::unique_ptr<ocs2::StateInputCost>(softConstraint->clone())->isActive(0.0));

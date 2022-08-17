@@ -53,6 +53,7 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
   static constexpr size_t N = 50;
   static constexpr size_t STATE_DIM = 3;
   static constexpr size_t INPUT_DIM = 2;
+  static constexpr ocs2::scalar_t minRelCost = 1e-3;
   static constexpr ocs2::scalar_t solutionPrecision = 5e-3;
   static constexpr size_t numStateInputConstraints = 2;
 
@@ -181,7 +182,7 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
     ddpSettings.absTolODE_ = 1e-10;
     ddpSettings.relTolODE_ = 1e-7;
     ddpSettings.maxNumStepsPerSecond_ = 10000;
-    ddpSettings.minRelCost_ = 1e-3;
+    ddpSettings.minRelCost_ = minRelCost;
     ddpSettings.nThreads_ = numThreads;
     ddpSettings.maxNumIterations_ = 2 + (numThreads - 1);  // need an extra iteration for each added time partition
     ddpSettings.strategy_ = strategy;
@@ -214,7 +215,7 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
   void correctnessTest(const ocs2::ddp::Settings& ddpSettings, const ocs2::PerformanceIndex& performanceIndex,
                        const ocs2::PrimalSolution& ddpSolution) const {
     const auto testName = getTestName(ddpSettings);
-    EXPECT_LT(fabs(performanceIndex.cost - qpCost), 10 * ddpSettings.minRelCost_)
+    EXPECT_NEAR(performanceIndex.cost, qpCost, 10.0 * minRelCost)
         << "MESSAGE: " << testName << ": failed in the optimal cost test!";
     EXPECT_LT(relError(ddpSolution.stateTrajectory_.back(), qpSolution.stateTrajectory.back()), solutionPrecision)
         << "MESSAGE: " << testName << ": failed in the optimal final state test!";
@@ -242,8 +243,9 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
 constexpr size_t DDPCorrectness::N;
 constexpr size_t DDPCorrectness::STATE_DIM;
 constexpr size_t DDPCorrectness::INPUT_DIM;
-constexpr size_t DDPCorrectness::numStateInputConstraints;
+constexpr ocs2::scalar_t DDPCorrectness::minRelCost;
 constexpr ocs2::scalar_t DDPCorrectness::solutionPrecision;
+constexpr size_t DDPCorrectness::numStateInputConstraints;
 
 /******************************************************************************************************/
 /******************************************************************************************************/

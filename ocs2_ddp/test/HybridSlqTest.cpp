@@ -70,6 +70,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 TEST(HybridSlqTest, state_rollout_slq) {
   using namespace ocs2;
 
+  constexpr scalar_t minRelCost = 1e-6;  // to avoid early termination
+
   const ddp::Settings ddpSettings = [&]() {
     ddp::Settings settings;
 
@@ -78,7 +80,7 @@ TEST(HybridSlqTest, state_rollout_slq) {
     settings.displayShortSummary_ = true;
     settings.maxNumIterations_ = 100;
     settings.nThreads_ = 1;
-    settings.minRelCost_ = 1e-6;  // to avoid early termination
+    settings.minRelCost_ = minRelCost;
     settings.checkNumericalStability_ = false;
     settings.absTolODE_ = 1e-10;
     settings.relTolODE_ = 1e-7;
@@ -166,5 +168,5 @@ TEST(HybridSlqTest, state_rollout_slq) {
 
   // Test 3: Check of cost
   const auto performanceIndecesST = slq.getPerformanceIndeces();
-  EXPECT_LT(performanceIndecesST.cost - 20.1, 10.0 * ddpSettings.minRelCost_);
+  EXPECT_LT(performanceIndecesST.cost - 20.1, 10.0 * minRelCost);
 }

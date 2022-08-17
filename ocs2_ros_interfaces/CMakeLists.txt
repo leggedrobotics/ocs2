@@ -5,7 +5,6 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   roscpp
   ocs2_msgs
   ocs2_core
-  ocs2_ddp
   ocs2_mpc
   std_msgs
   visualization_msgs

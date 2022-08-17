@@ -88,8 +88,8 @@ DoubleIntegratorInterface::DoubleIntegratorInterface(const std::string& taskFile
   std::cerr << "R:  \n" << R << "\n";
   std::cerr << "Q_final:\n" << Qf << "\n";
 
-  problem_.costPtr->add("cost", std::unique_ptr<StateInputCost>(new QuadraticStateInputCost(Q, R)));
-  problem_.finalCostPtr->add("finalCost", std::unique_ptr<StateCost>(new QuadraticStateCost(Qf)));
+  problem_.costPtr->add("cost", std::make_unique<QuadraticStateInputCost>(Q, R));
+  problem_.finalCostPtr->add("finalCost", std::make_unique<QuadraticStateCost>(Qf));
 
   // Dynamics
   const matrix_t A = (matrix_t(STATE_DIM, STATE_DIM) << 0.0, 1.0, 0.0, 0.0).finished();

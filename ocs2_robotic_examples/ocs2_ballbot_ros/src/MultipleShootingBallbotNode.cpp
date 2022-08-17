@@ -57,8 +57,7 @@ int main(int argc, char** argv) {
   ocs2::ballbot::BallbotInterface ballbotInterface(taskFile, libFolder);
 
   // ROS ReferenceManager
-  std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr(
-      new ocs2::RosReferenceManager(robotName, ballbotInterface.getReferenceManagerPtr()));
+  auto rosReferenceManagerPtr = std::make_shared<ocs2::RosReferenceManager>(robotName, ballbotInterface.getReferenceManagerPtr());
   rosReferenceManagerPtr->subscribe(nodeHandle);
 
   // MPC

@@ -62,7 +62,7 @@ TEST(test_valuefunction, linear_quadratic_problem) {
   // Reference Manager
   const ocs2::ModeSchedule modeSchedule({eventTime}, {0, 1});
   const ocs2::TargetTrajectories targetTrajectories({0.0}, {ocs2::vector_t::Random(n)}, {ocs2::vector_t::Random(m)});
-  std::shared_ptr<ocs2::ReferenceManager> referenceManagerPtr(new ocs2::ReferenceManager(targetTrajectories, modeSchedule));
+  auto referenceManagerPtr = std::make_shared<ocs2::ReferenceManager>(targetTrajectories, modeSchedule);
 
   problem.targetTrajectoriesPtr = &targetTrajectories;
 

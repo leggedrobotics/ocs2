@@ -106,8 +106,7 @@ class Exp0 : public testing::Test {
 
   void performanceIndexTest(const ocs2::ddp::Settings& ddpSettings, const ocs2::PerformanceIndex& performanceIndex) const {
     const auto testName = getTestName(ddpSettings);
-    EXPECT_NEAR(performanceIndex.cost, expectedCost, 10.0 * minRelCost)
-        << "MESSAGE: " << testName << ": failed in the total cost test!";
+    EXPECT_NEAR(performanceIndex.cost, expectedCost, 10.0 * minRelCost) << "MESSAGE: " << testName << ": failed in the total cost test!";
     EXPECT_NEAR(performanceIndex.equalityConstraintsSSE, 0.0, 10.0 * ddpSettings.constraintTolerance_)
         << "MESSAGE: " << testName << ": failed in state-input equality constraint ISE test!";
   }

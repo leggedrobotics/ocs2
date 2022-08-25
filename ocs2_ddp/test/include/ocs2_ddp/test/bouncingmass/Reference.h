@@ -50,11 +50,6 @@ class Reference {
  public:
   /*
    * Constructor
-   */
-  Reference() = default;
-
-  /*
-   * Constructor
    *
    * @param [in] t0: Time at which the first waypoint of the reference is defined
    * @param [in] t1: Time at which the second waypoint of the reference is defined
@@ -97,9 +92,7 @@ class Reference {
    */
   void extendref(scalar_t delta, Reference* refPre, Reference* refPost);
 
-  /*
-   * Display the reference
-   */
+  /* Display the reference */
   void display();
 
   scalar_t t0_;

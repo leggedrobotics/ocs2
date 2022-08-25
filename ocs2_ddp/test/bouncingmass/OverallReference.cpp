@@ -29,17 +29,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_ddp/test/bouncingmass/OverallReference.h"
 
-OverallReference::OverallReference(const scalar_array_t trajTimes, const vector_array_t trajStates) {
-  References_.clear();
-  References_.resize(trajTimes.size() - 1);
-
+OverallReference::OverallReference(const scalar_array_t& trajTimes, const vector_array_t& trajStates) {
   switchtimes_ = trajTimes;
-  vector_t x0 = trajStates[0];
 
+  References_.reserve(trajTimes.size() - 1);
   for (int i = 0; i < trajTimes.size() - 1; i++) {
-    References_[i] = Reference(trajTimes[i], trajTimes[i + 1], x0, trajStates[i + 1]);
-    x0 = trajStates[i + 1];
-    jumpMap(x0);
+    if (i == 0) {
+      References_.emplace_back(trajTimes[i], trajTimes[i + 1], trajStates[i], trajStates[i + 1]);
+    } else {
+      References_.emplace_back(trajTimes[i], trajTimes[i + 1], jumpMap(trajStates[i]), trajStates[i + 1]);
+    }
   }
 }
 
@@ -53,51 +52,37 @@ int OverallReference::getIndex(scalar_t time) const {
   return -1;
 }
 
-void OverallReference::getInput(scalar_t time, vector_t& input) const {
-  int idx = getIndex(time);
+vector_t OverallReference::getInput(scalar_t time) const {
+  vector_t input = vector_t::Zero(INPUT_DIM);
+  const int idx = getIndex(time);
   if (idx >= 0 && idx < References_.size()) {
     References_[idx].getInput(time, input);
-  } else {
-    input.setZero(INPUT_DIM);
   }
-}
-
-vector_t OverallReference::getInput(scalar_t time) const {
-  vector_t u;
-  getInput(time, u);
-  return u;
-}
-
-void OverallReference::getState(int idx, scalar_t time, vector_t& x) const {
-  if (idx >= 0 && idx < References_.size()) {
-    if (time < 2) {
-      References_[idx].getState(time, x);
-    } else {
-      getState(time, x);
-    }
-  } else {
-    References_[0].getState(0, x);
-  }
+  return input;
 }
 
 vector_t OverallReference::getState(int idx, scalar_t time) const {
   vector_t state;
-  getState(idx, time, state);
-  return state;
-}
-
-void OverallReference::getState(scalar_t time, vector_t& x) const {
-  int idx = getIndex(time);
   if (idx >= 0 && idx < References_.size()) {
-    References_[idx].getState(time, x);
+    if (time < 2) {
+      References_[idx].getState(time, state);
+    } else {
+      state = getState(time);
+    }
   } else {
-    References_[0].getState(0, x);
+    References_[0].getState(0, state);
   }
+  return state;
 }
 
 vector_t OverallReference::getState(scalar_t time) const {
   vector_t state;
-  getState(time, state);
+  const int idx = getIndex(time);
+  if (idx >= 0 && idx < References_.size()) {
+    References_[idx].getState(time, state);
+  } else {
+    References_[0].getState(0, state);
+  }
   return state;
 }
 
@@ -124,8 +109,9 @@ void OverallReference::display(int i) {
   References_[i].display();
 }
 
-void OverallReference::jumpMap(vector_t& x) const {
-  scalar_t e = 0.95;
-  x[1] = x[1] - (1 + e) * x[1];
-  x[2] = x[2] + 1;
+vector_t OverallReference::jumpMap(const vector_t& x) const {
+  constexpr scalar_t e = 0.95;
+  vector_t y(x.size());
+  y << x(0), -e * x(1), x(2) + 1.0;
+  return y;
 }

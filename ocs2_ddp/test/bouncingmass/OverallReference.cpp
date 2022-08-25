@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_ddp/test/bouncingmass/OverallReference.h"
 
+#include <ocs2_core/misc/Lookup.h>
+
 OverallReference::OverallReference(const scalar_array_t& trajTimes, const vector_array_t& trajStates) {
   switchtimes_ = trajTimes;
 
@@ -42,65 +44,34 @@ OverallReference::OverallReference(const scalar_array_t& trajTimes, const vector
   }
 }
 
-int OverallReference::getIndex(scalar_t time) const {
-  for (int i = 0; i < switchtimes_.size() - 1; i++) {
-    if (switchtimes_[i + 1] >= time) {
-      return i;
-    }
-  }
-
-  return -1;
+vector_t OverallReference::getInput(scalar_t time) const {
+  const int idx = ocs2::lookup::findIntervalInTimeArray(switchtimes_, time);
+  return (idx >= 0 && idx < References_.size()) ? References_[idx].getInput(time) : vector_t::Zero(INPUT_DIM);
 }
 
-vector_t OverallReference::getInput(scalar_t time) const {
-  vector_t input = vector_t::Zero(INPUT_DIM);
-  const int idx = getIndex(time);
-  if (idx >= 0 && idx < References_.size()) {
-    References_[idx].getInput(time, input);
-  }
-  return input;
+vector_t OverallReference::getState(scalar_t time) const {
+  const int idx = ocs2::lookup::findIntervalInTimeArray(switchtimes_, time);
+  return (idx >= 0 && idx < References_.size()) ? References_[idx].getState(time) : References_[0].getState(0);
 }
 
 vector_t OverallReference::getState(int idx, scalar_t time) const {
   vector_t state;
   if (idx >= 0 && idx < References_.size()) {
     if (time < 2) {
-      References_[idx].getState(time, state);
+      state = References_[idx].getState(time);
     } else {
       state = getState(time);
     }
   } else {
-    References_[0].getState(0, state);
-  }
-  return state;
-}
-
-vector_t OverallReference::getState(scalar_t time) const {
-  vector_t state;
-  const int idx = getIndex(time);
-  if (idx >= 0 && idx < References_.size()) {
-    References_[idx].getState(time, state);
-  } else {
-    References_[0].getState(0, state);
+    state = References_[0].getState(0);
   }
   return state;
 }
 
 void OverallReference::extendref(scalar_t delta) {
   for (int i = 0; i < References_.size(); i++) {
-    Reference* pre;
-    Reference* post;
-    if (i > 0) {
-      pre = &References_[i - 1];
-    } else {
-      pre = nullptr;
-    }
-
-    if (i <= References_.size() - 1) {
-      post = &References_[i + 1];
-    } else {
-      post = nullptr;
-    }
+    Reference* pre = i > 0 ? &References_[i - 1] : nullptr;
+    Reference* post = i < References_.size() - 1 ? &References_[i + 1] : nullptr;
     References_[i].extendref(delta, pre, post);
   }
 }

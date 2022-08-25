@@ -103,15 +103,6 @@ class OverallReference {
 
  private:
   /*
-   * Find the index of the currently active reference
-   *
-   * @param [in] time: time moment at which the index is requested
-   *
-   * @return currently active index
-   */
-  int getIndex(scalar_t time) const;
-
-  /*
    * Jump map of the system
    * @param [in] x: State before event
    * @return state after event

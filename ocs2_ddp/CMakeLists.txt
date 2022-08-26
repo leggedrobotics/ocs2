@@ -201,3 +201,13 @@ target_link_libraries(testDdpHelperFunction
   ${PROJECT_NAME}
   gtest_main
 )
+
+catkin_add_gtest(testReachingTask
+  test/testReachingTask.cpp
+)
+target_link_libraries(testReachingTask
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  ${PROJECT_NAME}
+  gtest_main
+)

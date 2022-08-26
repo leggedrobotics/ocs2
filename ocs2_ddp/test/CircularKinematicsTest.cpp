@@ -54,8 +54,7 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
   CircularKinematicsTest() {
     // optimal control problem
     boost::filesystem::path filePath(__FILE__);
-    const std::string libraryFolder = filePath.parent_path().generic_string() + "/ddp_test_generated";
-    problem = ocs2::createCircularKinematicsProblem(libraryFolder);
+    problem = ocs2::createCircularKinematicsProblem("/tmp/ocs2/ddp_test_generated");
 
     // initializer
     initializerPtr.reset(new ocs2::DefaultInitializer(INPUT_DIM));

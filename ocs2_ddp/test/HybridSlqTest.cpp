@@ -113,18 +113,14 @@ TEST(HybridSlqTest, state_rollout_slq) {
   // cost function
   const matrix_t Q = (matrix_t(STATE_DIM, STATE_DIM) << 50, 0, 0, 0, 50, 0, 0, 0, 0).finished();
   const matrix_t R = (matrix_t(INPUT_DIM, INPUT_DIM) << 1).finished();
-  auto cost = std::make_unique<QuadraticStateInputCost>(Q, R);
-  auto preJumpCost = std::make_unique<QuadraticStateCost>(Q);
-  auto finalCost = std::make_unique<QuadraticStateCost>(Q);
-
   // constraints
   auto boundsConstraints = std::make_unique<HybridSysBounds>();
 
   OptimalControlProblem problem;
   problem.dynamicsPtr.reset(systemDynamics.clone());
-  problem.costPtr->add("cost", std::move(cost));
-  problem.preJumpCostPtr->add("preJumpCost", std::move(preJumpCost));
-  problem.finalCostPtr->add("finalCost", std::move(finalCost));
+  problem.costPtr->add("cost", std::make_unique<QuadraticStateInputCost>(Q, R));
+  problem.preJumpCostPtr->add("preJumpCost", std::make_unique<QuadraticStateCost>(Q));
+  problem.finalCostPtr->add("finalCost", std::make_unique<QuadraticStateCost>(Q));
   problem.inequalityLagrangianPtr->add("bounds", create(std::move(boundsConstraints), augmented::SlacknessSquaredHingePenalty::create({200.0, 0.1})));
 
   const vector_t xNominal = vector_t::Zero(STATE_DIM);

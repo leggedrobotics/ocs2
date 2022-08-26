@@ -121,7 +121,8 @@ TEST(HybridSlqTest, state_rollout_slq) {
   problem.costPtr->add("cost", std::make_unique<QuadraticStateInputCost>(Q, R));
   problem.preJumpCostPtr->add("preJumpCost", std::make_unique<QuadraticStateCost>(Q));
   problem.finalCostPtr->add("finalCost", std::make_unique<QuadraticStateCost>(Q));
-  problem.inequalityLagrangianPtr->add("bounds", create(std::move(boundsConstraints), augmented::SlacknessSquaredHingePenalty::create({200.0, 0.1})));
+  problem.inequalityLagrangianPtr->add("bounds",
+                                       create(std::move(boundsConstraints), augmented::SlacknessSquaredHingePenalty::create({200.0, 0.1})));
 
   const vector_t xNominal = vector_t::Zero(STATE_DIM);
   const vector_t uNominal = vector_t::Zero(INPUT_DIM);
@@ -135,16 +136,17 @@ TEST(HybridSlqTest, state_rollout_slq) {
 
   // Test 1: Check constraint compliance. It uses a solver observer to get metrics for the bounds constraints
   auto boundsConstraintsObserverPtr = std::make_unique<AugmentedLagrangianObserver>("bounds");
-  boundsConstraintsObserverPtr->setMetricsCallback([&](const scalar_array_t& timeTraj, const std::vector<LagrangianMetricsConstRef>& metricsTraj) {
-    constexpr scalar_t constraintViolationTolerance = 1e-1;
-    for (size_t i = 0; i < metricsTraj.size(); i++) {
-      const vector_t constraintViolation = metricsTraj[i].constraint.cwiseMin(0.0);
-      EXPECT_NEAR(constraintViolation(0), 0.0, constraintViolationTolerance) << "At time " << timeTraj[i] << "\n";
-      EXPECT_NEAR(constraintViolation(1), 0.0, constraintViolationTolerance) << "At time " << timeTraj[i] << "\n";
-      EXPECT_NEAR(constraintViolation(2), 0.0, constraintViolationTolerance) << "At time " << timeTraj[i] << "\n";
-      EXPECT_NEAR(constraintViolation(3), 0.0, constraintViolationTolerance) << "At time " << timeTraj[i] << "\n";
-    }
-  });
+  boundsConstraintsObserverPtr->setMetricsCallback(
+      [&](const scalar_array_t& timeTraj, const std::vector<LagrangianMetricsConstRef>& metricsTraj) {
+        constexpr scalar_t constraintViolationTolerance = 1e-1;
+        for (size_t i = 0; i < metricsTraj.size(); i++) {
+          const vector_t constraintViolation = metricsTraj[i].constraint.cwiseMin(0.0);
+          EXPECT_NEAR(constraintViolation(0), 0.0, constraintViolationTolerance) << "At time " << timeTraj[i] << "\n";
+          EXPECT_NEAR(constraintViolation(1), 0.0, constraintViolationTolerance) << "At time " << timeTraj[i] << "\n";
+          EXPECT_NEAR(constraintViolation(2), 0.0, constraintViolationTolerance) << "At time " << timeTraj[i] << "\n";
+          EXPECT_NEAR(constraintViolation(3), 0.0, constraintViolationTolerance) << "At time " << timeTraj[i] << "\n";
+        }
+      });
 
   // setup SLQ
   SLQ slq(ddpSettings, stateTriggeredRollout, problem, operatingTrajectories);

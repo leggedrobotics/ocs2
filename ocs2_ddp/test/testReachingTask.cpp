@@ -84,7 +84,7 @@ class PreJumpDoubleIntegratorReachingTask : public DoubleIntegratorReachingTask,
     // optimal control problem
     ocp.dynamicsPtr = getDynamicsPtr();
     ocp.costPtr->add("cost", getCostPtr());
-    ocp.equalityConstraintPtr->add("zero_force", std::unique_ptr<ZeroInputConstraint>(new ZeroInputConstraint(*referenceManagerPtr)));
+    ocp.equalityConstraintPtr->add("zero_force", std::make_unique<ZeroInputConstraint>(*referenceManagerPtr));
     ocp.preJumpEqualityLagrangianPtr->add("goal_reaching", getGoalReachingAugmentedLagrangian(xGoal, GetParam()));
   }
 

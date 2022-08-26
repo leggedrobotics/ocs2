@@ -42,17 +42,11 @@ using vector_array_t = ocs2::vector_array_t;
 /*
  * 	This class constructs, contains a section of the reference, which is contained in
  * 	OverallReference and used in BouncingMass SLQ test.
- * 	The reference is based on the reference presented
- * 	in [On Optimal Trajectory Tracking for Mechanical Systems with Unilateral Constraints
- * by M. Rijnen]
+ * 	The reference is based on the reference presented in
+ * 	"On Optimal Trajectory Tracking for Mechanical Systems with Unilateral Constraints" by M. Rijnen
  */
 class Reference {
  public:
-  /*
-   * Constructor
-   */
-  Reference() = default;
-
   /*
    * Constructor
    *
@@ -67,14 +61,6 @@ class Reference {
    * Obtain reference input at the current time
    *
    * @param [in] time: current time
-   * @param [out] input: current reference input
-   */
-  void getInput(const scalar_t time, vector_t& input) const;
-
-  /*
-   * Obtain reference input at the current time
-   *
-   * @param [in] time: current time
    * @return current reference input
    */
   vector_t getInput(const scalar_t time) const;
@@ -83,9 +69,9 @@ class Reference {
    * Obtain reference state at current time
    *
    * @param [in] time: current time
-   * @param [out] x: current reference state
+   * @return current reference state
    */
-  void getState(const scalar_t time, vector_t& x) const;
+  vector_t getState(const scalar_t time) const;
 
   /*
    * Extend the reference by integrating the input signal of the next
@@ -97,14 +83,11 @@ class Reference {
    */
   void extendref(scalar_t delta, Reference* refPre, Reference* refPost);
 
-  /*
-   * Display the reference
-   */
+  /* Display the reference */
   void display();
 
   scalar_t t0_;
   scalar_t t1_;
-  scalar_t delta_ = 0;
 
  private:
   /*
@@ -116,7 +99,7 @@ class Reference {
    * 	@param [in] p0: first waypoint
    * 	@param [in] p1: second waypoint
    */
-  void Create5thOrdPol(scalar_t t0, scalar_t t1, const vector_t& p0, const vector_t& p1);
+  Eigen::Matrix<scalar_t, 6, 1> Create5thOrdPol(scalar_t t0, scalar_t t1, const vector_t& p0, const vector_t& p1) const;
 
   /*
    * 	Find the derivative of the polynomial described by a

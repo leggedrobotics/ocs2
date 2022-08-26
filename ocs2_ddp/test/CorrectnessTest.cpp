@@ -215,8 +215,7 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
   void correctnessTest(const ocs2::ddp::Settings& ddpSettings, const ocs2::PerformanceIndex& performanceIndex,
                        const ocs2::PrimalSolution& ddpSolution) const {
     const auto testName = getTestName(ddpSettings);
-    EXPECT_NEAR(performanceIndex.cost, qpCost, 10.0 * minRelCost)
-        << "MESSAGE: " << testName << ": failed in the optimal cost test!";
+    EXPECT_NEAR(performanceIndex.cost, qpCost, 10.0 * minRelCost) << "MESSAGE: " << testName << ": failed in the optimal cost test!";
     EXPECT_LT(relError(ddpSolution.stateTrajectory_.back(), qpSolution.stateTrajectory.back()), solutionPrecision)
         << "MESSAGE: " << testName << ": failed in the optimal final state test!";
     EXPECT_LT(relError(ddpSolution.inputTrajectory_.front(), qpSolution.inputTrajectory.front()), solutionPrecision)

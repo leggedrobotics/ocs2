@@ -73,7 +73,7 @@ ddp::Settings getDdpSettings(ddp::Algorithm alg, bool display) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/* Reaching task as event time at tGoal for a problem with horizon 2*tGoal. The solution input should be zero in [tGoal, 2*tGoal]. */
+/* Reaching task at event time (tGoal) for a problem with horizon 2*tGoal. The solution input should be zero in [tGoal, 2*tGoal]. */
 class PreJumpDoubleIntegratorReachingTask : public DoubleIntegratorReachingTask,
                                             public testing::Test,
                                             public testing::WithParamInterface<DoubleIntegratorReachingTask::PenaltyType> {

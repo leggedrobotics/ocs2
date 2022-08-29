@@ -35,13 +35,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
 #include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_core/penalties/Penalties.h>
-#include <ocs2_oc/synchronized_module/ReferenceManager.h>
 #include <ocs2_oc/oc_data/PrimalSolution.h>
+#include <ocs2_oc/synchronized_module/ReferenceManager.h>
 
 namespace ocs2 {
 
 class DoubleIntegratorReachingTask {
-public:
+ public:
   static constexpr size_t STATE_DIM = 2;
   static constexpr size_t INPUT_DIM = 1;
   static constexpr scalar_t timeStep = 1e-2;
@@ -56,7 +56,7 @@ public:
   DoubleIntegratorReachingTask() = default;
   virtual ~DoubleIntegratorReachingTask() = default;
 
-protected:
+ protected:
   const scalar_t tGoal = 1.0;
   const vector_t xInit = vector_t::Zero(STATE_DIM);
   const vector_t xGoal = (vector_t(STATE_DIM) << 2.0, 0.0).finished();
@@ -135,7 +135,6 @@ protected:
     ZeroInputConstraint(const ZeroInputConstraint&) = default;
     const ReferenceManager* referenceManagerPtr_;
   };
-
 
   /*
    * printout trajectory. Use the following commands for plotting in MATLAB:

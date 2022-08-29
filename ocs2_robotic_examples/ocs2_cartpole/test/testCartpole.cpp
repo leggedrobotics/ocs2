@@ -98,12 +98,12 @@ class TestCartpole : public testing::TestWithParam<std::tuple<ddp::Algorithm, Pe
 
     switch (algorithm) {
       case ddp::Algorithm::SLQ:
-        return std::make_unique<SLQ>(ddpSettings, cartPoleInterfacePtr->getRollout(),
+        return std::make_unique<SLQ>(std::move(ddpSettings), cartPoleInterfacePtr->getRollout(),
                                      createOptimalControlProblem(PenaltyType::ModifiedRelaxedBarrierPenalty),
                                      cartPoleInterfacePtr->getInitializer());
 
       case ddp::Algorithm::ILQR:
-        return std::make_unique<ILQR>(ddpSettings, cartPoleInterfacePtr->getRollout(),
+        return std::make_unique<ILQR>(std::move(ddpSettings), cartPoleInterfacePtr->getRollout(),
                                       createOptimalControlProblem(PenaltyType::ModifiedRelaxedBarrierPenalty),
                                       cartPoleInterfacePtr->getInitializer());
 

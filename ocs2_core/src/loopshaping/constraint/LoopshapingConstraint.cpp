@@ -41,7 +41,7 @@ namespace LoopshapingConstraint {
 /******************************************************************************************************/
 std::unique_ptr<StateConstraintCollection> create(const StateConstraintCollection& systemConstraint,
                                                   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
-  return std::make_unique<LoopshapingStateConstraint>(systemConstraint, loopshapingDefinition);
+  return std::make_unique<LoopshapingStateConstraint>(systemConstraint, std::move(loopshapingDefinition));
 }
 
 /******************************************************************************************************/

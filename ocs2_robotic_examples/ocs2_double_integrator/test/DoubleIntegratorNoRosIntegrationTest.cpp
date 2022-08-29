@@ -66,7 +66,7 @@ class DoubleIntegratorIntegrationTest : public testing::Test {
       ddpSettings.maxNumIterations_ = 5;
     }
 
-    auto mpcPtr = std::make_unique<GaussNewtonDDP_MPC>(mpcSettings, ddpSettings, interface.getRollout(),
+    auto mpcPtr = std::make_unique<GaussNewtonDDP_MPC>(std::move(mpcSettings), std::move(ddpSettings), interface.getRollout(),
                                                        interface.getOptimalControlProblem(), interface.getInitializer());
     mpcPtr->getSolverPtr()->setReferenceManager(interface.getReferenceManagerPtr());
 

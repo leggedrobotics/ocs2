@@ -42,7 +42,7 @@ namespace LoopshapingSoftConstraint {
 std::unique_ptr<StateCostCollection> create(const StateCostCollection& systemSoftConstraint,
                                             std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
   // State-only soft constraint wrapper is identical to LoopshapingStateCost wrapper.
-  return std::make_unique<LoopshapingStateCost>(systemSoftConstraint, loopshapingDefinition);
+  return std::make_unique<LoopshapingStateCost>(systemSoftConstraint, std::move(loopshapingDefinition));
 }
 
 /******************************************************************************************************/

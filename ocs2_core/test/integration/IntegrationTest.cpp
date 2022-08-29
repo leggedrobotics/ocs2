@@ -44,7 +44,7 @@ std::unique_ptr<OdeBase> getSystem(LinearController& controller) {
   matrix_t B(2, 1);
   B << 1, 0;
 
-  auto sys = std::make_unique<LinearSystemDynamics>(A, B);
+  auto sys = std::make_unique<LinearSystemDynamics>(std::move(A), std::move(B));
   sys->setController(&controller);
 
   return std::move(sys);

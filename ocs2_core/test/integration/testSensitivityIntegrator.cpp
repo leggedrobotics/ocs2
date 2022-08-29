@@ -43,7 +43,7 @@ std::unique_ptr<ocs2::LinearSystemDynamics> getSystem() {
         1,  0;  // clang-format on
   ocs2::matrix_t B(2, 1);
   B << 1, 0;
-  return std::make_unique<ocs2::LinearSystemDynamics>(A, B);
+  return std::make_unique<ocs2::LinearSystemDynamics>(std::move(A), std::move(B));
 }
 }  // namespace
 

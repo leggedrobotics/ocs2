@@ -60,10 +60,8 @@ std::vector<std::pair<scalar_t, scalar_t>> RolloutBase::findActiveModesTimeInter
     timeIntervalArray[i] = std::make_pair(beginTime, endTime);
 
     // adjusting the start time to correct for subsystem recognition
-    if (i > 0) {
-      constexpr auto eps = numeric_traits::weakEpsilon<scalar_t>();
-      timeIntervalArray[i].first = std::min(beginTime + eps, endTime);
-    }
+    constexpr auto eps = numeric_traits::weakEpsilon<scalar_t>();
+    timeIntervalArray[i].first = std::min(beginTime + eps, endTime);
   }  // end of for loop
 
   return timeIntervalArray;

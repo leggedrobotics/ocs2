@@ -21,6 +21,11 @@ class QuadrupedCom : public switched_model::ComModelBase<SCALAR_T> {
 
   SCALAR_T totalMass() const override { return totalMass_; }
 
+  switched_model::vector3_s_t<SCALAR_T> centerOfMassInBaseFrame(const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
+
+  switched_model::vector3_s_t<SCALAR_T> centerOfMassInWorldFrame(const switched_model::base_coordinate_s_t<SCALAR_T>& basePose,
+                                                     const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
+
   switched_model::base_coordinate_s_t<SCALAR_T> calculateBaseLocalAccelerations(
       const switched_model::base_coordinate_s_t<SCALAR_T>& basePose,
       const switched_model::base_coordinate_s_t<SCALAR_T>& baseLocalVelocities,
@@ -31,6 +36,14 @@ class QuadrupedCom : public switched_model::ComModelBase<SCALAR_T> {
 
  private:
   QuadrupedCom(const QuadrupedCom& rhs);
+
+  Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1> getPinnochioConfiguration(
+      const switched_model::base_coordinate_s_t<SCALAR_T>& basePose,
+      const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
+
+  Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1> getPinnochioVelocity(
+      const switched_model::base_coordinate_s_t<SCALAR_T>& baseLocalVelocities,
+      const switched_model::joint_coordinate_s_t<SCALAR_T>& jointVelocities) const;
 
   using PinocchioInterface_s_t = ocs2::PinocchioInterfaceTpl<SCALAR_T>;
 

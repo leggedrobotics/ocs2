@@ -41,7 +41,7 @@ Visualization Manager:
       Cell Size: 0.10000000149011612
       Class: rviz/Grid
       Color: 160; 160; 164
-      Enabled: true
+      Enabled: false
       Line Style:
         Line Width: 0.029999999329447746
         Value: Lines
@@ -54,7 +54,7 @@ Visualization Manager:
       Plane: XY
       Plane Cell Count: 100
       Reference Frame: world
-      Value: true
+      Value: false
     - Alpha: 1
       Class: rviz/RobotModel
       Collision Enabled: false
@@ -867,7 +867,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 3.5496129989624023
+      Distance: 5.270549297332764
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -875,17 +875,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.8991929292678833
-        Y: 0.35367560386657715
-        Z: 5.960464477539063e-08
+        X: 3.331205368041992
+        Y: 1.1847355365753174
+        Z: 0
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.10979794710874557
+      Pitch: 0.044797856360673904
       Target Frame: <Fixed Frame>
-      Yaw: 1.8865485191345215
+      Yaw: 1.556549310684204
     Saved:
       - Angle: 3.140000104904175
         Class: rviz/TopDownOrtho

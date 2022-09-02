@@ -64,24 +64,28 @@ int main(int argc, char* argv[]) {
   const ocs2::vector_t initSystemState = anymalInterface->getInitialState().head(switched_model::STATE_DIM);
 
   // ====== Scenario settings ========
-  ocs2::scalar_t forwardVelocity{0.6};
-  ocs2::scalar_t forwardDistance{8.0};
+  ocs2::scalar_t forwardVelocity{0.0};
+  nodeHandle.getParam("/forward_velocity", forwardVelocity);
+  ocs2::scalar_t gaitDuration{0.8};
+  ocs2::scalar_t forwardDistance{3.0};
 
   ocs2::scalar_t initTime = 0.0;
-  ocs2::scalar_t stanceTime = 1.5;
-  ocs2::scalar_t finalTime = forwardDistance / forwardVelocity + stanceTime;
+  ocs2::scalar_t stanceTime = 1.0;
+  int numGaitCycles = std::ceil((forwardDistance / forwardVelocity) / gaitDuration);
+  ocs2::scalar_t walkTime = numGaitCycles * gaitDuration;
+  ocs2::scalar_t finalTime = walkTime + 2 * stanceTime;
   ocs2::scalar_t f_mpc = 100;  // hz
 
   // Load a map
   const std::string elevationLayer{"elevation"};
   const std::string frameId{"world"};
-  std::string terrainFile = "gaps.png";
-  double heightScale = 1.0;
+  std::string terrainFile{""};
+  nodeHandle.getParam("/terrain_name", terrainFile);
+  double heightScale{1.0};
+  nodeHandle.getParam("/terrain_scale", heightScale);
   auto gridMap = convex_plane_decomposition::loadGridmapFromImage(terrainFolder + "/" + terrainFile, elevationLayer, frameId,
                                                                   perceptionConfig.preprocessingParameters.resolution, heightScale);
-  if (terrainFile == "gaps.png") {
-    gridMap.get(elevationLayer).array() -= static_cast<float>(heightScale);
-  }
+  gridMap.get(elevationLayer).array() -= gridMap.atPosition(elevationLayer, {0., 0.});
 
   // Gait
   using MN = switched_model::ModeNumber;
@@ -91,19 +95,26 @@ int main(int argc, char* argv[]) {
   stance.modeSequence = {MN::STANCE};
 
   switched_model::Gait gait;
-  gait.duration = 0.8;
-  gait.eventPhases = {0.45, 0.5, 0.95};
-  gait.modeSequence = {MN::LF_RH, MN::STANCE, MN::RF_LH, MN::STANCE};
+  gait.duration = gaitDuration;
+  gait.eventPhases = {0.5};
+  gait.modeSequence = {MN::LF_RH, MN::RF_LH};
 
-  GaitSchedule::GaitSequence gaitSequence{stance, gait};
+  GaitSchedule::GaitSequence gaitSequence{stance};
+  for (int i = 0; i < numGaitCycles; ++i) {
+    gaitSequence.push_back(gait);
+  }
+  gaitSequence.push_back(stance);
 
   // Reference trajectory
+  bool adaptReferenceToTerrain = true;
+  nodeHandle.getParam("/adaptReferenceToTerrain", adaptReferenceToTerrain);
+
   const double dtRef = 0.1;
-  const BaseReferenceHorizon commandHorizon{dtRef, size_t((finalTime - stanceTime) / dtRef) + 1};
+  const BaseReferenceHorizon commandHorizon{dtRef, size_t(walkTime / dtRef) + 1};
   BaseReferenceCommand command;
   command.baseHeight = getPositionInOrigin(getBasePose(initSystemState)).z();
   command.yawRate = 0.0;
-  command.headingVelocity = 0.6;
+  command.headingVelocity = forwardVelocity;
   command.lateralVelocity = 0.0;
 
   // ====== Run the perception pipeline ========
@@ -128,11 +139,11 @@ int main(int argc, char* argv[]) {
                                       getOrientation(getBasePose(initSystemState))};
 
   BaseReferenceTrajectory terrainAdaptedBaseReference;
-  if (terrainFile == "gaps.png") {
-    terrainAdaptedBaseReference = generateExtrapolatedBaseReference(commandHorizon, initialBaseState, command, TerrainPlane());
-  } else {
+  if (adaptReferenceToTerrain) {
     terrainAdaptedBaseReference = generateExtrapolatedBaseReference(commandHorizon, initialBaseState, command, planarTerrain.gridMap,
                                                                     nominalStanceWidthInHeading, nominalStanceWidthLateral);
+  } else {
+    terrainAdaptedBaseReference = generateExtrapolatedBaseReference(commandHorizon, initialBaseState, command, TerrainPlane());
   }
 
   ocs2::TargetTrajectories targetTrajectories;
@@ -154,6 +165,12 @@ int main(int argc, char* argv[]) {
     targetTrajectories.stateTrajectory.push_back(std::move(costReference));
     targetTrajectories.inputTrajectory.push_back(vector_t::Zero(INPUT_DIM));
   }
+  targetTrajectories.timeTrajectory.push_back(stanceTime + walkTime);
+  targetTrajectories.timeTrajectory.push_back(finalTime);
+  targetTrajectories.stateTrajectory.push_back(targetTrajectories.stateTrajectory.back());
+  targetTrajectories.stateTrajectory.push_back(targetTrajectories.stateTrajectory.back());
+  targetTrajectories.inputTrajectory.push_back(vector_t::Zero(INPUT_DIM));
+  targetTrajectories.inputTrajectory.push_back(vector_t::Zero(INPUT_DIM));
 
   // ====== Set the scenario to the correct interfaces ========
   auto referenceManager = anymalInterface->getQuadrupedInterface().getSwitchedModelModeScheduleManagerPtr();
@@ -171,6 +188,7 @@ int main(int argc, char* argv[]) {
   const auto mpcSettings = ocs2::mpc::loadSettings(taskFolder + configName + "/task.info");
 
   std::unique_ptr<ocs2::MPC_BASE> mpcPtr;
+  const auto sqpSettings = ocs2::multiple_shooting::loadSettings(taskFolder + configName + "/multiple_shooting.info");
   switch (anymalInterface->modelSettings().algorithm_) {
     case switched_model::Algorithm::DDP: {
       const auto ddpSettings = ocs2::ddp::loadSettings(taskFolder + configName + "/task.info");
@@ -178,12 +196,13 @@ int main(int argc, char* argv[]) {
       break;
     }
     case switched_model::Algorithm::SQP: {
-      const auto sqpSettings = ocs2::multiple_shooting::loadSettings(taskFolder + configName + "/multiple_shooting.info");
       mpcPtr = getSqpMpc(*anymalInterface, mpcSettings, sqpSettings);
       break;
     }
   }
   ocs2::MPC_MRT_Interface mpcInterface(*mpcPtr);
+
+  std::unique_ptr<ocs2::RolloutBase> rollout(anymalInterface->getRollout().clone());
 
   // ====== Execute the scenario ========
   ocs2::SystemObservation observation;
@@ -199,6 +218,7 @@ int main(int argc, char* argv[]) {
 
   // run MPC till final time
   ocs2::PrimalSolution closedLoopSolution;
+  std::vector<ocs2::PerformanceIndex> performances;
   while (observation.time < finalTime) {
     std::cout << "t: " << observation.time << "\n";
     try {
@@ -207,9 +227,13 @@ int main(int argc, char* argv[]) {
       mpcInterface.advanceMpc();
       mpcInterface.updatePolicy();
 
-      // Evaluate the optimized solution
+      performances.push_back(mpcInterface.getPerformanceIndices());
+
+      // Evaluate the optimized solution - change to optimal controller
       ocs2::vector_t tmp;
       mpcInterface.evaluatePolicy(observation.time, observation.state, tmp, observation.input, observation.mode);
+      observation.input = ocs2::LinearInterpolation::interpolate(observation.time, mpcInterface.getPolicy().timeTrajectory_,
+                                                                 mpcInterface.getPolicy().inputTrajectory_);
 
       closedLoopSolution.timeTrajectory_.push_back(observation.time);
       closedLoopSolution.stateTrajectory_.push_back(observation.state);
@@ -221,11 +245,17 @@ int main(int argc, char* argv[]) {
         closedLoopSolution.modeSchedule_.eventTimes.push_back(observation.time - 0.5 / f_mpc);
       }
 
-      // Forward stepping: use optimal state for the next observation:
-      observation.time += 1.0 / f_mpc;
-      size_t tmpMode;
-      mpcInterface.evaluatePolicy(observation.time, ocs2::vector_t::Zero(switched_model_loopshaping::STATE_DIM), observation.state, tmp,
-                                  tmpMode);
+      // perform a rollout
+      scalar_array_t timeTrajectory;
+      size_array_t postEventIndicesStock;
+      vector_array_t stateTrajectory, inputTrajectory;
+      const scalar_t finalTime = observation.time + 1.0 / f_mpc;
+      auto modeschedule = mpcInterface.getPolicy().modeSchedule_;
+      rollout->run(observation.time, observation.state, finalTime, mpcInterface.getPolicy().controllerPtr_.get(), modeschedule,
+                   timeTrajectory, postEventIndicesStock, stateTrajectory, inputTrajectory);
+
+      observation.time = finalTime;
+      observation.state = stateTrajectory.back();
       observation.input.setZero(switched_model_loopshaping::INPUT_DIM);  // reset
     } catch (std::exception& e) {
       std::cout << "MPC failed\n";
@@ -235,6 +265,36 @@ int main(int argc, char* argv[]) {
   }
   const auto closedLoopSystemSolution =
       ocs2::loopshapingToSystemPrimalSolution(closedLoopSolution, *anymalInterface->getLoopshapingDefinition());
+
+  // ====== Print result ==========
+  const auto totalCost = std::accumulate(performances.cbegin(), performances.cend(), 0.0,
+                                         [](double v, const ocs2::PerformanceIndex& p) { return v + p.cost; });
+  const auto totalDynamics =
+      std::accumulate(performances.cbegin(), performances.cend(), 0.0,
+                      [](double v, const ocs2::PerformanceIndex& p) { return v + std::sqrt(p.dynamicsViolationSSE); });
+  const auto maxDynamics = std::sqrt(std::max_element(performances.cbegin(), performances.cend(),
+                                                      [](const ocs2::PerformanceIndex& lhs, const ocs2::PerformanceIndex& rhs) {
+                                                        return lhs.dynamicsViolationSSE < rhs.dynamicsViolationSSE;
+                                                      })
+                                         ->dynamicsViolationSSE);
+  const auto totalEquality =
+      std::accumulate(performances.cbegin(), performances.cend(), 0.0,
+                      [](double v, const ocs2::PerformanceIndex& p) { return v + std::sqrt(p.equalityConstraintsSSE); });
+  const auto maxEquality = std::sqrt(std::max_element(performances.cbegin(), performances.cend(),
+                                                      [](const ocs2::PerformanceIndex& lhs, const ocs2::PerformanceIndex& rhs) {
+                                                        return lhs.equalityConstraintsSSE < rhs.equalityConstraintsSSE;
+                                                      })
+                                         ->equalityConstraintsSSE);
+
+  double achievedWalkTime = observation.time - stanceTime;
+  std::cout << "Speed: " << forwardVelocity << "\n";
+  std::cout << "Scale: " << heightScale << "\n";
+  std::cout << "Completed: " << std::min(1.0, (achievedWalkTime / walkTime)) * 100.0 << "\n";
+  std::cout << "average Cost: " << totalCost / performances.size() << "\n";
+  std::cout << "average Dynamics constr: " << totalDynamics / performances.size() << "\n";
+  std::cout << "max Dynamics constr: " << maxDynamics << "\n";
+  std::cout << "average Equality constr: " << totalEquality / performances.size() << "\n";
+  std::cout << "max Equality constr: " << maxEquality << "\n";
 
   // ====== Visualize ==========
   QuadrupedVisualizer visualizer(anymalInterface->getKinematicModel(), anymalInterface->getJointNames(), anymalInterface->getBaseName(),

@@ -44,8 +44,9 @@ Eigen::Matrix<SCALAR_T, -1, 1> computeMotionTargets(const comkino_state_s_t<SCAL
 
 }  // namespace
 
-MotionTrackingCost::MotionTrackingCost(const Weights& settings, const ad_kinematic_model_t& adKinematicModel, bool recompile)
-    : adKinematicModelPtr_(adKinematicModel.clone()) {
+MotionTrackingCost::MotionTrackingCost(const Weights& settings, const ad_kinematic_model_t& adKinematicModel,
+                                       const ModelSettings& modelSettings)
+    : adKinematicModelPtr_(adKinematicModel.clone()), modelSettings_(modelSettings) {
   // Weights are sqrt of settings
   CostElements<ocs2::scalar_t> weightStruct;
   weightStruct.eulerXYZ = settings.eulerXYZ.cwiseSqrt();
@@ -61,8 +62,8 @@ MotionTrackingCost::MotionTrackingCost(const Weights& settings, const ad_kinemat
   }
   sqrtWeights_ = weightStruct.asVector();
 
-  initialize(STATE_DIM, INPUT_DIM, CostElements<ocs2::scalar_t>::Size() + sqrtWeights_.size(), "MotionTrackingCost", "/tmp/ocs2",
-             recompile);
+  initialize(STATE_DIM, INPUT_DIM, CostElements<ocs2::scalar_t>::Size() + sqrtWeights_.size(),
+             modelSettings_.robotName_ + "_MotionTrackingCost", modelSettings_.autodiffLibraryFolder_, modelSettings_.recompileLibraries_);
 };
 
 ocs2::vector_t MotionTrackingCost::getParameters(ocs2::scalar_t time, const ocs2::TargetTrajectories& targetTrajectories,
@@ -76,8 +77,9 @@ ocs2::vector_t MotionTrackingCost::getParameters(ocs2::scalar_t time, const ocs2
 
 MotionTrackingCost::MotionTrackingCost(const MotionTrackingCost& other)
     : ocs2::StateInputCostGaussNewtonAd(other),
+      adKinematicModelPtr_(other.adKinematicModelPtr_->clone()),
       sqrtWeights_(other.sqrtWeights_),
-      adKinematicModelPtr_(other.adKinematicModelPtr_->clone()) {}
+      modelSettings_(other.modelSettings_) {}
 
 ocs2::ad_vector_t MotionTrackingCost::costVectorFunction(ocs2::ad_scalar_t time, const ocs2::ad_vector_t& state,
                                                          const ocs2::ad_vector_t& input, const ocs2::ad_vector_t& parameters) const {

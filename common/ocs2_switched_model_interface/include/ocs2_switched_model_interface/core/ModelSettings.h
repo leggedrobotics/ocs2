@@ -13,6 +13,8 @@ Algorithm fromAlgorithmName(std::string name);
 struct ModelSettings {
   Algorithm algorithm_ = Algorithm::SQP;
   bool recompileLibraries_ = true;
+  std::string robotName_ = "quadruped";
+  std::string autodiffLibraryFolder_ = "/tmp/ocs2";
 
   scalar_t phaseTransitionStanceTime_ = 0.4;
 

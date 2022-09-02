@@ -8,6 +8,7 @@
 
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
 #include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
+#include "ocs2_switched_model_interface/core/ModelSettings.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/logic/SwitchedModelModeScheduleManager.h"
 
@@ -40,7 +41,7 @@ class MotionTrackingCost final : public ocs2::StateInputCostGaussNewtonAd {
   using com_model_t = ComModelBase<ocs2::scalar_t>;
   using ad_com_model_t = ComModelBase<ocs2::ad_scalar_t>;
 
-  MotionTrackingCost(const Weights& settings, const ad_kinematic_model_t& adKinematicModel, bool recompile);
+  MotionTrackingCost(const Weights& settings, const ad_kinematic_model_t& adKinematicModel, const ModelSettings& modelSettings);
 
   ~MotionTrackingCost() override = default;
   MotionTrackingCost* clone() const { return new MotionTrackingCost(*this); }
@@ -57,6 +58,7 @@ class MotionTrackingCost final : public ocs2::StateInputCostGaussNewtonAd {
  private:
   std::unique_ptr<ad_kinematic_model_t> adKinematicModelPtr_;
   ocs2::vector_t sqrtWeights_;
+  const ModelSettings& modelSettings_;
 };
 
 MotionTrackingCost::Weights loadWeightsFromFile(const std::string& filename, const std::string& fieldname, bool verbose = true);

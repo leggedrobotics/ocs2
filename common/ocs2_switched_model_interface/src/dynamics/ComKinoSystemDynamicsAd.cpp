@@ -44,10 +44,8 @@ ComKinoSystemDynamicsAd::ComKinoSystemDynamicsAd(const ad_kinematic_model_t& adK
       adComModelPtr_(adComModel.clone()),
       dynamicsParametersModulePtr_(&dynamicsParametersModule),
       settings_(settings) {
-  std::string libName = "anymal_dynamics";
-  std::string libFolder = "/tmp/ocs2";
-  const bool verbose = settings_.recompileLibraries_;
-  this->initialize(STATE_DIM, INPUT_DIM, libName, libFolder, settings_.recompileLibraries_, verbose);
+  const std::string libName = settings_.robotName_ + "_dynamics";
+  this->initialize(STATE_DIM, INPUT_DIM, libName, settings_.autodiffLibraryFolder_, settings_.recompileLibraries_);
 }
 
 ComKinoSystemDynamicsAd::ComKinoSystemDynamicsAd(const ComKinoSystemDynamicsAd& rhs)

@@ -2,6 +2,7 @@ model_settings
 {
   algorithm                     SQP
   recompileLibraries            true
+  robotName                     d_series
 
   analyticalInverseKinematics   true
 

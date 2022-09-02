@@ -14,10 +14,8 @@ SwitchedModelPreComputation::SwitchedModelPreComputation(const SwingTrajectoryPl
                                                          const ad_kinematic_model_t& adKinematicModel, const com_model_t& comModel,
                                                          const ad_com_model_t& adComModel, ModelSettings settings)
     : swingTrajectoryPlannerPtr_(&swingTrajectoryPlanner), robotMass_(comModel.totalMass()) {
-  std::string libFolder = "/tmp/ocs2";
-
   // intermediate linear outputs
-  std::string intermediateLibName = "AnymalPrecomputation_intermediateLinearOutputs";
+  std::string intermediateLibName = settings.robotName_ + "_Precomputation_intermediateLinearOutputs";
   auto intermediateDiffFunc = [&](const ad_vector_t& x, ad_vector_t& y) {
     // Extract elements from taped input
     comkino_state_ad_t state = x.segment(0, STATE_DIM);
@@ -25,7 +23,7 @@ SwitchedModelPreComputation::SwitchedModelPreComputation(const SwingTrajectoryPl
     intermediateLinearOutputs(adComModel, adKinematicModel, state, input, y);
   };
   intermediateLinearOutputAdInterface_.reset(
-      new ocs2::CppAdInterface(intermediateDiffFunc, STATE_DIM + INPUT_DIM, intermediateLibName, libFolder));
+      new ocs2::CppAdInterface(intermediateDiffFunc, STATE_DIM + INPUT_DIM, intermediateLibName, settings.autodiffLibraryFolder_));
   tapedStateInput_.resize(STATE_DIM + INPUT_DIM);
 
   const auto initCollisions = kinematicModel.collisionSpheresInBaseFrame(joint_coordinate_t::Zero());
@@ -40,9 +38,10 @@ SwitchedModelPreComputation::SwitchedModelPreComputation(const SwingTrajectoryPl
   collisionSpheresDerivative_.resize(maxNumCollisions);
 
   // pre jump linear outputs
-  std::string prejumpLibName = "AnymalPrecomputation_prejumpLinearOutputs";
+  std::string prejumpLibName = settings.robotName_ + "_Precomputation_prejumpLinearOutputs";
   auto prejumpDiffFunc = [&](const ad_vector_t& x, ad_vector_t& y) { prejumpLinearOutputs(adComModel, adKinematicModel, x, y); };
-  prejumpLinearOutputAdInterface_.reset(new ocs2::CppAdInterface(prejumpDiffFunc, STATE_DIM, prejumpLibName, libFolder));
+  prejumpLinearOutputAdInterface_.reset(
+      new ocs2::CppAdInterface(prejumpDiffFunc, STATE_DIM, prejumpLibName, settings.autodiffLibraryFolder_));
 
   // Generate the models
   const bool verbose = true;

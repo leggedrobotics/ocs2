@@ -25,12 +25,19 @@ SegmentedPlanesTerrainModel::SegmentedPlanesTerrainModel(convex_plane_decomposit
 TerrainPlane SegmentedPlanesTerrainModel::getLocalTerrainAtPositionInWorldAlongGravity(
     const vector3_t& positionInWorld, std::function<scalar_t(const vector3_t&)> penaltyFunction) const {
   const auto projection = getBestPlanarRegionAtPositionInWorld(positionInWorld, planarTerrain_.planarRegions, std::move(penaltyFunction));
+  if (projection.regionPtr == nullptr) {
+    throw std::runtime_error("[SegmentedPlanesTerrainModel] no region found");
+  }
+
   return TerrainPlane{projection.positionInWorld, projection.regionPtr->transformPlaneToWorld.linear().transpose()};
 }
 
 ConvexTerrain SegmentedPlanesTerrainModel::getConvexTerrainAtPositionInWorld(
     const vector3_t& positionInWorld, std::function<scalar_t(const vector3_t&)> penaltyFunction) const {
   const auto projection = getBestPlanarRegionAtPositionInWorld(positionInWorld, planarTerrain_.planarRegions, std::move(penaltyFunction));
+  if (projection.regionPtr == nullptr) {
+    throw std::runtime_error("[SegmentedPlanesTerrainModel] no region found");
+  }
 
   // Convert boundary and projection to terrain frame
   const int numberOfVertices = 16;  // Multiple of 4 is nice for symmetry.

@@ -27,45 +27,58 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#pragma once
-
-#include <array>
-
-#include <ocs2_core/Types.h>
+#include <utility>
 
 namespace ocs2 {
 namespace bilinear_interpolation {
 
-/**
- * Compute the value of a function at a queried position using bi-linear interpolation on a 2D-grid.
- *
- * @param resolution The resolution of the grid.
- * @param referenceCorner The reference position on the 2-D grid closest to the point.
- * @param cornerValues The values around the reference corner, in the order: (0, 0), (1, 0), (0, 1), (1, 1).
- * @param position The queried position.
- * @tparam Scalar : The Scalar type.
- * @return Scalar : The interpolated function's value at the queried position.
- */
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename Scalar>
 Scalar getValue(Scalar resolution, const Eigen::Matrix<Scalar, 2, 1>& referenceCorner, const std::array<Scalar, 4>& cornerValues,
-                const Eigen::Matrix<Scalar, 2, 1>& position);
+                const Eigen::Matrix<Scalar, 2, 1>& position) {
+  // auxiliary variables
+  const Scalar r_inv = 1.0 / resolution;
+  std::array<Scalar, 4> v;
+  v[0] = (position.x() - referenceCorner.x()) * r_inv;
+  v[1] = (position.y() - referenceCorner.y()) * r_inv;
+  v[2] = 1 - v[0];
+  v[3] = 1 - v[1];
+  // (1 - x)(1 - y) f_00 + x (1 - y) f_10 + (1 - x) y f_01 + x y f_11
+  return cornerValues[0] * v[2] * v[3] + cornerValues[1] * v[0] * v[3] + cornerValues[2] * v[2] * v[1] + cornerValues[3] * v[0] * v[1];
+}
 
-/**
- * Computes a first-order approximation of the function at a queried position using bi-linear interpolation on a 2D-grid.
- *
- * @param resolution The resolution of the grid.
- * @param referenceCorner The reference position on the 2-D grid closest to the point.
- * @param cornerValues The values around the reference corner, in the order: (0, 0), (1, 0), (0, 1), (1, 1).
- * @param position The queried position.
- * @tparam Scalar : The Scalar type.
- * @return std::pair<Scalar, Eigen::Matrix<Scalar, 2, 1>> : A tuple containing the value and jacobian.
- */
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename Scalar>
 std::pair<Scalar, Eigen::Matrix<Scalar, 2, 1>> getLinearApproximation(Scalar resolution, const Eigen::Matrix<Scalar, 2, 1>& referenceCorner,
                                                                       const std::array<Scalar, 4>& cornerValues,
-                                                                      const Eigen::Matrix<Scalar, 2, 1>& position);
+                                                                      const Eigen::Matrix<Scalar, 2, 1>& position) {
+  // auxiliary variables
+  const Scalar r_inv = 1.0 / resolution;
+  std::array<Scalar, 6> v;
+  v[0] = (position.y() - referenceCorner.y()) * r_inv;
+  v[1] = (position.x() - referenceCorner.x()) * r_inv;
+  v[2] = 1.0 - v[0];
+  v[3] = 1.0 - v[1];
+  v[4] = cornerValues[2] * v[3];  // (1 - x) f_01
+  v[5] = cornerValues[3] * v[1];  // x f_11
+  v[3] = cornerValues[0] * v[3];  // (1 - x) f_00
+  v[1] = cornerValues[1] * v[1];  // x f_10
+
+  // x ( 1 - y) f_10 + (1 - x) (1 - y) f_00 + (1 - x) y f_01 + x y f_11
+  const Scalar value = v[1] * v[2] + v[3] * v[2] + v[4] * v[0] + v[5] * v[0];
+
+  Eigen::Matrix<Scalar, 2, 1> gradient;
+  // (1 - y) (f_10 - f_00) + y (f_11 - f_01)
+  gradient.x() = (v[2] * (cornerValues[1] - cornerValues[0]) + v[0] * (cornerValues[3] - cornerValues[2])) * r_inv;
+  // (1 - x) (f_01 - f_00) + x (f_11 - f_10)
+  gradient.y() = (v[4] + v[5] - (v[3] + v[1])) * r_inv;
+
+  return {value, gradient};
+}
 
 }  // namespace bilinear_interpolation
 }  // namespace ocs2
-
-#include "implementation/BilinearInterpolation.h"

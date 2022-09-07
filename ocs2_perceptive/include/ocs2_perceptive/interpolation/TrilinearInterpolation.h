@@ -34,38 +34,40 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 
 namespace ocs2 {
-namespace bilinear_interpolation {
+namespace trilinear_interpolation {
 
 /**
- * Compute the value of a function at a queried position using bi-linear interpolation on a 2D-grid.
+ * Compute the value of a function at a queried position using tri-linear interpolation on a 3D-grid.
  *
  * @param resolution The resolution of the grid.
- * @param referenceCorner The reference position on the 2-D grid closest to the point.
- * @param cornerValues The values around the reference corner, in the order: (0, 0), (1, 0), (0, 1), (1, 1).
+ * @param referenceCorner The reference position on the 3-D grid closest to the point.
+ * @param cornerValues The values around the reference corner, in the order:
+ *  (0, 0, 0), (1, 0, 0), (0, 1, 0), (1, 1, 0), (0, 0, 1), (1, 0, 1), (0, 1, 1), (1, 1, 1).
  * @param position The queried position.
  * @tparam Scalar : The Scalar type.
  * @return Scalar : The interpolated function's value at the queried position.
  */
 template <typename Scalar>
-Scalar getValue(Scalar resolution, const Eigen::Matrix<Scalar, 2, 1>& referenceCorner, const std::array<Scalar, 4>& cornerValues,
-                const Eigen::Matrix<Scalar, 2, 1>& position);
+Scalar getValue(Scalar resolution, const Eigen::Matrix<Scalar, 3, 1>& referenceCorner, const std::array<Scalar, 8>& cornerValues,
+                const Eigen::Matrix<Scalar, 3, 1>& position);
 
 /**
- * Computes a first-order approximation of the function at a queried position using bi-linear interpolation on a 2D-grid.
+ * Computes a first-order approximation of the function at a queried position using tri-linear interpolation on a 3D-grid.
  *
  * @param resolution The resolution of the grid.
- * @param referenceCorner The reference position on the 2-D grid closest to the point.
- * @param cornerValues The values around the reference corner, in the order: (0, 0), (1, 0), (0, 1), (1, 1).
+ * @param referenceCorner The reference position on the 3-D grid closest to the point.
+ * @param cornerValues The values around the reference corner, in the order:
+ *  (0, 0, 0), (1, 0, 0), (0, 1, 0), (1, 1, 0), (0, 0, 1), (1, 0, 1), (0, 1, 1), (1, 1, 1).
  * @param position The queried position.
  * @tparam Scalar : The Scalar type.
- * @return std::pair<Scalar, Eigen::Matrix<Scalar, 2, 1>> : A tuple containing the value and jacobian.
+ * @return std::pair<Scalar, Eigen::Matrix<Scalar, 3, 1>> : A tuple containing the value and jacobian.
  */
 template <typename Scalar>
-std::pair<Scalar, Eigen::Matrix<Scalar, 2, 1>> getLinearApproximation(Scalar resolution, const Eigen::Matrix<Scalar, 2, 1>& referenceCorner,
-                                                                      const std::array<Scalar, 4>& cornerValues,
-                                                                      const Eigen::Matrix<Scalar, 2, 1>& position);
+std::pair<Scalar, Eigen::Matrix<Scalar, 3, 1>> getLinearApproximation(Scalar resolution, const Eigen::Matrix<Scalar, 3, 1>& referenceCorner,
+                                                                      const std::array<Scalar, 8>& cornerValues,
+                                                                      const Eigen::Matrix<Scalar, 3, 1>& position);
 
-}  // namespace bilinear_interpolation
+}  // namespace trilinear_interpolation
 }  // namespace ocs2
 
-#include "implementation/BilinearInterpolation.h"
+#include "implementation/TrilinearInterpolation.h"

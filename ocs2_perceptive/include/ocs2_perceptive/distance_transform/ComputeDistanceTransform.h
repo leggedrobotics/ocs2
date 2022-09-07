@@ -37,7 +37,7 @@ namespace ocs2 {
  * Computes one-dimensional distance transform for a sampled function based on lower envelope of parabolas method introduced by:
  * P. F. Felzenszwalb and D. P. Huttenlocher. "Distance transforms of sampled functions." (2012).
  *
- * @param numSamples: The size of the smapled function.
+ * @param numSamples: The size of the sampled function.
  * @param getValue: Lambda function to get value from with signature: ScalarType(size_t index).
  * @param setValue: Lambda function to set value to with signature: void(size_t index, ScalarType value).
  * @param start: The start index for iteration over.
@@ -49,7 +49,7 @@ namespace ocs2 {
  *
  * @tparam GetValFunc: Template typename for inferring lambda expression with signature Scalar(size_t).
  * @tparam SetValFunc: Template typename for inferring lambda expression with signature void(size_t, Scalar).
- * @tpapram Scalar: The Scalar type
+ * @tparam Scalar: The Scalar type
  */
 template <typename GetValFunc, typename SetValFunc, typename Scalar = float>
 void computeDistanceTransform(size_t numSamples, GetValFunc&& getValue, SetValFunc&& setValue, size_t start, size_t end,
@@ -59,7 +59,7 @@ void computeDistanceTransform(size_t numSamples, GetValFunc&& getValue, SetValFu
  * Computes one-dimensional distance transform for a sampled function based on lower envelope of parabolas method introduced by:
  * P. F. Felzenszwalb and D. P. Huttenlocher. "Distance transforms of sampled functions." (2012).
  *
- * @param numSamples: The size of the smapled function.
+ * @param numSamples: The size of the sampled function.
  * @param getValue: Lambda function to get value from with signature: ScalarType(size_t index).
  * @param setValue: Lambda function to set value to with signature: void(size_t index, ScalarType value).
  * @param setImageIndex: Lambda function to set mirror index with signature: void(size_t index, size_t mirrorIndex).
@@ -73,7 +73,7 @@ void computeDistanceTransform(size_t numSamples, GetValFunc&& getValue, SetValFu
  * @tparam GetValFunc: Template typename for inferring lambda expression with signature Scalar(size_t).
  * @tparam SetValFunc: Template typename for inferring lambda expression with signature void(size_t, Scalar).
  * @tparam SetImageIndexFunc: Template typename for inferring lambda expression with signature void(size_t, size_t).
- * @tpapram Scalar: The Scalar type
+ * @tparam Scalar: The Scalar type
  */
 template <typename GetValFunc, typename SetValFunc, typename SetImageIndexFunc, typename Scalar = float>
 void computeDistanceTransform(size_t numSamples, GetValFunc&& getValue, SetValFunc&& setValue, SetImageIndexFunc&& setImageIndex,

@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 project(blasfeo_catkin)
 
+set(CMAKE_ASM_COMPILER "as")
+
 find_package(ament_cmake REQUIRED)
 
 include(FetchContent)

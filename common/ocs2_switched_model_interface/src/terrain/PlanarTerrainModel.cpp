@@ -6,7 +6,7 @@
 
 namespace switched_model {
 
-PlanarTerrainModel::PlanarTerrainModel(TerrainPlane terrainPlane) : terrainPlane_(std::move(terrainPlane)) {}
+PlanarTerrainModel::PlanarTerrainModel(TerrainPlane terrainPlane) : terrainPlane_(terrainPlane), sdf_(std::move(terrainPlane)) {}
 
 TerrainPlane PlanarTerrainModel::getLocalTerrainAtPositionInWorldAlongGravity(
     const vector3_t& positionInWorld, std::function<scalar_t(const vector3_t&)> penaltyFunction) const {

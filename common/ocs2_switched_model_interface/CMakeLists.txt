@@ -77,6 +77,7 @@ add_library(${PROJECT_NAME}
 	src/logic/DynamicsParametersSynchronizedModule.cpp
 	src/logic/SwitchedModelModeScheduleManager.cpp
 	src/ros_msg_conversions/RosMsgConversions.cpp
+	src/terrain/PlanarSignedDistanceField.cpp
 	src/terrain/PlanarTerrainModel.cpp
 	src/terrain/PlaneFitting.cpp
 	src/terrain/TerrainPlane.cpp

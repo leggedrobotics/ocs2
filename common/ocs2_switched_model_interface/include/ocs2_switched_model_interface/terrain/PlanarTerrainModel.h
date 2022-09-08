@@ -5,6 +5,7 @@
 #pragma once
 
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
+#include "ocs2_switched_model_interface/terrain/PlanarSignedDistanceField.h"
 #include "ocs2_switched_model_interface/terrain/TerrainModel.h"
 
 namespace switched_model {
@@ -25,8 +26,11 @@ class PlanarTerrainModel : public TerrainModel {
 
   std::vector<vector2_t> getHeightProfileAlongLine(const vector3_t& position1InWorld, const vector3_t& position2InWorld) const override;
 
+  const SignedDistanceField* getSignedDistanceField() const override { return &sdf_; }
+
  private:
   TerrainPlane terrainPlane_;
+  PlanarSignedDistanceField sdf_;
 };
 
 }  // namespace switched_model

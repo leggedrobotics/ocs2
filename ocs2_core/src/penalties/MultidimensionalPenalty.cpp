@@ -76,7 +76,7 @@ scalar_t getMultiplier(const vector_t* l, size_t ind) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <>
-MultidimensionalPenalty::MultidimensionalPenalty<AugmentedPenaltyBase>(std::vector<std::unique_ptr<AugmentedPenaltyBase>> penaltyPtrArray)
+MultidimensionalPenalty::MultidimensionalPenalty(std::vector<std::unique_ptr<AugmentedPenaltyBase>> penaltyPtrArray)
     : penaltyPtrArray_(std::move(penaltyPtrArray)) {
   if (penaltyPtrArray_.empty()) {
     throw std::runtime_error("[MultidimensionalPenalty::MultidimensionalPenalty] The penalty array cannot be empty!");
@@ -84,7 +84,7 @@ MultidimensionalPenalty::MultidimensionalPenalty<AugmentedPenaltyBase>(std::vect
 }
 
 template <>
-MultidimensionalPenalty::MultidimensionalPenalty<PenaltyBase>(std::vector<std::unique_ptr<PenaltyBase>> penaltyPtrArray) {
+MultidimensionalPenalty::MultidimensionalPenalty(std::vector<std::unique_ptr<PenaltyBase>> penaltyPtrArray) {
   for (auto& penaltyPtr : penaltyPtrArray) {
     penaltyPtrArray_.push_back(createWrapper(std::move(penaltyPtr)));
   }
@@ -98,12 +98,12 @@ MultidimensionalPenalty::MultidimensionalPenalty<PenaltyBase>(std::vector<std::u
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <>
-MultidimensionalPenalty::MultidimensionalPenalty<AugmentedPenaltyBase>(std::unique_ptr<AugmentedPenaltyBase> penaltyPtr) {
+MultidimensionalPenalty::MultidimensionalPenalty(std::unique_ptr<AugmentedPenaltyBase> penaltyPtr) {
   penaltyPtrArray_.push_back(std::move(penaltyPtr));
 }
 
 template <>
-MultidimensionalPenalty::MultidimensionalPenalty<PenaltyBase>(std::unique_ptr<PenaltyBase> penaltyPtr) {
+MultidimensionalPenalty::MultidimensionalPenalty(std::unique_ptr<PenaltyBase> penaltyPtr) {
   penaltyPtrArray_.push_back(createWrapper(std::move(penaltyPtr)));
 }
 

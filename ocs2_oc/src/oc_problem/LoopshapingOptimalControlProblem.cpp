@@ -49,11 +49,11 @@ OptimalControlProblem create(const OptimalControlProblem& problem, std::shared_p
 
   // Inequality constraints
   augmentedProblem.inequalityConstraintPtr = LoopshapingConstraint::create(*problem.inequalityConstraintPtr, loopshapingDefinition);
-  augmentedProblem.stateInequalityConstraintPtr = 
-      LoopshapingConstraint::create(*problem.stateInequalityConstraintPtr, loopshapingDefinition); 
+  augmentedProblem.stateInequalityConstraintPtr =
+      LoopshapingConstraint::create(*problem.stateInequalityConstraintPtr, loopshapingDefinition);
   augmentedProblem.preJumpInequalityConstraintPtr =
       LoopshapingConstraint::create(*problem.preJumpInequalityConstraintPtr, loopshapingDefinition);
-  augmentedProblem.finalInequalityConstraintPtr = 
+  augmentedProblem.finalInequalityConstraintPtr =
       LoopshapingConstraint::create(*problem.finalInequalityConstraintPtr, loopshapingDefinition);
 
   // Lagrangians

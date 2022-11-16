@@ -57,9 +57,9 @@ struct PerformanceIndex {
   scalar_t equalityConstraintsSSE = 0.0;
 
   /** Sum of Squared Error (SSE) of inequality constraints:
-   * - Final: squared norm of violation in state inequality constraints 
-   * - PreJumps: sum of squared norm of violation in state inequality constraints 
-   * - Intermediates: Integral of squared norm violation in state/state-input inequality constraints 
+   * - Final: squared norm of violation in state inequality constraints
+   * - PreJumps: sum of squared norm of violation in state inequality constraints
+   * - Intermediates: Integral of squared norm violation in state/state-input inequality constraints
    */
   scalar_t inequalityConstraintsSSE = 0.0;
 

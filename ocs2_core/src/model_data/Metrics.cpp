@@ -122,12 +122,12 @@ MetricsCollection interpolate(const index_alpha_t& indexAlpha, const std::vector
                   [](const std::vector<MetricsCollection>& array, size_t t) -> const vector_t& { return array[t].stateInputEqConstraint; });
 
   // inequality constraints
-  out.stateIneqConstraint = interpolate(indexAlpha, dataArray, [](const std::vector<MetricsCollection>& array, size_t t) -> const vector_t& {
-    return array[t].stateIneqConstraint;
-  });
-  out.stateInputIneqConstraint =
+  out.stateIneqConstraint =
       interpolate(indexAlpha, dataArray,
-                  [](const std::vector<MetricsCollection>& array, size_t t) -> const vector_t& { return array[t].stateInputIneqConstraint; });
+                  [](const std::vector<MetricsCollection>& array, size_t t) -> const vector_t& { return array[t].stateIneqConstraint; });
+  out.stateInputIneqConstraint = interpolate(
+      indexAlpha, dataArray,
+      [](const std::vector<MetricsCollection>& array, size_t t) -> const vector_t& { return array[t].stateInputIneqConstraint; });
 
   // state equality Lagrangian
   out.stateEqLagrangian.reserve(mumStateEq);

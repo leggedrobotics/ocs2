@@ -50,6 +50,11 @@ OptimalControlProblem::OptimalControlProblem()
       stateEqualityConstraintPtr(new StateConstraintCollection),
       preJumpEqualityConstraintPtr(new StateConstraintCollection),
       finalEqualityConstraintPtr(new StateConstraintCollection),
+      /* Inequality constraints */
+      inequalityConstraintPtr(new StateInputConstraintCollection),
+      stateInequalityConstraintPtr(new StateConstraintCollection),
+      preJumpInequalityConstraintPtr(new StateConstraintCollection),
+      finalInequalityConstraintPtr(new StateConstraintCollection),
       /* Lagrangians */
       equalityLagrangianPtr(new StateInputAugmentedLagrangianCollection),
       stateEqualityLagrangianPtr(new StateAugmentedLagrangianCollection),
@@ -82,6 +87,11 @@ OptimalControlProblem::OptimalControlProblem(const OptimalControlProblem& other)
       stateEqualityConstraintPtr(other.stateEqualityConstraintPtr->clone()),
       preJumpEqualityConstraintPtr(other.preJumpEqualityConstraintPtr->clone()),
       finalEqualityConstraintPtr(other.finalEqualityConstraintPtr->clone()),
+      /* Inequality constraints */
+      inequalityConstraintPtr(other.inequalityConstraintPtr->clone()),
+      stateInequalityConstraintPtr(other.stateInequalityConstraintPtr->clone()),
+      preJumpInequalityConstraintPtr(other.preJumpInequalityConstraintPtr->clone()),
+      finalInequalityConstraintPtr(other.finalInequalityConstraintPtr->clone()),
       /* Lagrangians */
       equalityLagrangianPtr(other.equalityLagrangianPtr->clone()),
       stateEqualityLagrangianPtr(other.stateEqualityLagrangianPtr->clone()),
@@ -129,6 +139,12 @@ void OptimalControlProblem::swap(OptimalControlProblem& other) noexcept {
   stateEqualityConstraintPtr.swap(other.stateEqualityConstraintPtr);
   preJumpEqualityConstraintPtr.swap(other.preJumpEqualityConstraintPtr);
   finalEqualityConstraintPtr.swap(other.finalEqualityConstraintPtr);
+
+  /* Inequality constraints */
+  inequalityConstraintPtr.swap(other.inequalityConstraintPtr);
+  stateInequalityConstraintPtr.swap(other.stateInequalityConstraintPtr);
+  preJumpInequalityConstraintPtr.swap(other.preJumpInequalityConstraintPtr);
+  finalInequalityConstraintPtr.swap(other.finalInequalityConstraintPtr);
 
   /* Lagrangians */
   equalityLagrangianPtr.swap(other.equalityLagrangianPtr);

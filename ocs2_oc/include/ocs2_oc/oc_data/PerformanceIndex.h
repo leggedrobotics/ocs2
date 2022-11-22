@@ -56,20 +56,6 @@ struct PerformanceIndex {
    */
   scalar_t equalityConstraintsSSE = 0.0;
 
-  /** Sum of Squared Error (SSE) of inequality constraints:
-   * - Final: squared norm of violation in state inequality constraints
-   * - PreJumps: sum of squared norm of violation in state inequality constraints
-   * - Intermediates: Integral of squared norm violation in state/state-input inequality constraints
-   */
-  scalar_t inequalityConstraintsSSE = 0.0;
-
-  /** Sum of Squared Error (SSE) of the dual feasibilities:
-   * - Final: squared norm of violation in the dual feasibilities
-   * - PreJumps: sum of squared norm of violation in the dual feasibilities
-   * - Intermediates: sum of squared norm of violation in the dual feasibilities
-   */
-  scalar_t dualFeasibilitiesSSE = 0.0;
-
   /** Sum of equality Lagrangians:
    * - Final: penalty for violation in state equality constraints
    * - PreJumps: penalty for violation in state equality constraints
@@ -90,8 +76,6 @@ struct PerformanceIndex {
     this->cost += rhs.cost;
     this->dynamicsViolationSSE += rhs.dynamicsViolationSSE;
     this->equalityConstraintsSSE += rhs.equalityConstraintsSSE;
-    this->inequalityConstraintsSSE += rhs.inequalityConstraintsSSE;
-    this->dualFeasibilitiesSSE += rhs.dualFeasibilitiesSSE;
     this->equalityLagrangian += rhs.equalityLagrangian;
     this->inequalityLagrangian += rhs.inequalityLagrangian;
     return *this;
@@ -109,8 +93,6 @@ inline void swap(PerformanceIndex& lhs, PerformanceIndex& rhs) {
   std::swap(lhs.cost, rhs.cost);
   std::swap(lhs.dynamicsViolationSSE, rhs.dynamicsViolationSSE);
   std::swap(lhs.equalityConstraintsSSE, rhs.equalityConstraintsSSE);
-  std::swap(lhs.inequalityConstraintsSSE, rhs.inequalityConstraintsSSE);
-  std::swap(lhs.dualFeasibilitiesSSE, rhs.dualFeasibilitiesSSE);
   std::swap(lhs.equalityLagrangian, rhs.equalityLagrangian);
   std::swap(lhs.inequalityLagrangian, rhs.inequalityLagrangian);
 }
@@ -127,10 +109,6 @@ inline std::ostream& operator<<(std::ostream& stream, const PerformanceIndex& pe
   stream << std::setw(indentation) << "";
   stream << "Dynamics violation SSE:     " << std::setw(tabSpace) << performanceIndex.dynamicsViolationSSE;
   stream << "Equality constraints SSE:   " << std::setw(tabSpace) << performanceIndex.equalityConstraintsSSE << '\n';
-
-  stream << std::setw(indentation) << "";
-  stream << "Inequality constraints SSE: " << std::setw(tabSpace) << performanceIndex.inequalityConstraintsSSE;
-  stream << "Dual feasibilities SSE:     " << std::setw(tabSpace) << performanceIndex.dualFeasibilitiesSSE << '\n';
 
   stream << std::setw(indentation) << "";
   stream << "Equality Lagrangian:        " << std::setw(tabSpace) << performanceIndex.equalityLagrangian;

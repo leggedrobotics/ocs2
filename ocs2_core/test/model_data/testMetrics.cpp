@@ -83,13 +83,6 @@ inline MetricsCollection interpolateNew(const LinearInterpolation::index_alpha_t
       out.stateInputEqConstraint = LinearInterpolation::interpolate(
           indexAlpha, dataArray,
           [](const std::vector<MetricsCollection>& array, size_t t) -> const vector_t& { return array[t].stateInputEqConstraint; });
-      // inequality constraints
-      out.stateIneqConstraint = LinearInterpolation::interpolate(
-          indexAlpha, dataArray,
-          [](const std::vector<MetricsCollection>& array, size_t t) -> const vector_t& { return array[t].stateIneqConstraint; });
-      out.stateInputIneqConstraint = LinearInterpolation::interpolate(
-          indexAlpha, dataArray,
-          [](const std::vector<MetricsCollection>& array, size_t t) -> const vector_t& { return array[t].stateInputIneqConstraint; });
       out.stateEqLagrangian = toLagrangianMetrics(getSizes(dataArray[index].stateEqLagrangian), f(lhs_stateEq, rhs_stateEq));
       out.stateIneqLagrangian = toLagrangianMetrics(getSizes(dataArray[index].stateIneqLagrangian), f(lhs_stateIneq, rhs_stateIneq));
       out.stateInputEqLagrangian =
@@ -117,8 +110,6 @@ bool isApprox(const MetricsCollection& lhs, const MetricsCollection& rhs, scalar
   bool flag = std::abs(lhs.cost - rhs.cost) < prec;
   flag = flag && lhs.stateEqConstraint.isApprox(rhs.stateEqConstraint, prec);
   flag = flag && lhs.stateInputEqConstraint.isApprox(rhs.stateInputEqConstraint, prec);
-  flag = flag && lhs.stateIneqConstraint.isApprox(rhs.stateIneqConstraint, prec);
-  flag = flag && lhs.stateInputIneqConstraint.isApprox(rhs.stateInputIneqConstraint, prec);
   flag = flag && toVector(lhs.stateEqLagrangian).isApprox(toVector(rhs.stateEqLagrangian), prec);
   flag = flag && toVector(lhs.stateIneqLagrangian).isApprox(toVector(rhs.stateIneqLagrangian), prec);
   flag = flag && toVector(lhs.stateInputEqLagrangian).isApprox(toVector(rhs.stateInputEqLagrangian), prec);
@@ -150,8 +141,6 @@ TEST(TestMetrics, testSwap) {
   termsMetricsCollection.cost = ocs2::vector_t::Random(1)(0);
   termsMetricsCollection.stateEqConstraint = ocs2::vector_t::Random(2);
   termsMetricsCollection.stateInputEqConstraint = ocs2::vector_t::Random(3);
-  termsMetricsCollection.stateIneqConstraint = ocs2::vector_t::Random(2);
-  termsMetricsCollection.stateInputIneqConstraint = ocs2::vector_t::Random(3);
   ocs2::random(termsSize, termsMetricsCollection.stateEqLagrangian);
   ocs2::random(termsSize, termsMetricsCollection.stateIneqLagrangian);
   ocs2::random(termsSize, termsMetricsCollection.stateInputEqLagrangian);
@@ -187,8 +176,6 @@ TEST(TestMetrics, testInterpolation) {
     metricsCollectionTrajectory[i].cost = ocs2::vector_t::Random(1)(0);
     metricsCollectionTrajectory[i].stateEqConstraint = ocs2::vector_t::Random(2);
     metricsCollectionTrajectory[i].stateInputEqConstraint = ocs2::vector_t::Random(3);
-    metricsCollectionTrajectory[i].stateIneqConstraint = ocs2::vector_t::Random(2);
-    metricsCollectionTrajectory[i].stateInputIneqConstraint = ocs2::vector_t::Random(3);
     ocs2::random(stateEqTermsSize, metricsCollectionTrajectory[i].stateEqLagrangian);
     ocs2::random(stateIneqTermsSize, metricsCollectionTrajectory[i].stateIneqLagrangian);
     ocs2::random(stateInputEqTermsSize, metricsCollectionTrajectory[i].stateInputEqLagrangian);

@@ -41,7 +41,7 @@ std::pair<VectorFunctionLinearApproximation, matrix_t> qrConstraintProjection(co
   const auto Q1 = Q.leftCols(numConstraints);
 
   const auto R = QRof_DT.matrixQR().topRows(numConstraints).triangularView<Eigen::Upper>();
-  const matrix_t pseudoInverse = R.solve(Q1.transpose());
+  const matrix_t pseudoInverse = R.solve(Q1.transpose());  // left pseudo-inverse of D^T
 
   VectorFunctionLinearApproximation projectionTerms;
   projectionTerms.dfdu = Q.rightCols(numInputs - numConstraints);
@@ -63,7 +63,7 @@ std::pair<VectorFunctionLinearApproximation, matrix_t> luConstraintProjection(co
 
   matrix_t pseudoInverse;
   if (extractPseudoInverse) {
-    pseudoInverse = lu.solve(matrix_t::Identity(constraint.f.size(), constraint.f.size())).transpose();
+    pseudoInverse = lu.solve(matrix_t::Identity(constraint.f.size(), constraint.f.size())).transpose();  // left pseudo-inverse of D^T
   }
 
   return std::make_pair(std::move(projectionTerms), std::move(pseudoInverse));
@@ -73,15 +73,19 @@ ProjectionMultiplierCoefficients extractProjectionMultiplierCoefficients(const V
                                                                          const ScalarFunctionQuadraticApproximation& cost,
                                                                          const VectorFunctionLinearApproximation& constraintProjection,
                                                                          const matrix_t& pseudoInverse) {
-  const auto& Px = constraintProjection.dfdx;
-  const auto& Pu = constraintProjection.dfdu;
-  const auto& u0 = constraintProjection.f;
+  vector_t projectedCost_dfdu = cost.dfdu;
+  projectedCost_dfdu.noalias() += cost.dfduu * constraintProjection.f;
+
+  matrix_t projectedCost_dfdux = cost.dfdux;
+  projectedCost_dfdux.noalias() += cost.dfduu * constraintProjection.dfdx;
+
+  const matrix_t projectedCost_dfduu = cost.dfduu * constraintProjection.dfdu;
 
   ProjectionMultiplierCoefficients multiplierCoefficients;
-  multiplierCoefficients.dfdx.noalias() = -pseudoInverse * (cost.dfdux + cost.dfduu * Px);
-  multiplierCoefficients.dfdu.noalias() = -pseudoInverse * (cost.dfduu * Pu);
+  multiplierCoefficients.dfdx.noalias() = -pseudoInverse * projectedCost_dfdux;
+  multiplierCoefficients.dfdu.noalias() = -pseudoInverse * projectedCost_dfduu;
   multiplierCoefficients.dfdcostate.noalias() = -pseudoInverse * dynamics.dfdu.transpose();
-  multiplierCoefficients.f.noalias() = pseudoInverse * (cost.dfdu + cost.dfduu * u0);
+  multiplierCoefficients.f.noalias() = -pseudoInverse * projectedCost_dfdu;
   return multiplierCoefficients;
 }
 

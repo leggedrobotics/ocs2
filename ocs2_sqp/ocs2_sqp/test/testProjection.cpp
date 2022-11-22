@@ -103,7 +103,15 @@ TEST(test_projection, testProjectionMultiplierCoefficients) {
   const auto projection = std::move(result.first);
   const auto pseudoInverse = std::move(result.second);
 
-  ASSERT_NO_THROW(
-    const auto projectionMultiplierCoefficients = extractProjectionMultiplierCoefficients(dynamics, cost, projection, pseudoInverse);
-  );
+  const auto projectionMultiplierCoefficients = extractProjectionMultiplierCoefficients(dynamics, cost, projection, pseudoInverse);
+
+  const ocs2::matrix_t dfdx = -pseudoInverse * (cost.dfdux + cost.dfduu * projection.dfdx);
+  const ocs2::matrix_t dfdu = -pseudoInverse * (cost.dfduu * projection.dfdu);
+  const ocs2::matrix_t dfdcostate = -pseudoInverse * dynamics.dfdu.transpose();
+  const ocs2::vector_t f = -pseudoInverse * (cost.dfdu + cost.dfduu * projection.f);
+
+  ASSERT_TRUE(projectionMultiplierCoefficients.dfdx.isApprox(dfdx));
+  ASSERT_TRUE(projectionMultiplierCoefficients.dfdu.isApprox(dfdu));
+  ASSERT_TRUE(projectionMultiplierCoefficients.dfdcostate.isApprox(dfdcostate));
+  ASSERT_TRUE(projectionMultiplierCoefficients.f.isApprox(f));
 }

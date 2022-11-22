@@ -31,7 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-VectorFunctionLinearApproximation qrConstraintProjection(const VectorFunctionLinearApproximation& constraint) {
+std::pair<VectorFunctionLinearApproximation, matrix_t> qrConstraintProjection(const VectorFunctionLinearApproximation& constraint,
+                                                                              bool extractLagrangeMultiplierCoefficient) {
   // Constraint Projectors are based on the QR decomposition
   const auto numConstraints = constraint.dfdu.rows();
   const auto numInputs = constraint.dfdu.cols();
@@ -49,10 +50,16 @@ VectorFunctionLinearApproximation qrConstraintProjection(const VectorFunctionLin
   projectionTerms.dfdx.noalias() = -Q1 * RTinvC;
   projectionTerms.f.noalias() = -Q1 * RTinve;
 
-  return projectionTerms;
+  matrix_t lagrangeMultiplierCoefficient;
+  if (extractLagrangeMultiplierCoefficient) {
+    lagrangeMultiplierCoefficient = RT.transpose().solve(Q1.transpose());
+  }
+
+  return std::make_pair(std::move(projectionTerms), std::move(lagrangeMultiplierCoefficient));
 }
 
-VectorFunctionLinearApproximation luConstraintProjection(const VectorFunctionLinearApproximation& constraint) {
+std::pair<VectorFunctionLinearApproximation, matrix_t> luConstraintProjection(const VectorFunctionLinearApproximation& constraint,
+                                                                              bool extractLagrangeMultiplierCoefficient) {
   // Constraint Projectors are based on the LU decomposition
   const Eigen::FullPivLU<matrix_t> lu(constraint.dfdu);
 
@@ -61,7 +68,12 @@ VectorFunctionLinearApproximation luConstraintProjection(const VectorFunctionLin
   projectionTerms.dfdx.noalias() = -lu.solve(constraint.dfdx);
   projectionTerms.f.noalias() = -lu.solve(constraint.f);
 
-  return projectionTerms;
+  matrix_t lagrangeMultiplierCoefficient;
+  if (extractLagrangeMultiplierCoefficient) {
+    lagrangeMultiplierCoefficient = lu.solve(matrix_t::Identity(constraint.f.size(), constraint.f.size())).transpose();
+  }
+
+  return std::make_pair(std::move(projectionTerms), std::move(lagrangeMultiplierCoefficient));
 }
 
 }  // namespace ocs2

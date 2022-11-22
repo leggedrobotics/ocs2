@@ -71,7 +71,7 @@ Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlP
       performance.equalityConstraintsSSE = dt * constraints.f.squaredNorm();
       if (projectStateInputEqualityConstraints) {  // Handle equality constraints using projection.
         // Projection stored instead of constraint, // TODO: benchmark between lu and qr method. LU seems slightly faster.
-        projection = luConstraintProjection(constraints);
+        projection = luConstraintProjection(constraints).first;
         constraints = VectorFunctionLinearApproximation();
 
         // Adapt dynamics and cost

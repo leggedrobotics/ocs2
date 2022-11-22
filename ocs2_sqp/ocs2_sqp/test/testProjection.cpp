@@ -36,7 +36,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 TEST(test_projection, testProjectionQR) {
   const auto constraint = ocs2::getRandomConstraints(30, 20, 10);
 
-  const auto projection = ocs2::qrConstraintProjection(constraint);
+  auto result = ocs2::qrConstraintProjection(constraint);
+  ASSERT_EQ(result.second.rows(), 0);
+  ASSERT_EQ(result.second.cols(), 0);
+
+  const auto projection = std::move(result.first);
 
   // range of Pu is in null-space of D
   ASSERT_TRUE((constraint.dfdu * projection.dfdu).isZero());
@@ -46,12 +50,27 @@ TEST(test_projection, testProjectionQR) {
 
   // D * Pe cancels the e term
   ASSERT_TRUE((constraint.f + constraint.dfdu * projection.f).isZero());
+
+  auto resultWithMultiplierCoefficient = ocs2::qrConstraintProjection(constraint, true);
+  const auto projectionWithMultiplierCoefficient = std::move(resultWithMultiplierCoefficient.first);
+  ASSERT_TRUE(projection.f.isApprox(projectionWithMultiplierCoefficient.f));
+  ASSERT_TRUE(projection.dfdx.isApprox(projectionWithMultiplierCoefficient.dfdx));
+  ASSERT_TRUE(projection.dfdu.isApprox(projectionWithMultiplierCoefficient.dfdu));
+
+  const auto lagrangeMultiplierCoefficient = std::move(resultWithMultiplierCoefficient.second);
+  ASSERT_EQ(lagrangeMultiplierCoefficient.rows(), constraint.dfdu.rows());
+  ASSERT_EQ(lagrangeMultiplierCoefficient.cols(), constraint.dfdu.cols());
+  ASSERT_TRUE((constraint.dfdx.transpose()*lagrangeMultiplierCoefficient).isApprox(- projection.dfdx.transpose()));
 }
 
 TEST(test_projection, testProjectionLU) {
   const auto constraint = ocs2::getRandomConstraints(30, 20, 10);
 
-  const auto projection = ocs2::luConstraintProjection(constraint);
+  auto result = ocs2::luConstraintProjection(constraint);
+  ASSERT_EQ(result.second.rows(), 0);
+  ASSERT_EQ(result.second.cols(), 0);
+
+  const auto projection = std::move(result.first);
 
   // range of Pu is in null-space of D
   ASSERT_TRUE((constraint.dfdu * projection.dfdu).isZero());
@@ -61,4 +80,15 @@ TEST(test_projection, testProjectionLU) {
 
   // D * Pe cancels the e term
   ASSERT_TRUE((constraint.f + constraint.dfdu * projection.f).isZero());
+
+  auto resultWithMultiplierCoefficient = ocs2::luConstraintProjection(constraint, true);
+  const auto projectionWithMultiplierCoefficient = std::move(resultWithMultiplierCoefficient.first);
+  ASSERT_TRUE(projection.f.isApprox(projectionWithMultiplierCoefficient.f));
+  ASSERT_TRUE(projection.dfdx.isApprox(projectionWithMultiplierCoefficient.dfdx));
+  ASSERT_TRUE(projection.dfdu.isApprox(projectionWithMultiplierCoefficient.dfdu));
+
+  const auto lagrangeMultiplierCoefficient = std::move(resultWithMultiplierCoefficient.second);
+  ASSERT_EQ(lagrangeMultiplierCoefficient.rows(), constraint.dfdu.rows());
+  ASSERT_EQ(lagrangeMultiplierCoefficient.cols(), constraint.dfdu.cols());
+  ASSERT_TRUE((constraint.dfdx.transpose()*lagrangeMultiplierCoefficient).isApprox(- projection.dfdx.transpose()));
 }

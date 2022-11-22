@@ -42,9 +42,12 @@ namespace ocs2 {
  * Implementation based on the QR decomposition
  *
  * @param constraint : C = dfdx, D = dfdu, e = f;
- * @return Px = dfdx, Pu = dfdu, Pe = f;
+ * @param extractLagrangeMultiplierCoefficient : If true, a term to compute the coefficients of the Lagrange multiplier associated with
+ * the state-input equality constraint is returned. If false, an empty matrix is returned.
+ * @return Px = dfdx, Pu = dfdu, Pe = f and the term for the Lagrange multiplier direction;
  */
-VectorFunctionLinearApproximation qrConstraintProjection(const VectorFunctionLinearApproximation& constraint);
+std::pair<VectorFunctionLinearApproximation, matrix_t> qrConstraintProjection(const VectorFunctionLinearApproximation& constraint,
+                                                                              bool extractLagrangeMultiplierCoefficient = false);
 
 /**
  * Returns the linear projection
@@ -55,8 +58,11 @@ VectorFunctionLinearApproximation qrConstraintProjection(const VectorFunctionLin
  * Implementation based on the LU decomposition
  *
  * @param constraint : C = dfdx, D = dfdu, e = f;
- * @return Px = dfdx, Pu = dfdu, Pe = f;
+ * @param extractLagrangeMultiplierCoefficient : If true, a term to compute the coefficients of the Lagrange multiplier associated with
+ * the state-input equality constraint is returned. If false, an empty matrix is returned.
+ * @return Px = dfdx, Pu = dfdu, Pe = f and the term for the Lagrange multiplier direction;
  */
-VectorFunctionLinearApproximation luConstraintProjection(const VectorFunctionLinearApproximation& constraint);
+std::pair<VectorFunctionLinearApproximation, matrix_t> luConstraintProjection(const VectorFunctionLinearApproximation& constraint,
+                                                                              bool extractLagrangeMultiplierCoefficient = false);
 
 }  // namespace ocs2

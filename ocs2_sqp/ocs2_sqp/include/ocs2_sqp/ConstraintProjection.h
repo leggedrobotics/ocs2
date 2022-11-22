@@ -42,11 +42,9 @@ namespace ocs2 {
  * Implementation based on the QR decomposition
  *
  * @param constraint : C = dfdx, D = dfdu, e = f;
- * @param extractPseudoInverse : If true, pseudo inverse of D is returned. If false, an empty matrix is returned.
  * @return Projection terms Px = dfdx, Pu = dfdu, Pe = f (first) and pseudo inverse of D (second);
  */
-std::pair<VectorFunctionLinearApproximation, matrix_t> qrConstraintProjection(const VectorFunctionLinearApproximation& constraint,
-                                                                              bool extractPseudoInverse = false);
+std::pair<VectorFunctionLinearApproximation, matrix_t> qrConstraintProjection(const VectorFunctionLinearApproximation& constraint);
 
 /**
  * Returns the linear projection

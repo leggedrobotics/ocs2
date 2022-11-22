@@ -31,29 +31,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-std::pair<VectorFunctionLinearApproximation, matrix_t> qrConstraintProjection(const VectorFunctionLinearApproximation& constraint,
-                                                                              bool extractPseudoInverse) {
+std::pair<VectorFunctionLinearApproximation, matrix_t> qrConstraintProjection(const VectorFunctionLinearApproximation& constraint) {
   // Constraint Projectors are based on the QR decomposition
   const auto numConstraints = constraint.dfdu.rows();
   const auto numInputs = constraint.dfdu.cols();
   const Eigen::HouseholderQR<matrix_t> QRof_DT(constraint.dfdu.transpose());
 
-  const auto RT = QRof_DT.matrixQR().topRows(numConstraints).triangularView<Eigen::Upper>().transpose();
-  const matrix_t RTinvC = RT.solve(constraint.dfdx);  // inv(R^T) * C
-  const matrix_t RTinve = RT.solve(constraint.f);     // inv(R^T) * e
-
   const matrix_t Q = QRof_DT.householderQ();
   const auto Q1 = Q.leftCols(numConstraints);
 
+  const auto R = QRof_DT.matrixQR().topRows(numConstraints).triangularView<Eigen::Upper>();
+  const matrix_t pseudoInverse = R.solve(Q1.transpose());
+
   VectorFunctionLinearApproximation projectionTerms;
   projectionTerms.dfdu = Q.rightCols(numInputs - numConstraints);
-  projectionTerms.dfdx.noalias() = -Q1 * RTinvC;
-  projectionTerms.f.noalias() = -Q1 * RTinve;
-
-  matrix_t pseudoInverse;
-  if (extractPseudoInverse) {
-    pseudoInverse = RT.transpose().solve(Q1.transpose());
-  }
+  projectionTerms.dfdx.noalias() = -pseudoInverse.transpose() * constraint.dfdx;
+  projectionTerms.f.noalias() = -pseudoInverse.transpose() * constraint.f;
 
   return std::make_pair(std::move(projectionTerms), std::move(pseudoInverse));
 }

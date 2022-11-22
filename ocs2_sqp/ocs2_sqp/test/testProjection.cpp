@@ -89,3 +89,21 @@ TEST(test_projection, testProjectionLU) {
   ASSERT_TRUE((pseudoInverse.transpose()*constraint.dfdx).isApprox(- projection.dfdx));
   ASSERT_TRUE((pseudoInverse.transpose()*constraint.f).isApprox(- projection.f));
 }
+
+TEST(test_projection, testProjectionMultiplierCoefficients) {
+  const size_t stateDim = 30;
+  const size_t inputDim = 20;
+  const size_t constraintDim = 10;
+
+  const auto cost = ocs2::getRandomCost(stateDim, inputDim);
+  const auto dynamics = ocs2::getRandomDynamics(stateDim, inputDim);
+  const auto constraint = ocs2::getRandomConstraints(stateDim, inputDim, constraintDim);
+
+  auto result = ocs2::qrConstraintProjection(constraint);
+  const auto projection = std::move(result.first);
+  const auto pseudoInverse = std::move(result.second);
+
+  ASSERT_NO_THROW(
+    const auto projectionMultiplierCoefficients = extractProjectionMultiplierCoefficients(dynamics, cost, projection, pseudoInverse);
+  );
+}

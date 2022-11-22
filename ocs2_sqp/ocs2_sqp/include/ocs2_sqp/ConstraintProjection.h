@@ -42,7 +42,7 @@ namespace ocs2 {
  * Implementation based on the QR decomposition
  *
  * @param constraint : C = dfdx, D = dfdu, e = f;
- * @return Projection terms Px = dfdx, Pu = dfdu, Pe = f (first) and pseudo inverse of D (second);
+ * @return Projection terms Px = dfdx, Pu = dfdu, Pe = f (first) and pseudo inverse of D^T (second);
  */
 std::pair<VectorFunctionLinearApproximation, matrix_t> qrConstraintProjection(const VectorFunctionLinearApproximation& constraint);
 
@@ -55,10 +55,34 @@ std::pair<VectorFunctionLinearApproximation, matrix_t> qrConstraintProjection(co
  * Implementation based on the LU decomposition
  *
  * @param constraint : C = dfdx, D = dfdu, e = f;
- * @param extractPseudoInverse : If true, pseudo inverse of D is returned. If false, an empty matrix is returned.
- * @return Projection terms Px = dfdx, Pu = dfdu, Pe = f (first) and pseudo inverse of D (second);
+ * @param extractPseudoInverse : If true, pseudo inverse of D^T is returned. If false, an empty matrix is returned.
+ * @return Projection terms Px = dfdx, Pu = dfdu, Pe = f (first) and pseudo inverse of D^T (second);
  */
 std::pair<VectorFunctionLinearApproximation, matrix_t> luConstraintProjection(const VectorFunctionLinearApproximation& constraint,
                                                                               bool extractPseudoInverse = false);
+
+/**
+ * Coefficients to compute the Newton step of the Lagrange multiplier associated with the state-input equality constraint such that
+ * dfdx*dx + dfdu*du + dfdcostate*dcostate + f
+ */
+struct ProjectionMultiplierCoefficients {
+  matrix_t dfdx;
+  matrix_t dfdu;
+  matrix_t dfdcostate;
+  vector_t f;
+};
+
+/**
+ * Extracts the coefficients to compute the Newton step of the Lagrange multiplier associated with the state-input equality constraint.
+ *
+ * @param dynamics : Dynamics
+ * @param cost : Cost
+ * @param constraintProjection : Constraint projection.
+ * @param pseudoInverse : Pseudo inverse of D^T of the state-input equality constraint.
+ */
+ProjectionMultiplierCoefficients extractProjectionMultiplierCoefficients(const VectorFunctionLinearApproximation& dynamics,
+                                                                         const ScalarFunctionQuadraticApproximation& cost,
+                                                                         const VectorFunctionLinearApproximation& constraintProjection,
+                                                                         const matrix_t& pseudoInverse);
 
 }  // namespace ocs2

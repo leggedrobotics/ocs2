@@ -69,4 +69,20 @@ std::pair<VectorFunctionLinearApproximation, matrix_t> luConstraintProjection(co
   return std::make_pair(std::move(projectionTerms), std::move(pseudoInverse));
 }
 
+ProjectionMultiplierCoefficients extractProjectionMultiplierCoefficients(const VectorFunctionLinearApproximation& dynamics,
+                                                                         const ScalarFunctionQuadraticApproximation& cost,
+                                                                         const VectorFunctionLinearApproximation& constraintProjection,
+                                                                         const matrix_t& pseudoInverse) {
+  const auto& Px = constraintProjection.dfdx;
+  const auto& Pu = constraintProjection.dfdu;
+  const auto& u0 = constraintProjection.f;
+
+  ProjectionMultiplierCoefficients multiplierCoefficients;
+  multiplierCoefficients.dfdx.noalias() = -pseudoInverse * (cost.dfdux + cost.dfduu * Px);
+  multiplierCoefficients.dfdu.noalias() = -pseudoInverse * (cost.dfduu * Pu);
+  multiplierCoefficients.dfdcostate.noalias() = -pseudoInverse * dynamics.dfdu.transpose();
+  multiplierCoefficients.f.noalias() = pseudoInverse * (cost.dfdu + cost.dfduu * u0);
+  return multiplierCoefficients;
+}
+
 }  // namespace ocs2

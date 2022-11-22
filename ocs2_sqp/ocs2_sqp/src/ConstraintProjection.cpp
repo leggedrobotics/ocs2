@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 std::pair<VectorFunctionLinearApproximation, matrix_t> qrConstraintProjection(const VectorFunctionLinearApproximation& constraint,
-                                                                              bool extractLagrangeMultiplierCoefficient) {
+                                                                              bool extractPseudoInverse) {
   // Constraint Projectors are based on the QR decomposition
   const auto numConstraints = constraint.dfdu.rows();
   const auto numInputs = constraint.dfdu.cols();
@@ -50,16 +50,16 @@ std::pair<VectorFunctionLinearApproximation, matrix_t> qrConstraintProjection(co
   projectionTerms.dfdx.noalias() = -Q1 * RTinvC;
   projectionTerms.f.noalias() = -Q1 * RTinve;
 
-  matrix_t lagrangeMultiplierCoefficient;
-  if (extractLagrangeMultiplierCoefficient) {
-    lagrangeMultiplierCoefficient = RT.transpose().solve(Q1.transpose());
+  matrix_t pseudoInverse;
+  if (extractPseudoInverse) {
+    pseudoInverse = RT.transpose().solve(Q1.transpose());
   }
 
-  return std::make_pair(std::move(projectionTerms), std::move(lagrangeMultiplierCoefficient));
+  return std::make_pair(std::move(projectionTerms), std::move(pseudoInverse));
 }
 
 std::pair<VectorFunctionLinearApproximation, matrix_t> luConstraintProjection(const VectorFunctionLinearApproximation& constraint,
-                                                                              bool extractLagrangeMultiplierCoefficient) {
+                                                                              bool extractPseudoInverse) {
   // Constraint Projectors are based on the LU decomposition
   const Eigen::FullPivLU<matrix_t> lu(constraint.dfdu);
 
@@ -68,12 +68,12 @@ std::pair<VectorFunctionLinearApproximation, matrix_t> luConstraintProjection(co
   projectionTerms.dfdx.noalias() = -lu.solve(constraint.dfdx);
   projectionTerms.f.noalias() = -lu.solve(constraint.f);
 
-  matrix_t lagrangeMultiplierCoefficient;
-  if (extractLagrangeMultiplierCoefficient) {
-    lagrangeMultiplierCoefficient = lu.solve(matrix_t::Identity(constraint.f.size(), constraint.f.size())).transpose();
+  matrix_t pseudoInverse;
+  if (extractPseudoInverse) {
+    pseudoInverse = lu.solve(matrix_t::Identity(constraint.f.size(), constraint.f.size())).transpose();
   }
 
-  return std::make_pair(std::move(projectionTerms), std::move(lagrangeMultiplierCoefficient));
+  return std::make_pair(std::move(projectionTerms), std::move(pseudoInverse));
 }
 
 }  // namespace ocs2

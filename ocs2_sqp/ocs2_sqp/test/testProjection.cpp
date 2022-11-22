@@ -51,16 +51,18 @@ TEST(test_projection, testProjectionQR) {
   // D * Pe cancels the e term
   ASSERT_TRUE((constraint.f + constraint.dfdu * projection.f).isZero());
 
-  auto resultWithMultiplierCoefficient = ocs2::qrConstraintProjection(constraint, true);
-  const auto projectionWithMultiplierCoefficient = std::move(resultWithMultiplierCoefficient.first);
-  ASSERT_TRUE(projection.f.isApprox(projectionWithMultiplierCoefficient.f));
-  ASSERT_TRUE(projection.dfdx.isApprox(projectionWithMultiplierCoefficient.dfdx));
-  ASSERT_TRUE(projection.dfdu.isApprox(projectionWithMultiplierCoefficient.dfdu));
+  auto resultWithPseudoInverse = ocs2::qrConstraintProjection(constraint, true);
+  const auto projectionWithPseudoInverse = std::move(resultWithPseudoInverse.first);
+  ASSERT_TRUE(projection.f.isApprox(projectionWithPseudoInverse.f));
+  ASSERT_TRUE(projection.dfdx.isApprox(projectionWithPseudoInverse.dfdx));
+  ASSERT_TRUE(projection.dfdu.isApprox(projectionWithPseudoInverse.dfdu));
 
-  const auto lagrangeMultiplierCoefficient = std::move(resultWithMultiplierCoefficient.second);
-  ASSERT_EQ(lagrangeMultiplierCoefficient.rows(), constraint.dfdu.rows());
-  ASSERT_EQ(lagrangeMultiplierCoefficient.cols(), constraint.dfdu.cols());
-  ASSERT_TRUE((constraint.dfdx.transpose()*lagrangeMultiplierCoefficient).isApprox(- projection.dfdx.transpose()));
+  const auto pseudoInverse = std::move(resultWithPseudoInverse.second);
+  ASSERT_EQ(pseudoInverse.rows(), constraint.dfdu.rows());
+  ASSERT_EQ(pseudoInverse.cols(), constraint.dfdu.cols());
+
+  ASSERT_TRUE((pseudoInverse*constraint.dfdu.transpose()).isIdentity());
+  ASSERT_TRUE((constraint.dfdx.transpose()*pseudoInverse).isApprox(- projection.dfdx.transpose()));
 }
 
 TEST(test_projection, testProjectionLU) {
@@ -81,14 +83,16 @@ TEST(test_projection, testProjectionLU) {
   // D * Pe cancels the e term
   ASSERT_TRUE((constraint.f + constraint.dfdu * projection.f).isZero());
 
-  auto resultWithMultiplierCoefficient = ocs2::luConstraintProjection(constraint, true);
-  const auto projectionWithMultiplierCoefficient = std::move(resultWithMultiplierCoefficient.first);
-  ASSERT_TRUE(projection.f.isApprox(projectionWithMultiplierCoefficient.f));
-  ASSERT_TRUE(projection.dfdx.isApprox(projectionWithMultiplierCoefficient.dfdx));
-  ASSERT_TRUE(projection.dfdu.isApprox(projectionWithMultiplierCoefficient.dfdu));
+  auto resultWithPseudoInverse = ocs2::luConstraintProjection(constraint, true);
+  const auto projectionWithPseudoInverse = std::move(resultWithPseudoInverse.first);
+  ASSERT_TRUE(projection.f.isApprox(projectionWithPseudoInverse.f));
+  ASSERT_TRUE(projection.dfdx.isApprox(projectionWithPseudoInverse.dfdx));
+  ASSERT_TRUE(projection.dfdu.isApprox(projectionWithPseudoInverse.dfdu));
 
-  const auto lagrangeMultiplierCoefficient = std::move(resultWithMultiplierCoefficient.second);
-  ASSERT_EQ(lagrangeMultiplierCoefficient.rows(), constraint.dfdu.rows());
-  ASSERT_EQ(lagrangeMultiplierCoefficient.cols(), constraint.dfdu.cols());
-  ASSERT_TRUE((constraint.dfdx.transpose()*lagrangeMultiplierCoefficient).isApprox(- projection.dfdx.transpose()));
+  const auto pseudoInverse = std::move(resultWithPseudoInverse.second);
+  ASSERT_EQ(pseudoInverse.rows(), constraint.dfdu.rows());
+  ASSERT_EQ(pseudoInverse.cols(), constraint.dfdu.cols());
+
+  ASSERT_TRUE((pseudoInverse*constraint.dfdu.transpose()).isIdentity());
+  ASSERT_TRUE((constraint.dfdx.transpose()*pseudoInverse).isApprox(- projection.dfdx.transpose()));
 }

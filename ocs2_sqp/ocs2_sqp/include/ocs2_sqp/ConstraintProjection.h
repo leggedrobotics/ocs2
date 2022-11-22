@@ -42,12 +42,11 @@ namespace ocs2 {
  * Implementation based on the QR decomposition
  *
  * @param constraint : C = dfdx, D = dfdu, e = f;
- * @param extractLagrangeMultiplierCoefficient : If true, a term to compute the coefficients of the Lagrange multiplier associated with
- * the state-input equality constraint is returned. If false, an empty matrix is returned.
- * @return Px = dfdx, Pu = dfdu, Pe = f and the term for the Lagrange multiplier direction;
+ * @param extractPseudoInverse : If true, pseudo inverse of D is returned. If false, an empty matrix is returned.
+ * @return Projection terms Px = dfdx, Pu = dfdu, Pe = f (first) and pseudo inverse of D (second);
  */
 std::pair<VectorFunctionLinearApproximation, matrix_t> qrConstraintProjection(const VectorFunctionLinearApproximation& constraint,
-                                                                              bool extractLagrangeMultiplierCoefficient = false);
+                                                                              bool extractPseudoInverse = false);
 
 /**
  * Returns the linear projection
@@ -58,11 +57,10 @@ std::pair<VectorFunctionLinearApproximation, matrix_t> qrConstraintProjection(co
  * Implementation based on the LU decomposition
  *
  * @param constraint : C = dfdx, D = dfdu, e = f;
- * @param extractLagrangeMultiplierCoefficient : If true, a term to compute the coefficients of the Lagrange multiplier associated with
- * the state-input equality constraint is returned. If false, an empty matrix is returned.
- * @return Px = dfdx, Pu = dfdu, Pe = f and the term for the Lagrange multiplier direction;
+ * @param extractPseudoInverse : If true, pseudo inverse of D is returned. If false, an empty matrix is returned.
+ * @return Projection terms Px = dfdx, Pu = dfdu, Pe = f (first) and pseudo inverse of D (second);
  */
 std::pair<VectorFunctionLinearApproximation, matrix_t> luConstraintProjection(const VectorFunctionLinearApproximation& constraint,
-                                                                              bool extractLagrangeMultiplierCoefficient = false);
+                                                                              bool extractPseudoInverse = false);
 
 }  // namespace ocs2

@@ -31,28 +31,28 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-VectorFunctionLinearApproximation qrConstraintProjection(const VectorFunctionLinearApproximation& constraint) {
+std::pair<VectorFunctionLinearApproximation, matrix_t> qrConstraintProjection(const VectorFunctionLinearApproximation& constraint) {
   // Constraint Projectors are based on the QR decomposition
   const auto numConstraints = constraint.dfdu.rows();
   const auto numInputs = constraint.dfdu.cols();
   const Eigen::HouseholderQR<matrix_t> QRof_DT(constraint.dfdu.transpose());
 
-  const auto RT = QRof_DT.matrixQR().topRows(numConstraints).triangularView<Eigen::Upper>().transpose();
-  const matrix_t RTinvC = RT.solve(constraint.dfdx);  // inv(R^T) * C
-  const matrix_t RTinve = RT.solve(constraint.f);     // inv(R^T) * e
-
   const matrix_t Q = QRof_DT.householderQ();
   const auto Q1 = Q.leftCols(numConstraints);
 
+  const auto R = QRof_DT.matrixQR().topRows(numConstraints).triangularView<Eigen::Upper>();
+  const matrix_t pseudoInverse = R.solve(Q1.transpose());  // left pseudo-inverse of D^T
+
   VectorFunctionLinearApproximation projectionTerms;
   projectionTerms.dfdu = Q.rightCols(numInputs - numConstraints);
-  projectionTerms.dfdx.noalias() = -Q1 * RTinvC;
-  projectionTerms.f.noalias() = -Q1 * RTinve;
+  projectionTerms.dfdx.noalias() = -pseudoInverse.transpose() * constraint.dfdx;
+  projectionTerms.f.noalias() = -pseudoInverse.transpose() * constraint.f;
 
-  return projectionTerms;
+  return std::make_pair(std::move(projectionTerms), std::move(pseudoInverse));
 }
 
-VectorFunctionLinearApproximation luConstraintProjection(const VectorFunctionLinearApproximation& constraint) {
+std::pair<VectorFunctionLinearApproximation, matrix_t> luConstraintProjection(const VectorFunctionLinearApproximation& constraint,
+                                                                              bool extractPseudoInverse) {
   // Constraint Projectors are based on the LU decomposition
   const Eigen::FullPivLU<matrix_t> lu(constraint.dfdu);
 
@@ -61,7 +61,32 @@ VectorFunctionLinearApproximation luConstraintProjection(const VectorFunctionLin
   projectionTerms.dfdx.noalias() = -lu.solve(constraint.dfdx);
   projectionTerms.f.noalias() = -lu.solve(constraint.f);
 
-  return projectionTerms;
+  matrix_t pseudoInverse;
+  if (extractPseudoInverse) {
+    pseudoInverse = lu.solve(matrix_t::Identity(constraint.f.size(), constraint.f.size())).transpose();  // left pseudo-inverse of D^T
+  }
+
+  return std::make_pair(std::move(projectionTerms), std::move(pseudoInverse));
+}
+
+ProjectionMultiplierCoefficients extractProjectionMultiplierCoefficients(const VectorFunctionLinearApproximation& dynamics,
+                                                                         const ScalarFunctionQuadraticApproximation& cost,
+                                                                         const VectorFunctionLinearApproximation& constraintProjection,
+                                                                         const matrix_t& pseudoInverse) {
+  vector_t semiprojectedCost_dfdu = cost.dfdu;
+  semiprojectedCost_dfdu.noalias() += cost.dfduu * constraintProjection.f;
+
+  matrix_t semiprojectedCost_dfdux = cost.dfdux;
+  semiprojectedCost_dfdux.noalias() += cost.dfduu * constraintProjection.dfdx;
+
+  const matrix_t semiprojectedCost_dfduu = cost.dfduu * constraintProjection.dfdu;
+
+  ProjectionMultiplierCoefficients multiplierCoefficients;
+  multiplierCoefficients.dfdx.noalias() = -pseudoInverse * semiprojectedCost_dfdux;
+  multiplierCoefficients.dfdu.noalias() = -pseudoInverse * semiprojectedCost_dfduu;
+  multiplierCoefficients.dfdcostate.noalias() = -pseudoInverse * dynamics.dfdu.transpose();
+  multiplierCoefficients.f.noalias() = -pseudoInverse * semiprojectedCost_dfdu;
+  return multiplierCoefficients;
 }
 
 }  // namespace ocs2

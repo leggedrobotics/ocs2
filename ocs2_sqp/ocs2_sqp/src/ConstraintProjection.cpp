@@ -73,19 +73,19 @@ ProjectionMultiplierCoefficients extractProjectionMultiplierCoefficients(const V
                                                                          const ScalarFunctionQuadraticApproximation& cost,
                                                                          const VectorFunctionLinearApproximation& constraintProjection,
                                                                          const matrix_t& pseudoInverse) {
-  vector_t projectedCost_dfdu = cost.dfdu;
-  projectedCost_dfdu.noalias() += cost.dfduu * constraintProjection.f;
+  vector_t semiprojectedCost_dfdu = cost.dfdu;
+  semiprojectedCost_dfdu.noalias() += cost.dfduu * constraintProjection.f;
 
-  matrix_t projectedCost_dfdux = cost.dfdux;
-  projectedCost_dfdux.noalias() += cost.dfduu * constraintProjection.dfdx;
+  matrix_t semiprojectedCost_dfdux = cost.dfdux;
+  semiprojectedCost_dfdux.noalias() += cost.dfduu * constraintProjection.dfdx;
 
-  const matrix_t projectedCost_dfduu = cost.dfduu * constraintProjection.dfdu;
+  const matrix_t semiprojectedCost_dfduu = cost.dfduu * constraintProjection.dfdu;
 
   ProjectionMultiplierCoefficients multiplierCoefficients;
-  multiplierCoefficients.dfdx.noalias() = -pseudoInverse * projectedCost_dfdux;
-  multiplierCoefficients.dfdu.noalias() = -pseudoInverse * projectedCost_dfduu;
+  multiplierCoefficients.dfdx.noalias() = -pseudoInverse * semiprojectedCost_dfdux;
+  multiplierCoefficients.dfdu.noalias() = -pseudoInverse * semiprojectedCost_dfduu;
   multiplierCoefficients.dfdcostate.noalias() = -pseudoInverse * dynamics.dfdu.transpose();
-  multiplierCoefficients.f.noalias() = -pseudoInverse * projectedCost_dfdu;
+  multiplierCoefficients.f.noalias() = -pseudoInverse * semiprojectedCost_dfdu;
   return multiplierCoefficients;
 }
 

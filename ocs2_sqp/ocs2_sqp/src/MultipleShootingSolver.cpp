@@ -551,26 +551,10 @@ multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIn
 
     // Compute cost and constraints
     const PerformanceIndex performanceNew = computePerformance(timeDiscretization, initState, xNew, uNew);
-    const scalar_t newConstraintViolation = totalConstraintViolation(performanceNew);
 
     // Step acceptance and record step type
-    const bool stepAccepted = [&]() {
-      if (newConstraintViolation > settings_.g_max) {
-        // High constraint violation. Only accept decrease in constraints.
-        stepInfo.stepType = StepType::CONSTRAINT;
-        return newConstraintViolation < ((1.0 - settings_.gamma_c) * baselineConstraintViolation);
-      } else if (newConstraintViolation < settings_.g_min && baselineConstraintViolation < settings_.g_min &&
-                 subproblemSolution.armijoDescentMetric < 0.0) {
-        // With low violation and having a descent direction, require the armijo condition.
-        stepInfo.stepType = StepType::COST;
-        return performanceNew.merit < (baseline.merit + settings_.armijoFactor * alpha * subproblemSolution.armijoDescentMetric);
-      } else {
-        // Medium violation: either merit or constraints decrease (with small gamma_c mixing of old constraints)
-        stepInfo.stepType = StepType::DUAL;
-        return performanceNew.merit < (baseline.merit - settings_.gamma_c * baselineConstraintViolation) ||
-               newConstraintViolation < ((1.0 - settings_.gamma_c) * baselineConstraintViolation);
-      }
-    }();
+    bool stepAccepted;
+    std::tie(stepAccepted, stepInfo.stepType) = acceptStep(baseline, performanceNew, subproblemSolution.armijoDescentMetric, alpha);
 
     if (settings_.printLinesearch) {
       std::cerr << "Step size: " << alpha << ", Step Type: " << toString(stepInfo.stepType)
@@ -587,7 +571,7 @@ multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIn
       stepInfo.dx_norm = alpha * deltaXnorm;
       stepInfo.du_norm = alpha * deltaUnorm;
       stepInfo.performanceAfterStep = performanceNew;
-      stepInfo.totalConstraintViolationAfterStep = newConstraintViolation;
+      stepInfo.totalConstraintViolationAfterStep = totalConstraintViolation(performanceNew);
       return stepInfo;
     } else {  // Try smaller step
       alpha *= settings_.alpha_decay;
@@ -609,13 +593,36 @@ multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIn
   stepInfo.dx_norm = 0.0;
   stepInfo.du_norm = 0.0;
   stepInfo.performanceAfterStep = baseline;
-  stepInfo.totalConstraintViolationAfterStep = baselineConstraintViolation;
+  stepInfo.totalConstraintViolationAfterStep = totalConstraintViolation(baseline);
 
   if (settings_.printLinesearch) {
     std::cerr << "[Linesearch terminated] Step size: " << stepInfo.stepSize << ", Step Type: " << toString(stepInfo.stepType) << "\n";
   }
 
   return stepInfo;
+}
+
+std::pair<bool, multiple_shooting::StepInfo::StepType> MultipleShootingSolver::acceptStep(const PerformanceIndex& baselinePerformance,
+                                                                                          const PerformanceIndex& stepPerformance,
+                                                                                          scalar_t armijoDescentMetric,
+                                                                                          scalar_t alpha) const {
+  const scalar_t baselineConstraintViolation = totalConstraintViolation(baselinePerformance);
+  const scalar_t newConstraintViolation = totalConstraintViolation(stepPerformance);
+  // Step acceptance and record step type
+  if (newConstraintViolation > settings_.g_max) {
+    // High constraint violation. Only accept decrease in constraints.
+    const bool accepted = newConstraintViolation < ((1.0 - settings_.gamma_c) * baselineConstraintViolation);
+    return std::make_pair(accepted, multiple_shooting::StepInfo::StepType::CONSTRAINT);
+  } else if (newConstraintViolation < settings_.g_min && baselineConstraintViolation < settings_.g_min && armijoDescentMetric < 0.0) {
+    // With low violation and having a descent direction, require the armijo condition.
+    const bool accepted = stepPerformance.merit < (baselinePerformance.merit + settings_.armijoFactor * alpha * armijoDescentMetric);
+    return std::make_pair(accepted, multiple_shooting::StepInfo::StepType::COST);
+  } else {
+    // Medium violation: either merit or constraints decrease (with small gamma_c mixing of old constraints)
+    const bool accepted = stepPerformance.merit < (baselinePerformance.merit - settings_.gamma_c * baselineConstraintViolation) ||
+                          newConstraintViolation < ((1.0 - settings_.gamma_c) * baselineConstraintViolation);
+    return std::make_pair(accepted, multiple_shooting::StepInfo::StepType::DUAL);
+  }
 }
 
 multiple_shooting::Convergence MultipleShootingSolver::checkConvergence(int iteration, const PerformanceIndex& baseline,

@@ -160,6 +160,11 @@ class MultipleShootingSolver : public SolverBase {
                                        const vector_t& initState, const OcpSubproblemSolution& subproblemSolution, vector_array_t& x,
                                        vector_array_t& u);
 
+  /** Checks that the trial step is accepted */
+  std::pair<bool, multiple_shooting::StepInfo::StepType> acceptStep(const PerformanceIndex& baselinePerformance,
+                                                                    const PerformanceIndex& stepPerformance, scalar_t armijoDescentMetric,
+                                                                    scalar_t alpha) const;
+
   /** Determine convergence after a step */
   multiple_shooting::Convergence checkConvergence(int iteration, const PerformanceIndex& baseline,
                                                   const multiple_shooting::StepInfo& stepInfo) const;

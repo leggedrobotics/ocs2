@@ -46,6 +46,8 @@ struct Transcription {
   ScalarFunctionQuadraticApproximation cost;
   VectorFunctionLinearApproximation constraints;
   VectorFunctionLinearApproximation constraintsProjection;
+  VectorFunctionLinearApproximation stateIneqConstraints;
+  VectorFunctionLinearApproximation stateInputIneqConstraints;
 };
 
 /**
@@ -59,18 +61,22 @@ struct Transcription {
  * @param x : State at start of the interval
  * @param x_next : State at the end of the interval
  * @param u : Input, taken to be constant across the interval.
+ * @param enableStateInequalityConstraint : Flag to enalbe the state-only inequality constraint. The constraint must be disabled at the
+ * initial node.
  * @return multiple shooting transcription for this node.
  */
 Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlProblem,
                                     DynamicsSensitivityDiscretizer& sensitivityDiscretizer, bool projectStateInputEqualityConstraints,
-                                    scalar_t t, scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u);
+                                    scalar_t t, scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u,
+                                    bool enableStateInequalityConstraint = true);
 
 /**
  * Compute only the performance index for a single intermediate node.
  * Corresponds to the performance index returned by "setupIntermediateNode"
  */
 PerformanceIndex computeIntermediatePerformance(const OptimalControlProblem& optimalControlProblem, DynamicsDiscretizer& discretizer,
-                                                scalar_t t, scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u);
+                                                scalar_t t, scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u,
+                                                bool enableStateInequalityConstraint = true);
 
 /**
  * Results of the transcription at a terminal node
@@ -79,6 +85,7 @@ struct TerminalTranscription {
   PerformanceIndex performance;
   ScalarFunctionQuadraticApproximation cost;
   VectorFunctionLinearApproximation constraints;
+  VectorFunctionLinearApproximation stateIneqConstraints;
 };
 
 /**
@@ -105,6 +112,7 @@ struct EventTranscription {
   VectorFunctionLinearApproximation dynamics;
   ScalarFunctionQuadraticApproximation cost;
   VectorFunctionLinearApproximation constraints;
+  VectorFunctionLinearApproximation stateIneqConstraints;
 };
 
 /**

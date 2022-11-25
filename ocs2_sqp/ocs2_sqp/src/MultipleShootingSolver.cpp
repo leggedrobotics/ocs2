@@ -392,6 +392,8 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
   cost_.resize(N + 1);
   constraints_.resize(N + 1);
   constraintsProjection_.resize(N);
+  stateIneqConstraints_.resize(N + 1);
+  stateInputIneqConstraints_.resize(N);
 
   std::atomic_int timeIndex{0};
   auto parallelTask = [&](int workerId) {
@@ -410,6 +412,8 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
         cost_[i] = std::move(result.cost);
         constraints_[i] = std::move(result.constraints);
         constraintsProjection_[i] = VectorFunctionLinearApproximation::Zero(0, x[i].size(), 0);
+        stateIneqConstraints_[i] = std::move(result.stateIneqConstraints);
+        stateInputIneqConstraints_[i] = VectorFunctionLinearApproximation::Zero(0, x[i].size(), 0);
       } else {
         // Normal, intermediate node
         const scalar_t ti = getIntervalStart(time[i]);
@@ -421,6 +425,8 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
         cost_[i] = std::move(result.cost);
         constraints_[i] = std::move(result.constraints);
         constraintsProjection_[i] = std::move(result.constraintsProjection);
+        stateIneqConstraints_[i] = std::move(result.stateIneqConstraints);
+        stateInputIneqConstraints_[i] = std::move(result.stateInputIneqConstraints);
       }
 
       i = timeIndex++;
@@ -432,6 +438,7 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
       workerPerformance += result.performance;
       cost_[i] = std::move(result.cost);
       constraints_[i] = std::move(result.constraints);
+      stateIneqConstraints_[i] = std::move(result.stateIneqConstraints);
     }
 
     // Accumulate! Same worker might run multiple tasks

@@ -141,7 +141,9 @@ PerformanceIndex computeIntermediatePerformance(const OptimalControlProblem& opt
   if (!optimalControlProblem.equalityConstraintPtr->empty()) {
     const vector_t stateInputEqConstraints =
         optimalControlProblem.equalityConstraintPtr->getValue(t, x, u, *optimalControlProblem.preComputationPtr);
-    performance.equalityConstraintsSSE = dt * stateInputEqConstraints.squaredNorm();
+    if (stateInputEqConstraints.size() > 0) {
+      performance.equalityConstraintsSSE = dt * stateInputEqConstraints.squaredNorm();
+    }
   }
 
   // State inequality constraints.

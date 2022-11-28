@@ -43,8 +43,8 @@ scalar_t getIneqConstraintsSSE(const vector_t& ineqConstraint) {
 
 Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlProblem,
                                     DynamicsSensitivityDiscretizer& sensitivityDiscretizer, bool projectStateInputEqualityConstraints,
-                                    scalar_t t, scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u,
-                                    bool enableStateInequalityConstraint) {
+                                    bool extractEqualityConstraintsPseudoInverse, scalar_t t, scalar_t dt, const vector_t& x,
+                                    const vector_t& x_next, const vector_t& u, bool enableStateInequalityConstraint) {
   // Results and short-hand notation
   Transcription transcription;
   auto& dynamics = transcription.dynamics;
@@ -52,6 +52,7 @@ Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlP
   auto& cost = transcription.cost;
   auto& constraints = transcription.constraints;
   auto& projection = transcription.constraintsProjection;
+  auto& constraintPseudoInverse = transcription.constraintPseudoInverse;
   auto& stateIneqConstraints = transcription.stateIneqConstraints;
   auto& stateInputIneqConstraints = transcription.stateInputIneqConstraints;
 
@@ -92,7 +93,12 @@ Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlP
       performance.equalityConstraintsSSE = dt * constraints.f.squaredNorm();
       if (projectStateInputEqualityConstraints) {  // Handle equality constraints using projection.
         // Projection stored instead of constraint, // TODO: benchmark between lu and qr method. LU seems slightly faster.
-        projection = luConstraintProjection(constraints).first;
+        if (extractEqualityConstraintsPseudoInverse) {
+          std::tie(projection, constraintPseudoInverse) = qrConstraintProjection(constraints);
+        } else {
+          projection = luConstraintProjection(constraints).first;
+          constraintPseudoInverse = matrix_t();
+        }
         constraints = VectorFunctionLinearApproximation();
 
         // Adapt dynamics, cost, and state-input inequality constraints

@@ -418,8 +418,11 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
         // Normal, intermediate node
         const scalar_t ti = getIntervalStart(time[i]);
         const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
-        auto result =
-            multiple_shooting::setupIntermediateNode(ocpDefinition, sensitivityDiscretizer_, projection, ti, dt, x[i], x[i + 1], u[i]);
+        const bool extractEqualityConstraintsPseudoInverse = false;
+        const bool enableStateInequalityConstraint = (i > 0);
+        auto result = multiple_shooting::setupIntermediateNode(ocpDefinition, sensitivityDiscretizer_, projection,
+                                                               extractEqualityConstraintsPseudoInverse, ti, dt, x[i], x[i + 1], u[i],
+                                                               enableStateInequalityConstraint);
         workerPerformance += result.performance;
         dynamics_[i] = std::move(result.dynamics);
         cost_[i] = std::move(result.cost);

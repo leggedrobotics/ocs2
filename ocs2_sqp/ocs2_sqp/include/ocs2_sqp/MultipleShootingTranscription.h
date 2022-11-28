@@ -46,6 +46,7 @@ struct Transcription {
   ScalarFunctionQuadraticApproximation cost;
   VectorFunctionLinearApproximation constraints;
   VectorFunctionLinearApproximation constraintsProjection;
+  matrix_t constraintPseudoInverse;
   VectorFunctionLinearApproximation stateIneqConstraints;
   VectorFunctionLinearApproximation stateInputIneqConstraints;
 };
@@ -56,6 +57,7 @@ struct Transcription {
  * @param optimalControlProblem : Definition of the optimal control problem
  * @param sensitivityDiscretizer : Integrator to use for creating the discrete dynamics.
  * @param projectStateInputEqualityConstraints
+ * @param extractEqualityConstraintsPseudoInverse
  * @param t : Start of the discrete interval
  * @param dt : Duration of the interval
  * @param x : State at start of the interval
@@ -67,8 +69,8 @@ struct Transcription {
  */
 Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlProblem,
                                     DynamicsSensitivityDiscretizer& sensitivityDiscretizer, bool projectStateInputEqualityConstraints,
-                                    scalar_t t, scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u,
-                                    bool enableStateInequalityConstraint = true);
+                                    bool extractEqualityConstraintsPseudoInverse, scalar_t t, scalar_t dt, const vector_t& x,
+                                    const vector_t& x_next, const vector_t& u, bool enableStateInequalityConstraint = true);
 
 /**
  * Compute only the performance index for a single intermediate node.

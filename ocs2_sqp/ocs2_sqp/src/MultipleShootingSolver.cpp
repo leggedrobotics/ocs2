@@ -479,7 +479,9 @@ PerformanceIndex MultipleShootingSolver::computePerformance(const std::vector<An
         // Normal, intermediate node
         const scalar_t ti = getIntervalStart(time[i]);
         const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
-        workerPerformance += multiple_shooting::computeIntermediatePerformance(ocpDefinition, discretizer_, ti, dt, x[i], x[i + 1], u[i]);
+        const bool enableStateInequalityConstraint = (i > 0);
+        workerPerformance += multiple_shooting::computeIntermediatePerformance(ocpDefinition, discretizer_, ti, dt, x[i], x[i + 1], u[i],
+                                                                               enableStateInequalityConstraint);
       }
 
       i = timeIndex++;

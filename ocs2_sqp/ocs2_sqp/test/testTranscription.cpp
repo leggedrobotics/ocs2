@@ -76,7 +76,7 @@ TEST(test_transcription, intermediate_performance) {
 
   const auto transcriptionWithIneq = setupIntermediateNode(problem, sensitivityDiscretizer, true, t, dt, x, x_next, u);
   const auto performanceWithIneq = computeIntermediatePerformance(problem, discretizer, t, dt, x, x_next, u);
-  ASSERT_TRUE(areIdentical(performance, transcription.performance));
+  ASSERT_TRUE(areIdentical(performanceWithIneq, transcriptionWithIneq.performance));
 }
 
 TEST(test_transcription, terminal_performance) {

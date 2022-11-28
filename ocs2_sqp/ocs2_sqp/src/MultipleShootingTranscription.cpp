@@ -137,18 +137,14 @@ PerformanceIndex computeIntermediatePerformance(const OptimalControlProblem& opt
   if (!optimalControlProblem.stateInequalityConstraintPtr->empty()) {
     const vector_t stateIneqConstraints =
         optimalControlProblem.stateInequalityConstraintPtr->getValue(t, x, *optimalControlProblem.preComputationPtr);
-    if (stateIneqConstraints.size() > 0) {
-      performance.inequalityConstraintsSSE += dt * getIneqConstraintsSSE(stateIneqConstraints);
-    }
+    performance.inequalityConstraintsSSE += dt * getIneqConstraintsSSE(stateIneqConstraints);
   }
 
   // State-input inequality constraints.
   if (!optimalControlProblem.inequalityConstraintPtr->empty()) {
     const vector_t stateInputIneqConstraints =
         optimalControlProblem.inequalityConstraintPtr->getValue(t, x, u, *optimalControlProblem.preComputationPtr);
-    if (stateInputIneqConstraints.size() > 0) {
-      performance.inequalityConstraintsSSE += dt * getIneqConstraintsSSE(stateInputIneqConstraints);
-    }
+    performance.inequalityConstraintsSSE += dt * getIneqConstraintsSSE(stateInputIneqConstraints);
   }
 
   // Constraints
@@ -262,9 +258,7 @@ PerformanceIndex computeEventPerformance(const OptimalControlProblem& optimalCon
   if (!optimalControlProblem.preJumpInequalityConstraintPtr->empty()) {
     const vector_t ineqConstraints =
         optimalControlProblem.preJumpInequalityConstraintPtr->getValue(t, x, *optimalControlProblem.preComputationPtr);
-    if (ineqConstraints.size() > 0) {
-      performance.inequalityConstraintsSSE += getIneqConstraintsSSE(ineqConstraints);
-    }
+    performance.inequalityConstraintsSSE += getIneqConstraintsSSE(ineqConstraints);
   }
 
   return performance;

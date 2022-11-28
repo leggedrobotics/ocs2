@@ -52,6 +52,10 @@ TEST(test_transcription, intermediate_performance) {
   // optimal control problem
   OptimalControlProblem problem = createCircularKinematicsProblem("/tmp/sqp_test_generated");
 
+  // inequality constraints
+  problem.inequalityConstraintPtr->add("emptyInequalityConstraint", getOcs2Constraints(getRandomConstraints(2, 2, 0)));
+  problem.stateInequalityConstraintPtr->add("emptyStateInequalityConstraint", getOcs2StateOnlyConstraints(getRandomConstraints(2, 2, 0)));
+
   auto discretizer = selectDynamicsDiscretization(SensitivityIntegratorType::RK4);
   auto sensitivityDiscretizer = selectDynamicsSensitivityDiscretization(SensitivityIntegratorType::RK4);
 
@@ -64,6 +68,14 @@ TEST(test_transcription, intermediate_performance) {
 
   const auto performance = computeIntermediatePerformance(problem, discretizer, t, dt, x, x_next, u);
 
+  ASSERT_TRUE(areIdentical(performance, transcription.performance));
+  ASSERT_DOUBLE_EQ(performance.inequalityConstraintsSSE, 0.0);
+
+  problem.inequalityConstraintPtr->add("inequalityConstraint", getOcs2Constraints(getRandomConstraints(2, 2, 3)));
+  problem.stateInequalityConstraintPtr->add("stateInequalityConstraint", getOcs2StateOnlyConstraints(getRandomConstraints(2, 2, 4)));
+
+  const auto transcriptionWithIneq = setupIntermediateNode(problem, sensitivityDiscretizer, true, t, dt, x, x_next, u);
+  const auto performanceWithIneq = computeIntermediatePerformance(problem, discretizer, t, dt, x, x_next, u);
   ASSERT_TRUE(areIdentical(performance, transcription.performance));
 }
 

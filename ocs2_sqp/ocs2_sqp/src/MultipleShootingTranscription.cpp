@@ -38,8 +38,12 @@ namespace ocs2 {
 namespace multiple_shooting {
 
 namespace {
-inline scalar_t getIneqConstraintsSSE(const vector_t& ineqConstraint) {
-  return ineqConstraint.cwiseMin(0.0).matrix().squaredNorm();
+scalar_t getIneqConstraintsSSE(const vector_t& ineqConstraint) {
+  if (ineqConstraint.size() == 0) {
+    return 0.0;
+  } else {
+    return ineqConstraint.cwiseMin(0.0).squaredNorm();
+  }
 }
 }  // namespace
 
@@ -87,7 +91,7 @@ Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlP
     performance.inequalityConstraintsSSE += dt * getIneqConstraintsSSE(stateInputIneqConstraints.f);
   }
 
-  // Constraints
+  // State-input equality constraints
   if (!optimalControlProblem.equalityConstraintPtr->empty()) {
     // C_{k} * dx_{k} + D_{k} * du_{k} + e_{k} = 0
     stateInputEqConstraints =
@@ -133,6 +137,13 @@ PerformanceIndex computeIntermediatePerformance(const OptimalControlProblem& opt
   // Costs
   performance.cost = dt * computeCost(optimalControlProblem, t, x, u);
 
+  // State-input equality constraints
+  if (!optimalControlProblem.equalityConstraintPtr->empty()) {
+    const vector_t stateIneqEqConstraints =
+        optimalControlProblem.equalityConstraintPtr->getValue(t, x, u, *optimalControlProblem.preComputationPtr);
+    performance.equalityConstraintsSSE = dt * stateIneqEqConstraints.squaredNorm();
+  }
+
   // State inequality constraints.
   if (!optimalControlProblem.stateInequalityConstraintPtr->empty()) {
     const vector_t stateIneqConstraints =
@@ -145,15 +156,6 @@ PerformanceIndex computeIntermediatePerformance(const OptimalControlProblem& opt
     const vector_t stateInputIneqConstraints =
         optimalControlProblem.inequalityConstraintPtr->getValue(t, x, u, *optimalControlProblem.preComputationPtr);
     performance.inequalityConstraintsSSE += dt * getIneqConstraintsSSE(stateInputIneqConstraints);
-  }
-
-  // Constraints
-  if (!optimalControlProblem.equalityConstraintPtr->empty()) {
-    const vector_t stateIneqEqConstraints =
-        optimalControlProblem.equalityConstraintPtr->getValue(t, x, u, *optimalControlProblem.preComputationPtr);
-    if (stateIneqEqConstraints.size() > 0) {
-      performance.equalityConstraintsSSE = dt * stateIneqEqConstraints.squaredNorm();
-    }
   }
 
   return performance;
@@ -177,9 +179,7 @@ TerminalTranscription setupTerminalNode(const OptimalControlProblem& optimalCont
   if (!optimalControlProblem.finalInequalityConstraintPtr->empty()) {
     ineqConstraints =
         optimalControlProblem.finalInequalityConstraintPtr->getLinearApproximation(t, x, *optimalControlProblem.preComputationPtr);
-    if (ineqConstraints.f.size() > 0) {
-      performance.inequalityConstraintsSSE += getIneqConstraintsSSE(ineqConstraints.f);
-    }
+    performance.inequalityConstraintsSSE += getIneqConstraintsSSE(ineqConstraints.f);
   }
 
   eqConstraints = VectorFunctionLinearApproximation::Zero(0, x.size());
@@ -198,9 +198,7 @@ PerformanceIndex computeTerminalPerformance(const OptimalControlProblem& optimal
   if (!optimalControlProblem.finalInequalityConstraintPtr->empty()) {
     const vector_t ineqConstraints =
         optimalControlProblem.finalInequalityConstraintPtr->getValue(t, x, *optimalControlProblem.preComputationPtr);
-    if (ineqConstraints.size() > 0) {
-      performance.inequalityConstraintsSSE += getIneqConstraintsSSE(ineqConstraints);
-    }
+    performance.inequalityConstraintsSSE += getIneqConstraintsSSE(ineqConstraints);
   }
 
   return performance;
@@ -233,9 +231,7 @@ EventTranscription setupEventNode(const OptimalControlProblem& optimalControlPro
   if (!optimalControlProblem.preJumpInequalityConstraintPtr->empty()) {
     ineqConstraints =
         optimalControlProblem.preJumpInequalityConstraintPtr->getLinearApproximation(t, x, *optimalControlProblem.preComputationPtr);
-    if (ineqConstraints.f.size() > 0) {
-      performance.inequalityConstraintsSSE += getIneqConstraintsSSE(ineqConstraints.f);
-    }
+    performance.inequalityConstraintsSSE += getIneqConstraintsSSE(ineqConstraints.f);
   }
 
   eqConstraints = VectorFunctionLinearApproximation::Zero(0, x.size());

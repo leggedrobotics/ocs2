@@ -44,9 +44,9 @@ struct Transcription {
   PerformanceIndex performance;
   VectorFunctionLinearApproximation dynamics;
   ScalarFunctionQuadraticApproximation cost;
-  VectorFunctionLinearApproximation constraints;
-  VectorFunctionLinearApproximation constraintsProjection;
   matrix_t constraintPseudoInverse;
+  VectorFunctionLinearApproximation constraintsProjection;
+  VectorFunctionLinearApproximation stateInputEqConstraints;
   VectorFunctionLinearApproximation stateIneqConstraints;
   VectorFunctionLinearApproximation stateInputIneqConstraints;
 };
@@ -57,28 +57,25 @@ struct Transcription {
  * @param optimalControlProblem : Definition of the optimal control problem
  * @param sensitivityDiscretizer : Integrator to use for creating the discrete dynamics.
  * @param projectStateInputEqualityConstraints
- * @param extractEqualityConstraintsPseudoInverse
  * @param t : Start of the discrete interval
  * @param dt : Duration of the interval
  * @param x : State at start of the interval
  * @param x_next : State at the end of the interval
  * @param u : Input, taken to be constant across the interval.
- * @param enableStateInequalityConstraint : Flag to enalbe the state-only inequality constraint. The constraint must be disabled at the
- * initial node.
+ * @param extractEqualityConstraintsPseudoInverse
  * @return multiple shooting transcription for this node.
  */
 Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlProblem,
                                     DynamicsSensitivityDiscretizer& sensitivityDiscretizer, bool projectStateInputEqualityConstraints,
-                                    bool extractEqualityConstraintsPseudoInverse, scalar_t t, scalar_t dt, const vector_t& x,
-                                    const vector_t& x_next, const vector_t& u, bool enableStateInequalityConstraint = true);
+                                    scalar_t t, scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u,
+                                    bool extractEqualityConstraintsPseudoInverse = false);
 
 /**
  * Compute only the performance index for a single intermediate node.
  * Corresponds to the performance index returned by "setupIntermediateNode"
  */
 PerformanceIndex computeIntermediatePerformance(const OptimalControlProblem& optimalControlProblem, DynamicsDiscretizer& discretizer,
-                                                scalar_t t, scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u,
-                                                bool enableStateInequalityConstraint = true);
+                                                scalar_t t, scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u);
 
 /**
  * Results of the transcription at a terminal node
@@ -86,8 +83,8 @@ PerformanceIndex computeIntermediatePerformance(const OptimalControlProblem& opt
 struct TerminalTranscription {
   PerformanceIndex performance;
   ScalarFunctionQuadraticApproximation cost;
-  VectorFunctionLinearApproximation constraints;
-  VectorFunctionLinearApproximation stateIneqConstraints;
+  VectorFunctionLinearApproximation eqConstraints;
+  VectorFunctionLinearApproximation ineqConstraints;
 };
 
 /**
@@ -113,8 +110,8 @@ struct EventTranscription {
   PerformanceIndex performance;
   VectorFunctionLinearApproximation dynamics;
   ScalarFunctionQuadraticApproximation cost;
-  VectorFunctionLinearApproximation constraints;
-  VectorFunctionLinearApproximation stateIneqConstraints;
+  VectorFunctionLinearApproximation eqConstraints;
+  VectorFunctionLinearApproximation ineqConstraints;
 };
 
 /**

@@ -273,8 +273,9 @@ MultipleShootingSolver::OcpSubproblemSolution MultipleShootingSolver::getOCPSolu
   hpipm_status status;
   const bool hasStateInputConstraints = !ocpDefinitions_.front().equalityConstraintPtr->empty();
   if (hasStateInputConstraints && !settings_.projectStateInputEqualityConstraints) {
-    hpipmInterface_.resize(hpipm_interface::extractSizesFromProblem(dynamics_, cost_, &constraints_));
-    status = hpipmInterface_.solve(delta_x0, dynamics_, cost_, &constraints_, deltaXSol, deltaUSol, settings_.printSolverStatus);
+    hpipmInterface_.resize(hpipm_interface::extractSizesFromProblem(dynamics_, cost_, &stateInputEqConstraints_));
+    status =
+        hpipmInterface_.solve(delta_x0, dynamics_, cost_, &stateInputEqConstraints_, deltaXSol, deltaUSol, settings_.printSolverStatus);
   } else {  // without constraints, or when using projection, we have an unconstrained QP.
     hpipmInterface_.resize(hpipm_interface::extractSizesFromProblem(dynamics_, cost_, nullptr));
     status = hpipmInterface_.solve(delta_x0, dynamics_, cost_, nullptr, deltaXSol, deltaUSol, settings_.printSolverStatus);
@@ -390,8 +391,8 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
   std::vector<PerformanceIndex> performance(settings_.nThreads, PerformanceIndex());
   dynamics_.resize(N);
   cost_.resize(N + 1);
-  constraints_.resize(N + 1);
   constraintsProjection_.resize(N);
+  stateInputEqConstraints_.resize(N + 1);
   stateIneqConstraints_.resize(N + 1);
   stateInputIneqConstraints_.resize(N);
 
@@ -410,24 +411,21 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
         workerPerformance += result.performance;
         dynamics_[i] = std::move(result.dynamics);
         cost_[i] = std::move(result.cost);
-        constraints_[i] = std::move(result.constraints);
         constraintsProjection_[i] = VectorFunctionLinearApproximation::Zero(0, x[i].size(), 0);
-        stateIneqConstraints_[i] = std::move(result.stateIneqConstraints);
+        stateInputEqConstraints_[i] = std::move(result.eqConstraints);
+        stateIneqConstraints_[i] = std::move(result.ineqConstraints);
         stateInputIneqConstraints_[i] = VectorFunctionLinearApproximation::Zero(0, x[i].size(), 0);
       } else {
         // Normal, intermediate node
         const scalar_t ti = getIntervalStart(time[i]);
         const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
-        const bool extractEqualityConstraintsPseudoInverse = false;
-        const bool enableStateInequalityConstraint = (i > 0);
-        auto result = multiple_shooting::setupIntermediateNode(ocpDefinition, sensitivityDiscretizer_, projection,
-                                                               extractEqualityConstraintsPseudoInverse, ti, dt, x[i], x[i + 1], u[i],
-                                                               enableStateInequalityConstraint);
+        auto result =
+            multiple_shooting::setupIntermediateNode(ocpDefinition, sensitivityDiscretizer_, projection, ti, dt, x[i], x[i + 1], u[i]);
         workerPerformance += result.performance;
         dynamics_[i] = std::move(result.dynamics);
         cost_[i] = std::move(result.cost);
-        constraints_[i] = std::move(result.constraints);
         constraintsProjection_[i] = std::move(result.constraintsProjection);
+        stateInputEqConstraints_[i] = std::move(result.stateInputEqConstraints);
         stateIneqConstraints_[i] = std::move(result.stateIneqConstraints);
         stateInputIneqConstraints_[i] = std::move(result.stateInputIneqConstraints);
       }
@@ -440,8 +438,8 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
       auto result = multiple_shooting::setupTerminalNode(ocpDefinition, tN, x[N]);
       workerPerformance += result.performance;
       cost_[i] = std::move(result.cost);
-      constraints_[i] = std::move(result.constraints);
-      stateIneqConstraints_[i] = std::move(result.stateIneqConstraints);
+      stateInputEqConstraints_[i] = std::move(result.eqConstraints);
+      stateIneqConstraints_[i] = std::move(result.ineqConstraints);
     }
 
     // Accumulate! Same worker might run multiple tasks
@@ -479,9 +477,7 @@ PerformanceIndex MultipleShootingSolver::computePerformance(const std::vector<An
         // Normal, intermediate node
         const scalar_t ti = getIntervalStart(time[i]);
         const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
-        const bool enableStateInequalityConstraint = (i > 0);
-        workerPerformance += multiple_shooting::computeIntermediatePerformance(ocpDefinition, discretizer_, ti, dt, x[i], x[i + 1], u[i],
-                                                                               enableStateInequalityConstraint);
+        workerPerformance += multiple_shooting::computeIntermediatePerformance(ocpDefinition, discretizer_, ti, dt, x[i], x[i + 1], u[i]);
       }
 
       i = timeIndex++;

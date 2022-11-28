@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
+#include <iostream>
+
 #include "ocs2_sqp/MultipleShootingTranscription.h"
 
 #include <ocs2_oc/test/circular_kinematics.h>
@@ -58,7 +60,7 @@ TEST(test_transcription, intermediate_performance) {
   const vector_t x = (vector_t(2) << 1.0, 0.1).finished();
   const vector_t x_next = (vector_t(2) << 1.1, 0.2).finished();
   const vector_t u = (vector_t(2) << 0.1, 1.3).finished();
-  const auto transcription = setupIntermediateNode(problem, sensitivityDiscretizer, true, true, t, dt, x, x_next, u);
+  const auto transcription = setupIntermediateNode(problem, sensitivityDiscretizer, true, t, dt, x, x_next, u);
 
   const auto performance = computeIntermediatePerformance(problem, discretizer, t, dt, x, x_next, u);
 

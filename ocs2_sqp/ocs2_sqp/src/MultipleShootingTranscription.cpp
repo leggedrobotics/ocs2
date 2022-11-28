@@ -37,22 +37,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace multiple_shooting {
 
-scalar_t getIneqConstraintsSSE(const vector_t& ineqConstraint) {
+namespace {
+inline scalar_t getIneqConstraintsSSE(const vector_t& ineqConstraint) {
   return ineqConstraint.cwiseMin(0.0).matrix().squaredNorm();
 }
+}  // namespace
 
 Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlProblem,
                                     DynamicsSensitivityDiscretizer& sensitivityDiscretizer, bool projectStateInputEqualityConstraints,
-                                    bool extractEqualityConstraintsPseudoInverse, scalar_t t, scalar_t dt, const vector_t& x,
-                                    const vector_t& x_next, const vector_t& u, bool enableStateInequalityConstraint) {
+                                    scalar_t t, scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u,
+                                    bool extractEqualityConstraintsPseudoInverse) {
   // Results and short-hand notation
   Transcription transcription;
   auto& dynamics = transcription.dynamics;
   auto& performance = transcription.performance;
   auto& cost = transcription.cost;
-  auto& constraints = transcription.constraints;
   auto& projection = transcription.constraintsProjection;
   auto& constraintPseudoInverse = transcription.constraintPseudoInverse;
+  auto& stateInputEqConstraints = transcription.stateInputEqConstraints;
   auto& stateIneqConstraints = transcription.stateIneqConstraints;
   auto& stateInputIneqConstraints = transcription.stateInputIneqConstraints;
 
@@ -71,8 +73,8 @@ Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlP
   cost *= dt;
   performance.cost = cost.f;
 
-  // State inequality constraints. Should be disabled at the initial time of the horizon.
-  if (!optimalControlProblem.stateInequalityConstraintPtr->empty() && enableStateInequalityConstraint) {
+  // State inequality constraints.
+  if (!optimalControlProblem.stateInequalityConstraintPtr->empty()) {
     stateIneqConstraints =
         optimalControlProblem.stateInequalityConstraintPtr->getLinearApproximation(t, x, *optimalControlProblem.preComputationPtr);
     performance.inequalityConstraintsSSE += dt * getIneqConstraintsSSE(stateIneqConstraints.f);
@@ -88,18 +90,19 @@ Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlP
   // Constraints
   if (!optimalControlProblem.equalityConstraintPtr->empty()) {
     // C_{k} * dx_{k} + D_{k} * du_{k} + e_{k} = 0
-    constraints = optimalControlProblem.equalityConstraintPtr->getLinearApproximation(t, x, u, *optimalControlProblem.preComputationPtr);
-    if (constraints.f.size() > 0) {
-      performance.equalityConstraintsSSE = dt * constraints.f.squaredNorm();
+    stateInputEqConstraints =
+        optimalControlProblem.equalityConstraintPtr->getLinearApproximation(t, x, u, *optimalControlProblem.preComputationPtr);
+    if (stateInputEqConstraints.f.size() > 0) {
+      performance.equalityConstraintsSSE = dt * stateInputEqConstraints.f.squaredNorm();
       if (projectStateInputEqualityConstraints) {  // Handle equality constraints using projection.
         // Projection stored instead of constraint, // TODO: benchmark between lu and qr method. LU seems slightly faster.
         if (extractEqualityConstraintsPseudoInverse) {
-          std::tie(projection, constraintPseudoInverse) = qrConstraintProjection(constraints);
+          std::tie(projection, constraintPseudoInverse) = qrConstraintProjection(stateInputEqConstraints);
         } else {
-          projection = luConstraintProjection(constraints).first;
+          projection = luConstraintProjection(stateInputEqConstraints).first;
           constraintPseudoInverse = matrix_t();
         }
-        constraints = VectorFunctionLinearApproximation();
+        stateInputEqConstraints = VectorFunctionLinearApproximation();
 
         // Adapt dynamics, cost, and state-input inequality constraints
         changeOfInputVariables(dynamics, projection.dfdu, projection.dfdx, projection.f);
@@ -115,8 +118,7 @@ Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlP
 }
 
 PerformanceIndex computeIntermediatePerformance(const OptimalControlProblem& optimalControlProblem, DynamicsDiscretizer& discretizer,
-                                                scalar_t t, scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u,
-                                                bool enableStateInequalityConstraint) {
+                                                scalar_t t, scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u) {
   PerformanceIndex performance;
 
   // Dynamics
@@ -131,8 +133,8 @@ PerformanceIndex computeIntermediatePerformance(const OptimalControlProblem& opt
   // Costs
   performance.cost = dt * computeCost(optimalControlProblem, t, x, u);
 
-  // State inequality constraints. Should be disabled at the initial time of the horizon.
-  if (!optimalControlProblem.stateInequalityConstraintPtr->empty() && enableStateInequalityConstraint) {
+  // State inequality constraints.
+  if (!optimalControlProblem.stateInequalityConstraintPtr->empty()) {
     const vector_t stateIneqConstraints =
         optimalControlProblem.stateInequalityConstraintPtr->getValue(t, x, *optimalControlProblem.preComputationPtr);
     if (stateIneqConstraints.size() > 0) {
@@ -151,9 +153,10 @@ PerformanceIndex computeIntermediatePerformance(const OptimalControlProblem& opt
 
   // Constraints
   if (!optimalControlProblem.equalityConstraintPtr->empty()) {
-    const vector_t constraints = optimalControlProblem.equalityConstraintPtr->getValue(t, x, u, *optimalControlProblem.preComputationPtr);
-    if (constraints.size() > 0) {
-      performance.equalityConstraintsSSE = dt * constraints.squaredNorm();
+    const vector_t stateIneqEqConstraints =
+        optimalControlProblem.equalityConstraintPtr->getValue(t, x, u, *optimalControlProblem.preComputationPtr);
+    if (stateIneqEqConstraints.size() > 0) {
+      performance.equalityConstraintsSSE = dt * stateIneqEqConstraints.squaredNorm();
     }
   }
 
@@ -165,8 +168,8 @@ TerminalTranscription setupTerminalNode(const OptimalControlProblem& optimalCont
   TerminalTranscription transcription;
   auto& performance = transcription.performance;
   auto& cost = transcription.cost;
-  auto& constraints = transcription.constraints;
-  auto& stateIneqConstraints = transcription.stateIneqConstraints;
+  auto& eqConstraints = transcription.eqConstraints;
+  auto& ineqConstraints = transcription.ineqConstraints;
 
   constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Approximation;
   optimalControlProblem.preComputationPtr->requestFinal(request, t, x);
@@ -176,14 +179,14 @@ TerminalTranscription setupTerminalNode(const OptimalControlProblem& optimalCont
 
   // State inequality constraints.
   if (!optimalControlProblem.finalInequalityConstraintPtr->empty()) {
-    stateIneqConstraints =
+    ineqConstraints =
         optimalControlProblem.finalInequalityConstraintPtr->getLinearApproximation(t, x, *optimalControlProblem.preComputationPtr);
-    if (stateIneqConstraints.f.size() > 0) {
-      performance.inequalityConstraintsSSE += getIneqConstraintsSSE(stateIneqConstraints.f);
+    if (ineqConstraints.f.size() > 0) {
+      performance.inequalityConstraintsSSE += getIneqConstraintsSSE(ineqConstraints.f);
     }
   }
 
-  constraints = VectorFunctionLinearApproximation::Zero(0, x.size());
+  eqConstraints = VectorFunctionLinearApproximation::Zero(0, x.size());
 
   return transcription;
 }
@@ -197,10 +200,10 @@ PerformanceIndex computeTerminalPerformance(const OptimalControlProblem& optimal
   performance.cost = computeFinalCost(optimalControlProblem, t, x);
 
   if (!optimalControlProblem.finalInequalityConstraintPtr->empty()) {
-    const vector_t stateIneqConstraints =
+    const vector_t ineqConstraints =
         optimalControlProblem.finalInequalityConstraintPtr->getValue(t, x, *optimalControlProblem.preComputationPtr);
-    if (stateIneqConstraints.size() > 0) {
-      performance.inequalityConstraintsSSE += getIneqConstraintsSSE(stateIneqConstraints);
+    if (ineqConstraints.size() > 0) {
+      performance.inequalityConstraintsSSE += getIneqConstraintsSSE(ineqConstraints);
     }
   }
 
@@ -214,8 +217,8 @@ EventTranscription setupEventNode(const OptimalControlProblem& optimalControlPro
   auto& performance = transcription.performance;
   auto& dynamics = transcription.dynamics;
   auto& cost = transcription.cost;
-  auto& constraints = transcription.constraints;
-  auto& stateIneqConstraints = transcription.stateIneqConstraints;
+  auto& eqConstraints = transcription.eqConstraints;
+  auto& ineqConstraints = transcription.ineqConstraints;
 
   constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Dynamics + Request::Approximation;
   optimalControlProblem.preComputationPtr->requestPreJump(request, t, x);
@@ -232,14 +235,14 @@ EventTranscription setupEventNode(const OptimalControlProblem& optimalControlPro
 
   // State inequality constraints.
   if (!optimalControlProblem.preJumpInequalityConstraintPtr->empty()) {
-    stateIneqConstraints =
+    ineqConstraints =
         optimalControlProblem.preJumpInequalityConstraintPtr->getLinearApproximation(t, x, *optimalControlProblem.preComputationPtr);
-    if (stateIneqConstraints.f.size() > 0) {
-      performance.inequalityConstraintsSSE += getIneqConstraintsSSE(stateIneqConstraints.f);
+    if (ineqConstraints.f.size() > 0) {
+      performance.inequalityConstraintsSSE += getIneqConstraintsSSE(ineqConstraints.f);
     }
   }
 
-  constraints = VectorFunctionLinearApproximation::Zero(0, x.size());
+  eqConstraints = VectorFunctionLinearApproximation::Zero(0, x.size());
   return transcription;
 }
 
@@ -257,10 +260,10 @@ PerformanceIndex computeEventPerformance(const OptimalControlProblem& optimalCon
   performance.cost = computeEventCost(optimalControlProblem, t, x);
 
   if (!optimalControlProblem.preJumpInequalityConstraintPtr->empty()) {
-    const vector_t stateIneqConstraints =
+    const vector_t ineqConstraints =
         optimalControlProblem.preJumpInequalityConstraintPtr->getValue(t, x, *optimalControlProblem.preComputationPtr);
-    if (stateIneqConstraints.size() > 0) {
-      performance.inequalityConstraintsSSE += getIneqConstraintsSSE(stateIneqConstraints);
+    if (ineqConstraints.size() > 0) {
+      performance.inequalityConstraintsSSE += getIneqConstraintsSSE(ineqConstraints);
     }
   }
 

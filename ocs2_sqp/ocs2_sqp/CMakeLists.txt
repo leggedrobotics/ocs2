@@ -57,6 +57,7 @@ add_library(${PROJECT_NAME}
   src/MultipleShootingSolver.cpp
   src/MultipleShootingSolverStatus.cpp
   src/MultipleShootingTranscription.cpp
+  src/PerformanceIndexComputation.cpp
   src/TimeDiscretization.cpp
 )
 add_dependencies(${PROJECT_NAME}
@@ -105,7 +106,7 @@ catkin_add_gtest(test_${PROJECT_NAME}
   test/testDiscretization.cpp
   test/testProjection.cpp
   test/testSwitchedProblem.cpp
-  test/testTranscription.cpp
+  test/testTranscriptionPerformanceIndex.cpp
   test/testUnconstrained.cpp
   test/testValuefunction.cpp
 )

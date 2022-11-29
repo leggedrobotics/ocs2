@@ -66,6 +66,7 @@ add_library(${PROJECT_NAME}
   src/synchronized_module/LoopshapingReferenceManager.cpp
   src/synchronized_module/LoopshapingSynchronizedModule.cpp
   src/synchronized_module/AugmentedLagrangianObserver.cpp
+  src/search_strategy/FilterLinesearch.cpp
   src/trajectory_adjustment/TrajectorySpreading.cpp
 )
 target_link_libraries(${PROJECT_NAME}

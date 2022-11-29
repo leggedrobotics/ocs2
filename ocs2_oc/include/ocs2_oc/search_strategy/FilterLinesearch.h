@@ -44,10 +44,10 @@ namespace ocs2 {
 struct FilterLinesearch {
   enum class StepType { UNKNOWN, CONSTRAINT, DUAL, COST, ZERO };
 
-  scalar_t g_max = 1e6;                // (1): IF g{i+1} > g_max REQUIRE g{i+1} < (1-gamma_c) * g{i}
-  scalar_t g_min = 1e-6;               // (2): ELSE IF (g{i} < g_min AND g{i+1} < g_min AND dc/dw'{i} * delta_w < 0) REQUIRE Armijo condition
-  scalar_t gamma_c = 1e-6;             // (3): ELSE REQUIRE c{i+1} < (c{i} - gamma_c * g{i}) OR g{i+1} < (1-gamma_c) * g{i}
-  scalar_t armijoFactor = 1e-4;        // Armijo condition: c{i+1} < c{i} + armijoFactor * armijoDescentMetric{i}
+  scalar_t g_max = 1e6;          // (1): IF g{i+1} > g_max REQUIRE g{i+1} < (1-gamma_c) * g{i}
+  scalar_t g_min = 1e-6;         // (2): ELSE IF (g{i} < g_min AND g{i+1} < g_min AND dc/dw'{i} * delta_w < 0) REQUIRE Armijo condition
+  scalar_t gamma_c = 1e-6;       // (3): ELSE REQUIRE c{i+1} < (c{i} - gamma_c * g{i}) OR g{i+1} < (1-gamma_c) * g{i}
+  scalar_t armijoFactor = 1e-4;  // Armijo condition: c{i+1} < c{i} + armijoFactor * armijoDescentMetric{i}
 
   /**
    * Checks that the step is accepted.
@@ -56,7 +56,8 @@ struct FilterLinesearch {
    * @param [in] stepPerformance : The step PerformanceIndex
    * @param [in] armijoDescentMetric : The step Armijo descent metric defined as dc/dw' * delta_w
    */
-  std::pair<bool, StepType> acceptStep(const PerformanceIndex& baselinePerformance, const PerformanceIndex& stepPerformance, scalar_t armijoDescentMetric) const;
+  std::pair<bool, StepType> acceptStep(const PerformanceIndex& baselinePerformance, const PerformanceIndex& stepPerformance,
+                                       scalar_t armijoDescentMetric) const;
 
   /** Compute total constraint violation */
   static scalar_t totalConstraintViolation(const PerformanceIndex& performance) {

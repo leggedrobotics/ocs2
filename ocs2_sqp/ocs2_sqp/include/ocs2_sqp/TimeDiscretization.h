@@ -61,7 +61,7 @@ scalar_t getIntervalEnd(const AnnotatedTime& end);
 scalar_t getIntervalDuration(const AnnotatedTime& start, const AnnotatedTime& end);
 
 /**
- * Decides on time discretization along the horizon. Tries to makes step of dt, but will also ensure that eventtimes are part of the
+ * Decides on time discretization along the horizon. Tries to makes step of dt, but will also ensure that event times are part of the
  * discretization.
  *
  * @param initTime : start time.
@@ -75,5 +75,13 @@ scalar_t getIntervalDuration(const AnnotatedTime& start, const AnnotatedTime& en
 std::vector<AnnotatedTime> timeDiscretizationWithEvents(scalar_t initTime, scalar_t finalTime, scalar_t dt,
                                                         const scalar_array_t& eventTimes,
                                                         scalar_t dt_min = 10.0 * numeric_traits::limitEpsilon<scalar_t>());
+
+/**
+ * Transforms the annotated time trajectory to a regular time trajectory and an array of indices indicating the post-event times.
+ *
+ * @param annotatedTime : Annotated time trajectory.
+ * @return The pair of time and post-event indices.
+ */
+std::pair<scalar_array_t, size_array_t> toTime(const std::vector<AnnotatedTime>& annotatedTime);
 
 }  // namespace ocs2

@@ -113,4 +113,17 @@ std::vector<AnnotatedTime> timeDiscretizationWithEvents(scalar_t initTime, scala
   return timeDiscretizationWithDoubleEvents;
 }
 
+std::pair<scalar_array_t, size_array_t> toTime(const std::vector<AnnotatedTime>& annotatedTime) {
+  size_array_t postEventIndices;
+  scalar_array_t timeTrajectory;
+  timeTrajectory.reserve(annotatedTime.size());
+  for (size_t i = 0; i < annotatedTime.size(); i++) {
+    timeTrajectory.push_back(annotatedTime[i].time);
+    if (annotatedTime[i].event == AnnotatedTime::Event::PreEvent) {
+      postEventIndices.push_back(i + 1);
+    }
+  }
+  return {timeTrajectory, postEventIndices};
+}
+
 }  // namespace ocs2

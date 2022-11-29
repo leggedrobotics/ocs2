@@ -135,8 +135,6 @@ TerminalTranscription setupTerminalNode(const OptimalControlProblem& optimalCont
         optimalControlProblem.finalInequalityConstraintPtr->getLinearApproximation(t, x, *optimalControlProblem.preComputationPtr);
   }
 
-  eqConstraints = VectorFunctionLinearApproximation::Zero(0, x.size());
-
   return transcription;
 }
 
@@ -173,7 +171,6 @@ EventTranscription setupEventNode(const OptimalControlProblem& optimalControlPro
         optimalControlProblem.preJumpInequalityConstraintPtr->getLinearApproximation(t, x, *optimalControlProblem.preComputationPtr);
   }
 
-  eqConstraints = VectorFunctionLinearApproximation::Zero(0, x.size());
   return transcription;
 }
 

@@ -35,6 +35,14 @@ namespace ocs2 {
 namespace sqp {
 
 namespace {
+scalar_t getEqConstraintsSSE(const vector_t& eqConstraint) {
+  if (eqConstraint.size() == 0) {
+    return 0.0;
+  } else {
+    return eqConstraint.squaredNorm();
+  }
+}
+
 scalar_t getIneqConstraintsSSE(const vector_t& ineqConstraint) {
   if (ineqConstraint.size() == 0) {
     return 0.0;
@@ -54,11 +62,7 @@ PerformanceIndex computeIntermediatePerformance(const multiple_shooting::Transcr
   performance.cost = transcription.cost.f;
 
   // State-input equality constraints
-  if (transcription.stateInputEqConstraints.f.size() > 0) {
-    performance.equalityConstraintsSSE = dt * transcription.stateInputEqConstraints.f.squaredNorm();
-  } else {
-    performance.equalityConstraintsSSE = 0.0;
-  }
+  performance.equalityConstraintsSSE = dt * getEqConstraintsSSE(transcription.stateInputEqConstraints.f);
 
   // Inequality constraints.
   performance.inequalityConstraintsSSE =
@@ -87,11 +91,7 @@ PerformanceIndex computeIntermediatePerformance(const OptimalControlProblem& opt
   if (!optimalControlProblem.equalityConstraintPtr->empty()) {
     const vector_t stateInputEqConstraints =
         optimalControlProblem.equalityConstraintPtr->getValue(t, x, u, *optimalControlProblem.preComputationPtr);
-    if (stateInputEqConstraints.size() > 0) {
-      performance.equalityConstraintsSSE = dt * stateInputEqConstraints.squaredNorm();
-    } else {
-      performance.equalityConstraintsSSE = 0.0;
-    }
+    performance.equalityConstraintsSSE = dt * getEqConstraintsSSE(stateInputEqConstraints);
   }
 
   // State inequality constraints.
@@ -99,8 +99,6 @@ PerformanceIndex computeIntermediatePerformance(const OptimalControlProblem& opt
     const vector_t stateIneqConstraints =
         optimalControlProblem.stateInequalityConstraintPtr->getValue(t, x, *optimalControlProblem.preComputationPtr);
     performance.inequalityConstraintsSSE = dt * getIneqConstraintsSSE(stateIneqConstraints);
-  } else {
-    performance.inequalityConstraintsSSE = 0.0;
   }
 
   // State-input inequality constraints.
@@ -119,11 +117,7 @@ PerformanceIndex computeTerminalPerformance(const multiple_shooting::TerminalTra
   performance.cost = transcription.cost.f;
 
   // Equality constraints
-  if (transcription.eqConstraints.f.size() > 0) {
-    performance.equalityConstraintsSSE = transcription.eqConstraints.f.squaredNorm();
-  } else {
-    performance.equalityConstraintsSSE = 0.0;
-  }
+  performance.equalityConstraintsSSE = getEqConstraintsSSE(transcription.eqConstraints.f);
 
   // State inequality constraints.
   performance.inequalityConstraintsSSE = getIneqConstraintsSSE(transcription.ineqConstraints.f);
@@ -142,11 +136,7 @@ PerformanceIndex computeTerminalPerformance(const OptimalControlProblem& optimal
   if (!optimalControlProblem.finalEqualityConstraintPtr->empty()) {
     const vector_t eqConstraints =
         optimalControlProblem.finalEqualityConstraintPtr->getValue(t, x, *optimalControlProblem.preComputationPtr);
-    if (eqConstraints.size() > 0) {
-      performance.equalityConstraintsSSE = eqConstraints.squaredNorm();
-    } else {
-      performance.equalityConstraintsSSE = 0.0;
-    }
+    performance.equalityConstraintsSSE = getEqConstraintsSSE(eqConstraints);
   }
 
   if (!optimalControlProblem.finalInequalityConstraintPtr->empty()) {
@@ -167,11 +157,7 @@ PerformanceIndex computeEventPerformance(const multiple_shooting::EventTranscrip
   performance.cost = transcription.cost.f;
 
   // Equality constraints
-  if (transcription.eqConstraints.f.size() > 0) {
-    performance.equalityConstraintsSSE = transcription.eqConstraints.f.squaredNorm();
-  } else {
-    performance.equalityConstraintsSSE = 0.0;
-  }
+  performance.equalityConstraintsSSE = getEqConstraintsSSE(transcription.eqConstraints.f);
 
   // State inequality constraints.
   performance.inequalityConstraintsSSE = getIneqConstraintsSSE(transcription.ineqConstraints.f);
@@ -195,11 +181,7 @@ PerformanceIndex computeEventPerformance(const OptimalControlProblem& optimalCon
   if (!optimalControlProblem.preJumpEqualityConstraintPtr->empty()) {
     const vector_t eqConstraints =
         optimalControlProblem.preJumpEqualityConstraintPtr->getValue(t, x, *optimalControlProblem.preComputationPtr);
-    if (eqConstraints.size() > 0) {
-      performance.equalityConstraintsSSE = eqConstraints.squaredNorm();
-    } else {
-      performance.equalityConstraintsSSE = 0.0;
-    }
+    performance.equalityConstraintsSSE = getEqConstraintsSSE(eqConstraints);
   }
 
   if (!optimalControlProblem.preJumpInequalityConstraintPtr->empty()) {

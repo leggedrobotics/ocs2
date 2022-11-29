@@ -31,89 +31,67 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/integration/SensitivityIntegrator.h>
+#include <ocs2_oc/oc_data/PerformanceIndex.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
+#include "ocs2_sqp/MultipleShootingTranscription.h"
 
 namespace ocs2 {
-namespace multiple_shooting {
+namespace sqp {
 
 /**
- * Results of the transcription at an intermediate node
+ * Compute the performance index from the transcription for a single intermediate node.
  */
-struct Transcription {
-  VectorFunctionLinearApproximation dynamics;
-  ScalarFunctionQuadraticApproximation cost;
-  matrix_t constraintPseudoInverse;
-  VectorFunctionLinearApproximation constraintsProjection;
-  VectorFunctionLinearApproximation stateInputEqConstraints;
-  VectorFunctionLinearApproximation stateIneqConstraints;
-  VectorFunctionLinearApproximation stateInputIneqConstraints;
-};
+PerformanceIndex computeIntermediatePerformance(const multiple_shooting::Transcription& transcription, scalar_t dt);
 
 /**
- * Compute the multiple shooting transcription for a single intermediate node.
- *
+ * Compute only the performance index for a single intermediate node.
+ * Corresponds to the performance index computed from the multiple_shooting::Transcription returned by
+ * "multiple_shooting::setupIntermediateNode"
  * @param optimalControlProblem : Definition of the optimal control problem
- * @param sensitivityDiscretizer : Integrator to use for creating the discrete dynamics.
+ * @param discretizer : Integrator to use for creating the discrete dynamics.
  * @param t : Start of the discrete interval
  * @param dt : Duration of the interval
  * @param x : State at start of the interval
  * @param x_next : State at the end of the interval
  * @param u : Input, taken to be constant across the interval.
- * @return multiple shooting transcription for this node.
+ * @return Performance index for a single intermediate node.
  */
-Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlProblem,
-                                    DynamicsSensitivityDiscretizer& sensitivityDiscretizer, scalar_t t, scalar_t dt, const vector_t& x,
-                                    const vector_t& x_next, const vector_t& u);
+PerformanceIndex computeIntermediatePerformance(const OptimalControlProblem& optimalControlProblem, DynamicsDiscretizer& discretizer,
+                                                scalar_t t, scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u);
 
 /**
- * Apply the state-input equality constraint projection for a single intermediate node transcription.
- *
- * @param transcription : Transcription for a single intermediate node
- * @param extractEqualityConstraintsPseudoInverse
- * @return multiple shooting transcription for this node.
+ * Compute the performance index from the transcription for the terminal node.
  */
-void projectTranscription(Transcription& transcription, bool extractEqualityConstraintsPseudoInverse = false);
+PerformanceIndex computeTerminalPerformance(const multiple_shooting::TerminalTranscription& transcription);
 
 /**
- * Results of the transcription at a terminal node
- */
-struct TerminalTranscription {
-  ScalarFunctionQuadraticApproximation cost;
-  VectorFunctionLinearApproximation eqConstraints;
-  VectorFunctionLinearApproximation ineqConstraints;
-};
-
-/**
- * Compute the multiple shooting transcription the terminal node.
- *
+ * Compute only the performance index for the terminal node.
+ * Corresponds to the performance index computed from multiple_shooting::TerminalTranscription returned by
+ * "multiple_shooting::setTerminalNode"
  * @param optimalControlProblem : Definition of the optimal control problem
  * @param t : Time at the terminal node
  * @param x : Terminal state
- * @return multiple shooting transcription for the terminal node.
+ * @return Performance index for the terminal node.
  */
-TerminalTranscription setupTerminalNode(const OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x);
+PerformanceIndex computeTerminalPerformance(const OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x);
 
 /**
- * Results of the transcription at an event
+ * Compute the performance index from the transcription for the event node.
  */
-struct EventTranscription {
-  VectorFunctionLinearApproximation dynamics;
-  ScalarFunctionQuadraticApproximation cost;
-  VectorFunctionLinearApproximation eqConstraints;
-  VectorFunctionLinearApproximation ineqConstraints;
-};
+PerformanceIndex computeEventPerformance(const multiple_shooting::EventTranscription& transcription);
 
 /**
- * Compute the jump transcription at an event node.
- *
+ * Compute only the performance index for the event node.
+ * Corresponds to the performance index computed from multiple_shooting::EventTranscription returned by
+ * "multiple_shooting::setEventNode"
  * @param optimalControlProblem : Definition of the optimal control problem
  * @param t : Time at the event node
  * @param x : Pre-event state
  * @param x_next : Post-event state
- * @return multiple shooting transcription for the event node.
+ * @return Performance index for the event node.
  */
-EventTranscription setupEventNode(const OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x,
-                                  const vector_t& x_next);
+PerformanceIndex computeEventPerformance(const OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x,
+                                         const vector_t& x_next);
 
-}  // namespace multiple_shooting
+}  // namespace sqp
 }  // namespace ocs2

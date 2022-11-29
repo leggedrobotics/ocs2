@@ -56,6 +56,7 @@ add_library(${PROJECT_NAME}
   src/MultipleShootingSolver.cpp
   src/MultipleShootingSolverStatus.cpp
   src/MultipleShootingTranscription.cpp
+  src/PerformanceIndexComputation.cpp
   src/TimeDiscretization.cpp
 )
 add_dependencies(${PROJECT_NAME}

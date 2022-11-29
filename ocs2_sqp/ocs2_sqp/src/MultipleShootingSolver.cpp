@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_sqp/MultipleShootingInitialization.h"
 #include "ocs2_sqp/MultipleShootingTranscription.h"
+#include "ocs2_sqp/PerformanceIndexComputation.h"
 
 namespace ocs2 {
 
@@ -273,8 +274,9 @@ MultipleShootingSolver::OcpSubproblemSolution MultipleShootingSolver::getOCPSolu
   hpipm_status status;
   const bool hasStateInputConstraints = !ocpDefinitions_.front().equalityConstraintPtr->empty();
   if (hasStateInputConstraints && !settings_.projectStateInputEqualityConstraints) {
-    hpipmInterface_.resize(hpipm_interface::extractSizesFromProblem(dynamics_, cost_, &constraints_));
-    status = hpipmInterface_.solve(delta_x0, dynamics_, cost_, &constraints_, deltaXSol, deltaUSol, settings_.printSolverStatus);
+    hpipmInterface_.resize(hpipm_interface::extractSizesFromProblem(dynamics_, cost_, &stateInputEqConstraints_));
+    status =
+        hpipmInterface_.solve(delta_x0, dynamics_, cost_, &stateInputEqConstraints_, deltaXSol, deltaUSol, settings_.printSolverStatus);
   } else {  // without constraints, or when using projection, we have an unconstrained QP.
     hpipmInterface_.resize(hpipm_interface::extractSizesFromProblem(dynamics_, cost_, nullptr));
     status = hpipmInterface_.solve(delta_x0, dynamics_, cost_, nullptr, deltaXSol, deltaUSol, settings_.printSolverStatus);
@@ -390,37 +392,44 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
   std::vector<PerformanceIndex> performance(settings_.nThreads, PerformanceIndex());
   dynamics_.resize(N);
   cost_.resize(N + 1);
-  constraints_.resize(N + 1);
   constraintsProjection_.resize(N);
+  stateInputEqConstraints_.resize(N + 1);
+  stateIneqConstraints_.resize(N + 1);
+  stateInputIneqConstraints_.resize(N);
 
   std::atomic_int timeIndex{0};
   auto parallelTask = [&](int workerId) {
     // Get worker specific resources
     OptimalControlProblem& ocpDefinition = ocpDefinitions_[workerId];
     PerformanceIndex workerPerformance;  // Accumulate performance in local variable
-    const bool projection = settings_.projectStateInputEqualityConstraints;
 
     int i = timeIndex++;
     while (i < N) {
       if (time[i].event == AnnotatedTime::Event::PreEvent) {
         // Event node
         auto result = multiple_shooting::setupEventNode(ocpDefinition, time[i].time, x[i], x[i + 1]);
-        workerPerformance += result.performance;
+        workerPerformance += sqp::computeEventPerformance(result);
         dynamics_[i] = std::move(result.dynamics);
         cost_[i] = std::move(result.cost);
-        constraints_[i] = std::move(result.constraints);
         constraintsProjection_[i] = VectorFunctionLinearApproximation::Zero(0, x[i].size(), 0);
+        stateInputEqConstraints_[i] = std::move(result.eqConstraints);
+        stateIneqConstraints_[i] = std::move(result.ineqConstraints);
+        stateInputIneqConstraints_[i] = VectorFunctionLinearApproximation::Zero(0, x[i].size(), 0);
       } else {
         // Normal, intermediate node
         const scalar_t ti = getIntervalStart(time[i]);
         const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
-        auto result =
-            multiple_shooting::setupIntermediateNode(ocpDefinition, sensitivityDiscretizer_, projection, ti, dt, x[i], x[i + 1], u[i]);
-        workerPerformance += result.performance;
+        auto result = multiple_shooting::setupIntermediateNode(ocpDefinition, sensitivityDiscretizer_, ti, dt, x[i], x[i + 1], u[i]);
+        workerPerformance += sqp::computeIntermediatePerformance(result, dt);
+        if (settings_.projectStateInputEqualityConstraints) {
+          multiple_shooting::projectTranscription(result);
+        }
         dynamics_[i] = std::move(result.dynamics);
         cost_[i] = std::move(result.cost);
-        constraints_[i] = std::move(result.constraints);
         constraintsProjection_[i] = std::move(result.constraintsProjection);
+        stateInputEqConstraints_[i] = std::move(result.stateInputEqConstraints);
+        stateIneqConstraints_[i] = std::move(result.stateIneqConstraints);
+        stateInputIneqConstraints_[i] = std::move(result.stateInputIneqConstraints);
       }
 
       i = timeIndex++;
@@ -429,9 +438,10 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
     if (i == N) {  // Only one worker will execute this
       const scalar_t tN = getIntervalStart(time[N]);
       auto result = multiple_shooting::setupTerminalNode(ocpDefinition, tN, x[N]);
-      workerPerformance += result.performance;
+      workerPerformance += sqp::computeTerminalPerformance(result);
       cost_[i] = std::move(result.cost);
-      constraints_[i] = std::move(result.constraints);
+      stateInputEqConstraints_[i] = std::move(result.eqConstraints);
+      stateIneqConstraints_[i] = std::move(result.ineqConstraints);
     }
 
     // Accumulate! Same worker might run multiple tasks
@@ -464,12 +474,12 @@ PerformanceIndex MultipleShootingSolver::computePerformance(const std::vector<An
     while (i < N) {
       if (time[i].event == AnnotatedTime::Event::PreEvent) {
         // Event node
-        workerPerformance += multiple_shooting::computeEventPerformance(ocpDefinition, time[i].time, x[i], x[i + 1]);
+        workerPerformance += sqp::computeEventPerformance(ocpDefinition, time[i].time, x[i], x[i + 1]);
       } else {
         // Normal, intermediate node
         const scalar_t ti = getIntervalStart(time[i]);
         const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
-        workerPerformance += multiple_shooting::computeIntermediatePerformance(ocpDefinition, discretizer_, ti, dt, x[i], x[i + 1], u[i]);
+        workerPerformance += sqp::computeIntermediatePerformance(ocpDefinition, discretizer_, ti, dt, x[i], x[i + 1], u[i]);
       }
 
       i = timeIndex++;
@@ -477,7 +487,7 @@ PerformanceIndex MultipleShootingSolver::computePerformance(const std::vector<An
 
     if (i == N) {  // Only one worker will execute this
       const scalar_t tN = getIntervalStart(time[N]);
-      workerPerformance += multiple_shooting::computeTerminalPerformance(ocpDefinition, tN, x[N]);
+      workerPerformance += sqp::computeTerminalPerformance(ocpDefinition, tN, x[N]);
     }
 
     // Accumulate! Same worker might run multiple tasks

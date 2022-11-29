@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <gtest/gtest.h>
 
 #include "ocs2_sqp/MultipleShootingTranscription.h"
+#include "ocs2_sqp/PerformanceIndexComputation.h"
 
 #include <ocs2_oc/test/circular_kinematics.h>
 #include <ocs2_oc/test/testProblemsGeneration.h>
@@ -45,10 +46,15 @@ bool areIdentical(const ocs2::PerformanceIndex& lhs, const ocs2::PerformanceInde
 
 using namespace ocs2;
 using namespace ocs2::multiple_shooting;
+using namespace ocs2::sqp;
 
 TEST(test_transcription, intermediate_performance) {
   // optimal control problem
   OptimalControlProblem problem = createCircularKinematicsProblem("/tmp/sqp_test_generated");
+
+  // inequality constraints
+  problem.inequalityConstraintPtr->add("inequalityConstraint", getOcs2Constraints(getRandomConstraints(2, 2, 3)));
+  problem.stateInequalityConstraintPtr->add("stateInequalityConstraint", getOcs2StateOnlyConstraints(getRandomConstraints(2, 2, 4)));
 
   auto discretizer = selectDynamicsDiscretization(SensitivityIntegratorType::RK4);
   auto sensitivityDiscretizer = selectDynamicsSensitivityDiscretization(SensitivityIntegratorType::RK4);
@@ -58,11 +64,11 @@ TEST(test_transcription, intermediate_performance) {
   const vector_t x = (vector_t(2) << 1.0, 0.1).finished();
   const vector_t x_next = (vector_t(2) << 1.1, 0.2).finished();
   const vector_t u = (vector_t(2) << 0.1, 1.3).finished();
-  const auto transcription = setupIntermediateNode(problem, sensitivityDiscretizer, true, t, dt, x, x_next, u);
+  const auto transcription = setupIntermediateNode(problem, sensitivityDiscretizer, t, dt, x, x_next, u);
 
   const auto performance = computeIntermediatePerformance(problem, discretizer, t, dt, x, x_next, u);
 
-  ASSERT_TRUE(areIdentical(performance, transcription.performance));
+  ASSERT_TRUE(areIdentical(performance, computeIntermediatePerformance(transcription, dt)));
 }
 
 TEST(test_transcription, terminal_performance) {
@@ -74,6 +80,9 @@ TEST(test_transcription, terminal_performance) {
   problem.finalCostPtr->add("finalCost", getOcs2StateCost(getRandomCost(nx, 0)));
   problem.finalSoftConstraintPtr->add("finalSoftCost", getOcs2StateCost(getRandomCost(nx, 0)));
 
+  // inequality constraints
+  problem.finalInequalityConstraintPtr->add("finalInequalityConstraint", getOcs2StateOnlyConstraints(getRandomConstraints(2, 2, 4)));
+
   const TargetTrajectories targetTrajectories({0.0}, {vector_t::Random(nx)}, {vector_t::Random(0)});
   problem.targetTrajectoriesPtr = &targetTrajectories;
 
@@ -82,7 +91,7 @@ TEST(test_transcription, terminal_performance) {
   const auto transcription = setupTerminalNode(problem, t, x);
   const auto performance = computeTerminalPerformance(problem, t, x);
 
-  ASSERT_TRUE(areIdentical(performance, transcription.performance));
+  ASSERT_TRUE(areIdentical(performance, computeTerminalPerformance(transcription)));
 }
 
 TEST(test_transcription, event_performance) {
@@ -98,6 +107,9 @@ TEST(test_transcription, event_performance) {
   // cost
   problem.preJumpCostPtr->add("eventCost", getOcs2StateCost(getRandomCost(nx, 0)));
 
+  // inequality constraints
+  problem.preJumpInequalityConstraintPtr->add("preJumpInequalityConstraint", getOcs2StateOnlyConstraints(getRandomConstraints(2, 2, 4)));
+
   const TargetTrajectories targetTrajectories({0.0}, {vector_t::Random(nx)}, {vector_t::Random(0)});
   problem.targetTrajectoriesPtr = &targetTrajectories;
 
@@ -107,5 +119,5 @@ TEST(test_transcription, event_performance) {
   const auto transcription = setupEventNode(problem, t, x, x_next);
   const auto performance = computeEventPerformance(problem, t, x, x_next);
 
-  ASSERT_TRUE(areIdentical(performance, transcription.performance));
+  ASSERT_TRUE(areIdentical(performance, computeEventPerformance(transcription)));
 }

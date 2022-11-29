@@ -70,7 +70,6 @@ Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlP
  *
  * @param transcription : Transcription for a single intermediate node
  * @param extractEqualityConstraintsPseudoInverse
- * @return multiple shooting transcription for this node.
  */
 void projectTranscription(Transcription& transcription, bool extractEqualityConstraintsPseudoInverse = false);
 

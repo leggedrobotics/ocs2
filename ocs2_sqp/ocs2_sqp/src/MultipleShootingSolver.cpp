@@ -402,7 +402,6 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
     // Get worker specific resources
     OptimalControlProblem& ocpDefinition = ocpDefinitions_[workerId];
     PerformanceIndex workerPerformance;  // Accumulate performance in local variable
-    const bool projection = settings_.projectStateInputEqualityConstraints;
 
     int i = timeIndex++;
     while (i < N) {
@@ -422,7 +421,7 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
         const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
         auto result = multiple_shooting::setupIntermediateNode(ocpDefinition, sensitivityDiscretizer_, ti, dt, x[i], x[i + 1], u[i]);
         workerPerformance += sqp::computeIntermediatePerformance(result, dt);
-        if (projection) {
+        if (settings_.projectStateInputEqualityConstraints) {
           multiple_shooting::projectTranscription(result);
         }
         dynamics_[i] = std::move(result.dynamics);

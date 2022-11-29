@@ -120,7 +120,14 @@ TerminalTranscription setupTerminalNode(const OptimalControlProblem& optimalCont
   constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Approximation;
   optimalControlProblem.preComputationPtr->requestFinal(request, t, x);
 
+  // Costs
   cost = approximateFinalCost(optimalControlProblem, t, x);
+
+  // State equality constraints.
+  if (!optimalControlProblem.finalEqualityConstraintPtr->empty()) {
+    eqConstraints =
+        optimalControlProblem.finalEqualityConstraintPtr->getLinearApproximation(t, x, *optimalControlProblem.preComputationPtr);
+  }
 
   // State inequality constraints.
   if (!optimalControlProblem.finalInequalityConstraintPtr->empty()) {
@@ -151,7 +158,14 @@ EventTranscription setupEventNode(const OptimalControlProblem& optimalControlPro
   dynamics.f -= x_next;                // make it dx_{k+1} = ...
   dynamics.dfdu.setZero(x.size(), 0);  // Overwrite derivative that shouldn't exist.
 
+  // Costs
   cost = approximateEventCost(optimalControlProblem, t, x);
+
+  // State equality constraints.
+  if (!optimalControlProblem.preJumpEqualityConstraintPtr->empty()) {
+    eqConstraints =
+        optimalControlProblem.preJumpEqualityConstraintPtr->getLinearApproximation(t, x, *optimalControlProblem.preComputationPtr);
+  }
 
   // State inequality constraints.
   if (!optimalControlProblem.preJumpInequalityConstraintPtr->empty()) {

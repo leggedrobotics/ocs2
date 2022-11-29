@@ -105,7 +105,7 @@ catkin_add_gtest(test_${PROJECT_NAME}
   test/testDiscretization.cpp
   test/testProjection.cpp
   test/testSwitchedProblem.cpp
-  test/testTranscription.cpp
+  test/testTranscriptionPerformanceIndex.cpp
   test/testUnconstrained.cpp
   test/testValuefunction.cpp
 )

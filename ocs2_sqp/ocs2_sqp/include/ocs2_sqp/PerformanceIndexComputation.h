@@ -39,7 +39,10 @@ namespace ocs2 {
 namespace sqp {
 
 /**
- * Compute the performance index from the transcription for a single intermediate node.
+ * Compute the performance index from the transcription for this node.
+ * @param transcription: multiple shooting transcription for this node.
+ * @param dt : Duration of the interval
+ * @return Performance index for a single intermediate node.
  */
 PerformanceIndex computeIntermediatePerformance(const multiple_shooting::Transcription& transcription, scalar_t dt);
 
@@ -61,6 +64,8 @@ PerformanceIndex computeIntermediatePerformance(const OptimalControlProblem& opt
 
 /**
  * Compute the performance index from the transcription for the terminal node.
+ * @param transcription: multiple shooting transcription for this node.
+ * @return Performance index for the terminal node.
  */
 PerformanceIndex computeTerminalPerformance(const multiple_shooting::TerminalTranscription& transcription);
 
@@ -77,6 +82,8 @@ PerformanceIndex computeTerminalPerformance(const OptimalControlProblem& optimal
 
 /**
  * Compute the performance index from the transcription for the event node.
+ * @param transcription: multiple shooting transcription for this node.
+ * @return Performance index for the event node.
  */
 PerformanceIndex computeEventPerformance(const multiple_shooting::EventTranscription& transcription);
 

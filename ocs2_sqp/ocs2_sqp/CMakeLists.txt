@@ -51,6 +51,7 @@ include_directories(
 # Multiple shooting solver library
 add_library(${PROJECT_NAME}
   src/ConstraintProjection.cpp
+  src/MultipleShootingHelpers.cpp
   src/MultipleShootingInitialization.cpp
   src/MultipleShootingSettings.cpp
   src/MultipleShootingSolver.cpp

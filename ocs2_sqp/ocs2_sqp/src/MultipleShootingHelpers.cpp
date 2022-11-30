@@ -72,8 +72,8 @@ void remapProjectedGain(const std::vector<VectorFunctionLinearApproximation>& co
   }
 }
 
-void setPrimalSolution(const std::vector<AnnotatedTime>& time, ModeSchedule&& modeSchedule, vector_array_t&& x, vector_array_t&& u,
-                       PrimalSolution& primalSolution) {
+PrimalSolution toPrimalSolution(const std::vector<AnnotatedTime>& time, ModeSchedule&& modeSchedule, vector_array_t&& x,
+                                vector_array_t&& u) {
   // Correct for missing inputs at PreEvents and the terminal time
   for (int i = 0; i < u.size(); ++i) {
     if (time[i].event == AnnotatedTime::Event::PreEvent && i > 0) {
@@ -84,16 +84,18 @@ void setPrimalSolution(const std::vector<AnnotatedTime>& time, ModeSchedule&& mo
   u.push_back(u.back());
 
   // Construct nominal time, state and input trajectories
-  primalSolution.clear();
+  PrimalSolution primalSolution;
+  primalSolution.timeTrajectory_ = toTime(time);
+  primalSolution.postEventIndices_ = toPostEventIndices(time);
   primalSolution.stateTrajectory_ = std::move(x);
   primalSolution.inputTrajectory_ = std::move(u);
-  std::tie(primalSolution.timeTrajectory_, primalSolution.postEventIndices_) = toTime(time);
   primalSolution.modeSchedule_ = std::move(modeSchedule);
   primalSolution.controllerPtr_.reset(new FeedforwardController(primalSolution.timeTrajectory_, primalSolution.inputTrajectory_));
+  return primalSolution;
 }
 
-void setPrimalSolution(const std::vector<AnnotatedTime>& time, ModeSchedule&& modeSchedule, vector_array_t&& x, vector_array_t&& u,
-                       matrix_array_t&& KMatrices, PrimalSolution& primalSolution) {
+PrimalSolution toPrimalSolution(const std::vector<AnnotatedTime>& time, ModeSchedule&& modeSchedule, vector_array_t&& x, vector_array_t&& u,
+                                matrix_array_t&& KMatrices) {
   // Compute feedback, before x and u are moved to primal solution
   // see doc/LQR_full.pdf for detailed derivation for feedback terms
   vector_array_t uff = u;  // Copy and adapt in loop
@@ -122,12 +124,14 @@ void setPrimalSolution(const std::vector<AnnotatedTime>& time, ModeSchedule&& mo
   u.push_back(u.back());
 
   // Construct nominal time, state and input trajectories
-  primalSolution.clear();
+  PrimalSolution primalSolution;
+  primalSolution.timeTrajectory_ = toTime(time);
+  primalSolution.postEventIndices_ = toPostEventIndices(time);
   primalSolution.stateTrajectory_ = std::move(x);
   primalSolution.inputTrajectory_ = std::move(u);
-  std::tie(primalSolution.timeTrajectory_, primalSolution.postEventIndices_) = toTime(time);
   primalSolution.modeSchedule_ = std::move(modeSchedule);
   primalSolution.controllerPtr_.reset(new LinearController(primalSolution.timeTrajectory_, std::move(uff), std::move(KMatrices)));
+  return primalSolution;
 }
 
 }  // namespace multiple_shooting

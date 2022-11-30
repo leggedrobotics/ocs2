@@ -90,29 +90,29 @@ void remapProjectedInput(const std::vector<VectorFunctionLinearApproximation>& c
 void remapProjectedGain(const std::vector<VectorFunctionLinearApproximation>& constraintsProjection, matrix_array_t& KMatrices);
 
 /**
- * Sets the primal solution (with a feedforward controller) based the LQ subproblem solution.
+ * Constructs a primal solution (with a feedforward controller) based the LQ subproblem solution.
  *
  * @param [in] time : The annotated time trajectory
  * @param [in] modeSchedule: The mode schedule.
  * @param [in] x: The state trajectory of the QP subproblem solution.
  * @param [in] u: The input trajectory of the QP subproblem solution.
- * @param [out] the updated primal solution
+ * @return The primal solution.
  */
-void setPrimalSolution(const std::vector<AnnotatedTime>& time, ModeSchedule&& modeSchedule, vector_array_t&& x, vector_array_t&& u,
-                       PrimalSolution& primalSolution);
+PrimalSolution toPrimalSolution(const std::vector<AnnotatedTime>& time, ModeSchedule&& modeSchedule, vector_array_t&& x,
+                                vector_array_t&& u);
 
 /**
- * Sets the primal solution (with a linear controller) based the LQ subproblem solution.
+ * Constructs a primal solution (with a linear controller) based the LQ subproblem solution.
  *
  * @param [in] time : The annotated time trajectory
  * @param [in] modeSchedule: The mode schedule.
  * @param [in] x: The state trajectory of the QP subproblem solution.
  * @param [in] u: The input trajectory of the QP subproblem solution.
  * @param [in] KMatrices: The LQR gain trajectory of the QP subproblem solution.
- * @param [out] the updated primal solution
+ * @return The primal solution.
  */
-void setPrimalSolution(const std::vector<AnnotatedTime>& time, ModeSchedule&& modeSchedule, vector_array_t&& x, vector_array_t&& u,
-                       matrix_array_t&& KMatrices, PrimalSolution& primalSolution);
+PrimalSolution toPrimalSolution(const std::vector<AnnotatedTime>& time, ModeSchedule&& modeSchedule, vector_array_t&& x, vector_array_t&& u,
+                                matrix_array_t&& KMatrices);
 
 }  // namespace multiple_shooting
 }  // namespace ocs2

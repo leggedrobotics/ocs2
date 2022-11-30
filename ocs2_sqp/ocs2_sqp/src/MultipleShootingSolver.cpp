@@ -206,7 +206,7 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   }
 
   computeControllerTimer_.startTimer();
-  setPrimalSolution(timeDiscretization, std::move(x), std::move(u));
+  primalSolution_ = toPrimalSolution(timeDiscretization, std::move(x), std::move(u));
   computeControllerTimer_.endTimer();
 
   ++numProblems_;
@@ -264,19 +264,18 @@ void MultipleShootingSolver::extractValueFunction(const std::vector<AnnotatedTim
   }
 }
 
-void MultipleShootingSolver::setPrimalSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& x, vector_array_t&& u) {
+PrimalSolution MultipleShootingSolver::toPrimalSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& x, vector_array_t&& u) {
   if (settings_.useFeedbackPolicy) {
     ModeSchedule modeSchedule = this->getReferenceManager().getModeSchedule();
     matrix_array_t KMatrices = hpipmInterface_.getRiccatiFeedback(dynamics_[0], cost_[0]);
-    // remap the tilde delta u to real delta u
     if (settings_.projectStateInputEqualityConstraints) {
       multiple_shooting::remapProjectedGain(constraintsProjection_, KMatrices);
     }
-    multiple_shooting::setPrimalSolution(time, std::move(modeSchedule), std::move(x), std::move(u), std::move(KMatrices), primalSolution_);
+    return multiple_shooting::toPrimalSolution(time, std::move(modeSchedule), std::move(x), std::move(u), std::move(KMatrices));
 
   } else {
     ModeSchedule modeSchedule = this->getReferenceManager().getModeSchedule();
-    multiple_shooting::setPrimalSolution(time, std::move(modeSchedule), std::move(x), std::move(u), primalSolution_);
+    return multiple_shooting::toPrimalSolution(time, std::move(modeSchedule), std::move(x), std::move(u));
   }
 }
 

@@ -77,11 +77,19 @@ std::vector<AnnotatedTime> timeDiscretizationWithEvents(scalar_t initTime, scala
                                                         scalar_t dt_min = 10.0 * numeric_traits::limitEpsilon<scalar_t>());
 
 /**
- * Transforms the annotated time trajectory to a regular time trajectory and an array of indices indicating the post-event times.
+ * Extracts the time trajectory from the annotated time trajectory.
  *
  * @param annotatedTime : Annotated time trajectory.
  * @return The pair of time and post-event indices.
  */
-std::pair<scalar_array_t, size_array_t> toTime(const std::vector<AnnotatedTime>& annotatedTime);
+scalar_array_t toTime(const std::vector<AnnotatedTime>& annotatedTime);
+
+/**
+ * Extracts the array of indices indicating the post-event times from the annotated time trajectory.
+ *
+ * @param annotatedTime : Annotated time trajectory.
+ * @return The pair of time and post-event indices.
+ */
+size_array_t toPostEventIndices(const std::vector<AnnotatedTime>& annotatedTime);
 
 }  // namespace ocs2

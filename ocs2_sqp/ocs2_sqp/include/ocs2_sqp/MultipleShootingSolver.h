@@ -143,8 +143,8 @@ class MultipleShootingSolver : public SolverBase {
   /** Extract the value function based on the last solved QP */
   void extractValueFunction(const std::vector<AnnotatedTime>& time, const vector_array_t& x);
 
-  /** Set up the primal solution based on the optimized state and input trajectories */
-  void setPrimalSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& x, vector_array_t&& u);
+  /** Constructs the primal solution based on the optimized state and input trajectories */
+  PrimalSolution toPrimalSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& x, vector_array_t&& u);
 
   /** Decides on the step to take and overrides given trajectories {x(t), u(t)} <- {x(t) + a*dx(t), u(t) + a*du(t)} */
   multiple_shooting::StepInfo takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization,

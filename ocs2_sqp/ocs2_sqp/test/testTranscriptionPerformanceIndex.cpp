@@ -49,21 +49,24 @@ using namespace ocs2::multiple_shooting;
 using namespace ocs2::sqp;
 
 TEST(test_transcription, intermediate_performance) {
+  constexpr int nx = 2;
+  constexpr int nu = 2;
+
   // optimal control problem
   OptimalControlProblem problem = createCircularKinematicsProblem("/tmp/sqp_test_generated");
 
   // inequality constraints
-  problem.inequalityConstraintPtr->add("inequalityConstraint", getOcs2Constraints(getRandomConstraints(2, 2, 3)));
-  problem.stateInequalityConstraintPtr->add("stateInequalityConstraint", getOcs2StateOnlyConstraints(getRandomConstraints(2, 2, 4)));
+  problem.inequalityConstraintPtr->add("inequalityConstraint", getOcs2Constraints(getRandomConstraints(nx, nu, 3)));
+  problem.stateInequalityConstraintPtr->add("stateInequalityConstraint", getOcs2StateOnlyConstraints(getRandomConstraints(nx, 0, 4)));
 
   auto discretizer = selectDynamicsDiscretization(SensitivityIntegratorType::RK4);
   auto sensitivityDiscretizer = selectDynamicsSensitivityDiscretization(SensitivityIntegratorType::RK4);
 
   scalar_t t = 0.5;
   scalar_t dt = 0.1;
-  const vector_t x = (vector_t(2) << 1.0, 0.1).finished();
-  const vector_t x_next = (vector_t(2) << 1.1, 0.2).finished();
-  const vector_t u = (vector_t(2) << 0.1, 1.3).finished();
+  const vector_t x = (vector_t(nx) << 1.0, 0.1).finished();
+  const vector_t x_next = (vector_t(nx) << 1.1, 0.2).finished();
+  const vector_t u = (vector_t(nu) << 0.1, 1.3).finished();
   const auto transcription = setupIntermediateNode(problem, sensitivityDiscretizer, t, dt, x, x_next, u);
 
   const auto performance = computeIntermediatePerformance(problem, discretizer, t, dt, x, x_next, u);
@@ -72,8 +75,9 @@ TEST(test_transcription, intermediate_performance) {
 }
 
 TEST(test_transcription, terminal_performance) {
-  int nx = 3;
+  constexpr int nx = 3;
 
+  // optimal control problem
   OptimalControlProblem problem;
 
   // cost
@@ -81,7 +85,7 @@ TEST(test_transcription, terminal_performance) {
   problem.finalSoftConstraintPtr->add("finalSoftCost", getOcs2StateCost(getRandomCost(nx, 0)));
 
   // inequality constraints
-  problem.finalInequalityConstraintPtr->add("finalInequalityConstraint", getOcs2StateOnlyConstraints(getRandomConstraints(2, 2, 4)));
+  problem.finalInequalityConstraintPtr->add("finalInequalityConstraint", getOcs2StateOnlyConstraints(getRandomConstraints(nx, 0, 4)));
 
   const TargetTrajectories targetTrajectories({0.0}, {vector_t::Random(nx)}, {vector_t::Random(0)});
   problem.targetTrajectoriesPtr = &targetTrajectories;
@@ -95,8 +99,9 @@ TEST(test_transcription, terminal_performance) {
 }
 
 TEST(test_transcription, event_performance) {
-  int nx = 2;
+  constexpr int nx = 2;
 
+  // optimal control problem
   OptimalControlProblem problem;
 
   // dynamics
@@ -108,7 +113,7 @@ TEST(test_transcription, event_performance) {
   problem.preJumpCostPtr->add("eventCost", getOcs2StateCost(getRandomCost(nx, 0)));
 
   // inequality constraints
-  problem.preJumpInequalityConstraintPtr->add("preJumpInequalityConstraint", getOcs2StateOnlyConstraints(getRandomConstraints(2, 2, 4)));
+  problem.preJumpInequalityConstraintPtr->add("preJumpInequalityConstraint", getOcs2StateOnlyConstraints(getRandomConstraints(nx, 0, 4)));
 
   const TargetTrajectories targetTrajectories({0.0}, {vector_t::Random(nx)}, {vector_t::Random(0)});
   problem.targetTrajectoriesPtr = &targetTrajectories;

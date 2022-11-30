@@ -52,9 +52,9 @@ TEST(test_projection, testProjectionQR) {
   ASSERT_EQ(pseudoInverse.rows(), constraint.dfdu.rows());
   ASSERT_EQ(pseudoInverse.cols(), constraint.dfdu.cols());
 
-  ASSERT_TRUE((pseudoInverse*constraint.dfdu.transpose()).isIdentity());
-  ASSERT_TRUE((pseudoInverse.transpose()*constraint.dfdx).isApprox(- projection.dfdx));
-  ASSERT_TRUE((pseudoInverse.transpose()*constraint.f).isApprox(- projection.f));
+  ASSERT_TRUE((pseudoInverse * constraint.dfdu.transpose()).isIdentity());
+  ASSERT_TRUE((pseudoInverse.transpose() * constraint.dfdx).isApprox(-projection.dfdx));
+  ASSERT_TRUE((pseudoInverse.transpose() * constraint.f).isApprox(-projection.f));
 }
 
 TEST(test_projection, testProjectionLU) {
@@ -85,9 +85,9 @@ TEST(test_projection, testProjectionLU) {
   ASSERT_EQ(pseudoInverse.rows(), constraint.dfdu.rows());
   ASSERT_EQ(pseudoInverse.cols(), constraint.dfdu.cols());
 
-  ASSERT_TRUE((pseudoInverse*constraint.dfdu.transpose()).isIdentity());
-  ASSERT_TRUE((pseudoInverse.transpose()*constraint.dfdx).isApprox(- projection.dfdx));
-  ASSERT_TRUE((pseudoInverse.transpose()*constraint.f).isApprox(- projection.f));
+  ASSERT_TRUE((pseudoInverse * constraint.dfdu.transpose()).isIdentity());
+  ASSERT_TRUE((pseudoInverse.transpose() * constraint.dfdx).isApprox(-projection.dfdx));
+  ASSERT_TRUE((pseudoInverse.transpose() * constraint.f).isApprox(-projection.f));
 }
 
 TEST(test_projection, testProjectionMultiplierCoefficients) {

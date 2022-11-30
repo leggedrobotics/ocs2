@@ -51,6 +51,7 @@ include_directories(
 # Multiple shooting solver library
 add_library(${PROJECT_NAME}
   src/ConstraintProjection.cpp
+  src/MultipleShootingHelpers.cpp
   src/MultipleShootingInitialization.cpp
   src/MultipleShootingSettings.cpp
   src/MultipleShootingSolver.cpp
@@ -77,7 +78,7 @@ if(cmake_clang_tools_FOUND)
   add_clang_tooling(
     TARGETS
     ${PROJECT_NAME}
-    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CF_WERROR
   )

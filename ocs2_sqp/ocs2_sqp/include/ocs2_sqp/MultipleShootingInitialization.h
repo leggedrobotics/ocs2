@@ -31,7 +31,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/initialization/Initializer.h>
+#include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_oc/oc_data/PrimalSolution.h>
+
+#include "ocs2_sqp/TimeDiscretization.h"
 
 namespace ocs2 {
 namespace multiple_shooting {
@@ -57,10 +60,12 @@ inline std::pair<vector_t, vector_t> initializeIntermediateNode(Initializer& ini
  * @param primalSolution : previous solution
  * @param t :  Start of the discrete interval
  * @param tNext : End time of te discrete interval
- * @param x : Starting state of the discrete interval
  * @return {u(t), x(tNext)} : input and state transition
  */
-std::pair<vector_t, vector_t> initializeIntermediateNode(PrimalSolution& primalSolution, scalar_t t, scalar_t tNext, const vector_t& x);
+inline std::pair<vector_t, vector_t> initializeIntermediateNode(const PrimalSolution& primalSolution, scalar_t t, scalar_t tNext) {
+  return {LinearInterpolation::interpolate(t, primalSolution.timeTrajectory_, primalSolution.inputTrajectory_),
+          LinearInterpolation::interpolate(tNext, primalSolution.timeTrajectory_, primalSolution.stateTrajectory_)};
+}
 
 /**
  * Initialize the state jump at an event node.
@@ -73,6 +78,21 @@ inline vector_t initializeEventNode(scalar_t t, const vector_t& x) {
   // Assume identity map for now
   return x;
 }
+
+/**
+ * Initializes for the state-input trajectories. It interpolates the primalSolution for the starting intersecting time period and then uses
+ * initializer for the tail.
+ *
+ * @param [in] initState :  Initial state
+ * @param [in] timeDiscretization : The annotated time trajectory
+ * @param [in] primalSolution : previous solution
+ * @param [in] initializer : System initializer
+ * @param [out] stateTrajectory : The initialized state trajectory
+ * @param [out] inputTrajectory : The initialized input trajectory
+ */
+void initializeStateInputTrajectories(const vector_t& initState, const std::vector<AnnotatedTime>& timeDiscretization,
+                                      const PrimalSolution& primalSolution, Initializer& initializer, vector_array_t& stateTrajectory,
+                                      vector_array_t& inputTrajectory);
 
 }  // namespace multiple_shooting
 }  // namespace ocs2

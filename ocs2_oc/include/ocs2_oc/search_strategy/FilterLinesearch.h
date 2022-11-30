@@ -31,30 +31,41 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_oc/oc_data/PerformanceIndex.h>
-#include <ocs2_oc/search_strategy/FilterLinesearch.h>
 
 namespace ocs2 {
-namespace multiple_shooting {
 
-/** Struct to contain the result and logging data of the stepsize computation */
-struct StepInfo {
-  // Step size and type
-  scalar_t stepSize = 0.0;
-  FilterLinesearch::StepType stepType = FilterLinesearch::StepType::UNKNOWN;
+/*
+ * Filter linesearch based on:
+ * "On the implementation of an interior-point filter line-search algorithm for large-scale nonlinear programming"
+ * https://link.springer.com/article/10.1007/s10107-004-0559-y
+ *
+ * step acceptance criteria with c = costs, g = the norm of constraint violation, and w = [x; u]
+ */
+struct FilterLinesearch {
+  enum class StepType { UNKNOWN, CONSTRAINT, DUAL, COST, ZERO };
 
-  // Step in primal variables
-  scalar_t dx_norm = 0.0;  // norm of the state trajectory update
-  scalar_t du_norm = 0.0;  // norm of the input trajectory update
+  scalar_t g_max = 1e6;          // (1): IF g{i+1} > g_max REQUIRE g{i+1} < (1-gamma_c) * g{i}
+  scalar_t g_min = 1e-6;         // (2): ELSE IF (g{i} < g_min AND g{i+1} < g_min AND dc/dw'{i} * delta_w < 0) REQUIRE Armijo condition
+  scalar_t gamma_c = 1e-6;       // (3): ELSE REQUIRE c{i+1} < (c{i} - gamma_c * g{i}) OR g{i+1} < (1-gamma_c) * g{i}
+  scalar_t armijoFactor = 1e-4;  // Armijo condition: c{i+1} < c{i} + armijoFactor * armijoDescentMetric{i}
 
-  // Performance result after the step
-  PerformanceIndex performanceAfterStep;
-  scalar_t totalConstraintViolationAfterStep;  // constraint metric used in the line search
+  /**
+   * Checks that the step is accepted.
+   *
+   * @param [in] baselinePerformance : The zero step PerformanceIndex
+   * @param [in] stepPerformance : The step PerformanceIndex
+   * @param [in] armijoDescentMetric : The step Armijo descent metric defined as dc/dw' * delta_w
+   */
+  std::pair<bool, StepType> acceptStep(const PerformanceIndex& baselinePerformance, const PerformanceIndex& stepPerformance,
+                                       scalar_t armijoDescentMetric) const;
+
+  /** Compute total constraint violation */
+  static scalar_t totalConstraintViolation(const PerformanceIndex& performance) {
+    return std::sqrt(performance.dynamicsViolationSSE + performance.equalityConstraintsSSE);
+  }
 };
 
-/** Different types of convergence */
-enum class Convergence { FALSE, ITERATIONS, STEPSIZE, METRICS, PRIMAL };
+/** Transforms the StepType to string */
+std::string toString(const FilterLinesearch::StepType& stepType);
 
-std::string toString(const Convergence& convergence);
-
-}  // namespace multiple_shooting
 }  // namespace ocs2

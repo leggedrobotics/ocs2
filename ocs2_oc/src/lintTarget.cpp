@@ -59,6 +59,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
+// search_strategy
+#include <ocs2_oc/search_strategy/FilterLinesearch.h>
+
 // trajectory_adjustment
 #include <ocs2_oc/trajectory_adjustment/TrajectorySpreading.h>
 

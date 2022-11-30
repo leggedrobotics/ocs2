@@ -80,7 +80,7 @@ std::vector<AnnotatedTime> timeDiscretizationWithEvents(scalar_t initTime, scala
  * Extracts the time trajectory from the annotated time trajectory.
  *
  * @param annotatedTime : Annotated time trajectory.
- * @return The pair of time and post-event indices.
+ * @return The time trajectory.
  */
 scalar_array_t toTime(const std::vector<AnnotatedTime>& annotatedTime);
 
@@ -88,7 +88,7 @@ scalar_array_t toTime(const std::vector<AnnotatedTime>& annotatedTime);
  * Extracts the array of indices indicating the post-event times from the annotated time trajectory.
  *
  * @param annotatedTime : Annotated time trajectory.
- * @return The pair of time and post-event indices.
+ * @return The post-event indices.
  */
 size_array_t toPostEventIndices(const std::vector<AnnotatedTime>& annotatedTime);
 

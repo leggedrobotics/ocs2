@@ -32,9 +32,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_oc/oc_data/PerformanceIndex.h>
 #include <ocs2_oc/oc_data/PrimalSolution.h>
+#include <ocs2_oc/oc_data/TimeDiscretization.h>
 
 #include "ocs2_sqp/MultipleShootingSolverStatus.h"
-#include "ocs2_sqp/TimeDiscretization.h"
 
 namespace ocs2 {
 namespace multiple_shooting {

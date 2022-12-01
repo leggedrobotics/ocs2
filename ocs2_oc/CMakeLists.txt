@@ -50,6 +50,7 @@ add_library(${PROJECT_NAME}
   src/approximate_model/ChangeOfInputVariables.cpp
   src/approximate_model/LinearQuadraticApproximator.cpp
   src/oc_data/LoopshapingPrimalSolution.cpp
+  src/oc_data/TimeDiscretization.cpp
   src/oc_problem/OptimalControlProblem.cpp
   src/oc_problem/LoopshapingOptimalControlProblem.cpp
   src/oc_problem/OptimalControlProblemHelperFunction.cpp
@@ -122,42 +123,51 @@ install(DIRECTORY test/include/${PROJECT_NAME}/
 ## to see the summary of unit test results run
 ## $ catkin_test_results ../../../build/ocs2_oc
 
-catkin_add_gtest(test_time_triggered_rollout
-   test/rollout/testTimeTriggeredRollout.cpp
+catkin_add_gtest(test_${PROJECT_NAME}_data
+  test/oc_data/testTimeDiscretization.cpp
 )
-target_link_libraries(test_time_triggered_rollout
+add_dependencies(test_${PROJECT_NAME}_data
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(test_${PROJECT_NAME}_data
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
   gtest_main
 )
 
-catkin_add_gtest(test_state_triggered_rollout
-  test/rollout/testStateTriggeredRollout.cpp
+catkin_add_gtest(test_${PROJECT_NAME}_rollout
+   test/rollout/testTimeTriggeredRollout.cpp
+   test/rollout/testStateTriggeredRollout.cpp
 )
-target_link_libraries(test_state_triggered_rollout
+add_dependencies(test_${PROJECT_NAME}_rollout
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(test_${PROJECT_NAME}_rollout
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
   gtest_main
 )
 
 catkin_add_gtest(test_change_of_variables
   test/testChangeOfInputVariables.cpp
 )
+add_dependencies(test_change_of_variables
+  ${catkin_EXPORTED_TARGETS}
+)
 target_link_libraries(test_change_of_variables
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
   gtest_main
 )
 
 catkin_add_gtest(test_trajectory_spreading
   test/trajectory_adjustment/TrajectorySpreadingTest.cpp
 )
+add_dependencies(test_trajectory_spreading
+  ${catkin_EXPORTED_TARGETS}
+)
 target_link_libraries(test_trajectory_spreading
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
   gtest_main
 )

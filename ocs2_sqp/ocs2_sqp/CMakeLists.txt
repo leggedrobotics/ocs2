@@ -57,7 +57,6 @@ add_library(${PROJECT_NAME}
   src/MultipleShootingSolverStatus.cpp
   src/MultipleShootingTranscription.cpp
   src/PerformanceIndexComputation.cpp
-  src/TimeDiscretization.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
@@ -102,7 +101,6 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 catkin_add_gtest(test_${PROJECT_NAME}
   test/testCircularKinematics.cpp
-  test/testDiscretization.cpp
   test/testMultipleShootingHelpers.cpp
   test/testSwitchedProblem.cpp
   test/testTranscriptionPerformanceIndex.cpp

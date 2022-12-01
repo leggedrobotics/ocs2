@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_core/thread_support/ThreadPool.h>
 
+#include <ocs2_oc/oc_data/TimeDiscretization.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/oc_solver/SolverBase.h>
 #include <ocs2_oc/search_strategy/FilterLinesearch.h>
@@ -42,7 +43,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_sqp/MultipleShootingSettings.h"
 #include "ocs2_sqp/MultipleShootingSolverStatus.h"
-#include "ocs2_sqp/TimeDiscretization.h"
 
 namespace ocs2 {
 

@@ -29,10 +29,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_sqp/MultipleShootingTranscription.h"
 
+#include <ocs2_core/misc/LinearAlgebra.h>
 #include <ocs2_oc/approximate_model/ChangeOfInputVariables.h>
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
-
-#include "ocs2_sqp/ConstraintProjection.h"
 
 namespace ocs2 {
 namespace multiple_shooting {
@@ -94,9 +93,9 @@ void projectTranscription(Transcription& transcription, bool extractEqualityCons
   if (stateInputEqConstraints.f.size() > 0) {
     // Projection stored instead of constraint, // TODO: benchmark between lu and qr method. LU seems slightly faster.
     if (extractEqualityConstraintsPseudoInverse) {
-      std::tie(projection, constraintPseudoInverse) = qrConstraintProjection(stateInputEqConstraints);
+      std::tie(projection, constraintPseudoInverse) = LinearAlgebra::qrConstraintProjection(stateInputEqConstraints);
     } else {
-      projection = luConstraintProjection(stateInputEqConstraints).first;
+      projection = LinearAlgebra::luConstraintProjection(stateInputEqConstraints).first;
       constraintPseudoInverse = matrix_t();
     }
     stateInputEqConstraints = VectorFunctionLinearApproximation();

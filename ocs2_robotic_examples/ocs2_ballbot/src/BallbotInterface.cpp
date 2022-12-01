@@ -67,7 +67,7 @@ BallbotInterface::BallbotInterface(const std::string& taskFile, const std::strin
   // DDP SQP MPC settings
   ddpSettings_ = ddp::loadSettings(taskFile, "ddp");
   mpcSettings_ = mpc::loadSettings(taskFile, "mpc");
-  sqpSettings_ = multiple_shooting::loadSettings(taskFile, "multiple_shooting");
+  sqpSettings_ = sqp::loadSettings(taskFile, "sqp");
 
   /*
    * ReferenceManager & SolverSynchronizedModule

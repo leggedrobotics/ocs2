@@ -12,8 +12,8 @@ templateSwitchingTimes
 {
 }
 
-; multiple_shooting settings
-multiple_shooting
+; Multiple_Shooting SQP settings
+sqp
 {
   dt                            0.1
   sqpIteration                  5

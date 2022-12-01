@@ -58,16 +58,16 @@ include_directories(
 )
 
 # Mpc node
-add_executable(ballbot_mpc
-  src/BallbotMpcNode.cpp
+add_executable(ballbot_ddp
+  src/DdpBallbotMpcNode.cpp
 )
-add_dependencies(ballbot_mpc
+add_dependencies(ballbot_ddp
   ${catkin_EXPORTED_TARGETS}
 )
-target_link_libraries(ballbot_mpc
+target_link_libraries(ballbot_ddp
   ${catkin_LIBRARIES}
 )
-target_compile_options(ballbot_mpc PRIVATE ${OCS2_CXX_FLAGS})
+target_compile_options(ballbot_ddp PRIVATE ${OCS2_CXX_FLAGS})
 
 # Dummy node
 add_executable(ballbot_dummy_test
@@ -110,7 +110,7 @@ target_compile_options(ballbot_mpc_mrt  PRIVATE ${OCS2_CXX_FLAGS})
 
 ## SQP node for ballbot
 add_executable(ballbot_sqp
-  src/MultipleShootingBallbotNode.cpp
+  src/SqpBallbotMpcNode.cpp
 )
 add_dependencies(ballbot_sqp
   ${catkin_EXPORTED_TARGETS}
@@ -129,7 +129,8 @@ if(cmake_clang_tools_FOUND)
   message(STATUS "Run clang tooling for target ocs2_ballbot")
   add_clang_tooling(
     TARGETS
-        ballbot_mpc
+        ballbot_ddp
+        ballbot_sqp
         ballbot_dummy_test
         ballbot_target
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -145,7 +146,7 @@ endif(cmake_clang_tools_FOUND)
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
-install(TARGETS ballbot_mpc ballbot_dummy_test ballbot_target ballbot_sqp
+install(TARGETS ballbot_ddp ballbot_dummy_test ballbot_target ballbot_sqp
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 install(DIRECTORY launch rviz

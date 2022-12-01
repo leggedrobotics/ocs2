@@ -316,7 +316,8 @@ PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<Annotated
         auto result = multiple_shooting::setupIntermediateNode(ocpDefinition, sensitivityDiscretizer_, ti, dt, x[i], x[i + 1], u[i]);
         workerPerformance += sqp::computeIntermediatePerformance(result, dt);
         if (settings_.projectStateInputEqualityConstraints) {
-          multiple_shooting::projectTranscription(result);
+          constexpr bool extractPseudoInverse = false;
+          multiple_shooting::projectTranscription(result, extractPseudoInverse);
         }
         dynamics_[i] = std::move(result.dynamics);
         cost_[i] = std::move(result.cost);
@@ -349,6 +350,7 @@ PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<Annotated
   // Sum performance of the threads
   PerformanceIndex totalPerformance = std::accumulate(std::next(performance.begin()), performance.end(), performance.front());
   totalPerformance.merit = totalPerformance.cost + totalPerformance.equalityLagrangian + totalPerformance.inequalityLagrangian;
+
   return totalPerformance;
 }
 

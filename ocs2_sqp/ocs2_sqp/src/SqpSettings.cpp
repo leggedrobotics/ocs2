@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_sqp/MultipleShootingSettings.h"
+#include "ocs2_sqp/SqpSettings.h"
 
 #include <boost/property_tree/info_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/LoadData.h>
 
 namespace ocs2 {
-namespace multiple_shooting {
+namespace sqp {
 
 Settings loadSettings(const std::string& filename, const std::string& fieldName, bool verbose) {
   boost::property_tree::ptree pt;
@@ -79,5 +79,5 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
 
   return settings;
 }
-}  // namespace multiple_shooting
+}  // namespace sqp
 }  // namespace ocs2

@@ -32,8 +32,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/initialization/Initializer.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
-#include <ocs2_oc/oc_data/PrimalSolution.h>
-#include <ocs2_oc/oc_data/TimeDiscretization.h>
+
+#include "ocs2_oc/oc_data/PrimalSolution.h"
+#include "ocs2_oc/oc_data/TimeDiscretization.h"
 
 namespace ocs2 {
 namespace multiple_shooting {

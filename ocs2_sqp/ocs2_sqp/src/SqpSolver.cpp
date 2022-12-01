@@ -27,22 +27,21 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_sqp/MultipleShootingSolver.h"
+#include "ocs2_sqp/SqpSolver.h"
 
 #include <iostream>
 #include <numeric>
 
 #include <ocs2_core/penalties/penalties/RelaxedBarrierPenalty.h>
+#include <ocs2_oc/multiple_shooting/Helpers.h>
+#include <ocs2_oc/multiple_shooting/Initialization.h>
+#include <ocs2_oc/multiple_shooting/Transcription.h>
 
-#include "ocs2_sqp/MultipleShootingHelpers.h"
-#include "ocs2_sqp/MultipleShootingInitialization.h"
-#include "ocs2_sqp/MultipleShootingTranscription.h"
-#include "ocs2_sqp/PerformanceIndexComputation.h"
+#include "ocs2_sqp/SqpPerformanceIndexComputation.h"
 
 namespace ocs2 {
 
-MultipleShootingSolver::MultipleShootingSolver(Settings settings, const OptimalControlProblem& optimalControlProblem,
-                                               const Initializer& initializer)
+SqpSolver::SqpSolver(sqp::Settings settings, const OptimalControlProblem& optimalControlProblem, const Initializer& initializer)
     : SolverBase(),
       settings_(std::move(settings)),
       hpipmInterface_(hpipm_interface::OcpSize(), settings.hpipmSettings),
@@ -73,13 +72,13 @@ MultipleShootingSolver::MultipleShootingSolver(Settings settings, const OptimalC
   filterLinesearch_.armijoFactor = settings_.armijoFactor;
 }
 
-MultipleShootingSolver::~MultipleShootingSolver() {
+SqpSolver::~SqpSolver() {
   if (settings_.printSolverStatistics) {
     std::cerr << getBenchmarkingInformation() << std::endl;
   }
 }
 
-void MultipleShootingSolver::reset() {
+void SqpSolver::reset() {
   // Clear solution
   primalSolution_ = PrimalSolution();
   valueFunction_.clear();
@@ -94,7 +93,7 @@ void MultipleShootingSolver::reset() {
   computeControllerTimer_.reset();
 }
 
-std::string MultipleShootingSolver::getBenchmarkingInformation() const {
+std::string SqpSolver::getBenchmarkingInformation() const {
   const auto linearQuadraticApproximationTotal = linearQuadraticApproximationTimer_.getTotalInMilliseconds();
   const auto solveQpTotal = solveQpTimer_.getTotalInMilliseconds();
   const auto linesearchTotal = linesearchTimer_.getTotalInMilliseconds();
@@ -120,17 +119,17 @@ std::string MultipleShootingSolver::getBenchmarkingInformation() const {
   return infoStream.str();
 }
 
-const std::vector<PerformanceIndex>& MultipleShootingSolver::getIterationsLog() const {
+const std::vector<PerformanceIndex>& SqpSolver::getIterationsLog() const {
   if (performanceIndeces_.empty()) {
-    throw std::runtime_error("[MultipleShootingSolver]: No performance log yet, no problem solved yet?");
+    throw std::runtime_error("[SqpSolver]: No performance log yet, no problem solved yet?");
   } else {
     return performanceIndeces_;
   }
 }
 
-ScalarFunctionQuadraticApproximation MultipleShootingSolver::getValueFunction(scalar_t time, const vector_t& state) const {
+ScalarFunctionQuadraticApproximation SqpSolver::getValueFunction(scalar_t time, const vector_t& state) const {
   if (valueFunction_.empty()) {
-    throw std::runtime_error("[MultipleShootingSolver] Value function is empty! Is createValueFunction true and did the solver run?");
+    throw std::runtime_error("[SqpSolver] Value function is empty! Is createValueFunction true and did the solver run?");
   } else {
     // Interpolation
     const auto indexAlpha = LinearInterpolation::timeSegment(time, primalSolution_.timeTrajectory_);
@@ -149,7 +148,7 @@ ScalarFunctionQuadraticApproximation MultipleShootingSolver::getValueFunction(sc
   }
 }
 
-void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
+void SqpSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
   if (settings_.printSolverStatus || settings_.printLinesearch) {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
     std::cerr << "\n+++++++++++++ SQP solver is initialized ++++++++++++++";
@@ -174,8 +173,8 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   performanceIndeces_.clear();
 
   int iter = 0;
-  multiple_shooting::Convergence convergence = multiple_shooting::Convergence::FALSE;
-  while (convergence == multiple_shooting::Convergence::FALSE) {
+  sqp::Convergence convergence = sqp::Convergence::FALSE;
+  while (convergence == sqp::Convergence::FALSE) {
     if (settings_.printSolverStatus || settings_.printLinesearch) {
       std::cerr << "\nSQP iteration: " << iter << "\n";
     }
@@ -219,11 +218,11 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   }
 }
 
-void MultipleShootingSolver::runParallel(std::function<void(int)> taskFunction) {
+void SqpSolver::runParallel(std::function<void(int)> taskFunction) {
   threadPool_.runParallel(std::move(taskFunction), settings_.nThreads);
 }
 
-MultipleShootingSolver::OcpSubproblemSolution MultipleShootingSolver::getOCPSolution(const vector_t& delta_x0) {
+SqpSolver::OcpSubproblemSolution SqpSolver::getOCPSolution(const vector_t& delta_x0) {
   // Solve the QP
   OcpSubproblemSolution solution;
   auto& deltaXSol = solution.deltaXSol;
@@ -240,7 +239,7 @@ MultipleShootingSolver::OcpSubproblemSolution MultipleShootingSolver::getOCPSolu
   }
 
   if (status != hpipm_status::SUCCESS) {
-    throw std::runtime_error("[MultipleShootingSolver] Failed to solve QP");
+    throw std::runtime_error("[SqpSolver] Failed to solve QP");
   }
 
   // to determine if the solution is a descent direction for the cost: compute gradient(cost)' * [dx; du]
@@ -254,7 +253,7 @@ MultipleShootingSolver::OcpSubproblemSolution MultipleShootingSolver::getOCPSolu
   return solution;
 }
 
-void MultipleShootingSolver::extractValueFunction(const std::vector<AnnotatedTime>& time, const vector_array_t& x) {
+void SqpSolver::extractValueFunction(const std::vector<AnnotatedTime>& time, const vector_array_t& x) {
   if (settings_.createValueFunction) {
     valueFunction_ = hpipmInterface_.getRiccatiCostToGo(dynamics_[0], cost_[0]);
     // Correct for linearization state
@@ -264,7 +263,7 @@ void MultipleShootingSolver::extractValueFunction(const std::vector<AnnotatedTim
   }
 }
 
-PrimalSolution MultipleShootingSolver::toPrimalSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& x, vector_array_t&& u) {
+PrimalSolution SqpSolver::toPrimalSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& x, vector_array_t&& u) {
   if (settings_.useFeedbackPolicy) {
     ModeSchedule modeSchedule = this->getReferenceManager().getModeSchedule();
     matrix_array_t KMatrices = hpipmInterface_.getRiccatiFeedback(dynamics_[0], cost_[0]);
@@ -279,8 +278,8 @@ PrimalSolution MultipleShootingSolver::toPrimalSolution(const std::vector<Annota
   }
 }
 
-PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vector<AnnotatedTime>& time, const vector_t& initState,
-                                                                  const vector_array_t& x, const vector_array_t& u) {
+PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<AnnotatedTime>& time, const vector_t& initState,
+                                                     const vector_array_t& x, const vector_array_t& u) {
   // Problem horizon
   const int N = static_cast<int>(time.size()) - 1;
 
@@ -353,8 +352,8 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
   return totalPerformance;
 }
 
-PerformanceIndex MultipleShootingSolver::computePerformance(const std::vector<AnnotatedTime>& time, const vector_t& initState,
-                                                            const vector_array_t& x, const vector_array_t& u) {
+PerformanceIndex SqpSolver::computePerformance(const std::vector<AnnotatedTime>& time, const vector_t& initState, const vector_array_t& x,
+                                               const vector_array_t& u) {
   // Problem horizon
   const int N = static_cast<int>(time.size()) - 1;
 
@@ -399,10 +398,9 @@ PerformanceIndex MultipleShootingSolver::computePerformance(const std::vector<An
   return totalPerformance;
 }
 
-multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIndex& baseline,
-                                                             const std::vector<AnnotatedTime>& timeDiscretization,
-                                                             const vector_t& initState, const OcpSubproblemSolution& subproblemSolution,
-                                                             vector_array_t& x, vector_array_t& u) {
+sqp::StepInfo SqpSolver::takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization,
+                                  const vector_t& initState, const OcpSubproblemSolution& subproblemSolution, vector_array_t& x,
+                                  vector_array_t& u) {
   using StepType = FilterLinesearch::StepType;
 
   /*
@@ -454,7 +452,7 @@ multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIn
       u = std::move(uNew);
 
       // Prepare step info
-      multiple_shooting::StepInfo stepInfo;
+      sqp::StepInfo stepInfo;
       stepInfo.stepSize = alpha;
       stepInfo.stepType = stepType;
       stepInfo.dx_norm = alpha * deltaXnorm;
@@ -478,7 +476,7 @@ multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIn
   } while (alpha >= settings_.alpha_min);
 
   // Alpha_min reached -> Don't take a step
-  multiple_shooting::StepInfo stepInfo;
+  sqp::StepInfo stepInfo;
   stepInfo.stepSize = 0.0;
   stepInfo.stepType = StepType::ZERO;
   stepInfo.dx_norm = 0.0;
@@ -493,9 +491,8 @@ multiple_shooting::StepInfo MultipleShootingSolver::takeStep(const PerformanceIn
   return stepInfo;
 }
 
-multiple_shooting::Convergence MultipleShootingSolver::checkConvergence(int iteration, const PerformanceIndex& baseline,
-                                                                        const multiple_shooting::StepInfo& stepInfo) const {
-  using Convergence = multiple_shooting::Convergence;
+sqp::Convergence SqpSolver::checkConvergence(int iteration, const PerformanceIndex& baseline, const sqp::StepInfo& stepInfo) const {
+  using Convergence = sqp::Convergence;
   if ((iteration + 1) >= settings_.sqpIteration) {
     // Converged because the next iteration would exceed the specified number of iterations
     return Convergence::ITERATIONS;

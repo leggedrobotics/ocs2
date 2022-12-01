@@ -29,11 +29,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
-#include "ocs2_sqp/MultipleShootingSolver.h"
-#include "ocs2_sqp/TimeDiscretization.h"
+#include "ocs2_sqp/SqpSolver.h"
 
 #include <ocs2_core/initialization/DefaultInitializer.h>
 
+#include <ocs2_oc/oc_data/TimeDiscretization.h>
 #include <ocs2_oc/synchronized_module/ReferenceManager.h>
 #include <ocs2_oc/test/testProblemsGeneration.h>
 
@@ -72,7 +72,7 @@ TEST(test_valuefunction, linear_quadratic_problem) {
   ocs2::DefaultInitializer zeroInitializer(m);
 
   // Solver settings
-  ocs2::multiple_shooting::Settings settings;
+  ocs2::sqp::Settings settings;
   settings.dt = 0.05;
   settings.sqpIteration = 1;
   settings.projectStateInputEqualityConstraints = true;
@@ -83,7 +83,7 @@ TEST(test_valuefunction, linear_quadratic_problem) {
   settings.createValueFunction = true;
 
   // Set up solver
-  ocs2::MultipleShootingSolver solver(settings, problem, zeroInitializer);
+  ocs2::SqpSolver solver(settings, problem, zeroInitializer);
   solver.setReferenceManager(referenceManagerPtr);
 
   // Get value function

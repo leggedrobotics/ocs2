@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <hpipm_catkin/HpipmInterfaceSettings.h>
 
 namespace ocs2 {
-namespace multiple_shooting {
+namespace sqp {
 
 struct Settings {
   // Sqp settings
@@ -89,5 +89,5 @@ struct Settings {
  */
 Settings loadSettings(const std::string& filename, const std::string& fieldName = "multiple_shooting", bool verbose = true);
 
-}  // namespace multiple_shooting
+}  // namespace sqp
 }  // namespace ocs2

@@ -27,11 +27,12 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_sqp/MultipleShootingTranscription.h"
+#include "ocs2_oc/multiple_shooting/Transcription.h"
 
 #include <ocs2_core/misc/LinearAlgebra.h>
-#include <ocs2_oc/approximate_model/ChangeOfInputVariables.h>
-#include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
+
+#include "ocs2_oc/approximate_model/ChangeOfInputVariables.h"
+#include "ocs2_oc/approximate_model/LinearQuadraticApproximator.h"
 
 namespace ocs2 {
 namespace multiple_shooting {

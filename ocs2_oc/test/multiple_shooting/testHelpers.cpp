@@ -27,34 +27,38 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#pragma once
+#include <gtest/gtest.h>
 
-#include <ocs2_core/Types.h>
-#include <ocs2_oc/oc_data/PerformanceIndex.h>
-#include <ocs2_oc/search_strategy/FilterLinesearch.h>
+#include <ocs2_core/misc/LinearAlgebra.h>
+#include <ocs2_oc/multiple_shooting/Helpers.h>
 
-namespace ocs2 {
-namespace multiple_shooting {
+#include "ocs2_oc/test/testProblemsGeneration.h"
 
-/** Struct to contain the result and logging data of the stepsize computation */
-struct StepInfo {
-  // Step size and type
-  scalar_t stepSize = 0.0;
-  FilterLinesearch::StepType stepType = FilterLinesearch::StepType::UNKNOWN;
+using namespace ocs2;
 
-  // Step in primal variables
-  scalar_t dx_norm = 0.0;  // norm of the state trajectory update
-  scalar_t du_norm = 0.0;  // norm of the input trajectory update
+TEST(testMultipleShootingHelpers, testProjectionMultiplierCoefficients) {
+  constexpr size_t stateDim = 30;
+  constexpr size_t inputDim = 20;
+  constexpr size_t constraintDim = 10;
 
-  // Performance result after the step
-  PerformanceIndex performanceAfterStep;
-  scalar_t totalConstraintViolationAfterStep;  // constraint metric used in the line search
-};
+  const auto cost = getRandomCost(stateDim, inputDim);
+  const auto dynamics = getRandomDynamics(stateDim, inputDim);
+  const auto constraint = getRandomConstraints(stateDim, inputDim, constraintDim);
 
-/** Different types of convergence */
-enum class Convergence { FALSE, ITERATIONS, STEPSIZE, METRICS, PRIMAL };
+  auto result = LinearAlgebra::qrConstraintProjection(constraint);
+  const auto projection = std::move(result.first);
+  const auto pseudoInverse = std::move(result.second);
 
-std::string toString(const Convergence& convergence);
+  multiple_shooting::ProjectionMultiplierCoefficients projectionMultiplierCoefficients;
+  projectionMultiplierCoefficients.extractProjectionMultiplierCoefficients(dynamics, cost, projection, pseudoInverse);
 
-}  // namespace multiple_shooting
-}  // namespace ocs2
+  const matrix_t dfdx = -pseudoInverse * (cost.dfdux + cost.dfduu * projection.dfdx);
+  const matrix_t dfdu = -pseudoInverse * (cost.dfduu * projection.dfdu);
+  const matrix_t dfdcostate = -pseudoInverse * dynamics.dfdu.transpose();
+  const vector_t f = -pseudoInverse * (cost.dfdu + cost.dfduu * projection.f);
+
+  ASSERT_TRUE(projectionMultiplierCoefficients.dfdx.isApprox(dfdx));
+  ASSERT_TRUE(projectionMultiplierCoefficients.dfdu.isApprox(dfdu));
+  ASSERT_TRUE(projectionMultiplierCoefficients.dfdcostate.isApprox(dfdcostate));
+  ASSERT_TRUE(projectionMultiplierCoefficients.f.isApprox(f));
+}

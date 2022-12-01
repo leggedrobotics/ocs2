@@ -27,10 +27,10 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_sqp/MultipleShootingSolverStatus.h"
+#include "ocs2_sqp/SqpSolverStatus.h"
 
 namespace ocs2 {
-namespace multiple_shooting {
+namespace sqp {
 
 std::string toString(const Convergence& convergence) {
   switch (convergence) {
@@ -48,5 +48,5 @@ std::string toString(const Convergence& convergence) {
   }
 }
 
-}  // namespace multiple_shooting
+}  // namespace sqp
 }  // namespace ocs2

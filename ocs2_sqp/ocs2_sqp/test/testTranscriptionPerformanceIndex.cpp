@@ -29,11 +29,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
-#include "ocs2_sqp/MultipleShootingTranscription.h"
-#include "ocs2_sqp/PerformanceIndexComputation.h"
-
+#include <ocs2_oc/multiple_shooting/Transcription.h>
 #include <ocs2_oc/test/circular_kinematics.h>
 #include <ocs2_oc/test/testProblemsGeneration.h>
+
+#include "ocs2_sqp/SqpPerformanceIndexComputation.h"
 
 namespace {
 /** Helper to compare if two performance indices are identical */
@@ -69,9 +69,9 @@ TEST(test_transcription, intermediate_performance) {
   const vector_t u = (vector_t(nu) << 0.1, 1.3).finished();
   const auto transcription = setupIntermediateNode(problem, sensitivityDiscretizer, t, dt, x, x_next, u);
 
-  const auto performance = computeIntermediatePerformance(problem, discretizer, t, dt, x, x_next, u);
+  const auto performance = sqp::computeIntermediatePerformance(problem, discretizer, t, dt, x, x_next, u);
 
-  ASSERT_TRUE(areIdentical(performance, computeIntermediatePerformance(transcription, dt)));
+  ASSERT_TRUE(areIdentical(performance, sqp::computeIntermediatePerformance(transcription, dt)));
 }
 
 TEST(test_transcription, terminal_performance) {
@@ -93,9 +93,9 @@ TEST(test_transcription, terminal_performance) {
   scalar_t t = 0.5;
   const vector_t x = vector_t::Random(nx);
   const auto transcription = setupTerminalNode(problem, t, x);
-  const auto performance = computeTerminalPerformance(problem, t, x);
+  const auto performance = sqp::computeTerminalPerformance(problem, t, x);
 
-  ASSERT_TRUE(areIdentical(performance, computeTerminalPerformance(transcription)));
+  ASSERT_TRUE(areIdentical(performance, sqp::computeTerminalPerformance(transcription)));
 }
 
 TEST(test_transcription, event_performance) {
@@ -122,7 +122,7 @@ TEST(test_transcription, event_performance) {
   const vector_t x = (vector_t(nx) << 1.0, 0.1).finished();
   const vector_t x_next = (vector_t(nx) << 1.1, 0.2).finished();
   const auto transcription = setupEventNode(problem, t, x, x_next);
-  const auto performance = computeEventPerformance(problem, t, x, x_next);
+  const auto performance = sqp::computeEventPerformance(problem, t, x, x_next);
 
-  ASSERT_TRUE(areIdentical(performance, computeEventPerformance(transcription)));
+  ASSERT_TRUE(areIdentical(performance, sqp::computeEventPerformance(transcription)));
 }

@@ -49,6 +49,9 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/approximate_model/ChangeOfInputVariables.cpp
   src/approximate_model/LinearQuadraticApproximator.cpp
+  src/multiple_shooting/Helpers.cpp
+  src/multiple_shooting/Initialization.cpp
+  src/multiple_shooting/Transcription.cpp
   src/oc_data/LoopshapingPrimalSolution.cpp
   src/oc_data/TimeDiscretization.cpp
   src/oc_problem/OptimalControlProblem.cpp
@@ -122,6 +125,18 @@ install(DIRECTORY test/include/${PROJECT_NAME}/
 ## $ catkin run_tests --no-deps --this
 ## to see the summary of unit test results run
 ## $ catkin_test_results ../../../build/ocs2_oc
+
+catkin_add_gtest(test_${PROJECT_NAME}_multiple_shooting
+  test/multiple_shooting/testHelpers.cpp
+)
+add_dependencies(test_${PROJECT_NAME}_multiple_shooting
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(test_${PROJECT_NAME}_multiple_shooting
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
 
 catkin_add_gtest(test_${PROJECT_NAME}_data
   test/oc_data/testTimeDiscretization.cpp

@@ -29,42 +29,32 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_mpc/MPC_BASE.h>
-
-#include <ocs2_sqp/MultipleShootingSolver.h>
+#include <ocs2_core/Types.h>
+#include <ocs2_oc/oc_data/PerformanceIndex.h>
+#include <ocs2_oc/search_strategy/FilterLinesearch.h>
 
 namespace ocs2 {
-class MultipleShootingMpc final : public MPC_BASE {
- public:
-  /**
-   * Constructor
-   *
-   * @param mpcSettings : settings for the mpc wrapping of the solver. Do not use this for maxIterations and stepsize, use multiple shooting
-   * settings directly.
-   * @param settings : settings for the multiple shooting solver.
-   * @param [in] optimalControlProblem: The optimal control problem formulation.
-   * @param [in] initializer: This class initializes the state-input for the time steps that no controller is available.
-   */
-  MultipleShootingMpc(mpc::Settings mpcSettings, multiple_shooting::Settings settings, const OptimalControlProblem& optimalControlProblem,
-                      const Initializer& initializer)
-      : MPC_BASE(std::move(mpcSettings)) {
-    solverPtr_.reset(new MultipleShootingSolver(std::move(settings), optimalControlProblem, initializer));
-  };
+namespace sqp {
 
-  ~MultipleShootingMpc() override = default;
+/** Struct to contain the result and logging data of the stepsize computation */
+struct StepInfo {
+  // Step size and type
+  scalar_t stepSize = 0.0;
+  FilterLinesearch::StepType stepType = FilterLinesearch::StepType::UNKNOWN;
 
-  MultipleShootingSolver* getSolverPtr() override { return solverPtr_.get(); }
-  const MultipleShootingSolver* getSolverPtr() const override { return solverPtr_.get(); }
+  // Step in primal variables
+  scalar_t dx_norm = 0.0;  // norm of the state trajectory update
+  scalar_t du_norm = 0.0;  // norm of the input trajectory update
 
- protected:
-  void calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override {
-    if (settings().coldStart_) {
-      solverPtr_->reset();
-    }
-    solverPtr_->run(initTime, initState, finalTime);
-  }
-
- private:
-  std::unique_ptr<MultipleShootingSolver> solverPtr_;
+  // Performance result after the step
+  PerformanceIndex performanceAfterStep;
+  scalar_t totalConstraintViolationAfterStep;  // constraint metric used in the line search
 };
+
+/** Different types of convergence */
+enum class Convergence { FALSE, ITERATIONS, STEPSIZE, METRICS, PRIMAL };
+
+std::string toString(const Convergence& convergence);
+
+}  // namespace sqp
 }  // namespace ocs2

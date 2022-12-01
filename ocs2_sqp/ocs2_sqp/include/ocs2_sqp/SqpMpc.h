@@ -27,36 +27,46 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <gtest/gtest.h>
+#pragma once
 
-#include <ocs2_core/misc/LinearAlgebra.h>
-#include <ocs2_sqp/MultipleShootingHelpers.h>
+#include <ocs2_mpc/MPC_BASE.h>
 
-#include <ocs2_oc/test/testProblemsGeneration.h>
+#include "ocs2_sqp/SqpSolver.h"
 
-TEST(testMultipleShootingHelpers, testProjectionMultiplierCoefficients) {
-  constexpr size_t stateDim = 30;
-  constexpr size_t inputDim = 20;
-  constexpr size_t constraintDim = 10;
+namespace ocs2 {
 
-  const auto cost = ocs2::getRandomCost(stateDim, inputDim);
-  const auto dynamics = ocs2::getRandomDynamics(stateDim, inputDim);
-  const auto constraint = ocs2::getRandomConstraints(stateDim, inputDim, constraintDim);
+class SqpMpc final : public MPC_BASE {
+ public:
+  /**
+   * Constructor
+   *
+   * @param mpcSettings : settings for the mpc wrapping of the solver. Do not use this for maxIterations and stepsize, use
+   * multiple shooting SQP settings directly.
+   * @param settings : settings for the multiple shooting SQP solver.
+   * @param [in] optimalControlProblem: The optimal control problem formulation.
+   * @param [in] initializer: This class initializes the state-input for the time steps that no controller is available.
+   */
+  SqpMpc(mpc::Settings mpcSettings, sqp::Settings settings, const OptimalControlProblem& optimalControlProblem,
+         const Initializer& initializer)
+      : MPC_BASE(std::move(mpcSettings)) {
+    solverPtr_.reset(new SqpSolver(std::move(settings), optimalControlProblem, initializer));
+  };
 
-  auto result = ocs2::LinearAlgebra::qrConstraintProjection(constraint);
-  const auto projection = std::move(result.first);
-  const auto pseudoInverse = std::move(result.second);
+  ~SqpMpc() override = default;
 
-  ocs2::multiple_shooting::ProjectionMultiplierCoefficients projectionMultiplierCoefficients;
-  projectionMultiplierCoefficients.extractProjectionMultiplierCoefficients(dynamics, cost, projection, pseudoInverse);
+  MultipleShootingSolver* getSolverPtr() override { return solverPtr_.get(); }
+  const MultipleShootingSolver* getSolverPtr() const override { return solverPtr_.get(); }
 
-  const ocs2::matrix_t dfdx = -pseudoInverse * (cost.dfdux + cost.dfduu * projection.dfdx);
-  const ocs2::matrix_t dfdu = -pseudoInverse * (cost.dfduu * projection.dfdu);
-  const ocs2::matrix_t dfdcostate = -pseudoInverse * dynamics.dfdu.transpose();
-  const ocs2::vector_t f = -pseudoInverse * (cost.dfdu + cost.dfduu * projection.f);
+ protected:
+  void calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override {
+    if (settings().coldStart_) {
+      solverPtr_->reset();
+    }
+    solverPtr_->run(initTime, initState, finalTime);
+  }
 
-  ASSERT_TRUE(projectionMultiplierCoefficients.dfdx.isApprox(dfdx));
-  ASSERT_TRUE(projectionMultiplierCoefficients.dfdu.isApprox(dfdu));
-  ASSERT_TRUE(projectionMultiplierCoefficients.dfdcostate.isApprox(dfdcostate));
-  ASSERT_TRUE(projectionMultiplierCoefficients.f.isApprox(f));
-}
+ private:
+  std::unique_ptr<SqpSolver> solverPtr_;
+};
+
+}  // namespace ocs2

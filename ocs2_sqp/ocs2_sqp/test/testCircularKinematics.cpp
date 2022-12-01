@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
-#include "ocs2_sqp/MultipleShootingSolver.h"
+#include "ocs2_sqp/SqpSolver.h"
 
 #include <ocs2_core/initialization/DefaultInitializer.h>
 
@@ -43,7 +43,7 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints) {
   ocs2::DefaultInitializer zeroInitializer(2);
 
   // Solver settings
-  ocs2::multiple_shooting::Settings settings;
+  ocs2::sqp::Settings settings;
   settings.dt = 0.01;
   settings.sqpIteration = 20;
   settings.projectStateInputEqualityConstraints = true;
@@ -59,7 +59,7 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints) {
   const ocs2::vector_t initState = (ocs2::vector_t(2) << 1.0, 0.0).finished();  // radius 1.0
 
   // Solve
-  ocs2::MultipleShootingSolver solver(settings, problem, zeroInitializer);
+  ocs2::SqpSolver solver(settings, problem, zeroInitializer);
   solver.run(startTime, initState, finalTime);
 
   // Inspect solution
@@ -97,7 +97,7 @@ TEST(test_circular_kinematics, solve_EqConstraints_inQPSubproblem) {
   ocs2::DefaultInitializer zeroInitializer(2);
 
   // Solver settings
-  ocs2::multiple_shooting::Settings settings;
+  ocs2::sqp::Settings settings;
   settings.dt = 0.01;
   settings.sqpIteration = 20;
   settings.projectStateInputEqualityConstraints = false;  // <- false to turn off projection of state-input equalities
@@ -112,7 +112,7 @@ TEST(test_circular_kinematics, solve_EqConstraints_inQPSubproblem) {
   const ocs2::vector_t initState = (ocs2::vector_t(2) << 1.0, 0.0).finished();  // radius 1.0
 
   // Solve
-  ocs2::MultipleShootingSolver solver(settings, problem, zeroInitializer);
+  ocs2::SqpSolver solver(settings, problem, zeroInitializer);
   solver.run(startTime, initState, finalTime);
 
   // Inspect solution

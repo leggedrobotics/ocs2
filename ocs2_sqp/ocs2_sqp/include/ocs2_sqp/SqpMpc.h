@@ -54,8 +54,8 @@ class SqpMpc final : public MPC_BASE {
 
   ~SqpMpc() override = default;
 
-  MultipleShootingSolver* getSolverPtr() override { return solverPtr_.get(); }
-  const MultipleShootingSolver* getSolverPtr() const override { return solverPtr_.get(); }
+  SqpSolver* getSolverPtr() override { return solverPtr_.get(); }
+  const SqpSolver* getSolverPtr() const override { return solverPtr_.get(); }
 
  protected:
   void calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override {

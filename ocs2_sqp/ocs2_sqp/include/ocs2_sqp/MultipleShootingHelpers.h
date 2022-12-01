@@ -114,5 +114,29 @@ PrimalSolution toPrimalSolution(const std::vector<AnnotatedTime>& time, ModeSche
 PrimalSolution toPrimalSolution(const std::vector<AnnotatedTime>& time, ModeSchedule&& modeSchedule, vector_array_t&& x, vector_array_t&& u,
                                 matrix_array_t&& KMatrices);
 
+/**
+ * Coefficients to compute the Newton step of the Lagrange multiplier associated with the state-input equality constraint such that
+ * dfdx*dx + dfdu*du + dfdcostate*dcostate + f
+ */
+struct ProjectionMultiplierCoefficients {
+  matrix_t dfdx;
+  matrix_t dfdu;
+  matrix_t dfdcostate;
+  vector_t f;
+
+  /**
+   * Extracts the coefficients to compute the Newton step of the Lagrange multiplier associated with the state-input equality constraint.
+   *
+   * @param dynamics : Dynamics
+   * @param cost : Cost
+   * @param constraintProjection : Constraint projection.
+   * @param pseudoInverse : Left pseudo-inverse of D^T of the state-input equality constraint.
+   */
+  void extractProjectionMultiplierCoefficients(const VectorFunctionLinearApproximation& dynamics,
+                                               const ScalarFunctionQuadraticApproximation& cost,
+                                               const VectorFunctionLinearApproximation& constraintProjection,
+                                               const matrix_t& pseudoInverse);
+};
+
 }  // namespace multiple_shooting
 }  // namespace ocs2

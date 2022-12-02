@@ -34,8 +34,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/model_data/Metrics.h>
 #include <ocs2_core/penalties/MultidimensionalPenalty.h>
 #include <ocs2_oc/oc_data/DualSolution.h>
+#include <ocs2_oc/oc_data/PerformanceIndex.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
-#include <ocs2_oc/oc_solver/PerformanceIndex.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
 
 #include "ocs2_ddp/DDP_Data.h"
@@ -81,6 +81,17 @@ scalar_t rolloutTrajectory(RolloutBase& rollout, scalar_t initTime, const vector
                            PrimalSolution& primalSolution);
 
 /**
+ * Projects the unconstrained LQ coefficients to constrained ones.
+ *
+ * @param [in] modelData: The model data.
+ * @param [in] constraintRangeProjector: The projection matrix to the constrained subspace.
+ * @param [in] constraintNullProjector: The projection matrix to the null space of constrained.
+ * @param [out] projectedModelData: The projected model data.
+ */
+void projectLQ(const ModelData& modelData, const matrix_t& constraintRangeProjector, const matrix_t& constraintNullProjector,
+               ModelData& projectedModelData);
+
+/**
  * Extract a primal solution for the range [initTime, finalTime] from a given primal solution. It assumes that the
  * given range is within the solution time of input primal solution.
  *
@@ -93,6 +104,14 @@ scalar_t rolloutTrajectory(RolloutBase& rollout, scalar_t initTime, const vector
  */
 void extractPrimalSolution(const std::pair<scalar_t, scalar_t>& timePeriod, const PrimalSolution& inputPrimalSolution,
                            PrimalSolution& outputPrimalSolution);
+
+/**
+ * Calculates max feedforward update norm of the controller.
+ *
+ * @param [in] controller: Control policy
+ * @return max feedforward update norm.
+ */
+scalar_t maxControllerUpdateNorm(const LinearController& controller);
 
 /**
  * Computes the integral of the squared (IS) norm of the controller update.

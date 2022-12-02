@@ -49,7 +49,7 @@ std::vector<LagrangianMetrics> LoopshapingStateAugmentedLagrangian::getValue(sca
 ScalarFunctionQuadraticApproximation LoopshapingStateAugmentedLagrangian::getQuadraticApproximation(
     scalar_t t, const vector_t& x, const std::vector<Multiplier>& termsMultiplier, const PreComputation& preComp) const {
   if (this->empty()) {
-    return ScalarFunctionQuadraticApproximation::Zero(x.rows(), 0);
+    return ScalarFunctionQuadraticApproximation::Zero(x.rows());
   }
 
   const LoopshapingPreComputation& preCompLS = cast<LoopshapingPreComputation>(preComp);

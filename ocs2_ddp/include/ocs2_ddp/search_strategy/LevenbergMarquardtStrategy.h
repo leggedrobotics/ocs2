@@ -83,16 +83,26 @@ class LevenbergMarquardtStrategy final : public SearchStrategyBase {
   matrix_t augmentHamiltonianHessian(const ModelData& modelData, const matrix_t& Hm) const override;
 
  private:
+  /** computes the ratio between actual reduction and predicted reduction */
+  scalar_t reductionToPredictedReduction(const scalar_t actualReduction, const scalar_t expectedReduction) const {
+    if (std::abs(actualReduction) < baseSettings_.minRelCost || expectedReduction <= baseSettings_.minRelCost) {
+      return 1.0;
+    } else if (actualReduction < 0.0) {
+      return 0.0;
+    } else {
+      return actualReduction / expectedReduction;
+    }
+  }
+
   // Levenberg-Marquardt
   struct LevenbergMarquardtModule {
-    scalar_t pho = 1.0;                           // the ratio between actual reduction and predicted reduction
     scalar_t riccatiMultiple = 0.0;               // the Riccati multiple for Tikhonov regularization.
     scalar_t riccatiMultipleAdaptiveRatio = 1.0;  // the adaptive ratio of geometric progression for Riccati multiple.
     size_t numSuccessiveRejections = 0;           // the number of successive rejections of solution.
   };
 
   const levenberg_marquardt::Settings settings_;
-  LevenbergMarquardtModule levenbergMarquardtModule_;
+  LevenbergMarquardtModule lmModule_;
 
   RolloutBase& rolloutRef_;
   OptimalControlProblem& optimalControlProblemRef_;

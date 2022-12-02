@@ -32,23 +32,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace multiple_shooting {
 
-std::string toString(const StepInfo::StepType& stepType) {
-  using StepType = StepInfo::StepType;
-  switch (stepType) {
-    case StepType::COST:
-      return "Cost";
-    case StepType::CONSTRAINT:
-      return "Constraint";
-    case StepType::DUAL:
-      return "Dual";
-    case StepType::ZERO:
-      return "Zero";
-    case StepType::UNKNOWN:
-    default:
-      return "Unknown";
-  }
-}
-
 std::string toString(const Convergence& convergence) {
   switch (convergence) {
     case Convergence::ITERATIONS:

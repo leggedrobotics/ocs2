@@ -230,27 +230,15 @@ void LineSearchStrategy::lineSearchTask(const size_t taskId) {
        * cost should be better than the baseline cost but learning rate should
        * be as high as possible. This is equivalent to a single core line search.
        */
-      const bool progressCondition = workersSolution_[taskId].performanceIndex.merit < (baselineMerit_ * (1.0 - 1e-3 * stepLength));
       const bool armijoCondition = workersSolution_[taskId].performanceIndex.merit <
                                    (baselineMerit_ - settings_.armijoCoefficient * stepLength * unoptimizedControllerUpdateIS_);
-
-      if (armijoCondition && stepLength > bestStepSize_) {
+      if (armijoCondition && stepLength > bestStepSize_) {  // save solution
         bestStepSize_ = stepLength;
         swap(*bestSolutionRef_, workersSolution_[taskId]);
-
-        // whether to stop all other thread.
-        terminateLinesearchTasks = true;
-        for (size_t i = 0; i < alphaExp; i++) {
-          if (!alphaProcessed_[i]) {
-            terminateLinesearchTasks = false;
-            break;
-          }
-        }  // end of i loop
-
-      }  // end of if
+        terminateLinesearchTasks = std::all_of(alphaProcessed_.cbegin(), alphaProcessed_.cbegin() + alphaExp, [](bool f) { return f; });
+      }
 
       alphaProcessed_[alphaExp] = true;
-
     }  // end lock
 
     // kill other ongoing line search tasks

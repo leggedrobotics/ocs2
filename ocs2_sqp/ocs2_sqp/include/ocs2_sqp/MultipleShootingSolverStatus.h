@@ -30,18 +30,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
-#include <ocs2_oc/oc_solver/PerformanceIndex.h>
+#include <ocs2_oc/oc_data/PerformanceIndex.h>
+#include <ocs2_oc/search_strategy/FilterLinesearch.h>
 
 namespace ocs2 {
 namespace multiple_shooting {
 
 /** Struct to contain the result and logging data of the stepsize computation */
 struct StepInfo {
-  enum class StepType { UNKNOWN, CONSTRAINT, DUAL, COST, ZERO };
-
   // Step size and type
   scalar_t stepSize = 0.0;
-  StepType stepType = StepType::UNKNOWN;
+  FilterLinesearch::StepType stepType = FilterLinesearch::StepType::UNKNOWN;
 
   // Step in primal variables
   scalar_t dx_norm = 0.0;  // norm of the state trajectory update
@@ -51,8 +50,6 @@ struct StepInfo {
   PerformanceIndex performanceAfterStep;
   scalar_t totalConstraintViolationAfterStep;  // constraint metric used in the line search
 };
-
-std::string toString(const StepInfo::StepType& stepType);
 
 /** Different types of convergence */
 enum class Convergence { FALSE, ITERATIONS, STEPSIZE, METRICS, PRIMAL };

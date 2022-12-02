@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/oc_solver/SolverBase.h>
+#include <ocs2_oc/search_strategy/FilterLinesearch.h>
 
 #include <hpipm_catkin/HpipmInterface.h>
 
@@ -123,10 +124,6 @@ class MultipleShootingSolver : public SolverBase {
   /** Get profiling information as a string */
   std::string getBenchmarkingInformation() const;
 
-  /** Initializes for the state-input trajectories */
-  void initializeStateInputTrajectories(const vector_t& initState, const std::vector<AnnotatedTime>& timeDiscretization,
-                                        vector_array_t& stateTrajectory, vector_array_t& inputTrajectory);
-
   /** Creates QP around t, x(t), u(t). Returns performance metrics at the current {t, x(t), u(t)} */
   PerformanceIndex setupQuadraticSubproblem(const std::vector<AnnotatedTime>& time, const vector_t& initState, const vector_array_t& x,
                                             const vector_array_t& u);
@@ -146,14 +143,8 @@ class MultipleShootingSolver : public SolverBase {
   /** Extract the value function based on the last solved QP */
   void extractValueFunction(const std::vector<AnnotatedTime>& time, const vector_array_t& x);
 
-  /** Set up the primal solution based on the optimized state and input trajectories */
-  void setPrimalSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& x, vector_array_t&& u);
-
-  /** Compute 2-norm of the trajectory: sqrt(sum_i v[i]^2)  */
-  static scalar_t trajectoryNorm(const vector_array_t& v);
-
-  /** Compute total constraint violation */
-  scalar_t totalConstraintViolation(const PerformanceIndex& performance) const;
+  /** Constructs the primal solution based on the optimized state and input trajectories */
+  PrimalSolution toPrimalSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& x, vector_array_t&& u);
 
   /** Decides on the step to take and overrides given trajectories {x(t), u(t)} <- {x(t) + a*dx(t), u(t) + a*du(t)} */
   multiple_shooting::StepInfo takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization,
@@ -170,6 +161,7 @@ class MultipleShootingSolver : public SolverBase {
   DynamicsSensitivityDiscretizer sensitivityDiscretizer_;
   std::vector<OptimalControlProblem> ocpDefinitions_;
   std::unique_ptr<Initializer> initializerPtr_;
+  FilterLinesearch filterLinesearch_;
 
   // Threading
   ThreadPool threadPool_;
@@ -186,8 +178,10 @@ class MultipleShootingSolver : public SolverBase {
   // LQ approximation
   std::vector<VectorFunctionLinearApproximation> dynamics_;
   std::vector<ScalarFunctionQuadraticApproximation> cost_;
-  std::vector<VectorFunctionLinearApproximation> constraints_;
   std::vector<VectorFunctionLinearApproximation> constraintsProjection_;
+  std::vector<VectorFunctionLinearApproximation> stateInputEqConstraints_;
+  std::vector<VectorFunctionLinearApproximation> stateIneqConstraints_;
+  std::vector<VectorFunctionLinearApproximation> stateInputIneqConstraints_;
 
   // Iteration performance log
   std::vector<PerformanceIndex> performanceIndeces_;

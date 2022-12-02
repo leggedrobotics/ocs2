@@ -32,7 +32,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/integration/SensitivityIntegrator.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
-#include <ocs2_oc/oc_solver/PerformanceIndex.h>
 
 namespace ocs2 {
 namespace multiple_shooting {
@@ -41,11 +40,13 @@ namespace multiple_shooting {
  * Results of the transcription at an intermediate node
  */
 struct Transcription {
-  PerformanceIndex performance;
   VectorFunctionLinearApproximation dynamics;
   ScalarFunctionQuadraticApproximation cost;
-  VectorFunctionLinearApproximation constraints;
+  matrix_t constraintPseudoInverse;
   VectorFunctionLinearApproximation constraintsProjection;
+  VectorFunctionLinearApproximation stateInputEqConstraints;
+  VectorFunctionLinearApproximation stateIneqConstraints;
+  VectorFunctionLinearApproximation stateInputIneqConstraints;
 };
 
 /**
@@ -53,7 +54,6 @@ struct Transcription {
  *
  * @param optimalControlProblem : Definition of the optimal control problem
  * @param sensitivityDiscretizer : Integrator to use for creating the discrete dynamics.
- * @param projectStateInputEqualityConstraints
  * @param t : Start of the discrete interval
  * @param dt : Duration of the interval
  * @param x : State at start of the interval
@@ -62,23 +62,24 @@ struct Transcription {
  * @return multiple shooting transcription for this node.
  */
 Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlProblem,
-                                    DynamicsSensitivityDiscretizer& sensitivityDiscretizer, bool projectStateInputEqualityConstraints,
-                                    scalar_t t, scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u);
+                                    DynamicsSensitivityDiscretizer& sensitivityDiscretizer, scalar_t t, scalar_t dt, const vector_t& x,
+                                    const vector_t& x_next, const vector_t& u);
 
 /**
- * Compute only the performance index for a single intermediate node.
- * Corresponds to the performance index returned by "setupIntermediateNode"
+ * Apply the state-input equality constraint projection for a single intermediate node transcription.
+ *
+ * @param transcription : Transcription for a single intermediate node
+ * @param extractEqualityConstraintsPseudoInverse
  */
-PerformanceIndex computeIntermediatePerformance(const OptimalControlProblem& optimalControlProblem, DynamicsDiscretizer& discretizer,
-                                                scalar_t t, scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u);
+void projectTranscription(Transcription& transcription, bool extractEqualityConstraintsPseudoInverse = false);
 
 /**
  * Results of the transcription at a terminal node
  */
 struct TerminalTranscription {
-  PerformanceIndex performance;
   ScalarFunctionQuadraticApproximation cost;
-  VectorFunctionLinearApproximation constraints;
+  VectorFunctionLinearApproximation eqConstraints;
+  VectorFunctionLinearApproximation ineqConstraints;
 };
 
 /**
@@ -92,19 +93,13 @@ struct TerminalTranscription {
 TerminalTranscription setupTerminalNode(const OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x);
 
 /**
- * Compute only the performance index for the terminal node.
- * Corresponds to the performance index returned by "setTerminalNode"
- */
-PerformanceIndex computeTerminalPerformance(const OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x);
-
-/**
  * Results of the transcription at an event
  */
 struct EventTranscription {
-  PerformanceIndex performance;
   VectorFunctionLinearApproximation dynamics;
   ScalarFunctionQuadraticApproximation cost;
-  VectorFunctionLinearApproximation constraints;
+  VectorFunctionLinearApproximation eqConstraints;
+  VectorFunctionLinearApproximation ineqConstraints;
 };
 
 /**
@@ -118,13 +113,6 @@ struct EventTranscription {
  */
 EventTranscription setupEventNode(const OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x,
                                   const vector_t& x_next);
-
-/**
- * Compute only the performance index for the event node.
- * Corresponds to the performance index returned by "setupEventNode"
- */
-PerformanceIndex computeEventPerformance(const OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x,
-                                         const vector_t& x_next);
 
 }  // namespace multiple_shooting
 }  // namespace ocs2

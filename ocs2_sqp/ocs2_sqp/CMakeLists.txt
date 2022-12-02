@@ -3,7 +3,6 @@ project(ocs2_sqp)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
-  ocs2_ddp
   ocs2_mpc
   ocs2_oc
   ocs2_qp_solver
@@ -52,11 +51,13 @@ include_directories(
 # Multiple shooting solver library
 add_library(${PROJECT_NAME}
   src/ConstraintProjection.cpp
+  src/MultipleShootingHelpers.cpp
   src/MultipleShootingInitialization.cpp
   src/MultipleShootingSettings.cpp
   src/MultipleShootingSolver.cpp
   src/MultipleShootingSolverStatus.cpp
   src/MultipleShootingTranscription.cpp
+  src/PerformanceIndexComputation.cpp
   src/TimeDiscretization.cpp
 )
 add_dependencies(${PROJECT_NAME}
@@ -77,7 +78,7 @@ if(cmake_clang_tools_FOUND)
   add_clang_tooling(
     TARGETS
     ${PROJECT_NAME}
-    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CF_WERROR
   )
@@ -105,7 +106,7 @@ catkin_add_gtest(test_${PROJECT_NAME}
   test/testDiscretization.cpp
   test/testProjection.cpp
   test/testSwitchedProblem.cpp
-  test/testTranscription.cpp
+  test/testTranscriptionPerformanceIndex.cpp
   test/testUnconstrained.cpp
   test/testValuefunction.cpp
 )

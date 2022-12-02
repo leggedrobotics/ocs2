@@ -48,6 +48,10 @@ struct Settings {
   scalar_t relativeTolerance = 1e-2;
   /** Number of iterations between consecutive calculation of termination conditions. **/
   size_t checkTerminationInterval = 1;
+  /** Number of pre-conditioning run. **/
+  int numScaling = 3;
+  /** The static lower bound of the cost hessian H. **/
+  scalar_t lowerBoundH = 5e-6;
   /** This value determines to display the a summary log. */
   bool displayShortSummary = false;
 };

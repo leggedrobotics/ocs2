@@ -1,3 +1,32 @@
+/******************************************************************************
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
+
 #pragma once
 
 #include <string>
@@ -9,38 +38,22 @@
 #include <ocs2_core/thread_support/ThreadPool.h>
 #include <ocs2_oc/oc_problem/OcpSize.h>
 
-#include "ocs2_pipg/PIPG_Settings.h"
+#include "ocs2_pipg/PipgSettings.h"
+#include "ocs2_pipg/PipgSolverStatus.h"
 
 namespace ocs2 {
-namespace pipg {
-enum class SolverStatus { SUCCESS, MAX_ITER };
-inline std::string toString(SolverStatus s) {
-  switch (s) {
-    case SolverStatus::SUCCESS:
-      return std::string("SUCCESS");
 
-    case SolverStatus::MAX_ITER:
-      return std::string("MAX_ITER");
-
-    default:
-      throw std::invalid_argument("[pipg::toString] Invalid solver status.");
-  }
-}
-}  // namespace pipg
-
-class Pipg {
+class PipgSolver {
  public:
-  using OcpSize = ocs2::OcpSize;
-  using Settings = pipg::Settings;
-  using SolverStatus = ocs2::pipg::SolverStatus;
-
   /**
-   * @brief Construct a new Pipg with pipg setting object.
+   * @brief Construct a new PIPG with pipg setting object.
    *
-   * @param pipgSettings: pipg setting
+   * @param Settings: PIPG setting
    */
-  explicit Pipg(pipg::Settings pipgSettings);
-  ~Pipg();
+  explicit PipgSolver(pipg::Settings settings);
+
+  /** Destructor */
+  ~PipgSolver();
 
   /**
    * @brief Solve generic QP problem.
@@ -56,9 +69,9 @@ class Pipg {
    * @param result: Stacked result.
    * @return SolverStatus
    */
-  SolverStatus solveDenseQP(const Eigen::SparseMatrix<scalar_t>& H, const vector_t& h, const Eigen::SparseMatrix<scalar_t>& G,
-                            const vector_t& g, const vector_t& EInv, const scalar_t mu, const scalar_t lambda, const scalar_t sigma,
-                            vector_t& result);
+  pipg::SolverStatus solveDenseQP(const Eigen::SparseMatrix<scalar_t>& H, const vector_t& h, const Eigen::SparseMatrix<scalar_t>& G,
+                                  const vector_t& g, const vector_t& EInv, const scalar_t mu, const scalar_t lambda, const scalar_t sigma,
+                                  vector_t& result);
 
   /**
    * @brief Solve Optimal Control type QP in parallel.
@@ -77,11 +90,12 @@ class Pipg {
    * @param constraintsM For testing only. Can be removed.
    * @return SolverStatus
    */
-  SolverStatus solveOCPInParallel(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
-                                  const std::vector<ScalarFunctionQuadraticApproximation>& cost,
-                                  const std::vector<VectorFunctionLinearApproximation>* constraints, const vector_array_t& scalingVectors,
-                                  const vector_array_t* EInv, const scalar_t mu, const scalar_t lambda, const scalar_t sigma,
-                                  const ScalarFunctionQuadraticApproximation& costM, const VectorFunctionLinearApproximation& constraintsM);
+  pipg::SolverStatus solveOCPInParallel(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
+                                        const std::vector<ScalarFunctionQuadraticApproximation>& cost,
+                                        const std::vector<VectorFunctionLinearApproximation>* constraints,
+                                        const vector_array_t& scalingVectors, const vector_array_t* EInv, const scalar_t mu,
+                                        const scalar_t lambda, const scalar_t sigma, const ScalarFunctionQuadraticApproximation& costM,
+                                        const VectorFunctionLinearApproximation& constraintsM);
 
   void resize(const OcpSize& size);
 
@@ -91,7 +105,7 @@ class Pipg {
 
   int getNumGeneralEqualityConstraints() const;
 
-  void getStackedSolution(vector_t& res) const;
+  void getStackedSolution(vector_t& res) const { packSolution(X_, U_, res); }
 
   void unpackSolution(const vector_t& stackedSolution, const vector_t x0, vector_array_t& xTrajectory, vector_array_t& uTrajectory) const;
 
@@ -105,7 +119,7 @@ class Pipg {
   scalar_t getTotalRunTimeInMilliseconds() const { return parallelizedQPTimer_.getTotalInMilliseconds(); }
   scalar_t getAverageRunTimeInMilliseconds() const { return parallelizedQPTimer_.getAverageInMilliseconds(); }
 
-  const Settings& settings() const { return pipgSettings_; }
+  const pipg::Settings& settings() const { return settings_; }
   const OcpSize& size() const { return ocpSize_; }
   ThreadPool& getThreadPool() { return threadPool_; }
 
@@ -116,13 +130,11 @@ class Pipg {
 
   void verifyOcpSize(const OcpSize& ocpSize) const;
 
-  void runParallel(std::function<void(int)> taskFunction);
+  void runParallel(std::function<void(int)> taskFunction) { threadPool_.runParallel(std::move(taskFunction), settings().nThreads); }
 
  private:
-  const Settings pipgSettings_;
-
+  const pipg::Settings settings_;
   ThreadPool threadPool_;
-
   OcpSize ocpSize_;
 
   // Data buffer for parallelized QP

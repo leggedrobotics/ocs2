@@ -1,6 +1,35 @@
+/******************************************************************************
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
+
 #include <gtest/gtest.h>
 
-#include "ocs2_pipg/PIPG.h"
+#include "ocs2_pipg/PipgSolver.h"
 
 #include <Eigen/Sparse>
 
@@ -32,7 +61,7 @@ class PIPGSolverTest : public testing::Test {
   static constexpr size_t numConstraints = N_ * (nx_ + nc_);
   static constexpr bool verbose = true;
 
-  PIPGSolverTest() : pipgSolver(configurePipg(8, 30000, 1e-10, 1e-3, verbose)) {
+  PIPGSolverTest() : solver(configurePipg(8, 30000, 1e-10, 1e-3, verbose)) {
     srand(10);
 
     // Construct OCP problem
@@ -46,9 +75,9 @@ class PIPGSolverTest : public testing::Test {
     costArray.push_back(ocs2::getRandomCost(nx_, nu_));
     constraintsArray.push_back(ocs2::getRandomConstraints(nx_, nu_, nc_));
 
-    pipgSolver.resize(ocs2::extractSizesFromProblem(dynamicsArray, costArray, &constraintsArray));
-    ocs2::getCostMatrix(pipgSolver.size(), x0, costArray, costApproximation);
-    ocs2::getConstraintMatrix(pipgSolver.size(), x0, dynamicsArray, nullptr, nullptr, constraintsApproximation);
+    solver.resize(ocs2::extractSizesFromProblem(dynamicsArray, costArray, &constraintsArray));
+    ocs2::getCostMatrix(solver.size(), x0, costArray, costApproximation);
+    ocs2::getConstraintMatrix(solver.size(), x0, dynamicsArray, nullptr, nullptr, constraintsApproximation);
   }
 
   ocs2::vector_t x0;
@@ -58,7 +87,7 @@ class PIPGSolverTest : public testing::Test {
   std::vector<ocs2::ScalarFunctionQuadraticApproximation> costArray;
   std::vector<ocs2::VectorFunctionLinearApproximation> constraintsArray;
 
-  ocs2::Pipg pipgSolver;
+  ocs2::PipgSolver solver;
 };
 
 constexpr size_t PIPGSolverTest::numDecisionVariables;
@@ -79,16 +108,16 @@ TEST_F(PIPGSolverTest, correctness) {
   ocs2::scalar_t sigma = svdGTG.singularValues()(0);
 
   ocs2::vector_t primalSolutionPIPG;
-  pipgSolver.solveDenseQP(costApproximation.dfdxx.sparseView(), costApproximation.dfdx, constraintsApproximation.dfdx.sparseView(),
-                          constraintsApproximation.f, ocs2::vector_t::Ones(pipgSolver.getNumDynamicsConstraints()), mu, lambda, sigma,
+  solver.solveDenseQP(costApproximation.dfdxx.sparseView(), costApproximation.dfdx, constraintsApproximation.dfdx.sparseView(),
+                          constraintsApproximation.f, ocs2::vector_t::Ones(solver.getNumDynamicsConstraints()), mu, lambda, sigma,
                           primalSolutionPIPG);
 
   ocs2::vector_t primalSolutionPIPGParallel;
   ocs2::vector_array_t scalingVectors(N_, ocs2::vector_t::Ones(nx_));
 
-  pipgSolver.solveOCPInParallel(x0, dynamicsArray, costArray, nullptr, scalingVectors, nullptr, mu, lambda, sigma, costApproximation,
+  solver.solveOCPInParallel(x0, dynamicsArray, costArray, nullptr, scalingVectors, nullptr, mu, lambda, sigma, costApproximation,
                                 constraintsApproximation);
-  pipgSolver.getStackedSolution(primalSolutionPIPGParallel);
+  solver.getStackedSolution(primalSolutionPIPGParallel);
 
   auto calculateConstraintViolation = [&](const ocs2::vector_t& sol) -> ocs2::scalar_t {
     return (constraintsApproximation.dfdx * sol - constraintsApproximation.f).cwiseAbs().maxCoeff();
@@ -128,24 +157,24 @@ TEST_F(PIPGSolverTest, correctness) {
               << "constraint-violation:   " << PIPGParallelCConstraintViolation << "\n\n"
               << std::endl;
   }
-  EXPECT_TRUE(primalSolutionQP.isApprox(primalSolutionPIPG, pipgSolver.settings().absoluteTolerance * 10.0))
+  EXPECT_TRUE(primalSolutionQP.isApprox(primalSolutionPIPG, solver.settings().absoluteTolerance * 10.0))
       << "Inf-norm of (QP - PIPG): " << (primalSolutionQP - primalSolutionPIPG).cwiseAbs().maxCoeff();
 
-  EXPECT_TRUE(primalSolutionPIPGParallel.isApprox(primalSolutionPIPG, pipgSolver.settings().absoluteTolerance * 10.0))
+  EXPECT_TRUE(primalSolutionPIPGParallel.isApprox(primalSolutionPIPG, solver.settings().absoluteTolerance * 10.0))
       << "Inf-norm of (PIPG - PIPGParallel): " << (primalSolutionPIPGParallel - primalSolutionPIPG).cwiseAbs().maxCoeff();
 
   // Threshold is the (absoluteTolerance) * (2-Norm of the hessian H)[lambda]
-  EXPECT_TRUE(std::abs(QPCost - PIPGCost) < pipgSolver.settings().absoluteTolerance * lambda)
+  EXPECT_TRUE(std::abs(QPCost - PIPGCost) < solver.settings().absoluteTolerance * lambda)
       << "Absolute diff is [" << std::abs(QPCost - PIPGCost) << "] which is larger than ["
-      << pipgSolver.settings().absoluteTolerance * lambda << "]";
+      << solver.settings().absoluteTolerance * lambda << "]";
 
-  EXPECT_TRUE(std::abs(PIPGParallelCost - PIPGCost) < pipgSolver.settings().absoluteTolerance)
+  EXPECT_TRUE(std::abs(PIPGParallelCost - PIPGCost) < solver.settings().absoluteTolerance)
       << "Absolute diff is [" << std::abs(PIPGParallelCost - PIPGCost) << "] which is larger than ["
-      << pipgSolver.settings().absoluteTolerance * lambda << "]";
+      << solver.settings().absoluteTolerance * lambda << "]";
 
-  ASSERT_TRUE(std::abs(PIPGConstraintViolation) < pipgSolver.settings().absoluteTolerance);
-  EXPECT_TRUE(std::abs(QPConstraintViolation - PIPGConstraintViolation) < pipgSolver.settings().absoluteTolerance * 10.0);
-  EXPECT_TRUE(std::abs(PIPGParallelCConstraintViolation - PIPGConstraintViolation) < pipgSolver.settings().absoluteTolerance * 10.0);
+  ASSERT_TRUE(std::abs(PIPGConstraintViolation) < solver.settings().absoluteTolerance);
+  EXPECT_TRUE(std::abs(QPConstraintViolation - PIPGConstraintViolation) < solver.settings().absoluteTolerance * 10.0);
+  EXPECT_TRUE(std::abs(PIPGParallelCConstraintViolation - PIPGConstraintViolation) < solver.settings().absoluteTolerance * 10.0);
 }
 
 TEST_F(PIPGSolverTest, descaleSolution) {
@@ -165,13 +194,13 @@ TEST_F(PIPGSolverTest, descaleSolution) {
     curRow += v.size();
   }
   ocs2::vector_t packedSolution;
-  pipgSolver.packSolution(x, u, packedSolution);
+  solver.packSolution(x, u, packedSolution);
 
   packedSolution.array() *= DStacked.array();
 
   ocs2::vector_t packedSolutionMy;
-  pipgSolver.descaleSolution(D, x, u);
-  pipgSolver.packSolution(x, u, packedSolutionMy);
+  solver.descaleSolution(D, x, u);
+  solver.packSolution(x, u, packedSolutionMy);
   EXPECT_TRUE(packedSolutionMy.isApprox(packedSolution)) << std::setprecision(6) << "DescaledSolution: \n"
                                                          << packedSolutionMy.transpose() << "\nIt should be \n"
                                                          << packedSolution.transpose();

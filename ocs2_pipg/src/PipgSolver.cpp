@@ -1,5 +1,33 @@
+/******************************************************************************
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
-#include "ocs2_pipg/PIPG.h"
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
+
+#include "ocs2_pipg/PipgSolver.h"
 
 #include <condition_variable>
 #include <iostream>
@@ -8,16 +36,31 @@
 
 namespace ocs2 {
 
-Pipg::Pipg(pipg::Settings pipgSettings)
-    : pipgSettings_(pipgSettings), threadPool_(std::max(pipgSettings.nThreads, size_t(1)) - 1, pipgSettings.threadPriority) {
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+PipgSolver::PipgSolver(pipg::Settings settings)
+    : settings_(std::move(settings)), threadPool_(std::max(settings_.nThreads, size_t(1)) - 1, settings_.threadPriority) {
   Eigen::initParallel();
-};
+}
 
-Pipg::SolverStatus Pipg::solveDenseQP(const Eigen::SparseMatrix<scalar_t>& H, const vector_t& h, const Eigen::SparseMatrix<scalar_t>& G,
-                                      const vector_t& g, const vector_t& EInv, const scalar_t mu, const scalar_t lambda,
-                                      const scalar_t sigma, vector_t& result) {
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+PipgSolver::~PipgSolver() {
+  if (settings().displayShortSummary) {
+    std::cerr << getBenchmarkingInformationDense() << std::endl;
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+pipg::SolverStatus PipgSolver::solveDenseQP(const Eigen::SparseMatrix<scalar_t>& H, const vector_t& h,
+                                            const Eigen::SparseMatrix<scalar_t>& G, const vector_t& g, const vector_t& EInv,
+                                            const scalar_t mu, const scalar_t lambda, const scalar_t sigma, vector_t& result) {
   if (const int N = ocpSize_.numStages < 1) {
-    throw std::runtime_error("[PIPG] The number of stages cannot be less than 1.");
+    throw std::runtime_error("[PipgSolver::solveDenseQP] The number of stages cannot be less than 1.");
   }
 
   denseQPTimer_.startTimer();
@@ -83,7 +126,7 @@ Pipg::SolverStatus Pipg::solveDenseQP(const Eigen::SparseMatrix<scalar_t>& H, co
   }
   denseQPTimer_.endTimer();
 
-  Pipg::SolverStatus status = isConverged ? Pipg::SolverStatus::SUCCESS : Pipg::SolverStatus::MAX_ITER;
+  pipg::SolverStatus status = isConverged ? pipg::SolverStatus::SUCCESS : pipg::SolverStatus::MAX_ITER;
   if (settings().displayShortSummary) {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
     std::cerr << "\n++++++++++++++ PIPG-DenseQP " << pipg::toString(status) << " +++++++++++++";
@@ -97,21 +140,25 @@ Pipg::SolverStatus Pipg::solveDenseQP(const Eigen::SparseMatrix<scalar_t>& H, co
   result.swap(z);
 
   return status;
-};
+}
 
-Pipg::SolverStatus Pipg::solveOCPInParallel(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
-                                            const std::vector<ScalarFunctionQuadraticApproximation>& cost,
-                                            const std::vector<VectorFunctionLinearApproximation>* constraints,
-                                            const vector_array_t& scalingVectors, const vector_array_t* EInv, const scalar_t mu,
-                                            const scalar_t lambda, const scalar_t sigma, const ScalarFunctionQuadraticApproximation& costM,
-                                            const VectorFunctionLinearApproximation& constraintsM) {
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+pipg::SolverStatus PipgSolver::solveOCPInParallel(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
+                                                  const std::vector<ScalarFunctionQuadraticApproximation>& cost,
+                                                  const std::vector<VectorFunctionLinearApproximation>* constraints,
+                                                  const vector_array_t& scalingVectors, const vector_array_t* EInv, const scalar_t mu,
+                                                  const scalar_t lambda, const scalar_t sigma,
+                                                  const ScalarFunctionQuadraticApproximation& costM,
+                                                  const VectorFunctionLinearApproximation& constraintsM) {
   verifySizes(dynamics, cost, constraints);
   const int N = ocpSize_.numStages;
   if (N < 1) {
-    throw std::runtime_error("[PIPG: solveOCPInParallel] The number of stages cannot be less than 1.");
+    throw std::runtime_error("[PipgSolver::solveOCPInParallel] The number of stages cannot be less than 1.");
   }
   if (scalingVectors.size() != N) {
-    throw std::runtime_error("[PIPG: solveOCPInParallel] The size of scalingVectors doesn't match the number of stage.");
+    throw std::runtime_error("[PipgSolver::solveOCPInParallel] The size of scalingVectors doesn't match the number of stage.");
   }
 
   // Disable Eigen's internal multithreading
@@ -373,7 +420,7 @@ Pipg::SolverStatus Pipg::solveOCPInParallel(const vector_t& x0, std::vector<Vect
 
   parallelizedQPTimer_.endTimer();
 
-  Pipg::SolverStatus status = isConverged ? Pipg::SolverStatus::SUCCESS : Pipg::SolverStatus::MAX_ITER;
+  pipg::SolverStatus status = isConverged ? pipg::SolverStatus::SUCCESS : pipg::SolverStatus::MAX_ITER;
   if (settings().displayShortSummary) {
     scalar_t totalTasks = std::accumulate(threadsWorkloadCounter.cbegin(), threadsWorkloadCounter.cend(), 0.0);
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
@@ -395,7 +442,10 @@ Pipg::SolverStatus Pipg::solveOCPInParallel(const vector_t& x0, std::vector<Vect
   return status;
 };
 
-void Pipg::resize(const OcpSize& ocpSize) {
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void PipgSolver::resize(const OcpSize& ocpSize) {
   if (ocpSize_ == ocpSize) {
     return;
   }
@@ -417,12 +467,11 @@ void Pipg::resize(const OcpSize& ocpSize) {
   WNew_.resize(N);
 }
 
-void Pipg::getStackedSolution(vector_t& res) const {
-  packSolution(X_, U_, res);
-}
-
-void Pipg::unpackSolution(const vector_t& stackedSolution, const vector_t x0, vector_array_t& xTrajectory,
-                          vector_array_t& uTrajectory) const {
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void PipgSolver::unpackSolution(const vector_t& stackedSolution, const vector_t x0, vector_array_t& xTrajectory,
+                                vector_array_t& uTrajectory) const {
   const int N = ocpSize_.numStages;
   xTrajectory.resize(N + 1);
   uTrajectory.resize(N);
@@ -440,7 +489,10 @@ void Pipg::unpackSolution(const vector_t& stackedSolution, const vector_t x0, ve
   }
 }
 
-void Pipg::packSolution(const vector_array_t& xTrajectory, const vector_array_t& uTrajectory, vector_t& stackedSolution) const {
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void PipgSolver::packSolution(const vector_array_t& xTrajectory, const vector_array_t& uTrajectory, vector_t& stackedSolution) const {
   stackedSolution.resize(getNumDecisionVariables());
 
   int curRow = 0;
@@ -452,10 +504,13 @@ void Pipg::packSolution(const vector_array_t& xTrajectory, const vector_array_t&
   }
 }
 
-void Pipg::descaleSolution(const vector_array_t& D, vector_array_t& xTrajectory, vector_array_t& uTrajectory) const {
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void PipgSolver::descaleSolution(const vector_array_t& D, vector_array_t& xTrajectory, vector_array_t& uTrajectory) const {
   const int N = ocpSize_.numStages;
   if (D.size() != xTrajectory.size() + uTrajectory.size() - 1) {
-    throw std::runtime_error("[PIPG]::descaleSolution - Size doesn't match.");
+    throw std::runtime_error("[PipgSolver::descaleSolution] - Size doesn't match.");
   }
 
   for (int k = 0; k < N; k++) {
@@ -464,7 +519,10 @@ void Pipg::descaleSolution(const vector_array_t& D, vector_array_t& xTrajectory,
   }
 }
 
-void Pipg::getStateInputTrajectoriesSolution(vector_array_t& xTrajectory, vector_array_t& uTrajectory) const {
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void PipgSolver::getStateInputTrajectoriesSolution(vector_array_t& xTrajectory, vector_array_t& uTrajectory) const {
   xTrajectory.resize(X_.size());
   uTrajectory.resize(U_.size());
 
@@ -472,56 +530,64 @@ void Pipg::getStateInputTrajectoriesSolution(vector_array_t& xTrajectory, vector
   std::copy(U_.begin(), U_.end(), uTrajectory.begin());
 }
 
-void Pipg::runParallel(std::function<void(int)> taskFunction) {
-  threadPool_.runParallel(std::move(taskFunction), settings().nThreads);
-}
-
-void Pipg::verifySizes(const std::vector<VectorFunctionLinearApproximation>& dynamics,
-                       const std::vector<ScalarFunctionQuadraticApproximation>& cost,
-                       const std::vector<VectorFunctionLinearApproximation>* constraints) const {
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void PipgSolver::verifySizes(const std::vector<VectorFunctionLinearApproximation>& dynamics,
+                             const std::vector<ScalarFunctionQuadraticApproximation>& cost,
+                             const std::vector<VectorFunctionLinearApproximation>* constraints) const {
   if (dynamics.size() != ocpSize_.numStages) {
-    throw std::runtime_error("[PIPG] Inconsistent size of dynamics: " + std::to_string(dynamics.size()) + " with " +
+    throw std::runtime_error("[PipgSolver::verifySizes] Inconsistent size of dynamics: " + std::to_string(dynamics.size()) + " with " +
                              std::to_string(ocpSize_.numStages) + " number of stages.");
   }
   if (cost.size() != ocpSize_.numStages + 1) {
-    throw std::runtime_error("[PIPG] Inconsistent size of cost: " + std::to_string(cost.size()) + " with " +
+    throw std::runtime_error("[PipgSolver::verifySizes] Inconsistent size of cost: " + std::to_string(cost.size()) + " with " +
                              std::to_string(ocpSize_.numStages + 1) + " nodes.");
   }
   if (constraints != nullptr) {
     if (constraints->size() != ocpSize_.numStages + 1) {
-      throw std::runtime_error("[PIPG] Inconsistent size of constraints: " + std::to_string(constraints->size()) + " with " +
-                               std::to_string(ocpSize_.numStages + 1) + " nodes.");
+      throw std::runtime_error("[PipgSolver::verifySizes] Inconsistent size of constraints: " + std::to_string(constraints->size()) +
+                               " with " + std::to_string(ocpSize_.numStages + 1) + " nodes.");
     }
   }
 }
 
-void Pipg::verifyOcpSize(const OcpSize& ocpSize) const {
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void PipgSolver::verifyOcpSize(const OcpSize& ocpSize) const {
   auto isNotEmpty = [](const std::vector<int>& v) { return std::any_of(v.cbegin(), v.cend(), [](int s) { return s != 0; }); };
 
   if (isNotEmpty(ocpSize.numInputBoxConstraints)) {
-    throw std::runtime_error("[Pipg::verifyOcpSize] PIPG solver does not support input box constraints.");
+    throw std::runtime_error("[PipgSolver::verifyOcpSize] PIPG solver does not support input box constraints.");
   }
   if (isNotEmpty(ocpSize.numStateBoxConstraints)) {
-    throw std::runtime_error("[Pipg::verifyOcpSize] PIPG solver does not support state box constraints.");
+    throw std::runtime_error("[PipgSolver::verifyOcpSize] PIPG solver does not support state box constraints.");
   }
   if (isNotEmpty(ocpSize.numInputBoxSlack)) {
-    throw std::runtime_error("[Pipg::verifyOcpSize] PIPG solver does not support input slack variables.");
+    throw std::runtime_error("[PipgSolver::verifyOcpSize] PIPG solver does not support input slack variables.");
   }
   if (isNotEmpty(ocpSize.numStateBoxSlack)) {
-    throw std::runtime_error("[Pipg::verifyOcpSize] PIPG solver does not support state slack variables.");
+    throw std::runtime_error("[PipgSolver::verifyOcpSize] PIPG solver does not support state slack variables.");
   }
   if (isNotEmpty(ocpSize.numIneqSlack)) {
-    throw std::runtime_error("[Pipg::verifyOcpSize] PIPG solver does not support inequality slack variables.");
+    throw std::runtime_error("[PipgSolver::verifyOcpSize] PIPG solver does not support inequality slack variables.");
   }
 }
 
-int Pipg::getNumGeneralEqualityConstraints() const {
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+int PipgSolver::getNumGeneralEqualityConstraints() const {
   const auto totalNumberOfGeneralEqualityConstraints =
       std::accumulate(ocpSize_.numIneqConstraints.begin(), ocpSize_.numIneqConstraints.end(), 0);
   return totalNumberOfGeneralEqualityConstraints;
 }
 
-std::string Pipg::getBenchmarkingInformationDense() const {
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::string PipgSolver::getBenchmarkingInformationDense() const {
   const auto step1v = vComputationTimer_.getTotalInMilliseconds();
   const auto step2z = zComputationTimer_.getTotalInMilliseconds();
   const auto step3w = wComputationTimer_.getTotalInMilliseconds();
@@ -547,9 +613,4 @@ std::string Pipg::getBenchmarkingInformationDense() const {
   return infoStream.str();
 }
 
-Pipg::~Pipg() {
-  if (settings().displayShortSummary) {
-    std::cerr << getBenchmarkingInformationDense() << std::endl;
-  }
-}
 }  // namespace ocs2

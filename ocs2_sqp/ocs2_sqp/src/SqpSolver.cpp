@@ -33,11 +33,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <numeric>
 
 #include <ocs2_core/penalties/penalties/RelaxedBarrierPenalty.h>
-#include <ocs2_oc/oc_problem/OcpSize.h>
 #include <ocs2_oc/multiple_shooting/Helpers.h>
 #include <ocs2_oc/multiple_shooting/Initialization.h>
 #include <ocs2_oc/multiple_shooting/PerformanceIndexComputation.h>
 #include <ocs2_oc/multiple_shooting/Transcription.h>
+#include <ocs2_oc/oc_problem/OcpSize.h>
 
 namespace ocs2 {
 

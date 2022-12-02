@@ -27,12 +27,12 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_sqp/PerformanceIndexComputation.h"
+#include "ocs2_oc/multiple_shooting/PerformanceIndexComputation.h"
 
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
 
 namespace ocs2 {
-namespace sqp {
+namespace multiple_shooting {
 
 namespace {
 scalar_t getEqConstraintsSSE(const vector_t& eqConstraint) {
@@ -52,7 +52,7 @@ scalar_t getIneqConstraintsSSE(const vector_t& ineqConstraint) {
 }
 }  // namespace
 
-PerformanceIndex computeIntermediatePerformance(const multiple_shooting::Transcription& transcription, scalar_t dt) {
+PerformanceIndex computeIntermediatePerformance(const Transcription& transcription, scalar_t dt) {
   PerformanceIndex performance;
 
   // Dynamics
@@ -111,7 +111,7 @@ PerformanceIndex computeIntermediatePerformance(const OptimalControlProblem& opt
   return performance;
 }
 
-PerformanceIndex computeTerminalPerformance(const multiple_shooting::TerminalTranscription& transcription) {
+PerformanceIndex computeTerminalPerformance(const TerminalTranscription& transcription) {
   PerformanceIndex performance;
 
   performance.cost = transcription.cost.f;
@@ -148,7 +148,7 @@ PerformanceIndex computeTerminalPerformance(const OptimalControlProblem& optimal
   return performance;
 }
 
-PerformanceIndex computeEventPerformance(const multiple_shooting::EventTranscription& transcription) {
+PerformanceIndex computeEventPerformance(const EventTranscription& transcription) {
   PerformanceIndex performance;
 
   // Dynamics
@@ -193,5 +193,5 @@ PerformanceIndex computeEventPerformance(const OptimalControlProblem& optimalCon
   return performance;
 }
 
-}  // namespace sqp
+}  // namespace multiple_shooting
 }  // namespace ocs2

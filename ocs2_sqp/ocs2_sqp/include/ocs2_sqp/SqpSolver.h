@@ -34,32 +34,30 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_core/thread_support/ThreadPool.h>
 
+#include <ocs2_oc/oc_data/TimeDiscretization.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/oc_solver/SolverBase.h>
 #include <ocs2_oc/search_strategy/FilterLinesearch.h>
 
 #include <hpipm_catkin/HpipmInterface.h>
 
-#include "ocs2_sqp/MultipleShootingSettings.h"
-#include "ocs2_sqp/MultipleShootingSolverStatus.h"
-#include "ocs2_sqp/TimeDiscretization.h"
+#include "ocs2_sqp/SqpSettings.h"
+#include "ocs2_sqp/SqpSolverStatus.h"
 
 namespace ocs2 {
 
-class MultipleShootingSolver : public SolverBase {
+class SqpSolver : public SolverBase {
  public:
-  using Settings = multiple_shooting::Settings;
-
   /**
    * Constructor
    *
-   * @param settings : settings for the multiple shooting solver.
+   * @param settings : settings for the multiple shooting SQP solver.
    * @param [in] optimalControlProblem: The optimal control problem formulation.
    * @param [in] initializer: This class initializes the state-input for the time steps that no controller is available.
    */
-  MultipleShootingSolver(Settings settings, const OptimalControlProblem& optimalControlProblem, const Initializer& initializer);
+  SqpSolver(sqp::Settings settings, const OptimalControlProblem& optimalControlProblem, const Initializer& initializer);
 
-  ~MultipleShootingSolver() override;
+  ~SqpSolver() override;
 
   void reset() override;
 
@@ -67,12 +65,10 @@ class MultipleShootingSolver : public SolverBase {
 
   void getPrimalSolution(scalar_t finalTime, PrimalSolution* primalSolutionPtr) const override { *primalSolutionPtr = primalSolution_; }
 
-  const DualSolution& getDualSolution() const override {
-    throw std::runtime_error("[MultipleShootingSolver] getDualSolution() not available yet.");
-  }
+  const DualSolution& getDualSolution() const override { throw std::runtime_error("[SqpSolver] getDualSolution() not available yet."); }
 
   const ProblemMetrics& getSolutionMetrics() const override {
-    throw std::runtime_error("[MultipleShootingSolver] getSolutionMetrics() not available yet.");
+    throw std::runtime_error("[SqpSolver] getSolutionMetrics() not available yet.");
   }
 
   size_t getNumIterations() const override { return totalNumIterations_; }
@@ -86,15 +82,15 @@ class MultipleShootingSolver : public SolverBase {
   ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const override;
 
   ScalarFunctionQuadraticApproximation getHamiltonian(scalar_t time, const vector_t& state, const vector_t& input) override {
-    throw std::runtime_error("[MultipleShootingSolver] getHamiltonian() not available yet.");
+    throw std::runtime_error("[SqpSolver] getHamiltonian() not available yet.");
   }
 
   vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const override {
-    throw std::runtime_error("[MultipleShootingSolver] getStateInputEqualityConstraintLagrangian() not available yet.");
+    throw std::runtime_error("[SqpSolver] getStateInputEqualityConstraintLagrangian() not available yet.");
   }
 
   MultiplierCollection getIntermediateDualSolution(scalar_t time) const override {
-    throw std::runtime_error("[MultipleShootingSolver] getIntermediateDualSolution() not available yet.");
+    throw std::runtime_error("[SqpSolver] getIntermediateDualSolution() not available yet.");
   }
 
  private:
@@ -104,7 +100,7 @@ class MultipleShootingSolver : public SolverBase {
     if (externalControllerPtr == nullptr) {
       runImpl(initTime, initState, finalTime);
     } else {
-      throw std::runtime_error("[MultipleShootingSolver::run] This solver does not support external controller!");
+      throw std::runtime_error("[SqpSolver::run] This solver does not support external controller!");
     }
   }
 
@@ -147,16 +143,14 @@ class MultipleShootingSolver : public SolverBase {
   PrimalSolution toPrimalSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& x, vector_array_t&& u);
 
   /** Decides on the step to take and overrides given trajectories {x(t), u(t)} <- {x(t) + a*dx(t), u(t) + a*du(t)} */
-  multiple_shooting::StepInfo takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization,
-                                       const vector_t& initState, const OcpSubproblemSolution& subproblemSolution, vector_array_t& x,
-                                       vector_array_t& u);
+  sqp::StepInfo takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization, const vector_t& initState,
+                         const OcpSubproblemSolution& subproblemSolution, vector_array_t& x, vector_array_t& u);
 
   /** Determine convergence after a step */
-  multiple_shooting::Convergence checkConvergence(int iteration, const PerformanceIndex& baseline,
-                                                  const multiple_shooting::StepInfo& stepInfo) const;
+  sqp::Convergence checkConvergence(int iteration, const PerformanceIndex& baseline, const sqp::StepInfo& stepInfo) const;
 
   // Problem definition
-  Settings settings_;
+  sqp::Settings settings_;
   DynamicsDiscretizer discretizer_;
   DynamicsSensitivityDiscretizer sensitivityDiscretizer_;
   std::vector<OptimalControlProblem> ocpDefinitions_;

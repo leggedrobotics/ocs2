@@ -50,5 +50,27 @@ Strategy fromString(const std::string& name) {
   return strategyMap.at(name);
 }
 
+void shiftHessian(Strategy strategy, matrix_t& matrix, scalar_t minEigenvalue) {
+  assert(matrix.rows() == matrix.cols());
+  switch (strategy) {
+    case Strategy::DIAGONAL_SHIFT: {
+      matrix.diagonal().array() += minEigenvalue;
+      break;
+    }
+    case Strategy::CHOLESKY_MODIFICATION: {
+      LinearAlgebra::makePsdCholesky(matrix, minEigenvalue);
+      break;
+    }
+    case Strategy::EIGENVALUE_MODIFICATION: {
+      LinearAlgebra::makePsdEigenvalue(matrix, minEigenvalue);
+      break;
+    }
+    case Strategy::GERSHGORIN_MODIFICATION: {
+      LinearAlgebra::makePsdGershgorin(matrix, minEigenvalue);
+      break;
+    }
+  }
+}
+
 }  // namespace hessian_correction
 }  // namespace ocs2

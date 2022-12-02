@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,40 +29,32 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <string>
-
-#include <ocs2_core/NumericTraits.h>
-#include <ocs2_core/misc/LinearAlgebra.h>
+#include <ocs2_core/Types.h>
+#include <ocs2_oc/oc_data/PerformanceIndex.h>
+#include <ocs2_oc/search_strategy/FilterLinesearch.h>
 
 namespace ocs2 {
-namespace hessian_correction {
+namespace sqp {
 
-/**
- * @brief The Hessian matrix correction strategy
- * Enum used in selecting either DIAGONAL_SHIFT, CHOLESKY_MODIFICATION, EIGENVALUE_MODIFICATION, or GERSHGORIN_MODIFICATION strategies.
- */
-enum class Strategy { DIAGONAL_SHIFT, CHOLESKY_MODIFICATION, EIGENVALUE_MODIFICATION, GERSHGORIN_MODIFICATION };
+/** Struct to contain the result and logging data of the stepsize computation */
+struct StepInfo {
+  // Step size and type
+  scalar_t stepSize = 0.0;
+  FilterLinesearch::StepType stepType = FilterLinesearch::StepType::UNKNOWN;
 
-/**
- * Get string name of Hessian_Correction type
- * @param [in] strategy: Hessian_Correction type enum
- */
-std::string toString(Strategy strategy);
+  // Step in primal variables
+  scalar_t dx_norm = 0.0;  // norm of the state trajectory update
+  scalar_t du_norm = 0.0;  // norm of the input trajectory update
 
-/**
- * Get Hessian_Correction type from string name, useful for reading config file
- * @param [in] name: Hessian_Correction name
- */
-Strategy fromString(const std::string& name);
+  // Performance result after the step
+  PerformanceIndex performanceAfterStep;
+  scalar_t totalConstraintViolationAfterStep;  // constraint metric used in the line search
+};
 
-/**
- * Shifts the Hessian based on the strategy defined by Line_Search::hessianCorrectionStrategy_.
- *
- * @param [in] strategy: Hessian matrix correction strategy.
- * @param [in, out] matrix: The Hessian matrix.
- * @param [in] minEigenvalue: The minimum expected eigenvalue after correction.
- */
-void shiftHessian(Strategy strategy, matrix_t& matrix, scalar_t minEigenvalue = numeric_traits::limitEpsilon<scalar_t>());
+/** Different types of convergence */
+enum class Convergence { FALSE, ITERATIONS, STEPSIZE, METRICS, PRIMAL };
 
-}  // namespace hessian_correction
+std::string toString(const Convergence& convergence);
+
+}  // namespace sqp
 }  // namespace ocs2

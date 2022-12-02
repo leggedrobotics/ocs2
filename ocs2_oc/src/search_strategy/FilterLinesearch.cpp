@@ -73,4 +73,19 @@ std::string toString(const FilterLinesearch::StepType& stepType) {
   }
 }
 
+scalar_t armijoDescentMetric(const std::vector<ScalarFunctionQuadraticApproximation>& cost, const vector_array_t& deltaXSol,
+                             const vector_array_t& deltaUSol) {
+  // To determine if the solution is a descent direction for the cost: compute gradient(cost)' * [dx; du]
+  scalar_t metric = 0.0;
+  for (int i = 0; i < cost.size(); i++) {
+    if (cost[i].dfdx.size() > 0) {
+      metric += cost[i].dfdx.dot(deltaXSol[i]);
+    }
+    if (cost[i].dfdu.size() > 0) {
+      metric += cost[i].dfdu.dot(deltaUSol[i]);
+    }
+  }
+  return metric;
+}
+
 }  // namespace ocs2

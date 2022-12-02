@@ -95,7 +95,7 @@ LeggedRobotInterface::LeggedRobotInterface(const std::string& taskFile, const st
   ddpSettings_ = ddp::loadSettings(taskFile, "ddp", verbose);
   mpcSettings_ = mpc::loadSettings(taskFile, "mpc", verbose);
   rolloutSettings_ = rollout::loadSettings(taskFile, "rollout", verbose);
-  sqpSettings_ = multiple_shooting::loadSettings(taskFile, "multiple_shooting", verbose);
+  sqpSettings_ = sqp::loadSettings(taskFile, "sqp", verbose);
 
   // OptimalConrolProblem
   setupOptimalConrolProblem(taskFile, urdfFile, referenceFile, verbose);

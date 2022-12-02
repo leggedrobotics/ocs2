@@ -29,32 +29,44 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/Types.h>
-#include <ocs2_oc/oc_data/PerformanceIndex.h>
-#include <ocs2_oc/search_strategy/FilterLinesearch.h>
+#include <ocs2_mpc/MPC_BASE.h>
+
+#include "ocs2_sqp/SqpSolver.h"
 
 namespace ocs2 {
-namespace multiple_shooting {
 
-/** Struct to contain the result and logging data of the stepsize computation */
-struct StepInfo {
-  // Step size and type
-  scalar_t stepSize = 0.0;
-  FilterLinesearch::StepType stepType = FilterLinesearch::StepType::UNKNOWN;
+class SqpMpc final : public MPC_BASE {
+ public:
+  /**
+   * Constructor
+   *
+   * @param mpcSettings : settings for the mpc wrapping of the solver. Do not use this for maxIterations and stepsize, use
+   * multiple shooting SQP settings directly.
+   * @param settings : settings for the multiple shooting SQP solver.
+   * @param [in] optimalControlProblem: The optimal control problem formulation.
+   * @param [in] initializer: This class initializes the state-input for the time steps that no controller is available.
+   */
+  SqpMpc(mpc::Settings mpcSettings, sqp::Settings settings, const OptimalControlProblem& optimalControlProblem,
+         const Initializer& initializer)
+      : MPC_BASE(std::move(mpcSettings)) {
+    solverPtr_.reset(new SqpSolver(std::move(settings), optimalControlProblem, initializer));
+  };
 
-  // Step in primal variables
-  scalar_t dx_norm = 0.0;  // norm of the state trajectory update
-  scalar_t du_norm = 0.0;  // norm of the input trajectory update
+  ~SqpMpc() override = default;
 
-  // Performance result after the step
-  PerformanceIndex performanceAfterStep;
-  scalar_t totalConstraintViolationAfterStep;  // constraint metric used in the line search
+  SqpSolver* getSolverPtr() override { return solverPtr_.get(); }
+  const SqpSolver* getSolverPtr() const override { return solverPtr_.get(); }
+
+ protected:
+  void calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override {
+    if (settings().coldStart_) {
+      solverPtr_->reset();
+    }
+    solverPtr_->run(initTime, initState, finalTime);
+  }
+
+ private:
+  std::unique_ptr<SqpSolver> solverPtr_;
 };
 
-/** Different types of convergence */
-enum class Convergence { FALSE, ITERATIONS, STEPSIZE, METRICS, PRIMAL };
-
-std::string toString(const Convergence& convergence);
-
-}  // namespace multiple_shooting
 }  // namespace ocs2

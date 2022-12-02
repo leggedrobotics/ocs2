@@ -28,13 +28,21 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 // approximate model
+#include <ocs2_oc/approximate_model/ChangeOfInputVariables.h>
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
+
+// multiple_shooting
+#include <ocs2_oc/multiple_shooting/Helpers.h>
+#include <ocs2_oc/multiple_shooting/Initialization.h>
+#include <ocs2_oc/multiple_shooting/PerformanceIndexComputation.h>
+#include <ocs2_oc/multiple_shooting/Transcription.h>
 
 // oc_data
 #include <ocs2_oc/oc_data/DualSolution.h>
 #include <ocs2_oc/oc_data/LoopshapingPrimalSolution.h>
 #include <ocs2_oc/oc_data/PerformanceIndex.h>
 #include <ocs2_oc/oc_data/PrimalSolution.h>
+#include <ocs2_oc/oc_data/TimeDiscretization.h>
 
 // oc_problem
 #include <ocs2_oc/oc_problem/LoopshapingOptimalControlProblem.h>

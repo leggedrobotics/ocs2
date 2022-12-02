@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 #include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
-#include <ocs2_sqp/MultipleShootingMpc.h>
+#include <ocs2_sqp/SqpMpc.h>
 
 #include <ocs2_ballbot/BallbotInterface.h>
 
@@ -62,8 +62,8 @@ int main(int argc, char** argv) {
   rosReferenceManagerPtr->subscribe(nodeHandle);
 
   // MPC
-  ocs2::MultipleShootingMpc mpc(ballbotInterface.mpcSettings(), ballbotInterface.sqpSettings(), ballbotInterface.getOptimalControlProblem(),
-                                ballbotInterface.getInitializer());
+  ocs2::SqpMpc mpc(ballbotInterface.mpcSettings(), ballbotInterface.sqpSettings(), ballbotInterface.getOptimalControlProblem(),
+                   ballbotInterface.getInitializer());
   mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
 
   // Launch MPC ROS node

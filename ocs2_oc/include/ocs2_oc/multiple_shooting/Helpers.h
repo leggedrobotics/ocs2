@@ -30,11 +30,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
-#include <ocs2_oc/oc_data/PerformanceIndex.h>
-#include <ocs2_oc/oc_data/PrimalSolution.h>
 
-#include "ocs2_sqp/MultipleShootingSolverStatus.h"
-#include "ocs2_sqp/TimeDiscretization.h"
+#include "ocs2_oc/oc_data/PerformanceIndex.h"
+#include "ocs2_oc/oc_data/PrimalSolution.h"
+#include "ocs2_oc/oc_data/TimeDiscretization.h"
 
 namespace ocs2 {
 namespace multiple_shooting {
@@ -64,18 +63,6 @@ void incrementTrajectory(const std::vector<Type>& v, const std::vector<Type>& dv
     }
   }
 }
-
-/**
- * Computes the Armijo descent metric that determines if the solution is a descent direction for the cost. It calculates sum of
- * gradient(cost).dot([dx; du]) over the trajectory.
- *
- * @param [in] cost: The quadratic approximation of the cost.
- * @param [in] deltaXSol: The state trajectory of the QP subproblem solution.
- * @param [in] deltaUSol: The input trajectory of the QP subproblem solution.
- * @return The Armijo descent metric.
- */
-scalar_t armijoDescentMetric(const std::vector<ScalarFunctionQuadraticApproximation>& cost, const vector_array_t& deltaXSol,
-                             const vector_array_t& deltaUSol);
 
 /**
  * Re-map the projected input back to the original space.
@@ -113,6 +100,28 @@ PrimalSolution toPrimalSolution(const std::vector<AnnotatedTime>& time, ModeSche
  */
 PrimalSolution toPrimalSolution(const std::vector<AnnotatedTime>& time, ModeSchedule&& modeSchedule, vector_array_t&& x, vector_array_t&& u,
                                 matrix_array_t&& KMatrices);
+
+/**
+ * Coefficients to compute the Newton step of the Lagrange multiplier associated with the state-input equality constraint such that
+ * dfdx*dx + dfdu*du + dfdcostate*dcostate + f
+ */
+struct ProjectionMultiplierCoefficients {
+  matrix_t dfdx;
+  matrix_t dfdu;
+  matrix_t dfdcostate;
+  vector_t f;
+
+  /**
+   * Extracts the coefficients of the Lagrange multiplier associated with the state-input equality constraint.
+   *
+   * @param dynamics : Dynamics
+   * @param cost : Cost
+   * @param constraintProjection : Constraint projection.
+   * @param pseudoInverse : Left pseudo-inverse of D^T of the state-input equality constraint.
+   */
+  void compute(const VectorFunctionLinearApproximation& dynamics, const ScalarFunctionQuadraticApproximation& cost,
+               const VectorFunctionLinearApproximation& constraintProjection, const matrix_t& pseudoInverse);
+};
 
 }  // namespace multiple_shooting
 }  // namespace ocs2

@@ -50,15 +50,9 @@ include_directories(
 
 # Multiple shooting solver library
 add_library(${PROJECT_NAME}
-  src/ConstraintProjection.cpp
-  src/MultipleShootingHelpers.cpp
-  src/MultipleShootingInitialization.cpp
-  src/MultipleShootingSettings.cpp
-  src/MultipleShootingSolver.cpp
-  src/MultipleShootingSolverStatus.cpp
-  src/MultipleShootingTranscription.cpp
-  src/PerformanceIndexComputation.cpp
-  src/TimeDiscretization.cpp
+  src/SqpSettings.cpp
+  src/SqpSolver.cpp
+  src/SqpSolverStatus.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
@@ -103,10 +97,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 catkin_add_gtest(test_${PROJECT_NAME}
   test/testCircularKinematics.cpp
-  test/testDiscretization.cpp
-  test/testProjection.cpp
   test/testSwitchedProblem.cpp
-  test/testTranscriptionPerformanceIndex.cpp
   test/testUnconstrained.cpp
   test/testValuefunction.cpp
 )

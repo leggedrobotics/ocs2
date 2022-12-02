@@ -27,28 +27,13 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_sqp/MultipleShootingHelpers.h"
+#include "ocs2_oc/multiple_shooting/Helpers.h"
 
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/control/LinearController.h>
 
 namespace ocs2 {
 namespace multiple_shooting {
-
-scalar_t armijoDescentMetric(const std::vector<ScalarFunctionQuadraticApproximation>& cost, const vector_array_t& deltaXSol,
-                             const vector_array_t& deltaUSol) {
-  // To determine if the solution is a descent direction for the cost: compute gradient(cost)' * [dx; du]
-  scalar_t metric = 0.0;
-  for (int i = 0; i < cost.size(); i++) {
-    if (cost[i].dfdx.size() > 0) {
-      metric += cost[i].dfdx.dot(deltaXSol[i]);
-    }
-    if (cost[i].dfdu.size() > 0) {
-      metric += cost[i].dfdu.dot(deltaUSol[i]);
-    }
-  }
-  return metric;
-}
 
 void remapProjectedInput(const std::vector<VectorFunctionLinearApproximation>& constraintsProjection, const vector_array_t& deltaXSol,
                          vector_array_t& deltaUSol) {
@@ -132,6 +117,24 @@ PrimalSolution toPrimalSolution(const std::vector<AnnotatedTime>& time, ModeSche
   primalSolution.modeSchedule_ = std::move(modeSchedule);
   primalSolution.controllerPtr_.reset(new LinearController(primalSolution.timeTrajectory_, std::move(uff), std::move(KMatrices)));
   return primalSolution;
+}
+
+void ProjectionMultiplierCoefficients::compute(const VectorFunctionLinearApproximation& dynamics,
+                                               const ScalarFunctionQuadraticApproximation& cost,
+                                               const VectorFunctionLinearApproximation& constraintProjection,
+                                               const matrix_t& pseudoInverse) {
+  vector_t semiprojectedCost_dfdu = cost.dfdu;
+  semiprojectedCost_dfdu.noalias() += cost.dfduu * constraintProjection.f;
+
+  matrix_t semiprojectedCost_dfdux = cost.dfdux;
+  semiprojectedCost_dfdux.noalias() += cost.dfduu * constraintProjection.dfdx;
+
+  const matrix_t semiprojectedCost_dfduu = cost.dfduu * constraintProjection.dfdu;
+
+  this->dfdx.noalias() = -pseudoInverse * semiprojectedCost_dfdux;
+  this->dfdu.noalias() = -pseudoInverse * semiprojectedCost_dfduu;
+  this->dfdcostate.noalias() = -pseudoInverse * dynamics.dfdu.transpose();
+  this->f.noalias() = -pseudoInverse * semiprojectedCost_dfdu;
 }
 
 }  // namespace multiple_shooting

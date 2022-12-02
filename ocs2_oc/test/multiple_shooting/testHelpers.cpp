@@ -27,26 +27,38 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_sqp/MultipleShootingSolverStatus.h"
+#include <gtest/gtest.h>
 
-namespace ocs2 {
-namespace multiple_shooting {
+#include <ocs2_core/misc/LinearAlgebra.h>
+#include <ocs2_oc/multiple_shooting/Helpers.h>
 
-std::string toString(const Convergence& convergence) {
-  switch (convergence) {
-    case Convergence::ITERATIONS:
-      return "Maximum number of iterations reached";
-    case Convergence::STEPSIZE:
-      return "Step size below minimum";
-    case Convergence::METRICS:
-      return "Cost decrease and constraint satisfaction below tolerance";
-    case Convergence::PRIMAL:
-      return "Primal update below tolerance";
-    case Convergence::FALSE:
-    default:
-      return "Not Converged";
-  }
+#include "ocs2_oc/test/testProblemsGeneration.h"
+
+using namespace ocs2;
+
+TEST(testMultipleShootingHelpers, testProjectionMultiplierCoefficients) {
+  constexpr size_t stateDim = 30;
+  constexpr size_t inputDim = 20;
+  constexpr size_t constraintDim = 10;
+
+  const auto cost = getRandomCost(stateDim, inputDim);
+  const auto dynamics = getRandomDynamics(stateDim, inputDim);
+  const auto constraint = getRandomConstraints(stateDim, inputDim, constraintDim);
+
+  auto result = LinearAlgebra::qrConstraintProjection(constraint);
+  const auto projection = std::move(result.first);
+  const auto pseudoInverse = std::move(result.second);
+
+  multiple_shooting::ProjectionMultiplierCoefficients projectionMultiplierCoefficients;
+  projectionMultiplierCoefficients.compute(dynamics, cost, projection, pseudoInverse);
+
+  const matrix_t dfdx = -pseudoInverse * (cost.dfdux + cost.dfduu * projection.dfdx);
+  const matrix_t dfdu = -pseudoInverse * (cost.dfduu * projection.dfdu);
+  const matrix_t dfdcostate = -pseudoInverse * dynamics.dfdu.transpose();
+  const vector_t f = -pseudoInverse * (cost.dfdu + cost.dfduu * projection.f);
+
+  ASSERT_TRUE(projectionMultiplierCoefficients.dfdx.isApprox(dfdx));
+  ASSERT_TRUE(projectionMultiplierCoefficients.dfdu.isApprox(dfdu));
+  ASSERT_TRUE(projectionMultiplierCoefficients.dfdcostate.isApprox(dfdcostate));
+  ASSERT_TRUE(projectionMultiplierCoefficients.f.isApprox(f));
 }
-
-}  // namespace multiple_shooting
-}  // namespace ocs2

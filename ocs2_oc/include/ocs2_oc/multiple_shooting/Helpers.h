@@ -112,17 +112,15 @@ struct ProjectionMultiplierCoefficients {
   vector_t f;
 
   /**
-   * Extracts the coefficients to compute the Newton step of the Lagrange multiplier associated with the state-input equality constraint.
+   * Extracts the coefficients of the Lagrange multiplier associated with the state-input equality constraint.
    *
    * @param dynamics : Dynamics
    * @param cost : Cost
    * @param constraintProjection : Constraint projection.
    * @param pseudoInverse : Left pseudo-inverse of D^T of the state-input equality constraint.
    */
-  void extractProjectionMultiplierCoefficients(const VectorFunctionLinearApproximation& dynamics,
-                                               const ScalarFunctionQuadraticApproximation& cost,
-                                               const VectorFunctionLinearApproximation& constraintProjection,
-                                               const matrix_t& pseudoInverse);
+  void compute(const VectorFunctionLinearApproximation& dynamics, const ScalarFunctionQuadraticApproximation& cost,
+               const VectorFunctionLinearApproximation& constraintProjection, const matrix_t& pseudoInverse);
 };
 
 }  // namespace multiple_shooting

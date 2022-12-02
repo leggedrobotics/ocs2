@@ -30,10 +30,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <gtest/gtest.h>
 
 #include <ocs2_oc/multiple_shooting/Transcription.h>
-#include <ocs2_oc/test/circular_kinematics.h>
-#include <ocs2_oc/test/testProblemsGeneration.h>
+#include <ocs2_oc/multiple_shooting/PerformanceIndexComputation.h>
 
-#include "ocs2_sqp/SqpPerformanceIndexComputation.h"
+#include "ocs2_oc/test/circular_kinematics.h"
+#include "ocs2_oc/test/testProblemsGeneration.h"
 
 namespace {
 /** Helper to compare if two performance indices are identical */
@@ -45,8 +45,6 @@ bool areIdentical(const ocs2::PerformanceIndex& lhs, const ocs2::PerformanceInde
 }  // namespace
 
 using namespace ocs2;
-using namespace ocs2::multiple_shooting;
-using namespace ocs2::sqp;
 
 TEST(test_transcription, intermediate_performance) {
   constexpr int nx = 2;
@@ -67,35 +65,11 @@ TEST(test_transcription, intermediate_performance) {
   const vector_t x = (vector_t(nx) << 1.0, 0.1).finished();
   const vector_t x_next = (vector_t(nx) << 1.1, 0.2).finished();
   const vector_t u = (vector_t(nu) << 0.1, 1.3).finished();
-  const auto transcription = setupIntermediateNode(problem, sensitivityDiscretizer, t, dt, x, x_next, u);
+  const auto transcription = multiple_shooting::setupIntermediateNode(problem, sensitivityDiscretizer, t, dt, x, x_next, u);
 
-  const auto performance = sqp::computeIntermediatePerformance(problem, discretizer, t, dt, x, x_next, u);
+  const auto performance = multiple_shooting::computeIntermediatePerformance(problem, discretizer, t, dt, x, x_next, u);
 
-  ASSERT_TRUE(areIdentical(performance, sqp::computeIntermediatePerformance(transcription, dt)));
-}
-
-TEST(test_transcription, terminal_performance) {
-  constexpr int nx = 3;
-
-  // optimal control problem
-  OptimalControlProblem problem;
-
-  // cost
-  problem.finalCostPtr->add("finalCost", getOcs2StateCost(getRandomCost(nx, 0)));
-  problem.finalSoftConstraintPtr->add("finalSoftCost", getOcs2StateCost(getRandomCost(nx, 0)));
-
-  // inequality constraints
-  problem.finalInequalityConstraintPtr->add("finalInequalityConstraint", getOcs2StateOnlyConstraints(getRandomConstraints(nx, 0, 4)));
-
-  const TargetTrajectories targetTrajectories({0.0}, {vector_t::Random(nx)}, {vector_t::Random(0)});
-  problem.targetTrajectoriesPtr = &targetTrajectories;
-
-  scalar_t t = 0.5;
-  const vector_t x = vector_t::Random(nx);
-  const auto transcription = setupTerminalNode(problem, t, x);
-  const auto performance = sqp::computeTerminalPerformance(problem, t, x);
-
-  ASSERT_TRUE(areIdentical(performance, sqp::computeTerminalPerformance(transcription)));
+  ASSERT_TRUE(areIdentical(performance, multiple_shooting::computeIntermediatePerformance(transcription, dt)));
 }
 
 TEST(test_transcription, event_performance) {
@@ -121,8 +95,32 @@ TEST(test_transcription, event_performance) {
   const scalar_t t = 0.5;
   const vector_t x = (vector_t(nx) << 1.0, 0.1).finished();
   const vector_t x_next = (vector_t(nx) << 1.1, 0.2).finished();
-  const auto transcription = setupEventNode(problem, t, x, x_next);
-  const auto performance = sqp::computeEventPerformance(problem, t, x, x_next);
+  const auto transcription = multiple_shooting::setupEventNode(problem, t, x, x_next);
+  const auto performance = multiple_shooting::computeEventPerformance(problem, t, x, x_next);
 
-  ASSERT_TRUE(areIdentical(performance, sqp::computeEventPerformance(transcription)));
+  ASSERT_TRUE(areIdentical(performance, multiple_shooting::computeEventPerformance(transcription)));
+}
+
+TEST(test_transcription, terminal_performance) {
+  constexpr int nx = 3;
+
+  // optimal control problem
+  OptimalControlProblem problem;
+
+  // cost
+  problem.finalCostPtr->add("finalCost", getOcs2StateCost(getRandomCost(nx, 0)));
+  problem.finalSoftConstraintPtr->add("finalSoftCost", getOcs2StateCost(getRandomCost(nx, 0)));
+
+  // inequality constraints
+  problem.finalInequalityConstraintPtr->add("finalInequalityConstraint", getOcs2StateOnlyConstraints(getRandomConstraints(nx, 0, 4)));
+
+  const TargetTrajectories targetTrajectories({0.0}, {vector_t::Random(nx)}, {vector_t::Random(0)});
+  problem.targetTrajectoriesPtr = &targetTrajectories;
+
+  scalar_t t = 0.5;
+  const vector_t x = vector_t::Random(nx);
+  const auto transcription = multiple_shooting::setupTerminalNode(problem, t, x);
+  const auto performance = multiple_shooting::computeTerminalPerformance(problem, t, x);
+
+  ASSERT_TRUE(areIdentical(performance, multiple_shooting::computeTerminalPerformance(transcription)));
 }

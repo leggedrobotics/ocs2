@@ -53,7 +53,6 @@ add_library(${PROJECT_NAME}
   src/SqpSettings.cpp
   src/SqpSolver.cpp
   src/SqpSolverStatus.cpp
-  src/SqpPerformanceIndexComputation.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
@@ -99,7 +98,6 @@ install(DIRECTORY include/${PROJECT_NAME}/
 catkin_add_gtest(test_${PROJECT_NAME}
   test/testCircularKinematics.cpp
   test/testSwitchedProblem.cpp
-  test/testTranscriptionPerformanceIndex.cpp
   test/testUnconstrained.cpp
   test/testValuefunction.cpp
 )

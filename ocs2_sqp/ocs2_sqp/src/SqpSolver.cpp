@@ -35,9 +35,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/penalties/penalties/RelaxedBarrierPenalty.h>
 #include <ocs2_oc/multiple_shooting/Helpers.h>
 #include <ocs2_oc/multiple_shooting/Initialization.h>
+#include <ocs2_oc/multiple_shooting/PerformanceIndexComputation.h>
 #include <ocs2_oc/multiple_shooting/Transcription.h>
-
-#include "ocs2_sqp/SqpPerformanceIndexComputation.h"
 
 namespace ocs2 {
 
@@ -302,7 +301,7 @@ PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<Annotated
       if (time[i].event == AnnotatedTime::Event::PreEvent) {
         // Event node
         auto result = multiple_shooting::setupEventNode(ocpDefinition, time[i].time, x[i], x[i + 1]);
-        workerPerformance += sqp::computeEventPerformance(result);
+        workerPerformance += multiple_shooting::computeEventPerformance(result);
         dynamics_[i] = std::move(result.dynamics);
         cost_[i] = std::move(result.cost);
         constraintsProjection_[i] = VectorFunctionLinearApproximation::Zero(0, x[i].size(), 0);
@@ -314,7 +313,7 @@ PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<Annotated
         const scalar_t ti = getIntervalStart(time[i]);
         const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
         auto result = multiple_shooting::setupIntermediateNode(ocpDefinition, sensitivityDiscretizer_, ti, dt, x[i], x[i + 1], u[i]);
-        workerPerformance += sqp::computeIntermediatePerformance(result, dt);
+        workerPerformance += multiple_shooting::computeIntermediatePerformance(result, dt);
         if (settings_.projectStateInputEqualityConstraints) {
           constexpr bool extractPseudoInverse = false;
           multiple_shooting::projectTranscription(result, extractPseudoInverse);
@@ -333,7 +332,7 @@ PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<Annotated
     if (i == N) {  // Only one worker will execute this
       const scalar_t tN = getIntervalStart(time[N]);
       auto result = multiple_shooting::setupTerminalNode(ocpDefinition, tN, x[N]);
-      workerPerformance += sqp::computeTerminalPerformance(result);
+      workerPerformance += multiple_shooting::computeTerminalPerformance(result);
       cost_[i] = std::move(result.cost);
       stateInputEqConstraints_[i] = std::move(result.eqConstraints);
       stateIneqConstraints_[i] = std::move(result.ineqConstraints);
@@ -370,12 +369,12 @@ PerformanceIndex SqpSolver::computePerformance(const std::vector<AnnotatedTime>&
     while (i < N) {
       if (time[i].event == AnnotatedTime::Event::PreEvent) {
         // Event node
-        workerPerformance += sqp::computeEventPerformance(ocpDefinition, time[i].time, x[i], x[i + 1]);
+        workerPerformance += multiple_shooting::computeEventPerformance(ocpDefinition, time[i].time, x[i], x[i + 1]);
       } else {
         // Normal, intermediate node
         const scalar_t ti = getIntervalStart(time[i]);
         const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
-        workerPerformance += sqp::computeIntermediatePerformance(ocpDefinition, discretizer_, ti, dt, x[i], x[i + 1], u[i]);
+        workerPerformance += multiple_shooting::computeIntermediatePerformance(ocpDefinition, discretizer_, ti, dt, x[i], x[i + 1], u[i]);
       }
 
       i = timeIndex++;
@@ -383,7 +382,7 @@ PerformanceIndex SqpSolver::computePerformance(const std::vector<AnnotatedTime>&
 
     if (i == N) {  // Only one worker will execute this
       const scalar_t tN = getIntervalStart(time[N]);
-      workerPerformance += sqp::computeTerminalPerformance(ocpDefinition, tN, x[N]);
+      workerPerformance += multiple_shooting::computeTerminalPerformance(ocpDefinition, tN, x[N]);
     }
 
     // Accumulate! Same worker might run multiple tasks

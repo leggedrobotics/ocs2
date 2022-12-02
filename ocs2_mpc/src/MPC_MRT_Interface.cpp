@@ -138,12 +138,14 @@ void MPC_MRT_Interface::copyToBuffer(const SystemObservation& mpcInitObservation
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_MRT_Interface::getLinearFeedbackGain(scalar_t time, matrix_t& K) {
+matrix_t MPC_MRT_Interface::getLinearFeedbackGain(scalar_t time) {
   auto controller = dynamic_cast<LinearController*>(this->getPolicy().controllerPtr_.get());
   if (controller == nullptr) {
     throw std::runtime_error("[MPC_MRT_Interface::getLinearFeedbackGain] Feedback gains only available with linear controller!");
   }
+  matrix_t K;
   controller->getFeedbackGain(time, K);
+  return K;
 }
 
 /******************************************************************************************************/
@@ -158,6 +160,13 @@ ScalarFunctionQuadraticApproximation MPC_MRT_Interface::getValueFunction(scalar_
 /******************************************************************************************************/
 vector_t MPC_MRT_Interface::getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const {
   return mpc_.getSolverPtr()->getStateInputEqualityConstraintLagrangian(time, state);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+MultiplierCollection MPC_MRT_Interface::getIntermediateDualSolution(scalar_t time) const {
+  return mpc_.getSolverPtr()->getIntermediateDualSolution(time);
 }
 
 }  // namespace ocs2

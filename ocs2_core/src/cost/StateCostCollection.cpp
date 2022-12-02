@@ -71,7 +71,7 @@ ScalarFunctionQuadraticApproximation StateCostCollection::getQuadraticApproximat
 
   // No active terms (or terms is empty).
   if (firstActive == terms_.end()) {
-    return ScalarFunctionQuadraticApproximation::Zero(state.rows(), 0);
+    return ScalarFunctionQuadraticApproximation::Zero(state.rows());
   }
 
   // Initialize with first active term, accumulate potentially other active terms.
@@ -85,10 +85,10 @@ ScalarFunctionQuadraticApproximation StateCostCollection::getQuadraticApproximat
     }
   });
 
-  // Make sure that input derivatives have zero size
-  cost.dfdu.resize(0);
-  cost.dfduu.resize(0, 0);
-  cost.dfdux.resize(0, state.size());
+  // Make sure that input derivatives are empty
+  cost.dfdu = vector_t();
+  cost.dfduu = matrix_t();
+  cost.dfdux = matrix_t();
 
   return cost;
 }

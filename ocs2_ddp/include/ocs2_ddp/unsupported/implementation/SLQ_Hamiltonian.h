@@ -403,7 +403,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_Hamiltonian<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(size_t workerIndex, const size_t& partitionIndex,
                                                                                        const state_matrix_t& SmFinal,
                                                                                        const state_vector_t& SvFinal,
-                                                                                       const eigen_scalar_t& sFinal) {
+                                                                                       const scalar_t sFinal) {
   // set data for Riccati equations
   riccatiEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
   riccatiEquationsPtrStock_[workerIndex]->setData(
@@ -537,11 +537,8 @@ void SLQ_Hamiltonian<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquations
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
-void SLQ_Hamiltonian<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNominalTimeWorker(size_t workerIndex,
-                                                                                                     const size_t& partitionIndex,
-                                                                                                     const state_matrix_t& SmFinal,
-                                                                                                     const state_vector_t& SvFinal,
-                                                                                                     const eigen_scalar_t& sFinal) {
+void SLQ_Hamiltonian<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNominalTimeWorker(
+    size_t workerIndex, const size_t& partitionIndex, const state_matrix_t& SmFinal, const state_vector_t& SvFinal, const scalar_t sFinal) {
   // set data for Riccati equations
   riccatiEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
   riccatiEquationsPtrStock_[workerIndex]->setData(
@@ -813,7 +810,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_Hamiltonian<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveSlqRiccatiEquationsWorker(size_t workerIndex, const size_t& partitionIndex,
                                                                                           const state_matrix_t& SmFinal,
                                                                                           const state_vector_t& SvFinal,
-                                                                                          const eigen_scalar_t& sFinal,
+                                                                                          const scalar_t sFinal,
                                                                                           const state_vector_t& SveFinal) {
   if (settings_.useNominalTimeForBackwardPass_) {
     solveRiccatiEquationsForNominalTimeWorker(workerIndex, partitionIndex, SmFinal, SvFinal, sFinal);
@@ -921,7 +918,7 @@ SLQ_Hamiltonian<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::integrateIncrement(size_t 
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T>
 void SLQ_Hamiltonian<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWorker(
     size_t workerIndex, const size_t& partitionIndex, const state_matrix_t& SmFinal, const state_vector_t& SvFinal,
-    const state_vector_t& SveFinal, const eigen_scalar_t& sFinal, const scalar_t& constraintStepSize) {
+    const state_vector_t& SveFinal, const scalar_t sFinal, const scalar_t& constraintStepSize) {
   const size_t N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
 
   // Riccati parameters

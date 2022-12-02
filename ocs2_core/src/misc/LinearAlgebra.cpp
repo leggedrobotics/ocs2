@@ -35,6 +35,20 @@ namespace LinearAlgebra {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+void setTriangularMinimumEigenvalues(matrix_t& Lr, scalar_t minEigenValue) {
+  for (Eigen::Index i = 0; i < Lr.rows(); ++i) {
+    scalar_t& eigenValue = Lr(i, i);  // diagonal element is the eigenvalue
+    if (eigenValue < 0.0) {
+      eigenValue = std::min(-minEigenValue, eigenValue);
+    } else {
+      eigenValue = std::max(minEigenValue, eigenValue);
+    }
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void makePsdEigenvalue(matrix_t& squareMatrix, scalar_t minEigenvalue) {
   assert(squareMatrix.rows() == squareMatrix.cols());
 
@@ -54,6 +68,19 @@ void makePsdEigenvalue(matrix_t& squareMatrix, scalar_t minEigenvalue) {
     squareMatrix = eig.eigenvectors() * lambda.asDiagonal() * eig.eigenvectors().inverse();
   } else {
     squareMatrix = 0.5 * (squareMatrix + squareMatrix.transpose()).eval();
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void makePsdGershgorin(matrix_t& squareMatrix, scalar_t minEigenvalue) {
+  assert(squareMatrix.rows() == squareMatrix.cols());
+  squareMatrix = 0.5 * (squareMatrix + squareMatrix.transpose()).eval();
+  for (size_t i = 0; i < squareMatrix.rows(); i++) {
+    // Gershgorin radius: since the matrix is symmetric we use column sum instead of row sum
+    auto Ri = squareMatrix.col(i).cwiseAbs().sum() - std::abs(squareMatrix(i, i));
+    squareMatrix(i, i) = std::max(squareMatrix(i, i), Ri + minEigenvalue);
   }
 }
 
@@ -89,6 +116,16 @@ void makePsdCholesky(matrix_t& A, scalar_t minEigenvalue) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+void computeInverseMatrixUUT(const matrix_t& Am, matrix_t& AmInvUmUmT) {
+  // Am = Lm Lm^T --> inv(Am) = inv(Lm^T) inv(Lm) where Lm^T is upper triangular
+  Eigen::LLT<matrix_t> lltOfA(Am);
+  AmInvUmUmT.setIdentity(Am.rows(), Am.cols());  // for dynamic size matrices
+  lltOfA.matrixU().solveInPlace(AmInvUmUmT);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void computeConstraintProjection(const matrix_t& Dm, const matrix_t& RmInvUmUmT, matrix_t& DmDagger, matrix_t& DmDaggerTRmDmDaggerUUT,
                                  matrix_t& RmInvConstrainedUUT) {
   const auto numConstraints = Dm.rows();
@@ -115,6 +152,50 @@ void computeConstraintProjection(const matrix_t& Dm, const matrix_t& RmInvUmUmT,
 
   // Constraint input cost UUT decomposition
   RmInvConstrainedUUT.noalias() = RmInvUmUmT * QRof_RmInvUmUmTT_DmT_Qu;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::pair<VectorFunctionLinearApproximation, matrix_t> qrConstraintProjection(const VectorFunctionLinearApproximation& constraint) {
+  // Constraint Projectors are based on the QR decomposition
+  const auto numConstraints = constraint.dfdu.rows();
+  const auto numInputs = constraint.dfdu.cols();
+  const Eigen::HouseholderQR<matrix_t> QRof_DT(constraint.dfdu.transpose());
+
+  const matrix_t Q = QRof_DT.householderQ();
+  const auto Q1 = Q.leftCols(numConstraints);
+
+  const auto R = QRof_DT.matrixQR().topRows(numConstraints).triangularView<Eigen::Upper>();
+  const matrix_t pseudoInverse = R.solve(Q1.transpose());  // left pseudo-inverse of D^T
+
+  VectorFunctionLinearApproximation projectionTerms;
+  projectionTerms.dfdu = Q.rightCols(numInputs - numConstraints);
+  projectionTerms.dfdx.noalias() = -pseudoInverse.transpose() * constraint.dfdx;
+  projectionTerms.f.noalias() = -pseudoInverse.transpose() * constraint.f;
+
+  return std::make_pair(std::move(projectionTerms), std::move(pseudoInverse));
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::pair<VectorFunctionLinearApproximation, matrix_t> luConstraintProjection(const VectorFunctionLinearApproximation& constraint,
+                                                                              bool extractPseudoInverse) {
+  // Constraint Projectors are based on the LU decomposition
+  const Eigen::FullPivLU<matrix_t> lu(constraint.dfdu);
+
+  VectorFunctionLinearApproximation projectionTerms;
+  projectionTerms.dfdu = lu.kernel();
+  projectionTerms.dfdx.noalias() = -lu.solve(constraint.dfdx);
+  projectionTerms.f.noalias() = -lu.solve(constraint.f);
+
+  matrix_t pseudoInverse;
+  if (extractPseudoInverse) {
+    pseudoInverse = lu.solve(matrix_t::Identity(constraint.f.size(), constraint.f.size())).transpose();  // left pseudo-inverse of D^T
+  }
+
+  return std::make_pair(std::move(projectionTerms), std::move(pseudoInverse));
 }
 
 // Explicit instantiations for dynamic sized matrices

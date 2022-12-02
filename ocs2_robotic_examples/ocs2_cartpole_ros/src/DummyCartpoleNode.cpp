@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
   // Robot interface
   const std::string taskFile = ros::package::getPath("ocs2_cartpole") + "/config/" + taskFileFolderName + "/task.info";
   const std::string libFolder = ros::package::getPath("ocs2_cartpole") + "/auto_generated";
-  ocs2::cartpole::CartPoleInterface cartPoleInterface(taskFile, libFolder);
+  ocs2::cartpole::CartPoleInterface cartPoleInterface(taskFile, libFolder, false /*verbose*/);
 
   // MRT
   ocs2::MRT_ROS_Interface mrt(robotName);

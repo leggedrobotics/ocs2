@@ -60,7 +60,6 @@ class BVPEquations : public OdeBase<STATE_DIM * STATE_DIM + STATE_DIM> {
   using full_ode_vector_t = Eigen::Matrix<scalar_t, Full_ODE_VECTOR_DIM, 1>;
   using full_ode_vector_array_t = std::vector<full_ode_vector_t, Eigen::aligned_allocator<full_ode_vector_t> >;
 
-  using eigen_scalar_t = Eigen::Matrix<scalar_t, 1, 1>;
   using state_vector_t = Eigen::Matrix<scalar_t, STATE_DIM, 1>;
   using input_vector_t = Eigen::Matrix<scalar_t, INPUT_DIM, 1>;
   using state_state_matrix_t = Eigen::Matrix<scalar_t, STATE_DIM, STATE_DIM>;
@@ -69,7 +68,6 @@ class BVPEquations : public OdeBase<STATE_DIM * STATE_DIM + STATE_DIM> {
   using state_input_matrix_t = Eigen::Matrix<scalar_t, STATE_DIM, INPUT_DIM>;
 
   using scalar_array_t = std::vector<scalar_t>;
-  using eigen_scalar_array_t = std::vector<eigen_scalar_t, Eigen::aligned_allocator<eigen_scalar_t> >;
   using state_vector_array_t = std::vector<state_vector_t, Eigen::aligned_allocator<state_vector_t> >;
   using input_vector_array_t = std::vector<input_vector_t, Eigen::aligned_allocator<input_vector_t> >;
   using state_state_matrix_array_t = std::vector<state_state_matrix_t, Eigen::aligned_allocator<state_state_matrix_t> >;

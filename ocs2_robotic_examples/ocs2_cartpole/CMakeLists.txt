@@ -79,7 +79,7 @@ if(cmake_clang_tools_FOUND)
   message(STATUS "Running clang tooling.")
   add_clang_tooling(
     TARGETS ${PROJECT_NAME}
-    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_EXCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/generated
     CF_WERROR
@@ -102,4 +102,27 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 install(DIRECTORY config
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
+#############
+## Testing ##
+#############
+## Info ==============================
+## to run tests, cd package folder and run
+## $ catkin build -DCMAKE_BUILD_TYPE=RelWithDebInfo --this
+## $ catkin run_tests --no-deps --this
+## to see the summary of unit test results run
+## $ catkin_test_results ../../../build/ocs2_cartpole
+
+catkin_add_gtest(test_cartpole
+  test/testCartpole.cpp
+)
+target_include_directories(test_cartpole PRIVATE
+  ${PROJECT_BINARY_DIR}/include
+)
+target_link_libraries(test_cartpole
+  gtest_main
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
 )

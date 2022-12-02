@@ -64,19 +64,19 @@ LeggedRobotMpcnetInterface::LeggedRobotMpcnetInterface(size_t nDataGenerationThr
   mpcnetDefinitionPtrs.reserve(nDataGenerationThreads + nPolicyEvaluationThreads);
   referenceManagerPtrs.reserve(nDataGenerationThreads + nPolicyEvaluationThreads);
   for (int i = 0; i < (nDataGenerationThreads + nPolicyEvaluationThreads); i++) {
-    leggedRobotInterfacePtrs_.push_back(std::unique_ptr<LeggedRobotInterface>(new LeggedRobotInterface(taskFile, urdfFile, referenceFile)));
-    std::shared_ptr<ocs2::mpcnet::MpcnetDefinitionBase> mpcnetDefinitionPtr(new LeggedRobotMpcnetDefinition(*leggedRobotInterfacePtrs_[i]));
+    leggedRobotInterfacePtrs_.push_back(std::make_unique<LeggedRobotInterface>(taskFile, urdfFile, referenceFile));
+    auto mpcnetDefinitionPtr = std::make_shared<LeggedRobotMpcnetDefinition>(*leggedRobotInterfacePtrs_[i]);
     mpcPtrs.push_back(getMpc(*leggedRobotInterfacePtrs_[i]));
     mpcnetPtrs.push_back(std::unique_ptr<ocs2::mpcnet::MpcnetControllerBase>(new ocs2::mpcnet::MpcnetOnnxController(
         mpcnetDefinitionPtr, leggedRobotInterfacePtrs_[i]->getReferenceManagerPtr(), onnxEnvironmentPtr)));
     if (raisim) {
       RaisimRolloutSettings raisimRolloutSettings(raisimFile, "rollout");
       raisimRolloutSettings.portNumber_ += i;
-      leggedRobotRaisimConversionsPtrs_.push_back(std::unique_ptr<LeggedRobotRaisimConversions>(new LeggedRobotRaisimConversions(
+      leggedRobotRaisimConversionsPtrs_.push_back(std::make_unique<LeggedRobotRaisimConversions>(
           leggedRobotInterfacePtrs_[i]->getPinocchioInterface(), leggedRobotInterfacePtrs_[i]->getCentroidalModelInfo(),
-          leggedRobotInterfacePtrs_[i]->getInitialState())));
+          leggedRobotInterfacePtrs_[i]->getInitialState()));
       leggedRobotRaisimConversionsPtrs_[i]->loadSettings(raisimFile, "rollout", true);
-      rolloutPtrs.push_back(std::unique_ptr<RolloutBase>(new RaisimRollout(
+      rolloutPtrs.push_back(std::make_unique<RaisimRollout>(
           urdfFile, resourcePath,
           [&, i](const vector_t& state, const vector_t& input) {
             return leggedRobotRaisimConversionsPtrs_[i]->stateToRaisimGenCoordGenVel(state, input);
@@ -90,7 +90,7 @@ LeggedRobotMpcnetInterface::LeggedRobotMpcnetInterface(size_t nDataGenerationThr
           nullptr, raisimRolloutSettings,
           [&, i](double time, const vector_t& input, const vector_t& state, const Eigen::VectorXd& q, const Eigen::VectorXd& dq) {
             return leggedRobotRaisimConversionsPtrs_[i]->inputToRaisimPdTargets(time, input, state, q, dq);
-          })));
+          }));
       if (raisimRolloutSettings.generateTerrain_) {
         raisim::TerrainProperties terrainProperties;
         terrainProperties.zScale = raisimRolloutSettings.terrainRoughness_;
@@ -132,9 +132,9 @@ std::unique_ptr<MPC_BASE> LeggedRobotMpcnetInterface::getMpc(LeggedRobotInterfac
     return settings;
   }();
   // create one MPC instance
-  std::unique_ptr<MPC_BASE> mpcPtr(new GaussNewtonDDP_MPC(mpcSettings, ddpSettings, leggedRobotInterface.getRollout(),
-                                                          leggedRobotInterface.getOptimalControlProblem(),
-                                                          leggedRobotInterface.getInitializer()));
+  auto mpcPtr =
+      std::make_unique<GaussNewtonDDP_MPC>(mpcSettings, ddpSettings, leggedRobotInterface.getRollout(),
+                                           leggedRobotInterface.getOptimalControlProblem(), leggedRobotInterface.getInitializer());
   mpcPtr->getSolverPtr()->setReferenceManager(leggedRobotInterface.getReferenceManagerPtr());
   return mpcPtr;
 }

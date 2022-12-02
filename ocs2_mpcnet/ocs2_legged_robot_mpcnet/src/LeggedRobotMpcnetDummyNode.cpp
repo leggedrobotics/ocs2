@@ -79,9 +79,9 @@ int main(int argc, char** argv) {
 
   // policy (MPC-Net controller)
   auto onnxEnvironmentPtr = ocs2::mpcnet::createOnnxEnvironment();
-  std::shared_ptr<ocs2::mpcnet::MpcnetDefinitionBase> mpcnetDefinitionPtr(new LeggedRobotMpcnetDefinition(leggedRobotInterface));
-  std::unique_ptr<ocs2::mpcnet::MpcnetControllerBase> mpcnetControllerPtr(
-      new ocs2::mpcnet::MpcnetOnnxController(mpcnetDefinitionPtr, rosReferenceManagerPtr, onnxEnvironmentPtr));
+  auto mpcnetDefinitionPtr = std::make_shared<LeggedRobotMpcnetDefinition>(leggedRobotInterface);
+  auto mpcnetControllerPtr =
+      std::make_unique<ocs2::mpcnet::MpcnetOnnxController>(mpcnetDefinitionPtr, rosReferenceManagerPtr, onnxEnvironmentPtr);
   mpcnetControllerPtr->loadPolicyModel(policyFile);
 
   // rollout
@@ -121,8 +121,7 @@ int main(int argc, char** argv) {
   }
 
   // observer
-  std::shared_ptr<ocs2::mpcnet::MpcnetDummyObserverRos> mpcnetDummyObserverRosPtr(
-      new ocs2::mpcnet::MpcnetDummyObserverRos(nodeHandle, robotName));
+  auto mpcnetDummyObserverRosPtr = std::make_shared<ocs2::mpcnet::MpcnetDummyObserverRos>(nodeHandle, robotName);
 
   // visualization
   CentroidalModelPinocchioMapping pinocchioMapping(leggedRobotInterface.getCentroidalModelInfo());

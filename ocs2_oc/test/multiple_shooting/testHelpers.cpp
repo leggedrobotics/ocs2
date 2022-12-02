@@ -50,7 +50,7 @@ TEST(testMultipleShootingHelpers, testProjectionMultiplierCoefficients) {
   const auto pseudoInverse = std::move(result.second);
 
   multiple_shooting::ProjectionMultiplierCoefficients projectionMultiplierCoefficients;
-  projectionMultiplierCoefficients.extractProjectionMultiplierCoefficients(dynamics, cost, projection, pseudoInverse);
+  projectionMultiplierCoefficients.compute(dynamics, cost, projection, pseudoInverse);
 
   const matrix_t dfdx = -pseudoInverse * (cost.dfdux + cost.dfduu * projection.dfdx);
   const matrix_t dfdu = -pseudoInverse * (cost.dfduu * projection.dfdu);

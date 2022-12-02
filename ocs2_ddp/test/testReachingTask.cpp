@@ -186,6 +186,8 @@ INSTANTIATE_TEST_CASE_P(FinalDoubleIntegratorReachingTaskCase, FinalDoubleIntegr
                             return std::string("QuadraticPenalty");
                           } else if (info.param == DoubleIntegratorReachingTask::PenaltyType::SmoothAbsolutePenalty) {
                             return std::string("SmoothAbsolutePenalty");
+                          } else {
+                            throw std::runtime_error("Undefined PenaltyTyp!");
                           }
                         });
 

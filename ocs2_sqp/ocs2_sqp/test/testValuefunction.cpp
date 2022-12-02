@@ -44,7 +44,7 @@ TEST(test_valuefunction, linear_quadratic_problem) {
   constexpr int Nsample = 10;
   constexpr ocs2::scalar_t tol = 1e-9;
   const ocs2::scalar_t startTime = 0.0;
-  const ocs2::scalar_t eventTime = 1.0/3.0;
+  const ocs2::scalar_t eventTime = 1.0 / 3.0;
   const ocs2::scalar_t finalTime = 1.0;
 
   ocs2::OptimalControlProblem problem;
@@ -67,7 +67,7 @@ TEST(test_valuefunction, linear_quadratic_problem) {
   problem.targetTrajectoriesPtr = &targetTrajectories;
 
   // Constraint
-  problem.equalityConstraintPtr->add("constraint",  ocs2::getOcs2Constraints(ocs2::getRandomConstraints(n, m, nc)));
+  problem.equalityConstraintPtr->add("constraint", ocs2::getOcs2Constraints(ocs2::getRandomConstraints(n, m, nc)));
 
   ocs2::DefaultInitializer zeroInitializer(m);
 
@@ -90,7 +90,7 @@ TEST(test_valuefunction, linear_quadratic_problem) {
   const ocs2::vector_t zeroState = ocs2::vector_t::Random(n);
   solver.reset();
   solver.run(startTime, zeroState, finalTime);
-  const auto costToGo = solver.getValueFunction(startTime,  zeroState);
+  const auto costToGo = solver.getValueFunction(startTime, zeroState);
   const ocs2::scalar_t zeroCost = solver.getPerformanceIndeces().cost;
 
   // Solve for random states and check consistency with value function

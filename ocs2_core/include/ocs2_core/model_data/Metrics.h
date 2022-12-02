@@ -71,6 +71,10 @@ struct MetricsCollection {
   vector_t stateEqConstraint;
   vector_t stateInputEqConstraint;
 
+  // Inequality constraints
+  vector_t stateIneqConstraint;
+  vector_t stateInputIneqConstraint;
+
   // Lagrangians
   std::vector<LagrangianMetrics> stateEqLagrangian;
   std::vector<LagrangianMetrics> stateIneqLagrangian;
@@ -84,6 +88,9 @@ struct MetricsCollection {
     // Equality constraints
     stateEqConstraint.swap(other.stateEqConstraint);
     stateInputEqConstraint.swap(other.stateInputEqConstraint);
+    // Inequality constraints
+    stateIneqConstraint.swap(other.stateIneqConstraint);
+    stateInputIneqConstraint.swap(other.stateInputIneqConstraint);
     // Lagrangians
     stateEqLagrangian.swap(other.stateEqLagrangian);
     stateIneqLagrangian.swap(other.stateIneqLagrangian);
@@ -98,6 +105,9 @@ struct MetricsCollection {
     // Equality constraints
     stateEqConstraint = vector_t();
     stateInputEqConstraint = vector_t();
+    // Inequality constraints
+    stateIneqConstraint = vector_t();
+    stateInputIneqConstraint = vector_t();
     // Lagrangians
     stateEqLagrangian.clear();
     stateIneqLagrangian.clear();

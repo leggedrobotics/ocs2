@@ -36,7 +36,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 TEST(test_projection, testProjectionQR) {
   const auto constraint = ocs2::getRandomConstraints(30, 20, 10);
 
-  const auto projection = ocs2::qrConstraintProjection(constraint);
+  auto result = ocs2::qrConstraintProjection(constraint);
+  const auto projection = std::move(result.first);
+  const auto pseudoInverse = std::move(result.second);
 
   // range of Pu is in null-space of D
   ASSERT_TRUE((constraint.dfdu * projection.dfdu).isZero());
@@ -46,12 +48,23 @@ TEST(test_projection, testProjectionQR) {
 
   // D * Pe cancels the e term
   ASSERT_TRUE((constraint.f + constraint.dfdu * projection.f).isZero());
+
+  ASSERT_EQ(pseudoInverse.rows(), constraint.dfdu.rows());
+  ASSERT_EQ(pseudoInverse.cols(), constraint.dfdu.cols());
+
+  ASSERT_TRUE((pseudoInverse * constraint.dfdu.transpose()).isIdentity());
+  ASSERT_TRUE((pseudoInverse.transpose() * constraint.dfdx).isApprox(-projection.dfdx));
+  ASSERT_TRUE((pseudoInverse.transpose() * constraint.f).isApprox(-projection.f));
 }
 
 TEST(test_projection, testProjectionLU) {
   const auto constraint = ocs2::getRandomConstraints(30, 20, 10);
 
-  const auto projection = ocs2::luConstraintProjection(constraint);
+  auto result = ocs2::luConstraintProjection(constraint);
+  ASSERT_EQ(result.second.rows(), 0);
+  ASSERT_EQ(result.second.cols(), 0);
+
+  const auto projection = std::move(result.first);
 
   // range of Pu is in null-space of D
   ASSERT_TRUE((constraint.dfdu * projection.dfdu).isZero());
@@ -61,4 +74,44 @@ TEST(test_projection, testProjectionLU) {
 
   // D * Pe cancels the e term
   ASSERT_TRUE((constraint.f + constraint.dfdu * projection.f).isZero());
+
+  auto resultWithPseudoInverse = ocs2::luConstraintProjection(constraint, true);
+  const auto projectionWithPseudoInverse = std::move(resultWithPseudoInverse.first);
+  ASSERT_TRUE(projection.f.isApprox(projectionWithPseudoInverse.f));
+  ASSERT_TRUE(projection.dfdx.isApprox(projectionWithPseudoInverse.dfdx));
+  ASSERT_TRUE(projection.dfdu.isApprox(projectionWithPseudoInverse.dfdu));
+
+  const auto pseudoInverse = std::move(resultWithPseudoInverse.second);
+  ASSERT_EQ(pseudoInverse.rows(), constraint.dfdu.rows());
+  ASSERT_EQ(pseudoInverse.cols(), constraint.dfdu.cols());
+
+  ASSERT_TRUE((pseudoInverse * constraint.dfdu.transpose()).isIdentity());
+  ASSERT_TRUE((pseudoInverse.transpose() * constraint.dfdx).isApprox(-projection.dfdx));
+  ASSERT_TRUE((pseudoInverse.transpose() * constraint.f).isApprox(-projection.f));
+}
+
+TEST(test_projection, testProjectionMultiplierCoefficients) {
+  const size_t stateDim = 30;
+  const size_t inputDim = 20;
+  const size_t constraintDim = 10;
+
+  const auto cost = ocs2::getRandomCost(stateDim, inputDim);
+  const auto dynamics = ocs2::getRandomDynamics(stateDim, inputDim);
+  const auto constraint = ocs2::getRandomConstraints(stateDim, inputDim, constraintDim);
+
+  auto result = ocs2::qrConstraintProjection(constraint);
+  const auto projection = std::move(result.first);
+  const auto pseudoInverse = std::move(result.second);
+
+  const auto projectionMultiplierCoefficients = extractProjectionMultiplierCoefficients(dynamics, cost, projection, pseudoInverse);
+
+  const ocs2::matrix_t dfdx = -pseudoInverse * (cost.dfdux + cost.dfduu * projection.dfdx);
+  const ocs2::matrix_t dfdu = -pseudoInverse * (cost.dfduu * projection.dfdu);
+  const ocs2::matrix_t dfdcostate = -pseudoInverse * dynamics.dfdu.transpose();
+  const ocs2::vector_t f = -pseudoInverse * (cost.dfdu + cost.dfduu * projection.f);
+
+  ASSERT_TRUE(projectionMultiplierCoefficients.dfdx.isApprox(dfdx));
+  ASSERT_TRUE(projectionMultiplierCoefficients.dfdu.isApprox(dfdu));
+  ASSERT_TRUE(projectionMultiplierCoefficients.dfdcostate.isApprox(dfdcostate));
+  ASSERT_TRUE(projectionMultiplierCoefficients.f.isApprox(f));
 }

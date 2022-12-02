@@ -30,57 +30,42 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <array>
-#include <utility>
 
 #include <ocs2_core/Types.h>
 
 namespace ocs2 {
 namespace bilinear_interpolation {
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
+/**
+ * Compute the value of a function at a queried position using bi-linear interpolation on a 2D-grid.
+ *
+ * @param resolution The resolution of the grid.
+ * @param referenceCorner The reference position on the 2-D grid closest to the point.
+ * @param cornerValues The values around the reference corner, in the order: (0, 0), (1, 0), (0, 1), (1, 1).
+ * @param position The queried position.
+ * @tparam Scalar : The Scalar type.
+ * @return Scalar : The interpolated function's value at the queried position.
+ */
 template <typename Scalar>
 Scalar getValue(Scalar resolution, const Eigen::Matrix<Scalar, 2, 1>& referenceCorner, const std::array<Scalar, 4>& cornerValues,
-                const Eigen::Matrix<Scalar, 2, 1>& position) {
-  // auxiliary variables
-  const Scalar r_inv = 1.0 / resolution;
-  std::array<Scalar, 4> v;
-  v[0] = (position.x() - referenceCorner.x()) * r_inv;
-  v[1] = (position.y() - referenceCorner.y()) * r_inv;
-  v[2] = 1 - v[1];
-  v[3] = 1 - v[0];
+                const Eigen::Matrix<Scalar, 2, 1>& position);
 
-  return cornerValues[1] * v[0] * v[2] + cornerValues[0] * v[3] * v[2] + cornerValues[2] * v[3] * v[1] + cornerValues[3] * v[0] * v[1];
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
+/**
+ * Computes a first-order approximation of the function at a queried position using bi-linear interpolation on a 2D-grid.
+ *
+ * @param resolution The resolution of the grid.
+ * @param referenceCorner The reference position on the 2-D grid closest to the point.
+ * @param cornerValues The values around the reference corner, in the order: (0, 0), (1, 0), (0, 1), (1, 1).
+ * @param position The queried position.
+ * @tparam Scalar : The Scalar type.
+ * @return std::pair<Scalar, Eigen::Matrix<Scalar, 2, 1>> : A tuple containing the value and jacobian.
+ */
 template <typename Scalar>
 std::pair<Scalar, Eigen::Matrix<Scalar, 2, 1>> getLinearApproximation(Scalar resolution, const Eigen::Matrix<Scalar, 2, 1>& referenceCorner,
                                                                       const std::array<Scalar, 4>& cornerValues,
-                                                                      const Eigen::Matrix<Scalar, 2, 1>& position) {
-  // auxiliary variables
-  const Scalar r_inv = 1.0 / resolution;
-  std::array<Scalar, 6> v;
-  v[0] = (position.y() - referenceCorner.y()) * r_inv;
-  v[1] = (position.x() - referenceCorner.x()) * r_inv;
-  v[2] = 1.0 - v[0];
-  v[3] = 1.0 - v[1];
-  v[4] = cornerValues[2] * v[3];
-  v[5] = cornerValues[3] * v[1];
-  v[3] = cornerValues[0] * v[3];
-  v[1] = cornerValues[1] * v[1];
-
-  const Scalar value = v[1] * v[2] + v[3] * v[2] + v[4] * v[0] + v[5] * v[0];
-
-  Eigen::Matrix<Scalar, 2, 1> gradient;
-  gradient.x() = (v[2] * (cornerValues[1] - cornerValues[0]) + v[0] * (cornerValues[3] - cornerValues[2])) * r_inv;
-  gradient.y() = (v[4] + v[5] - (v[3] + v[1])) * r_inv;
-
-  return {value, gradient};
-}
+                                                                      const Eigen::Matrix<Scalar, 2, 1>& position);
 
 }  // namespace bilinear_interpolation
 }  // namespace ocs2
+
+#include "implementation/BilinearInterpolation.h"

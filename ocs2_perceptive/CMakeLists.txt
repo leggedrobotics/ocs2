@@ -105,3 +105,12 @@ target_link_libraries(test_bilinear_interpolation
   gtest_main
 )
 
+catkin_add_gtest(test_trilinear_interpolation
+  test/interpolation/testTrilinearInterpolation.cpp
+)
+target_link_libraries(test_trilinear_interpolation
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  gtest_main
+)

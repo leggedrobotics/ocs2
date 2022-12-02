@@ -219,7 +219,7 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematics::g
     pinocchio::getFrameJacobian(model, data, frameId, rf, J);
     const matrix_t Jqdist =
         (quaternionDistanceJacobian(q, referenceOrientations[i]) * angularVelocityToQuaternionTimeDerivative(q)) * J.bottomRows<3>();
-    std::tie(err.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, Jqdist, matrix_t::Zero(0, model.nv));
+    std::tie(err.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, Jqdist, matrix_t::Zero(3, model.nv));
     errors.emplace_back(std::move(err));
   }
   return errors;

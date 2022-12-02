@@ -57,7 +57,7 @@ class StateInputConstraintCppAd : public StateInputConstraint {
                   const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true, bool verbose = true);
 
   /** Get the parameter vector */
-  virtual vector_t getParameters(scalar_t time) const { return vector_t(0); };
+  virtual vector_t getParameters(scalar_t time, const PreComputation& /* preComputation */) const { return vector_t(0); };
 
   /** Constraint evaluation */
   vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation& /* preComputation */) const override;

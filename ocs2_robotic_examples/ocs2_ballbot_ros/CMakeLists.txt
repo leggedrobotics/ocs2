@@ -42,6 +42,8 @@ catkin_package(
     ${EIGEN3_INCLUDE_DIRS}
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
+  LIBRARIES
+    ${PROJECT_NAME}
   DEPENDS
     Boost
 )
@@ -57,27 +59,40 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-# Mpc node
-add_executable(ballbot_mpc
-  src/BallbotMpcNode.cpp
+# main library
+add_library(${PROJECT_NAME}
+  src/BallbotDummyVisualization.cpp
 )
-add_dependencies(ballbot_mpc
+add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
 )
-target_link_libraries(ballbot_mpc
+target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
-target_compile_options(ballbot_mpc PRIVATE ${OCS2_CXX_FLAGS})
+target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
+
+# Mpc node
+add_executable(ballbot_ddp
+  src/BallbotDdpMpcNode.cpp
+)
+add_dependencies(ballbot_ddp
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(ballbot_ddp
+  ${catkin_LIBRARIES}
+)
+target_compile_options(ballbot_ddp PRIVATE ${OCS2_CXX_FLAGS})
 
 # Dummy node
 add_executable(ballbot_dummy_test
   src/DummyBallbotNode.cpp
-  src/BallbotDummyVisualization.cpp
 )
 add_dependencies(ballbot_dummy_test
+  ${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(ballbot_dummy_test
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 target_compile_options(ballbot_dummy_test PRIVATE ${OCS2_CXX_FLAGS})
@@ -110,7 +125,7 @@ target_compile_options(ballbot_mpc_mrt  PRIVATE ${OCS2_CXX_FLAGS})
 
 ## SQP node for ballbot
 add_executable(ballbot_sqp
-  src/MultipleShootingBallbotNode.cpp
+  src/BallbotSqpMpcNode.cpp
 )
 add_dependencies(ballbot_sqp
   ${catkin_EXPORTED_TARGETS}
@@ -129,7 +144,9 @@ if(cmake_clang_tools_FOUND)
   message(STATUS "Run clang tooling for target ocs2_ballbot")
   add_clang_tooling(
     TARGETS
-        ballbot_mpc
+        ${PROJECT_NAME}
+        ballbot_ddp
+        ballbot_sqp
         ballbot_dummy_test
         ballbot_target
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -142,10 +159,16 @@ endif(cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
+install(TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
-install(TARGETS ballbot_mpc ballbot_dummy_test ballbot_target ballbot_sqp
+install(TARGETS ballbot_ddp ballbot_dummy_test ballbot_target ballbot_sqp
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 install(DIRECTORY launch rviz

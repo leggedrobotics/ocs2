@@ -87,9 +87,7 @@ class MobileManipulatorInterface final : public RobotInterface {
   std::unique_ptr<StateCost> getSelfCollisionConstraint(const PinocchioInterface& pinocchioInterface, const std::string& taskFile,
                                                         const std::string& urdfFile, const std::string& prefix, bool useCaching,
                                                         const std::string& libraryFolder, bool recompileLibraries);
-  std::unique_ptr<StateCost> getJointPositionLimitConstraint(const PinocchioInterface& pinocchioInterface, const std::string& taskFile,
-                                                             const std::string& prefix);
-  std::unique_ptr<StateInputCost> getJointVelocityLimitConstraint(const std::string& taskFile, const std::string& prefix);
+  std::unique_ptr<StateInputCost> getJointLimitSoftConstraint(const PinocchioInterface& pinocchioInterface, const std::string& taskFile);
 
   ddp::Settings ddpSettings_;
   mpc::Settings mpcSettings_;

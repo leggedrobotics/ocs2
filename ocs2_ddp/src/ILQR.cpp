@@ -76,12 +76,13 @@ ILQR::ILQR(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalC
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ILQR::approximateIntermediateLQ(PrimalDataContainer& primalData) {
+void ILQR::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalDataContainer& primalData) {
   // create alias
   const auto& timeTrajectory = primalData.primalSolution.timeTrajectory_;
   const auto& stateTrajectory = primalData.primalSolution.stateTrajectory_;
   const auto& inputTrajectory = primalData.primalSolution.inputTrajectory_;
   const auto& postEventIndices = primalData.primalSolution.postEventIndices_;
+  const auto& multiplierTrajectory = dualSolution.intermediates;
   auto& modelDataTrajectory = primalData.modelDataTrajectory;
 
   modelDataTrajectory.clear();
@@ -99,7 +100,7 @@ void ILQR::approximateIntermediateLQ(PrimalDataContainer& primalData) {
     while ((timeIndex = nextTimeIndex_++) < timeTrajectory.size()) {
       // approximate continuous LQ for the given time index
       ocs2::approximateIntermediateLQ(optimalControlProblemStock_[taskId], timeTrajectory[timeIndex], stateTrajectory[timeIndex],
-                                      inputTrajectory[timeIndex], continuousTimeModelData);
+                                      inputTrajectory[timeIndex], multiplierTrajectory[timeIndex], continuousTimeModelData);
 
       // checking the numerical properties
       if (settings().checkNumericalStability_) {
@@ -187,12 +188,12 @@ scalar_t ILQR::solveSequentialRiccatiEquations(const ScalarFunctionQuadraticAppr
   projectedLvTrajectoryStock_.resize(N);
   projectedKmTrajectoryStock_.resize(N);
 
-  dualData_.riccatiModificationTrajectory.resize(N);
-  dualData_.projectedModelDataTrajectory.resize(N);
+  nominalDualData_.riccatiModificationTrajectory.resize(N);
+  nominalDualData_.projectedModelDataTrajectory.resize(N);
 
   const auto& finalModelData = nominalPrimalData_.modelDataTrajectory.back();
-  auto& finalRiccatiModification = dualData_.riccatiModificationTrajectory.back();
-  auto& finalProjectedModelData = dualData_.projectedModelDataTrajectory.back();
+  auto& finalRiccatiModification = nominalDualData_.riccatiModificationTrajectory.back();
+  auto& finalProjectedModelData = nominalDualData_.projectedModelDataTrajectory.back();
   auto& finalProjectedLvFinal = projectedLvTrajectoryStock_.back();
   auto& finalProjectedKmFinal = projectedKmTrajectoryStock_.back();
 
@@ -244,20 +245,20 @@ void ILQR::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>&
   while (curIndex >= stopIndex) {
     auto& curProjectedLv = projectedLvTrajectoryStock_[curIndex];
     auto& curProjectedKm = projectedKmTrajectoryStock_[curIndex];
-    auto& curProjectedModelData = dualData_.projectedModelDataTrajectory[curIndex];
-    auto& curRiccatiModification = dualData_.riccatiModificationTrajectory[curIndex];
+    auto& curProjectedModelData = nominalDualData_.projectedModelDataTrajectory[curIndex];
+    auto& curRiccatiModification = nominalDualData_.riccatiModificationTrajectory[curIndex];
     const auto& curModelData = nominalPrimalData_.modelDataTrajectory[curIndex];
 
-    auto& curSm = dualData_.valueFunctionTrajectory[curIndex].dfdxx;
-    auto& curSv = dualData_.valueFunctionTrajectory[curIndex].dfdx;
-    auto& curs = dualData_.valueFunctionTrajectory[curIndex].f;
+    auto& curSm = nominalDualData_.valueFunctionTrajectory[curIndex].dfdxx;
+    auto& curSv = nominalDualData_.valueFunctionTrajectory[curIndex].dfdx;
+    auto& curs = nominalDualData_.valueFunctionTrajectory[curIndex].f;
 
     computeProjectionAndRiccatiModification(curModelData, valueFunctionNext->dfdxx, curProjectedModelData, curRiccatiModification);
 
     riccatiEquationsPtrStock_[workerIndex]->computeMap(curProjectedModelData, curRiccatiModification, valueFunctionNext->dfdxx,
                                                        valueFunctionNext->dfdx, valueFunctionNext->f, curProjectedKm, curProjectedLv, curSm,
                                                        curSv, curs);
-    valueFunctionNext = &(dualData_.valueFunctionTrajectory[curIndex]);
+    valueFunctionNext = &(nominalDualData_.valueFunctionTrajectory[curIndex]);
 
     if (std::distance(firstEventItr, nextEventItr) >= 0 && curIndex == *nextEventItr) {
       // move to pre-event index
@@ -267,11 +268,11 @@ void ILQR::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>&
       std::tie(finalValueTemp.dfdxx, finalValueTemp.dfdx, finalValueTemp.f) =
           riccatiTransversalityConditions(nominalPrimalData_.modelDataEventTimes[index], curSm, curSv, curs);
 
-      dualData_.valueFunctionTrajectory[curIndex] = finalValueTemp;
+      nominalDualData_.valueFunctionTrajectory[curIndex] = finalValueTemp;
 
       const auto& finalModelData = nominalPrimalData_.modelDataTrajectory[curIndex];
-      auto& finalRiccatiModification = dualData_.riccatiModificationTrajectory[curIndex];
-      auto& finalProjectedModelData = dualData_.projectedModelDataTrajectory[curIndex];
+      auto& finalRiccatiModification = nominalDualData_.riccatiModificationTrajectory[curIndex];
+      auto& finalProjectedModelData = nominalDualData_.projectedModelDataTrajectory[curIndex];
       auto& finalProjectedLvFinal = projectedLvTrajectoryStock_[curIndex];
       auto& finalProjectedKmFinal = projectedKmTrajectoryStock_[curIndex];
 
@@ -281,12 +282,12 @@ void ILQR::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>&
       // projected feedforward
       finalProjectedLvFinal = -finalProjectedModelData.cost.dfdu - finalRiccatiModification.deltaGv_;
       finalProjectedLvFinal.noalias() -=
-          finalProjectedModelData.dynamics.dfdu.transpose() * dualData_.valueFunctionTrajectory[curIndex].dfdx;
+          finalProjectedModelData.dynamics.dfdu.transpose() * nominalDualData_.valueFunctionTrajectory[curIndex].dfdx;
 
       // projected feedback
       finalProjectedKmFinal = -finalProjectedModelData.cost.dfdux - finalRiccatiModification.deltaGm_;
       finalProjectedKmFinal.noalias() -=
-          finalProjectedModelData.dynamics.dfdu.transpose() * dualData_.valueFunctionTrajectory[curIndex].dfdxx;
+          finalProjectedModelData.dynamics.dfdu.transpose() * nominalDualData_.valueFunctionTrajectory[curIndex].dfdxx;
 
       valueFunctionNext = &finalValueTemp;
 

@@ -59,7 +59,7 @@ The cartpole example is a classic control problem where a pole is
 attached through an unactuated joint to a cart. The car moves along a
 frictionless track. The goal is to swing up and balance the pendulum
 starting from the downright position by accelerating a decelerating the
-cart along the track. 
+cart along the track while respecting the input limits.
 
 .. code-block:: bash
 

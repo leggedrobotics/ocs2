@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_oc/synchronized_module/ReferenceManager.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
-#include <ocs2_sqp/MultipleShootingSettings.h>
+#include <ocs2_sqp/SqpSettings.h>
 
 // Ballbot
 #include "ocs2_ballbot/dynamics/BallbotSystemDynamics.h"
@@ -69,7 +69,7 @@ class BallbotInterface final : public RobotInterface {
 
   const vector_t& getInitialState() { return initialState_; }
 
-  multiple_shooting::Settings& sqpSettings() { return sqpSettings_; }
+  sqp::Settings& sqpSettings() { return sqpSettings_; }
 
   ddp::Settings& ddpSettings() { return ddpSettings_; }
 
@@ -86,7 +86,7 @@ class BallbotInterface final : public RobotInterface {
  private:
   ddp::Settings ddpSettings_;
   mpc::Settings mpcSettings_;
-  multiple_shooting::Settings sqpSettings_;
+  sqp::Settings sqpSettings_;
 
   OptimalControlProblem problem_;
   std::shared_ptr<ReferenceManager> referenceManagerPtr_;

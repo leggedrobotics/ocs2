@@ -32,8 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/integration/SystemEventHandler.h>
 
-#include "GaussNewtonDDP.h"
-#include "riccati_equations/ContinuousTimeRiccatiEquations.h"
+#include "ocs2_ddp/GaussNewtonDDP.h"
+#include "ocs2_ddp/riccati_equations/ContinuousTimeRiccatiEquations.h"
 
 namespace ocs2 {
 
@@ -61,7 +61,7 @@ class SLQ final : public GaussNewtonDDP {
  protected:
   matrix_t computeHamiltonianHessian(const ModelData& modelData, const matrix_t& Sm) const override;
 
-  void approximateIntermediateLQ(PrimalDataContainer& primalData) override;
+  void approximateIntermediateLQ(const DualSolution& dualSolution, PrimalDataContainer& primalData) override;
 
   void calculateControllerWorker(size_t timeIndex, const PrimalDataContainer& primalData, const DualDataContainer& dualData,
                                  LinearController& dstController) override;
@@ -88,23 +88,6 @@ class SLQ final : public GaussNewtonDDP {
                                            const size_array_t& nominalEventsPastTheEndIndices, vector_t allSsFinal,
                                            scalar_array_t& SsNormalizedTime, size_array_t& SsNormalizedPostEventIndices,
                                            vector_array_t& allSsTrajectory);
-
-  /**
-   * Integrates the riccati equation and freely selects the time nodes for the value function.
-   *
-   * @param riccatiIntegrator [in] : Riccati integrator object
-   * @param riccatiEquation [in] : Riccati equation object
-   * @param nominalTimeTrajectory [in] : time trajectory produced in the forward rollout.
-   * @param nominalEventsPastTheEndIndices [in] : Indices into nominalTimeTrajectory to point to times right after event times
-   * @param allSsFinal [in] : Final value of the value function.
-   * @param SsNormalizedTime [out] : Time trajectory of the value function.
-   * @param SsNormalizedPostEventIndices [out] : Indices into SsNormalizedTime to point to times right after event times
-   * @param allSsTrajectory [out] : Value function in vector format.
-   */
-  void integrateRiccatiEquationAdaptiveTime(IntegratorBase& riccatiIntegrator, ContinuousTimeRiccatiEquations& riccatiEquation,
-                                            const scalar_array_t& nominalTimeTrajectory, const size_array_t& nominalEventsPastTheEndIndices,
-                                            vector_t allSsFinal, scalar_array_t& SsNormalizedTime,
-                                            size_array_t& SsNormalizedPostEventIndices, vector_array_t& allSsTrajectory);
 
   /****************
    *** Variables **

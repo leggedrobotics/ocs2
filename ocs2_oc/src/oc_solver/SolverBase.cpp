@@ -64,6 +64,15 @@ void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t fina
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const PrimalSolution& primalSolution) {
+  preRun(initTime, initState, finalTime);
+  runImpl(initTime, initState, finalTime, primalSolution);
+  postRun();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 PrimalSolution SolverBase::primalSolution(scalar_t finalTime) const {
   PrimalSolution primalSolution;
   getPrimalSolution(finalTime, &primalSolution);
@@ -93,10 +102,14 @@ void SolverBase::preRun(scalar_t initTime, const vector_t& initState, scalar_t f
 /******************************************************************************************************/
 /******************************************************************************************************/
 void SolverBase::postRun() {
-  if (!synchronizedModules_.empty()) {
+  if (!synchronizedModules_.empty() || !augmentedLagrangianObservers_.empty()) {
     const auto solution = primalSolution(getFinalTime());
     for (auto& module : synchronizedModules_) {
       module->postSolverRun(solution);
+    }
+    for (auto& observer : augmentedLagrangianObservers_) {
+      observer->extractTermMetrics(getOptimalControlProblem(), solution, getSolutionMetrics());
+      observer->extractTermMultipliers(getOptimalControlProblem(), getDualSolution());
     }
   }
 }

@@ -34,14 +34,11 @@ ddp
   maxNumStepsPerSecond         100000
   backwardPassIntegratorType   ODE45
 
-  inequalityConstraintMu       100.0
-  inequalityConstraintDelta    1.1
-
   preComputeRiccatiTerms       true
 
   useFeedbackPolicy            true
   
-  strategy                       LINE_SEARCH
+  strategy                     LINE_SEARCH
   lineSearch
   {
     minStepLength              0.1

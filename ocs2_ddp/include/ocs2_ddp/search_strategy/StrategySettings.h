@@ -86,17 +86,17 @@ namespace line_search {
  */
 struct Settings {
   /** Minimum step length of line-search strategy. */
-  scalar_t minStepLength_ = 0.05;
+  scalar_t minStepLength = 0.05;
   /** Maximum step length of line-search strategy. */
-  scalar_t maxStepLength_ = 1.0;
+  scalar_t maxStepLength = 1.0;
   /** Line-search strategy contraction rate. */
-  scalar_t contractionRate_ = 0.5;
+  scalar_t contractionRate = 0.5;
   /** Armijo coefficient, c defined as f(u + a*p) < f(u) + c*a dfdu.dot(p)  */
-  scalar_t armijoCoefficient_ = 1e-4;
+  scalar_t armijoCoefficient = 1e-4;
   /** The Hessian correction strategy. */
-  hessian_correction::Strategy hessianCorrectionStrategy_ = hessian_correction::Strategy::DIAGONAL_SHIFT;
+  hessian_correction::Strategy hessianCorrectionStrategy = hessian_correction::Strategy::DIAGONAL_SHIFT;
   /** The multiple used for correcting the Hessian for numerical stability of the Riccati backward pass.*/
-  scalar_t hessianCorrectionMultiple_ = numeric_traits::limitEpsilon<scalar_t>();
+  scalar_t hessianCorrectionMultiple = numeric_traits::limitEpsilon<scalar_t>();
 };  // end of Settings
 
 /**
@@ -122,13 +122,13 @@ struct Settings {
   /** Minimum pho (the ratio between actual reduction and predicted reduction) to accept the iteration's solution.
    * minAcceptedPho_ should be [0, 0.25);
    * */
-  scalar_t minAcceptedPho_ = 0.25;
+  scalar_t minAcceptedPho = 0.25;
   /** The default ratio of geometric progression for Riccati multiple. */
-  scalar_t riccatiMultipleDefaultRatio_ = 2.0;
+  scalar_t riccatiMultipleDefaultRatio = 2.0;
   /** The default scalar-factor of geometric progression for Riccati multiple. */
-  scalar_t riccatiMultipleDefaultFactor_ = 1e-6;
+  scalar_t riccatiMultipleDefaultFactor = 1e-6;
   /** Maximum number of successive rejections of the iteration's solution. */
-  size_t maxNumSuccessiveRejections_ = 5;
+  size_t maxNumSuccessiveRejections = 5;
 };  // end of Settings
 
 /**

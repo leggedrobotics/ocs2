@@ -52,7 +52,7 @@ namespace ocs2 {
 class LineSearchStrategy final : public SearchStrategyBase {
  public:
   /**
-   * constructor.
+   * Constructor.
    *
    * @param [in] baseSettings: The basic settings for the search strategy algorithms.
    * @param [in] settings: The line search settings.
@@ -66,18 +66,15 @@ class LineSearchStrategy final : public SearchStrategyBase {
                      std::vector<std::reference_wrapper<OptimalControlProblem>> optimalControlProblemRef,
                      std::function<scalar_t(const PerformanceIndex&)> meritFunc);
 
-  /**
-   * Default destructor.
-   */
   ~LineSearchStrategy() override = default;
-
   LineSearchStrategy(const LineSearchStrategy&) = delete;
   LineSearchStrategy& operator=(const LineSearchStrategy&) = delete;
 
   void reset() override {}
 
   bool run(const std::pair<scalar_t, scalar_t>& timePeriod, const vector_t& initState, const scalar_t expectedCost,
-           const LinearController& unoptimizedController, const ModeSchedule& modeSchedule, search_strategy::SolutionRef solution) override;
+           const LinearController& unoptimizedController, const DualSolution& dualSolution, const ModeSchedule& modeSchedule,
+           search_strategy::SolutionRef solution) override;
 
   std::pair<bool, std::string> checkConvergence(bool unreliableControllerIncrement, const PerformanceIndex& previousPerformanceIndex,
                                                 const PerformanceIndex& currentPerformanceIndex) const override;
@@ -92,6 +89,7 @@ class LineSearchStrategy final : public SearchStrategyBase {
     const std::pair<scalar_t, scalar_t>* timePeriodPtr;
     const vector_t* initStatePtr;
     const LinearController* unoptimizedControllerPtr;
+    const DualSolution* dualSolutionPtr;
     const ModeSchedule* modeSchedulePtr;
   };
 
@@ -112,6 +110,7 @@ class LineSearchStrategy final : public SearchStrategyBase {
 
   const line_search::Settings settings_;
   ThreadPool& threadPoolRef_;
+  std::vector<DualSolution> tempDualSolutions_;
   std::vector<search_strategy::Solution> workersSolution_;
   std::vector<std::reference_wrapper<RolloutBase>> rolloutRefStock_;
   std::vector<std::reference_wrapper<OptimalControlProblem>> optimalControlProblemRefStock_;

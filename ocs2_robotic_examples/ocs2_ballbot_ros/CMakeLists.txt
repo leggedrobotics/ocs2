@@ -42,6 +42,8 @@ catkin_package(
     ${EIGEN3_INCLUDE_DIRS}
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
+  LIBRARIES
+    ${PROJECT_NAME}
   DEPENDS
     Boost
 )
@@ -57,9 +59,21 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+# main library
+add_library(${PROJECT_NAME}
+  src/BallbotDummyVisualization.cpp
+)
+add_dependencies(${PROJECT_NAME}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
+
 # Mpc node
 add_executable(ballbot_ddp
-  src/DdpBallbotMpcNode.cpp
+  src/BallbotDdpMpcNode.cpp
 )
 add_dependencies(ballbot_ddp
   ${catkin_EXPORTED_TARGETS}
@@ -72,12 +86,13 @@ target_compile_options(ballbot_ddp PRIVATE ${OCS2_CXX_FLAGS})
 # Dummy node
 add_executable(ballbot_dummy_test
   src/DummyBallbotNode.cpp
-  src/BallbotDummyVisualization.cpp
 )
 add_dependencies(ballbot_dummy_test
+  ${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(ballbot_dummy_test
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 target_compile_options(ballbot_dummy_test PRIVATE ${OCS2_CXX_FLAGS})
@@ -110,7 +125,7 @@ target_compile_options(ballbot_mpc_mrt  PRIVATE ${OCS2_CXX_FLAGS})
 
 ## SQP node for ballbot
 add_executable(ballbot_sqp
-  src/SqpBallbotMpcNode.cpp
+  src/BallbotSqpMpcNode.cpp
 )
 add_dependencies(ballbot_sqp
   ${catkin_EXPORTED_TARGETS}
@@ -129,6 +144,7 @@ if(cmake_clang_tools_FOUND)
   message(STATUS "Run clang tooling for target ocs2_ballbot")
   add_clang_tooling(
     TARGETS
+        ${PROJECT_NAME}
         ballbot_ddp
         ballbot_sqp
         ballbot_dummy_test
@@ -142,6 +158,12 @@ endif(cmake_clang_tools_FOUND)
 #############
 ## Install ##
 #############
+
+install(TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}

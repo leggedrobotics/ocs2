@@ -60,7 +60,8 @@ Michael Spieler (ETHZ),
 Jan Carius (ETHZ), 
 Jean-Pierre Sleiman (ETHZ).
 
-**Other Developers**: 
+**Other Developers**:
+Alexander Reske,
 Mayank Mittal,
 Johannes Pankert,
 Perry Franklin,

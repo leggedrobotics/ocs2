@@ -1,0 +1,240 @@
+#
+# general
+#
+# name of the robot
+NAME: "legged_robot"
+# description of the training run
+DESCRIPTION: "description"
+# state dimension
+STATE_DIM: 24
+# input dimension
+INPUT_DIM: 24
+# target trajectories state dimension
+TARGET_STATE_DIM: 24
+# target trajectories input dimension
+TARGET_INPUT_DIM: 24
+# observation dimension
+OBSERVATION_DIM: 36
+# action dimension
+ACTION_DIM: 24
+# expert number
+EXPERT_NUM: 3
+# default state
+DEFAULT_STATE:
+  - 0.0    # normalized linear momentum x
+  - 0.0    # normalized linear momentum y
+  - 0.0    # normalized linear momentum z
+  - 0.0    # normalized angular momentum x
+  - 0.0    # normalized angular momentum y
+  - 0.0    # normalized angular momentum z
+  - 0.0    # position x
+  - 0.0    # position y
+  - 0.575  # position z
+  - 0.0    # orientation z
+  - 0.0    # orientation y
+  - 0.0    # orientation x
+  - -0.25  # joint position LF HAA
+  - 0.6    # joint position LF HFE
+  - -0.85  # joint position LF KFE
+  - -0.25  # joint position LH HAA
+  - -0.6   # joint position LH HFE
+  - 0.85   # joint position LH KFE
+  - 0.25   # joint position RF HAA
+  - 0.6    # joint position RF HFE
+  - -0.85  # joint position RF KFE
+  - 0.25   # joint position RH HAA
+  - -0.6   # joint position RH HFE
+  - 0.85   # joint position RH KFE
+# default target state
+DEFAULT_TARGET_STATE:
+  - 0.0    # normalized linear momentum x
+  - 0.0    # normalized linear momentum y
+  - 0.0    # normalized linear momentum z
+  - 0.0    # normalized angular momentum x
+  - 0.0    # normalized angular momentum y
+  - 0.0    # normalized angular momentum z
+  - 0.0    # position x
+  - 0.0    # position y
+  - 0.575  # position z
+  - 0.0    # orientation z
+  - 0.0    # orientation y
+  - 0.0    # orientation x
+  - -0.25  # joint position LF HAA
+  - 0.6    # joint position LF HFE
+  - -0.85  # joint position LF KFE
+  - -0.25  # joint position LH HAA
+  - -0.6   # joint position LH HFE
+  - 0.85   # joint position LH KFE
+  - 0.25   # joint position RF HAA
+  - 0.6    # joint position RF HFE
+  - -0.85  # joint position RF KFE
+  - 0.25   # joint position RH HAA
+  - -0.6   # joint position RH HFE
+  - 0.85   # joint position RH KFE
+#
+# loss
+#
+# epsilon to improve numerical stability of logs and denominators
+EPSILON: 1.e-8
+# whether to cheat by adding the gating loss
+CHEATING: True
+# parameter to control the relative importance of both loss types
+LAMBDA: 1.0
+# dictionary for the gating loss (assigns modes to experts responsible for the corresponding contact configuration)
+EXPERT_FOR_MODE:
+  6: 1   # trot
+  9: 2   # trot
+  15: 0  # stance
+# input cost for behavioral cloning
+R:
+  - 0.001  # contact force LF x
+  - 0.001  # contact force LF y
+  - 0.001  # contact force LF z
+  - 0.001  # contact force LH x
+  - 0.001  # contact force LH y
+  - 0.001  # contact force LH z
+  - 0.001  # contact force RF x
+  - 0.001  # contact force RF y
+  - 0.001  # contact force RF z
+  - 0.001  # contact force RH x
+  - 0.001  # contact force RH y
+  - 0.001  # contact force RH z
+  - 5.0    # joint velocity LF HAA
+  - 5.0    # joint velocity LF HFE
+  - 5.0    # joint velocity LF KFE
+  - 5.0    # joint velocity LH HAA
+  - 5.0    # joint velocity LH HFE
+  - 5.0    # joint velocity LH KFE
+  - 5.0    # joint velocity RF HAA
+  - 5.0    # joint velocity RF HFE
+  - 5.0    # joint velocity RF KFE
+  - 5.0    # joint velocity RH HAA
+  - 5.0    # joint velocity RH HFE
+  - 5.0    # joint velocity RH KFE
+#
+# memory
+#
+# capacity of the memory
+CAPACITY: 400000
+#
+# policy
+#
+# observation scaling
+OBSERVATION_SCALING:
+  - 1.0  # swing phase LF
+  - 1.0  # swing phase LH
+  - 1.0  # swing phase RF
+  - 1.0  # swing phase RH
+  - 1.0  # swing phase rate LF
+  - 1.0  # swing phase rate LH
+  - 1.0  # swing phase rate RF
+  - 1.0  # swing phase rate RH
+  - 1.0  # sinusoidal bump LF
+  - 1.0  # sinusoidal bump LH
+  - 1.0  # sinusoidal bump RF
+  - 1.0  # sinusoidal bump RH
+  - 1.0  # normalized linear momentum x
+  - 1.0  # normalized linear momentum y
+  - 1.0  # normalized linear momentum z
+  - 1.0  # normalized angular momentum x
+  - 1.0  # normalized angular momentum y
+  - 1.0  # normalized angular momentum z
+  - 1.0  # position x
+  - 1.0  # position y
+  - 1.0  # position z
+  - 1.0  # orientation z
+  - 1.0  # orientation y
+  - 1.0  # orientation x
+  - 1.0  # joint position LF HAA
+  - 1.0  # joint position LF HFE
+  - 1.0  # joint position LF KFE
+  - 1.0  # joint position LH HAA
+  - 1.0  # joint position LH HFE
+  - 1.0  # joint position LH KFE
+  - 1.0  # joint position RF HAA
+  - 1.0  # joint position RF HFE
+  - 1.0  # joint position RF KFE
+  - 1.0  # joint position RH HAA
+  - 1.0  # joint position RH HFE
+  - 1.0  # joint position RH KFE
+# action scaling
+ACTION_SCALING:
+  - 100.0  # contact force LF x
+  - 100.0  # contact force LF y
+  - 100.0  # contact force LF z
+  - 100.0  # contact force LH x
+  - 100.0  # contact force LH y
+  - 100.0  # contact force LH z
+  - 100.0  # contact force RF x
+  - 100.0  # contact force RF y
+  - 100.0  # contact force RF z
+  - 100.0  # contact force RH x
+  - 100.0  # contact force RH y
+  - 100.0  # contact force RH z
+  - 10.0   # joint velocity LF HAA
+  - 10.0   # joint velocity LF HFE
+  - 10.0   # joint velocity LF KFE
+  - 10.0   # joint velocity LH HAA
+  - 10.0   # joint velocity LH HFE
+  - 10.0   # joint velocity LH KFE
+  - 10.0   # joint velocity RF HAA
+  - 10.0   # joint velocity RF HFE
+  - 10.0   # joint velocity RF KFE
+  - 10.0   # joint velocity RH HAA
+  - 10.0   # joint velocity RH HFE
+  - 10.0   # joint velocity RH KFE
+#
+# rollout
+#
+# RaiSim or TimeTriggered rollout for data generation and policy evaluation
+RAISIM: True
+# weights defining how often a gait is chosen for rollout
+WEIGHTS_FOR_GAITS:
+  stance: 1.0
+  trot_1: 2.0
+  trot_2: 2.0
+# settings for data generation
+DATA_GENERATION_TIME_STEP: 0.0025
+DATA_GENERATION_DURATION: 4.0
+DATA_GENERATION_DATA_DECIMATION: 4
+DATA_GENERATION_THREADS: 12
+DATA_GENERATION_TASKS: 12
+DATA_GENERATION_SAMPLES: 2
+DATA_GENERATION_SAMPLING_VARIANCE:
+  - 0.05           # normalized linear momentum x
+  - 0.05           # normalized linear momentum y
+  - 0.05           # normalized linear momentum z
+  - 0.00135648942  # normalized angular momentum x: 1.62079 / 52.1348 * 2.5 / 180.0 * pi
+  - 0.00404705526  # normalized angular momentum y: 4.83559 / 52.1348 * 2.5 / 180.0 * pi
+  - 0.00395351148  # normalized angular momentum z: 4.72382 / 52.1348 * 2.5 / 180.0 * pi
+  - 0.01           # position x
+  - 0.01           # position y
+  - 0.01           # position z
+  - 0.00872664625  # orientation z: 0.5 / 180.0 * pi
+  - 0.00872664625  # orientation y: 0.5 / 180.0 * pi
+  - 0.00872664625  # orientation x: 0.5 / 180.0 * pi
+  - 0.00872664625  # joint position LF HAA: 0.5 / 180.0 * pi
+  - 0.00872664625  # joint position LF HFE: 0.5 / 180.0 * pi
+  - 0.00872664625  # joint position LF KFE: 0.5 / 180.0 * pi
+  - 0.00872664625  # joint position LH HAA: 0.5 / 180.0 * pi
+  - 0.00872664625  # joint position LH HFE: 0.5 / 180.0 * pi
+  - 0.00872664625  # joint position LH KFE: 0.5 / 180.0 * pi
+  - 0.00872664625  # joint position RF HAA: 0.5 / 180.0 * pi
+  - 0.00872664625  # joint position RF HFE: 0.5 / 180.0 * pi
+  - 0.00872664625  # joint position RF KFE: 0.5 / 180.0 * pi
+  - 0.00872664625  # joint position RH HAA: 0.5 / 180.0 * pi
+  - 0.00872664625  # joint position RH HFE: 0.5 / 180.0 * pi
+  - 0.00872664625  # joint position RH KFE: 0.5 / 180.0 * pi
+# settings for computing metrics
+POLICY_EVALUATION_TIME_STEP: 0.0025
+POLICY_EVALUATION_DURATION: 4.0
+POLICY_EVALUATION_THREADS: 3
+POLICY_EVALUATION_TASKS: 3
+#
+# training
+#
+BATCH_SIZE: 128
+LEARNING_RATE: 1.e-3
+LEARNING_ITERATIONS: 100000
+GRADIENT_CLIPPING: True
+GRADIENT_CLIPPING_VALUE: 1.0

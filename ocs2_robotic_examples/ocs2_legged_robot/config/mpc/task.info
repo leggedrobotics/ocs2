@@ -9,7 +9,7 @@ legged_robot_interface
 
 model_settings
 {
-  positionErrorGain             20.0
+  positionErrorGain             0.0 ; 20.0
   phaseTransitionStanceTime     0.4
 
   verboseCppAd                  true

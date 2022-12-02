@@ -1,0 +1,123 @@
+#
+# general
+#
+# name of the robot
+NAME: "ballbot"
+# description of the training run
+DESCRIPTION: "description"
+# state dimension
+STATE_DIM: 10
+# input dimension
+INPUT_DIM: 3
+# target trajectories state dimension
+TARGET_STATE_DIM: 10
+# target trajectories input dimension
+TARGET_INPUT_DIM: 3
+# observation dimension
+OBSERVATION_DIM: 10
+# action dimension
+ACTION_DIM: 3
+# expert number
+EXPERT_NUM: 1
+# default state
+DEFAULT_STATE:
+  - 0.0  # pose x
+  - 0.0  # pose y
+  - 0.0  # pose yaw
+  - 0.0  # pose pitch
+  - 0.0  # pose roll
+  - 0.0  # twist x
+  - 0.0  # twist y
+  - 0.0  # twist yaw
+  - 0.0  # twist pitch
+  - 0.0  # twist roll
+# default target state
+DEFAULT_TARGET_STATE:
+  - 0.0  # pose x
+  - 0.0  # pose y
+  - 0.0  # pose yaw
+  - 0.0  # pose pitch
+  - 0.0  # pose roll
+  - 0.0  # twist x
+  - 0.0  # twist y
+  - 0.0  # twist yaw
+  - 0.0  # twist pitch
+  - 0.0  # twist roll
+#
+# loss
+#
+# epsilon to improve numerical stability of logs and denominators
+EPSILON: 1.e-8
+# whether to cheat by adding the gating loss
+CHEATING: False
+# parameter to control the relative importance of both loss types
+LAMBDA: 1.0
+# dictionary for the gating loss (assigns modes to experts responsible for the corresponding contact configuration)
+EXPERT_FOR_MODE:
+  0: 0
+# input cost for behavioral cloning
+R:
+  - 2.0  # torque
+  - 2.0  # torque
+  - 2.0  # torque
+#
+# memory
+#
+# capacity of the memory
+CAPACITY: 100000
+#
+# policy
+#
+# observation scaling
+OBSERVATION_SCALING:
+  - 1.0  # pose x
+  - 1.0  # pose y
+  - 1.0  # pose yaw
+  - 1.0  # pose pitch
+  - 1.0  # pose roll
+  - 1.0  # twist x
+  - 1.0  # twist y
+  - 1.0  # twist yaw
+  - 1.0  # twist pitch
+  - 1.0  # twist roll
+# action scaling
+ACTION_SCALING:
+  - 1.0  # torque
+  - 1.0  # torque
+  - 1.0  # torque
+#
+# rollout
+#
+# RaiSim or TimeTriggered rollout for data generation and policy evaluation
+RAISIM: False
+# settings for data generation
+DATA_GENERATION_TIME_STEP: 0.1
+DATA_GENERATION_DURATION: 3.0
+DATA_GENERATION_DATA_DECIMATION: 1
+DATA_GENERATION_THREADS: 2
+DATA_GENERATION_TASKS: 10
+DATA_GENERATION_SAMPLES: 2
+DATA_GENERATION_SAMPLING_VARIANCE:
+  - 0.01           # pose x
+  - 0.01           # pose y
+  - 0.01745329251  # pose yaw: 1.0 / 180.0 * pi
+  - 0.01745329251  # pose pitch: 1.0 / 180.0 * pi
+  - 0.01745329251  # pose roll: 1.0 / 180.0 * pi
+  - 0.05           # twist x
+  - 0.05           # twist y
+  - 0.08726646259  # twist yaw: 5.0 / 180.0 * pi
+  - 0.08726646259  # twist pitch: 5.0 / 180.0 * pi
+  - 0.08726646259  # twist roll: 5.0 / 180.0 * pi
+# settings for computing metrics
+POLICY_EVALUATION_TIME_STEP: 0.1
+POLICY_EVALUATION_DURATION: 3.0
+POLICY_EVALUATION_THREADS: 1
+POLICY_EVALUATION_TASKS: 5
+#
+# training
+#
+BATCH_SIZE: 32
+LEARNING_RATE: 1.e-2
+LEARNING_ITERATIONS: 10000
+GRADIENT_CLIPPING: False
+GRADIENT_CLIPPING_VALUE: 1.0

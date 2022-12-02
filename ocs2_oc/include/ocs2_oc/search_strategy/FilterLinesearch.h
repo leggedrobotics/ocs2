@@ -68,4 +68,16 @@ struct FilterLinesearch {
 /** Transforms the StepType to string */
 std::string toString(const FilterLinesearch::StepType& stepType);
 
+/**
+ * Computes the Armijo descent metric that determines if the solution is a descent direction for the cost. It calculates sum of
+ * gradient(cost).dot([dx; du]) over the trajectory.
+ *
+ * @param [in] cost: The quadratic approximation of the cost.
+ * @param [in] deltaXSol: The state trajectory of the QP subproblem solution.
+ * @param [in] deltaUSol: The input trajectory of the QP subproblem solution.
+ * @return The Armijo descent metric.
+ */
+scalar_t armijoDescentMetric(const std::vector<ScalarFunctionQuadraticApproximation>& cost, const vector_array_t& deltaXSol,
+                             const vector_array_t& deltaUSol);
+
 }  // namespace ocs2

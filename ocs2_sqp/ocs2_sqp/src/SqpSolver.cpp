@@ -243,7 +243,7 @@ SqpSolver::OcpSubproblemSolution SqpSolver::getOCPSolution(const vector_t& delta
   }
 
   // to determine if the solution is a descent direction for the cost: compute gradient(cost)' * [dx; du]
-  solution.armijoDescentMetric = multiple_shooting::armijoDescentMetric(cost_, deltaXSol, deltaUSol);
+  solution.armijoDescentMetric = armijoDescentMetric(cost_, deltaXSol, deltaUSol);
 
   // remap the tilde delta u to real delta u
   if (settings_.projectStateInputEqualityConstraints) {

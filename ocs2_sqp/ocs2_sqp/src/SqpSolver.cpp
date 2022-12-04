@@ -32,7 +32,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <numeric>
 
-#include <ocs2_core/penalties/penalties/RelaxedBarrierPenalty.h>
 #include <ocs2_oc/multiple_shooting/Helpers.h>
 #include <ocs2_oc/multiple_shooting/Initialization.h>
 #include <ocs2_oc/multiple_shooting/PerformanceIndexComputation.h>
@@ -41,24 +40,29 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+namespace {
+sqp::Settings rectifySettings(const OptimalControlProblem& ocp, sqp::Settings&& settings) {
+  // True does not make sense if there are no constraints.
+  if (ocp.equalityConstraintPtr->empty()) {
+    settings.projectStateInputEqualityConstraints = false;
+  }
+  return settings;
+}
+}  // anonymous namespace
+
 SqpSolver::SqpSolver(sqp::Settings settings, const OptimalControlProblem& optimalControlProblem, const Initializer& initializer)
-    : SolverBase(),
-      settings_(std::move(settings)),
-      hpipmInterface_(OcpSize(), settings.hpipmSettings),
+    : settings_(rectifySettings(optimalControlProblem, std::move(settings))),
+      hpipmInterface_(OcpSize(), settings_.hpipmSettings),
       threadPool_(std::max(settings_.nThreads, size_t(1)) - 1, settings_.threadPriority) {
   Eigen::setNbThreads(1);  // No multithreading within Eigen.
   Eigen::initParallel();
 
-  if (optimalControlProblem.equalityConstraintPtr->empty()) {
-    settings_.projectStateInputEqualityConstraints = false;  // True does not make sense if there are no constraints.
-  }
-
   // Dynamics discretization
-  discretizer_ = selectDynamicsDiscretization(settings.integratorType);
-  sensitivityDiscretizer_ = selectDynamicsSensitivityDiscretization(settings.integratorType);
+  discretizer_ = selectDynamicsDiscretization(settings_.integratorType);
+  sensitivityDiscretizer_ = selectDynamicsSensitivityDiscretization(settings_.integratorType);
 
   // Clone objects to have one for each worker
-  for (int w = 0; w < settings.nThreads; w++) {
+  for (int w = 0; w < settings_.nThreads; w++) {
     ocpDefinitions_.push_back(optimalControlProblem);
   }
 
@@ -296,6 +300,7 @@ PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<Annotated
     // Get worker specific resources
     OptimalControlProblem& ocpDefinition = ocpDefinitions_[workerId];
     PerformanceIndex workerPerformance;  // Accumulate performance in local variable
+    const bool projectStateInputEqualityConstraints = settings_.projectStateInputEqualityConstraints;
 
     int i = timeIndex++;
     while (i < N) {
@@ -315,7 +320,7 @@ PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<Annotated
         const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
         auto result = multiple_shooting::setupIntermediateNode(ocpDefinition, sensitivityDiscretizer_, ti, dt, x[i], x[i + 1], u[i]);
         workerPerformance += multiple_shooting::computeIntermediatePerformance(result, dt);
-        if (settings_.projectStateInputEqualityConstraints) {
+        if (projectStateInputEqualityConstraints) {
           constexpr bool extractPseudoInverse = false;
           multiple_shooting::projectTranscription(result, extractPseudoInverse);
         }

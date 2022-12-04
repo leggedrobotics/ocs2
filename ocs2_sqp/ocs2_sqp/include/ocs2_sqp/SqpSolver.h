@@ -150,12 +150,15 @@ class SqpSolver : public SolverBase {
   sqp::Convergence checkConvergence(int iteration, const PerformanceIndex& baseline, const sqp::StepInfo& stepInfo) const;
 
   // Problem definition
-  sqp::Settings settings_;
+  const sqp::Settings settings_;
   DynamicsDiscretizer discretizer_;
   DynamicsSensitivityDiscretizer sensitivityDiscretizer_;
   std::vector<OptimalControlProblem> ocpDefinitions_;
   std::unique_ptr<Initializer> initializerPtr_;
   FilterLinesearch filterLinesearch_;
+
+  // Solver interface
+  HpipmInterface hpipmInterface_;
 
   // Threading
   ThreadPool threadPool_;
@@ -165,9 +168,6 @@ class SqpSolver : public SolverBase {
 
   // Value function in absolute state coordinates (without the constant value)
   std::vector<ScalarFunctionQuadraticApproximation> valueFunction_;
-
-  // Solver interface
-  HpipmInterface hpipmInterface_;
 
   // LQ approximation
   std::vector<VectorFunctionLinearApproximation> dynamics_;

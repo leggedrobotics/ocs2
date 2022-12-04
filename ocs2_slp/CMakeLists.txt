@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(ocs2_pipg)
+project(ocs2_slp)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
@@ -45,11 +45,11 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
+  src/pipg/PipgSettings.cpp
+  src/pipg/PipgSolver.cpp
   src/Helpers.cpp
-  src/PipgSettings.cpp
-  src/PipgSolver.cpp
   src/SlpSettings.cpp
-  src/mpc/PipgMpcSolver.cpp
+  src/SlpSolver.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
@@ -60,14 +60,18 @@ target_link_libraries(${PROJECT_NAME}
 )
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
+add_executable(${PROJECT_NAME}_lintTarget
+  src/lintTarget.cpp
+)
+
 #########################
 ###   CLANG TOOLING   ###
 #########################
 find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
-  message(STATUS "Run clang tooling for target " ${PROJECT_NAME})
+  message(STATUS "Run clang tooling for target " ${PROJECT_NAME}_lintTarget)
   add_clang_tooling(
-    TARGETS ${PROJECT_NAME}
+    TARGETS ${PROJECT_NAME}_lintTarget ${PROJECT_NAME}
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CF_WERROR

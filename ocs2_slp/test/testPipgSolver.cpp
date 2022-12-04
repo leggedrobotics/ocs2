@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/test/testProblemsGeneration.h>
 #include <ocs2_qp_solver/QpSolver.h>
 
-#include "ocs2_pipg/PipgSolver.h"
+#include "ocs2_slp/pipg/PipgSolver.h"
 
 ocs2::pipg::Settings configurePipg(size_t nThreads, size_t maxNumIterations, ocs2::scalar_t absoluteTolerance,
                                    ocs2::scalar_t relativeTolerance, bool verbose) {

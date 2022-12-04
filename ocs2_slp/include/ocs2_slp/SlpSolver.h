@@ -39,13 +39,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/oc_solver/SolverBase.h>
 #include <ocs2_oc/search_strategy/FilterLinesearch.h>
 
-#include "ocs2_pipg/PipgSolver.h"
-#include "ocs2_pipg/SlpSettings.h"
-#include "ocs2_pipg/SlpSolverStatus.h"
+#include "ocs2_slp/SlpSettings.h"
+#include "ocs2_slp/SlpSolverStatus.h"
+#include "ocs2_slp/pipg/PipgSolver.h"
 
 namespace ocs2 {
 
-class PipgMpcSolver : public SolverBase {
+class SlpSolver : public SolverBase {
  public:
   /**
    * Constructor
@@ -54,9 +54,9 @@ class PipgMpcSolver : public SolverBase {
    * @param [in] optimalControlProblem: The optimal control problem formulation.
    * @param [in] initializer: This class initializes the state-input for the time steps that no controller is available.
    */
-  PipgMpcSolver(slp::Settings settings, const OptimalControlProblem& optimalControlProblem, const Initializer& initializer);
+  SlpSolver(slp::Settings settings, const OptimalControlProblem& optimalControlProblem, const Initializer& initializer);
 
-  ~PipgMpcSolver() override;
+  ~SlpSolver() override;
 
   void reset() override;
 
@@ -79,15 +79,15 @@ class PipgMpcSolver : public SolverBase {
   const std::vector<PerformanceIndex>& getIterationsLog() const override;
 
   ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const override {
-    throw std::runtime_error("[PipgMpcSolver] getValueFunction() not available yet.");
+    throw std::runtime_error("[SlpSolver] getValueFunction() not available yet.");
   };
 
   ScalarFunctionQuadraticApproximation getHamiltonian(scalar_t time, const vector_t& state, const vector_t& input) override {
-    throw std::runtime_error("[PipgMpcSolver] getHamiltonian() not available yet.");
+    throw std::runtime_error("[SlpSolver] getHamiltonian() not available yet.");
   }
 
   vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const override {
-    throw std::runtime_error("[PipgMpcSolver] getStateInputEqualityConstraintLagrangian() not available yet.");
+    throw std::runtime_error("[SlpSolver] getStateInputEqualityConstraintLagrangian() not available yet.");
   }
 
   MultiplierCollection getIntermediateDualSolution(scalar_t time) const override {
@@ -101,7 +101,7 @@ class PipgMpcSolver : public SolverBase {
     if (externalControllerPtr == nullptr) {
       runImpl(initTime, initState, finalTime);
     } else {
-      throw std::runtime_error("[PipgMpcSolver::run] This solver does not support external controller!");
+      throw std::runtime_error("[SlpSolver::run] This solver does not support external controller!");
     }
   }
 

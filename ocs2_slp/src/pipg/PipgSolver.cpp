@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_pipg/PipgSolver.h"
+#include "ocs2_slp/pipg/PipgSolver.h"
 
 #include <condition_variable>
 #include <iostream>

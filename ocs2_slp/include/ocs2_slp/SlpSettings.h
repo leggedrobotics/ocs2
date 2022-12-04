@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/integration/SensitivityIntegrator.h>
 
-#include "ocs2_pipg/PipgSettings.h"
+#include "ocs2_slp/pipg/PipgSettings.h"
 
 namespace ocs2 {
 namespace slp {

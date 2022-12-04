@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/synchronized_module/ReferenceManager.h>
 #include <ocs2_oc/test/testProblemsGeneration.h>
 
-#include "ocs2_pipg/mpc/PipgMpcSolver.h"
+#include "ocs2_slp/SlpSolver.h"
 
 namespace ocs2 {
 namespace {
@@ -97,7 +97,7 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solve(const VectorFunct
   const ocs2::vector_t initState = ocs2::vector_t::Ones(n);
 
   // Construct solver
-  ocs2::PipgMpcSolver solver(slpSettings, problem, zeroInitializer);
+  ocs2::SlpSolver solver(slpSettings, problem, zeroInitializer);
   solver.setReferenceManager(referenceManagerPtr);
 
   // Solve

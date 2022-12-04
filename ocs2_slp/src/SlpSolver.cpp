@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_pipg/mpc/PipgMpcSolver.h"
+#include "ocs2_slp/SlpSolver.h"
 
 #include <iostream>
 #include <numeric>
@@ -38,11 +38,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/multiple_shooting/Transcription.h>
 #include <ocs2_oc/pre_condition/Scaling.h>
 
-#include "ocs2_pipg/Helpers.h"
+#include "ocs2_slp/Helpers.h"
 
 namespace ocs2 {
 
-PipgMpcSolver::PipgMpcSolver(slp::Settings settings, const OptimalControlProblem& optimalControlProblem, const Initializer& initializer)
+SlpSolver::SlpSolver(slp::Settings settings, const OptimalControlProblem& optimalControlProblem, const Initializer& initializer)
     : settings_(std::move(settings)),
       pipgSolver_(settings_.pipgSettings),
       threadPool_(std::max(settings_.nThreads, size_t(1)) - 1, settings_.threadPriority) {
@@ -68,13 +68,13 @@ PipgMpcSolver::PipgMpcSolver(slp::Settings settings, const OptimalControlProblem
   filterLinesearch_.armijoFactor = settings_.armijoFactor;
 }
 
-PipgMpcSolver::~PipgMpcSolver() {
+SlpSolver::~SlpSolver() {
   if (settings_.printSolverStatistics) {
     std::cerr << getBenchmarkingInformationPIPG() << "\n" << getBenchmarkingInformation() << std::endl;
   }
 }
 
-void PipgMpcSolver::reset() {
+void SlpSolver::reset() {
   // Clear solution
   primalSolution_ = PrimalSolution();
   performanceIndeces_.clear();
@@ -88,7 +88,7 @@ void PipgMpcSolver::reset() {
   computeControllerTimer_.reset();
 }
 
-std::string PipgMpcSolver::getBenchmarkingInformationPIPG() const {
+std::string SlpSolver::getBenchmarkingInformationPIPG() const {
   const auto GGTMultiplication = GGTMultiplication_.getTotalInMilliseconds();
   const auto preConditioning = preConditioning_.getTotalInMilliseconds();
   const auto lambdaEstimation = lambdaEstimation_.getTotalInMilliseconds();
@@ -117,7 +117,7 @@ std::string PipgMpcSolver::getBenchmarkingInformationPIPG() const {
   return infoStream.str();
 }
 
-std::string PipgMpcSolver::getBenchmarkingInformation() const {
+std::string SlpSolver::getBenchmarkingInformation() const {
   const auto linearQuadraticApproximationTotal = linearQuadraticApproximationTimer_.getTotalInMilliseconds();
   const auto solveQpTotal = solveQpTimer_.getTotalInMilliseconds();
   const auto linesearchTotal = linesearchTimer_.getTotalInMilliseconds();
@@ -143,18 +143,18 @@ std::string PipgMpcSolver::getBenchmarkingInformation() const {
   return infoStream.str();
 }
 
-const std::vector<PerformanceIndex>& PipgMpcSolver::getIterationsLog() const {
+const std::vector<PerformanceIndex>& SlpSolver::getIterationsLog() const {
   if (performanceIndeces_.empty()) {
-    throw std::runtime_error("[PipgMpcSolver]: No performance log yet, no problem solved yet?");
+    throw std::runtime_error("[SlpSolver]: No performance log yet, no problem solved yet?");
   } else {
     return performanceIndeces_;
   }
 }
 
-void PipgMpcSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
+void SlpSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
   if (settings_.printSolverStatus || settings_.printLinesearch) {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
-    std::cerr << "\n+++++++++++++ PIPG solver is initialized +++++++++++++";
+    std::cerr << "\n+++++++++++++ SLP solver is initialized ++++++++++++++";
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
   }
 
@@ -215,16 +215,16 @@ void PipgMpcSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar
   if (settings_.printSolverStatus || settings_.printLinesearch) {
     std::cerr << "\nConvergence : " << toString(convergence) << "\n";
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
-    std::cerr << "\n+++++++++++++ PIPG solver has terminated +++++++++++++";
+    std::cerr << "\n+++++++++++++ SLP solver has terminated ++++++++++++++";
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
   }
 }
 
-void PipgMpcSolver::runParallel(std::function<void(int)> taskFunction) {
+void SlpSolver::runParallel(std::function<void(int)> taskFunction) {
   threadPool_.runParallel(std::move(taskFunction), settings_.nThreads);
 }
 
-PipgMpcSolver::OcpSubproblemSolution PipgMpcSolver::getOCPSolution(const vector_t& delta_x0) {
+SlpSolver::OcpSubproblemSolution SlpSolver::getOCPSolution(const vector_t& delta_x0) {
   // Solve the QP
   OcpSubproblemSolution solution;
   auto& deltaXSol = solution.deltaXSol;
@@ -283,13 +283,13 @@ PipgMpcSolver::OcpSubproblemSolution PipgMpcSolver::getOCPSolution(const vector_
   return solution;
 }
 
-PrimalSolution PipgMpcSolver::toPrimalSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& x, vector_array_t&& u) {
+PrimalSolution SlpSolver::toPrimalSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& x, vector_array_t&& u) {
   ModeSchedule modeSchedule = this->getReferenceManager().getModeSchedule();
   return multiple_shooting::toPrimalSolution(time, std::move(modeSchedule), std::move(x), std::move(u));
 }
 
-PerformanceIndex PipgMpcSolver::setupQuadraticSubproblem(const std::vector<AnnotatedTime>& time, const vector_t& initState,
-                                                         const vector_array_t& x, const vector_array_t& u) {
+PerformanceIndex SlpSolver::setupQuadraticSubproblem(const std::vector<AnnotatedTime>& time, const vector_t& initState,
+                                                     const vector_array_t& x, const vector_array_t& u) {
   // Problem horizon
   const int N = static_cast<int>(time.size()) - 1;
 
@@ -362,8 +362,8 @@ PerformanceIndex PipgMpcSolver::setupQuadraticSubproblem(const std::vector<Annot
   return totalPerformance;
 }
 
-PerformanceIndex PipgMpcSolver::computePerformance(const std::vector<AnnotatedTime>& time, const vector_t& initState,
-                                                   const vector_array_t& x, const vector_array_t& u) {
+PerformanceIndex SlpSolver::computePerformance(const std::vector<AnnotatedTime>& time, const vector_t& initState, const vector_array_t& x,
+                                               const vector_array_t& u) {
   // Problem horizon
   const int N = static_cast<int>(time.size()) - 1;
 
@@ -408,9 +408,9 @@ PerformanceIndex PipgMpcSolver::computePerformance(const std::vector<AnnotatedTi
   return totalPerformance;
 }
 
-slp::StepInfo PipgMpcSolver::takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization,
-                                      const vector_t& initState, const OcpSubproblemSolution& subproblemSolution, vector_array_t& x,
-                                      vector_array_t& u) {
+slp::StepInfo SlpSolver::takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization,
+                                  const vector_t& initState, const OcpSubproblemSolution& subproblemSolution, vector_array_t& x,
+                                  vector_array_t& u) {
   using StepType = FilterLinesearch::StepType;
 
   /*
@@ -501,7 +501,7 @@ slp::StepInfo PipgMpcSolver::takeStep(const PerformanceIndex& baseline, const st
   return stepInfo;
 }
 
-slp::Convergence PipgMpcSolver::checkConvergence(int iteration, const PerformanceIndex& baseline, const slp::StepInfo& stepInfo) const {
+slp::Convergence SlpSolver::checkConvergence(int iteration, const PerformanceIndex& baseline, const slp::StepInfo& stepInfo) const {
   using Convergence = slp::Convergence;
   if ((iteration + 1) >= settings_.slpIteration) {
     // Converged because the next iteration would exceed the specified number of iterations

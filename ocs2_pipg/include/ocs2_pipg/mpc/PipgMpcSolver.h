@@ -1,18 +1,48 @@
-#pragma once
+/******************************************************************************
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
-#include "ocs2_pipg/PIPG.h"
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
+
+#pragma once
 
 #include <ocs2_core/initialization/Initializer.h>
 #include <ocs2_core/integration/SensitivityIntegrator.h>
 #include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_core/thread_support/ThreadPool.h>
 
+#include <ocs2_oc/oc_data/TimeDiscretization.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/oc_solver/SolverBase.h>
+#include <ocs2_oc/search_strategy/FilterLinesearch.h>
 
-#include <ocs2_sqp/MultipleShootingSettings.h>
-#include <ocs2_sqp/MultipleShootingSolverStatus.h>
-#include <ocs2_sqp/TimeDiscretization.h>
+#include <ocs2_sqp/SqpSettings.h>
+#include <ocs2_sqp/SqpSolverStatus.h>
+
+#include "ocs2_pipg/PipgSolver.h"
 
 namespace ocs2 {
 
@@ -25,7 +55,7 @@ class PipgMpcSolver : public SolverBase {
    * @param [in] optimalControlProblem: The optimal control problem formulation.
    * @param [in] initializer: This class initializes the state-input for the time steps that no controller is available.
    */
-  PipgMpcSolver(multiple_shooting::Settings sqpSettings, pipg::Settings pipgSettings, const OptimalControlProblem& optimalControlProblem,
+  PipgMpcSolver(sqp::Settings sqpSettings, pipg::Settings pipgSettings, const OptimalControlProblem& optimalControlProblem,
                 const Initializer& initializer);
 
   ~PipgMpcSolver() override;
@@ -36,7 +66,15 @@ class PipgMpcSolver : public SolverBase {
 
   void getPrimalSolution(scalar_t finalTime, PrimalSolution* primalSolutionPtr) const override { *primalSolutionPtr = primalSolution_; }
 
+  const DualSolution& getDualSolution() const override { throw std::runtime_error("[SqpSolver] getDualSolution() not available yet."); }
+
+  const ProblemMetrics& getSolutionMetrics() const override {
+    throw std::runtime_error("[SqpSolver] getSolutionMetrics() not available yet.");
+  }
+
   size_t getNumIterations() const override { return totalNumIterations_; }
+
+  const OptimalControlProblem& getOptimalControlProblem() const override { return ocpDefinitions_.front(); }
 
   const PerformanceIndex& getPerformanceIndeces() const override { return getIterationsLog().back(); };
 
@@ -54,6 +92,10 @@ class PipgMpcSolver : public SolverBase {
     throw std::runtime_error("[PipgMpcSolver] getStateInputEqualityConstraintLagrangian() not available yet.");
   }
 
+  MultiplierCollection getIntermediateDualSolution(scalar_t time) const override {
+    throw std::runtime_error("[SqpSolver] getIntermediateDualSolution() not available yet.");
+  }
+
  private:
   void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override;
 
@@ -65,6 +107,16 @@ class PipgMpcSolver : public SolverBase {
     }
   }
 
+  void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const PrimalSolution& primalSolution) override {
+    // Copy all except the controller
+    primalSolution_.timeTrajectory_ = primalSolution.timeTrajectory_;
+    primalSolution_.stateTrajectory_ = primalSolution.stateTrajectory_;
+    primalSolution_.inputTrajectory_ = primalSolution.inputTrajectory_;
+    primalSolution_.postEventIndices_ = primalSolution.postEventIndices_;
+    primalSolution_.modeSchedule_ = primalSolution.modeSchedule_;
+    runImpl(initTime, initState, finalTime);
+  }
+
   /** Run a task in parallel with settings.nThreads */
   void runParallel(std::function<void(int)> taskFunction);
 
@@ -72,10 +124,6 @@ class PipgMpcSolver : public SolverBase {
   std::string getBenchmarkingInformation() const;
 
   std::string getBenchmarkingInformationPIPG() const;
-
-  /** Initializes for the state-input trajectories */
-  void initializeStateInputTrajectories(const vector_t& initState, const std::vector<AnnotatedTime>& timeDiscretization,
-                                        vector_array_t& stateTrajectory, vector_array_t& inputTrajectory);
 
   /** Creates QP around t, x(t), u(t). Returns performance metrics at the current {t, x(t), u(t)} */
   PerformanceIndex setupQuadraticSubproblem(const std::vector<AnnotatedTime>& time, const vector_t& initState, const vector_array_t& x,
@@ -93,30 +141,26 @@ class PipgMpcSolver : public SolverBase {
   };
   OcpSubproblemSolution getOCPSolution(const vector_t& delta_x0);
 
-  /** Set up the primal solution based on the optimized state and input trajectories */
-  void setPrimalSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& x, vector_array_t&& u);
-
-  /** Compute 2-norm of the trajectory: sqrt(sum_i v[i]^2)  */
-  static scalar_t trajectoryNorm(const vector_array_t& v);
-
-  /** Compute total constraint violation */
-  scalar_t totalConstraintViolation(const PerformanceIndex& performance) const;
+  /** Constructs the primal solution based on the optimized state and input trajectories */
+  PrimalSolution toPrimalSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& x, vector_array_t&& u);
 
   /** Decides on the step to take and overrides given trajectories {x(t), u(t)} <- {x(t) + a*dx(t), u(t) + a*du(t)} */
-  multiple_shooting::StepInfo takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization,
-                                       const vector_t& initState, const OcpSubproblemSolution& subproblemSolution, vector_array_t& x,
-                                       vector_array_t& u);
+  sqp::StepInfo takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization, const vector_t& initState,
+                         const OcpSubproblemSolution& subproblemSolution, vector_array_t& x, vector_array_t& u);
 
   /** Determine convergence after a step */
-  multiple_shooting::Convergence checkConvergence(int iteration, const PerformanceIndex& baseline,
-                                                  const multiple_shooting::StepInfo& stepInfo) const;
+  sqp::Convergence checkConvergence(int iteration, const PerformanceIndex& baseline, const sqp::StepInfo& stepInfo) const;
 
   // Problem definition
-  multiple_shooting::Settings settings_;
+  const sqp::Settings settings_;
   DynamicsDiscretizer discretizer_;
   DynamicsSensitivityDiscretizer sensitivityDiscretizer_;
   std::vector<OptimalControlProblem> ocpDefinitions_;
   std::unique_ptr<Initializer> initializerPtr_;
+  FilterLinesearch filterLinesearch_;
+
+  // Solver interface
+  PipgSolver pipgSolver_;
 
   // Threading
   ThreadPool threadPool_;
@@ -124,14 +168,13 @@ class PipgMpcSolver : public SolverBase {
   // Solution
   PrimalSolution primalSolution_;
 
-  // Solver interface
-  Pipg pipgSolver_;
-
   // LQ approximation
   std::vector<VectorFunctionLinearApproximation> dynamics_;
   std::vector<ScalarFunctionQuadraticApproximation> cost_;
-  std::vector<VectorFunctionLinearApproximation> constraints_;
   std::vector<VectorFunctionLinearApproximation> constraintsProjection_;
+  std::vector<VectorFunctionLinearApproximation> stateInputEqConstraints_;
+  std::vector<VectorFunctionLinearApproximation> stateIneqConstraints_;
+  std::vector<VectorFunctionLinearApproximation> stateInputIneqConstraints_;
 
   // Iteration performance log
   std::vector<PerformanceIndex> performanceIndeces_;

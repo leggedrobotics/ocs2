@@ -66,7 +66,7 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solve(const VectorFunct
 
   // Solver settings
   auto sqpSettings = []() {
-    ocs2::multiple_shooting::Settings settings;
+    ocs2::sqp::Settings settings;
     settings.dt = 0.05;
     settings.sqpIteration = 10;
     settings.projectStateInputEqualityConstraints = true;

@@ -109,14 +109,14 @@ TEST_F(PIPGSolverTest, correctness) {
 
   ocs2::vector_t primalSolutionPIPG;
   solver.solveDenseQP(costApproximation.dfdxx.sparseView(), costApproximation.dfdx, constraintsApproximation.dfdx.sparseView(),
-                          constraintsApproximation.f, ocs2::vector_t::Ones(solver.getNumDynamicsConstraints()), mu, lambda, sigma,
-                          primalSolutionPIPG);
+                      constraintsApproximation.f, ocs2::vector_t::Ones(solver.getNumDynamicsConstraints()), mu, lambda, sigma,
+                      primalSolutionPIPG);
 
   ocs2::vector_t primalSolutionPIPGParallel;
   ocs2::vector_array_t scalingVectors(N_, ocs2::vector_t::Ones(nx_));
 
   solver.solveOCPInParallel(x0, dynamicsArray, costArray, nullptr, scalingVectors, nullptr, mu, lambda, sigma, costApproximation,
-                                constraintsApproximation);
+                            constraintsApproximation);
   solver.getStackedSolution(primalSolutionPIPGParallel);
 
   auto calculateConstraintViolation = [&](const ocs2::vector_t& sol) -> ocs2::scalar_t {
@@ -165,8 +165,8 @@ TEST_F(PIPGSolverTest, correctness) {
 
   // Threshold is the (absoluteTolerance) * (2-Norm of the hessian H)[lambda]
   EXPECT_TRUE(std::abs(QPCost - PIPGCost) < solver.settings().absoluteTolerance * lambda)
-      << "Absolute diff is [" << std::abs(QPCost - PIPGCost) << "] which is larger than ["
-      << solver.settings().absoluteTolerance * lambda << "]";
+      << "Absolute diff is [" << std::abs(QPCost - PIPGCost) << "] which is larger than [" << solver.settings().absoluteTolerance * lambda
+      << "]";
 
   EXPECT_TRUE(std::abs(PIPGParallelCost - PIPGCost) < solver.settings().absoluteTolerance)
       << "Absolute diff is [" << std::abs(PIPGParallelCost - PIPGCost) << "] which is larger than ["

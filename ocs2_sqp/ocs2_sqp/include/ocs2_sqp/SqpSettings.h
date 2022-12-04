@@ -80,7 +80,7 @@ struct Settings {
 };
 
 /**
- * Loads the multiple shooting settings from a given file.
+ * Loads the multiple shooting SQP settings from a given file.
  *
  * @param [in] filename: File name which contains the configuration data.
  * @param [in] fieldName: Field name which contains the configuration data.

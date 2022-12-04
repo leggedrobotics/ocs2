@@ -29,8 +29,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <string>
-
 #include <ocs2_core/Types.h>
 
 namespace ocs2 {
@@ -56,6 +54,14 @@ struct Settings {
   bool displayShortSummary = false;
 };
 
+/**
+ * Loads the PIPG settings from a given file.
+ *
+ * @param [in] filename: File name which contains the configuration data.
+ * @param [in] fieldName: Field name which contains the configuration data.
+ * @param [in] verbose: Flag to determine whether to print out the loaded settings or not.
+ * @return The settings
+ */
 Settings loadSettings(const std::string& filename, const std::string& fieldName = "pipg", bool verbose = true);
 
 }  // namespace pipg

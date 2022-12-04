@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_pipg/PipgSettings.h"
+#include "ocs2_pipg/SlpSettings.h"
 
 #include <iostream>
 
@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/LoadData.h>
 
 namespace ocs2 {
-namespace pipg {
+namespace slp {
 
 Settings loadSettings(const std::string& filename, const std::string& fieldName, bool verbose) {
   boost::property_tree::ptree pt;
@@ -46,28 +46,38 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   Settings settings;
 
   if (verbose) {
-    std::cerr << "\n #### PIPG Settings: {";
+    std::cerr << "\n #### Multiple-Shooting SLP Settings:";
+    std::cerr << "\n #### =============================================================================\n";
   }
 
+  loadData::loadPtreeValue(pt, settings.slpIteration, fieldName + ".slpIteration", verbose);
+  loadData::loadPtreeValue(pt, settings.deltaTol, fieldName + ".deltaTol", verbose);
+  loadData::loadPtreeValue(pt, settings.alpha_decay, fieldName + ".alpha_decay", verbose);
+  loadData::loadPtreeValue(pt, settings.alpha_min, fieldName + ".alpha_min", verbose);
+  loadData::loadPtreeValue(pt, settings.gamma_c, fieldName + ".gamma_c", verbose);
+  loadData::loadPtreeValue(pt, settings.g_max, fieldName + ".g_max", verbose);
+  loadData::loadPtreeValue(pt, settings.g_min, fieldName + ".g_min", verbose);
+  loadData::loadPtreeValue(pt, settings.armijoFactor, fieldName + ".armijoFactor", verbose);
+  loadData::loadPtreeValue(pt, settings.costTol, fieldName + ".costTol", verbose);
+  loadData::loadPtreeValue(pt, settings.dt, fieldName + ".dt", verbose);
+  auto integratorName = sensitivity_integrator::toString(settings.integratorType);
+  loadData::loadPtreeValue(pt, integratorName, fieldName + ".integratorType", verbose);
+  settings.integratorType = sensitivity_integrator::fromString(integratorName);
+  loadData::loadPtreeValue(pt, settings.inequalityConstraintMu, fieldName + ".inequalityConstraintMu", verbose);
+  loadData::loadPtreeValue(pt, settings.inequalityConstraintDelta, fieldName + ".inequalityConstraintDelta", verbose);
+  loadData::loadPtreeValue(pt, settings.printSolverStatus, fieldName + ".printSolverStatus", verbose);
+  loadData::loadPtreeValue(pt, settings.printSolverStatistics, fieldName + ".printSolverStatistics", verbose);
+  loadData::loadPtreeValue(pt, settings.printLinesearch, fieldName + ".printLinesearch", verbose);
   loadData::loadPtreeValue(pt, settings.nThreads, fieldName + ".nThreads", verbose);
   loadData::loadPtreeValue(pt, settings.threadPriority, fieldName + ".threadPriority", verbose);
-
-  loadData::loadPtreeValue(pt, settings.maxNumIterations, fieldName + ".maxNumIterations", verbose);
-  loadData::loadPtreeValue(pt, settings.absoluteTolerance, fieldName + ".absoluteTolerance", verbose);
-  loadData::loadPtreeValue(pt, settings.relativeTolerance, fieldName + ".relativeTolerance", verbose);
-
-  loadData::loadPtreeValue(pt, settings.numScaling, fieldName + ".numScaling", verbose);
-  loadData::loadPtreeValue(pt, settings.lowerBoundH, fieldName + ".lowerBoundH", verbose);
-
-  loadData::loadPtreeValue(pt, settings.checkTerminationInterval, fieldName + ".checkTerminationInterval", verbose);
-  loadData::loadPtreeValue(pt, settings.displayShortSummary, fieldName + ".displayShortSummary", verbose);
+  settings.pipgSettings = pipg::loadSettings(filename, fieldName + ".pipg", verbose);
 
   if (verbose) {
-    std::cerr << "}\n";
+    std::cerr << " #### =============================================================================" << std::endl;
   }
 
   return settings;
 }
 
-}  // namespace pipg
+}  // namespace slp
 }  // namespace ocs2

@@ -29,17 +29,49 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <string>
+
 #include <ocs2_core/Types.h>
-#include <ocs2_core/thread_support/ThreadPool.h>
-#include <ocs2_oc/oc_problem/OcpSize.h>
+#include <ocs2_oc/oc_data/PerformanceIndex.h>
+#include <ocs2_oc/search_strategy/FilterLinesearch.h>
 
 namespace ocs2 {
 namespace slp {
 
-vector_t hessianAbsRowSum(const OcpSize& ocpSize, const std::vector<ScalarFunctionQuadraticApproximation>& cost);
+/** Different types of convergence */
+enum class Convergence { FALSE, ITERATIONS, STEPSIZE, METRICS, PRIMAL };
 
-vector_t GGTAbsRowSumInParallel(const OcpSize& ocpSize, const std::vector<VectorFunctionLinearApproximation>& dynamics,
-                                const std::vector<VectorFunctionLinearApproximation>* constraints, const vector_array_t* scalingVectorsPtr,
-                                ThreadPool& threadPool);
+/** Struct to contain the result and logging data of the stepsize computation */
+struct StepInfo {
+  // Step size and type
+  scalar_t stepSize = 0.0;
+  FilterLinesearch::StepType stepType = FilterLinesearch::StepType::UNKNOWN;
+
+  // Step in primal variables
+  scalar_t dx_norm = 0.0;  // norm of the state trajectory update
+  scalar_t du_norm = 0.0;  // norm of the input trajectory update
+
+  // Performance result after the step
+  PerformanceIndex performanceAfterStep;
+  scalar_t totalConstraintViolationAfterStep;  // constraint metric used in the line search
+};
+
+/** Transforms pipg::Convergence to string */
+inline std::string toString(const Convergence& convergence) {
+  switch (convergence) {
+    case Convergence::ITERATIONS:
+      return "Maximum number of iterations reached";
+    case Convergence::STEPSIZE:
+      return "Step size below minimum";
+    case Convergence::METRICS:
+      return "Cost decrease and constraint satisfaction below tolerance";
+    case Convergence::PRIMAL:
+      return "Primal update below tolerance";
+    case Convergence::FALSE:
+    default:
+      return "Not Converged";
+  }
+}
+
 }  // namespace slp
 }  // namespace ocs2

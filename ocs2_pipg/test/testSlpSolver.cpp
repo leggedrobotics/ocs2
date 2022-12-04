@@ -29,12 +29,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
-#include "ocs2_pipg/mpc/PipgMpcSolver.h"
-
 #include <ocs2_core/initialization/DefaultInitializer.h>
-
 #include <ocs2_oc/synchronized_module/ReferenceManager.h>
 #include <ocs2_oc/test/testProblemsGeneration.h>
+
+#include "ocs2_pipg/mpc/PipgMpcSolver.h"
 
 namespace ocs2 {
 namespace {
@@ -65,21 +64,7 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solve(const VectorFunct
   ocs2::DefaultInitializer zeroInitializer(m);
 
   // Solver settings
-  auto sqpSettings = []() {
-    ocs2::sqp::Settings settings;
-    settings.dt = 0.05;
-    settings.sqpIteration = 10;
-    settings.projectStateInputEqualityConstraints = true;
-    settings.useFeedbackPolicy = false;
-    settings.printSolverStatistics = true;
-    settings.printSolverStatus = true;
-    settings.printLinesearch = true;
-    settings.nThreads = 100;
-
-    return settings;
-  }();
-
-  auto pipgSettings = [&]() {
+  auto getPipgSettings = [&]() {
     ocs2::pipg::Settings settings;
     settings.nThreads = 100;
     settings.maxNumIterations = 30000;
@@ -91,6 +76,19 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solve(const VectorFunct
     settings.displayShortSummary = true;
 
     return settings;
+  };
+
+  const auto slpSettings = [&]() {
+    ocs2::slp::Settings settings;
+    settings.dt = 0.05;
+    settings.slpIteration = 10;
+    settings.printSolverStatistics = true;
+    settings.printSolverStatus = true;
+    settings.printLinesearch = true;
+    settings.nThreads = 100;
+    settings.pipgSettings = getPipgSettings();
+
+    return settings;
   }();
 
   // Additional problem definitions
@@ -99,7 +97,7 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solve(const VectorFunct
   const ocs2::vector_t initState = ocs2::vector_t::Ones(n);
 
   // Construct solver
-  ocs2::PipgMpcSolver solver(sqpSettings, pipgSettings, problem, zeroInitializer);
+  ocs2::PipgMpcSolver solver(slpSettings, problem, zeroInitializer);
   solver.setReferenceManager(referenceManagerPtr);
 
   // Solve
@@ -110,7 +108,7 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solve(const VectorFunct
 }  // namespace
 }  // namespace ocs2
 
-TEST(test_unconstrained, correctness) {
+TEST(testSlpSolver, test_unconstrained) {
   int n = 3;
   int m = 2;
   const double tol = 1e-9;

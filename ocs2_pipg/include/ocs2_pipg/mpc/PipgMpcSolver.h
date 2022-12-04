@@ -39,10 +39,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/oc_solver/SolverBase.h>
 #include <ocs2_oc/search_strategy/FilterLinesearch.h>
 
-#include <ocs2_sqp/SqpSettings.h>
-#include <ocs2_sqp/SqpSolverStatus.h>
-
 #include "ocs2_pipg/PipgSolver.h"
+#include "ocs2_pipg/SlpSettings.h"
+#include "ocs2_pipg/SlpSolverStatus.h"
 
 namespace ocs2 {
 
@@ -51,12 +50,11 @@ class PipgMpcSolver : public SolverBase {
   /**
    * Constructor
    *
-   * @param settings : settings for the multiple shooting solver.
+   * @param settings : settings for the multiple shooting SLP solver.
    * @param [in] optimalControlProblem: The optimal control problem formulation.
    * @param [in] initializer: This class initializes the state-input for the time steps that no controller is available.
    */
-  PipgMpcSolver(sqp::Settings sqpSettings, pipg::Settings pipgSettings, const OptimalControlProblem& optimalControlProblem,
-                const Initializer& initializer);
+  PipgMpcSolver(slp::Settings settings, const OptimalControlProblem& optimalControlProblem, const Initializer& initializer);
 
   ~PipgMpcSolver() override;
 
@@ -145,14 +143,14 @@ class PipgMpcSolver : public SolverBase {
   PrimalSolution toPrimalSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& x, vector_array_t&& u);
 
   /** Decides on the step to take and overrides given trajectories {x(t), u(t)} <- {x(t) + a*dx(t), u(t) + a*du(t)} */
-  sqp::StepInfo takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization, const vector_t& initState,
+  slp::StepInfo takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization, const vector_t& initState,
                          const OcpSubproblemSolution& subproblemSolution, vector_array_t& x, vector_array_t& u);
 
   /** Determine convergence after a step */
-  sqp::Convergence checkConvergence(int iteration, const PerformanceIndex& baseline, const sqp::StepInfo& stepInfo) const;
+  slp::Convergence checkConvergence(int iteration, const PerformanceIndex& baseline, const slp::StepInfo& stepInfo) const;
 
   // Problem definition
-  const sqp::Settings settings_;
+  const slp::Settings settings_;
   DynamicsDiscretizer discretizer_;
   DynamicsSensitivityDiscretizer sensitivityDiscretizer_;
   std::vector<OptimalControlProblem> ocpDefinitions_;

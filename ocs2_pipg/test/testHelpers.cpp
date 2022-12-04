@@ -75,7 +75,7 @@ class HelperFunctionTest : public testing::Test {
 };
 
 TEST_F(HelperFunctionTest, hessianAbsRowSum) {
-  ocs2::vector_t rowwiseSum = ocs2::pipg::hessianAbsRowSum(ocpSize_, costArray);
+  ocs2::vector_t rowwiseSum = ocs2::slp::hessianAbsRowSum(ocpSize_, costArray);
   EXPECT_TRUE(rowwiseSum.isApprox(costApproximation.dfdxx.cwiseAbs().rowwise().sum())) << "rowSum:\n" << rowwiseSum.transpose();
 }
 
@@ -87,7 +87,7 @@ TEST_F(HelperFunctionTest, GGTAbsRowSumInParallel) {
   }
 
   ocs2::getConstraintMatrix(ocpSize_, x0, dynamicsArray, nullptr, &scalingVectors, constraintsApproximation);
-  ocs2::vector_t rowwiseSum = ocs2::pipg::GGTAbsRowSumInParallel(ocpSize_, dynamicsArray, nullptr, &scalingVectors, threadPool_);
+  ocs2::vector_t rowwiseSum = ocs2::slp::GGTAbsRowSumInParallel(ocpSize_, dynamicsArray, nullptr, &scalingVectors, threadPool_);
   ocs2::matrix_t GGT = constraintsApproximation.dfdx * constraintsApproximation.dfdx.transpose();
   EXPECT_TRUE(rowwiseSum.isApprox(GGT.cwiseAbs().rowwise().sum()));
 }

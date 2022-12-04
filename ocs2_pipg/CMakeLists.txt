@@ -6,7 +6,6 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_mpc
   ocs2_oc
   ocs2_qp_solver
-  ocs2_sqp
 )
 
 find_package(catkin REQUIRED COMPONENTS
@@ -46,9 +45,10 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
+  src/Helpers.cpp
   src/PipgSettings.cpp
   src/PipgSolver.cpp
-  src/Helpers.cpp
+  src/SlpSettings.cpp
   src/mpc/PipgMpcSolver.cpp
 )
 add_dependencies(${PROJECT_NAME}
@@ -94,23 +94,12 @@ install(DIRECTORY include/${PROJECT_NAME}/
 catkin_add_gtest(test_${PROJECT_NAME}
   test/testHelpers.cpp
   test/testPipgSolver.cpp
+  test/testSlpSolver.cpp
 )
 add_dependencies(test_${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(test_${PROJECT_NAME}
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  gtest_main
-)
-
-catkin_add_gtest(test_pipg_mpc
-  test/testPipgMpc.cpp
-)
-add_dependencies(test_pipg_mpc
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(test_pipg_mpc
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   gtest_main

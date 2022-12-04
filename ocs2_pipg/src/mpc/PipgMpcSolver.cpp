@@ -42,20 +42,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-namespace {
-sqp::Settings rectifySettings(const OptimalControlProblem& ocp, sqp::Settings&& settings) {
-  // True does not make sense if there are no constraints.
-  if (ocp.equalityConstraintPtr->empty()) {
-    settings.projectStateInputEqualityConstraints = false;
-  }
-  return settings;
-}
-}  // anonymous namespace
-
-PipgMpcSolver::PipgMpcSolver(sqp::Settings settings, pipg::Settings pipgSettings, const OptimalControlProblem& optimalControlProblem,
-                             const Initializer& initializer)
-    : settings_(rectifySettings(optimalControlProblem, std::move(settings))),
-      pipgSolver_(pipgSettings),
+PipgMpcSolver::PipgMpcSolver(slp::Settings settings, const OptimalControlProblem& optimalControlProblem, const Initializer& initializer)
+    : settings_(std::move(settings)),
+      pipgSolver_(settings_.pipgSettings),
       threadPool_(std::max(settings_.nThreads, size_t(1)) - 1, settings_.threadPriority) {
   Eigen::setNbThreads(1);  // No multithreading within Eigen.
   Eigen::initParallel();
@@ -187,8 +176,8 @@ void PipgMpcSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar
   performanceIndeces_.clear();
 
   int iter = 0;
-  sqp::Convergence convergence = sqp::Convergence::FALSE;
-  while (convergence == sqp::Convergence::FALSE) {
+  slp::Convergence convergence = slp::Convergence::FALSE;
+  while (convergence == slp::Convergence::FALSE) {
     if (settings_.printSolverStatus || settings_.printLinesearch) {
       std::cerr << "\nPIPG iteration: " << iter << "\n";
     }
@@ -241,11 +230,6 @@ PipgMpcSolver::OcpSubproblemSolution PipgMpcSolver::getOCPSolution(const vector_
   auto& deltaXSol = solution.deltaXSol;
   auto& deltaUSol = solution.deltaUSol;
 
-  const bool hasStateInputConstraints = !ocpDefinitions_.front().equalityConstraintPtr->empty();
-  if (hasStateInputConstraints && !settings_.projectStateInputEqualityConstraints) {
-    throw std::runtime_error("[PipgMpcSolver] Please project State-Input equality constraints.");
-  }
-
   // without constraints, or when using projection, we have an unconstrained QP.
   pipgSolver_.resize(extractSizesFromProblem(dynamics_, cost_, nullptr));
 
@@ -260,13 +244,13 @@ PipgMpcSolver::OcpSubproblemSolution PipgMpcSolver::getOCPSolution(const vector_
   preConditioning_.endTimer();
 
   lambdaEstimation_.startTimer();
-  const vector_t rowwiseAbsSumH = pipg::hessianAbsRowSum(pipgSolver_.size(), cost_);
+  const vector_t rowwiseAbsSumH = slp::hessianAbsRowSum(pipgSolver_.size(), cost_);
   const scalar_t lambdaScaled = rowwiseAbsSumH.maxCoeff();
   lambdaEstimation_.endTimer();
 
   GGTMultiplication_.startTimer();
   const vector_t rowwiseAbsSumGGT =
-      pipg::GGTAbsRowSumInParallel(pipgSolver_.size(), dynamics_, nullptr, &scalingVectors, pipgSolver_.getThreadPool());
+      slp::GGTAbsRowSumInParallel(pipgSolver_.size(), dynamics_, nullptr, &scalingVectors, pipgSolver_.getThreadPool());
   GGTMultiplication_.endTimer();
 
   sigmaEstimation_.startTimer();
@@ -283,7 +267,7 @@ PipgMpcSolver::OcpSubproblemSolution PipgMpcSolver::getOCPSolution(const vector_
 
   vector_array_t EInv(E.size());
   std::transform(E.begin(), E.end(), EInv.begin(), [](const vector_t& v) { return v.cwiseInverse(); });
-  pipg::SolverStatus pipgStatus =
+  const auto pipgStatus =
       pipgSolver_.solveOCPInParallel(delta_x0, dynamics_, cost_, nullptr, scalingVectors, &EInv, muEstimated, lambdaScaled, sigmaScaled,
                                      ScalarFunctionQuadraticApproximation(), VectorFunctionLinearApproximation());
   pipgSolver_.getStateInputTrajectoriesSolution(deltaXSol, deltaUSol);
@@ -294,9 +278,7 @@ PipgMpcSolver::OcpSubproblemSolution PipgMpcSolver::getOCPSolution(const vector_
   solution.armijoDescentMetric = armijoDescentMetric(cost_, deltaXSol, deltaUSol);
 
   // remap the tilde delta u to real delta u
-  if (settings_.projectStateInputEqualityConstraints) {
-    multiple_shooting::remapProjectedInput(constraintsProjection_, deltaXSol, deltaUSol);
-  }
+  multiple_shooting::remapProjectedInput(constraintsProjection_, deltaXSol, deltaUSol);
 
   return solution;
 }
@@ -324,7 +306,6 @@ PerformanceIndex PipgMpcSolver::setupQuadraticSubproblem(const std::vector<Annot
     // Get worker specific resources
     OptimalControlProblem& ocpDefinition = ocpDefinitions_[workerId];
     PerformanceIndex workerPerformance;  // Accumulate performance in local variable
-    const bool projectStateInputEqualityConstraints = settings_.projectStateInputEqualityConstraints;
 
     int i = timeIndex++;
     while (i < N) {
@@ -344,10 +325,8 @@ PerformanceIndex PipgMpcSolver::setupQuadraticSubproblem(const std::vector<Annot
         const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
         auto result = multiple_shooting::setupIntermediateNode(ocpDefinition, sensitivityDiscretizer_, ti, dt, x[i], x[i + 1], u[i]);
         workerPerformance += multiple_shooting::computeIntermediatePerformance(result, dt);
-        if (projectStateInputEqualityConstraints) {
-          constexpr bool extractPseudoInverse = false;
-          multiple_shooting::projectTranscription(result, extractPseudoInverse);
-        }
+        constexpr bool extractPseudoInverse = false;
+        multiple_shooting::projectTranscription(result, extractPseudoInverse);
         dynamics_[i] = std::move(result.dynamics);
         cost_[i] = std::move(result.cost);
         constraintsProjection_[i] = std::move(result.constraintsProjection);
@@ -429,7 +408,7 @@ PerformanceIndex PipgMpcSolver::computePerformance(const std::vector<AnnotatedTi
   return totalPerformance;
 }
 
-sqp::StepInfo PipgMpcSolver::takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization,
+slp::StepInfo PipgMpcSolver::takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization,
                                       const vector_t& initState, const OcpSubproblemSolution& subproblemSolution, vector_array_t& x,
                                       vector_array_t& u) {
   using StepType = FilterLinesearch::StepType;
@@ -483,7 +462,7 @@ sqp::StepInfo PipgMpcSolver::takeStep(const PerformanceIndex& baseline, const st
       u = std::move(uNew);
 
       // Prepare step info
-      sqp::StepInfo stepInfo;
+      slp::StepInfo stepInfo;
       stepInfo.stepSize = alpha;
       stepInfo.stepType = stepType;
       stepInfo.dx_norm = alpha * deltaXnorm;
@@ -507,7 +486,7 @@ sqp::StepInfo PipgMpcSolver::takeStep(const PerformanceIndex& baseline, const st
   } while (alpha >= settings_.alpha_min);
 
   // Alpha_min reached -> Don't take a step
-  sqp::StepInfo stepInfo;
+  slp::StepInfo stepInfo;
   stepInfo.stepSize = 0.0;
   stepInfo.stepType = StepType::ZERO;
   stepInfo.dx_norm = 0.0;
@@ -522,9 +501,9 @@ sqp::StepInfo PipgMpcSolver::takeStep(const PerformanceIndex& baseline, const st
   return stepInfo;
 }
 
-sqp::Convergence PipgMpcSolver::checkConvergence(int iteration, const PerformanceIndex& baseline, const sqp::StepInfo& stepInfo) const {
-  using Convergence = sqp::Convergence;
-  if ((iteration + 1) >= settings_.sqpIteration) {
+slp::Convergence PipgMpcSolver::checkConvergence(int iteration, const PerformanceIndex& baseline, const slp::StepInfo& stepInfo) const {
+  using Convergence = slp::Convergence;
+  if ((iteration + 1) >= settings_.slpIteration) {
     // Converged because the next iteration would exceed the specified number of iterations
     return Convergence::ITERATIONS;
   } else if (stepInfo.stepSize < settings_.alpha_min) {

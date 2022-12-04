@@ -24,7 +24,7 @@
   <depend>ocs2_ddp</depend>
   <depend>ocs2_mpc</depend>
   <depend>ocs2_sqp</depend>
-  <depend>ocs2_pipg</depend>
+  <depend>ocs2_slp</depend>
   <depend>ocs2_ros_interfaces</depend>
   <depend>ocs2_ballbot</depend>
   <depend>ocs2_robotic_tools</depend>

@@ -30,15 +30,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/init.h>
 #include <ros/package.h>
 
-#include <ocs2_pipg/mpc/PipgMpc.h>
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 #include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
+#include <ocs2_slp/SlpMpc.h>
 
 #include <ocs2_ballbot/BallbotInterface.h>
-
-// Boost
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/path.hpp>
 
 int main(int argc, char** argv) {
   const std::string robotName = "ballbot";
@@ -57,18 +53,8 @@ int main(int argc, char** argv) {
 
   // Robot interface
   const std::string taskFile = ros::package::getPath("ocs2_ballbot") + "/config/" + taskFileFolderName + "/task.info";
-  const std::string pipgConfigFile = ros::package::getPath("ocs2_ballbot") + "/config/" + taskFileFolderName + "/pipg.info";
   const std::string libFolder = ros::package::getPath("ocs2_ballbot") + "/auto_generated";
   ocs2::ballbot::BallbotInterface ballbotInterface(taskFile, libFolder);
-
-  // Load PIPG settings
-  boost::filesystem::path pipgConfigPath(pipgConfigFile);
-  if (boost::filesystem::exists(pipgConfigPath)) {
-    std::cerr << "[pipgBallbotExample] Loading pipg config file: " << pipgConfigFile << std::endl;
-  } else {
-    throw std::invalid_argument("[pipgBallbotExample] Pipg config file not found: " + pipgConfigPath.string());
-  }
-  ocs2::pipg::Settings pipgSettings = ocs2::pipg::loadSettings(pipgConfigFile, "pipg");
 
   // ROS ReferenceManager
   std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr(
@@ -76,9 +62,8 @@ int main(int argc, char** argv) {
   rosReferenceManagerPtr->subscribe(nodeHandle);
 
   // MPC
-  ocs2::PipgMpc mpc(ballbotInterface.mpcSettings(), ballbotInterface.sqpSettings(), pipgSettings,
-                    ballbotInterface.getOptimalControlProblem(), ballbotInterface.getInitializer());
-
+  ocs2::SlpMpc mpc(ballbotInterface.mpcSettings(), ballbotInterface.slpSettings(), ballbotInterface.getOptimalControlProblem(),
+                   ballbotInterface.getInitializer());
   mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
 
   // Launch MPC ROS node

@@ -12,6 +12,30 @@ templateSwitchingTimes
 {
 }
 
+; Multiple_Shooting SLP settings
+slp
+{
+  dt                            0.1
+  slpIteration                  5
+  deltaTol                      1e-3
+  printSolverStatistics         true
+  printSolverStatus             false
+  printLinesearch               false
+  integratorType                RK2
+  nThreads                      4
+  pipg
+  {
+    nThreads                    4
+    maxNumIterations            7000
+    absoluteTolerance           1e-3
+    relativeTolerance           1e-2
+    numScaling                  3
+    lowerBoundH                 0.2
+    checkTerminationInterval    10
+    displayShortSummary         false
+  }
+}
+
 ; Multiple_Shooting SQP settings
 sqp
 {

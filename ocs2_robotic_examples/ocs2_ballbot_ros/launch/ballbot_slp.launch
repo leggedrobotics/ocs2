@@ -11,7 +11,7 @@
       <include file="$(find ocs2_ballbot_ros)/launch/multiplot.launch"/>
     </group>
 
-    <node pkg="ocs2_ballbot_ros" type="ballbot_pipg" name="ballbot_pipg"
+    <node pkg="ocs2_ballbot_ros" type="ballbot_slp" name="ballbot_slp"
           output="screen" args="$(arg task_name)" launch-prefix=""/>
 
     <node pkg="ocs2_ballbot_ros" type="ballbot_dummy_test" name="ballbot_dummy_test"

@@ -46,7 +46,7 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   Settings settings;
 
   if (verbose) {
-    std::cerr << "\n #### PIPG Settings: {";
+    std::cerr << " #### PIPG Settings: {\n";
   }
 
   loadData::loadPtreeValue(pt, settings.nThreads, fieldName + ".nThreads", verbose);
@@ -63,7 +63,7 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   loadData::loadPtreeValue(pt, settings.displayShortSummary, fieldName + ".displayShortSummary", verbose);
 
   if (verbose) {
-    std::cerr << "}\n";
+    std::cerr << " #### }\n";
   }
 
   return settings;

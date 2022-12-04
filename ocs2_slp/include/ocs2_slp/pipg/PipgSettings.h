@@ -38,7 +38,7 @@ struct Settings {
   /** Number of threads used in the multi-threading scheme. */
   size_t nThreads = 3;
   /** Priority of threads used in the multi-threading scheme. */
-  int threadPriority = 99;
+  int threadPriority = 50;
   /** Maximum number of iterations of PIPG. */
   size_t maxNumIterations = 3000;
   /** Termination criteria. **/

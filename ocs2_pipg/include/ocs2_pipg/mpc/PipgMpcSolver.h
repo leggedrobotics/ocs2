@@ -39,25 +39,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/oc_solver/SolverBase.h>
 #include <ocs2_oc/search_strategy/FilterLinesearch.h>
 
-#include <hpipm_catkin/HpipmInterface.h>
-
-#include "ocs2_sqp/SqpSettings.h"
-#include "ocs2_sqp/SqpSolverStatus.h"
+#include "ocs2_pipg/PipgSolver.h"
+#include "ocs2_pipg/SlpSettings.h"
+#include "ocs2_pipg/SlpSolverStatus.h"
 
 namespace ocs2 {
 
-class SqpSolver : public SolverBase {
+class PipgMpcSolver : public SolverBase {
  public:
   /**
    * Constructor
    *
-   * @param settings : settings for the multiple shooting SQP solver.
+   * @param settings : settings for the multiple shooting SLP solver.
    * @param [in] optimalControlProblem: The optimal control problem formulation.
    * @param [in] initializer: This class initializes the state-input for the time steps that no controller is available.
    */
-  SqpSolver(sqp::Settings settings, const OptimalControlProblem& optimalControlProblem, const Initializer& initializer);
+  PipgMpcSolver(slp::Settings settings, const OptimalControlProblem& optimalControlProblem, const Initializer& initializer);
 
-  ~SqpSolver() override;
+  ~PipgMpcSolver() override;
 
   void reset() override;
 
@@ -79,14 +78,16 @@ class SqpSolver : public SolverBase {
 
   const std::vector<PerformanceIndex>& getIterationsLog() const override;
 
-  ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const override;
+  ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const override {
+    throw std::runtime_error("[PipgMpcSolver] getValueFunction() not available yet.");
+  };
 
   ScalarFunctionQuadraticApproximation getHamiltonian(scalar_t time, const vector_t& state, const vector_t& input) override {
-    throw std::runtime_error("[SqpSolver] getHamiltonian() not available yet.");
+    throw std::runtime_error("[PipgMpcSolver] getHamiltonian() not available yet.");
   }
 
   vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const override {
-    throw std::runtime_error("[SqpSolver] getStateInputEqualityConstraintLagrangian() not available yet.");
+    throw std::runtime_error("[PipgMpcSolver] getStateInputEqualityConstraintLagrangian() not available yet.");
   }
 
   MultiplierCollection getIntermediateDualSolution(scalar_t time) const override {
@@ -100,7 +101,7 @@ class SqpSolver : public SolverBase {
     if (externalControllerPtr == nullptr) {
       runImpl(initTime, initState, finalTime);
     } else {
-      throw std::runtime_error("[SqpSolver::run] This solver does not support external controller!");
+      throw std::runtime_error("[PipgMpcSolver::run] This solver does not support external controller!");
     }
   }
 
@@ -120,6 +121,8 @@ class SqpSolver : public SolverBase {
   /** Get profiling information as a string */
   std::string getBenchmarkingInformation() const;
 
+  std::string getBenchmarkingInformationPIPG() const;
+
   /** Creates QP around t, x(t), u(t). Returns performance metrics at the current {t, x(t), u(t)} */
   PerformanceIndex setupQuadraticSubproblem(const std::vector<AnnotatedTime>& time, const vector_t& initState, const vector_array_t& x,
                                             const vector_array_t& u);
@@ -136,21 +139,18 @@ class SqpSolver : public SolverBase {
   };
   OcpSubproblemSolution getOCPSolution(const vector_t& delta_x0);
 
-  /** Extract the value function based on the last solved QP */
-  void extractValueFunction(const std::vector<AnnotatedTime>& time, const vector_array_t& x);
-
   /** Constructs the primal solution based on the optimized state and input trajectories */
   PrimalSolution toPrimalSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& x, vector_array_t&& u);
 
   /** Decides on the step to take and overrides given trajectories {x(t), u(t)} <- {x(t) + a*dx(t), u(t) + a*du(t)} */
-  sqp::StepInfo takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization, const vector_t& initState,
+  slp::StepInfo takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization, const vector_t& initState,
                          const OcpSubproblemSolution& subproblemSolution, vector_array_t& x, vector_array_t& u);
 
   /** Determine convergence after a step */
-  sqp::Convergence checkConvergence(int iteration, const PerformanceIndex& baseline, const sqp::StepInfo& stepInfo) const;
+  slp::Convergence checkConvergence(int iteration, const PerformanceIndex& baseline, const slp::StepInfo& stepInfo) const;
 
   // Problem definition
-  const sqp::Settings settings_;
+  const slp::Settings settings_;
   DynamicsDiscretizer discretizer_;
   DynamicsSensitivityDiscretizer sensitivityDiscretizer_;
   std::vector<OptimalControlProblem> ocpDefinitions_;
@@ -158,16 +158,13 @@ class SqpSolver : public SolverBase {
   FilterLinesearch filterLinesearch_;
 
   // Solver interface
-  HpipmInterface hpipmInterface_;
+  PipgSolver pipgSolver_;
 
   // Threading
   ThreadPool threadPool_;
 
   // Solution
   PrimalSolution primalSolution_;
-
-  // Value function in absolute state coordinates (without the constant value)
-  std::vector<ScalarFunctionQuadraticApproximation> valueFunction_;
 
   // LQ approximation
   std::vector<VectorFunctionLinearApproximation> dynamics_;
@@ -188,6 +185,12 @@ class SqpSolver : public SolverBase {
   benchmark::RepeatedTimer solveQpTimer_;
   benchmark::RepeatedTimer linesearchTimer_;
   benchmark::RepeatedTimer computeControllerTimer_;
+
+  // PIPG Solver
+  benchmark::RepeatedTimer GGTMultiplication_;
+  benchmark::RepeatedTimer lambdaEstimation_;
+  benchmark::RepeatedTimer sigmaEstimation_;
+  benchmark::RepeatedTimer preConditioning_;
 };
 
 }  // namespace ocs2

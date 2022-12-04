@@ -4,12 +4,14 @@
   <version>0.0.0</version>
   <description>A numerical implementation of PIPG.</description>
 
+  <maintainer email="farbod.farshidian@gmail.com">Farbod Farshidian</maintainer>
   <maintainer email="zhengfuaj@gmail.com">Zhengyu Fu</maintainer>
 
-  <license>TODO</license>
+  <license>BSD3</license>
 
   <buildtool_depend>catkin</buildtool_depend>
   <depend>ocs2_core</depend>
+  <depend>ocs2_mpc</depend>
   <depend>ocs2_oc</depend>
 
   <!-- Test dependancy -->

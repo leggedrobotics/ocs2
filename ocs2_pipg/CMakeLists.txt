@@ -3,6 +3,7 @@ project(ocs2_pipg)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
+  ocs2_mpc
   ocs2_oc
   ocs2_qp_solver
 )
@@ -11,7 +12,10 @@ find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
-find_package(Boost REQUIRED)
+find_package(Boost REQUIRED COMPONENTS
+  system
+  filesystem
+)
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
@@ -41,13 +45,20 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
+  src/Helpers.cpp
   src/PipgSettings.cpp
   src/PipgSolver.cpp
-  src/HelperFunctions.cpp
+  src/SlpSettings.cpp
+  src/mpc/PipgMpcSolver.cpp
+)
+add_dependencies(${PROJECT_NAME}
+  ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
 )
+target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
 #########################
 ###   CLANG TOOLING   ###
@@ -56,13 +67,9 @@ find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
   message(STATUS "Run clang tooling for target " ${PROJECT_NAME})
   add_clang_tooling(
-    TARGETS
-      ${PROJECT_NAME}
-    SOURCE_DIRS 
-      ${CMAKE_CURRENT_SOURCE_DIR}/src 
-      ${CMAKE_CURRENT_SOURCE_DIR}/include
-    CT_HEADER_DIRS 
-      ${CMAKE_CURRENT_SOURCE_DIR}/include
+    TARGETS ${PROJECT_NAME}
+    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test
+    CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CF_WERROR
   )
 endif(cmake_clang_tools_FOUND)
@@ -83,9 +90,14 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 ## Testing ##
 #############
+
 catkin_add_gtest(test_${PROJECT_NAME}
+  test/testHelpers.cpp
   test/testPipgSolver.cpp
-  test/testHelper.cpp
+  test/testSlpSolver.cpp
+)
+add_dependencies(test_${PROJECT_NAME}
+  ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(test_${PROJECT_NAME}
   ${PROJECT_NAME}

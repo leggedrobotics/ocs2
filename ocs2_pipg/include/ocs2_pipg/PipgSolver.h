@@ -43,10 +43,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+/*
+ * First order primal-dual method for solving optimal control problem based on:
+ * "Proportional-Integral Projected Gradient Method for Model Predictive Control"
+ * https://arxiv.org/abs/2009.06980
+ */
 class PipgSolver {
  public:
   /**
-   * @brief Construct a new PIPG with pipg setting object.
+   * @brief Constructor.
    *
    * @param Settings: PIPG setting
    */

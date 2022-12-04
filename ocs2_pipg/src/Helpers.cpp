@@ -27,28 +27,28 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_pipg/HelperFunctions.h"
+#include "ocs2_pipg/Helpers.h"
 
 #include <atomic>
 #include <numeric>
 
-namespace ocs2 {
-namespace pipg {
-
 namespace {
-int getNumDecisionVariables(const OcpSize& ocpSize) {
+int getNumDecisionVariables(const ocs2::OcpSize& ocpSize) {
   return std::accumulate(ocpSize.numInputs.begin(), ocpSize.numInputs.end(),
                          std::accumulate(ocpSize.numStates.begin() + 1, ocpSize.numStates.end(), (int)0));
 }
 
-int getNumDynamicsConstraints(const OcpSize& ocpSize) {
+int getNumDynamicsConstraints(const ocs2::OcpSize& ocpSize) {
   return std::accumulate(ocpSize.numStates.begin() + 1, ocpSize.numStates.end(), (int)0);
 }
 
-int getNumGeneralEqualityConstraints(const OcpSize& ocpSize) {
+int getNumGeneralEqualityConstraints(const ocs2::OcpSize& ocpSize) {
   return std::accumulate(ocpSize.numIneqConstraints.begin(), ocpSize.numIneqConstraints.end(), (int)0);
 }
-}  // namespace
+}  // anonymous namespace
+
+namespace ocs2 {
+namespace slp {
 
 vector_t hessianAbsRowSum(const OcpSize& ocpSize, const std::vector<ScalarFunctionQuadraticApproximation>& cost) {
   const int N = ocpSize.numStages;
@@ -179,5 +179,5 @@ vector_t GGTAbsRowSumInParallel(const OcpSize& ocpSize, const std::vector<Vector
   //  */
 }
 
-}  // namespace pipg
+}  // namespace slp
 }  // namespace ocs2

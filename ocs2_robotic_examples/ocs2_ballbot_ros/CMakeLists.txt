@@ -14,6 +14,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_ddp
   ocs2_mpc
   ocs2_sqp
+  ocs2_pipg
   ocs2_ros_interfaces
   ocs2_robotic_tools
   ocs2_ballbot
@@ -135,6 +136,17 @@ target_link_libraries(ballbot_sqp
 )
 target_compile_options(ballbot_sqp  PRIVATE ${OCS2_CXX_FLAGS})
 
+## PIPG node for ballbot
+add_executable(ballbot_pipg
+  src/PipgBallbotNode.cpp
+)
+add_dependencies(ballbot_pipg
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(ballbot_pipg
+  ${catkin_LIBRARIES}
+)
+target_compile_options(ballbot_pipg  PRIVATE ${OCS2_CXX_FLAGS})
 
 #########################
 ###   CLANG TOOLING   ###

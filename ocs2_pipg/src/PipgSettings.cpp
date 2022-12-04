@@ -46,8 +46,7 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   Settings settings;
 
   if (verbose) {
-    std::cerr << "\n #### PIPG Settings: ";
-    std::cerr << "\n #### =============================================================================\n";
+    std::cerr << "\n #### PIPG Settings: {";
   }
 
   loadData::loadPtreeValue(pt, settings.nThreads, fieldName + ".nThreads", verbose);
@@ -57,11 +56,14 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   loadData::loadPtreeValue(pt, settings.absoluteTolerance, fieldName + ".absoluteTolerance", verbose);
   loadData::loadPtreeValue(pt, settings.relativeTolerance, fieldName + ".relativeTolerance", verbose);
 
+  loadData::loadPtreeValue(pt, settings.numScaling, fieldName + ".numScaling", verbose);
+  loadData::loadPtreeValue(pt, settings.lowerBoundH, fieldName + ".lowerBoundH", verbose);
+
   loadData::loadPtreeValue(pt, settings.checkTerminationInterval, fieldName + ".checkTerminationInterval", verbose);
   loadData::loadPtreeValue(pt, settings.displayShortSummary, fieldName + ".displayShortSummary", verbose);
 
   if (verbose) {
-    std::cerr << " #### =============================================================================" << std::endl;
+    std::cerr << "}\n";
   }
 
   return settings;

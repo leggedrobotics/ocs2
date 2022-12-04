@@ -40,6 +40,7 @@ enum class SolverStatus {
   UNDEFINED,
 };
 
+/** Transforms pipg::SolverStatus to string */
 inline std::string toString(SolverStatus s) {
   switch (s) {
     case SolverStatus::SUCCESS:

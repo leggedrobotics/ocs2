@@ -29,40 +29,42 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/Types.h>
+#include "ocs2_pipg/mpc/PipgMpcSolver.h"
+
+#include <ocs2_mpc/MPC_BASE.h>
 
 namespace ocs2 {
-namespace pipg {
+class PipgMpc final : public MPC_BASE {
+ public:
+  /**
+   * Constructor
+   *
+   * @param mpcSettings : settings for the mpc wrapping of the solver. Do not use this for maxIterations and stepsize, use multiple shooting
+   * settings directly.
+   * @param settings : settings for the multiple shooting solver.
+   * @param [in] optimalControlProblem: The optimal control problem formulation.
+   * @param [in] initializer: This class initializes the state-input for the time steps that no controller is available.
+   */
+  PipgMpc(mpc::Settings mpcSettings, multiple_shooting::Settings settings, pipg::Settings pipgSetting,
+          const OptimalControlProblem& optimalControlProblem, const Initializer& initializer)
+      : MPC_BASE(std::move(mpcSettings)) {
+    solverPtr_.reset(new PipgMpcSolver(std::move(settings), std::move(pipgSetting), optimalControlProblem, initializer));
+  };
 
-struct Settings {
-  /** Number of threads used in the multi-threading scheme. */
-  size_t nThreads = 3;
-  /** Priority of threads used in the multi-threading scheme. */
-  int threadPriority = 99;
-  /** Maximum number of iterations of PIPG. */
-  size_t maxNumIterations = 3000;
-  /** Termination criteria. **/
-  scalar_t absoluteTolerance = 1e-3;
-  scalar_t relativeTolerance = 1e-2;
-  /** Number of iterations between consecutive calculation of termination conditions. **/
-  size_t checkTerminationInterval = 1;
-  /** Number of pre-conditioning run. **/
-  int numScaling = 3;
-  /** The static lower bound of the cost hessian H. **/
-  scalar_t lowerBoundH = 5e-6;
-  /** This value determines to display the a summary log. */
-  bool displayShortSummary = false;
+  ~PipgMpc() override = default;
+
+  PipgMpcSolver* getSolverPtr() override { return solverPtr_.get(); }
+  const PipgMpcSolver* getSolverPtr() const override { return solverPtr_.get(); }
+
+ protected:
+  void calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override {
+    if (settings().coldStart_) {
+      solverPtr_->reset();
+    }
+    solverPtr_->run(initTime, initState, finalTime);
+  }
+
+ private:
+  std::unique_ptr<PipgMpcSolver> solverPtr_;
 };
-
-/**
- * Loads the PIPG settings from a given file.
- *
- * @param [in] filename: File name which contains the configuration data.
- * @param [in] fieldName: Field name which contains the configuration data.
- * @param [in] verbose: Flag to determine whether to print out the loaded settings or not.
- * @return The settings
- */
-Settings loadSettings(const std::string& filename, const std::string& fieldName = "pipg", bool verbose = true);
-
-}  // namespace pipg
 }  // namespace ocs2

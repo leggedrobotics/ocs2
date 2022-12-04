@@ -27,26 +27,19 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_sqp/SqpSolverStatus.h"
+#pragma once
+
+#include <ocs2_core/Types.h>
+#include <ocs2_core/thread_support/ThreadPool.h>
+#include <ocs2_oc/oc_problem/OcpSize.h>
 
 namespace ocs2 {
-namespace sqp {
+namespace slp {
 
-std::string toString(const Convergence& convergence) {
-  switch (convergence) {
-    case Convergence::ITERATIONS:
-      return "Maximum number of iterations reached";
-    case Convergence::STEPSIZE:
-      return "Step size below minimum";
-    case Convergence::METRICS:
-      return "Cost decrease and constraint satisfaction below tolerance";
-    case Convergence::PRIMAL:
-      return "Primal update below tolerance";
-    case Convergence::FALSE:
-    default:
-      return "Not Converged";
-  }
-}
+vector_t hessianAbsRowSum(const OcpSize& ocpSize, const std::vector<ScalarFunctionQuadraticApproximation>& cost);
 
-}  // namespace sqp
+vector_t GGTAbsRowSumInParallel(const OcpSize& ocpSize, const std::vector<VectorFunctionLinearApproximation>& dynamics,
+                                const std::vector<VectorFunctionLinearApproximation>* constraints, const vector_array_t* scalingVectorsPtr,
+                                ThreadPool& threadPool);
+}  // namespace slp
 }  // namespace ocs2

@@ -17,6 +17,7 @@
   <exec_depend>ocs2_qp_solver</exec_depend>
   <exec_depend>ocs2_ddp</exec_depend>
   <exec_depend>ocs2_sqp</exec_depend>
+  <exec_depend>ocs2_pipg</exec_depend>
   <exec_depend>ocs2_ros_interfaces</exec_depend>
   <exec_depend>ocs2_python_interface</exec_depend>
   <exec_depend>ocs2_pinocchio</exec_depend>

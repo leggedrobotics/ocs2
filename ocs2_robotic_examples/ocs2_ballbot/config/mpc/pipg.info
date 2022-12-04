@@ -1,0 +1,12 @@
+pipg
+{
+  nThreads                    8
+  threadPriority              50
+  maxNumIterations            7000
+  absoluteTolerance           1e-3
+  relativeTolerance           1e-2
+  numScaling                  3
+  lowerBoundH                 0.2
+  checkTerminationInterval    10
+  displayShortSummary         false
+}

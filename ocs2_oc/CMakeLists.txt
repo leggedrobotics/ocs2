@@ -58,9 +58,9 @@ add_library(${PROJECT_NAME}
   src/oc_problem/OptimalControlProblem.cpp
   src/oc_problem/LoopshapingOptimalControlProblem.cpp
   src/oc_problem/OptimalControlProblemHelperFunction.cpp
-  src/oc_solver/SolverBase.cpp
-  src/oc_problem/OcpSize.cpp
   src/oc_problem/OcpMatrixConstruction.cpp
+  src/oc_problem/OcpSize.cpp
+  src/oc_solver/SolverBase.cpp
   src/pre_condition/Scaling.cpp
   src/rollout/PerformanceIndicesRollout.cpp
   src/rollout/RolloutBase.cpp
@@ -192,7 +192,7 @@ target_link_libraries(test_trajectory_spreading
 )
 
 catkin_add_gtest(test_matrix_construction
-  test/testMatrixConstruction.cpp
+  test/oc_problem/testMatrixConstruction.cpp
 )
 target_link_libraries(test_matrix_construction
   ${PROJECT_NAME}
@@ -201,7 +201,8 @@ target_link_libraries(test_matrix_construction
 )
 
 catkin_add_gtest(test_scaling
-  test/testScaling.cpp
+  test/pre_condition/SparseScaling.cpp
+  test/pre_condition/testScaling.cpp
 )
 target_link_libraries(test_scaling
   ${PROJECT_NAME}

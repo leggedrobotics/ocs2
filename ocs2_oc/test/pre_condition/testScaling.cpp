@@ -1,9 +1,40 @@
+/******************************************************************************
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
+
 #include <gtest/gtest.h>
 
 #include <ocs2_core/thread_support/ThreadPool.h>
 
 #include "ocs2_oc/oc_problem/OcpMatrixConstruction.h"
 #include "ocs2_oc/pre_condition/Scaling.h"
+
+#include "ocs2_oc/test/SparseScaling.h"
 #include "ocs2_oc/test/testProblemsGeneration.h"
 
 class ScalingTest : public testing::Test {
@@ -23,7 +54,7 @@ class ScalingTest : public testing::Test {
       dynamicsArray.push_back(ocs2::getRandomDynamics(nx_, nu_));
       costArray.push_back(ocs2::getRandomCost(nx_, nu_));
     }
-    costArray.push_back(ocs2::getRandomCost(nx_, nu_));
+    costArray.push_back(ocs2::getRandomCost(nx_, 0));
 
     ocpSize_ = ocs2::extractSizesFromProblem(dynamicsArray, costArray, nullptr);
   }
@@ -109,26 +140,19 @@ TEST_F(ScalingTest, preConditioningInPlaceInParallel) {
   Eigen::SparseMatrix<ocs2::scalar_t> H_ref;
   ocs2::vector_t h_ref;
   ocs2::getCostMatrixSparse(ocpSize_, x0, costArray, H_ref, h_ref);
-  // Copy of the original matrix/vector
-  const Eigen::SparseMatrix<ocs2::scalar_t> H_src = H_ref;
-  const ocs2::vector_t h_src = h_ref;
 
-  Eigen::SparseMatrix<ocs2::scalar_t> G_ref;
-  ocs2::vector_t g_ref;
-  ocs2::getConstraintMatrixSparse(ocpSize_, x0, dynamicsArray, nullptr, nullptr, G_ref, g_ref);
-  // Copy of the original matrix/vector
-  const Eigen::SparseMatrix<ocs2::scalar_t> G_src = G_ref;
-  const ocs2::vector_t g_src = g_ref;
   // Generate reference
+  ocs2::vector_t g_ref;
+  Eigen::SparseMatrix<ocs2::scalar_t> G_ref;
+  ocs2::getConstraintMatrixSparse(ocpSize_, x0, dynamicsArray, nullptr, nullptr, G_ref, g_ref);
   ocs2::preConditioningSparseMatrixInPlace(H_ref, h_ref, G_ref, 5, D_ref, E_ref, c_ref);
-  g_ref = E_ref.asDiagonal() * g_src;
+  g_ref = E_ref.asDiagonal() * g_ref;
 
   // Test start
   ocs2::vector_array_t D_array, E_array;
   ocs2::scalar_t c;
   ocs2::vector_array_t scalingVectors(N_);
-  ocs2::preConditioningInPlaceInParallel(x0, ocpSize_, 5, dynamicsArray, costArray, D_array, E_array, scalingVectors, c, threadPool, H_src,
-                                         h_src, G_src);
+  ocs2::preConditioningInPlaceInParallel(threadPool, x0, ocpSize_, 5, dynamicsArray, costArray, D_array, E_array, scalingVectors, c);
 
   ocs2::vector_t D_stacked(D_ref.rows()), E_stacked(E_ref.rows());
   int curRow = 0;

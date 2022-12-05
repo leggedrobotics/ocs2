@@ -238,9 +238,8 @@ SlpSolver::OcpSubproblemSolution SlpSolver::getOCPSolution(const vector_t& delta
   scalar_t c;
 
   preConditioning_.startTimer();
-  preConditioningInPlaceInParallel(delta_x0, pipgSolver_.size(), pipgSolver_.settings().numScaling, dynamics_, cost_, D, E, scalingVectors,
-                                   c, pipgSolver_.getThreadPool(), Eigen::SparseMatrix<scalar_t>(), vector_t(),
-                                   Eigen::SparseMatrix<scalar_t>());
+  preConditioningInPlaceInParallel(pipgSolver_.getThreadPool(), delta_x0, pipgSolver_.size(), pipgSolver_.settings().numScaling, dynamics_,
+                                   cost_, D, E, scalingVectors, c);
   preConditioning_.endTimer();
 
   lambdaEstimation_.startTimer();
@@ -272,10 +271,10 @@ SlpSolver::OcpSubproblemSolution SlpSolver::getOCPSolution(const vector_t& delta
                                      ScalarFunctionQuadraticApproximation(), VectorFunctionLinearApproximation());
   pipgSolver_.getStateInputTrajectoriesSolution(deltaXSol, deltaUSol);
 
-  pipgSolver_.descaleSolution(D, deltaXSol, deltaUSol);
-
   // to determine if the solution is a descent direction for the cost: compute gradient(cost)' * [dx; du]
   solution.armijoDescentMetric = armijoDescentMetric(cost_, deltaXSol, deltaUSol);
+
+  pipgSolver_.descaleSolution(D, deltaXSol, deltaUSol);
 
   // remap the tilde delta u to real delta u
   multiple_shooting::remapProjectedInput(constraintsProjection_, deltaXSol, deltaUSol);

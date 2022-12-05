@@ -4,6 +4,7 @@
 #include <numeric>
 
 namespace ocs2 {
+
 // Internal helper functions
 namespace {
 
@@ -87,14 +88,17 @@ void scaleMatrixInPlace(const vector_t& rowScale, const vector_t& colScale, Eige
 
 template <typename T>
 void scaleMatrixInPlace(const vector_t* rowScale, const vector_t* colScale, Eigen::MatrixBase<T>& mat) {
-  if (rowScale != nullptr) mat.array().colwise() *= rowScale->array();
-  if (colScale != nullptr) mat *= colScale->asDiagonal();
+  if (rowScale != nullptr) {
+    mat.array().colwise() *= rowScale->array();
+  }
+  if (colScale != nullptr) {
+    mat *= colScale->asDiagonal();
+  }
 }
 
-void invSqrtInfNormInParallel(const std::vector<VectorFunctionLinearApproximation>& dynamics,
+void invSqrtInfNormInParallel(ThreadPool& threadPool, const std::vector<VectorFunctionLinearApproximation>& dynamics,
                               const std::vector<ScalarFunctionQuadraticApproximation>& cost, const vector_array_t& scalingVectors,
-                              const int N, const std::function<void(vector_t&)>& limitScaling, vector_array_t& D, vector_array_t& E,
-                              ThreadPool& threadPool) {
+                              const int N, const std::function<void(vector_t&)>& limitScaling, vector_array_t& D, vector_array_t& E) {
   // Helper function
   auto procedure = [&limitScaling](vector_t& dst, const vector_t& norm) {
     dst = norm;
@@ -121,41 +125,29 @@ void invSqrtInfNormInParallel(const std::vector<VectorFunctionLinearApproximatio
   procedure(D[2 * N - 1], matrixInfNormCols(cost[N].dfdxx, scalingVectors[N - 1].asDiagonal().toDenseMatrix()));
 }
 
-void scaleDataOneStepInPlaceInParallel(const vector_array_t& D, const vector_array_t& E, const int N,
+void scaleDataOneStepInPlaceInParallel(ThreadPool& threadPool, const vector_array_t& D, const vector_array_t& E, const int N,
                                        std::vector<VectorFunctionLinearApproximation>& dynamics,
-                                       std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<vector_t>& scalingVectors,
-                                       ThreadPool& threadPool) {
-  scaleMatrixInPlace(&(D[0]), &(D[0]), cost.front().dfduu);
+                                       std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<vector_t>& scalingVectors) {
   scaleMatrixInPlace(&(D[0]), nullptr, cost.front().dfdu);
+  scaleMatrixInPlace(&(D[0]), &(D[0]), cost.front().dfduu);
   scaleMatrixInPlace(&(D[0]), nullptr, cost.front().dfdux);
 
   std::atomic_int timeStamp{1};
   auto scaleCost = [&](int workerId) {
     int k;
-    while ((k = timeStamp++) < N) {
-      auto& Q = cost[k].dfdxx;
-      auto& R = cost[k].dfduu;
-      auto& P = cost[k].dfdux;
-      auto& q = cost[k].dfdx;
-      auto& r = cost[k].dfdu;
-
-      scaleMatrixInPlace(&(D[2 * k - 1]), &(D[2 * k - 1]), Q);
-      scaleMatrixInPlace(&(D[2 * k - 1]), nullptr, q);
-      scaleMatrixInPlace(&(D[2 * k]), &(D[2 * k - 1]), P);
-
-      scaleMatrixInPlace(&(D[2 * k]), &(D[2 * k]), R);
-      scaleMatrixInPlace(&(D[2 * k]), nullptr, r);
+    while ((k = timeStamp++) <= N) {
+      scaleMatrixInPlace(&(D[2 * k - 1]), nullptr, cost[k].dfdx);
+      scaleMatrixInPlace(&(D[2 * k - 1]), &(D[2 * k - 1]), cost[k].dfdxx);
+      if (cost[k].dfdu.size() > 0) {
+        scaleMatrixInPlace(&(D[2 * k]), nullptr, cost[k].dfdu);
+        scaleMatrixInPlace(&(D[2 * k]), &(D[2 * k]), cost[k].dfduu);
+        scaleMatrixInPlace(&(D[2 * k]), &(D[2 * k - 1]), cost[k].dfdux);
+      }
     }
   };
-
   threadPool.runParallel(std::move(scaleCost), threadPool.numThreads() + 1U);
 
-  scaleMatrixInPlace(&(D.back()), &(D.back()), cost[N].dfdxx);
-  scaleMatrixInPlace(&(D.back()), nullptr, cost[N].dfdx);
-
   // Scale G & g
-  auto& B_0 = dynamics[0].dfdu;
-  auto& C_0 = scalingVectors[0];
   /**
    * \f$
    * \tilde{B} = E * B * D,
@@ -163,32 +155,103 @@ void scaleDataOneStepInPlaceInParallel(const vector_array_t& D, const vector_arr
    * \tilde{g} = E * g,
    * \f$
    */
-  scaleMatrixInPlace(&(E[0]), &(D[0]), B_0);
-  C_0.array() *= E[0].array() * D[1].array();
-
-  scaleMatrixInPlace(&(E[0]), nullptr, dynamics[0].dfdx);
   scaleMatrixInPlace(&(E[0]), nullptr, dynamics[0].f);
+  scaleMatrixInPlace(&(E[0]), nullptr, dynamics[0].dfdx);
+  scalingVectors[0].array() *= E[0].array() * D[1].array();
+  if (dynamics[0].dfdu.size() > 0) {
+    scaleMatrixInPlace(&(E[0]), &(D[0]), dynamics[0].dfdu);
+  }
 
   timeStamp = 1;
   auto scaleConstraints = [&](int workerId) {
     int k;
     while ((k = timeStamp++) < N) {
-      auto& A_k = dynamics[k].dfdx;
-      auto& B_k = dynamics[k].dfdu;
-      auto& b_k = dynamics[k].f;
-      auto& C_k = scalingVectors[k];
+      scaleMatrixInPlace(&(E[k]), nullptr, dynamics[k].f);
+      scaleMatrixInPlace(&(E[k]), &(D[2 * k - 1]), dynamics[k].dfdx);
+      scalingVectors[k].array() *= E[k].array() * D[2 * k + 1].array();
+      if (dynamics[k].dfdu.size() > 0) {
+        scaleMatrixInPlace(&(E[k]), &(D[2 * k]), dynamics[k].dfdu);
+      }
+    }
+  };
+  threadPool.runParallel(std::move(scaleConstraints), threadPool.numThreads() + 1U);
+}
+}  // anonymous namespace
 
-      scaleMatrixInPlace(&(E[k]), &(D[2 * k - 1]), A_k);
-      scaleMatrixInPlace(&(E[k]), &(D[2 * k]), B_k);
-      C_k.array() *= E[k].array() * D[2 * k + 1].array();
+void preConditioningInPlaceInParallel(ThreadPool& threadPool, const vector_t& x0, const OcpSize& ocpSize, const int iteration,
+                                      std::vector<VectorFunctionLinearApproximation>& dynamics,
+                                      std::vector<ScalarFunctionQuadraticApproximation>& cost, vector_array_t& DOut, vector_array_t& EOut,
+                                      vector_array_t& scalingVectors, scalar_t& cOut) {
+  const int N = ocpSize.numStages;
+  if (N < 1) {
+    throw std::runtime_error("[preConditioningInPlaceInParallel] The number of stages cannot be less than 1.");
+  }
 
-      scaleMatrixInPlace(&(E[k]), nullptr, b_k);
+  auto limitScaling = [](vector_t& vec) {
+    for (int i = 0; i < vec.size(); i++) {
+      if (vec(i) > 1e+4) vec(i) = 1e+4;
+      if (vec(i) < 1e-4) vec(i) = 1.0;
     }
   };
 
-  threadPool.runParallel(std::move(scaleConstraints), threadPool.numThreads() + 1U);
+  // Init output
+  cOut = 1.0;
+  DOut.resize(2 * N);
+  EOut.resize(N);
+  scalingVectors.resize(N);
+  for (int i = 0; i < N; i++) {
+    DOut[2 * i].setOnes(ocpSize.numInputs[i]);
+    DOut[2 * i + 1].setOnes(ocpSize.numStates[i + 1]);
+    EOut[i].setOnes(ocpSize.numStates[i + 1]);
+    scalingVectors[i].setOnes(ocpSize.numStates[i + 1]);
+  }
+
+  vector_array_t D(2 * N), E(N);
+  for (int i = 0; i < iteration; i++) {
+    invSqrtInfNormInParallel(threadPool, dynamics, cost, scalingVectors, N, limitScaling, D, E);
+    scaleDataOneStepInPlaceInParallel(threadPool, D, E, N, dynamics, cost, scalingVectors);
+
+    for (int k = 0; k < DOut.size(); k++) {
+      DOut[k].array() *= D[k].array();
+    }
+    for (int k = 0; k < EOut.size(); k++) {
+      EOut[k].array() *= E[k].array();
+    }
+
+    scalar_t infNormOfh = (cost.front().dfdu + cost.front().dfdux * x0).lpNorm<Eigen::Infinity>();
+    for (int k = 1; k < N; k++) {
+      infNormOfh = std::max(infNormOfh, std::max(cost[k].dfdx.lpNorm<Eigen::Infinity>(), cost[k].dfdu.lpNorm<Eigen::Infinity>()));
+    }
+    infNormOfh = std::max(infNormOfh, cost[N].dfdx.lpNorm<Eigen::Infinity>());
+    if (infNormOfh < 1e-4) infNormOfh = 1.0;
+
+    scalar_t sumOfInfNormOfH = matrixInfNormCols(cost[0].dfduu).derived().sum();
+    for (int k = 1; k < N; k++) {
+      sumOfInfNormOfH += matrixInfNormCols(cost[k].dfdxx, cost[k].dfdux).derived().sum();
+      sumOfInfNormOfH += matrixInfNormCols(cost[k].dfdux.transpose().eval(), cost[k].dfduu).derived().sum();
+    }
+    sumOfInfNormOfH += matrixInfNormCols(cost[N].dfdxx).derived().sum();
+
+    const int numDecisionVariables = std::accumulate(ocpSize.numInputs.begin(), ocpSize.numInputs.end(), (int)0) +
+                                     std::accumulate(ocpSize.numStates.begin() + 1, ocpSize.numStates.end(), (int)0);
+
+    scalar_t c_temp = std::max(sumOfInfNormOfH / static_cast<scalar_t>(numDecisionVariables), infNormOfh);
+    if (c_temp > 1e+4) c_temp = 1e+4;
+    if (c_temp < 1e-4) c_temp = 1.0;
+
+    const scalar_t gamma = 1.0 / c_temp;
+
+    for (int k = 0; k <= N; ++k) {
+      cost[k].dfdxx *= gamma;
+      cost[k].dfduu *= gamma;
+      cost[k].dfdux *= gamma;
+      cost[k].dfdx *= gamma;
+      cost[k].dfdu *= gamma;
+    }
+
+    cOut *= gamma;
+  }
 }
-}  // namespace
 
 void preConditioningSparseMatrixInPlace(Eigen::SparseMatrix<scalar_t>& H, vector_t& h, Eigen::SparseMatrix<scalar_t>& G,
                                         const int iteration, vector_t& DOut, vector_t& EOut, scalar_t& cOut) {
@@ -244,181 +307,6 @@ void preConditioningSparseMatrixInPlace(Eigen::SparseMatrix<scalar_t>& H, vector
     h *= gamma;
 
     cOut *= gamma;
-  }
-}
-
-void preConditioningInPlaceInParallel(const vector_t& x0, const OcpSize& ocpSize, const int iteration,
-                                      std::vector<VectorFunctionLinearApproximation>& dynamics,
-                                      std::vector<ScalarFunctionQuadraticApproximation>& cost, vector_array_t& DOut, vector_array_t& EOut,
-                                      vector_array_t& scalingVectors, scalar_t& cOut, ThreadPool& threadPool,
-                                      const Eigen::SparseMatrix<scalar_t>& H, const vector_t& h, const Eigen::SparseMatrix<scalar_t>& G) {
-  const int N = ocpSize.numStages;
-  if (N < 1) {
-    throw std::runtime_error("[preConditioningInPlaceInParallel] The number of stages cannot be less than 1.");
-  }
-
-  auto limitScaling = [](vector_t& vec) {
-    for (int i = 0; i < vec.size(); i++) {
-      if (vec(i) > 1e+4) vec(i) = 1e+4;
-      if (vec(i) < 1e-4) vec(i) = 1.0;
-    }
-  };
-
-  // Init output
-  cOut = 1.0;
-  DOut.resize(2 * N);
-  EOut.resize(N);
-  scalingVectors.resize(N);
-  for (int i = 0; i < N; i++) {
-    DOut[2 * i].setOnes(ocpSize.numInputs[i]);
-    DOut[2 * i + 1].setOnes(ocpSize.numStates[i + 1]);
-    EOut[i].setOnes(ocpSize.numStates[i + 1]);
-    scalingVectors[i].setOnes(ocpSize.numStates[i + 1]);
-  }
-
-  // /**
-  //  * Test start
-  //  */
-  // Eigen::SparseMatrix<scalar_t> HTest = H;
-  // vector_t hTest = h;
-  // Eigen::SparseMatrix<scalar_t> GTest = G;
-  // /**
-  //  * Test end
-  //  */
-
-  vector_array_t D(2 * N), E(N);
-  for (int i = 0; i < iteration; i++) {
-    invSqrtInfNormInParallel(dynamics, cost, scalingVectors, N, limitScaling, D, E, threadPool);
-    scaleDataOneStepInPlaceInParallel(D, E, N, dynamics, cost, scalingVectors, threadPool);
-
-    for (int k = 0; k < DOut.size(); k++) {
-      DOut[k].array() *= D[k].array();
-    }
-    for (int k = 0; k < EOut.size(); k++) {
-      EOut[k].array() *= E[k].array();
-    }
-
-    scalar_t infNormOfh = (cost.front().dfdu + cost.front().dfdux * x0).lpNorm<Eigen::Infinity>();
-    for (int k = 1; k < N; k++) {
-      infNormOfh = std::max(infNormOfh, std::max(cost[k].dfdx.lpNorm<Eigen::Infinity>(), cost[k].dfdu.lpNorm<Eigen::Infinity>()));
-    }
-    infNormOfh = std::max(infNormOfh, cost[N].dfdx.lpNorm<Eigen::Infinity>());
-    if (infNormOfh < 1e-4) infNormOfh = 1.0;
-
-    scalar_t sumOfInfNormOfH = matrixInfNormCols(cost[0].dfduu).derived().sum();
-    for (int k = 1; k < N; k++) {
-      sumOfInfNormOfH += matrixInfNormCols(cost[k].dfdxx, cost[k].dfdux).derived().sum();
-      sumOfInfNormOfH += matrixInfNormCols(cost[k].dfdux.transpose().eval(), cost[k].dfduu).derived().sum();
-    }
-    sumOfInfNormOfH += matrixInfNormCols(cost[N].dfdxx).derived().sum();
-
-    int numDecisionVariables = std::accumulate(ocpSize.numInputs.begin(), ocpSize.numInputs.end(),
-                                               std::accumulate(ocpSize.numStates.begin() + 1, ocpSize.numStates.end(), (int)0));
-
-    scalar_t c_temp = std::max(sumOfInfNormOfH / static_cast<scalar_t>(numDecisionVariables), infNormOfh);
-    if (c_temp > 1e+4) c_temp = 1e+4;
-    if (c_temp < 1e-4) c_temp = 1.0;
-
-    scalar_t gamma = 1.0 / c_temp;
-
-    for (int k = 0; k <= N; ++k) {
-      cost[k].dfdxx *= gamma;
-      cost[k].dfduu *= gamma;
-      cost[k].dfdux *= gamma;
-      cost[k].dfdx *= gamma;
-      cost[k].dfdu *= gamma;
-    }
-
-    cOut *= gamma;
-
-    // /**
-    //  * Test start
-    //  */
-    // auto isEqual = [](scalar_t a, scalar_t b) -> bool {
-    //   return std::abs(a - b) < std::numeric_limits<scalar_t>::epsilon() * std::min(std::abs(a), std::abs(b));
-    // };
-    // vector_t DTest, ETest;
-    // vector_t infNormOfHCols = matrixInfNormCols(HTest);
-    // vector_t infNormOfGCols = matrixInfNormCols(GTest);
-
-    // DTest = infNormOfHCols.array().max(infNormOfGCols.array());
-    // ETest = matrixInfNormRows(GTest);
-
-    // limitScaling(DTest);
-    // limitScaling(ETest);
-
-    // std::cerr << "DTest: " << DTest.transpose() << "\n";
-    // std::cerr << "ETest   : " << ETest.transpose() << "\n";
-    // std::cerr << "G   :\n " << GTest.toDense() << "\n";
-
-    // DTest = DTest.array().sqrt().inverse();
-    // ETest = ETest.array().sqrt().inverse();
-
-    // scaleMatrixInPlace(DTest, DTest, HTest);
-
-    // scaleMatrixInPlace(ETest, DTest, GTest);
-
-    // hTest.array() *= DTest.array();
-
-    // scalar_t infNormOfhTest = hTest.lpNorm<Eigen::Infinity>();
-    // if (infNormOfhTest < 1e-4) infNormOfhTest = 1.0;
-
-    // const vector_t infNormOfHColsUpdated = matrixInfNormCols(HTest);
-    // scalar_t c_tempTest = std::max(infNormOfHColsUpdated.mean(), infNormOfhTest);
-    // if (c_tempTest > 1e+4) c_tempTest = 1e+4;
-    // if (c_tempTest < 1e-4) c_tempTest = 1.0;
-
-    // scalar_t gammaTest = 1.0 / c_tempTest;
-
-    // HTest *= gamma;
-    // hTest *= gamma;
-
-    // ocs2::vector_t DStacked(H.cols()), EStacked(G.rows());
-    // int curRow = 0;
-    // for (auto& v : D) {
-    //   DStacked.segment(curRow, v.size()) = v;
-    //   curRow += v.size();
-    // }
-    // curRow = 0;
-    // for (auto& v : E) {
-    //   EStacked.segment(curRow, v.size()) = v;
-    //   curRow += v.size();
-    // }
-    // if (!DStacked.isApprox(DTest)) {
-    //   std::cerr << "i: " << i << "\n";
-    //   std::cerr << "DStacked: " << DStacked.transpose() << "\n";
-    //   std::cerr << "DTest   : " << DTest.transpose() << "\n";
-    //   std::cerr << "diff    : " << (DStacked - DTest).transpose() << std::endl;
-    //   std::cerr << "R: \n" << cost[0].dfduu << std::endl;
-    //   std::cerr << "B: \n" << dynamics[0].dfdu << std::endl;
-    // }
-    // if (!EStacked.isApprox(ETest)) {
-    //   std::cerr << "i: " << i << "\n";
-    //   std::cerr << "EStacked: " << EStacked.transpose() << "\n";
-    //   std::cerr << "ETest: " << ETest.transpose() << "\n";
-    //   std::cerr << "diff: " << (ETest - EStacked).transpose() << std::endl;
-    // }
-    // if (!isEqual(infNormOfhTest, infNormOfh)) {
-    //   std::cerr << "i: " << i << "\n";
-    //   std::cerr << "infNormOfhTest: " << infNormOfhTest << "\n";
-    //   std::cerr << "infNormOfh: " << infNormOfh << "\n";
-    //   std::cerr << "diff: " << (infNormOfhTest - infNormOfh) << std::endl;
-    // }
-    // if (!isEqual(infNormOfHColsUpdated.sum(), sumOfInfNormOfH)) {
-    //   std::cerr << "i: " << i << "\n";
-    //   std::cerr << "infNormOfHColsUpdated.sum(): " << infNormOfHColsUpdated.sum() << "\n";
-    //   std::cerr << "sumOfInfNormOfH: " << sumOfInfNormOfH << "\n";
-    //   std::cerr << "diff: " << (infNormOfHColsUpdated.sum() - sumOfInfNormOfH) << std::endl;
-    // }
-    // if (!isEqual(c_temp, c_tempTest)) {
-    //   std::cerr << "i: " << i << "\n";
-    //   std::cerr << "c_temp: " << c_temp << "\n";
-    //   std::cerr << "c_tempTest: " << c_tempTest << "\n";
-    //   std::cerr << "diff: " << (c_temp - c_tempTest) << std::endl;
-    // }
-    // /**
-    //  * Test end
-    //  */
   }
 }
 

@@ -61,10 +61,10 @@ BallbotMpcnetInterface::BallbotMpcnetInterface(size_t nDataGenerationThreads, si
   referenceManagerPtrs.reserve(nDataGenerationThreads + nPolicyEvaluationThreads);
   for (int i = 0; i < (nDataGenerationThreads + nPolicyEvaluationThreads); i++) {
     BallbotInterface ballbotInterface(taskFile, libraryFolder);
-    std::shared_ptr<ocs2::mpcnet::MpcnetDefinitionBase> mpcnetDefinitionPtr(new BallbotMpcnetDefinition);
+    auto mpcnetDefinitionPtr = std::make_shared<BallbotMpcnetDefinition>();
     mpcPtrs.push_back(getMpc(ballbotInterface));
-    mpcnetPtrs.push_back(std::unique_ptr<ocs2::mpcnet::MpcnetControllerBase>(
-        new ocs2::mpcnet::MpcnetOnnxController(mpcnetDefinitionPtr, ballbotInterface.getReferenceManagerPtr(), onnxEnvironmentPtr)));
+    mpcnetPtrs.push_back(std::make_unique<ocs2::mpcnet::MpcnetOnnxController>(
+        mpcnetDefinitionPtr, ballbotInterface.getReferenceManagerPtr(), onnxEnvironmentPtr));
     if (raisim) {
       throw std::runtime_error("[BallbotMpcnetInterface::BallbotMpcnetInterface] raisim rollout not yet implemented for ballbot.");
     } else {
@@ -101,8 +101,8 @@ std::unique_ptr<MPC_BASE> BallbotMpcnetInterface::getMpc(BallbotInterface& ballb
     return settings;
   }();
   // create one MPC instance
-  std::unique_ptr<MPC_BASE> mpcPtr(new GaussNewtonDDP_MPC(mpcSettings, ddpSettings, ballbotInterface.getRollout(),
-                                                          ballbotInterface.getOptimalControlProblem(), ballbotInterface.getInitializer()));
+  auto mpcPtr = std::make_unique<GaussNewtonDDP_MPC>(mpcSettings, ddpSettings, ballbotInterface.getRollout(),
+                                                     ballbotInterface.getOptimalControlProblem(), ballbotInterface.getInitializer());
   mpcPtr->getSolverPtr()->setReferenceManager(ballbotInterface.getReferenceManagerPtr());
   return mpcPtr;
 }

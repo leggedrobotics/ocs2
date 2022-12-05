@@ -47,7 +47,7 @@ TEST(testContinousTimeLqr, compareWithMatlab) {
   const matrix_t Q = (matrix_t(2, 2) << 3.0, 2.0, 2.0, 4.0).finished();
   const matrix_t R = (matrix_t(1, 1) << 5.0).finished();
   const matrix_t P = (matrix_t(1, 2) << 0.1, 0.2).finished();
-  std::unique_ptr<StateInputCost> cost(new QuadraticStateInputCost(Q, R, P));
+  auto cost = std::make_unique<QuadraticStateInputCost>(Q, R, P);
 
   const scalar_t time = 0.0;
   const vector_t state = vector_t::Zero(2);

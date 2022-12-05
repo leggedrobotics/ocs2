@@ -91,8 +91,7 @@ int main(int argc, char** argv) {
                                ballbotInterface.getOptimalControlProblem(), ballbotInterface.getInitializer());
 
   // ROS ReferenceManager. This gives us the command interface. Requires the observations to be published
-  std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr(
-      new ocs2::RosReferenceManager(robotName, ballbotInterface.getReferenceManagerPtr()));
+  auto rosReferenceManagerPtr = std::make_shared<ocs2::RosReferenceManager>(robotName, ballbotInterface.getReferenceManagerPtr());
   rosReferenceManagerPtr->subscribe(nodeHandle);
   auto observationPublisher = nodeHandle.advertise<ocs2_msgs::mpc_observation>(robotName + "_mpc_observation", 1);
   mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);

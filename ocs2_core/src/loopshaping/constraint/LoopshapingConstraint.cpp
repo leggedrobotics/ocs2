@@ -41,7 +41,7 @@ namespace LoopshapingConstraint {
 /******************************************************************************************************/
 std::unique_ptr<StateConstraintCollection> create(const StateConstraintCollection& systemConstraint,
                                                   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
-  return std::unique_ptr<StateConstraintCollection>(new LoopshapingStateConstraint(systemConstraint, loopshapingDefinition));
+  return std::make_unique<LoopshapingStateConstraint>(systemConstraint, std::move(loopshapingDefinition));
 }
 
 /******************************************************************************************************/
@@ -51,11 +51,9 @@ std::unique_ptr<StateInputConstraintCollection> create(const StateInputConstrain
                                                        std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
   switch (loopshapingDefinition->getType()) {
     case LoopshapingType::outputpattern:
-      return std::unique_ptr<StateInputConstraintCollection>(
-          new LoopshapingConstraintOutputPattern(systemConstraint, std::move(loopshapingDefinition)));
+      return std::make_unique<LoopshapingConstraintOutputPattern>(systemConstraint, std::move(loopshapingDefinition));
     case LoopshapingType::eliminatepattern:
-      return std::unique_ptr<StateInputConstraintCollection>(
-          new LoopshapingConstraintEliminatePattern(systemConstraint, std::move(loopshapingDefinition)));
+      return std::make_unique<LoopshapingConstraintEliminatePattern>(systemConstraint, std::move(loopshapingDefinition));
     default:
       throw std::runtime_error("[LoopshapingConstraint::create] invalid loopshaping type");
   }

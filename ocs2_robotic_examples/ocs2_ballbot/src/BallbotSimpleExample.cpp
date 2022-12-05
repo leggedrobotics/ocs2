@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
    * Rollout
    */
   problem.dynamicsPtr.reset(new BallbotSystemDynamics(libraryFolder, true));
-  std::unique_ptr<TimeTriggeredRollout> ballbotRolloutPtr(new TimeTriggeredRollout(*problem.dynamicsPtr, rolloutSettings));
+  auto ballbotRolloutPtr = std::make_unique<TimeTriggeredRollout>(*problem.dynamicsPtr, rolloutSettings);
 
   /*
    * Cost function
@@ -93,15 +93,13 @@ int main(int argc, char** argv) {
   vector_t xInit(STATE_DIM);
   loadData::loadEigenMatrix(taskFile, "initialState", xInit);
 
-  std::unique_ptr<QuadraticStateInputCost> L(new QuadraticStateInputCost(Q, R));
-  std::unique_ptr<QuadraticStateCost> Phi(new QuadraticStateCost(QFinal));
-  problem.costPtr->add("cost", std::move(L));
-  problem.finalCostPtr->add("finalCost", std::move(Phi));
+  problem.costPtr->add("cost", std::make_unique<QuadraticStateInputCost>(Q, R));
+  problem.finalCostPtr->add("finalCost", std::make_unique<QuadraticStateCost>(QFinal));
 
   /*
    * Initialization
    */
-  std::unique_ptr<Initializer> ballbotInitializerPtr(new DefaultInitializer(INPUT_DIM));
+  auto ballbotInitializerPtr = std::make_unique<DefaultInitializer>(INPUT_DIM);
 
   /*
    * Time partitioning which defines the time horizon and the number of data partitioning

@@ -61,9 +61,7 @@ class DoubleIntegratorReachingTask {
   const vector_t xInit = vector_t::Zero(STATE_DIM);
   const vector_t xGoal = (vector_t(STATE_DIM) << 2.0, 0.0).finished();
 
-  std::unique_ptr<DefaultInitializer> getInitializer() const {
-    return std::unique_ptr<DefaultInitializer>(new DefaultInitializer(INPUT_DIM));
-  }
+  std::unique_ptr<DefaultInitializer> getInitializer() const { return std::make_unique<DefaultInitializer>(INPUT_DIM); }
 
   std::shared_ptr<ReferenceManager> getReferenceManagerPtr() const {
     const ModeSchedule modeSchedule({tGoal}, {0, 1});
@@ -72,23 +70,22 @@ class DoubleIntegratorReachingTask {
   }
 
   std::unique_ptr<StateInputCost> getCostPtr() const {
-    const matrix_t Q = matrix_t::Zero(STATE_DIM, STATE_DIM);
-    const matrix_t R = 0.1 * matrix_t::Identity(INPUT_DIM, INPUT_DIM);
-    return std::unique_ptr<StateInputCost>(new QuadraticStateInputCost(Q, R));
+    matrix_t Q = matrix_t::Zero(STATE_DIM, STATE_DIM);
+    matrix_t R = 0.1 * matrix_t::Identity(INPUT_DIM, INPUT_DIM);
+    return std::make_unique<QuadraticStateInputCost>(std::move(Q), std::move(R));
   }
 
   std::unique_ptr<SystemDynamicsBase> getDynamicsPtr() const {
-    const matrix_t A = (matrix_t(STATE_DIM, STATE_DIM) << 0.0, 1.0, 0.0, 0.0).finished();
-    const matrix_t B = (matrix_t(STATE_DIM, INPUT_DIM) << 0.0, 1.0).finished();
-    return std::unique_ptr<LinearSystemDynamics>(new LinearSystemDynamics(A, B));
+    matrix_t A = (matrix_t(STATE_DIM, STATE_DIM) << 0.0, 1.0, 0.0, 0.0).finished();
+    matrix_t B = (matrix_t(STATE_DIM, INPUT_DIM) << 0.0, 1.0).finished();
+    return std::make_unique<LinearSystemDynamics>(std::move(A), std::move(B));
   }
 
   std::unique_ptr<ocs2::StateAugmentedLagrangian> getGoalReachingAugmentedLagrangian(const vector_t& xGoal, PenaltyType penaltyType) {
     constexpr scalar_t scale = 10.0;
     constexpr scalar_t stepSize = 1.0;
 
-    auto goalReachingConstraintPtr =
-        std::unique_ptr<LinearStateConstraint>(new ocs2::LinearStateConstraint(-xGoal, matrix_t::Identity(xGoal.size(), xGoal.size())));
+    auto goalReachingConstraintPtr = std::make_unique<LinearStateConstraint>(-xGoal, matrix_t::Identity(xGoal.size(), xGoal.size()));
 
     switch (penaltyType) {
       case PenaltyType::QuadraticPenalty: {

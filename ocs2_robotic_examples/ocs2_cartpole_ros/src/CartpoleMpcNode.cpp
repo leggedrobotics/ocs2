@@ -71,8 +71,7 @@ int main(int argc, char** argv) {
     metricsTopicNames.push_back("metrics/" + observingLagrangianTerm + "/" + std::to_string(timeMs) + "MsLookAhead");
     multiplierTopicNames.push_back("multipliers/" + observingLagrangianTerm + "/" + std::to_string(timeMs) + "MsLookAhead");
   }
-  std::unique_ptr<ocs2::AugmentedLagrangianObserver> stateInputBoundsObserverPtr(
-      new ocs2::AugmentedLagrangianObserver(observingLagrangianTerm));
+  auto stateInputBoundsObserverPtr = std::make_unique<ocs2::AugmentedLagrangianObserver>(observingLagrangianTerm);
   stateInputBoundsObserverPtr->setMetricsCallback(ocs2::ros::createMetricsCallback(
       nodeHandle, observingTimePoints, metricsTopicNames, ocs2::ros::CallbackInterpolationStrategy::linear_interpolation));
   stateInputBoundsObserverPtr->setMultiplierCallback(ocs2::ros::createMultiplierCallback(

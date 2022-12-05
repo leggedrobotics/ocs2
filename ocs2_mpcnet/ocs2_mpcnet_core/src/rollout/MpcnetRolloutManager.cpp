@@ -47,9 +47,9 @@ MpcnetRolloutManager::MpcnetRolloutManager(size_t nDataGenerationThreads, size_t
     dataGenerationThreadPoolPtr_.reset(new ThreadPool(nDataGenerationThreads_));
     dataGenerationPtrs_.reserve(nDataGenerationThreads);
     for (int i = 0; i < nDataGenerationThreads; i++) {
-      dataGenerationPtrs_.push_back(std::unique_ptr<MpcnetDataGeneration>(
-          new MpcnetDataGeneration(std::move(mpcPtrs.at(i)), std::move(mpcnetPtrs.at(i)), std::move(rolloutPtrs.at(i)),
-                                   std::move(mpcnetDefinitionPtrs.at(i)), referenceManagerPtrs.at(i))));
+      dataGenerationPtrs_.push_back(
+          std::make_unique<MpcnetDataGeneration>(std::move(mpcPtrs.at(i)), std::move(mpcnetPtrs.at(i)), std::move(rolloutPtrs.at(i)),
+                                                 std::move(mpcnetDefinitionPtrs.at(i)), referenceManagerPtrs.at(i)));
     }
   }
 
@@ -59,9 +59,9 @@ MpcnetRolloutManager::MpcnetRolloutManager(size_t nDataGenerationThreads, size_t
     policyEvaluationThreadPoolPtr_.reset(new ThreadPool(nPolicyEvaluationThreads_));
     policyEvaluationPtrs_.reserve(nPolicyEvaluationThreads_);
     for (int i = nDataGenerationThreads_; i < (nDataGenerationThreads_ + nPolicyEvaluationThreads_); i++) {
-      policyEvaluationPtrs_.push_back(std::unique_ptr<MpcnetPolicyEvaluation>(
-          new MpcnetPolicyEvaluation(std::move(mpcPtrs.at(i)), std::move(mpcnetPtrs.at(i)), std::move(rolloutPtrs.at(i)),
-                                     std::move(mpcnetDefinitionPtrs.at(i)), referenceManagerPtrs.at(i))));
+      policyEvaluationPtrs_.push_back(
+          std::make_unique<MpcnetPolicyEvaluation>(std::move(mpcPtrs.at(i)), std::move(mpcnetPtrs.at(i)), std::move(rolloutPtrs.at(i)),
+                                                   std::move(mpcnetDefinitionPtrs.at(i)), referenceManagerPtrs.at(i)));
     }
   }
 }

@@ -85,8 +85,8 @@ class RosReferenceManager final : public ReferenceManagerDecorator {
 /******************************************************************************************************/
 template <class ReferenceManagerType, class... Args>
 std::unique_ptr<RosReferenceManager> RosReferenceManager::create(const std::string& topicPrefix, Args&&... args) {
-  std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr(new ReferenceManagerType(std::forward<Args>(args)...));
-  return std::unique_ptr<RosReferenceManager>(new RosReferenceManager(topicPrefix, std::move(referenceManagerPtr)));
+  auto referenceManagerPtr = std::make_shared<ReferenceManagerType>(std::forward<Args>(args)...);
+  return std::make_unique<RosReferenceManager>(topicPrefix, std::move(referenceManagerPtr));
 }
 
 }  // namespace ocs2

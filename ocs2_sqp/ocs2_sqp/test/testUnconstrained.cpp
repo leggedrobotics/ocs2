@@ -56,7 +56,7 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithFeedbackSettin
 
   // Reference Managaer
   ocs2::TargetTrajectories targetTrajectories({0.0}, {ocs2::vector_t::Ones(n)}, {ocs2::vector_t::Ones(m)});
-  std::shared_ptr<ReferenceManager> referenceManagerPtr(new ReferenceManager(targetTrajectories));
+  auto referenceManagerPtr = std::make_shared<ReferenceManager>(targetTrajectories);
 
   problem.targetTrajectoriesPtr = &referenceManagerPtr->getTargetTrajectories();
 

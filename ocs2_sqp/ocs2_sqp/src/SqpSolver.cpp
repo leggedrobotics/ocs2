@@ -315,8 +315,8 @@ PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<Annotated
         auto result = multiple_shooting::setupIntermediateNode(ocpDefinition, sensitivityDiscretizer_, ti, dt, x[i], x[i + 1], u[i]);
         workerPerformance += multiple_shooting::computeIntermediatePerformance(result, dt);
         if (settings_.projectStateInputEqualityConstraints) {
-          constexpr bool extractPseudoInverse = false;
-          multiple_shooting::projectTranscription(result, extractPseudoInverse);
+          constexpr bool extractProjectionMultiplierCoefficients = false;
+          multiple_shooting::projectTranscription(result, extractProjectionMultiplierCoefficients);
         }
         dynamics_[i] = std::move(result.dynamics);
         cost_[i] = std::move(result.cost);

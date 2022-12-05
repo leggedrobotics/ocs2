@@ -113,7 +113,7 @@ TEST_F(PIPGSolverTest, correctness) {
                         ocs2::vector_t::Ones(solver.getNumDynamicsConstraints()), mu, lambda, sigma, primalSolutionPIPG);
 
   ocs2::vector_array_t scalingVectors(N_, ocs2::vector_t::Ones(nx_));
-  solver.solveOCPInParallel(x0, dynamicsArray, costArray, nullptr, scalingVectors, nullptr, mu, lambda, sigma);
+  solver.solve(x0, dynamicsArray, costArray, nullptr, scalingVectors, nullptr, mu, lambda, sigma);
 
   ocs2::vector_array_t X, U;
   solver.getStateInputTrajectoriesSolution(X, U);

@@ -45,13 +45,34 @@ struct DensePipgBenchmark {
   benchmark::RepeatedTimer convergenceCheck;
 };
 
+/*
+ * First order primal-dual method for solving optimal control problem based on:
+ * "Proportional-Integral Projected Gradient Method for Model Predictive Control"
+ * https://arxiv.org/abs/2009.06980
+ */
 SolverStatus densePipg(const pipg::Settings& settings, const Eigen::SparseMatrix<scalar_t>& H, const vector_t& h,
                        const Eigen::SparseMatrix<scalar_t>& G, const vector_t& g, const vector_t& EInv, const scalar_t mu,
                        const scalar_t lambda, const scalar_t sigma, vector_t& stackedSolution, DensePipgBenchmark* timerPtr = nullptr);
 
+/**
+ * Deserializes the stacked solution to state-input trajecotries.
+ *
+ * @param[in] ocpSize : Optimal control problem sizes.
+ * @param[in] stackedSolution : Defined as [u[0], x[1], ..., u[N-1], x[N]].
+ * @param[in] x0 : The initial state.
+ * @param[out] xTrajectory : State tarjectory.
+ * @param[out] UTrajectory : Input trajecotry.
+ */
 void unpackSolution(const OcpSize& ocpSize, const vector_t& stackedSolution, const vector_t x0, vector_array_t& xTrajectory,
                     vector_array_t& uTrajectory);
 
+/**
+ * Serializes the state-input trajecotries.
+ *
+ * @param[in] xTrajectory : State tarjectory
+ * @param[in] UTrajectory : Input trajecotry
+ * @param[out] stackedSolution : [u[0], x[1], ..., u[N-1], x[N]]
+ */
 void packSolution(const vector_array_t& xTrajectory, const vector_array_t& uTrajectory, vector_t& stackedSolution);
 
 }  // namespace pipg

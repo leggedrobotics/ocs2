@@ -58,7 +58,7 @@ class PipgSolver {
   explicit PipgSolver(pipg::Settings settings);
 
   /**
-   * @brief Solve Optimal Control type QP in parallel.
+   * @brief Solve Optimal Control in parallel.
    *
    * @param x0 Initial state
    * @param dynamics: Dynamics array.
@@ -72,11 +72,10 @@ class PipgSolver {
    * @param sigma: the upper bound of \f$ G^TG \f$
    * @return SolverStatus
    */
-  pipg::SolverStatus solveOCPInParallel(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
-                                        const std::vector<ScalarFunctionQuadraticApproximation>& cost,
-                                        const std::vector<VectorFunctionLinearApproximation>* constraints,
-                                        const vector_array_t& scalingVectors, const vector_array_t* EInv, const scalar_t mu,
-                                        const scalar_t lambda, const scalar_t sigma);
+  pipg::SolverStatus solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
+                           const std::vector<ScalarFunctionQuadraticApproximation>& cost,
+                           const std::vector<VectorFunctionLinearApproximation>* constraints, const vector_array_t& scalingVectors,
+                           const vector_array_t* EInv, const scalar_t mu, const scalar_t lambda, const scalar_t sigma);
 
   void resize(const OcpSize& size);
 

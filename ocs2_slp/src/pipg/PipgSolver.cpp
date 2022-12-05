@@ -47,18 +47,18 @@ PipgSolver::PipgSolver(pipg::Settings settings)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-pipg::SolverStatus PipgSolver::solveOCPInParallel(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
-                                                  const std::vector<ScalarFunctionQuadraticApproximation>& cost,
-                                                  const std::vector<VectorFunctionLinearApproximation>* constraints,
-                                                  const vector_array_t& scalingVectors, const vector_array_t* EInv, const scalar_t mu,
-                                                  const scalar_t lambda, const scalar_t sigma) {
+pipg::SolverStatus PipgSolver::solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
+                                     const std::vector<ScalarFunctionQuadraticApproximation>& cost,
+                                     const std::vector<VectorFunctionLinearApproximation>* constraints,
+                                     const vector_array_t& scalingVectors, const vector_array_t* EInv, const scalar_t mu,
+                                     const scalar_t lambda, const scalar_t sigma) {
   verifySizes(dynamics, cost, constraints);
   const int N = ocpSize_.numStages;
   if (N < 1) {
-    throw std::runtime_error("[PipgSolver::solveOCPInParallel] The number of stages cannot be less than 1.");
+    throw std::runtime_error("[PipgSolver::solve] The number of stages cannot be less than 1.");
   }
   if (scalingVectors.size() != N) {
-    throw std::runtime_error("[PipgSolver::solveOCPInParallel] The size of scalingVectors doesn't match the number of stage.");
+    throw std::runtime_error("[PipgSolver::solve] The size of scalingVectors doesn't match the number of stage.");
   }
 
   // Disable Eigen's internal multithreading

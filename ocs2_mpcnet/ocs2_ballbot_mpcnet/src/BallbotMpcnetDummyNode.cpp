@@ -69,20 +69,19 @@ int main(int argc, char** argv) {
 
   // policy (MPC-Net controller)
   auto onnxEnvironmentPtr = ocs2::mpcnet::createOnnxEnvironment();
-  std::shared_ptr<ocs2::mpcnet::MpcnetDefinitionBase> mpcnetDefinitionPtr(new BallbotMpcnetDefinition);
-  std::unique_ptr<ocs2::mpcnet::MpcnetControllerBase> mpcnetControllerPtr(
-      new ocs2::mpcnet::MpcnetOnnxController(mpcnetDefinitionPtr, rosReferenceManagerPtr, onnxEnvironmentPtr));
+  auto mpcnetDefinitionPtr = std::make_shared<BallbotMpcnetDefinition>();
+  auto mpcnetControllerPtr =
+      std::make_unique<ocs2::mpcnet::MpcnetOnnxController>(mpcnetDefinitionPtr, rosReferenceManagerPtr, onnxEnvironmentPtr);
   mpcnetControllerPtr->loadPolicyModel(policyFilePath);
 
   // rollout
   std::unique_ptr<RolloutBase> rolloutPtr(ballbotInterface.getRollout().clone());
 
   // observer
-  std::shared_ptr<ocs2::mpcnet::MpcnetDummyObserverRos> mpcnetDummyObserverRosPtr(
-      new ocs2::mpcnet::MpcnetDummyObserverRos(nodeHandle, robotName));
+  auto mpcnetDummyObserverRosPtr = std::make_shared<ocs2::mpcnet::MpcnetDummyObserverRos>(nodeHandle, robotName);
 
   // visualization
-  std::shared_ptr<BallbotDummyVisualization> ballbotDummyVisualization(new BallbotDummyVisualization(nodeHandle));
+  auto ballbotDummyVisualization = std::make_shared<BallbotDummyVisualization>(nodeHandle);
 
   // MPC-Net dummy loop ROS
   const scalar_t controlFrequency = ballbotInterface.mpcSettings().mrtDesiredFrequency_;

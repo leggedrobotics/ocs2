@@ -82,10 +82,16 @@ void SlpSolver::reset() {
   // reset timers
   numProblems_ = 0;
   totalNumIterations_ = 0;
+  initializationTimer_.reset();
   linearQuadraticApproximationTimer_.reset();
   solveQpTimer_.reset();
   linesearchTimer_.reset();
   computeControllerTimer_.reset();
+  GGTMultiplication_.reset();
+  lambdaEstimation_.reset();
+  sigmaEstimation_.reset();
+  preConditioning_.reset();
+  pipgSolverTimer_.reset();
 }
 
 std::string SlpSolver::getBenchmarkingInformationPIPG() const {
@@ -93,7 +99,7 @@ std::string SlpSolver::getBenchmarkingInformationPIPG() const {
   const auto preConditioning = preConditioning_.getTotalInMilliseconds();
   const auto lambdaEstimation = lambdaEstimation_.getTotalInMilliseconds();
   const auto sigmaEstimation = sigmaEstimation_.getTotalInMilliseconds();
-  const auto pipgRuntime = pipgSolver_.getTotalRunTimeInMilliseconds();
+  const auto pipgRuntime = pipgSolverTimer_.getTotalInMilliseconds();
 
   const auto benchmarkTotal = GGTMultiplication + preConditioning + lambdaEstimation + sigmaEstimation + pipgRuntime;
 
@@ -111,7 +117,7 @@ std::string SlpSolver::getBenchmarkingInformationPIPG() const {
                << lambdaEstimation / benchmarkTotal * inPercent << "%)\n";
     infoStream << "\tsigmaEstimation        :\t" << std::setw(10) << sigmaEstimation_.getAverageInMilliseconds() << " [ms] \t("
                << sigmaEstimation / benchmarkTotal * inPercent << "%)\n";
-    infoStream << "\tPIPG runTime           :\t" << std::setw(10) << pipgSolver_.getAverageRunTimeInMilliseconds() << " [ms] \t("
+    infoStream << "\tPIPG runTime           :\t" << std::setw(10) << pipgSolverTimer_.getAverageInMilliseconds() << " [ms] \t("
                << pipgRuntime / benchmarkTotal * inPercent << "%)\n";
   }
   return infoStream.str();
@@ -264,12 +270,13 @@ SlpSolver::OcpSubproblemSolution SlpSolver::getOCPSolution(const vector_t& delta
   }
   const scalar_t muEstimated = pipgSolver_.settings().lowerBoundH * c * maxScalingFactor * maxScalingFactor;
 
+  pipgSolverTimer_.startTimer();
   vector_array_t EInv(E.size());
   std::transform(E.begin(), E.end(), EInv.begin(), [](const vector_t& v) { return v.cwiseInverse(); });
   const auto pipgStatus =
-      pipgSolver_.solveOCPInParallel(delta_x0, dynamics_, cost_, nullptr, scalingVectors, &EInv, muEstimated, lambdaScaled, sigmaScaled,
-                                     ScalarFunctionQuadraticApproximation(), VectorFunctionLinearApproximation());
+      pipgSolver_.solveOCPInParallel(delta_x0, dynamics_, cost_, nullptr, scalingVectors, &EInv, muEstimated, lambdaScaled, sigmaScaled);
   pipgSolver_.getStateInputTrajectoriesSolution(deltaXSol, deltaUSol);
+  pipgSolverTimer_.endTimer();
 
   // to determine if the solution is a descent direction for the cost: compute gradient(cost)' * [dx; du]
   solution.armijoDescentMetric = armijoDescentMetric(cost_, deltaXSol, deltaUSol);

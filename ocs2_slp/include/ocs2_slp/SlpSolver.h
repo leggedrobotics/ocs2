@@ -191,6 +191,7 @@ class SlpSolver : public SolverBase {
   benchmark::RepeatedTimer lambdaEstimation_;
   benchmark::RepeatedTimer sigmaEstimation_;
   benchmark::RepeatedTimer preConditioning_;
+  benchmark::RepeatedTimer pipgSolverTimer_;
 };
 
 }  // namespace ocs2

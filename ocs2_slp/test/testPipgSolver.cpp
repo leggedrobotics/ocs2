@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/test/testProblemsGeneration.h>
 #include <ocs2_qp_solver/QpSolver.h>
 
+#include "ocs2_slp/pipg/DensePipgSolver.h"
 #include "ocs2_slp/pipg/PipgSolver.h"
 
 ocs2::pipg::Settings configurePipg(size_t nThreads, size_t maxNumIterations, ocs2::scalar_t absoluteTolerance,
@@ -107,16 +108,17 @@ TEST_F(PIPGSolverTest, correctness) {
   ocs2::scalar_t sigma = svdGTG.singularValues()(0);
 
   ocs2::vector_t primalSolutionPIPG;
-  solver.solveDenseQP(costApproximation.dfdxx.sparseView(), costApproximation.dfdx, constraintsApproximation.dfdx.sparseView(),
-                      constraintsApproximation.f, ocs2::vector_t::Ones(solver.getNumDynamicsConstraints()), mu, lambda, sigma,
-                      primalSolutionPIPG);
+  ocs2::pipg::densePipg(solver.settings(), costApproximation.dfdxx.sparseView(), costApproximation.dfdx,
+                        constraintsApproximation.dfdx.sparseView(), constraintsApproximation.f,
+                        ocs2::vector_t::Ones(solver.getNumDynamicsConstraints()), mu, lambda, sigma, primalSolutionPIPG);
 
-  ocs2::vector_t primalSolutionPIPGParallel;
   ocs2::vector_array_t scalingVectors(N_, ocs2::vector_t::Ones(nx_));
+  solver.solveOCPInParallel(x0, dynamicsArray, costArray, nullptr, scalingVectors, nullptr, mu, lambda, sigma);
 
-  solver.solveOCPInParallel(x0, dynamicsArray, costArray, nullptr, scalingVectors, nullptr, mu, lambda, sigma, costApproximation,
-                            constraintsApproximation);
-  solver.getStackedSolution(primalSolutionPIPGParallel);
+  ocs2::vector_array_t X, U;
+  solver.getStateInputTrajectoriesSolution(X, U);
+  ocs2::vector_t primalSolutionPIPGParallel;
+  ocs2::pipg::packSolution(X, U, primalSolutionPIPGParallel);
 
   auto calculateConstraintViolation = [&](const ocs2::vector_t& sol) -> ocs2::scalar_t {
     return (constraintsApproximation.dfdx * sol - constraintsApproximation.f).cwiseAbs().maxCoeff();
@@ -193,13 +195,13 @@ TEST_F(PIPGSolverTest, descaleSolution) {
     curRow += v.size();
   }
   ocs2::vector_t packedSolution;
-  solver.packSolution(x, u, packedSolution);
+  ocs2::pipg::packSolution(x, u, packedSolution);
 
   packedSolution.array() *= DStacked.array();
 
   ocs2::vector_t packedSolutionMy;
   solver.descaleSolution(D, x, u);
-  solver.packSolution(x, u, packedSolutionMy);
+  ocs2::pipg::packSolution(x, u, packedSolutionMy);
   EXPECT_TRUE(packedSolutionMy.isApprox(packedSolution)) << std::setprecision(6) << "DescaledSolution: \n"
                                                          << packedSolutionMy.transpose() << "\nIt should be \n"
                                                          << packedSolution.transpose();

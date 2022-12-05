@@ -57,27 +57,6 @@ class PipgSolver {
    */
   explicit PipgSolver(pipg::Settings settings);
 
-  /** Destructor */
-  ~PipgSolver();
-
-  /**
-   * @brief Solve generic QP problem.
-   *
-   * @param H: Cost hessian.
-   * @param h: Cost linear component.
-   * @param G: Linear equality constraint matrix.
-   * @param g: Linear equality constraint values
-   * @param EInv: Inverse of the scaling matrix E. Used to calculate un-sacled termination criteria.
-   * @param mu: the lower bound of the cost hessian H.
-   * @param lambda: the upper bound of the cost hessian H.
-   * @param sigma: the upper bound of \f$ G^TG \f$
-   * @param result: Stacked result.
-   * @return SolverStatus
-   */
-  pipg::SolverStatus solveDenseQP(const Eigen::SparseMatrix<scalar_t>& H, const vector_t& h, const Eigen::SparseMatrix<scalar_t>& G,
-                                  const vector_t& g, const vector_t& EInv, const scalar_t mu, const scalar_t lambda, const scalar_t sigma,
-                                  vector_t& result);
-
   /**
    * @brief Solve Optimal Control type QP in parallel.
    *
@@ -91,16 +70,13 @@ class PipgSolver {
    * @param mu: the lower bound of the cost hessian H.
    * @param lambda: the upper bound of the cost hessian H.
    * @param sigma: the upper bound of \f$ G^TG \f$
-   * @param costM For testing only. Can be removed.
-   * @param constraintsM For testing only. Can be removed.
    * @return SolverStatus
    */
   pipg::SolverStatus solveOCPInParallel(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
                                         const std::vector<ScalarFunctionQuadraticApproximation>& cost,
                                         const std::vector<VectorFunctionLinearApproximation>* constraints,
                                         const vector_array_t& scalingVectors, const vector_array_t* EInv, const scalar_t mu,
-                                        const scalar_t lambda, const scalar_t sigma, const ScalarFunctionQuadraticApproximation& costM,
-                                        const VectorFunctionLinearApproximation& constraintsM);
+                                        const scalar_t lambda, const scalar_t sigma);
 
   void resize(const OcpSize& size);
 
@@ -110,19 +86,12 @@ class PipgSolver {
 
   int getNumGeneralEqualityConstraints() const;
 
-  void getStackedSolution(vector_t& res) const { packSolution(X_, U_, res); }
-
-  void unpackSolution(const vector_t& stackedSolution, const vector_t x0, vector_array_t& xTrajectory, vector_array_t& uTrajectory) const;
-
-  void packSolution(const vector_array_t& xTrajectory, const vector_array_t& uTrajectory, vector_t& stackedSolution) const;
-
-  void getStateInputTrajectoriesSolution(vector_array_t& xTrajectory, vector_array_t& uTrajectory) const;
+  void getStateInputTrajectoriesSolution(vector_array_t& xTrajectory, vector_array_t& uTrajectory) const {
+    xTrajectory = X_;
+    uTrajectory = U_;
+  }
 
   void descaleSolution(const vector_array_t& D, vector_array_t& xTrajectory, vector_array_t& uTrajectory) const;
-
-  std::string getBenchmarkingInformationDense() const;
-  scalar_t getTotalRunTimeInMilliseconds() const { return parallelizedQPTimer_.getTotalInMilliseconds(); }
-  scalar_t getAverageRunTimeInMilliseconds() const { return parallelizedQPTimer_.getAverageInMilliseconds(); }
 
   const pipg::Settings& settings() const { return settings_; }
   const OcpSize& size() const { return ocpSize_; }
@@ -149,16 +118,6 @@ class PipgSolver {
   // Problem size
   int numDecisionVariables_;
   int numDynamicsConstraints_;
-
-  // Profiling
-  // Dense PIPG
-  benchmark::RepeatedTimer denseQPTimer_;
-  benchmark::RepeatedTimer parallelizedQPTimer_;
-
-  // Parallel PIPG
-  benchmark::RepeatedTimer vComputationTimer_;
-  benchmark::RepeatedTimer zComputationTimer_;
-  benchmark::RepeatedTimer wComputationTimer_;
-  benchmark::RepeatedTimer convergenceCheckTimer_;
 };
+
 }  // namespace ocs2

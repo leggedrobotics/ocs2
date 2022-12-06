@@ -51,28 +51,28 @@ namespace ocs2 {
 class PipgSolver {
  public:
   /**
-   * @brief Constructor.
-   *
-   * @param Settings: PIPG setting
+   * Constructor.
+   * @param[in] Settings: PIPG setting
    */
   explicit PipgSolver(pipg::Settings settings);
 
   /**
-   * @brief Solve Optimal Control in parallel.
+   * Solve the optimal control in parallel.
    *
-   * @param x0 Initial state
-   * @param dynamics: Dynamics array.
-   * @param cost: Cost array.
-   * @param constraints: Constraints array. Pass nullptr for an unconstrained problem.
-   * @param scalingVectors Vector representatoin for the identity parts of the dynamics inside the constraint matrix. After scaling,
-   *                       they become arbitrary diagonal matrices. Pass nullptr to get them filled with identity matrices.
-   * @param EInv Inverse of the scaling factor E. Used to calculate un-sacled termination criteria.
-   * @param mu: the lower bound of the cost hessian H.
-   * @param lambda: the upper bound of the cost hessian H.
-   * @param sigma: the upper bound of \f$ G^TG \f$
-   * @return Solver satus
+   * @param[in] threadPool : The external thread pool.
+   * @param[in] x0 : Initial state
+   * @param[in] dynamics : Dynamics array.
+   * @param[in] cost : Cost array.
+   * @param[in] constraints : Constraints array. Pass nullptr for an unconstrained problem.
+   * @param[in] scalingVectors : Vector representatoin for the identity parts of the dynamics inside the constraint matrix. After scaling,
+   *                             they become arbitrary diagonal matrices. Pass nullptr to get them filled with identity matrices.
+   * @param[in] EInv : Inverse of the scaling factor E. Used to calculate un-sacled termination criteria.
+   * @param[in] mu : the lower bound of the cost hessian H.
+   * @param[in] lambda : the upper bound of the cost hessian H.
+   * @param[in] sigma : the upper bound of \f$ G^TG \f$.
+   * @return The solver status.
    */
-  pipg::SolverStatus solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
+  pipg::SolverStatus solve(ThreadPool& threadPool, const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
                            const std::vector<ScalarFunctionQuadraticApproximation>& cost,
                            const std::vector<VectorFunctionLinearApproximation>* constraints, const vector_array_t& scalingVectors,
                            const vector_array_t* EInv, const scalar_t mu, const scalar_t lambda, const scalar_t sigma);
@@ -94,7 +94,6 @@ class PipgSolver {
 
   const pipg::Settings& settings() const { return settings_; }
   const OcpSize& size() const { return ocpSize_; }
-  ThreadPool& getThreadPool() { return threadPool_; }
 
  private:
   void verifySizes(const std::vector<VectorFunctionLinearApproximation>& dynamics,
@@ -103,14 +102,12 @@ class PipgSolver {
 
   void verifyOcpSize(const OcpSize& ocpSize) const;
 
-  void runParallel(std::function<void(int)> taskFunction) { threadPool_.runParallel(std::move(taskFunction), settings().nThreads); }
-
  private:
   const pipg::Settings settings_;
-  ThreadPool threadPool_;
+
   OcpSize ocpSize_;
 
-  // Data buffer for parallelized QP
+  // Data buffer for parallelized PIPG
   vector_array_t X_, W_, V_, U_;
   vector_array_t XNew_, UNew_, WNew_;
 

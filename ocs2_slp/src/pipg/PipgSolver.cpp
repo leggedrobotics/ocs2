@@ -39,15 +39,14 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PipgSolver::PipgSolver(pipg::Settings settings)
-    : settings_(std::move(settings)), threadPool_(std::max(settings_.nThreads, size_t(1)) - 1, settings_.threadPriority) {
+PipgSolver::PipgSolver(pipg::Settings settings) : settings_(std::move(settings)) {
   Eigen::initParallel();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-pipg::SolverStatus PipgSolver::solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
+pipg::SolverStatus PipgSolver::solve(ThreadPool& threadPool, const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
                                      const std::vector<ScalarFunctionQuadraticApproximation>& cost,
                                      const std::vector<VectorFunctionLinearApproximation>* constraints,
                                      const vector_array_t& scalingVectors, const vector_array_t* EInv, const scalar_t mu,
@@ -95,7 +94,7 @@ pipg::SolverStatus PipgSolver::solve(const vector_t& x0, std::vector<VectorFunct
 
   std::mutex mux;
   std::condition_variable iterationFinished;
-  std::vector<int> threadsWorkloadCounter(threadPool_.numThreads() + 1, 0);
+  std::vector<int> threadsWorkloadCounter(threadPool.numThreads() + 1U, 0);
 
   auto updateVariablesTask = [&](int workerId) {
     int t;
@@ -111,7 +110,7 @@ pipg::SolverStatus PipgSolver::solve(const vector_t& x0, std::vector<VectorFunct
           shouldWait = true;
         }
         // Multi-thread performance analysis
-        threadsWorkloadCounter[workerId]++;
+        ++threadsWorkloadCounter[workerId];
 
         // PIPG algorithm
         const auto& A = dynamics[t - 1].dfdx;
@@ -229,7 +228,7 @@ pipg::SolverStatus PipgSolver::solve(const vector_t& x0, std::vector<VectorFunct
       }
     }
   };
-  runParallel(std::move(updateVariablesTask));
+  threadPool.runParallel(std::move(updateVariablesTask), threadPool.numThreads() + 1U);
 
   pipg::SolverStatus status = isConverged ? pipg::SolverStatus::SUCCESS : pipg::SolverStatus::MAX_ITER;
   if (settings().displayShortSummary) {

@@ -49,9 +49,6 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
     std::cerr << " #### PIPG Settings: {\n";
   }
 
-  loadData::loadPtreeValue(pt, settings.nThreads, fieldName + ".nThreads", verbose);
-  loadData::loadPtreeValue(pt, settings.threadPriority, fieldName + ".threadPriority", verbose);
-
   loadData::loadPtreeValue(pt, settings.maxNumIterations, fieldName + ".maxNumIterations", verbose);
   loadData::loadPtreeValue(pt, settings.absoluteTolerance, fieldName + ".absoluteTolerance", verbose);
   loadData::loadPtreeValue(pt, settings.relativeTolerance, fieldName + ".relativeTolerance", verbose);

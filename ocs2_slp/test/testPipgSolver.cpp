@@ -37,10 +37,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_slp/pipg/PipgSolver.h"
 #include "ocs2_slp/pipg/SingleThreadPipg.h"
 
-ocs2::pipg::Settings configurePipg(size_t nThreads, size_t maxNumIterations, ocs2::scalar_t absoluteTolerance,
-                                   ocs2::scalar_t relativeTolerance, bool verbose) {
+ocs2::pipg::Settings configurePipg(size_t maxNumIterations, ocs2::scalar_t absoluteTolerance, ocs2::scalar_t relativeTolerance,
+                                   bool verbose) {
   ocs2::pipg::Settings settings;
-  settings.nThreads = nThreads;
   settings.maxNumIterations = maxNumIterations;
   settings.absoluteTolerance = absoluteTolerance;
   settings.relativeTolerance = relativeTolerance;
@@ -59,9 +58,10 @@ class PIPGSolverTest : public testing::Test {
   static constexpr size_t nc_ = 0;
   static constexpr size_t numDecisionVariables = N_ * (nx_ + nu_);
   static constexpr size_t numConstraints = N_ * (nx_ + nc_);
+  static constexpr size_t numThreads = 8;
   static constexpr bool verbose = true;
 
-  PIPGSolverTest() : solver(configurePipg(8, 30000, 1e-10, 1e-3, verbose)) {
+  PIPGSolverTest() : solver(configurePipg(30000, 1e-10, 1e-3, verbose)) {
     srand(10);
 
     // Construct OCP problem
@@ -88,6 +88,7 @@ class PIPGSolverTest : public testing::Test {
   std::vector<ocs2::VectorFunctionLinearApproximation> constraintsArray;
 
   ocs2::PipgSolver solver;
+  ocs2::ThreadPool threadPool{numThreads - 1u, 50};
 };
 
 constexpr size_t PIPGSolverTest::numDecisionVariables;
@@ -113,7 +114,7 @@ TEST_F(PIPGSolverTest, correctness) {
       constraintsApproximation.f, ocs2::vector_t::Ones(solver.getNumDynamicsConstraints()), mu, lambda, sigma, primalSolutionPIPG);
 
   ocs2::vector_array_t scalingVectors(N_, ocs2::vector_t::Ones(nx_));
-  solver.solve(x0, dynamicsArray, costArray, nullptr, scalingVectors, nullptr, mu, lambda, sigma);
+  solver.solve(threadPool, x0, dynamicsArray, costArray, nullptr, scalingVectors, nullptr, mu, lambda, sigma);
 
   ocs2::vector_array_t X, U;
   solver.getStateInputTrajectoriesSolution(X, U);

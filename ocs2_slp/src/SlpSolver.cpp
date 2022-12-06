@@ -268,7 +268,7 @@ SlpSolver::OcpSubproblemSolution SlpSolver::getOCPSolution(const vector_t& delta
   vector_array_t EInv(E.size());
   std::transform(E.begin(), E.end(), EInv.begin(), [](const vector_t& v) { return v.cwiseInverse(); });
   const auto pipgStatus =
-      pipgSolver_.solve(delta_x0, dynamics_, cost_, nullptr, scalingVectors, &EInv, muEstimated, lambdaScaled, sigmaScaled);
+      pipgSolver_.solve(threadPool_, delta_x0, dynamics_, cost_, nullptr, scalingVectors, &EInv, muEstimated, lambdaScaled, sigmaScaled);
   pipgSolver_.getStateInputTrajectoriesSolution(deltaXSol, deltaUSol);
   pipgSolverTimer_.endTimer();
 

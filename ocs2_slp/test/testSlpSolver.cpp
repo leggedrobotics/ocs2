@@ -66,7 +66,6 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solve(const VectorFunct
   // Solver settings
   auto getPipgSettings = [&]() {
     ocs2::pipg::Settings settings;
-    settings.nThreads = 100;
     settings.maxNumIterations = 30000;
     settings.absoluteTolerance = tol;
     settings.relativeTolerance = 1e-2;
@@ -74,7 +73,6 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solve(const VectorFunct
     settings.lowerBoundH = 1e-3;
     settings.checkTerminationInterval = 1;
     settings.displayShortSummary = true;
-
     return settings;
   };
 
@@ -87,7 +85,6 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solve(const VectorFunct
     settings.printLinesearch = true;
     settings.nThreads = 100;
     settings.pipgSettings = getPipgSettings();
-
     return settings;
   }();
 

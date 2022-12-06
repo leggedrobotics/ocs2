@@ -17,6 +17,7 @@ slp
 {
   dt                            0.1
   slpIteration                  5
+  scalingIteration              3
   deltaTol                      1e-3
   printSolverStatistics         true
   printSolverStatus             false
@@ -25,11 +26,9 @@ slp
   nThreads                      4
   pipg
   {
-    nThreads                    4
     maxNumIterations            7000
     absoluteTolerance           1e-3
     relativeTolerance           1e-2
-    numScaling                  3
     lowerBoundH                 0.2
     checkTerminationInterval    10
     displayShortSummary         false

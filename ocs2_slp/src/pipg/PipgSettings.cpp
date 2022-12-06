@@ -53,7 +53,6 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   loadData::loadPtreeValue(pt, settings.absoluteTolerance, fieldName + ".absoluteTolerance", verbose);
   loadData::loadPtreeValue(pt, settings.relativeTolerance, fieldName + ".relativeTolerance", verbose);
 
-  loadData::loadPtreeValue(pt, settings.numScaling, fieldName + ".numScaling", verbose);
   loadData::loadPtreeValue(pt, settings.lowerBoundH, fieldName + ".lowerBoundH", verbose);
 
   loadData::loadPtreeValue(pt, settings.checkTerminationInterval, fieldName + ".checkTerminationInterval", verbose);

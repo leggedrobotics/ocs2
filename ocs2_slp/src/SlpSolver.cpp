@@ -45,7 +45,7 @@ namespace ocs2 {
 SlpSolver::SlpSolver(slp::Settings settings, const OptimalControlProblem& optimalControlProblem, const Initializer& initializer)
     : settings_(std::move(settings)),
       pipgSolver_(settings_.pipgSettings),
-      threadPool_(std::max(settings_.nThreads, size_t(1)) - 1, settings_.threadPriority) {
+      threadPool_(std::max(settings_.nThreads - 1, size_t(1)) - 1, settings_.threadPriority) {
   Eigen::setNbThreads(1);  // No multithreading within Eigen.
   Eigen::initParallel();
 
@@ -132,10 +132,10 @@ std::string SlpSolver::getBenchmarkingInformation() const {
     const scalar_t inPercent = 100.0;
     infoStream << "\n########################################################################\n";
     infoStream << "The benchmarking is computed over " << totalNumIterations_ << " iterations. \n";
-    infoStream << "SQP Benchmarking\t   :\tAverage time [ms]   (% of total runtime)\n";
+    infoStream << "SLP Benchmarking\t   :\tAverage time [ms]   (% of total runtime)\n";
     infoStream << "\tLQ Approximation   :\t" << std::setw(10) << linearQuadraticApproximationTimer_.getAverageInMilliseconds()
                << " [ms] \t(" << linearQuadraticApproximationTotal / benchmarkTotal * inPercent << "%)\n";
-    infoStream << "\tSolve QP           :\t" << std::setw(10) << solveQpTimer_.getAverageInMilliseconds() << " [ms] \t("
+    infoStream << "\tSolve LP           :\t" << std::setw(10) << solveQpTimer_.getAverageInMilliseconds() << " [ms] \t("
                << solveQpTotal / benchmarkTotal * inPercent << "%)\n";
     infoStream << "\tLinesearch         :\t" << std::setw(10) << linesearchTimer_.getAverageInMilliseconds() << " [ms] \t("
                << linesearchTotal / benchmarkTotal * inPercent << "%)\n";
@@ -240,7 +240,7 @@ SlpSolver::OcpSubproblemSolution SlpSolver::getOCPSolution(const vector_t& delta
   scalar_t c;
   vector_array_t D, E;
   vector_array_t scalingVectors;
-  preConditioningInPlaceInParallel(threadPool_, delta_x0, pipgSolver_.size(), pipgSolver_.settings().numScaling, dynamics_, cost_, D, E,
+  preConditioningInPlaceInParallel(threadPool_, delta_x0, pipgSolver_.size(), settings_.scalingIteration, dynamics_, cost_, D, E,
                                    scalingVectors, c);
   preConditioning_.endTimer();
 

@@ -39,9 +39,10 @@ namespace slp {
 
 /** Multiple-shooting SLP (Successive Linear Programming) settings */
 struct Settings {
-  size_t slpIteration = 10;  // Maximum number of SLP iterations
-  scalar_t deltaTol = 1e-6;  // Termination condition : RMS update of x(t) and u(t) are both below this value
-  scalar_t costTol = 1e-4;   // Termination condition : (cost{i+1} - (cost{i}) < costTol AND constraints{i+1} < g_min
+  size_t slpIteration = 10;     // Maximum number of SLP iterations
+  size_t scalingIteration = 3;  // Number of pre-conditioning iterations
+  scalar_t deltaTol = 1e-6;     // Termination condition : RMS update of x(t) and u(t) are both below this value
+  scalar_t costTol = 1e-4;      // Termination condition : (cost{i+1} - (cost{i}) < costTol AND constraints{i+1} < g_min
 
   // Linesearch - step size rules
   scalar_t alpha_decay = 0.5;  // multiply the step size by this factor every time a linesearch step is rejected.

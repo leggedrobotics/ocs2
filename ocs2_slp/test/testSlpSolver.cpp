@@ -69,7 +69,6 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solve(const VectorFunct
     settings.maxNumIterations = 30000;
     settings.absoluteTolerance = tol;
     settings.relativeTolerance = 1e-2;
-    settings.numScaling = 3;
     settings.lowerBoundH = 1e-3;
     settings.checkTerminationInterval = 1;
     settings.displayShortSummary = true;
@@ -80,6 +79,7 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solve(const VectorFunct
     ocs2::slp::Settings settings;
     settings.dt = 0.05;
     settings.slpIteration = 10;
+    settings.scalingIteration = 3;
     settings.printSolverStatistics = true;
     settings.printSolverStatus = true;
     settings.printLinesearch = true;

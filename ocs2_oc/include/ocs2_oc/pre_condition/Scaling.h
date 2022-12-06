@@ -39,12 +39,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * There are a bunch of pre-conditioning methods aiming to shape different aspect of the problem. To balance the
- * performance and computational effort, we choose a modified Ruzi equilibration summarized in Algorithm 2.
- * Interested readers can find the original Ruiz equilibration in:
- * "Ruiz, D., 2001. A scaling algorithm to equilibrate both rows and columns norms in matrices"
- *
  * Calculates the scaling factor D, E and c, and scale the input dynamics, cost data in place in parallel.
+ *
+ * There are a few pre-conditioning methods aiming to shape different aspect of the problem. To balance the performance and
+ * computational effort, we choose a modified Ruzi equilibration summarized in Algorithm 2. Interested readers can find the
+ * original Ruiz equilibration in: "Ruiz, D., 2001. A scaling algorithm to equilibrate both rows and columns norms in matrices"
+ *
+ *
  *
  * @param[in] : threadPool External thread pool.
  * @param[in] x0 : Initial state

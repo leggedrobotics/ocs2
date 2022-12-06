@@ -187,7 +187,6 @@ class SlpSolver : public SolverBase {
   benchmark::RepeatedTimer computeControllerTimer_;
 
   // PIPG Solver
-  benchmark::RepeatedTimer GGTMultiplication_;
   benchmark::RepeatedTimer lambdaEstimation_;
   benchmark::RepeatedTimer sigmaEstimation_;
   benchmark::RepeatedTimer preConditioning_;

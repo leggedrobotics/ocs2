@@ -64,13 +64,13 @@ class PipgSolver {
    * @param dynamics: Dynamics array.
    * @param cost: Cost array.
    * @param constraints: Constraints array. Pass nullptr for an unconstrained problem.
-   * @param scalingVectors Vector representatoin for the identity parts of the dynamics constraints inside the constraint matrix. After
-   * scaling, they become arbitrary diagonal matrices. Pass nullptr to get them filled with identity matrices.
+   * @param scalingVectors Vector representatoin for the identity parts of the dynamics inside the constraint matrix. After scaling,
+   *                       they become arbitrary diagonal matrices. Pass nullptr to get them filled with identity matrices.
    * @param EInv Inverse of the scaling factor E. Used to calculate un-sacled termination criteria.
    * @param mu: the lower bound of the cost hessian H.
    * @param lambda: the upper bound of the cost hessian H.
    * @param sigma: the upper bound of \f$ G^TG \f$
-   * @return SolverStatus
+   * @return Solver satus
    */
   pipg::SolverStatus solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
                            const std::vector<ScalarFunctionQuadraticApproximation>& cost,

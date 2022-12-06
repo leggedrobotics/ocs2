@@ -87,7 +87,6 @@ void SlpSolver::reset() {
   solveQpTimer_.reset();
   linesearchTimer_.reset();
   computeControllerTimer_.reset();
-  GGTMultiplication_.reset();
   lambdaEstimation_.reset();
   sigmaEstimation_.reset();
   preConditioning_.reset();
@@ -95,22 +94,19 @@ void SlpSolver::reset() {
 }
 
 std::string SlpSolver::getBenchmarkingInformationPIPG() const {
-  const auto GGTMultiplication = GGTMultiplication_.getTotalInMilliseconds();
-  const auto preConditioning = preConditioning_.getTotalInMilliseconds();
   const auto lambdaEstimation = lambdaEstimation_.getTotalInMilliseconds();
   const auto sigmaEstimation = sigmaEstimation_.getTotalInMilliseconds();
+  const auto preConditioning = preConditioning_.getTotalInMilliseconds();
   const auto pipgRuntime = pipgSolverTimer_.getTotalInMilliseconds();
 
-  const auto benchmarkTotal = GGTMultiplication + preConditioning + lambdaEstimation + sigmaEstimation + pipgRuntime;
+  const auto benchmarkTotal = preConditioning + lambdaEstimation + sigmaEstimation + pipgRuntime;
 
   std::stringstream infoStream;
   if (benchmarkTotal > 0.0) {
     const scalar_t inPercent = 100.0;
     infoStream << "\n########################################################################\n";
-    infoStream << "The benchmarking is computed over " << GGTMultiplication_.getNumTimedIntervals() << " iterations. \n";
+    infoStream << "The benchmarking is computed over " << preConditioning_.getNumTimedIntervals() << " iterations. \n";
     infoStream << "PIPG Benchmarking\t       :\tAverage time [ms]   (% of total runtime)\n";
-    infoStream << "\tGGTMultiplication      :\t" << std::setw(10) << GGTMultiplication_.getAverageInMilliseconds() << " [ms] \t("
-               << GGTMultiplication / benchmarkTotal * inPercent << "%)\n";
     infoStream << "\tpreConditioning        :\t" << std::setw(10) << preConditioning_.getAverageInMilliseconds() << " [ms] \t("
                << preConditioning / benchmarkTotal * inPercent << "%)\n";
     infoStream << "\tlambdaEstimation       :\t" << std::setw(10) << lambdaEstimation_.getAverageInMilliseconds() << " [ms] \t("
@@ -239,36 +235,34 @@ SlpSolver::OcpSubproblemSolution SlpSolver::getOCPSolution(const vector_t& delta
   // without constraints, or when using projection, we have an unconstrained QP.
   pipgSolver_.resize(extractSizesFromProblem(dynamics_, cost_, nullptr));
 
+  // pre-condition the OCP
+  preConditioning_.startTimer();
+  scalar_t c;
   vector_array_t D, E;
   vector_array_t scalingVectors;
-  scalar_t c;
-
-  preConditioning_.startTimer();
-  preConditioningInPlaceInParallel(pipgSolver_.getThreadPool(), delta_x0, pipgSolver_.size(), pipgSolver_.settings().numScaling, dynamics_,
-                                   cost_, D, E, scalingVectors, c);
+  preConditioningInPlaceInParallel(threadPool_, delta_x0, pipgSolver_.size(), pipgSolver_.settings().numScaling, dynamics_, cost_, D, E,
+                                   scalingVectors, c);
   preConditioning_.endTimer();
 
+  // estimate mu and lambda: mu I < H < lambda I
+  const auto muEstimated = [&]() {
+    scalar_t maxScalingFactor = -1;
+    for (auto& v : D) {
+      if (v.size() != 0) {
+        maxScalingFactor = std::max(maxScalingFactor, v.maxCoeff());
+      }
+    }
+    return c * pipgSolver_.settings().lowerBoundH * maxScalingFactor * maxScalingFactor;
+  }();
   lambdaEstimation_.startTimer();
-  const vector_t rowwiseAbsSumH = slp::hessianAbsRowSum(pipgSolver_.size(), cost_);
-  const scalar_t lambdaScaled = rowwiseAbsSumH.maxCoeff();
+  const auto lambdaScaled = slp::hessianEigenvaluesUpperBound(pipgSolver_.size(), cost_);
   lambdaEstimation_.endTimer();
 
-  GGTMultiplication_.startTimer();
-  const vector_t rowwiseAbsSumGGT =
-      slp::GGTAbsRowSumInParallel(pipgSolver_.getThreadPool(), pipgSolver_.size(), dynamics_, nullptr, &scalingVectors);
-  GGTMultiplication_.endTimer();
-
+  // estimate sigma: G' G < sigma I
+  // However, since the G'G and GG' have exactly the same set of eigenvalues value: G G' < sigma I
   sigmaEstimation_.startTimer();
-  const scalar_t sigmaScaled = rowwiseAbsSumGGT.maxCoeff();
+  const auto sigmaScaled = slp::GGTEigenvaluesUpperBound(threadPool_, pipgSolver_.size(), dynamics_, nullptr, &scalingVectors);
   sigmaEstimation_.endTimer();
-
-  scalar_t maxScalingFactor = -1;
-  for (auto& v : D) {
-    if (v.size() != 0) {
-      maxScalingFactor = std::max(maxScalingFactor, v.maxCoeff());
-    }
-  }
-  const scalar_t muEstimated = pipgSolver_.settings().lowerBoundH * c * maxScalingFactor * maxScalingFactor;
 
   pipgSolverTimer_.startTimer();
   vector_array_t EInv(E.size());

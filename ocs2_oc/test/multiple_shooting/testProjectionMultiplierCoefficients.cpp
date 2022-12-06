@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <gtest/gtest.h>
 
 #include <ocs2_core/misc/LinearAlgebra.h>
-#include <ocs2_oc/multiple_shooting/Helpers.h>
+#include <ocs2_oc/multiple_shooting/ProjectionMultiplierCoefficients.h>
 
 #include "ocs2_oc/test/testProblemsGeneration.h"
 

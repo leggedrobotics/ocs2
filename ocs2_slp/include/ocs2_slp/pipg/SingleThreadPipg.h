@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace pipg {
 
-/*
+/**
  * First order primal-dual method for solving optimal control problem based on:
  * "Proportional-Integral Projected Gradient Method for Model Predictive Control"
  * https://arxiv.org/abs/2009.06980
@@ -69,14 +69,14 @@ namespace pipg {
  *
  * For constructing H, h, G, and g, refer to "ocs2_oc/oc_problem/OcpToKkt.h".
  *
- * @param[in] settings : The PIPG settings.
- * @param[in] H : The hessian matrix of the total cost.
- * @param[in] h : The jacobian vector of the total cost.
- * @param[in] G : The jacobian matrix of the constarinst.
- * @param[in] g : The constraints vector.
- * @param[in] EInv : Inverse of the scaling factor E. Used to calculate un-sacled termination criteria.
- * @param[in] pipgBounds : The PipgBounds used to define the primal and dual stepsizes.
- * @param[out] stackedSolution : The concatenated state-input trajectories, z.
+ * @param [in] settings : The PIPG settings.
+ * @param [in] H : The hessian matrix of the total cost.
+ * @param [in] h : The jacobian vector of the total cost.
+ * @param [in] G : The jacobian matrix of the constarinst.
+ * @param [in] g : The constraints vector.
+ * @param [in] EInv : Inverse of the scaling factor E. Used to calculate un-sacled termination criteria.
+ * @param [in] pipgBounds : The PipgBounds used to define the primal and dual stepsizes.
+ * @param [out] stackedSolution : The concatenated state-input trajectories, z.
  * @return The solver status.
  */
 SolverStatus singleThreadPipg(const pipg::Settings& settings, const Eigen::SparseMatrix<scalar_t>& H, const vector_t& h,
@@ -86,11 +86,11 @@ SolverStatus singleThreadPipg(const pipg::Settings& settings, const Eigen::Spars
 /**
  * Deserializes the stacked solution to state-input trajecotries.
  *
- * @param[in] ocpSize : Optimal control problem sizes.
- * @param[in] stackedSolution : Defined as [u_{0}; x_{1}; ...; u_{n}; x_{n+1}].
- * @param[in] x0 : The initial state.
- * @param[out] xTrajectory : State tarjectory.
- * @param[out] uTrajectory : Input trajecotry.
+ * @param [in] ocpSize : Optimal control problem sizes.
+ * @param [in] stackedSolution : Defined as [u_{0}; x_{1}; ...; u_{n}; x_{n+1}].
+ * @param [in] x0 : The initial state.
+ * @param [out] xTrajectory : State tarjectory.
+ * @param [out] uTrajectory : Input trajecotry.
  */
 void unpackSolution(const OcpSize& ocpSize, const vector_t& stackedSolution, const vector_t x0, vector_array_t& xTrajectory,
                     vector_array_t& uTrajectory);
@@ -98,9 +98,9 @@ void unpackSolution(const OcpSize& ocpSize, const vector_t& stackedSolution, con
 /**
  * Serializes the state-input trajecotries.
  *
- * @param[in] xTrajectory : State tarjectory.
- * @param[in] UTrajectory : Input trajecotry.
- * @param[out] stackedSolution : [u_{0}; x_{1}; ...; u_{n}; x_{n+1}].
+ * @param [in] xTrajectory : State tarjectory.
+ * @param [in] UTrajectory : Input trajecotry.
+ * @param [out] stackedSolution : [u_{0}; x_{1}; ...; u_{n}; x_{n+1}].
  */
 void packSolution(const vector_array_t& xTrajectory, const vector_array_t& uTrajectory, vector_t& stackedSolution);
 

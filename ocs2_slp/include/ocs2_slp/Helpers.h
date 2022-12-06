@@ -46,9 +46,9 @@ namespace slp {
  *
  * Also refer to "ocs2_oc/oc_problem/OcpToKkt.h".
  *
- * Z = [u_{0}; x_{1}; ...; u_{n}; x_{n+1}].
+ * z = [u_{0}; x_{1}; ...; u_{n}; x_{n+1}].
  *
- * totalCost = 0.5 Z' H Z + Z' h + h0
+ * totalCost = 0.5 z' H z + z' h + h0
  *
  * H = [ R0
  *       *   Q1  P1'
@@ -59,8 +59,8 @@ namespace slp {
  *
  * h = [(P0 x0 + r0); q1; r1 ...; qn; rn; q_{n+1}]
  *
- * @param[in] ocpSize: The size of optimal control problem.
- * @param[in] cost: Quadratic approximation of the cost over the time horizon.
+ * @param [in] ocpSize: The size of optimal control problem.
+ * @param [in] cost: Quadratic approximation of the cost over the time horizon.
  * @return: The upper bound of eigenvalues for H.
  */
 scalar_t hessianEigenvaluesUpperBound(const OcpSize& ocpSize, const std::vector<ScalarFunctionQuadraticApproximation>& cost);
@@ -75,9 +75,9 @@ scalar_t hessianEigenvaluesUpperBound(const OcpSize& ocpSize, const std::vector<
  *
  * Also refer to "ocs2_oc/oc_problem/OcpToKkt.h".
  *
- * Z = [u_{0}; x_{1}; ...; u_{n}; x_{n+1}].
+ * z = [u_{0}; x_{1}; ...; u_{n}; x_{n+1}].
  *
- * G Z = g
+ * G z = g
  *
  * G = [-B0  I
  *       *  -A1 -B1   I
@@ -90,12 +90,12 @@ scalar_t hessianEigenvaluesUpperBound(const OcpSize& ocpSize, const std::vector<
  *
  * g = [(A0 x0 + b0); b1; ...; bn, -(C0 x0 + e0); -e1; ...; en]
  *
- * @param[in] threadPool: The thread pool.
- * @param[in] ocpSize: The size of optimal control problem.
- * @param[in] dynamics: Linear approximation of the dynamics over the time horizon.
- * @param[in] constraints: Linear approximation of the constraints over the time horizon. Pass nullptr if there is no constraints.
- * @param[in] scalingVectorsPtr: Vector representatoin for the identity parts of the dynamics inside the constraint matrix. After scaling,
- *                               they become arbitrary diagonal matrices. Pass nullptr to get them filled with identity matrices.
+ * @param [in] threadPool: The thread pool.
+ * @param [in] ocpSize: The size of optimal control problem.
+ * @param [in] dynamics: Linear approximation of the dynamics over the time horizon.
+ * @param [in] constraints: Linear approximation of the constraints over the time horizon. Pass nullptr if there is no constraints.
+ * @param [in] scalingVectorsPtr: Vector representatoin for the identity parts of the dynamics inside the constraint matrix. After scaling,
+ *                                they become arbitrary diagonal matrices. Pass nullptr to get them filled with identity matrices.
  * @return: The upper bound of eigenvalues for G G'.
  */
 scalar_t GGTEigenvaluesUpperBound(ThreadPool& threadPool, const OcpSize& ocpSize,
@@ -106,7 +106,7 @@ scalar_t GGTEigenvaluesUpperBound(ThreadPool& threadPool, const OcpSize& ocpSize
 /**
  * Computes the row-wise absolute sum of the cost hessian matrix, H. Also refer to "ocs2_oc/oc_problem/OcpToKkt.h".
  *
- * totalCost = 0.5 Z' H Z + Z' h + h0
+ * totalCost = 0.5 z' H z + z' h + h0
  *
  * H = [ R0
  *       *   Q1  P1'
@@ -117,8 +117,8 @@ scalar_t GGTEigenvaluesUpperBound(ThreadPool& threadPool, const OcpSize& ocpSize
  *
  * h = [(P0 x0 + r0); q1; r1 ...; qn; rn; q_{n+1}]
  *
- * @param[in] ocpSize: The size of optimal control problem.
- * @param[in] cost: Quadratic approximation of the cost over the time horizon.
+ * @param [in] ocpSize: The size of optimal control problem.
+ * @param [in] cost: Quadratic approximation of the cost over the time horizon.
  * @return: The absolute sum of rows of matrix H.
  */
 vector_t hessianAbsRowSum(const OcpSize& ocpSize, const std::vector<ScalarFunctionQuadraticApproximation>& cost);
@@ -126,9 +126,9 @@ vector_t hessianAbsRowSum(const OcpSize& ocpSize, const std::vector<ScalarFuncti
 /**
  * Computes the row-wise absolute sum of matrix G G' in parallel. Also refer to "ocs2_oc/oc_problem/OcpToKkt.h".
  *
- * Z = [u_{0}; x_{1}; ...; u_{n}; x_{n+1}].
+ * z = [u_{0}; x_{1}; ...; u_{n}; x_{n+1}].
  *
- * G Z = g
+ * G z = g
  *
  * G = [-B0  I
  *       *  -A1 -B1   I
@@ -141,13 +141,13 @@ vector_t hessianAbsRowSum(const OcpSize& ocpSize, const std::vector<ScalarFuncti
  *
  * g = [(A0 x0 + b0); b1; ...; bn, -(C0 x0 + e0); -e1; ...; en]
  *
- * @param[in] threadPool: The thread pool.
- * @param[in] ocpSize: The size of optimal control problem.
- * @param[in] dynamics: Linear approximation of the dynamics over the time horizon.
- * @param[in] constraints: Linear approximation of the constraints over the time horizon. Pass nullptr if there is no constraints.
- * @param[in] scalingVectorsPtr: Vector representatoin for the identity parts of the dynamics inside the constraint matrix. After scaling,
- *                               they become arbitrary diagonal matrices. Pass nullptr to get them filled with identity matrices.
- * @return: The absolute sum of rows of matrix G G'.
+ * @param [in] threadPool: The thread pool.
+ * @param [in] ocpSize: The size of optimal control problem.
+ * @param [in] dynamics: Linear approximation of the dynamics over the time horizon.
+ * @param [in] constraints: Linear approximation of the constraints over the time horizon. Pass nullptr if there is no constraints.
+ * @param [in] scalingVectorsPtr: Vector representatoin for the identity parts of the dynamics inside the constraint matrix. After scaling,
+ *                                they become arbitrary diagonal matrices. Pass nullptr to get them filled with identity matrices.
+ * @return The absolute sum of rows of matrix G G'.
  */
 vector_t GGTAbsRowSumInParallel(ThreadPool& threadPool, const OcpSize& ocpSize,
                                 const std::vector<VectorFunctionLinearApproximation>& dynamics,

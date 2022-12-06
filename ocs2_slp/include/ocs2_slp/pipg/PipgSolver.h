@@ -60,17 +60,17 @@ class PipgSolver {
   /**
    * Solve the optimal control in parallel.
    *
-   * @param[in] threadPool : The external thread pool.
-   * @param[in] x0 : Initial state
-   * @param[in] dynamics : Dynamics array.
-   * @param[in] cost : Cost array.
-   * @param[in] constraints : Constraints array. Pass nullptr for an unconstrained problem.
-   * @param[in] scalingVectors : Vector representatoin for the identity parts of the dynamics inside the constraint matrix. After scaling,
-   *                             they become arbitrary diagonal matrices. Pass nullptr to get them filled with identity matrices.
-   * @param[in] EInv : Inverse of the scaling factor E. Used to calculate un-sacled termination criteria.
-   * @param[in] pipgBounds : The PipgBounds used to define the primal and dual stepsizes.
-   * @param[out] xTrajectory : The optimized state trajectory.
-   * @param[out] uTrajectory : The optimized input trajectory.
+   * @param [in] threadPool : The external thread pool.
+   * @param [in] x0 : Initial state
+   * @param [in] dynamics : Dynamics array.
+   * @param [in] cost : Cost array.
+   * @param [in] constraints : Constraints array. Pass nullptr for an unconstrained problem.
+   * @param [in] scalingVectors : Vector representatoin for the identity parts of the dynamics inside the constraint matrix. After scaling,
+   *                              they become arbitrary diagonal matrices. Pass nullptr to get them filled with identity matrices.
+   * @param [in] EInv : Inverse of the scaling factor E. Used to calculate un-sacled termination criteria.
+   * @param [in] pipgBounds : The PipgBounds used to define the primal and dual stepsizes.
+   * @param [out] xTrajectory : The optimized state trajectory.
+   * @param [out] uTrajectory : The optimized input trajectory.
    * @return The solver status.
    */
   pipg::SolverStatus solve(ThreadPool& threadPool, const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,

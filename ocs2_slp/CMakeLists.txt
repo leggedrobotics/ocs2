@@ -47,7 +47,7 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/pipg/PipgSettings.cpp
   src/pipg/PipgSolver.cpp
-  src/pipg/DensePipgSolver.cpp
+  src/pipg/SingleThreadPipg.cpp
   src/Helpers.cpp
   src/SlpSettings.cpp
   src/SlpSolver.cpp

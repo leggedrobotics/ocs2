@@ -39,9 +39,9 @@ class SlpMpc final : public MPC_BASE {
   /**
    * Constructor
    *
-   * @param mpcSettings : settings for the mpc wrapping of the solver. Do not use this for maxIterations and stepsize, use multiple shooting
-   * settings directly.
-   * @param settings : settings for the multiple shooting SLP solver.
+   * @param [in] mpcSettings : settings for the mpc wrapping of the solver. Do not use this for maxIterations and stepsize, use
+   *                           slp::Settings directly.
+   * @param [in] settings : settings for the multiple shooting SLP solver.
    * @param [in] optimalControlProblem: The optimal control problem formulation.
    * @param [in] initializer: This class initializes the state-input for the time steps that no controller is available.
    */

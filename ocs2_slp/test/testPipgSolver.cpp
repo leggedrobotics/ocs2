@@ -116,7 +116,7 @@ TEST_F(PIPGSolverTest, correctness) {
 
   ocs2::vector_array_t scalingVectors(N_, ocs2::vector_t::Ones(nx_));
   ocs2::vector_array_t X, U;
-  std::ignore = osolver.solve(threadPool, x0, dynamicsArray, costArray, nullptr, scalingVectors, nullptr, pipgBounds, X, U);
+  std::ignore = solver.solve(threadPool, x0, dynamicsArray, costArray, nullptr, scalingVectors, nullptr, pipgBounds, X, U);
 
   ocs2::vector_t primalSolutionPIPGParallel;
   ocs2::pipg::packSolution(X, U, primalSolutionPIPGParallel);

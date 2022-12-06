@@ -50,7 +50,7 @@ class SlpSolver : public SolverBase {
   /**
    * Constructor
    *
-   * @param settings : settings for the multiple shooting SLP solver.
+   * @param [in] settings : settings for the multiple shooting SLP solver.
    * @param [in] optimalControlProblem: The optimal control problem formulation.
    * @param [in] initializer: This class initializes the state-input for the time steps that no controller is available.
    */

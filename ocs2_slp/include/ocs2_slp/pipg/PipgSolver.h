@@ -65,7 +65,7 @@ class PipgSolver {
    * @param [in] dynamics : Dynamics array.
    * @param [in] cost : Cost array.
    * @param [in] constraints : Constraints array. Pass nullptr for an unconstrained problem.
-   * @param [in] scalingVectors : Vector representatoin for the identity parts of the dynamics inside the constraint matrix. After scaling,
+   * @param [in] scalingVectors : Vector representation for the identity parts of the dynamics inside the constraint matrix. After scaling,
    *                              they become arbitrary diagonal matrices. Pass nullptr to get them filled with identity matrices.
    * @param [in] EInv : Inverse of the scaling factor E. Used to calculate un-sacled termination criteria.
    * @param [in] pipgBounds : The PipgBounds used to define the primal and dual stepsizes.

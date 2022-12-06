@@ -33,8 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_oc/oc_problem/OcpToKkt.h"
 #include "ocs2_oc/pre_condition/Scaling.h"
-
-#include "ocs2_oc/test/SparseScaling.h"
 #include "ocs2_oc/test/testProblemsGeneration.h"
 
 class ScalingTest : public testing::Test {
@@ -84,9 +82,9 @@ TEST_F(ScalingTest, preConditioningSparseMatrix) {
   const ocs2::vector_t g_src = g;
 
   // Test 1: Construct the stacked cost and constraints matrices first and scale next.
-  ocs2::preConditioningSparseMatrixInPlace(H, h, G, 5, D, E, c);
+  ocs2::preConditioningSparseMatrixInPlace(5, H, h, G, g, D, E, c);
 
-  // After pre-conditioning, H, h, G will be scaled in place. g remains the same.
+  // After pre-conditioning, H, h, G, and g will be scaled in place..
   const Eigen::SparseMatrix<ocs2::scalar_t> H_ref = c * D.asDiagonal() * H_src * D.asDiagonal();
   const ocs2::vector_t h_ref = c * D.asDiagonal() * h_src;
   const Eigen::SparseMatrix<ocs2::scalar_t> G_ref = E.asDiagonal() * G_src * D.asDiagonal();
@@ -96,6 +94,7 @@ TEST_F(ScalingTest, preConditioningSparseMatrix) {
   ASSERT_TRUE(H_ref.isApprox(H));                                                    // H
   ASSERT_TRUE(h_ref.isApprox(h));                                                    // h
   ASSERT_TRUE(G_ref.isApprox(G)) << "G_ref:\n" << G_ref << "\nG:\n" << G.toDense();  // G
+  ASSERT_TRUE(g_ref.isApprox(g));                                                    // g
 
   // Normalized the inf-Norm of both rows and cols of KKT matrix should be closer to 1
   const ocs2::matrix_t KKT = (ocs2::matrix_t(H_src.rows() + G_src.rows(), H_src.rows() + G_src.rows()) << H_src.toDense(),
@@ -145,8 +144,7 @@ TEST_F(ScalingTest, preConditioningInPlaceInParallel) {
   ocs2::vector_t g_ref;
   Eigen::SparseMatrix<ocs2::scalar_t> G_ref;
   ocs2::getConstraintMatrixSparse(ocpSize_, x0, dynamicsArray, nullptr, nullptr, G_ref, g_ref);
-  ocs2::preConditioningSparseMatrixInPlace(H_ref, h_ref, G_ref, 5, D_ref, E_ref, c_ref);
-  g_ref = E_ref.asDiagonal() * g_ref;
+  ocs2::preConditioningSparseMatrixInPlace(5, H_ref, h_ref, G_ref, g_ref, D_ref, E_ref, c_ref);
 
   // Test start
   ocs2::vector_array_t D_array, E_array;

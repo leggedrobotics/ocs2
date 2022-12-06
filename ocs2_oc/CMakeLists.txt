@@ -201,7 +201,6 @@ target_link_libraries(test_matrix_construction
 )
 
 catkin_add_gtest(test_scaling
-  test/pre_condition/SparseScaling.cpp
   test/pre_condition/testScaling.cpp
 )
 target_link_libraries(test_scaling

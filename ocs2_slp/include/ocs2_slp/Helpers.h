@@ -94,7 +94,7 @@ scalar_t hessianEigenvaluesUpperBound(const OcpSize& ocpSize, const std::vector<
  * @param [in] ocpSize: The size of optimal control problem.
  * @param [in] dynamics: Linear approximation of the dynamics over the time horizon.
  * @param [in] constraints: Linear approximation of the constraints over the time horizon. Pass nullptr if there is no constraints.
- * @param [in] scalingVectorsPtr: Vector representatoin for the identity parts of the dynamics inside the constraint matrix. After scaling,
+ * @param [in] scalingVectorsPtr: Vector representation for the identity parts of the dynamics inside the constraint matrix. After scaling,
  *                                they become arbitrary diagonal matrices. Pass nullptr to get them filled with identity matrices.
  * @return: The upper bound of eigenvalues for G G'.
  */
@@ -145,7 +145,7 @@ vector_t hessianAbsRowSum(const OcpSize& ocpSize, const std::vector<ScalarFuncti
  * @param [in] ocpSize: The size of optimal control problem.
  * @param [in] dynamics: Linear approximation of the dynamics over the time horizon.
  * @param [in] constraints: Linear approximation of the constraints over the time horizon. Pass nullptr if there is no constraints.
- * @param [in] scalingVectorsPtr: Vector representatoin for the identity parts of the dynamics inside the constraint matrix. After scaling,
+ * @param [in] scalingVectorsPtr: Vector representation for the identity parts of the dynamics inside the constraint matrix. After scaling,
  *                                they become arbitrary diagonal matrices. Pass nullptr to get them filled with identity matrices.
  * @return The absolute sum of rows of matrix G G'.
  */

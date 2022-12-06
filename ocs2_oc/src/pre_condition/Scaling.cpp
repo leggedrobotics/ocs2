@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_oc/pre_condition/Scaling.h"
 
 #include <atomic>
+#include <functional>
 #include <numeric>
 
 namespace ocs2 {
@@ -42,7 +43,7 @@ vector_t matrixInfNormRows(const Eigen::MatrixBase<T>& mat) {
   if (mat.rows() == 0 || mat.cols() == 0) {
     return vector_t(0);
   } else {
-    return mat.array().abs().matrix().rowwise().maxCoeff();
+    return mat.rowwise().template lpNorm<Eigen::Infinity>();
   }
 }
 
@@ -52,9 +53,9 @@ vector_t matrixInfNormRows(const Eigen::MatrixBase<T>& mat, const Eigen::MatrixB
   if (mat.rows() == 0 || mat.cols() == 0) {
     return temp;
   } else if (temp.rows() != 0) {
-    return mat.array().abs().matrix().rowwise().maxCoeff().cwiseMax(temp);
+    return mat.rowwise().template lpNorm<Eigen::Infinity>().cwiseMax(temp);
   } else {
-    return mat.array().abs().matrix().rowwise().maxCoeff();
+    return mat.rowwise().template lpNorm<Eigen::Infinity>();
   }
 }
 
@@ -63,7 +64,7 @@ vector_t matrixInfNormCols(const Eigen::MatrixBase<T>& mat) {
   if (mat.rows() == 0 || mat.cols() == 0) {
     return vector_t(0);
   } else {
-    return mat.array().abs().matrix().colwise().maxCoeff().transpose();
+    return mat.colwise().template lpNorm<Eigen::Infinity>().transpose();
   }
 }
 
@@ -73,9 +74,9 @@ vector_t matrixInfNormCols(const Eigen::MatrixBase<T>& mat, const Eigen::MatrixB
   if (mat.rows() == 0 || mat.cols() == 0) {
     return temp;
   } else if (temp.rows() != 0) {
-    return mat.array().abs().matrix().colwise().maxCoeff().transpose().cwiseMax(temp);
+    return mat.colwise().template lpNorm<Eigen::Infinity>().transpose().cwiseMax(temp);
   } else {
-    return mat.array().abs().matrix().colwise().maxCoeff().transpose();
+    return mat.colwise().template lpNorm<Eigen::Infinity>().transpose();
   }
 }
 
@@ -89,33 +90,38 @@ void scaleMatrixInPlace(const vector_t* rowScale, const vector_t* colScale, Eige
   }
 }
 
+scalar_t limitScaling(const scalar_t& v) {
+  if (v < 1e-4) {
+    return 1.0;
+  } else if (v > 1e+4) {
+    return 1e+4;
+  } else {
+    return v;
+  }
+}
+
 void invSqrtInfNormInParallel(ThreadPool& threadPool, const std::vector<VectorFunctionLinearApproximation>& dynamics,
                               const std::vector<ScalarFunctionQuadraticApproximation>& cost, const vector_array_t& scalingVectors,
-                              const int N, const std::function<void(vector_t&)>& limitScaling, vector_array_t& D, vector_array_t& E) {
+                              const int N, vector_array_t& D, vector_array_t& E) {
   // Helper function
-  auto procedure = [&limitScaling](vector_t& dst, const vector_t& norm) {
-    dst = norm;
-    limitScaling(dst);
-    dst.array() = dst.array().sqrt().inverse();
-  };
+  auto invSqrt = [](const vector_t& v) -> vector_t { return v.unaryExpr(std::ref(limitScaling)).array().sqrt().inverse(); };
 
-  procedure(D[0], matrixInfNormCols(cost[0].dfduu, dynamics[0].dfdu));
-  procedure(E[0], matrixInfNormRows(dynamics[0].dfdu, scalingVectors[0].asDiagonal().toDenseMatrix()));
+  D[0] = invSqrt(matrixInfNormCols(cost[0].dfduu, dynamics[0].dfdu));
+  E[0] = invSqrt(matrixInfNormRows(dynamics[0].dfdu, scalingVectors[0].asDiagonal().toDenseMatrix()));
 
   std::atomic_int timeStamp{1};
   auto task = [&](int workerId) {
     int k;
     while ((k = timeStamp++) < N) {
-      procedure(D[2 * k - 1],
-                matrixInfNormCols(cost[k].dfdxx, cost[k].dfdux, scalingVectors[k - 1].asDiagonal().toDenseMatrix(), dynamics[k].dfdx));
-      procedure(D[2 * k], matrixInfNormCols(cost[k].dfdux.transpose().eval(), cost[k].dfduu, dynamics[k].dfdu));
-      procedure(E[k], matrixInfNormRows(dynamics[k].dfdx, dynamics[k].dfdu, scalingVectors[k].asDiagonal().toDenseMatrix()));
+      D[2 * k - 1] =
+          invSqrt(matrixInfNormCols(cost[k].dfdxx, cost[k].dfdux, scalingVectors[k - 1].asDiagonal().toDenseMatrix(), dynamics[k].dfdx));
+      D[2 * k] = invSqrt(matrixInfNormCols(cost[k].dfdux.transpose().eval(), cost[k].dfduu, dynamics[k].dfdu));
+      E[k] = invSqrt(matrixInfNormRows(dynamics[k].dfdx, dynamics[k].dfdu, scalingVectors[k].asDiagonal().toDenseMatrix()));
     }
   };
-
   threadPool.runParallel(std::move(task), threadPool.numThreads() + 1U);
 
-  procedure(D[2 * N - 1], matrixInfNormCols(cost[N].dfdxx, scalingVectors[N - 1].asDiagonal().toDenseMatrix()));
+  D[2 * N - 1] = invSqrt(matrixInfNormCols(cost[N].dfdxx, scalingVectors[N - 1].asDiagonal().toDenseMatrix()));
 }
 
 void scaleDataOneStepInPlaceInParallel(ThreadPool& threadPool, const vector_array_t& D, const vector_array_t& E, const int N,
@@ -180,13 +186,6 @@ void preConditioningInPlaceInParallel(ThreadPool& threadPool, const vector_t& x0
     throw std::runtime_error("[preConditioningInPlaceInParallel] The number of stages cannot be less than 1.");
   }
 
-  auto limitScaling = [](vector_t& vec) {
-    for (int i = 0; i < vec.size(); i++) {
-      if (vec(i) > 1e+4) vec(i) = 1e+4;
-      if (vec(i) < 1e-4) vec(i) = 1.0;
-    }
-  };
-
   // Init output
   cOut = 1.0;
   DOut.resize(2 * N);
@@ -199,9 +198,12 @@ void preConditioningInPlaceInParallel(ThreadPool& threadPool, const vector_t& x0
     scalingVectors[i].setOnes(ocpSize.numStates[i + 1]);
   }
 
+  const auto numDecisionVariables = std::accumulate(ocpSize.numInputs.begin(), ocpSize.numInputs.end(), 0) +
+                                    std::accumulate(ocpSize.numStates.begin() + 1, ocpSize.numStates.end(), 0);
+
   vector_array_t D(2 * N), E(N);
   for (int i = 0; i < iteration; i++) {
-    invSqrtInfNormInParallel(threadPool, dynamics, cost, scalingVectors, N, limitScaling, D, E);
+    invSqrtInfNormInParallel(threadPool, dynamics, cost, scalingVectors, N, D, E);
     scaleDataOneStepInPlaceInParallel(threadPool, D, E, N, dynamics, cost, scalingVectors);
 
     for (int k = 0; k < DOut.size(); k++) {
@@ -211,28 +213,33 @@ void preConditioningInPlaceInParallel(ThreadPool& threadPool, const vector_t& x0
       EOut[k].array() *= E[k].array();
     }
 
-    scalar_t infNormOfh = (cost.front().dfdu + cost.front().dfdux * x0).lpNorm<Eigen::Infinity>();
-    for (int k = 1; k < N; k++) {
-      infNormOfh = std::max(infNormOfh, std::max(cost[k].dfdx.lpNorm<Eigen::Infinity>(), cost[k].dfdu.lpNorm<Eigen::Infinity>()));
-    }
-    infNormOfh = std::max(infNormOfh, cost[N].dfdx.lpNorm<Eigen::Infinity>());
-    if (infNormOfh < 1e-4) infNormOfh = 1.0;
+    const auto infNormOfh = [&cost, &x0]() {
+      scalar_t out = (cost.front().dfdu + cost.front().dfdux * x0).lpNorm<Eigen::Infinity>();
+      for (int k = 1; k < cost.size(); ++k) {
+        out = std::max(out, cost[k].dfdx.lpNorm<Eigen::Infinity>());
+        if (cost[k].dfdu.size() > 0) {
+          out = std::max(out, cost[k].dfdu.lpNorm<Eigen::Infinity>());
+        }
+      }
+      return out;
+    }();
 
-    scalar_t sumOfInfNormOfH = matrixInfNormCols(cost[0].dfduu).derived().sum();
-    for (int k = 1; k < N; k++) {
-      sumOfInfNormOfH += matrixInfNormCols(cost[k].dfdxx, cost[k].dfdux).derived().sum();
-      sumOfInfNormOfH += matrixInfNormCols(cost[k].dfdux.transpose().eval(), cost[k].dfduu).derived().sum();
-    }
-    sumOfInfNormOfH += matrixInfNormCols(cost[N].dfdxx).derived().sum();
+    const auto sumOfInfNormOfH = [&cost]() {
+      scalar_t out = matrixInfNormCols(cost[0].dfduu).derived().sum();
+      for (int k = 1; k < cost.size(); k++) {
+        if (cost[k].dfduu.size() == 0) {
+          out += matrixInfNormCols(cost[k].dfdxx).derived().sum();
+        } else {
+          out += matrixInfNormCols(cost[k].dfdxx, cost[k].dfdux).derived().sum();
+          out += matrixInfNormCols(cost[k].dfdux.transpose().eval(), cost[k].dfduu).derived().sum();
+        }
+      }
+      return out;
+    }();
 
-    const int numDecisionVariables = std::accumulate(ocpSize.numInputs.begin(), ocpSize.numInputs.end(), (int)0) +
-                                     std::accumulate(ocpSize.numStates.begin() + 1, ocpSize.numStates.end(), (int)0);
+    const auto averageOfInfNormOfH = sumOfInfNormOfH / static_cast<scalar_t>(numDecisionVariables);
 
-    scalar_t c_temp = std::max(sumOfInfNormOfH / static_cast<scalar_t>(numDecisionVariables), infNormOfh);
-    if (c_temp > 1e+4) c_temp = 1e+4;
-    if (c_temp < 1e-4) c_temp = 1.0;
-
-    const scalar_t gamma = 1.0 / c_temp;
+    const auto gamma = 1.0 / limitScaling(std::max(averageOfInfNormOfH, infNormOfh));
 
     for (int k = 0; k <= N; ++k) {
       cost[k].dfdxx *= gamma;

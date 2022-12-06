@@ -38,13 +38,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace pipg {
 
-struct DensePipgBenchmark {
-  benchmark::RepeatedTimer vComputation;
-  benchmark::RepeatedTimer zComputation;
-  benchmark::RepeatedTimer wComputation;
-  benchmark::RepeatedTimer convergenceCheck;
-};
-
 /*
  * First order primal-dual method for solving optimal control problem based on:
  * "Proportional-Integral Projected Gradient Method for Model Predictive Control"
@@ -52,7 +45,7 @@ struct DensePipgBenchmark {
  */
 SolverStatus densePipg(const pipg::Settings& settings, const Eigen::SparseMatrix<scalar_t>& H, const vector_t& h,
                        const Eigen::SparseMatrix<scalar_t>& G, const vector_t& g, const vector_t& EInv, const scalar_t mu,
-                       const scalar_t lambda, const scalar_t sigma, vector_t& stackedSolution, DensePipgBenchmark* timerPtr = nullptr);
+                       const scalar_t lambda, const scalar_t sigma, vector_t& stackedSolution);
 
 /**
  * Deserializes the stacked solution to state-input trajecotries.
@@ -61,7 +54,7 @@ SolverStatus densePipg(const pipg::Settings& settings, const Eigen::SparseMatrix
  * @param[in] stackedSolution : Defined as [u[0], x[1], ..., u[N-1], x[N]].
  * @param[in] x0 : The initial state.
  * @param[out] xTrajectory : State tarjectory.
- * @param[out] UTrajectory : Input trajecotry.
+ * @param[out] uTrajectory : Input trajecotry.
  */
 void unpackSolution(const OcpSize& ocpSize, const vector_t& stackedSolution, const vector_t x0, vector_array_t& xTrajectory,
                     vector_array_t& uTrajectory);

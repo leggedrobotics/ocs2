@@ -37,7 +37,7 @@ namespace pipg {
 
 SolverStatus densePipg(const pipg::Settings& settings, const Eigen::SparseMatrix<scalar_t>& H, const vector_t& h,
                        const Eigen::SparseMatrix<scalar_t>& G, const vector_t& g, const vector_t& EInv, const scalar_t mu,
-                       const scalar_t lambda, const scalar_t sigma, vector_t& stackedSolution, DensePipgBenchmark* timerPtr) {
+                       const scalar_t lambda, const scalar_t sigma, vector_t& stackedSolution) {
   // Cold start
   vector_t z = vector_t::Zero(H.cols());
   vector_t z_old = vector_t::Zero(H.cols());
@@ -55,44 +55,24 @@ SolverStatus densePipg(const pipg::Settings& settings, const Eigen::SparseMatrix
     const scalar_t beta = (k + 1) * mu / (2.0 * sigma);
 
     z_old.swap(z);
-    if (timerPtr != nullptr) {
-      timerPtr->vComputation.startTimer();
-    }
+
     // v = w + beta * (G * z - g);
     v = -g;
     v.noalias() += G * z;
     v *= beta;
     v += w;
-    if (timerPtr != nullptr) {
-      timerPtr->vComputation.endTimer();
-    }
 
-    if (timerPtr != nullptr) {
-      timerPtr->zComputation.startTimer();
-    }
     // z = z_old - alpha * (H * z_old + h + G.transpose() * v);
     z = -h;
     z.noalias() -= (H * z_old);
     z.noalias() -= (G.transpose() * v);
     z *= alpha;
     z.noalias() += z_old;
-    if (timerPtr != nullptr) {
-      timerPtr->zComputation.endTimer();
-    }
 
-    if (timerPtr != nullptr) {
-      timerPtr->wComputation.startTimer();
-    }
     // w = w + beta * (G * z - g);
     w -= beta * g;
     w.noalias() += beta * (G * z);
-    if (timerPtr != nullptr) {
-      timerPtr->wComputation.endTimer();
-    }
 
-    if (timerPtr != nullptr) {
-      timerPtr->convergenceCheck.startTimer();
-    }
     if (k % settings.checkTerminationInterval == 0) {
       const scalar_t zNorm = z.squaredNorm();
 
@@ -106,9 +86,6 @@ SolverStatus densePipg(const pipg::Settings& settings, const Eigen::SparseMatrix
       isConverged =
           constraintsViolationInfNorm <= settings.absoluteTolerance &&
           (z_deltaNorm <= settings.relativeTolerance * settings.relativeTolerance * zNorm || z_deltaNorm <= settings.absoluteTolerance);
-    }
-    if (timerPtr != nullptr) {
-      timerPtr->convergenceCheck.endTimer();
     }
 
     ++k;
@@ -125,24 +102,6 @@ SolverStatus densePipg(const pipg::Settings& settings, const Eigen::SparseMatrix
     std::cerr << "Number of Iterations: " << k << " out of " << settings.maxNumIterations << "\n";
     std::cerr << "Norm of delta primal solution: " << (stackedSolution - z_old).norm() << "\n";
     std::cerr << "Constraints violation : " << constraintsViolationInfNorm << "\n";
-    if (timerPtr != nullptr) {
-      const auto step1v = timerPtr->vComputation.getTotalInMilliseconds();
-      const auto step2z = timerPtr->zComputation.getTotalInMilliseconds();
-      const auto step3w = timerPtr->wComputation.getTotalInMilliseconds();
-      const auto step4CheckConvergence = timerPtr->convergenceCheck.getTotalInMilliseconds();
-      const auto benchmarkTotal = step1v + step2z + step3w + step4CheckConvergence;
-      std::cerr << "\n########################################################################\n";
-      std::cerr << "The benchmarking is computed over " << k << " iterations. \n";
-      std::cerr << "PIPG Dense Benchmarking\t     :\tAverage time [ms]   (% of total runtime)\n";
-      std::cerr << "\tvComputation         :\t" << timerPtr->vComputation.getAverageInMilliseconds() << " [ms] \t\t("
-                << step1v / benchmarkTotal * 100.0 << "%)\n";
-      std::cerr << "\tzComputation         :\t" << timerPtr->zComputation.getAverageInMilliseconds() << " [ms] \t\t("
-                << step2z / benchmarkTotal * 100.0 << "%)\n";
-      std::cerr << "\twComputation         :\t" << timerPtr->wComputation.getAverageInMilliseconds() << " [ms] \t\t("
-                << step3w / benchmarkTotal * 100.0 << "%)\n";
-      std::cerr << "\tCheckConvergence     :\t" << timerPtr->convergenceCheck.getAverageInMilliseconds() << " [ms] \t\t("
-                << step4CheckConvergence / benchmarkTotal * 100.0 << "%)\n";
-    }
   }
 
   return status;

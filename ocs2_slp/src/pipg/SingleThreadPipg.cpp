@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_slp/pipg/DensePipgSolver.h"
+#include "ocs2_slp/pipg/SingleThreadPipg.h"
 
 #include <iostream>
 #include <numeric>
@@ -35,9 +35,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace pipg {
 
-SolverStatus densePipg(const pipg::Settings& settings, const Eigen::SparseMatrix<scalar_t>& H, const vector_t& h,
-                       const Eigen::SparseMatrix<scalar_t>& G, const vector_t& g, const vector_t& EInv, const scalar_t mu,
-                       const scalar_t lambda, const scalar_t sigma, vector_t& stackedSolution) {
+SolverStatus singleThreadPipg(const pipg::Settings& settings, const Eigen::SparseMatrix<scalar_t>& H, const vector_t& h,
+                              const Eigen::SparseMatrix<scalar_t>& G, const vector_t& g, const vector_t& EInv, const scalar_t mu,
+                              const scalar_t lambda, const scalar_t sigma, vector_t& stackedSolution) {
   // Cold start
   vector_t z = vector_t::Zero(H.cols());
   vector_t z_old = vector_t::Zero(H.cols());

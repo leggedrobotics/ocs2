@@ -34,8 +34,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/test/testProblemsGeneration.h>
 #include <ocs2_qp_solver/QpSolver.h>
 
-#include "ocs2_slp/pipg/DensePipgSolver.h"
 #include "ocs2_slp/pipg/PipgSolver.h"
+#include "ocs2_slp/pipg/SingleThreadPipg.h"
 
 ocs2::pipg::Settings configurePipg(size_t nThreads, size_t maxNumIterations, ocs2::scalar_t absoluteTolerance,
                                    ocs2::scalar_t relativeTolerance, bool verbose) {
@@ -108,9 +108,9 @@ TEST_F(PIPGSolverTest, correctness) {
   ocs2::scalar_t sigma = svdGTG.singularValues()(0);
 
   ocs2::vector_t primalSolutionPIPG;
-  ocs2::pipg::densePipg(solver.settings(), costApproximation.dfdxx.sparseView(), costApproximation.dfdx,
-                        constraintsApproximation.dfdx.sparseView(), constraintsApproximation.f,
-                        ocs2::vector_t::Ones(solver.getNumDynamicsConstraints()), mu, lambda, sigma, primalSolutionPIPG);
+  std::ignore = ocs2::pipg::singleThreadPipg(
+      solver.settings(), costApproximation.dfdxx.sparseView(), costApproximation.dfdx, constraintsApproximation.dfdx.sparseView(),
+      constraintsApproximation.f, ocs2::vector_t::Ones(solver.getNumDynamicsConstraints()), mu, lambda, sigma, primalSolutionPIPG);
 
   ocs2::vector_array_t scalingVectors(N_, ocs2::vector_t::Ones(nx_));
   solver.solve(x0, dynamicsArray, costArray, nullptr, scalingVectors, nullptr, mu, lambda, sigma);

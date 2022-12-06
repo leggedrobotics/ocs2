@@ -43,9 +43,9 @@ namespace pipg {
  * "Proportional-Integral Projected Gradient Method for Model Predictive Control"
  * https://arxiv.org/abs/2009.06980
  */
-SolverStatus densePipg(const pipg::Settings& settings, const Eigen::SparseMatrix<scalar_t>& H, const vector_t& h,
-                       const Eigen::SparseMatrix<scalar_t>& G, const vector_t& g, const vector_t& EInv, const scalar_t mu,
-                       const scalar_t lambda, const scalar_t sigma, vector_t& stackedSolution);
+SolverStatus singleThreadPipg(const pipg::Settings& settings, const Eigen::SparseMatrix<scalar_t>& H, const vector_t& h,
+                              const Eigen::SparseMatrix<scalar_t>& G, const vector_t& g, const vector_t& EInv, const scalar_t mu,
+                              const scalar_t lambda, const scalar_t sigma, vector_t& stackedSolution);
 
 /**
  * Deserializes the stacked solution to state-input trajecotries.

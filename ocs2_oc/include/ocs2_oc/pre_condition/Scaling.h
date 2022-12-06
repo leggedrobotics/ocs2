@@ -39,24 +39,54 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * Calculates the scaling factor D, E and c, and scale the input dynamics, cost data in place in parallel.
+ * Calculates the scaling factors D, E, and c, and scale the input dynamics, and cost data in place in parallel.
  *
- * There are a few pre-conditioning methods aiming to shape different aspect of the problem. To balance the performance and
+ * There are a few pre-conditioning methods aiming to shape different aspects of the problem. To balance the performance and
  * computational effort, we choose a modified Ruzi equilibration Algorithm. Interested readers can find the original Ruiz
- * equilibration in: "Ruiz, D., 2001. A scaling algorithm to equilibrate both rows and columns norms in matrices"
+ * equilibration in: "Ruiz, D., 2001. A scaling algorithm to equilibrate both rows and columns norms in matrices".
  *
- * @param[in] : threadPool : The external thread pool.
- * @param[in] x0 : Initial state
- * @param[in] ocpSize : The size of the oc problem.
- * @param[in] iteration : Number of iteration.
- * @param[in, out] : dynamics The dynamics array of all time points.
- * @param[in, out] : cost The cost array of all time points.
- * @param[out] : DOut Scaling factor D
- * @param[out] : EOut Scaling factor E
- * @param[out] scalingVectors : Vector representatoin for the identity parts of the dynamics constraints inside the constraint matrix.
- *                              After scaling, they become arbitrary diagonal matrices. scalingVectors store the diagonal components
- *                              of this type of matrix for every timestamp.
- * @param[out] cOut : Scaling factor c
+ * This pre-conditioning transforms the following minimization with z := [u_{0}; x_{1}; ...; u_{n}; x_{n+1}]
+ *
+ * min_{z} 1/2 z' H y + y' h
+ * s.t.    G z = g
+ *
+ * to the follwoing one with y := inv(D) z
+ *
+ * min_{y} c/2 y' (D H D) y + c y' (D h)
+ * s.t.    (E G D) y = E g
+ *
+ * The KKT matrices H, h, G, and g are defined as
+ *
+ * H = [ R0
+ *       *   Q1  P1'
+ *       *   P1  R1
+ *       *   *   *   Qn  Pn'
+ *       *   *   *   Pn  Rn
+ *       *   *   *   *   *   Q{n+1}]
+ * h = [(P0 x0 + r0); q1; r1 ...; qn; rn; q_{n+1}]
+ *
+ * G = [-B0  I
+ *       *  -A1 -B1   I
+ *
+ *       *   *   *   -An -Bn  I
+ *       D0  0
+ *       *   C1  D1   0
+ *
+ *       *   *   *    Cn  Dn  0]
+ * g = [(A0 x0 + b0); b1; ...; bn, -(C0 x0 + e0); -e1; ...; en]
+ *
+ * @param [in] threadPool : The external thread pool.
+ * @param [in] x0 : The initial state.
+ * @param [in] ocpSize : The size of the oc problem.
+ * @param [in] iteration : Number of iterations.
+ * @param [in, out] dynamics : The dynamics array of all time points.
+ * @param [in, out] cost : The cost array of all time points.
+ * @param [out] DOut : The matrix D decomposed for each time step.
+ * @param [out] EOut : The matrix E decomposed for each time step.
+ * @param [out] scalingVectors : Vector representation for the identity parts of the dynamics constraints inside the constraint matrix.
+ *                               After scaling, they become arbitrary diagonal matrices. scalingVectors store the diagonal components
+ *                               of this type of matrix for every timestamp.
+ * @param [out] cOut : Scaling factor c.
  */
 void preConditioningInPlaceInParallel(ThreadPool& threadPool, const vector_t& x0, const OcpSize& ocpSize, const int iteration,
                                       std::vector<VectorFunctionLinearApproximation>& dynamics,

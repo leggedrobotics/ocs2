@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <gtest/gtest.h>
 
 #include "ocs2_oc/oc_problem/OcpSize.h"
-#include "ocs2_oc/oc_problem/OcpMatrixConstruction.h"
+#include "ocs2_oc/oc_problem/OcpToKkt.h"
 
 #include "ocs2_oc/test/testProblemsGeneration.h"
 

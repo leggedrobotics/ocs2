@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/thread_support/ThreadPool.h>
 
-#include "ocs2_oc/oc_problem/OcpMatrixConstruction.h"
+#include "ocs2_oc/oc_problem/OcpToKkt.h"
 #include "ocs2_oc/pre_condition/Scaling.h"
 
 #include "ocs2_oc/test/SparseScaling.h"

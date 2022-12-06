@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_oc/oc_problem/OcpMatrixConstruction.h"
+#include "ocs2_oc/oc_problem/OcpToKkt.h"
 
 #include <numeric>
 
@@ -49,7 +49,7 @@ int getNumGeneralEqualityConstraints(const OcpSize& ocpSize) {
 }  // namespace
 
 void getConstraintMatrix(const OcpSize& ocpSize, const vector_t& x0, const std::vector<VectorFunctionLinearApproximation>& dynamics,
-                         const std::vector<VectorFunctionLinearApproximation>* constraints, const vector_array_t* scalingVectorsPtr,
+                         const std::vector<VectorFunctionLinearApproximation>* constraintsPtr, const vector_array_t* scalingVectorsPtr,
                          VectorFunctionLinearApproximation& res) {
   const int N = ocpSize.numStages;
   if (N < 1) {
@@ -60,15 +60,14 @@ void getConstraintMatrix(const OcpSize& ocpSize, const vector_t& x0, const std::
   }
 
   // Preallocate full constraint matrix
-  auto& G = res.dfdx;
   auto& g = res.f;
-  if (constraints != nullptr) {
-    G.setZero(getNumDynamicsConstraints(ocpSize) + getNumGeneralEqualityConstraints(ocpSize), getNumDecisionVariables(ocpSize));
-
+  auto& G = res.dfdx;
+  if (constraintsPtr == nullptr) {
+    g.setZero(getNumDynamicsConstraints(ocpSize));
   } else {
-    G.setZero(getNumDynamicsConstraints(ocpSize), getNumDecisionVariables(ocpSize));
+    g.setZero(getNumDynamicsConstraints(ocpSize) + getNumGeneralEqualityConstraints(ocpSize));
   }
-  g.setZero(G.rows());
+  G.setZero(g.rows(), getNumDecisionVariables(ocpSize));
 
   // Initial state constraint
   const int nu_0 = ocpSize.numInputs.front();
@@ -111,9 +110,9 @@ void getConstraintMatrix(const OcpSize& ocpSize, const vector_t& x0, const std::
 
     currRow += nx_next;
     currCol += nx_k + nu_k;
-  }
+  }  // end of i loop
 
-  if (constraints != nullptr) {
+  if (constraintsPtr != nullptr) {
     currCol = nu_0;
     // === Constraints ===
     // for ocs2 --> C*dx + D*du + e = 0
@@ -121,7 +120,7 @@ void getConstraintMatrix(const OcpSize& ocpSize, const vector_t& x0, const std::
     // Initial general constraints
     const int nc_0 = ocpSize.numIneqConstraints.front();
     if (nc_0 > 0) {
-      const auto& constraint_0 = (*constraints).front();
+      const auto& constraint_0 = (*constraintsPtr).front();
       G.block(currRow, 0, nc_0, nu_0) = constraint_0.dfdu;
       g.segment(currRow, nc_0) = -constraint_0.f;
       g.segment(currRow, nc_0) -= constraint_0.dfdx * x0;
@@ -133,7 +132,7 @@ void getConstraintMatrix(const OcpSize& ocpSize, const vector_t& x0, const std::
       const int nu_k = ocpSize.numInputs[k];
       const int nx_k = ocpSize.numStates[k];
       if (nc_k > 0) {
-        const auto& constraints_k = (*constraints)[k];
+        const auto& constraints_k = (*constraintsPtr)[k];
 
         // Add [C, D, 0]
         G.block(currRow, currCol, nc_k, nx_k + nu_k) << constraints_k.dfdx, constraints_k.dfdu;
@@ -148,16 +147,16 @@ void getConstraintMatrix(const OcpSize& ocpSize, const vector_t& x0, const std::
     // Final general constraint
     const int nc_N = ocpSize.numIneqConstraints[N];
     if (nc_N > 0) {
-      const auto& constraints_N = (*constraints)[N];
+      const auto& constraints_N = (*constraintsPtr)[N];
       G.bottomRightCorner(nc_N, constraints_N.dfdx.cols()) = constraints_N.dfdx;
       g.tail(nc_N) = -constraints_N.f;
     }
-  }
+  }  // end of i loop
 }
 
 void getConstraintMatrixSparse(const OcpSize& ocpSize, const vector_t& x0, const std::vector<VectorFunctionLinearApproximation>& dynamics,
-                               const std::vector<VectorFunctionLinearApproximation>* constraints, const vector_array_t* scalingVectorsPtr,
-                               Eigen::SparseMatrix<scalar_t>& G, vector_t& g) {
+                               const std::vector<VectorFunctionLinearApproximation>* constraintsPtr,
+                               const vector_array_t* scalingVectorsPtr, Eigen::SparseMatrix<scalar_t>& G, vector_t& g) {
   const int N = ocpSize.numStages;
   if (N < 1) {
     throw std::runtime_error("[getConstraintMatrixSparse] The number of stages cannot be less than 1.");
@@ -178,7 +177,7 @@ void getConstraintMatrixSparse(const OcpSize& ocpSize, const vector_t& x0, const
     nnz += nx_next * (nx_k + nu_k + nx_next);
   }
 
-  if (constraints != nullptr) {
+  if (constraintsPtr != nullptr) {
     const int nc_0 = ocpSize.numIneqConstraints[0];
     nnz += nc_0 * nu_0;
     for (int k = 1; k < N; ++k) {
@@ -204,12 +203,12 @@ void getConstraintMatrixSparse(const OcpSize& ocpSize, const vector_t& x0, const
     }
   };
 
-  if (constraints != nullptr) {
-    G.resize(getNumDynamicsConstraints(ocpSize) + getNumGeneralEqualityConstraints(ocpSize), getNumDecisionVariables(ocpSize));
+  if (constraintsPtr == nullptr) {
+    g.setZero(getNumDynamicsConstraints(ocpSize));
   } else {
-    G.resize(getNumDynamicsConstraints(ocpSize), getNumDecisionVariables(ocpSize));
+    g.setZero(getNumDynamicsConstraints(ocpSize) + getNumGeneralEqualityConstraints(ocpSize));
   }
-  g.setZero(G.rows());
+  G.resize(g.rows(), getNumDecisionVariables(ocpSize));
 
   // Initial state constraint
   emplaceBackMatrix(0, 0, -dynamics.front().dfdu);
@@ -254,7 +253,7 @@ void getConstraintMatrixSparse(const OcpSize& ocpSize, const vector_t& x0, const
     currCol += nx_k + nu_k;
   }
 
-  if (constraints != nullptr) {
+  if (constraintsPtr != nullptr) {
     currCol = nu_0;
     // === Constraints ===
     // for ocs2 --> C*dx + D*du + e = 0
@@ -262,7 +261,7 @@ void getConstraintMatrixSparse(const OcpSize& ocpSize, const vector_t& x0, const
     // Initial general constraints
     const int nc_0 = ocpSize.numIneqConstraints.front();
     if (nc_0 > 0) {
-      const auto& constraint_0 = (*constraints).front();
+      const auto& constraint_0 = (*constraintsPtr).front();
       emplaceBackMatrix(currRow, 0, constraint_0.dfdu);
 
       g.segment(currRow, nc_0) = -constraint_0.f;
@@ -275,7 +274,7 @@ void getConstraintMatrixSparse(const OcpSize& ocpSize, const vector_t& x0, const
       const int nu_k = ocpSize.numInputs[k];
       const int nx_k = ocpSize.numStates[k];
       if (nc_k > 0) {
-        const auto& constraints_k = (*constraints)[k];
+        const auto& constraints_k = (*constraintsPtr)[k];
 
         // Add [C, D, 0]
         emplaceBackMatrix(currRow, currCol, constraints_k.dfdx);
@@ -291,7 +290,7 @@ void getConstraintMatrixSparse(const OcpSize& ocpSize, const vector_t& x0, const
     // Final general constraint
     const int nc_N = ocpSize.numIneqConstraints[N];
     if (nc_N > 0) {
-      const auto& constraints_N = (*constraints)[N];
+      const auto& constraints_N = (*constraintsPtr)[N];
       emplaceBackMatrix(currRow, currCol, constraints_N.dfdx);
       g.segment(currRow, nc_N) = -constraints_N.f;
     }

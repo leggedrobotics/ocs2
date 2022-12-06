@@ -58,8 +58,8 @@ add_library(${PROJECT_NAME}
   src/oc_problem/OptimalControlProblem.cpp
   src/oc_problem/LoopshapingOptimalControlProblem.cpp
   src/oc_problem/OptimalControlProblemHelperFunction.cpp
-  src/oc_problem/OcpMatrixConstruction.cpp
   src/oc_problem/OcpSize.cpp
+  src/oc_problem/OcpToKkt.cpp
   src/oc_solver/SolverBase.cpp
   src/pre_condition/Scaling.cpp
   src/rollout/PerformanceIndicesRollout.cpp

@@ -32,7 +32,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Sparse>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/thread_support/ThreadPool.h>
 
 #include "ocs2_oc/oc_problem/OcpSize.h"
 

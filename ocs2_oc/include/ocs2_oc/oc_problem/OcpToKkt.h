@@ -39,7 +39,20 @@ namespace ocs2 {
 
 /**
  * Constructs concatenated linear approximation of the constraints from the dynamics and constraints arrays w.r.t.
- * X = [u_{0}, x{1}, ..., u_{i}, x{i+1}, ..., u_{N}, x{N+1}].
+ * Z = [u_{0}; x_{1}; ...; u_{n}; x_{n+1}].
+ *
+ * G Z = g
+ *
+ * G = [-B0  I
+ *       *  -A1 -B1   I
+ *
+ *       *   *   *   -An -Bn  I
+ *       D0  0
+ *       *   C1  D1   0
+ *
+ *       *   *   *    Cn  Dn  0]
+ *
+ * g = [(A0 x0 + b0); b1; ...; bn, -(C0 x0 + e0); -e1; ...; en]
  *
  * @param[in] ocpSize: The size of optimal control problem.
  * @param[in] x0: The initial state.
@@ -47,7 +60,7 @@ namespace ocs2 {
  * @param[in] constraints: Linear approximation of the constraints over the time horizon. Pass nullptr if there is no constraints.
  * @param[in] scalingVectorsPtr: Vector representatoin for the identity parts of the dynamics inside the constraint matrix. After scaling,
  *                               they become arbitrary diagonal matrices. Pass nullptr to get them filled with identity matrices.
- * @param[out] res: The resulting constraints approxmation. Here we misused dfdx field to store the jacobian w.r.t. X.
+ * @param[out] res: The resulting constraints approxmation. Here we misused dfdx field to store the jacobian w.r.t. Z.
  */
 void getConstraintMatrix(const OcpSize& ocpSize, const vector_t& x0, const std::vector<VectorFunctionLinearApproximation>& dynamics,
                          const std::vector<VectorFunctionLinearApproximation>* constraints, const vector_array_t* scalingVectorsPtr,
@@ -55,7 +68,20 @@ void getConstraintMatrix(const OcpSize& ocpSize, const vector_t& x0, const std::
 
 /**
  * Constructs concatenated linear approximation of the constraints from the dynamics and constraints arrays w.r.t.
- * X = [u_{0}, x{1}, ..., u_{i}, x{i+1}, ..., u_{N}, x{N+1}].
+ * Z = [u_{0}; x_{1}; ...; u_{n}; x_{n+1}].
+ *
+ * G Z = g
+ *
+ * G = [-B0  I
+ *       *  -A1 -B1   I
+ *
+ *       *   *   *   -An -Bn  I
+ *       D0  0
+ *       *   C1  D1   0
+ *
+ *       *   *   *    Cn  Dn  0]
+ *
+ * g = [(A0 x0 + b0); b1; ...; bn, -(C0 x0 + e0); -e1; ...; en]
  *
  * @param[in] ocpSize: The size of optimal control problem.
  * @param[in] x0: The initial state.
@@ -63,7 +89,7 @@ void getConstraintMatrix(const OcpSize& ocpSize, const vector_t& x0, const std::
  * @param[in] constraints: Linear approximation of the constraints over the time horizon. Pass nullptr if there is no constraints.
  * @param[in] scalingVectorsPtr: Vector representatoin for the identity parts of the dynamics inside the constraint matrix. After scaling,
  *                               they become arbitrary diagonal matrices. Pass nullptr to get them filled with identity matrices.
- * @param[out] G: The jacobian of the concatenated constraints w.r.t. X.
+ * @param[out] G: The jacobian of the concatenated constraints w.r.t. Z.
  * @param[out] g: The concatenated constraints value.
  */
 void getConstraintMatrixSparse(const OcpSize& ocpSize, const vector_t& x0, const std::vector<VectorFunctionLinearApproximation>& dynamics,
@@ -71,26 +97,47 @@ void getConstraintMatrixSparse(const OcpSize& ocpSize, const vector_t& x0, const
                                Eigen::SparseMatrix<scalar_t>& G, vector_t& g);
 
 /**
- * Constructs concatenated quadratic approximation of the total cost w.r.t. X = [u_{0}, x{1}, ..., u_{i}, x{i+1}, ..., u_{N}, x{N+1}].
+ * Constructs concatenated quadratic approximation of the total cost w.r.t. Z = [u_{0}; x_{1}; ...; u_{n}; x_{n+1}].
+ *
+ * totalCost = 0.5 Z' H Z + Z' h + h0
+ *
+ * H = [ R0
+ *       *   Q1  P1'
+ *       *   P1  R1
+ *       *   *   *   Qn  Pn'
+ *       *   *   *   Pn  Rn
+ *       *   *   *   *   *   Q{n+1}]
+ *
+ * h = [(P0 x0 + r0); q1; r1 ...; qn; rn; q_{n+1}]
  *
  * @param[in] ocpSize: The size of optimal control problem.
  * @param[in] x0: The initial state.
  * @param[in] cost: Quadratic approximation of the cost over the time horizon.
  * @param[out] res: The resulting cost approxmation. Here we misused dfdx and dfdxx fields to store the jacobian and the hessian
- *                  matrices w.r.t. Xaug.
+ *                  matrices w.r.t. Z.
  */
 void getCostMatrix(const OcpSize& ocpSize, const vector_t& x0, const std::vector<ScalarFunctionQuadraticApproximation>& cost,
                    ScalarFunctionQuadraticApproximation& res);
 
 /**
- * Constructs concatenated the jacobian and the hessian matrices of the total cost w.r.t.
- * X = [u_{0}, x{1}, ..., u_{i}, x{i+1}, ..., u_{N}, x{N+1}].
+ * Constructs concatenated the jacobian and the hessian matrices of the total cost w.r.t. Z = [u_{0}; x_{1}; ...; u_{n}; x_{n+1}].
+ *
+ * totalCost = 0.5 Z' H Z + Z' h + h0
+ *
+ * H = [ R0
+ *       *   Q1  P1'
+ *       *   P1  R1
+ *       *   *   *   Qn  Pn'
+ *       *   *   *   Pn  Rn
+ *       *   *   *   *   *   Q{n+1}]
+ *
+ * h = [(P0 x0 + r0); q1; r1 ...; qn; rn; q_{n+1}]
  *
  * @param[in] ocpSize: The size of optimal control problem.
  * @param[in] x0: The initial state.
  * @param[in] cost: Quadratic approximation of the cost over the time horizon.
- * @param[out] H: The concatenated hessian matrix w.r.t. X.
- * @param[out] h: The concatenated jacobian vector w.r.t. X.
+ * @param[out] H: The concatenated hessian matrix w.r.t. Z.
+ * @param[out] h: The concatenated jacobian vector w.r.t. Z.
  */
 void getCostMatrixSparse(const OcpSize& ocpSize, const vector_t& x0, const std::vector<ScalarFunctionQuadraticApproximation>& cost,
                          Eigen::SparseMatrix<scalar_t>& H, vector_t& h);

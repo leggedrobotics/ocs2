@@ -87,7 +87,7 @@ TEST_F(HelperFunctionTest, GGTAbsRowSumInParallel) {
   }
 
   ocs2::getConstraintMatrix(ocpSize_, x0, dynamicsArray, nullptr, &scalingVectors, constraintsApproximation);
-  ocs2::vector_t rowwiseSum = ocs2::slp::GGTAbsRowSumInParallel(ocpSize_, dynamicsArray, nullptr, &scalingVectors, threadPool_);
+  ocs2::vector_t rowwiseSum = ocs2::slp::GGTAbsRowSumInParallel(threadPool_, ocpSize_, dynamicsArray, nullptr, &scalingVectors);
   ocs2::matrix_t GGT = constraintsApproximation.dfdx * constraintsApproximation.dfdx.transpose();
   EXPECT_TRUE(rowwiseSum.isApprox(GGT.cwiseAbs().rowwise().sum()));
 }

@@ -255,7 +255,7 @@ SlpSolver::OcpSubproblemSolution SlpSolver::getOCPSolution(const vector_t& delta
 
   GGTMultiplication_.startTimer();
   const vector_t rowwiseAbsSumGGT =
-      slp::GGTAbsRowSumInParallel(pipgSolver_.size(), dynamics_, nullptr, &scalingVectors, pipgSolver_.getThreadPool());
+      slp::GGTAbsRowSumInParallel(pipgSolver_.getThreadPool(), pipgSolver_.size(), dynamics_, nullptr, &scalingVectors);
   GGTMultiplication_.endTimer();
 
   sigmaEstimation_.startTimer();

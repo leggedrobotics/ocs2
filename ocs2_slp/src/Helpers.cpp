@@ -79,9 +79,10 @@ vector_t hessianAbsRowSum(const OcpSize& ocpSize, const std::vector<ScalarFuncti
   return res;
 }
 
-vector_t GGTAbsRowSumInParallel(const OcpSize& ocpSize, const std::vector<VectorFunctionLinearApproximation>& dynamics,
-                                const std::vector<VectorFunctionLinearApproximation>* constraints, const vector_array_t* scalingVectorsPtr,
-                                ThreadPool& threadPool) {
+vector_t GGTAbsRowSumInParallel(ThreadPool& threadPool, const OcpSize& ocpSize,
+                                const std::vector<VectorFunctionLinearApproximation>& dynamics,
+                                const std::vector<VectorFunctionLinearApproximation>* constraints,
+                                const vector_array_t* scalingVectorsPtr) {
   const int N = ocpSize.numStages;
   if (N < 1) {
     throw std::runtime_error("[GGTAbsRowSumInParallel] The number of stages cannot be less than 1.");

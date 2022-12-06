@@ -188,7 +188,7 @@ void SlpSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
     const auto baselinePerformance = setupQuadraticSubproblem(timeDiscretization, initState, x, u);
     linearQuadraticApproximationTimer_.endTimer();
 
-    // Solve QP
+    // Solve LP
     solveQpTimer_.startTimer();
     const vector_t delta_x0 = initState - x[0];
     const auto deltaSolution = getOCPSolution(delta_x0);
@@ -267,9 +267,9 @@ SlpSolver::OcpSubproblemSolution SlpSolver::getOCPSolution(const vector_t& delta
   pipgSolverTimer_.startTimer();
   vector_array_t EInv(E.size());
   std::transform(E.begin(), E.end(), EInv.begin(), [](const vector_t& v) { return v.cwiseInverse(); });
+  const pipg::PipgBounds pipgBounds{muEstimated, lambdaScaled, sigmaScaled};
   const auto pipgStatus =
-      pipgSolver_.solve(threadPool_, delta_x0, dynamics_, cost_, nullptr, scalingVectors, &EInv, muEstimated, lambdaScaled, sigmaScaled);
-  pipgSolver_.getStateInputTrajectoriesSolution(deltaXSol, deltaUSol);
+      pipgSolver_.solve(threadPool_, delta_x0, dynamics_, cost_, nullptr, scalingVectors, &EInv, pipgBounds, deltaXSol, deltaUSol);
   pipgSolverTimer_.endTimer();
 
   // to determine if the solution is a descent direction for the cost: compute gradient(cost)' * [dx; du]

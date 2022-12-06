@@ -37,26 +37,6 @@ namespace ocs2 {
 namespace slp {
 
 /**
- * Computes the row-wise absolute sum of the cost hessian matrix, H. Also refer to "ocs2_oc/oc_problem/OcpToKkt.h".
- *
- * totalCost = 0.5 Z' H Z + Z' h + h0
- *
- * H = [ R0
- *       *   Q1  P1'
- *       *   P1  R1
- *       *   *   *   Qn  Pn'
- *       *   *   *   Pn  Rn
- *       *   *   *   *   *   Q{n+1}]
- *
- * h = [(P0 x0 + r0); q1; r1 ...; qn; rn; q_{n+1}]
- *
- * @param[in] ocpSize: The size of optimal control problem.
- * @param[in] cost: Quadratic approximation of the cost over the time horizon.
- * @return: The absolute sum of rows of matrix H.
- */
-vector_t hessianAbsRowSum(const OcpSize& ocpSize, const std::vector<ScalarFunctionQuadraticApproximation>& cost);
-
-/**
  * Computes the upper bound of eigenvalues for the total cost hessian matrix. The bound is computed based on the Gershgorin Circle Theorem.
  *
  * As the hessian matrix is a real symmetric matrix, all eigenvalues are real. Therefore, instead of estimating the
@@ -83,41 +63,7 @@ vector_t hessianAbsRowSum(const OcpSize& ocpSize, const std::vector<ScalarFuncti
  * @param[in] cost: Quadratic approximation of the cost over the time horizon.
  * @return: The upper bound of eigenvalues for H.
  */
-inline scalar_t hessianEigenvaluesUpperBound(const OcpSize& ocpSize, const std::vector<ScalarFunctionQuadraticApproximation>& cost) {
-  const vector_t rowwiseAbsSumH = hessianAbsRowSum(ocpSize, cost);
-  return rowwiseAbsSumH.maxCoeff();
-}
-
-/**
- * Computes the row-wise absolute sum of matrix G G' in parallel. Also refer to "ocs2_oc/oc_problem/OcpToKkt.h".
- *
- * Z = [u_{0}; x_{1}; ...; u_{n}; x_{n+1}].
- *
- * G Z = g
- *
- * G = [-B0  I
- *       *  -A1 -B1   I
- *
- *       *   *   *   -An -Bn  I
- *       D0  0
- *       *   C1  D1   0
- *
- *       *   *   *    Cn  Dn  0]
- *
- * g = [(A0 x0 + b0); b1; ...; bn, -(C0 x0 + e0); -e1; ...; en]
- *
- * @param[in] threadPool: The thread pool.
- * @param[in] ocpSize: The size of optimal control problem.
- * @param[in] dynamics: Linear approximation of the dynamics over the time horizon.
- * @param[in] constraints: Linear approximation of the constraints over the time horizon. Pass nullptr if there is no constraints.
- * @param[in] scalingVectorsPtr: Vector representatoin for the identity parts of the dynamics inside the constraint matrix. After scaling,
- *                               they become arbitrary diagonal matrices. Pass nullptr to get them filled with identity matrices.
- * @return: The absolute sum of rows of matrix G G'.
- */
-vector_t GGTAbsRowSumInParallel(ThreadPool& threadPool, const OcpSize& ocpSize,
-                                const std::vector<VectorFunctionLinearApproximation>& dynamics,
-                                const std::vector<VectorFunctionLinearApproximation>* constraintsPtr,
-                                const vector_array_t* scalingVectorsPtr);
+scalar_t hessianEigenvaluesUpperBound(const OcpSize& ocpSize, const std::vector<ScalarFunctionQuadraticApproximation>& cost);
 
 /**
  * Computes the upper bound of eigenvalues for the matrix G G' ( in parallel). The bound is computed based on the Gershgorin Circle Theorem.
@@ -152,13 +98,61 @@ vector_t GGTAbsRowSumInParallel(ThreadPool& threadPool, const OcpSize& ocpSize,
  *                               they become arbitrary diagonal matrices. Pass nullptr to get them filled with identity matrices.
  * @return: The upper bound of eigenvalues for G G'.
  */
-inline scalar_t GGTEigenvaluesUpperBound(ThreadPool& threadPool, const OcpSize& ocpSize,
-                                         const std::vector<VectorFunctionLinearApproximation>& dynamics,
-                                         const std::vector<VectorFunctionLinearApproximation>* constraintsPtr,
-                                         const vector_array_t* scalingVectorsPtr) {
-  const vector_t rowwiseAbsSumGGT = GGTAbsRowSumInParallel(threadPool, ocpSize, dynamics, constraintsPtr, scalingVectorsPtr);
-  return rowwiseAbsSumGGT.maxCoeff();
-}
+scalar_t GGTEigenvaluesUpperBound(ThreadPool& threadPool, const OcpSize& ocpSize,
+                                  const std::vector<VectorFunctionLinearApproximation>& dynamics,
+                                  const std::vector<VectorFunctionLinearApproximation>* constraintsPtr,
+                                  const vector_array_t* scalingVectorsPtr);
+
+/**
+ * Computes the row-wise absolute sum of the cost hessian matrix, H. Also refer to "ocs2_oc/oc_problem/OcpToKkt.h".
+ *
+ * totalCost = 0.5 Z' H Z + Z' h + h0
+ *
+ * H = [ R0
+ *       *   Q1  P1'
+ *       *   P1  R1
+ *       *   *   *   Qn  Pn'
+ *       *   *   *   Pn  Rn
+ *       *   *   *   *   *   Q{n+1}]
+ *
+ * h = [(P0 x0 + r0); q1; r1 ...; qn; rn; q_{n+1}]
+ *
+ * @param[in] ocpSize: The size of optimal control problem.
+ * @param[in] cost: Quadratic approximation of the cost over the time horizon.
+ * @return: The absolute sum of rows of matrix H.
+ */
+vector_t hessianAbsRowSum(const OcpSize& ocpSize, const std::vector<ScalarFunctionQuadraticApproximation>& cost);
+
+/**
+ * Computes the row-wise absolute sum of matrix G G' in parallel. Also refer to "ocs2_oc/oc_problem/OcpToKkt.h".
+ *
+ * Z = [u_{0}; x_{1}; ...; u_{n}; x_{n+1}].
+ *
+ * G Z = g
+ *
+ * G = [-B0  I
+ *       *  -A1 -B1   I
+ *
+ *       *   *   *   -An -Bn  I
+ *       D0  0
+ *       *   C1  D1   0
+ *
+ *       *   *   *    Cn  Dn  0]
+ *
+ * g = [(A0 x0 + b0); b1; ...; bn, -(C0 x0 + e0); -e1; ...; en]
+ *
+ * @param[in] threadPool: The thread pool.
+ * @param[in] ocpSize: The size of optimal control problem.
+ * @param[in] dynamics: Linear approximation of the dynamics over the time horizon.
+ * @param[in] constraints: Linear approximation of the constraints over the time horizon. Pass nullptr if there is no constraints.
+ * @param[in] scalingVectorsPtr: Vector representatoin for the identity parts of the dynamics inside the constraint matrix. After scaling,
+ *                               they become arbitrary diagonal matrices. Pass nullptr to get them filled with identity matrices.
+ * @return: The absolute sum of rows of matrix G G'.
+ */
+vector_t GGTAbsRowSumInParallel(ThreadPool& threadPool, const OcpSize& ocpSize,
+                                const std::vector<VectorFunctionLinearApproximation>& dynamics,
+                                const std::vector<VectorFunctionLinearApproximation>* constraintsPtr,
+                                const vector_array_t* scalingVectorsPtr);
 
 }  // namespace slp
 }  // namespace ocs2

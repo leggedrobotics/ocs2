@@ -36,8 +36,8 @@ namespace ocs2 {
 namespace pipg {
 
 SolverStatus singleThreadPipg(const pipg::Settings& settings, const Eigen::SparseMatrix<scalar_t>& H, const vector_t& h,
-                              const Eigen::SparseMatrix<scalar_t>& G, const vector_t& g, const vector_t& EInv, const scalar_t mu,
-                              const scalar_t lambda, const scalar_t sigma, vector_t& stackedSolution) {
+                              const Eigen::SparseMatrix<scalar_t>& G, const vector_t& g, const vector_t& EInv, const PipgBounds& pipgBounds,
+                              vector_t& stackedSolution) {
   // Cold start
   vector_t z = vector_t::Zero(H.cols());
   vector_t z_old = vector_t::Zero(H.cols());
@@ -51,8 +51,8 @@ SolverStatus singleThreadPipg(const pipg::Settings& settings, const Eigen::Spars
   bool isConverged = false;
   scalar_t constraintsViolationInfNorm;
   while (k < settings.maxNumIterations && !isConverged) {
-    const scalar_t alpha = 2.0 / ((k + 1.0) * mu + 2.0 * lambda);
-    const scalar_t beta = (k + 1) * mu / (2.0 * sigma);
+    const auto beta = pipgBounds.dualStepSize(k);
+    const auto alpha = pipgBounds.primalStepSize(k);
 
     z_old.swap(z);
 
@@ -95,9 +95,9 @@ SolverStatus singleThreadPipg(const pipg::Settings& settings, const Eigen::Spars
   pipg::SolverStatus status = isConverged ? pipg::SolverStatus::SUCCESS : pipg::SolverStatus::MAX_ITER;
 
   if (settings.displayShortSummary) {
-    std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++";
-    std::cerr << "\n++++++++++++++ Dense PIPG ++++++++++++++++";
-    std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++\n";
+    std::cerr << "\n+++++++++++++++++++++++++++++++++++++++++++++";
+    std::cerr << "\n++++++++++++++ PIPG +++++++++++++++++++++++++";
+    std::cerr << "\n+++++++++++++++++++++++++++++++++++++++++++++\n";
     std::cerr << "Solver status: " << pipg::toString(status) << "\n";
     std::cerr << "Number of Iterations: " << k << " out of " << settings.maxNumIterations << "\n";
     std::cerr << "Norm of delta primal solution: " << (stackedSolution - z_old).norm() << "\n";

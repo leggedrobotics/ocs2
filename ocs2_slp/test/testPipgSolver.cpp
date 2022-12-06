@@ -103,21 +103,21 @@ TEST_F(PIPGSolverTest, correctness) {
 
   Eigen::JacobiSVD<ocs2::matrix_t> svd(costApproximation.dfdxx);
   ocs2::vector_t s = svd.singularValues();
-  ocs2::scalar_t lambda = s(0);
-  ocs2::scalar_t mu = s(svd.rank() - 1);
+  const ocs2::scalar_t lambda = s(0);
+  const ocs2::scalar_t mu = s(svd.rank() - 1);
   Eigen::JacobiSVD<ocs2::matrix_t> svdGTG(constraintsApproximation.dfdx.transpose() * constraintsApproximation.dfdx);
-  ocs2::scalar_t sigma = svdGTG.singularValues()(0);
+  const ocs2::scalar_t sigma = svdGTG.singularValues()(0);
+  const ocs2::pipg::PipgBounds pipgBounds{mu, lambda, sigma};
 
   ocs2::vector_t primalSolutionPIPG;
-  std::ignore = ocs2::pipg::singleThreadPipg(
-      solver.settings(), costApproximation.dfdxx.sparseView(), costApproximation.dfdx, constraintsApproximation.dfdx.sparseView(),
-      constraintsApproximation.f, ocs2::vector_t::Ones(solver.getNumDynamicsConstraints()), mu, lambda, sigma, primalSolutionPIPG);
+  std::ignore = ocs2::pipg::singleThreadPipg(solver.settings(), costApproximation.dfdxx.sparseView(), costApproximation.dfdx,
+                                             constraintsApproximation.dfdx.sparseView(), constraintsApproximation.f,
+                                             ocs2::vector_t::Ones(solver.getNumDynamicsConstraints()), pipgBounds, primalSolutionPIPG);
 
   ocs2::vector_array_t scalingVectors(N_, ocs2::vector_t::Ones(nx_));
-  solver.solve(threadPool, x0, dynamicsArray, costArray, nullptr, scalingVectors, nullptr, mu, lambda, sigma);
-
   ocs2::vector_array_t X, U;
-  solver.getStateInputTrajectoriesSolution(X, U);
+  std::ignore = osolver.solve(threadPool, x0, dynamicsArray, costArray, nullptr, scalingVectors, nullptr, pipgBounds, X, U);
+
   ocs2::vector_t primalSolutionPIPGParallel;
   ocs2::pipg::packSolution(X, U, primalSolutionPIPGParallel);
 

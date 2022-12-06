@@ -49,8 +49,8 @@ PipgSolver::PipgSolver(pipg::Settings settings) : settings_(std::move(settings))
 pipg::SolverStatus PipgSolver::solve(ThreadPool& threadPool, const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
                                      const std::vector<ScalarFunctionQuadraticApproximation>& cost,
                                      const std::vector<VectorFunctionLinearApproximation>* constraints,
-                                     const vector_array_t& scalingVectors, const vector_array_t* EInv, const scalar_t mu,
-                                     const scalar_t lambda, const scalar_t sigma) {
+                                     const vector_array_t& scalingVectors, const vector_array_t* EInv, const pipg::PipgBounds& pipgBounds,
+                                     vector_array_t& xTrajectory, vector_array_t& uTrajectory) {
   verifySizes(dynamics, cost, constraints);
   const int N = ocpSize_.numStages;
   if (N < 1) {
@@ -83,8 +83,8 @@ pipg::SolverStatus PipgSolver::solve(ThreadPool& threadPool, const vector_t& x0,
     WNew_[t].setZero(dynamics[t].dfdx.rows());
   }
 
-  scalar_t alpha = 2.0 / (mu + 2.0 * lambda);
-  scalar_t beta = mu / (2.0 * sigma);
+  scalar_t alpha = pipgBounds.primalStepSize(0);
+  scalar_t beta = pipgBounds.primalStepSize(0);
   scalar_t betaLast = 0;
 
   size_t k = 0;
@@ -196,8 +196,8 @@ pipg::SolverStatus PipgSolver::solve(ThreadPool& threadPool, const vector_t& x0,
       } else {
         betaLast = beta;
         // Adaptive step size
-        alpha = 2.0 / ((static_cast<scalar_t>(k) + 1.0) * mu + 2.0 * lambda);
-        beta = (static_cast<scalar_t>(k) + 1.0) * mu / (2.0 * sigma);
+        beta = pipgBounds.dualStepSize(k);
+        alpha = pipgBounds.primalStepSize(k);
 
         if (k != 0 && k % settings().checkTerminationInterval == 0) {
           constraintsViolationInfNorm =
@@ -230,12 +230,16 @@ pipg::SolverStatus PipgSolver::solve(ThreadPool& threadPool, const vector_t& x0,
   };
   threadPool.runParallel(std::move(updateVariablesTask), threadPool.numThreads() + 1U);
 
-  pipg::SolverStatus status = isConverged ? pipg::SolverStatus::SUCCESS : pipg::SolverStatus::MAX_ITER;
+  xTrajectory = X_;
+  uTrajectory = U_;
+  const auto status = isConverged ? pipg::SolverStatus::SUCCESS : pipg::SolverStatus::MAX_ITER;
+
   if (settings().displayShortSummary) {
     scalar_t totalTasks = std::accumulate(threadsWorkloadCounter.cbegin(), threadsWorkloadCounter.cend(), 0.0);
-    std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
-    std::cerr << "\n++++++++++++++ PIPG-Parallel " << pipg::toString(status) << " +++++++++++++";
-    std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+    std::cerr << "\n+++++++++++++++++++++++++++++++++++++++++++++";
+    std::cerr << "\n++++++++++++++ PIPG +++++++++++++++++++++++++";
+    std::cerr << "\n+++++++++++++++++++++++++++++++++++++++++++++\n";
+    std::cerr << "Solver status: " << pipg::toString(status) << "\n";
     std::cerr << "Number of Iterations: " << k << " out of " << settings().maxNumIterations << "\n";
     std::cerr << "Norm of delta primal solution: " << std::sqrt(solutionSSE) << "\n";
     std::cerr << "Constraints violation : " << constraintsViolationInfNorm << "\n";

@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/thread_support/ThreadPool.h>
 #include <ocs2_oc/oc_problem/OcpSize.h>
 
+#include "ocs2_slp/pipg/PipgBounds.h"
 #include "ocs2_slp/pipg/PipgSettings.h"
 #include "ocs2_slp/pipg/PipgSolverStatus.h"
 
@@ -67,15 +68,16 @@ class PipgSolver {
    * @param[in] scalingVectors : Vector representatoin for the identity parts of the dynamics inside the constraint matrix. After scaling,
    *                             they become arbitrary diagonal matrices. Pass nullptr to get them filled with identity matrices.
    * @param[in] EInv : Inverse of the scaling factor E. Used to calculate un-sacled termination criteria.
-   * @param[in] mu : the lower bound of the cost hessian H.
-   * @param[in] lambda : the upper bound of the cost hessian H.
-   * @param[in] sigma : the upper bound of \f$ G^TG \f$.
+   * @param[in] pipgBounds : The PipgBounds used to define the primal and dual stepsizes.
+   * @param[out] xTrajectory : The optimized state trajectory.
+   * @param[out] uTrajectory : The optimized input trajectory.
    * @return The solver status.
    */
   pipg::SolverStatus solve(ThreadPool& threadPool, const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
                            const std::vector<ScalarFunctionQuadraticApproximation>& cost,
                            const std::vector<VectorFunctionLinearApproximation>* constraints, const vector_array_t& scalingVectors,
-                           const vector_array_t* EInv, const scalar_t mu, const scalar_t lambda, const scalar_t sigma);
+                           const vector_array_t* EInv, const pipg::PipgBounds& pipgBounds, vector_array_t& xTrajectory,
+                           vector_array_t& uTrajectory);
 
   void resize(const OcpSize& size);
 
@@ -84,11 +86,6 @@ class PipgSolver {
   int getNumDynamicsConstraints() const { return numDynamicsConstraints_; }
 
   int getNumGeneralEqualityConstraints() const;
-
-  void getStateInputTrajectoriesSolution(vector_array_t& xTrajectory, vector_array_t& uTrajectory) const {
-    xTrajectory = X_;
-    uTrajectory = U_;
-  }
 
   void descaleSolution(const vector_array_t& D, vector_array_t& xTrajectory, vector_array_t& uTrajectory) const;
 

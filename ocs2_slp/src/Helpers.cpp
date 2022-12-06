@@ -50,6 +50,19 @@ int getNumGeneralEqualityConstraints(const ocs2::OcpSize& ocpSize) {
 namespace ocs2 {
 namespace slp {
 
+scalar_t hessianEigenvaluesUpperBound(const OcpSize& ocpSize, const std::vector<ScalarFunctionQuadraticApproximation>& cost) {
+  const vector_t rowwiseAbsSumH = hessianAbsRowSum(ocpSize, cost);
+  return rowwiseAbsSumH.maxCoeff();
+}
+
+scalar_t GGTEigenvaluesUpperBound(ThreadPool& threadPool, const OcpSize& ocpSize,
+                                  const std::vector<VectorFunctionLinearApproximation>& dynamics,
+                                  const std::vector<VectorFunctionLinearApproximation>* constraintsPtr,
+                                  const vector_array_t* scalingVectorsPtr) {
+  const vector_t rowwiseAbsSumGGT = GGTAbsRowSumInParallel(threadPool, ocpSize, dynamics, constraintsPtr, scalingVectorsPtr);
+  return rowwiseAbsSumGGT.maxCoeff();
+}
+
 vector_t hessianAbsRowSum(const OcpSize& ocpSize, const std::vector<ScalarFunctionQuadraticApproximation>& cost) {
   const int N = ocpSize.numStages;
   const int nu_0 = ocpSize.numInputs[0];

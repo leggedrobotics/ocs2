@@ -228,39 +228,44 @@ void preConditioningInPlaceInParallel(ThreadPool& threadPool, const vector_t& x0
   }
 
   const auto numDecisionVariables = std::accumulate(ocpSize.numInputs.begin(), ocpSize.numInputs.end(), 0) +
-                                    std::accumulate(ocpSize.numStates.begin() + 1, ocpSize.numStates.end(), 0);
+                                    std::accumulate(std::next(ocpSize.numStates.begin()), ocpSize.numStates.end(), 0);
 
   vector_array_t D(2 * N), E(N);
   std::atomic_int timeIndex{0};
-  const size_t numThreads = threadPool.numThreads() + 1U;
+  const size_t numWorkers = threadPool.numThreads() + 1U;
   for (int i = 0; i < iteration; i++) {
     invSqrtInfNormInParallel(threadPool, dynamics, cost, scalingVectors, D, E);
     scaleDataOneStepInPlaceInParallel(threadPool, D, E, dynamics, cost, scalingVectors);
 
-    const auto infNormOfh = [&cost, &x0]() {
-      scalar_t out = (cost.front().dfdu + cost.front().dfdux * x0).lpNorm<Eigen::Infinity>();
-      for (int k = 1; k < cost.size(); ++k) {
-        out = std::max(out, cost[k].dfdx.lpNorm<Eigen::Infinity>());
-        if (cost[k].dfdu.size() > 0) {
-          out = std::max(out, cost[k].dfdu.lpNorm<Eigen::Infinity>());
-        }
-      }
-      return out;
-    }();
+    timeIndex = 0;
+    scalar_array_t infNormOfhArray(numWorkers, 0.0);
+    scalar_array_t sumOfInfNormOfHArray(numWorkers, 0.0);
+    auto infNormOfh_sumOfInfNormOfH = [&](int workerId) {
+      scalar_t workerInfNormOfh = 0.0;
+      scalar_t workerSumOfInfNormOfH = 0.0;
 
-    const auto sumOfInfNormOfH = [&cost]() {
-      scalar_t out = matrixInfNormCols(cost[0].dfduu).derived().sum();
-      for (int k = 1; k < cost.size(); k++) {
-        if (cost[k].dfduu.size() == 0) {
-          out += matrixInfNormCols(cost[k].dfdxx).derived().sum();
-        } else {
-          out += matrixInfNormCols(cost[k].dfdxx, cost[k].dfdux).derived().sum();
-          out += matrixInfNormCols(cost[k].dfdux.transpose().eval(), cost[k].dfduu).derived().sum();
-        }
+      int k = timeIndex++;
+      if (k == 0) {  // Only one worker will execute this
+        workerInfNormOfh = (cost[0].dfdu + cost[0].dfdux * x0).lpNorm<Eigen::Infinity>();
+        workerSumOfInfNormOfH = matrixInfNormCols(cost[0].dfduu).derived().sum();
+        k = timeIndex++;
       }
-      return out;
-    }();
 
+      while (k <= N) {
+        workerInfNormOfh = std::max(workerInfNormOfh, cost[k].dfdx.lpNorm<Eigen::Infinity>());
+        workerInfNormOfh = std::max(workerInfNormOfh, cost[k].dfdu.lpNorm<Eigen::Infinity>());
+        workerSumOfInfNormOfH += matrixInfNormCols(cost[k].dfdxx, cost[k].dfdux).derived().sum();
+        workerSumOfInfNormOfH += matrixInfNormCols(cost[k].dfdux.transpose().eval(), cost[k].dfduu).derived().sum();
+        k = timeIndex++;
+      }
+
+      infNormOfhArray[workerId] = std::max(infNormOfhArray[workerId], workerInfNormOfh);
+      sumOfInfNormOfHArray[workerId] += workerSumOfInfNormOfH;
+    };
+    threadPool.runParallel(std::move(infNormOfh_sumOfInfNormOfH), numWorkers);
+
+    const auto infNormOfh = *std::max_element(infNormOfhArray.cbegin(), infNormOfhArray.cend());
+    const auto sumOfInfNormOfH = std::accumulate(sumOfInfNormOfHArray.cbegin(), sumOfInfNormOfHArray.cend(), 0.0);
     const auto averageOfInfNormOfH = sumOfInfNormOfH / static_cast<scalar_t>(numDecisionVariables);
     const auto gamma = 1.0 / limitScaling(std::max(averageOfInfNormOfH, infNormOfh));
 
@@ -289,7 +294,7 @@ void preConditioningInPlaceInParallel(ThreadPool& threadPool, const vector_t& x0
         cost[N].dfdu *= gamma;
       }
     };
-    threadPool.runParallel(std::move(computeDOutEOutScaleCost), numThreads);
+    threadPool.runParallel(std::move(computeDOutEOutScaleCost), numWorkers);
 
     // compute cOut
     cOut *= gamma;

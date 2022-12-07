@@ -27,51 +27,19 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#pragma once
+#include <ocs2_slp/pipg/PipgBounds.h>
+#include <ocs2_slp/pipg/PipgSettings.h>
+#include <ocs2_slp/pipg/PipgSolver.h>
+#include <ocs2_slp/pipg/PipgSolverStatus.h>
+#include <ocs2_slp/pipg/SingleThreadPipg.h>
 
-#include <string>
+#include <ocs2_slp/Helpers.h>
+#include <ocs2_slp/SlpMpc.h>
+#include <ocs2_slp/SlpSettings.h>
+#include <ocs2_slp/SlpSolver.h>
+#include <ocs2_slp/SlpSolverStatus.h>
 
-#include <ocs2_core/Types.h>
-#include <ocs2_oc/oc_data/PerformanceIndex.h>
-#include <ocs2_oc/search_strategy/FilterLinesearch.h>
-
-namespace ocs2 {
-namespace sqp {
-
-/** Different types of convergence */
-enum class Convergence { FALSE, ITERATIONS, STEPSIZE, METRICS, PRIMAL };
-
-/** Struct to contain the result and logging data of the stepsize computation */
-struct StepInfo {
-  // Step size and type
-  scalar_t stepSize = 0.0;
-  FilterLinesearch::StepType stepType = FilterLinesearch::StepType::UNKNOWN;
-
-  // Step in primal variables
-  scalar_t dx_norm = 0.0;  // norm of the state trajectory update
-  scalar_t du_norm = 0.0;  // norm of the input trajectory update
-
-  // Performance result after the step
-  PerformanceIndex performanceAfterStep;
-  scalar_t totalConstraintViolationAfterStep;  // constraint metric used in the line search
-};
-
-/** Transforms sqp::Convergence to string */
-inline std::string toString(const Convergence& convergence) {
-  switch (convergence) {
-    case Convergence::ITERATIONS:
-      return "Maximum number of iterations reached";
-    case Convergence::STEPSIZE:
-      return "Step size below minimum";
-    case Convergence::METRICS:
-      return "Cost decrease and constraint satisfaction below tolerance";
-    case Convergence::PRIMAL:
-      return "Primal update below tolerance";
-    case Convergence::FALSE:
-    default:
-      return "Not Converged";
-  }
+// dummy target for clang toolchain
+int main() {
+  return 0;
 }
-
-}  // namespace sqp
-}  // namespace ocs2

@@ -32,16 +32,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/integration/SensitivityIntegrator.h>
 
-#include <hpipm_catkin/HpipmInterfaceSettings.h>
+#include "ocs2_slp/pipg/PipgSettings.h"
 
 namespace ocs2 {
-namespace sqp {
+namespace slp {
 
+/** Multiple-shooting SLP (Successive Linear Programming) settings */
 struct Settings {
-  // Sqp settings
-  size_t sqpIteration = 10;  // Maximum number of SQP iterations
-  scalar_t deltaTol = 1e-6;  // Termination condition : RMS update of x(t) and u(t) are both below this value
-  scalar_t costTol = 1e-4;   // Termination condition : (cost{i+1} - (cost{i}) < costTol AND constraints{i+1} < g_min
+  size_t slpIteration = 10;     // Maximum number of SLP iterations
+  size_t scalingIteration = 3;  // Number of pre-conditioning iterations
+  scalar_t deltaTol = 1e-6;     // Termination condition : RMS update of x(t) and u(t) are both below this value
+  scalar_t costTol = 1e-4;      // Termination condition : (cost{i+1} - (cost{i}) < costTol AND constraints{i+1} < g_min
 
   // Linesearch - step size rules
   scalar_t alpha_decay = 0.5;  // multiply the step size by this factor every time a linesearch step is rejected.
@@ -53,13 +54,6 @@ struct Settings {
   scalar_t armijoFactor = 1e-4;  // Armijo condition: c{i+1} < c{i} + armijoFactor * dc/dw'{i} * delta_w
   scalar_t gamma_c = 1e-6;       // (3): ELSE REQUIRE c{i+1} < (c{i} - gamma_c * g{i}) OR g{i+1} < (1-gamma_c) * g{i}
 
-  // controller type
-  bool useFeedbackPolicy = true;     // true to use feedback, false to use feedforward
-  bool createValueFunction = false;  // true to store the value function, false to ignore it
-
-  // QP subproblem solver settings
-  hpipm_interface::Settings hpipmSettings = hpipm_interface::Settings();
-
   // Discretization method
   scalar_t dt = 0.01;  // user-defined time discretization
   SensitivityIntegratorType integratorType = SensitivityIntegratorType::RK2;
@@ -67,7 +61,6 @@ struct Settings {
   // Inequality penalty relaxed barrier parameters
   scalar_t inequalityConstraintMu = 0.0;
   scalar_t inequalityConstraintDelta = 1e-6;
-  bool projectStateInputEqualityConstraints = true;  // Use a projection method to resolve the state-input constraint Cx+Du+e
 
   // Printing
   bool printSolverStatus = false;      // Print HPIPM status after solving the QP subproblem
@@ -77,10 +70,13 @@ struct Settings {
   // Threading
   size_t nThreads = 4;
   int threadPriority = 50;
+
+  // LP subproblem solver settings
+  pipg::Settings pipgSettings = pipg::Settings();
 };
 
 /**
- * Loads the multiple shooting SQP settings from a given file.
+ * Loads the multiple shooting SLP settings from a given file.
  *
  * @param [in] filename: File name which contains the configuration data.
  * @param [in] fieldName: Field name which contains the configuration data.
@@ -89,5 +85,5 @@ struct Settings {
  */
 Settings loadSettings(const std::string& filename, const std::string& fieldName = "multiple_shooting", bool verbose = true);
 
-}  // namespace sqp
+}  // namespace slp
 }  // namespace ocs2

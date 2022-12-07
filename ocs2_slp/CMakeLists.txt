@@ -1,13 +1,11 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(ocs2_sqp)
+project(ocs2_slp)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
   ocs2_mpc
   ocs2_oc
   ocs2_qp_solver
-  blasfeo_catkin
-  hpipm_catkin
 )
 
 find_package(catkin REQUIRED COMPONENTS
@@ -24,7 +22,6 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 ###################################
 ## catkin specific configuration ##
 ###################################
-
 catkin_package(
   INCLUDE_DIRS
     include
@@ -40,18 +37,20 @@ catkin_package(
 ###########
 ## Build ##
 ###########
-
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
 )
 
-# Multiple shooting solver library
 add_library(${PROJECT_NAME}
-  src/SqpSettings.cpp
-  src/SqpSolver.cpp
+  src/pipg/PipgSettings.cpp
+  src/pipg/PipgSolver.cpp
+  src/pipg/SingleThreadPipg.cpp
+  src/Helpers.cpp
+  src/SlpSettings.cpp
+  src/SlpSolver.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
@@ -62,14 +61,18 @@ target_link_libraries(${PROJECT_NAME}
 )
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
+add_executable(${PROJECT_NAME}_lintTarget
+  src/lintTarget.cpp
+)
+
 #########################
 ###   CLANG TOOLING   ###
 #########################
 find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
-  message(STATUS "Run clang tooling for target " ${PROJECT_NAME})
+  message(STATUS "Run clang tooling for target " ${PROJECT_NAME}_lintTarget)
   add_clang_tooling(
-    TARGETS ${PROJECT_NAME}
+    TARGETS ${PROJECT_NAME}_lintTarget ${PROJECT_NAME}
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CF_WERROR
@@ -94,10 +97,9 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 
 catkin_add_gtest(test_${PROJECT_NAME}
-  test/testCircularKinematics.cpp
-  test/testSwitchedProblem.cpp
-  test/testUnconstrained.cpp
-  test/testValuefunction.cpp
+  test/testHelpers.cpp
+  test/testPipgSolver.cpp
+  test/testSlpSolver.cpp
 )
 add_dependencies(test_${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}

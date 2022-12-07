@@ -31,47 +31,26 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <string>
 
-#include <ocs2_core/Types.h>
-#include <ocs2_oc/oc_data/PerformanceIndex.h>
-#include <ocs2_oc/search_strategy/FilterLinesearch.h>
-
 namespace ocs2 {
-namespace sqp {
+namespace pipg {
 
-/** Different types of convergence */
-enum class Convergence { FALSE, ITERATIONS, STEPSIZE, METRICS, PRIMAL };
-
-/** Struct to contain the result and logging data of the stepsize computation */
-struct StepInfo {
-  // Step size and type
-  scalar_t stepSize = 0.0;
-  FilterLinesearch::StepType stepType = FilterLinesearch::StepType::UNKNOWN;
-
-  // Step in primal variables
-  scalar_t dx_norm = 0.0;  // norm of the state trajectory update
-  scalar_t du_norm = 0.0;  // norm of the input trajectory update
-
-  // Performance result after the step
-  PerformanceIndex performanceAfterStep;
-  scalar_t totalConstraintViolationAfterStep;  // constraint metric used in the line search
+enum class SolverStatus {
+  SUCCESS,
+  MAX_ITER,
+  UNDEFINED,
 };
 
-/** Transforms sqp::Convergence to string */
-inline std::string toString(const Convergence& convergence) {
-  switch (convergence) {
-    case Convergence::ITERATIONS:
-      return "Maximum number of iterations reached";
-    case Convergence::STEPSIZE:
-      return "Step size below minimum";
-    case Convergence::METRICS:
-      return "Cost decrease and constraint satisfaction below tolerance";
-    case Convergence::PRIMAL:
-      return "Primal update below tolerance";
-    case Convergence::FALSE:
+/** Transforms pipg::SolverStatus to string */
+inline std::string toString(SolverStatus s) {
+  switch (s) {
+    case SolverStatus::SUCCESS:
+      return std::string("SUCCESS");
+    case SolverStatus::MAX_ITER:
+      return std::string("MAX_ITER");
     default:
-      return "Not Converged";
+      return std::string("UNDEFINED");
   }
 }
 
-}  // namespace sqp
+}  // namespace pipg
 }  // namespace ocs2

@@ -27,49 +27,46 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "hpipm_catkin/OcpSize.h"
+#pragma once
+
+#include <ocs2_mpc/MPC_BASE.h>
+
+#include "ocs2_slp/SlpSolver.h"
 
 namespace ocs2 {
-namespace hpipm_interface {
 
-bool operator==(const OcpSize& lhs, const OcpSize& rhs) noexcept {
-  // use && instead of &= to enable short-circuit evaluation
-  bool same = lhs.numStages == rhs.numStages;
-  same = same && (lhs.numInputs == rhs.numInputs);
-  same = same && (lhs.numStates == rhs.numStates);
-  same = same && (lhs.numInputBoxConstraints == rhs.numInputBoxConstraints);
-  same = same && (lhs.numStateBoxConstraints == rhs.numStateBoxConstraints);
-  same = same && (lhs.numIneqConstraints == rhs.numIneqConstraints);
-  same = same && (lhs.numInputBoxSlack == rhs.numInputBoxSlack);
-  same = same && (lhs.numStateBoxSlack == rhs.numStateBoxSlack);
-  same = same && (lhs.numIneqSlack == rhs.numIneqSlack);
-  return same;
-}
+class SlpMpc final : public MPC_BASE {
+ public:
+  /**
+   * Constructor
+   *
+   * @param [in] mpcSettings : settings for the mpc wrapping of the solver. Do not use this for maxIterations and stepsize, use
+   *                           slp::Settings directly.
+   * @param [in] settings : settings for the multiple shooting SLP solver.
+   * @param [in] optimalControlProblem: The optimal control problem formulation.
+   * @param [in] initializer: This class initializes the state-input for the time steps that no controller is available.
+   */
+  SlpMpc(mpc::Settings mpcSettings, slp::Settings slpSettings, const OptimalControlProblem& optimalControlProblem,
+         const Initializer& initializer)
+      : MPC_BASE(std::move(mpcSettings)) {
+    solverPtr_.reset(new SlpSolver(std::move(slpSettings), optimalControlProblem, initializer));
+  };
 
-OcpSize extractSizesFromProblem(const std::vector<VectorFunctionLinearApproximation>& dynamics,
-                                const std::vector<ScalarFunctionQuadraticApproximation>& cost,
-                                const std::vector<VectorFunctionLinearApproximation>* constraints) {
-  const int numStages = dynamics.size();
+  ~SlpMpc() override = default;
 
-  OcpSize problemSize(dynamics.size());
+  SlpSolver* getSolverPtr() override { return solverPtr_.get(); }
+  const SlpSolver* getSolverPtr() const override { return solverPtr_.get(); }
 
-  // State inputs
-  for (int k = 0; k < numStages; k++) {
-    problemSize.numStates[k] = dynamics[k].dfdx.cols();
-    problemSize.numInputs[k] = dynamics[k].dfdu.cols();
-  }
-  problemSize.numStates[numStages] = dynamics[numStages - 1].dfdx.rows();
-  problemSize.numInputs[numStages] = 0;
-
-  // Constraints
-  if (constraints != nullptr) {
-    for (int k = 0; k < numStages + 1; k++) {
-      problemSize.numIneqConstraints[k] = (*constraints)[k].f.size();
+ protected:
+  void calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override {
+    if (settings().coldStart_) {
+      solverPtr_->reset();
     }
+    solverPtr_->run(initTime, initState, finalTime);
   }
 
-  return problemSize;
-}
+ private:
+  std::unique_ptr<SlpSolver> solverPtr_;
+};
 
-}  // namespace hpipm_interface
 }  // namespace ocs2

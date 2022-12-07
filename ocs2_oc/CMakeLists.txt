@@ -58,8 +58,10 @@ add_library(${PROJECT_NAME}
   src/oc_problem/OptimalControlProblem.cpp
   src/oc_problem/LoopshapingOptimalControlProblem.cpp
   src/oc_problem/OptimalControlProblemHelperFunction.cpp
+  src/oc_problem/OcpSize.cpp
+  src/oc_problem/OcpToKkt.cpp
   src/oc_solver/SolverBase.cpp
-  src/oc_problem/OptimalControlProblem.cpp
+  src/precondition/Ruzi.cpp
   src/rollout/PerformanceIndicesRollout.cpp
   src/rollout/RolloutBase.cpp
   src/rollout/RootFinder.cpp
@@ -108,11 +110,9 @@ install(
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
-
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
-
 install(DIRECTORY test/include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
@@ -184,6 +184,24 @@ add_dependencies(test_trajectory_spreading
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(test_trajectory_spreading
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
+
+catkin_add_gtest(test_ocp_to_kkt
+  test/oc_problem/testOcpToKkt.cpp
+)
+target_link_libraries(test_ocp_to_kkt
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
+
+catkin_add_gtest(test_precondition
+  test/precondition/testPrecondition.cpp
+)
+target_link_libraries(test_precondition
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   gtest_main

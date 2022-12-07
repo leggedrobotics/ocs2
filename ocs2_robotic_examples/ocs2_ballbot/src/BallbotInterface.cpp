@@ -68,6 +68,7 @@ BallbotInterface::BallbotInterface(const std::string& taskFile, const std::strin
   ddpSettings_ = ddp::loadSettings(taskFile, "ddp");
   mpcSettings_ = mpc::loadSettings(taskFile, "mpc");
   sqpSettings_ = sqp::loadSettings(taskFile, "sqp");
+  slpSettings_ = slp::loadSettings(taskFile, "slp");
 
   /*
    * ReferenceManager & SolverSynchronizedModule

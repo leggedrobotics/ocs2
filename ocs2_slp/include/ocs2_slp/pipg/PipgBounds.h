@@ -29,49 +29,48 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <string>
-
 #include <ocs2_core/Types.h>
-#include <ocs2_oc/oc_data/PerformanceIndex.h>
-#include <ocs2_oc/search_strategy/FilterLinesearch.h>
 
 namespace ocs2 {
-namespace sqp {
+namespace pipg {
 
-/** Different types of convergence */
-enum class Convergence { FALSE, ITERATIONS, STEPSIZE, METRICS, PRIMAL };
+/**
+ * Defines the lower and upper bounds of the total cost hessian, H, and the upper bound of \f$ G^TG \f$.
+ * Refer to "Proportional-Integral Projected Gradient Method for Model Predictive Control"
+ * Link: https://arxiv.org/abs/2009.06980
+ *
+ * z := [u_{0}; x_{1}; ...; u_{n}; x_{n+1}].
+ *
+ * min  0.5 z' H z + z' h
+ * s.t. G z = g
+ *
+ * H = [ R0
+ *       *   Q1  P1'
+ *       *   P1  R1
+ *       *   *   *   Qn  Pn'
+ *       *   *   *   Pn  Rn
+ *       *   *   *   *   *   Q{n+1}]
+ *
+ * G = [-B0  I
+ *       *  -A1 -B1   I
+ *
+ *       *   *   *   -An -Bn  I
+ *       D0  0
+ *       *   C1  D1   0
+ *
+ *       *   *   *    Cn  Dn  0]
+ */
+struct PipgBounds {
+  PipgBounds(scalar_t muArg, scalar_t lambdaArg, scalar_t sigmaArg) : mu(muArg), lambda(lambdaArg), sigma(sigmaArg) {}
 
-/** Struct to contain the result and logging data of the stepsize computation */
-struct StepInfo {
-  // Step size and type
-  scalar_t stepSize = 0.0;
-  FilterLinesearch::StepType stepType = FilterLinesearch::StepType::UNKNOWN;
+  scalar_t dualStepSize(size_t iteration) const { return (static_cast<scalar_t>(iteration) + 1.0) * mu / (2.0 * sigma); }
 
-  // Step in primal variables
-  scalar_t dx_norm = 0.0;  // norm of the state trajectory update
-  scalar_t du_norm = 0.0;  // norm of the input trajectory update
+  scalar_t primalStepSize(size_t iteration) const { return 2.0 / ((static_cast<scalar_t>(iteration) + 1.0) * mu + 2.0 * lambda); }
 
-  // Performance result after the step
-  PerformanceIndex performanceAfterStep;
-  scalar_t totalConstraintViolationAfterStep;  // constraint metric used in the line search
+  scalar_t mu = 1e-5;     // mu I <= H
+  scalar_t lambda = 1.0;  // H <= lambda I
+  scalar_t sigma = 1.0;   // G' G <= sigma I
 };
 
-/** Transforms sqp::Convergence to string */
-inline std::string toString(const Convergence& convergence) {
-  switch (convergence) {
-    case Convergence::ITERATIONS:
-      return "Maximum number of iterations reached";
-    case Convergence::STEPSIZE:
-      return "Step size below minimum";
-    case Convergence::METRICS:
-      return "Cost decrease and constraint satisfaction below tolerance";
-    case Convergence::PRIMAL:
-      return "Primal update below tolerance";
-    case Convergence::FALSE:
-    default:
-      return "Not Converged";
-  }
-}
-
-}  // namespace sqp
+}  // namespace pipg
 }  // namespace ocs2

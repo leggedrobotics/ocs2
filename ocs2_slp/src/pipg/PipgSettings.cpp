@@ -27,26 +27,43 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_sqp/SqpSolverStatus.h"
+#include "ocs2_slp/pipg/PipgSettings.h"
+
+#include <iostream>
+
+#include <boost/property_tree/info_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
+
+#include <ocs2_core/misc/LoadData.h>
 
 namespace ocs2 {
-namespace sqp {
+namespace pipg {
 
-std::string toString(const Convergence& convergence) {
-  switch (convergence) {
-    case Convergence::ITERATIONS:
-      return "Maximum number of iterations reached";
-    case Convergence::STEPSIZE:
-      return "Step size below minimum";
-    case Convergence::METRICS:
-      return "Cost decrease and constraint satisfaction below tolerance";
-    case Convergence::PRIMAL:
-      return "Primal update below tolerance";
-    case Convergence::FALSE:
-    default:
-      return "Not Converged";
+Settings loadSettings(const std::string& filename, const std::string& fieldName, bool verbose) {
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_info(filename, pt);
+
+  Settings settings;
+
+  if (verbose) {
+    std::cerr << " #### PIPG Settings: {\n";
   }
+
+  loadData::loadPtreeValue(pt, settings.maxNumIterations, fieldName + ".maxNumIterations", verbose);
+  loadData::loadPtreeValue(pt, settings.absoluteTolerance, fieldName + ".absoluteTolerance", verbose);
+  loadData::loadPtreeValue(pt, settings.relativeTolerance, fieldName + ".relativeTolerance", verbose);
+
+  loadData::loadPtreeValue(pt, settings.lowerBoundH, fieldName + ".lowerBoundH", verbose);
+
+  loadData::loadPtreeValue(pt, settings.checkTerminationInterval, fieldName + ".checkTerminationInterval", verbose);
+  loadData::loadPtreeValue(pt, settings.displayShortSummary, fieldName + ".displayShortSummary", verbose);
+
+  if (verbose) {
+    std::cerr << " #### }\n";
+  }
+
+  return settings;
 }
 
-}  // namespace sqp
+}  // namespace pipg
 }  // namespace ocs2

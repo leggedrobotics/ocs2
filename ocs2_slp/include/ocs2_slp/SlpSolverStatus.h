@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/search_strategy/FilterLinesearch.h>
 
 namespace ocs2 {
-namespace sqp {
+namespace slp {
 
 /** Different types of convergence */
 enum class Convergence { FALSE, ITERATIONS, STEPSIZE, METRICS, PRIMAL };
@@ -56,7 +56,7 @@ struct StepInfo {
   scalar_t totalConstraintViolationAfterStep;  // constraint metric used in the line search
 };
 
-/** Transforms sqp::Convergence to string */
+/** Transforms pipg::Convergence to string */
 inline std::string toString(const Convergence& convergence) {
   switch (convergence) {
     case Convergence::ITERATIONS:
@@ -73,5 +73,5 @@ inline std::string toString(const Convergence& convergence) {
   }
 }
 
-}  // namespace sqp
+}  // namespace slp
 }  // namespace ocs2

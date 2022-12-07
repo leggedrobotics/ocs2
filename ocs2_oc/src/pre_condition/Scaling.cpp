@@ -102,39 +102,53 @@ void scaleMatrixInPlace(const vector_t* rowScale, const vector_t* colScale, Eige
 
 void invSqrtInfNormInParallel(ThreadPool& threadPool, const std::vector<VectorFunctionLinearApproximation>& dynamics,
                               const std::vector<ScalarFunctionQuadraticApproximation>& cost, const vector_array_t& scalingVectors,
-                              const int N, vector_array_t& D, vector_array_t& E) {
+                              vector_array_t& D, vector_array_t& E) {
   // Helper function
   auto invSqrt = [](const vector_t& v) -> vector_t { return v.unaryExpr(std::ref(limitScaling)).array().sqrt().inverse(); };
 
+  // resize
+  const int N = static_cast<int>(cost.size()) - 1;
+  E.resize(N);
+  D.resize(2 * N);
+
   D[0] = invSqrt(matrixInfNormCols(cost[0].dfduu, dynamics[0].dfdu));
-  E[0] = invSqrt(matrixInfNormRows(dynamics[0].dfdu, scalingVectors[0].asDiagonal().toDenseMatrix()));
+  E[0] = invSqrt(matrixInfNormRows(dynamics[0].dfdu, scalingVectors[0]));
 
   std::atomic_int timeStamp{1};
   auto task = [&](int workerId) {
     int k;
     while ((k = timeStamp++) < N) {
-      D[2 * k - 1] =
-          invSqrt(matrixInfNormCols(cost[k].dfdxx, cost[k].dfdux, scalingVectors[k - 1].asDiagonal().toDenseMatrix(), dynamics[k].dfdx));
+      D[2 * k - 1] = invSqrt(matrixInfNormCols(cost[k].dfdxx, cost[k].dfdux, scalingVectors[k - 1].transpose().eval(), dynamics[k].dfdx));
       D[2 * k] = invSqrt(matrixInfNormCols(cost[k].dfdux.transpose().eval(), cost[k].dfduu, dynamics[k].dfdu));
-      E[k] = invSqrt(matrixInfNormRows(dynamics[k].dfdx, dynamics[k].dfdu, scalingVectors[k].asDiagonal().toDenseMatrix()));
+      E[k] = invSqrt(matrixInfNormRows(dynamics[k].dfdx, dynamics[k].dfdu, scalingVectors[k]));
     }
   };
   threadPool.runParallel(std::move(task), threadPool.numThreads() + 1U);
 
-  D[2 * N - 1] = invSqrt(matrixInfNormCols(cost[N].dfdxx, scalingVectors[N - 1].asDiagonal().toDenseMatrix()));
+  D[2 * N - 1] = invSqrt(matrixInfNormCols(cost[N].dfdxx, scalingVectors[N - 1].transpose().eval()));
 }
 
-void scaleDataOneStepInPlaceInParallel(ThreadPool& threadPool, const vector_array_t& D, const vector_array_t& E, const int N,
+void scaleDataOneStepInPlaceInParallel(ThreadPool& threadPool, const vector_array_t& D, const vector_array_t& E,
                                        std::vector<VectorFunctionLinearApproximation>& dynamics,
                                        std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<vector_t>& scalingVectors) {
+  // cost at 0
   scaleMatrixInPlace(&(D[0]), nullptr, cost.front().dfdu);
   scaleMatrixInPlace(&(D[0]), &(D[0]), cost.front().dfduu);
   scaleMatrixInPlace(&(D[0]), nullptr, cost.front().dfdux);
+  // constraints at 0
+  scaleMatrixInPlace(&(E[0]), nullptr, dynamics[0].f);
+  scaleMatrixInPlace(&(E[0]), nullptr, dynamics[0].dfdx);
+  scalingVectors[0].array() *= E[0].array() * D[1].array();
+  if (dynamics[0].dfdu.size() > 0) {
+    scaleMatrixInPlace(&(E[0]), &(D[0]), dynamics[0].dfdu);
+  }
 
-  std::atomic_int timeStamp{1};
-  auto scaleCost = [&](int workerId) {
+  std::atomic_int timeStamp1{1}, timeStamp2{1};
+  auto scaleCostConstraints = [&](int workerId) {
     int k;
-    while ((k = timeStamp++) <= N) {
+    const int N = static_cast<int>(cost.size()) - 1;
+    // cost
+    while ((k = timeStamp1++) <= N) {
       scaleMatrixInPlace(&(D[2 * k - 1]), nullptr, cost[k].dfdx);
       scaleMatrixInPlace(&(D[2 * k - 1]), &(D[2 * k - 1]), cost[k].dfdxx);
       if (cost[k].dfdu.size() > 0) {
@@ -143,28 +157,8 @@ void scaleDataOneStepInPlaceInParallel(ThreadPool& threadPool, const vector_arra
         scaleMatrixInPlace(&(D[2 * k]), &(D[2 * k - 1]), cost[k].dfdux);
       }
     }
-  };
-  threadPool.runParallel(std::move(scaleCost), threadPool.numThreads() + 1U);
-
-  // Scale G & g
-  /**
-   * \f$
-   * \tilde{B} = E * B * D,
-   * scaling = E * I * D,
-   * \tilde{g} = E * g,
-   * \f$
-   */
-  scaleMatrixInPlace(&(E[0]), nullptr, dynamics[0].f);
-  scaleMatrixInPlace(&(E[0]), nullptr, dynamics[0].dfdx);
-  scalingVectors[0].array() *= E[0].array() * D[1].array();
-  if (dynamics[0].dfdu.size() > 0) {
-    scaleMatrixInPlace(&(E[0]), &(D[0]), dynamics[0].dfdu);
-  }
-
-  timeStamp = 1;
-  auto scaleConstraints = [&](int workerId) {
-    int k;
-    while ((k = timeStamp++) < N) {
+    // constraints
+    while ((k = timeStamp2++) < N) {
       scaleMatrixInPlace(&(E[k]), nullptr, dynamics[k].f);
       scaleMatrixInPlace(&(E[k]), &(D[2 * k - 1]), dynamics[k].dfdx);
       scalingVectors[k].array() *= E[k].array() * D[2 * k + 1].array();
@@ -173,7 +167,7 @@ void scaleDataOneStepInPlaceInParallel(ThreadPool& threadPool, const vector_arra
       }
     }
   };
-  threadPool.runParallel(std::move(scaleConstraints), threadPool.numThreads() + 1U);
+  threadPool.runParallel(std::move(scaleCostConstraints), threadPool.numThreads() + 1U);
 }
 
 vector_t matrixInfNormRows(const Eigen::SparseMatrix<scalar_t>& mat) {
@@ -238,8 +232,8 @@ void preConditioningInPlaceInParallel(ThreadPool& threadPool, const vector_t& x0
 
   vector_array_t D(2 * N), E(N);
   for (int i = 0; i < iteration; i++) {
-    invSqrtInfNormInParallel(threadPool, dynamics, cost, scalingVectors, N, D, E);
-    scaleDataOneStepInPlaceInParallel(threadPool, D, E, N, dynamics, cost, scalingVectors);
+    invSqrtInfNormInParallel(threadPool, dynamics, cost, scalingVectors, D, E);
+    scaleDataOneStepInPlaceInParallel(threadPool, D, E, dynamics, cost, scalingVectors);
 
     for (int k = 0; k < DOut.size(); k++) {
       DOut[k].array() *= D[k].array();

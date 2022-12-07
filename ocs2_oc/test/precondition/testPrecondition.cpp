@@ -41,8 +41,8 @@ class PreconditionTest : public testing::Test {
   static constexpr size_t N_ = 10;  // numStages
   static constexpr size_t nx_ = 4;
   static constexpr size_t nu_ = 3;
-  static constexpr size_t numDecisionVariables = N_ * (nx_ + nu_);
-  static constexpr size_t numConstraints = N_ * nx_;
+  static constexpr size_t numDecisionVariables_ = N_ * (nx_ + nu_);
+  static constexpr size_t numConstraints_ = N_ * nx_;
 
   PreconditionTest() {
     srand(0);
@@ -62,6 +62,12 @@ class PreconditionTest : public testing::Test {
   std::vector<ocs2::VectorFunctionLinearApproximation> dynamicsArray;
   std::vector<ocs2::ScalarFunctionQuadraticApproximation> costArray;
 };
+
+constexpr size_t PreconditionTest::N_;
+constexpr size_t PreconditionTest::nx_;
+constexpr size_t PreconditionTest::nu_;
+constexpr size_t PreconditionTest::numDecisionVariables_;
+constexpr size_t PreconditionTest::numConstraints_;
 
 TEST_F(PreconditionTest, kktMatrixInPlace) {
   ocs2::vector_t D, E;
@@ -183,7 +189,7 @@ TEST_F(PreconditionTest, ocpDataInPlaceInParallel) {
 
 TEST_F(PreconditionTest, descaleSolution) {
   ocs2::vector_array_t D(2 * N_);
-  ocs2::vector_t DStacked(numDecisionVariables);
+  ocs2::vector_t DStacked(numDecisionVariables_);
   ocs2::vector_array_t x(N_ + 1), u(N_);
   x[0].setRandom(nx_);
   for (int i = 0; i < N_; i++) {

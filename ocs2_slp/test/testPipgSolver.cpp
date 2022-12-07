@@ -56,12 +56,12 @@ class PIPGSolverTest : public testing::Test {
   static constexpr size_t nx_ = 4;
   static constexpr size_t nu_ = 3;
   static constexpr size_t nc_ = 0;
-  static constexpr size_t numDecisionVariables = N_ * (nx_ + nu_);
-  static constexpr size_t numConstraints = N_ * (nx_ + nc_);
-  static constexpr size_t numThreads = 8;
-  static constexpr bool verbose = true;
+  static constexpr size_t numDecisionVariables_ = N_ * (nx_ + nu_);
+  static constexpr size_t numConstraints_ = N_ * (nx_ + nc_);
+  static constexpr size_t numThreads_ = 8;
+  static constexpr bool verbose_ = true;
 
-  PIPGSolverTest() : solver(configurePipg(30000, 1e-10, 1e-3, verbose)) {
+  PIPGSolverTest() : solver(configurePipg(30000, 1e-10, 1e-3, verbose_)) {
     srand(10);
 
     // Construct OCP problem
@@ -88,11 +88,17 @@ class PIPGSolverTest : public testing::Test {
   std::vector<ocs2::VectorFunctionLinearApproximation> constraintsArray;
 
   ocs2::PipgSolver solver;
-  ocs2::ThreadPool threadPool{numThreads - 1u, 50};
+  ocs2::ThreadPool threadPool{numThreads_ - 1u, 50};
 };
 
-constexpr size_t PIPGSolverTest::numDecisionVariables;
-constexpr size_t PIPGSolverTest::numConstraints;
+constexpr size_t PIPGSolverTest::N_;
+constexpr size_t PIPGSolverTest::nx_;
+constexpr size_t PIPGSolverTest::nu_;
+constexpr size_t PIPGSolverTest::nc_;
+constexpr size_t PIPGSolverTest::numDecisionVariables_;
+constexpr size_t PIPGSolverTest::numConstraints_;
+constexpr size_t PIPGSolverTest::numThreads_;
+constexpr bool PIPGSolverTest::verbose_;
 
 TEST_F(PIPGSolverTest, correctness) {
   // ocs2::qp_solver::SolveDenseQP use  Gz + g = 0 for constraints
@@ -136,7 +142,7 @@ TEST_F(PIPGSolverTest, correctness) {
   ocs2::scalar_t PIPGParallelCost = calculateCost(primalSolutionPIPGParallel);
   ocs2::scalar_t PIPGParallelCConstraintViolation = calculateConstraintViolation(primalSolutionPIPGParallel);
 
-  if (verbose) {
+  if (verbose_) {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
     std::cerr << "\n++++++++++++++ [TestPIPG] Correctness ++++++++++++++++";
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";

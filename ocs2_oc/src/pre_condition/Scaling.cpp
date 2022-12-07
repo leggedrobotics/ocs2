@@ -235,13 +235,6 @@ void preConditioningInPlaceInParallel(ThreadPool& threadPool, const vector_t& x0
     invSqrtInfNormInParallel(threadPool, dynamics, cost, scalingVectors, D, E);
     scaleDataOneStepInPlaceInParallel(threadPool, D, E, dynamics, cost, scalingVectors);
 
-    for (int k = 0; k < DOut.size(); k++) {
-      DOut[k].array() *= D[k].array();
-    }
-    for (int k = 0; k < EOut.size(); k++) {
-      EOut[k].array() *= E[k].array();
-    }
-
     const auto infNormOfh = [&cost, &x0]() {
       scalar_t out = (cost.front().dfdu + cost.front().dfdux * x0).lpNorm<Eigen::Infinity>();
       for (int k = 1; k < cost.size(); ++k) {
@@ -267,8 +260,14 @@ void preConditioningInPlaceInParallel(ThreadPool& threadPool, const vector_t& x0
     }();
 
     const auto averageOfInfNormOfH = sumOfInfNormOfH / static_cast<scalar_t>(numDecisionVariables);
-
     const auto gamma = 1.0 / limitScaling(std::max(averageOfInfNormOfH, infNormOfh));
+
+    for (int k = 0; k < DOut.size(); k++) {
+      DOut[k].array() *= D[k].array();
+    }
+    for (int k = 0; k < EOut.size(); k++) {
+      EOut[k].array() *= E[k].array();
+    }
 
     for (int k = 0; k <= N; ++k) {
       cost[k].dfdxx *= gamma;

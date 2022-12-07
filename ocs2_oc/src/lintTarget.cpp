@@ -54,8 +54,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // oc_solver
 #include <ocs2_oc/oc_solver/SolverBase.h>
 
-// pre_condition
-#include <ocs2_oc/pre_condition/Scaling.h>
+// precondition
+#include <ocs2_oc/precondition/Ruzi.h>
 
 // synchronized_module
 #include <ocs2_oc/synchronized_module/LoopshapingReferenceManager.h>

@@ -283,21 +283,6 @@ void PipgSolver::resize(const OcpSize& ocpSize) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void PipgSolver::descaleSolution(const vector_array_t& D, vector_array_t& xTrajectory, vector_array_t& uTrajectory) const {
-  const int N = ocpSize_.numStages;
-  if (D.size() != xTrajectory.size() + uTrajectory.size() - 1) {
-    throw std::runtime_error("[PipgSolver::descaleSolution] - Size doesn't match.");
-  }
-
-  for (int k = 0; k < N; k++) {
-    uTrajectory[k].array() *= D[2 * k].array();
-    xTrajectory[k + 1].array() *= D[2 * k + 1].array();
-  }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 void PipgSolver::verifySizes(const std::vector<VectorFunctionLinearApproximation>& dynamics,
                              const std::vector<ScalarFunctionQuadraticApproximation>& cost,
                              const std::vector<VectorFunctionLinearApproximation>* constraints) const {

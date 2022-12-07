@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_oc/test/testProblemsGeneration.h"
 
-class MatrixConstructionTest : public testing::Test {
+class OcpToKktTest : public testing::Test {
  protected:
   // x_0, x_1, ... x_{N - 1}, X_{N}
   static constexpr size_t N_ = 10;  // numStages
@@ -44,7 +44,7 @@ class MatrixConstructionTest : public testing::Test {
   static constexpr size_t numDecisionVariables = N_ * (nx_ + nu_);
   static constexpr size_t numConstraints = N_ * (nx_ + nc_);
 
-  MatrixConstructionTest() {
+  OcpToKktTest() {
     srand(0);
 
     x0 = ocs2::vector_t::Random(nx_);
@@ -66,7 +66,7 @@ class MatrixConstructionTest : public testing::Test {
   std::vector<ocs2::VectorFunctionLinearApproximation> constraintsArray;
 };
 
-TEST_F(MatrixConstructionTest, sparseConstraintsApproximation) {
+TEST_F(OcpToKktTest, sparseConstraintsApproximation) {
   Eigen::SparseMatrix<ocs2::scalar_t> G;
   ocs2::vector_t g;
   ocs2::vector_array_t scalingVectors(N_);
@@ -81,7 +81,7 @@ TEST_F(MatrixConstructionTest, sparseConstraintsApproximation) {
   EXPECT_TRUE(constraintsApproximation.f.isApprox(g));
 }
 
-TEST_F(MatrixConstructionTest, sparseCostApproximation) {
+TEST_F(OcpToKktTest, sparseCostApproximation) {
   Eigen::SparseMatrix<ocs2::scalar_t> H;
   ocs2::vector_t h;
 

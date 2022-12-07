@@ -32,10 +32,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/thread_support/ThreadPool.h>
 
 #include "ocs2_oc/oc_problem/OcpToKkt.h"
-#include "ocs2_oc/pre_condition/Scaling.h"
+#include "ocs2_oc/precondition/Ruzi.h"
 #include "ocs2_oc/test/testProblemsGeneration.h"
 
-class ScalingTest : public testing::Test {
+class PreconditionTest : public testing::Test {
  protected:
   // x_0, x_1, ... x_{N - 1}, X_{N}
   static constexpr size_t N_ = 10;  // numStages
@@ -44,7 +44,7 @@ class ScalingTest : public testing::Test {
   static constexpr size_t numDecisionVariables = N_ * (nx_ + nu_);
   static constexpr size_t numConstraints = N_ * nx_;
 
-  ScalingTest() {
+  PreconditionTest() {
     srand(0);
 
     x0 = ocs2::vector_t::Random(nx_);
@@ -63,7 +63,7 @@ class ScalingTest : public testing::Test {
   std::vector<ocs2::ScalarFunctionQuadraticApproximation> costArray;
 };
 
-TEST_F(ScalingTest, preConditioningSparseMatrix) {
+TEST_F(PreconditionTest, kktMatrixInPlace) {
   ocs2::vector_t D, E;
   ocs2::scalar_t c;
 
@@ -82,7 +82,7 @@ TEST_F(ScalingTest, preConditioningSparseMatrix) {
   const ocs2::vector_t g_src = g;
 
   // Test 1: Construct the stacked cost and constraints matrices first and scale next.
-  ocs2::preConditioningSparseMatrixInPlace(5, H, h, G, g, D, E, c);
+  ocs2::precondition::kktMatrixInPlace(5, H, h, G, g, D, E, c);
 
   // After pre-conditioning, H, h, G, and g will be scaled in place..
   const Eigen::SparseMatrix<ocs2::scalar_t> H_ref = c * D.asDiagonal() * H_src * D.asDiagonal();
@@ -116,7 +116,7 @@ TEST_F(ScalingTest, preConditioningSparseMatrix) {
 
   // Test 2: Scale const and dynamics data of each time step first and then construct the stacked matrices from the scaled data.
   std::vector<ocs2::vector_t> scalingVectors;
-  ocs2::scaleDataInPlace(ocpSize_, D, E, c, dynamicsArray, costArray, scalingVectors);
+  ocs2::precondition::scaleOcpData(ocpSize_, D, E, c, dynamicsArray, costArray, scalingVectors);
 
   Eigen::SparseMatrix<ocs2::scalar_t> H_scaledData;
   ocs2::vector_t h_scaledData;
@@ -130,7 +130,7 @@ TEST_F(ScalingTest, preConditioningSparseMatrix) {
   EXPECT_TRUE(g_ref.isApprox(g_scaledData));  // g
 }
 
-TEST_F(ScalingTest, preConditioningInPlaceInParallel) {
+TEST_F(PreconditionTest, ocpDataInPlaceInParallel) {
   ocs2::ThreadPool threadPool(5, 99);
 
   ocs2::vector_t D_ref, E_ref;
@@ -144,13 +144,13 @@ TEST_F(ScalingTest, preConditioningInPlaceInParallel) {
   ocs2::vector_t g_ref;
   Eigen::SparseMatrix<ocs2::scalar_t> G_ref;
   ocs2::getConstraintMatrixSparse(ocpSize_, x0, dynamicsArray, nullptr, nullptr, G_ref, g_ref);
-  ocs2::preConditioningSparseMatrixInPlace(5, H_ref, h_ref, G_ref, g_ref, D_ref, E_ref, c_ref);
+  ocs2::precondition::kktMatrixInPlace(5, H_ref, h_ref, G_ref, g_ref, D_ref, E_ref, c_ref);
 
   // Test start
   ocs2::vector_array_t D_array, E_array;
   ocs2::scalar_t c;
   ocs2::vector_array_t scalingVectors(N_);
-  ocs2::preConditioningInPlaceInParallel(threadPool, x0, ocpSize_, 5, dynamicsArray, costArray, D_array, E_array, scalingVectors, c);
+  ocs2::precondition::ocpDataInPlaceInParallel(threadPool, x0, ocpSize_, 5, dynamicsArray, costArray, D_array, E_array, scalingVectors, c);
 
   ocs2::vector_t D_stacked(D_ref.rows()), E_stacked(E_ref.rows());
   int curRow = 0;

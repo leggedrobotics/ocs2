@@ -87,8 +87,6 @@ class PipgSolver {
 
   int getNumGeneralEqualityConstraints() const;
 
-  void descaleSolution(const vector_array_t& D, vector_array_t& xTrajectory, vector_array_t& uTrajectory) const;
-
   const pipg::Settings& settings() const { return settings_; }
   const OcpSize& size() const { return ocpSize_; }
 

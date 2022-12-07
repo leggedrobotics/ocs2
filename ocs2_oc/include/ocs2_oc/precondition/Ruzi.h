@@ -37,9 +37,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_oc/oc_problem/OcpSize.h"
 
 namespace ocs2 {
+namespace precondition {
 
 /**
- * Calculates the scaling factors D, E, and c, and scale the input dynamics, and cost data in place in parallel.
+ * Calculates the pre-conditioning factors D, E, and c, and scale the input dynamics, and cost data in place and parallel.
  *
  * There are a few pre-conditioning methods aiming to shape different aspects of the problem. To balance the performance and
  * computational effort, we choose a modified Ruzi equilibration Algorithm. Interested readers can find the original Ruiz
@@ -88,13 +89,13 @@ namespace ocs2 {
  *                               of this type of matrix for every timestamp.
  * @param [out] cOut : Scaling factor c.
  */
-void preConditioningInPlaceInParallel(ThreadPool& threadPool, const vector_t& x0, const OcpSize& ocpSize, const int iteration,
-                                      std::vector<VectorFunctionLinearApproximation>& dynamics,
-                                      std::vector<ScalarFunctionQuadraticApproximation>& cost, vector_array_t& DOut, vector_array_t& EOut,
-                                      vector_array_t& scalingVectors, scalar_t& cOut);
+void ocpDataInPlaceInParallel(ThreadPool& threadPool, const vector_t& x0, const OcpSize& ocpSize, const int iteration,
+                              std::vector<VectorFunctionLinearApproximation>& dynamics,
+                              std::vector<ScalarFunctionQuadraticApproximation>& cost, vector_array_t& DOut, vector_array_t& EOut,
+                              vector_array_t& scalingVectors, scalar_t& cOut);
 
 /**
- * Calculates the scaling factors D, E, and c, and scale the input dynamics, and cost data in place in parallel.
+ * Calculates the pre-conditioning factors D, E, and c, and scale the input dynamics, and cost data in place in place.
  *
  * There are a few pre-conditioning methods aiming to shape different aspects of the problem. To balance the performance and
  * computational effort, we choose a modified Ruzi equilibration Algorithm. Interested readers can find the original Ruiz
@@ -141,24 +142,35 @@ void preConditioningInPlaceInParallel(ThreadPool& threadPool, const vector_t& x0
  * @param [out] EOut : The matrix E decomposed for each time step.
  * @param [out] cOut : Scaling factor c.
  */
-void preConditioningSparseMatrixInPlace(int iteration, Eigen::SparseMatrix<scalar_t>& H, vector_t& h, Eigen::SparseMatrix<scalar_t>& G,
-                                        vector_t& g, vector_t& DOut, vector_t& EOut, scalar_t& cOut);
+void kktMatrixInPlace(int iteration, Eigen::SparseMatrix<scalar_t>& H, vector_t& h, Eigen::SparseMatrix<scalar_t>& G, vector_t& g,
+                      vector_t& DOut, vector_t& EOut, scalar_t& cOut);
 
 /**
  * Scales the dynamics and cost array in place and construct scaling vector array from the given scaling factors E, D and c.
  *
- * @param[in] ocpSize : The size of the oc problem.
- * @param[in] D : Scaling factor D
- * @param[in] E : Scaling factor E
- * @param[in] c : Scaling factor c
- * @param[in, out] dynamics : The dynamics  array of all time points.
- * @param[in, out] cost : The cost array of all time points.
- * @param[out] scalingVectors : Vector representation for the identity parts of the dynamics inside the constraint matrix.
- *                              After scaling, they become arbitrary diagonal matrices. scalingVectors store the diagonal
- *                              components of this type of matrix for every timestamp.
+ * @param [in] ocpSize : The size of the oc problem.
+ * @param [in] D : Scaling factor D
+ * @param [in] E : Scaling factor E
+ * @param [in] c : Scaling factor c
+ * @param [in, out] dynamics : The dynamics  array of all time points.
+ * @param [in, out] cost : The cost array of all time points.
+ * @param [out] scalingVectors : Vector representation for the identity parts of the dynamics inside the constraint matrix.
+ *                               After scaling, they become arbitrary diagonal matrices. scalingVectors store the diagonal
+ *                               components of this type of matrix for every timestamp.
  */
-void scaleDataInPlace(const OcpSize& ocpSize, const vector_t& D, const vector_t& E, const scalar_t c,
-                      std::vector<VectorFunctionLinearApproximation>& dynamics, std::vector<ScalarFunctionQuadraticApproximation>& cost,
-                      std::vector<vector_t>& scalingVectors);
+void scaleOcpData(const OcpSize& ocpSize, const vector_t& D, const vector_t& E, const scalar_t c,
+                  std::vector<VectorFunctionLinearApproximation>& dynamics, std::vector<ScalarFunctionQuadraticApproximation>& cost,
+                  std::vector<vector_t>& scalingVectors);
 
+/**
+ * Descales the solution. Note that the initial state is not considered a decision variable; therefore, it is not scaled.
+ * This pre-conditioning transforms the following decision vector z := [u_{0}; x_{1}; ...; u_{n}; x_{n+1}] to y := inv(D) z.
+ *
+ * @param [in] D : Scaling factor D
+ * @param [in, out] xTrajectory : The state trajectory of the length (N + 1).
+ * @param [in, out] uTrajectory : The input trajectory of the length N.
+ */
+void descaleSolution(const vector_array_t& D, vector_array_t& xTrajectory, vector_array_t& uTrajectory);
+
+}  // namespace precondition
 }  // namespace ocs2

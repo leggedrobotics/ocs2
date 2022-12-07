@@ -27,13 +27,14 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_oc/pre_condition/Scaling.h"
+#include "ocs2_oc/precondition/Ruzi.h"
 
 #include <atomic>
 #include <functional>
 #include <numeric>
 
 namespace ocs2 {
+namespace precondition {
 
 // Internal helper functions
 namespace {
@@ -206,13 +207,13 @@ void scaleMatrixInPlace(const vector_t& rowScale, const vector_t& colScale, Eige
 
 }  // anonymous namespace
 
-void preConditioningInPlaceInParallel(ThreadPool& threadPool, const vector_t& x0, const OcpSize& ocpSize, const int iteration,
-                                      std::vector<VectorFunctionLinearApproximation>& dynamics,
-                                      std::vector<ScalarFunctionQuadraticApproximation>& cost, vector_array_t& DOut, vector_array_t& EOut,
-                                      vector_array_t& scalingVectors, scalar_t& cOut) {
+void ocpDataInPlaceInParallel(ThreadPool& threadPool, const vector_t& x0, const OcpSize& ocpSize, const int iteration,
+                              std::vector<VectorFunctionLinearApproximation>& dynamics,
+                              std::vector<ScalarFunctionQuadraticApproximation>& cost, vector_array_t& DOut, vector_array_t& EOut,
+                              vector_array_t& scalingVectors, scalar_t& cOut) {
   const int N = ocpSize.numStages;
   if (N < 1) {
-    throw std::runtime_error("[preConditioningInPlaceInParallel] The number of stages cannot be less than 1.");
+    throw std::runtime_error("[precondition::ocpDataInPlaceInParallel] The number of stages cannot be less than 1.");
   }
 
   // Init output
@@ -301,8 +302,8 @@ void preConditioningInPlaceInParallel(ThreadPool& threadPool, const vector_t& x0
   }
 }
 
-void preConditioningSparseMatrixInPlace(int iteration, Eigen::SparseMatrix<scalar_t>& H, vector_t& h, Eigen::SparseMatrix<scalar_t>& G,
-                                        vector_t& g, vector_t& DOut, vector_t& EOut, scalar_t& cOut) {
+void kktMatrixInPlace(int iteration, Eigen::SparseMatrix<scalar_t>& H, vector_t& h, Eigen::SparseMatrix<scalar_t>& G, vector_t& g,
+                      vector_t& DOut, vector_t& EOut, scalar_t& cOut) {
   const int nz = H.rows();
   const int nc = G.rows();
 
@@ -351,12 +352,12 @@ void preConditioningSparseMatrixInPlace(int iteration, Eigen::SparseMatrix<scala
   }
 }
 
-void scaleDataInPlace(const OcpSize& ocpSize, const vector_t& D, const vector_t& E, const scalar_t c,
-                      std::vector<VectorFunctionLinearApproximation>& dynamics, std::vector<ScalarFunctionQuadraticApproximation>& cost,
-                      std::vector<vector_t>& scalingVectors) {
+void scaleOcpData(const OcpSize& ocpSize, const vector_t& D, const vector_t& E, const scalar_t c,
+                  std::vector<VectorFunctionLinearApproximation>& dynamics, std::vector<ScalarFunctionQuadraticApproximation>& cost,
+                  std::vector<vector_t>& scalingVectors) {
   const int N = ocpSize.numStages;
   if (N < 1) {
-    throw std::runtime_error("[PIPG] The number of stages cannot be less than 1.");
+    throw std::runtime_error("[precondition::scaleOcpData] The number of stages cannot be less than 1.");
   }
 
   scalingVectors.resize(N);
@@ -445,4 +446,16 @@ void scaleDataInPlace(const OcpSize& ocpSize, const vector_t& D, const vector_t&
   }
 }
 
+void descaleSolution(const vector_array_t& D, vector_array_t& xTrajectory, vector_array_t& uTrajectory) {
+  if (D.size() != xTrajectory.size() + uTrajectory.size() - 1) {
+    throw std::runtime_error("[precondition::descaleSolution] - Size doesn't match.");
+  }
+
+  for (int k = 0; k < uTrajectory.size(); k++) {
+    uTrajectory[k].array() *= D[2 * k].array();
+    xTrajectory[k + 1].array() *= D[2 * k + 1].array();
+  }
+}
+
+}  // namespace precondition
 }  // namespace ocs2

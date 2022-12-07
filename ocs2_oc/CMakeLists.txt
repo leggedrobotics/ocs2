@@ -61,7 +61,7 @@ add_library(${PROJECT_NAME}
   src/oc_problem/OcpSize.cpp
   src/oc_problem/OcpToKkt.cpp
   src/oc_solver/SolverBase.cpp
-  src/pre_condition/Scaling.cpp
+  src/precondition/Ruzi.cpp
   src/rollout/PerformanceIndicesRollout.cpp
   src/rollout/RolloutBase.cpp
   src/rollout/RootFinder.cpp
@@ -191,19 +191,19 @@ target_link_libraries(test_trajectory_spreading
   gtest_main
 )
 
-catkin_add_gtest(test_matrix_construction
-  test/oc_problem/testMatrixConstruction.cpp
+catkin_add_gtest(test_ocp_to_kkt
+  test/oc_problem/testOcpToKkt.cpp
 )
-target_link_libraries(test_matrix_construction
+target_link_libraries(test_ocp_to_kkt
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   gtest_main
 )
 
-catkin_add_gtest(test_scaling
-  test/pre_condition/testScaling.cpp
+catkin_add_gtest(test_precondition
+  test/precondition/testPrecondition.cpp
 )
-target_link_libraries(test_scaling
+target_link_libraries(test_precondition
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   gtest_main

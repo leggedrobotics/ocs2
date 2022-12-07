@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/multiple_shooting/Initialization.h>
 #include <ocs2_oc/multiple_shooting/PerformanceIndexComputation.h>
 #include <ocs2_oc/multiple_shooting/Transcription.h>
-#include <ocs2_oc/pre_condition/Scaling.h>
+#include <ocs2_oc/precondition/Ruzi.h>
 
 #include "ocs2_slp/Helpers.h"
 
@@ -240,8 +240,8 @@ SlpSolver::OcpSubproblemSolution SlpSolver::getOCPSolution(const vector_t& delta
   scalar_t c;
   vector_array_t D, E;
   vector_array_t scalingVectors;
-  preConditioningInPlaceInParallel(threadPool_, delta_x0, pipgSolver_.size(), settings_.scalingIteration, dynamics_, cost_, D, E,
-                                   scalingVectors, c);
+  precondition::ocpDataInPlaceInParallel(threadPool_, delta_x0, pipgSolver_.size(), settings_.scalingIteration, dynamics_, cost_, D, E,
+                                         scalingVectors, c);
   preConditioning_.endTimer();
 
   // estimate mu and lambda: mu I < H < lambda I
@@ -275,7 +275,7 @@ SlpSolver::OcpSubproblemSolution SlpSolver::getOCPSolution(const vector_t& delta
   // to determine if the solution is a descent direction for the cost: compute gradient(cost)' * [dx; du]
   solution.armijoDescentMetric = armijoDescentMetric(cost_, deltaXSol, deltaUSol);
 
-  pipgSolver_.descaleSolution(D, deltaXSol, deltaUSol);
+  precondition::descaleSolution(D, deltaXSol, deltaUSol);
 
   // remap the tilde delta u to real delta u
   multiple_shooting::remapProjectedInput(constraintsProjection_, deltaXSol, deltaUSol);

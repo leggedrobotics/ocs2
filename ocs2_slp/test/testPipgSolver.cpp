@@ -119,7 +119,7 @@ TEST_F(PIPGSolverTest, correctness) {
   std::ignore = solver.solve(threadPool, x0, dynamicsArray, costArray, nullptr, scalingVectors, nullptr, pipgBounds, X, U);
 
   ocs2::vector_t primalSolutionPIPGParallel;
-  ocs2::pipg::packSolution(X, U, primalSolutionPIPGParallel);
+  ocs2::toKktSolution(X, U, primalSolutionPIPGParallel);
 
   auto calculateConstraintViolation = [&](const ocs2::vector_t& sol) -> ocs2::scalar_t {
     return (constraintsApproximation.dfdx * sol - constraintsApproximation.f).cwiseAbs().maxCoeff();
@@ -177,33 +177,4 @@ TEST_F(PIPGSolverTest, correctness) {
   ASSERT_TRUE(std::abs(PIPGConstraintViolation) < solver.settings().absoluteTolerance);
   EXPECT_TRUE(std::abs(QPConstraintViolation - PIPGConstraintViolation) < solver.settings().absoluteTolerance * 10.0);
   EXPECT_TRUE(std::abs(PIPGParallelCConstraintViolation - PIPGConstraintViolation) < solver.settings().absoluteTolerance * 10.0);
-}
-
-TEST_F(PIPGSolverTest, descaleSolution) {
-  ocs2::vector_array_t D(2 * N_);
-  ocs2::vector_t DStacked(numDecisionVariables);
-  ocs2::vector_array_t x(N_ + 1), u(N_);
-  x[0].setRandom(nx_);
-  for (int i = 0; i < N_; i++) {
-    D[2 * i].setRandom(nu_);
-    D[2 * i + 1].setRandom(nx_);
-    u[i].setRandom(nu_);
-    x[i + 1].setRandom(nx_);
-  }
-  int curRow = 0;
-  for (auto& v : D) {
-    DStacked.segment(curRow, v.size()) = v;
-    curRow += v.size();
-  }
-  ocs2::vector_t packedSolution;
-  ocs2::pipg::packSolution(x, u, packedSolution);
-
-  packedSolution.array() *= DStacked.array();
-
-  ocs2::vector_t packedSolutionMy;
-  solver.descaleSolution(D, x, u);
-  ocs2::pipg::packSolution(x, u, packedSolutionMy);
-  EXPECT_TRUE(packedSolutionMy.isApprox(packedSolution)) << std::setprecision(6) << "DescaledSolution: \n"
-                                                         << packedSolutionMy.transpose() << "\nIt should be \n"
-                                                         << packedSolution.transpose();
 }

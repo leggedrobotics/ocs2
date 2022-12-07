@@ -406,4 +406,41 @@ void getCostMatrixSparse(const OcpSize& ocpSize, const vector_t& x0, const std::
   H.setFromTriplets(tripletList.begin(), tripletList.end());
   assert(H.nonZeros() <= nnz);
 }
+
+void toOcpSolution(const OcpSize& ocpSize, const vector_t& stackedSolution, const vector_t x0, vector_array_t& xTrajectory,
+                   vector_array_t& uTrajectory) {
+  const int N = ocpSize.numStages;
+  xTrajectory.resize(N + 1);
+  uTrajectory.resize(N);
+
+  xTrajectory.front() = x0;
+
+  int curRow = 0;
+  for (int i = 0; i < N; i++) {
+    const auto nx = ocpSize.numStates[i + 1];
+    const auto nu = ocpSize.numInputs[i];
+    xTrajectory[i + 1] = stackedSolution.segment(curRow + nu, nx);
+    uTrajectory[i] = stackedSolution.segment(curRow, nu);
+
+    curRow += nx + nu;
+  }
+}
+
+void toKktSolution(const vector_array_t& xTrajectory, const vector_array_t& uTrajectory, vector_t& stackedSolution) {
+  int numDecisionVariables = 0;
+  for (int i = 1; i < xTrajectory.size(); i++) {
+    numDecisionVariables += uTrajectory[i - 1].size() + xTrajectory[i].size();
+  }
+
+  stackedSolution.resize(numDecisionVariables);
+
+  int curRow = 0;
+  for (int i = 1; i < xTrajectory.size(); i++) {
+    const auto nu = uTrajectory[i - 1].size();
+    const auto nx = xTrajectory[i].size();
+    stackedSolution.segment(curRow, nx + nu) << uTrajectory[i - 1], xTrajectory[i];
+    curRow += nx + nu;
+  }
+}
+
 }  // namespace ocs2

@@ -83,26 +83,5 @@ SolverStatus singleThreadPipg(const pipg::Settings& settings, const Eigen::Spars
                               const Eigen::SparseMatrix<scalar_t>& G, const vector_t& g, const vector_t& EInv, const PipgBounds& pipgBounds,
                               vector_t& stackedSolution);
 
-/**
- * Deserializes the stacked solution to state-input trajecotries.
- *
- * @param [in] ocpSize : Optimal control problem sizes.
- * @param [in] stackedSolution : Defined as [u_{0}; x_{1}; ...; u_{n}; x_{n+1}].
- * @param [in] x0 : The initial state.
- * @param [out] xTrajectory : State tarjectory.
- * @param [out] uTrajectory : Input trajecotry.
- */
-void unpackSolution(const OcpSize& ocpSize, const vector_t& stackedSolution, const vector_t x0, vector_array_t& xTrajectory,
-                    vector_array_t& uTrajectory);
-
-/**
- * Serializes the state-input trajecotries.
- *
- * @param [in] xTrajectory : State tarjectory.
- * @param [in] UTrajectory : Input trajecotry.
- * @param [out] stackedSolution : [u_{0}; x_{1}; ...; u_{n}; x_{n+1}].
- */
-void packSolution(const vector_array_t& xTrajectory, const vector_array_t& uTrajectory, vector_t& stackedSolution);
-
 }  // namespace pipg
 }  // namespace ocs2

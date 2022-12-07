@@ -180,3 +180,32 @@ TEST_F(PreconditionTest, ocpDataInPlaceInParallel) {
   EXPECT_TRUE(G_ref.isApprox(G_scaledData));  // G
   EXPECT_TRUE(g_ref.isApprox(g_scaledData));  // g
 }
+
+TEST_F(PreconditionTest, descaleSolution) {
+  ocs2::vector_array_t D(2 * N_);
+  ocs2::vector_t DStacked(numDecisionVariables);
+  ocs2::vector_array_t x(N_ + 1), u(N_);
+  x[0].setRandom(nx_);
+  for (int i = 0; i < N_; i++) {
+    D[2 * i].setRandom(nu_);
+    D[2 * i + 1].setRandom(nx_);
+    u[i].setRandom(nu_);
+    x[i + 1].setRandom(nx_);
+  }
+  int curRow = 0;
+  for (auto& v : D) {
+    DStacked.segment(curRow, v.size()) = v;
+    curRow += v.size();
+  }
+  ocs2::vector_t packedSolution;
+  ocs2::toKktSolution(x, u, packedSolution);
+
+  packedSolution.array() *= DStacked.array();
+
+  ocs2::vector_t packedSolutionNew;
+  ocs2::precondition::descaleSolution(D, x, u);
+  ocs2::toKktSolution(x, u, packedSolutionNew);
+  EXPECT_TRUE(packedSolutionNew.isApprox(packedSolution)) << std::setprecision(6) << "DescaledSolution: \n"
+                                                          << packedSolutionNew.transpose() << "\nIt should be \n"
+                                                          << packedSolution.transpose();
+}

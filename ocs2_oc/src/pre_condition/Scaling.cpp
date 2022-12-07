@@ -231,6 +231,8 @@ void preConditioningInPlaceInParallel(ThreadPool& threadPool, const vector_t& x0
                                     std::accumulate(ocpSize.numStates.begin() + 1, ocpSize.numStates.end(), 0);
 
   vector_array_t D(2 * N), E(N);
+  std::atomic_int timeIndex{0};
+  const size_t numThreads = threadPool.numThreads() + 1U;
   for (int i = 0; i < iteration; i++) {
     invSqrtInfNormInParallel(threadPool, dynamics, cost, scalingVectors, D, E);
     scaleDataOneStepInPlaceInParallel(threadPool, D, E, dynamics, cost, scalingVectors);
@@ -262,21 +264,34 @@ void preConditioningInPlaceInParallel(ThreadPool& threadPool, const vector_t& x0
     const auto averageOfInfNormOfH = sumOfInfNormOfH / static_cast<scalar_t>(numDecisionVariables);
     const auto gamma = 1.0 / limitScaling(std::max(averageOfInfNormOfH, infNormOfh));
 
-    for (int k = 0; k < DOut.size(); k++) {
-      DOut[k].array() *= D[k].array();
-    }
-    for (int k = 0; k < EOut.size(); k++) {
-      EOut[k].array() *= E[k].array();
-    }
+    // compute EOut, DOut, and scale cost
+    timeIndex = 0;
+    auto computeDOutEOutScaleCost = [&](int workerId) {
+      int k = timeIndex++;
+      while (k < N) {
+        EOut[k].array() *= E[k].array();
+        DOut[2 * k].array() *= D[2 * k].array();
+        DOut[2 * k + 1].array() *= D[2 * k + 1].array();
+        // cost
+        cost[k].dfdxx *= gamma;
+        cost[k].dfduu *= gamma;
+        cost[k].dfdux *= gamma;
+        cost[k].dfdx *= gamma;
+        cost[k].dfdu *= gamma;
 
-    for (int k = 0; k <= N; ++k) {
-      cost[k].dfdxx *= gamma;
-      cost[k].dfduu *= gamma;
-      cost[k].dfdux *= gamma;
-      cost[k].dfdx *= gamma;
-      cost[k].dfdu *= gamma;
-    }
+        k = timeIndex++;
+      }
+      if (k == N) {  // Only one worker will execute this
+        cost[N].dfdxx *= gamma;
+        cost[N].dfduu *= gamma;
+        cost[N].dfdux *= gamma;
+        cost[N].dfdx *= gamma;
+        cost[N].dfdu *= gamma;
+      }
+    };
+    threadPool.runParallel(std::move(computeDOutEOutScaleCost), numThreads);
 
+    // compute cOut
     cOut *= gamma;
   }
 }

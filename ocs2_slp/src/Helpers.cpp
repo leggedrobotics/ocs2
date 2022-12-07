@@ -157,40 +157,6 @@ vector_t GGTAbsRowSumInParallel(ThreadPool& threadPool, const OcpSize& ocpSize,
   Eigen::setNbThreads(0);  // Restore default setup.
 
   return res;
-
-  // /**
-  //  * *********************************
-  //  * ************ Test begin *********
-  //  * *********************************
-  //  */
-  // matrix_t m(getNumDynamicsConstraints(), getNumDynamicsConstraints());
-  // const int nx_1 = ocpSize.numStates[1];
-  // const int nx_2 = ocpSize.numStates[2];
-  // const auto& A1 = dynamics[1].dfdx;
-  // m.topLeftCorner(nx_1, nx_1 + nx_2) << tempMatrixArray[0],
-  //     -(A1 * (scalingVectorsPtr == nullptr ? matrix_t::Identity(nx_1, nx_1) : (*scalingVectorsPtr)[0].asDiagonal().toDenseMatrix()))
-  //          .transpose();
-
-  // curRow = nx_1;
-  // for (int i = 1; i < N - 1; i++) {
-  //   const int nx_i1 = ocpSize.numStates[i + 1];
-  //   const int nx_i2 = ocpSize.numStates[i + 2];
-  //   const auto& ANext = dynamics[i + 1].dfdx;
-
-  //   m.block(curRow, curRow, nx_i1, nx_i1 + nx_i2) << tempMatrixArray[i],
-  //       -(ANext * (scalingVectorsPtr == nullptr ? matrix_t::Identity(nx_i1, nx_i1) :
-  //       (*scalingVectorsPtr)[i].asDiagonal().toDenseMatrix()))
-  //            .transpose();
-  //   curRow += nx_i1;
-  // }
-  // const int nx_N = ocpSize.numStates[N];
-  // m.block(curRow, curRow, nx_N, nx_N) = tempMatrixArray[N - 1];
-  // std::cerr << "GGT: \n" << m.selfadjointView<Eigen::Upper>().toDenseMatrix() << "\n\n";
-  // /**
-  //  * *********************************
-  //  * ************ Test end *********
-  //  * *********************************
-  //  */
 }
 
 }  // namespace slp

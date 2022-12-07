@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_slp/SlpSolver.h"
 
 namespace ocs2 {
+
 class SlpMpc final : public MPC_BASE {
  public:
   /**
@@ -67,4 +68,5 @@ class SlpMpc final : public MPC_BASE {
  private:
   std::unique_ptr<SlpSolver> solverPtr_;
 };
+
 }  // namespace ocs2

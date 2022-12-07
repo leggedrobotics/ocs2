@@ -267,9 +267,9 @@ void PipgSolver::resize(const OcpSize& ocpSize) {
   ocpSize_ = ocpSize;
   const int N = ocpSize_.numStages;
 
-  numDecisionVariables_ = std::accumulate(ocpSize_.numStates.begin() + 1, ocpSize_.numStates.end(), 0);
+  numDecisionVariables_ = std::accumulate(std::next(ocpSize_.numStates.begin()), ocpSize_.numStates.end(), 0);
   numDecisionVariables_ += std::accumulate(ocpSize_.numInputs.begin(), ocpSize_.numInputs.end(), 0);
-  numDynamicsConstraints_ = std::accumulate(ocpSize_.numStates.begin() + 1, ocpSize_.numStates.end(), 0);
+  numDynamicsConstraints_ = std::accumulate(std::next(ocpSize_.numStates.begin()), ocpSize_.numStates.end(), 0);
 
   X_.resize(N + 1);
   W_.resize(N);
@@ -323,15 +323,6 @@ void PipgSolver::verifyOcpSize(const OcpSize& ocpSize) const {
   if (isNotEmpty(ocpSize.numIneqSlack)) {
     throw std::runtime_error("[PipgSolver::verifyOcpSize] PIPG solver does not support inequality slack variables.");
   }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-int PipgSolver::getNumGeneralEqualityConstraints() const {
-  const auto totalNumberOfGeneralEqualityConstraints =
-      std::accumulate(ocpSize_.numIneqConstraints.begin(), ocpSize_.numIneqConstraints.end(), 0);
-  return totalNumberOfGeneralEqualityConstraints;
 }
 
 }  // namespace ocs2

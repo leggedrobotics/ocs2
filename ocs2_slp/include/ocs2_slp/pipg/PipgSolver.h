@@ -82,13 +82,10 @@ class PipgSolver {
   void resize(const OcpSize& size);
 
   int getNumDecisionVariables() const { return numDecisionVariables_; }
-
   int getNumDynamicsConstraints() const { return numDynamicsConstraints_; }
 
-  int getNumGeneralEqualityConstraints() const;
-
-  const pipg::Settings& settings() const { return settings_; }
   const OcpSize& size() const { return ocpSize_; }
+  const pipg::Settings& settings() const { return settings_; }
 
  private:
   void verifySizes(const std::vector<VectorFunctionLinearApproximation>& dynamics,
@@ -97,18 +94,17 @@ class PipgSolver {
 
   void verifyOcpSize(const OcpSize& ocpSize) const;
 
- private:
+  // Settings
   const pipg::Settings settings_;
 
+  // Problem size
   OcpSize ocpSize_;
+  int numDecisionVariables_;
+  int numDynamicsConstraints_;
 
   // Data buffer for parallelized PIPG
   vector_array_t X_, W_, V_, U_;
   vector_array_t XNew_, UNew_, WNew_;
-
-  // Problem size
-  int numDecisionVariables_;
-  int numDynamicsConstraints_;
 };
 
 }  // namespace ocs2

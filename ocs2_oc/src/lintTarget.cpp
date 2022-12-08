@@ -34,7 +34,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // multiple_shooting
 #include <ocs2_oc/multiple_shooting/Helpers.h>
 #include <ocs2_oc/multiple_shooting/Initialization.h>
+#include <ocs2_oc/multiple_shooting/LagrangianEvaluation.h>
 #include <ocs2_oc/multiple_shooting/PerformanceIndexComputation.h>
+#include <ocs2_oc/multiple_shooting/ProjectionMultiplierCoefficients.h>
 #include <ocs2_oc/multiple_shooting/Transcription.h>
 
 // oc_data
@@ -77,6 +79,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // trajectory_adjustment
 #include <ocs2_oc/trajectory_adjustment/TrajectorySpreading.h>
+#include <ocs2_oc/trajectory_adjustment/TrajectorySpreadingHelperFunctions.h>
 
 // dummy target for clang toolchain
 int main() {

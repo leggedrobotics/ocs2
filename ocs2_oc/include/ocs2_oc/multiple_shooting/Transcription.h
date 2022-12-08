@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/integration/SensitivityIntegrator.h>
 
+#include "ocs2_oc/multiple_shooting/ProjectionMultiplierCoefficients.h"
 #include "ocs2_oc/oc_problem/OptimalControlProblem.h"
 
 namespace ocs2 {
@@ -41,13 +42,13 @@ namespace multiple_shooting {
  * Results of the transcription at an intermediate node
  */
 struct Transcription {
-  VectorFunctionLinearApproximation dynamics;
   ScalarFunctionQuadraticApproximation cost;
-  matrix_t constraintPseudoInverse;
-  VectorFunctionLinearApproximation constraintsProjection;
+  VectorFunctionLinearApproximation dynamics;
   VectorFunctionLinearApproximation stateInputEqConstraints;
   VectorFunctionLinearApproximation stateIneqConstraints;
   VectorFunctionLinearApproximation stateInputIneqConstraints;
+  VectorFunctionLinearApproximation constraintsProjection;
+  ProjectionMultiplierCoefficients projectionMultiplierCoefficients;
 };
 
 /**
@@ -70,9 +71,9 @@ Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlP
  * Apply the state-input equality constraint projection for a single intermediate node transcription.
  *
  * @param transcription : Transcription for a single intermediate node
- * @param extractEqualityConstraintsPseudoInverse
+ * @param extractProjectionMultiplier : Whether to extract the projection multiplier.
  */
-void projectTranscription(Transcription& transcription, bool extractEqualityConstraintsPseudoInverse = false);
+void projectTranscription(Transcription& transcription, bool extractProjectionMultiplier = false);
 
 /**
  * Results of the transcription at a terminal node
@@ -97,8 +98,8 @@ TerminalTranscription setupTerminalNode(const OptimalControlProblem& optimalCont
  * Results of the transcription at an event
  */
 struct EventTranscription {
-  VectorFunctionLinearApproximation dynamics;
   ScalarFunctionQuadraticApproximation cost;
+  VectorFunctionLinearApproximation dynamics;
   VectorFunctionLinearApproximation eqConstraints;
   VectorFunctionLinearApproximation ineqConstraints;
 };

@@ -119,23 +119,5 @@ PrimalSolution toPrimalSolution(const std::vector<AnnotatedTime>& time, ModeSche
   return primalSolution;
 }
 
-void ProjectionMultiplierCoefficients::compute(const VectorFunctionLinearApproximation& dynamics,
-                                               const ScalarFunctionQuadraticApproximation& cost,
-                                               const VectorFunctionLinearApproximation& constraintProjection,
-                                               const matrix_t& pseudoInverse) {
-  vector_t semiprojectedCost_dfdu = cost.dfdu;
-  semiprojectedCost_dfdu.noalias() += cost.dfduu * constraintProjection.f;
-
-  matrix_t semiprojectedCost_dfdux = cost.dfdux;
-  semiprojectedCost_dfdux.noalias() += cost.dfduu * constraintProjection.dfdx;
-
-  const matrix_t semiprojectedCost_dfduu = cost.dfduu * constraintProjection.dfdu;
-
-  this->dfdx.noalias() = -pseudoInverse * semiprojectedCost_dfdux;
-  this->dfdu.noalias() = -pseudoInverse * semiprojectedCost_dfduu;
-  this->dfdcostate.noalias() = -pseudoInverse * dynamics.dfdu.transpose();
-  this->f.noalias() = -pseudoInverse * semiprojectedCost_dfdu;
-}
-
 }  // namespace multiple_shooting
 }  // namespace ocs2

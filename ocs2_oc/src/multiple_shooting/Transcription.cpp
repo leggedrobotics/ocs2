@@ -83,21 +83,23 @@ Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlP
   return transcription;
 }
 
-void projectTranscription(Transcription& transcription, bool extractEqualityConstraintsPseudoInverse) {
-  auto& dynamics = transcription.dynamics;
+void projectTranscription(Transcription& transcription, bool extractProjectionMultiplier) {
   auto& cost = transcription.cost;
-  auto& projection = transcription.constraintsProjection;
-  auto& constraintPseudoInverse = transcription.constraintPseudoInverse;
+  auto& dynamics = transcription.dynamics;
   auto& stateInputEqConstraints = transcription.stateInputEqConstraints;
   auto& stateInputIneqConstraints = transcription.stateInputIneqConstraints;
+  auto& projection = transcription.constraintsProjection;
+  auto& projectionMultiplierCoefficients = transcription.projectionMultiplierCoefficients;
 
   if (stateInputEqConstraints.f.size() > 0) {
     // Projection stored instead of constraint, // TODO: benchmark between lu and qr method. LU seems slightly faster.
-    if (extractEqualityConstraintsPseudoInverse) {
+    if (extractProjectionMultiplier) {
+      matrix_t constraintPseudoInverse;
       std::tie(projection, constraintPseudoInverse) = LinearAlgebra::qrConstraintProjection(stateInputEqConstraints);
+      projectionMultiplierCoefficients.compute(cost, dynamics, projection, constraintPseudoInverse);
     } else {
       projection = LinearAlgebra::luConstraintProjection(stateInputEqConstraints).first;
-      constraintPseudoInverse = matrix_t();
+      projectionMultiplierCoefficients = ProjectionMultiplierCoefficients();
     }
     stateInputEqConstraints = VectorFunctionLinearApproximation();
 
@@ -142,8 +144,8 @@ EventTranscription setupEventNode(const OptimalControlProblem& optimalControlPro
                                   const vector_t& x_next) {
   // Results and short-hand notation
   EventTranscription transcription;
-  auto& dynamics = transcription.dynamics;
   auto& cost = transcription.cost;
+  auto& dynamics = transcription.dynamics;
   auto& eqConstraints = transcription.eqConstraints;
   auto& ineqConstraints = transcription.ineqConstraints;
 

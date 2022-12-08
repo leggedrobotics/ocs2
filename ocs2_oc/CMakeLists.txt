@@ -51,7 +51,9 @@ add_library(${PROJECT_NAME}
   src/approximate_model/LinearQuadraticApproximator.cpp
   src/multiple_shooting/Helpers.cpp
   src/multiple_shooting/Initialization.cpp
+  src/multiple_shooting/LagrangianEvaluation.cpp
   src/multiple_shooting/PerformanceIndexComputation.cpp
+  src/multiple_shooting/ProjectionMultiplierCoefficients.cpp
   src/multiple_shooting/Transcription.cpp
   src/oc_data/LoopshapingPrimalSolution.cpp
   src/oc_data/TimeDiscretization.cpp
@@ -128,7 +130,7 @@ install(DIRECTORY test/include/${PROJECT_NAME}/
 ## $ catkin_test_results ../../../build/ocs2_oc
 
 catkin_add_gtest(test_${PROJECT_NAME}_multiple_shooting
-  test/multiple_shooting/testHelpers.cpp
+  test/multiple_shooting/testProjectionMultiplierCoefficients.cpp
   test/multiple_shooting/testTranscriptionPerformanceIndex.cpp
 )
 add_dependencies(test_${PROJECT_NAME}_multiple_shooting

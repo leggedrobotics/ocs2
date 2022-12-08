@@ -67,7 +67,9 @@ struct Settings {
   // Inequality penalty relaxed barrier parameters
   scalar_t inequalityConstraintMu = 0.0;
   scalar_t inequalityConstraintDelta = 1e-6;
+
   bool projectStateInputEqualityConstraints = true;  // Use a projection method to resolve the state-input constraint Cx+Du+e
+  bool extractProjectionMultiplier = false;          // Extract the Lagrange multiplier of the projected state-input constraint Cx+Du+e
 
   // Printing
   bool printSolverStatus = false;      // Print HPIPM status after solving the QP subproblem

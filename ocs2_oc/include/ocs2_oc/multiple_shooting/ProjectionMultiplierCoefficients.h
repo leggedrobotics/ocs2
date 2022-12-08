@@ -27,38 +27,34 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <gtest/gtest.h>
+#pragma once
 
-#include <ocs2_core/misc/LinearAlgebra.h>
-#include <ocs2_oc/multiple_shooting/Helpers.h>
+#include <ocs2_core/Types.h>
 
-#include "ocs2_oc/test/testProblemsGeneration.h"
+namespace ocs2 {
+namespace multiple_shooting {
 
-using namespace ocs2;
+/**
+ * Coefficients to compute the Newton step of the Lagrange multiplier associated with the state-input equality constraint such that
+ * dfdx * dx + dfdu * du + dfdcostate * dcostate + f
+ */
+struct ProjectionMultiplierCoefficients {
+  matrix_t dfdx;
+  matrix_t dfdu;
+  matrix_t dfdcostate;
+  vector_t f;
 
-TEST(testMultipleShootingHelpers, testProjectionMultiplierCoefficients) {
-  constexpr size_t stateDim = 30;
-  constexpr size_t inputDim = 20;
-  constexpr size_t constraintDim = 10;
+  /**
+   * Computes the coefficients of the Lagrange multiplier associated with the state-input equality constraint.
+   *
+   * @param cost : The cost quadratic approximation.
+   * @param dynamics : The dynamics linear approximation.
+   * @param constraintProjection : The constraint projection.
+   * @param pseudoInverse : Left pseudo-inverse of D^T of the state-input linearized equality constraint (C dx + D du + e = 0).
+   */
+  void compute(const ScalarFunctionQuadraticApproximation& cost, const VectorFunctionLinearApproximation& dynamics,
+               const VectorFunctionLinearApproximation& constraintProjection, const matrix_t& pseudoInverse);
+};
 
-  const auto cost = getRandomCost(stateDim, inputDim);
-  const auto dynamics = getRandomDynamics(stateDim, inputDim);
-  const auto constraint = getRandomConstraints(stateDim, inputDim, constraintDim);
-
-  auto result = LinearAlgebra::qrConstraintProjection(constraint);
-  const auto projection = std::move(result.first);
-  const auto pseudoInverse = std::move(result.second);
-
-  multiple_shooting::ProjectionMultiplierCoefficients projectionMultiplierCoefficients;
-  projectionMultiplierCoefficients.compute(dynamics, cost, projection, pseudoInverse);
-
-  const matrix_t dfdx = -pseudoInverse * (cost.dfdux + cost.dfduu * projection.dfdx);
-  const matrix_t dfdu = -pseudoInverse * (cost.dfduu * projection.dfdu);
-  const matrix_t dfdcostate = -pseudoInverse * dynamics.dfdu.transpose();
-  const vector_t f = -pseudoInverse * (cost.dfdu + cost.dfduu * projection.f);
-
-  ASSERT_TRUE(projectionMultiplierCoefficients.dfdx.isApprox(dfdx));
-  ASSERT_TRUE(projectionMultiplierCoefficients.dfdu.isApprox(dfdu));
-  ASSERT_TRUE(projectionMultiplierCoefficients.dfdcostate.isApprox(dfdcostate));
-  ASSERT_TRUE(projectionMultiplierCoefficients.f.isApprox(f));
-}
+}  // namespace multiple_shooting
+}  // namespace ocs2

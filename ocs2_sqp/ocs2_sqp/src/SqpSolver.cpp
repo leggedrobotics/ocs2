@@ -290,7 +290,7 @@ PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<Annotated
   std::vector<PerformanceIndex> performance(settings_.nThreads, PerformanceIndex());
   cost_.resize(N + 1);
   dynamics_.resize(N);
-  stateInputEqConstraints_.resize(N);
+  stateInputEqConstraints_.resize(N + 1);  // +1 because of HpipmInterface size check
   stateIneqConstraints_.resize(N + 1);
   stateInputIneqConstraints_.resize(N);
   constraintsProjection_.resize(N);
@@ -310,10 +310,10 @@ PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<Annotated
         workerPerformance += multiple_shooting::computeEventPerformance(result);
         cost_[i] = std::move(result.cost);
         dynamics_[i] = std::move(result.dynamics);
-        stateInputEqConstraints_[i] = VectorFunctionLinearApproximation(0, x[i].size(), 0);
+        stateInputEqConstraints_[i].resize(0, x[i].size());
         stateIneqConstraints_[i] = std::move(result.ineqConstraints);
-        stateInputIneqConstraints_[i] = VectorFunctionLinearApproximation::Zero(0, x[i].size(), 0);
-        constraintsProjection_[i] = VectorFunctionLinearApproximation::Zero(0, x[i].size(), 0);
+        stateInputIneqConstraints_[i].resize(0, x[i].size());
+        constraintsProjection_[i].resize(0, x[i].size());
         projectionMultiplierCoefficients_[i] = multiple_shooting::ProjectionMultiplierCoefficients();
       } else {
         // Normal, intermediate node
@@ -341,6 +341,7 @@ PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<Annotated
       auto result = multiple_shooting::setupTerminalNode(ocpDefinition, tN, x[N]);
       workerPerformance += multiple_shooting::computeTerminalPerformance(result);
       cost_[i] = std::move(result.cost);
+      stateInputEqConstraints_[i].resize(0, x[i].size());
       stateIneqConstraints_[i] = std::move(result.ineqConstraints);
     }
 

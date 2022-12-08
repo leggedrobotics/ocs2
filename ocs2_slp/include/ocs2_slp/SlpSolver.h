@@ -174,7 +174,7 @@ class SlpSolver : public SolverBase {
   std::vector<VectorFunctionLinearApproximation> stateIneqConstraints_;
   std::vector<VectorFunctionLinearApproximation> stateInputIneqConstraints_;
   std::vector<VectorFunctionLinearApproximation> constraintsProjection_;
-  
+
   // Lagrange multipliers
   std::vector<multiple_shooting::ProjectionMultiplierCoefficients> projectionMultiplierCoefficients_;
 

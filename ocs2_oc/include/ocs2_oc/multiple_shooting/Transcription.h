@@ -42,13 +42,13 @@ namespace multiple_shooting {
  * Results of the transcription at an intermediate node
  */
 struct Transcription {
-  VectorFunctionLinearApproximation dynamics;
   ScalarFunctionQuadraticApproximation cost;
-  ProjectionMultiplierCoefficients projectionMultiplierCoefficients;
-  VectorFunctionLinearApproximation constraintsProjection;
+  VectorFunctionLinearApproximation dynamics;
   VectorFunctionLinearApproximation stateInputEqConstraints;
   VectorFunctionLinearApproximation stateIneqConstraints;
   VectorFunctionLinearApproximation stateInputIneqConstraints;
+  VectorFunctionLinearApproximation constraintsProjection;
+  ProjectionMultiplierCoefficients projectionMultiplierCoefficients;
 };
 
 /**
@@ -71,7 +71,7 @@ Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlP
  * Apply the state-input equality constraint projection for a single intermediate node transcription.
  *
  * @param transcription : Transcription for a single intermediate node
- * @param extractProjectionMultiplier
+ * @param extractProjectionMultiplier : Whether to extract the projection multiplier.
  */
 void projectTranscription(Transcription& transcription, bool extractProjectionMultiplier = false);
 
@@ -98,8 +98,8 @@ TerminalTranscription setupTerminalNode(const OptimalControlProblem& optimalCont
  * Results of the transcription at an event
  */
 struct EventTranscription {
-  VectorFunctionLinearApproximation dynamics;
   ScalarFunctionQuadraticApproximation cost;
+  VectorFunctionLinearApproximation dynamics;
   VectorFunctionLinearApproximation eqConstraints;
   VectorFunctionLinearApproximation ineqConstraints;
 };

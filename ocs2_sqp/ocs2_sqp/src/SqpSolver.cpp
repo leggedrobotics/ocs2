@@ -251,20 +251,6 @@ SqpSolver::OcpSubproblemSolution SqpSolver::getOCPSolution(const vector_t& delta
 
   // remap the tilde delta u to real delta u
   if (settings_.projectStateInputEqualityConstraints) {
-    // compute Lagrange multipliers before remap
-    projectionMultiplier_.resize(projectionMultiplierCoefficients_.size());
-    if (settings_.extractProjectionMultiplier) {
-      for (int i = 0; i < projectionMultiplierCoefficients_.size(); ++i) {
-        if (projectionMultiplierCoefficients_[i].f.size() > 0) {
-          const auto& dfdx = projectionMultiplierCoefficients_[i].dfdx;
-          const auto& dfdu = projectionMultiplierCoefficients_[i].dfdu;
-          const auto& f = projectionMultiplierCoefficients_[i].f;
-          projectionMultiplier_[i].noalias() = dfdx * deltaXSol[i] + dfdu * deltaUSol[i] + f;
-        } else {
-          projectionMultiplier_[i].resize(0);
-        }
-      }
-    }
     multiple_shooting::remapProjectedInput(constraintsProjection_, deltaXSol, deltaUSol);
   }
 

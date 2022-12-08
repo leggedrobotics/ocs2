@@ -36,7 +36,7 @@ namespace multiple_shooting {
 
 /**
  * Coefficients to compute the Newton step of the Lagrange multiplier associated with the state-input equality constraint such that
- * dfdx*dx + dfdu*du + dfdcostate*dcostate + f
+ * dfdx * dx + dfdu * du + dfdcostate * dcostate + f
  */
 struct ProjectionMultiplierCoefficients {
   matrix_t dfdx;
@@ -45,14 +45,14 @@ struct ProjectionMultiplierCoefficients {
   vector_t f;
 
   /**
-   * Extracts the coefficients of the Lagrange multiplier associated with the state-input equality constraint.
+   * Computes the coefficients of the Lagrange multiplier associated with the state-input equality constraint.
    *
-   * @param dynamics : Dynamics
-   * @param cost : Cost
-   * @param constraintProjection : Constraint projection.
-   * @param pseudoInverse : Left pseudo-inverse of D^T of the state-input equality constraint.
+   * @param cost : The cost quadratic approximation.
+   * @param dynamics : The dynamics linear approximation.
+   * @param constraintProjection : The constraint projection.
+   * @param pseudoInverse : Left pseudo-inverse of D^T of the state-input linearized equality constraint (C dx + D du + e = 0).
    */
-  void compute(const VectorFunctionLinearApproximation& dynamics, const ScalarFunctionQuadraticApproximation& cost,
+  void compute(const ScalarFunctionQuadraticApproximation& cost, const VectorFunctionLinearApproximation& dynamics,
                const VectorFunctionLinearApproximation& constraintProjection, const matrix_t& pseudoInverse);
 };
 

@@ -288,20 +288,19 @@ PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<Annotated
   const int N = static_cast<int>(time.size()) - 1;
 
   std::vector<PerformanceIndex> performance(settings_.nThreads, PerformanceIndex());
-  dynamics_.resize(N);
   cost_.resize(N + 1);
-  constraintsProjection_.resize(N);
-  projectionMultiplierCoefficients_.resize(N);
-  stateInputEqConstraints_.resize(N + 1);
+  dynamics_.resize(N);
+  stateInputEqConstraints_.resize(N);
   stateIneqConstraints_.resize(N + 1);
   stateInputIneqConstraints_.resize(N);
+  constraintsProjection_.resize(N);
+  projectionMultiplierCoefficients_.resize(N);
 
   std::atomic_int timeIndex{0};
   auto parallelTask = [&](int workerId) {
     // Get worker specific resources
     OptimalControlProblem& ocpDefinition = ocpDefinitions_[workerId];
     PerformanceIndex workerPerformance;  // Accumulate performance in local variable
-    const bool projectStateInputEqualityConstraints = settings_.projectStateInputEqualityConstraints;
 
     int i = timeIndex++;
     while (i < N) {
@@ -309,13 +308,13 @@ PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<Annotated
         // Event node
         auto result = multiple_shooting::setupEventNode(ocpDefinition, time[i].time, x[i], x[i + 1]);
         workerPerformance += multiple_shooting::computeEventPerformance(result);
-        dynamics_[i] = std::move(result.dynamics);
         cost_[i] = std::move(result.cost);
-        constraintsProjection_[i] = VectorFunctionLinearApproximation::Zero(0, x[i].size(), 0);
-        projectionMultiplierCoefficients_[i] = multiple_shooting::ProjectionMultiplierCoefficients();
-        stateInputEqConstraints_[i] = std::move(result.eqConstraints);
+        dynamics_[i] = std::move(result.dynamics);
+        stateInputEqConstraints_[i] = VectorFunctionLinearApproximation(0, x[i].size(), 0);
         stateIneqConstraints_[i] = std::move(result.ineqConstraints);
         stateInputIneqConstraints_[i] = VectorFunctionLinearApproximation::Zero(0, x[i].size(), 0);
+        constraintsProjection_[i] = VectorFunctionLinearApproximation::Zero(0, x[i].size(), 0);
+        projectionMultiplierCoefficients_[i] = multiple_shooting::ProjectionMultiplierCoefficients();
       } else {
         // Normal, intermediate node
         const scalar_t ti = getIntervalStart(time[i]);
@@ -325,13 +324,13 @@ PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<Annotated
         if (settings_.projectStateInputEqualityConstraints) {
           multiple_shooting::projectTranscription(result, settings_.extractProjectionMultiplier);
         }
-        dynamics_[i] = std::move(result.dynamics);
         cost_[i] = std::move(result.cost);
-        constraintsProjection_[i] = std::move(result.constraintsProjection);
-        projectionMultiplierCoefficients_[i] = std::move(result.projectionMultiplierCoefficients);
+        dynamics_[i] = std::move(result.dynamics);
         stateInputEqConstraints_[i] = std::move(result.stateInputEqConstraints);
         stateIneqConstraints_[i] = std::move(result.stateIneqConstraints);
         stateInputIneqConstraints_[i] = std::move(result.stateInputIneqConstraints);
+        constraintsProjection_[i] = std::move(result.constraintsProjection);
+        projectionMultiplierCoefficients_[i] = std::move(result.projectionMultiplierCoefficients);
       }
 
       i = timeIndex++;
@@ -342,7 +341,6 @@ PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<Annotated
       auto result = multiple_shooting::setupTerminalNode(ocpDefinition, tN, x[N]);
       workerPerformance += multiple_shooting::computeTerminalPerformance(result);
       cost_[i] = std::move(result.cost);
-      stateInputEqConstraints_[i] = std::move(result.eqConstraints);
       stateIneqConstraints_[i] = std::move(result.ineqConstraints);
     }
 

@@ -62,6 +62,9 @@ struct Settings {
   scalar_t inequalityConstraintMu = 0.0;
   scalar_t inequalityConstraintDelta = 1e-6;
 
+  // Extract the Lagrange multiplier of the projected state-input constraint Cx+Du+e
+  bool extractProjectionMultiplier = false;
+
   // Printing
   bool printSolverStatus = false;      // Print HPIPM status after solving the QP subproblem
   bool printSolverStatistics = false;  // Print benchmarking of the multiple shooting method

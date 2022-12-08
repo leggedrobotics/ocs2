@@ -32,8 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace multiple_shooting {
 
-void ProjectionMultiplierCoefficients::compute(const VectorFunctionLinearApproximation& dynamics,
-                                               const ScalarFunctionQuadraticApproximation& cost,
+void ProjectionMultiplierCoefficients::compute(const ScalarFunctionQuadraticApproximation& cost,
+                                               const VectorFunctionLinearApproximation& dynamics,
                                                const VectorFunctionLinearApproximation& constraintProjection,
                                                const matrix_t& pseudoInverse) {
   vector_t semiprojectedCost_dfdu = cost.dfdu;

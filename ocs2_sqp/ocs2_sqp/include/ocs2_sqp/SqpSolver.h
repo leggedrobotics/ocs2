@@ -174,10 +174,13 @@ class SqpSolver : public SolverBase {
   std::vector<VectorFunctionLinearApproximation> dynamics_;
   std::vector<ScalarFunctionQuadraticApproximation> cost_;
   std::vector<VectorFunctionLinearApproximation> constraintsProjection_;
-  std::vector<multiple_shooting::ProjectionMultiplierCoefficients> projectionMultiplierCoefficients_;
   std::vector<VectorFunctionLinearApproximation> stateInputEqConstraints_;
   std::vector<VectorFunctionLinearApproximation> stateIneqConstraints_;
   std::vector<VectorFunctionLinearApproximation> stateInputIneqConstraints_;
+
+  // Lagrange multipliers
+  vector_array_t projectionMultiplier_;
+  std::vector<multiple_shooting::ProjectionMultiplierCoefficients> projectionMultiplierCoefficients_;
 
   // Iteration performance log
   std::vector<PerformanceIndex> performanceIndeces_;

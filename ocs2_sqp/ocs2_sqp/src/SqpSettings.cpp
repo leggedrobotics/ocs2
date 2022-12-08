@@ -66,6 +66,7 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   loadData::loadPtreeValue(pt, settings.inequalityConstraintMu, fieldName + ".inequalityConstraintMu", verbose);
   loadData::loadPtreeValue(pt, settings.inequalityConstraintDelta, fieldName + ".inequalityConstraintDelta", verbose);
   loadData::loadPtreeValue(pt, settings.projectStateInputEqualityConstraints, fieldName + ".projectStateInputEqualityConstraints", verbose);
+  loadData::loadPtreeValue(pt, settings.extractProjectionMultiplier, fieldName + ".extractProjectionMultiplier", verbose);
   loadData::loadPtreeValue(pt, settings.printSolverStatus, fieldName + ".printSolverStatus", verbose);
   loadData::loadPtreeValue(pt, settings.printSolverStatistics, fieldName + ".printSolverStatistics", verbose);
   loadData::loadPtreeValue(pt, settings.printLinesearch, fieldName + ".printLinesearch", verbose);

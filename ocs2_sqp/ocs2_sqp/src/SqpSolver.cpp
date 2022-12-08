@@ -251,6 +251,20 @@ SqpSolver::OcpSubproblemSolution SqpSolver::getOCPSolution(const vector_t& delta
 
   // remap the tilde delta u to real delta u
   if (settings_.projectStateInputEqualityConstraints) {
+    // compute Lagrange multipliers before remap
+    projectionMultiplier_.resize(projectionMultiplierCoefficients_.size());
+    if (settings_.extractProjectionMultiplier) {
+      for (int i = 0; i < projectionMultiplierCoefficients_.size(); ++i) {
+        if (projectionMultiplierCoefficients_[i].f.size() > 0) {
+          const auto& dfdx = projectionMultiplierCoefficients_[i].dfdx;
+          const auto& dfdu = projectionMultiplierCoefficients_[i].dfdu;
+          const auto& f = projectionMultiplierCoefficients_[i].f;
+          projectionMultiplier_[i].noalias() = dfdx * deltaXSol[i] + dfdu * deltaUSol[i] + f;
+        } else {
+          projectionMultiplier_[i].resize(0);
+        }
+      }
+    }
     multiple_shooting::remapProjectedInput(constraintsProjection_, deltaXSol, deltaUSol);
   }
 
@@ -312,6 +326,7 @@ PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<Annotated
         dynamics_[i] = std::move(result.dynamics);
         cost_[i] = std::move(result.cost);
         constraintsProjection_[i] = VectorFunctionLinearApproximation::Zero(0, x[i].size(), 0);
+        projectionMultiplierCoefficients_[i] = multiple_shooting::ProjectionMultiplierCoefficients();
         stateInputEqConstraints_[i] = std::move(result.eqConstraints);
         stateIneqConstraints_[i] = std::move(result.ineqConstraints);
         stateInputIneqConstraints_[i] = VectorFunctionLinearApproximation::Zero(0, x[i].size(), 0);
@@ -322,7 +337,7 @@ PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<Annotated
         auto result = multiple_shooting::setupIntermediateNode(ocpDefinition, sensitivityDiscretizer_, ti, dt, x[i], x[i + 1], u[i]);
         workerPerformance += multiple_shooting::computeIntermediatePerformance(result, dt);
         if (settings_.projectStateInputEqualityConstraints) {
-          multiple_shooting::projectTranscription(result, settings_.extractProjectionMultiplierCoefficients);
+          multiple_shooting::projectTranscription(result, settings_.extractProjectionMultiplier);
         }
         dynamics_[i] = std::move(result.dynamics);
         cost_[i] = std::move(result.cost);

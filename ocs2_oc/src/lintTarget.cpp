@@ -80,7 +80,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // trajectory_adjustment
 #include <ocs2_oc/trajectory_adjustment/TrajectorySpreading.h>
 #include <ocs2_oc/trajectory_adjustment/TrajectorySpreadingHelperFunctions.h>
-#include <ocs2_oc/trajectory_adjustment/VectorTrajectory.h>
 
 // dummy target for clang toolchain
 int main() {

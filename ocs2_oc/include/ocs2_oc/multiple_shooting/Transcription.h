@@ -71,9 +71,9 @@ Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlP
  * Apply the state-input equality constraint projection for a single intermediate node transcription.
  *
  * @param transcription : Transcription for a single intermediate node
- * @param extractProjectionMultiplierCoefficients
+ * @param extractProjectionMultiplier
  */
-void projectTranscription(Transcription& transcription, bool extractProjectionMultiplierCoefficients = false);
+void projectTranscription(Transcription& transcription, bool extractProjectionMultiplier = false);
 
 /**
  * Results of the transcription at a terminal node

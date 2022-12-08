@@ -124,9 +124,9 @@ TEST(BouncingMassTest, state_triggered_hybrid_slq) {
   const ocs2::matrix_t Q = (ocs2::matrix_t(STATE_DIM, STATE_DIM) << 50.0, 0.0, 0.0, 0.0, 50.0, 0.0, 0.0, 0.0, 0.0).finished();
   const ocs2::matrix_t R = (ocs2::matrix_t(INPUT_DIM, INPUT_DIM) << 1.0).finished();
   const ocs2::matrix_t Qf = (ocs2::matrix_t(STATE_DIM, STATE_DIM) << 56.63, 7.07, 0.0, 7.07, 8.01, 0.0, 0.0, 0.0, 0.0).finished();
-  problem.costPtr->add("cost", std::unique_ptr<BouncingMassCost>(new BouncingMassCost(reference, Q, R)));
-  problem.preJumpCostPtr->add("preJumpCost", std::unique_ptr<BouncingMassFinalCost>(new BouncingMassFinalCost(reference, Qf, finalTime)));
-  problem.finalCostPtr->add("finalCost", std::unique_ptr<BouncingMassFinalCost>(new BouncingMassFinalCost(reference, Qf, finalTime)));
+  problem.costPtr->add("cost", std::make_unique<BouncingMassCost>(reference, Q, R));
+  problem.preJumpCostPtr->add("preJumpCost", std::make_unique<BouncingMassFinalCost>(reference, Qf, finalTime));
+  problem.finalCostPtr->add("finalCost", std::make_unique<BouncingMassFinalCost>(reference, Qf, finalTime));
 
   // Rollout Class
   ocs2::StateTriggeredRollout stateTriggeredRollout(systemDynamics, rolloutSettings);

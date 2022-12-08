@@ -48,11 +48,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // oc_problem
 #include <ocs2_oc/oc_problem/LoopshapingOptimalControlProblem.h>
+#include <ocs2_oc/oc_problem/OcpSize.h>
+#include <ocs2_oc/oc_problem/OcpToKkt.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblemHelperFunction.h>
 
 // oc_solver
 #include <ocs2_oc/oc_solver/SolverBase.h>
+
+// precondition
+#include <ocs2_oc/precondition/Ruzi.h>
 
 // synchronized_module
 #include <ocs2_oc/synchronized_module/LoopshapingReferenceManager.h>

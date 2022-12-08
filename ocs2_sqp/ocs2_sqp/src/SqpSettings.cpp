@@ -44,7 +44,7 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   Settings settings;
 
   if (verbose) {
-    std::cerr << "\n #### Multiple Shooting Settings:";
+    std::cerr << "\n #### Multiple-Shooting SQP Settings:";
     std::cerr << "\n #### =============================================================================\n";
   }
 

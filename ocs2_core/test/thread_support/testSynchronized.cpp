@@ -35,7 +35,7 @@ TEST(testLockable, construction) {
   ASSERT_FALSE(defaultObj.lock());
 
   // from pointer
-  std::unique_ptr<double> doublePtr(new double(1.0));
+  auto doublePtr = std::make_unique<double>(1.0);
   ocs2::Synchronized<double> nonDefaultObj(std::move(doublePtr));
   ASSERT_TRUE(nonDefaultObj.lock());
 }

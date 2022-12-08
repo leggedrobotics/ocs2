@@ -141,7 +141,7 @@ struct ThreadPool::Task final : public ThreadPool::TaskBase {
 /**************************************************************************************************/
 template <typename Functor>
 std::future<typename std::result_of<Functor(int)>::type> ThreadPool::run(Functor taskFunction) {
-  std::unique_ptr<Task<Functor>> taskPtr(new Task<Functor>(std::move(taskFunction)));
+  auto taskPtr = std::make_unique<Task<Functor>>(std::move(taskFunction));
   auto future = taskPtr->packagedTask.get_future();
 
   if (workerThreads_.empty()) {

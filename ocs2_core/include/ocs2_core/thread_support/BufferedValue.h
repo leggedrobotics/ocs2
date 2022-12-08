@@ -58,10 +58,10 @@ class BufferedValue {
   T& get() { return activeValue_; }
 
   /** Copy a new value into the buffer. */
-  void setBuffer(const T& value) { buffer_.reset(std::unique_ptr<T>(new T(value))); }
+  void setBuffer(const T& value) { buffer_.reset(std::make_unique<T>(value)); }
 
   /** Move a new value into the buffer. */
-  void setBuffer(T&& value) { buffer_.reset(std::unique_ptr<T>(new T(std::move(value)))); }
+  void setBuffer(T&& value) { buffer_.reset(std::make_unique<T>(std::move(value))); }
 
   /**
    * Replaces the active value with the value in the buffer.

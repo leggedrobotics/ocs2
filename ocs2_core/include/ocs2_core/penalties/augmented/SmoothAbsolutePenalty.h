@@ -76,9 +76,7 @@ class SmoothAbsolutePenalty final : public AugmentedPenaltyBase {
   explicit SmoothAbsolutePenalty(Config config) : config_(std::move(config)) {}
 
   /** Factory function */
-  static std::unique_ptr<SmoothAbsolutePenalty> create(Config config) {
-    return std::unique_ptr<SmoothAbsolutePenalty>(new SmoothAbsolutePenalty(std::move(config)));
-  }
+  static std::unique_ptr<SmoothAbsolutePenalty> create(Config config) { return std::make_unique<SmoothAbsolutePenalty>(std::move(config)); }
 
   ~SmoothAbsolutePenalty() override = default;
   SmoothAbsolutePenalty* clone() const override { return new SmoothAbsolutePenalty(*this); }

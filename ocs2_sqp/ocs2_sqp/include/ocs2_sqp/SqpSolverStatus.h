@@ -29,12 +29,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <string>
+
 #include <ocs2_core/Types.h>
 #include <ocs2_oc/oc_data/PerformanceIndex.h>
 #include <ocs2_oc/search_strategy/FilterLinesearch.h>
 
 namespace ocs2 {
 namespace sqp {
+
+/** Different types of convergence */
+enum class Convergence { FALSE, ITERATIONS, STEPSIZE, METRICS, PRIMAL };
 
 /** Struct to contain the result and logging data of the stepsize computation */
 struct StepInfo {
@@ -51,10 +56,22 @@ struct StepInfo {
   scalar_t totalConstraintViolationAfterStep;  // constraint metric used in the line search
 };
 
-/** Different types of convergence */
-enum class Convergence { FALSE, ITERATIONS, STEPSIZE, METRICS, PRIMAL };
-
-std::string toString(const Convergence& convergence);
+/** Transforms sqp::Convergence to string */
+inline std::string toString(const Convergence& convergence) {
+  switch (convergence) {
+    case Convergence::ITERATIONS:
+      return "Maximum number of iterations reached";
+    case Convergence::STEPSIZE:
+      return "Step size below minimum";
+    case Convergence::METRICS:
+      return "Cost decrease and constraint satisfaction below tolerance";
+    case Convergence::PRIMAL:
+      return "Primal update below tolerance";
+    case Convergence::FALSE:
+    default:
+      return "Not Converged";
+  }
+}
 
 }  // namespace sqp
 }  // namespace ocs2

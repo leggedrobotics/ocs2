@@ -44,7 +44,7 @@ class TestQuadraticStateInputConstraint : public StateInputConstraint {
     P.setRandom(inputDim, stateDim);
     Q = (0.5 * Q.transpose() + 0.5 * Q).eval();
     R = (0.5 * R.transpose() + 0.5 * R).eval();
-    return std::unique_ptr<TestQuadraticStateInputConstraint>(new TestQuadraticStateInputConstraint(Q, R, P));
+    return std::make_unique<TestQuadraticStateInputConstraint>(std::move(Q), std::move(R), std::move(P));
   }
 
   ~TestQuadraticStateInputConstraint() override = default;
@@ -94,7 +94,7 @@ class TestQuadraticStateConstraint : public StateConstraint {
     matrix_t Q;
     Q.setRandom(stateDim, stateDim);
     Q = (0.5 * Q.transpose() + 0.5 * Q).eval();
-    return std::unique_ptr<TestQuadraticStateConstraint>(new TestQuadraticStateConstraint(Q));
+    return std::make_unique<TestQuadraticStateConstraint>(std::move(Q));
   }
 
   ~TestQuadraticStateConstraint() override = default;

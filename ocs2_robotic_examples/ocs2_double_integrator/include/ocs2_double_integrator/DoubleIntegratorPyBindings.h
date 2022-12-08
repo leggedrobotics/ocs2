@@ -30,9 +30,9 @@ class DoubleIntegratorPyBindings final : public PythonInterface {
     DoubleIntegratorInterface doubleIntegratorInterface(taskFile, libraryFolder);
 
     // MPC
-    std::unique_ptr<GaussNewtonDDP_MPC> mpcPtr(new GaussNewtonDDP_MPC(
+    auto mpcPtr = std::make_unique<GaussNewtonDDP_MPC>(
         doubleIntegratorInterface.mpcSettings(), doubleIntegratorInterface.ddpSettings(), doubleIntegratorInterface.getRollout(),
-        doubleIntegratorInterface.getOptimalControlProblem(), doubleIntegratorInterface.getInitializer()));
+        doubleIntegratorInterface.getOptimalControlProblem(), doubleIntegratorInterface.getInitializer());
     mpcPtr->getSolverPtr()->setReferenceManager(doubleIntegratorInterface.getReferenceManagerPtr());
 
     // Python interface

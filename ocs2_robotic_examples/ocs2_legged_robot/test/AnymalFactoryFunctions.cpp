@@ -50,7 +50,7 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::unique_ptr<PinocchioInterface> createAnymalPinocchioInterface() {
-  return std::unique_ptr<PinocchioInterface>(new PinocchioInterface(centroidal_model::createPinocchioInterface(URDF_FILE)));
+  return std::make_unique<PinocchioInterface>(centroidal_model::createPinocchioInterface(URDF_FILE));
 }
 
 /******************************************************************************************************/
@@ -71,11 +71,11 @@ std::shared_ptr<SwitchedModelReferenceManager> createReferenceManager(size_t num
   const auto defaultModeSequenceTemplate = loadModeSequenceTemplate(REFERENCE_FILE, "defaultModeSequenceTemplate", false);
 
   const ModelSettings modelSettings;
-  std::shared_ptr<GaitSchedule> gaitSchedule(
-      new GaitSchedule(initModeSchedule, defaultModeSequenceTemplate, modelSettings.phaseTransitionStanceTime));
-  std::unique_ptr<SwingTrajectoryPlanner> swingTrajectoryPlanner(
-      new SwingTrajectoryPlanner(loadSwingTrajectorySettings(TASK_FILE, "swing_trajectory_config", false), numFeet));
-  return std::make_shared<SwitchedModelReferenceManager>(gaitSchedule, std::move(swingTrajectoryPlanner));
+  auto gaitSchedule =
+      std::make_shared<GaitSchedule>(initModeSchedule, defaultModeSequenceTemplate, modelSettings.phaseTransitionStanceTime);
+  auto swingTrajectoryPlanner =
+      std::make_unique<SwingTrajectoryPlanner>(loadSwingTrajectorySettings(TASK_FILE, "swing_trajectory_config", false), numFeet);
+  return std::make_shared<SwitchedModelReferenceManager>(std::move(gaitSchedule), std::move(swingTrajectoryPlanner));
 }
 
 }  // namespace legged_robot

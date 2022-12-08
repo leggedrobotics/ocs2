@@ -37,7 +37,7 @@ TEST(TestConstraintCollection, add) {
   ocs2::StateInputConstraintCollection constraintCollection;
 
   // Add after construction
-  std::unique_ptr<TestEmptyConstraint> constraintTerm(new TestEmptyConstraint());
+  auto constraintTerm = std::make_unique<TestEmptyConstraint>();
   ASSERT_NO_THROW({ constraintCollection.add("Constraint1", std::move(constraintTerm)); });
 }
 
@@ -48,7 +48,7 @@ TEST(TestConstraintCollection, numberOfConstraints) {
   EXPECT_EQ(constraintCollection.getNumConstraints(0.0), 0);
 
   // Add Linear inequality constraint term, which has 2 constraints
-  std::unique_ptr<TestDummyConstraint> constraintTerm(new TestDummyConstraint());
+  auto constraintTerm = std::make_unique<TestDummyConstraint>();
   const size_t addedConstraints = constraintTerm->getNumConstraints(0.0);
   constraintCollection.add("Constraint1", std::move(constraintTerm));
 
@@ -63,7 +63,7 @@ TEST(TestConstraintCollection, activatingConstraints) {
   EXPECT_EQ(constraintCollection.getNumConstraints(0.0), 0);
 
   // Add Linear inequality constraint term, which has 2 constraints
-  std::unique_ptr<TestDummyConstraint> constraintTerm(new TestDummyConstraint());
+  auto constraintTerm = std::make_unique<TestDummyConstraint>();
   const size_t addedConstraints = constraintTerm->getNumConstraints(0.0);
   constraintCollection.add("Constraint1", std::move(constraintTerm));
 
@@ -78,7 +78,7 @@ TEST(TestConstraintCollection, activatingConstraints) {
 
 TEST(TestConstraintCollection, clone) {
   ocs2::StateInputConstraintCollection constraintCollection;
-  std::unique_ptr<TestDummyConstraint> constraintTerm(new TestDummyConstraint());
+  auto constraintTerm = std::make_unique<TestDummyConstraint>();
   const size_t addedConstraints = constraintTerm->getNumConstraints(0.0);
   constraintCollection.add("Constraint1", std::move(constraintTerm));
 
@@ -103,8 +103,8 @@ TEST(TestConstraintCollection, getValue) {
   EXPECT_EQ(constraintValues.size(), 0);
 
   // Add Linear inequality constraint term, which has 2 constraints, twice
-  std::unique_ptr<TestDummyConstraint> constraintTerm1(new TestDummyConstraint());
-  std::unique_ptr<TestDummyConstraint> constraintTerm2(new TestDummyConstraint());
+  auto constraintTerm1 = std::make_unique<TestDummyConstraint>();
+  auto constraintTerm2 = std::make_unique<TestDummyConstraint>();
   constraintCollection.add("Constraint1", std::move(constraintTerm1));
   constraintCollection.add("Constraint2", std::move(constraintTerm2));
 
@@ -128,8 +128,8 @@ TEST(TestConstraintCollection, getLinearApproximation) {
   x.setZero();
 
   // Add Linear inequality constraint term, which has 2 constraints, twice
-  std::unique_ptr<TestDummyConstraint> constraintTerm1(new TestDummyConstraint());
-  std::unique_ptr<TestDummyConstraint> constraintTerm2(new TestDummyConstraint());
+  auto constraintTerm1 = std::make_unique<TestDummyConstraint>();
+  auto constraintTerm2 = std::make_unique<TestDummyConstraint>();
   constraintCollection.add("Constraint1", std::move(constraintTerm1));
   constraintCollection.add("Constraint2", std::move(constraintTerm2));
 
@@ -161,8 +161,8 @@ TEST(TestConstraintCollection, getQuadraticApproximation) {
   x.setZero();
 
   // Add Linear inequality constraint term, which has 2 constraints, twice
-  std::unique_ptr<TestDummyConstraint> constraintTerm1(new TestDummyConstraint());
-  std::unique_ptr<TestDummyConstraint> constraintTerm2(new TestDummyConstraint());
+  auto constraintTerm1 = std::make_unique<TestDummyConstraint>();
+  auto constraintTerm2 = std::make_unique<TestDummyConstraint>();
   constraintCollection.add("Constraint1", std::move(constraintTerm1));
   constraintCollection.add("Constraint2", std::move(constraintTerm2));
 

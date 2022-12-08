@@ -75,7 +75,7 @@ class SlacknessSquaredHingePenalty final : public AugmentedPenaltyBase {
 
   /** Factory function */
   static std::unique_ptr<SlacknessSquaredHingePenalty> create(Config config) {
-    return std::unique_ptr<SlacknessSquaredHingePenalty>(new SlacknessSquaredHingePenalty(std::move(config)));
+    return std::make_unique<SlacknessSquaredHingePenalty>(std::move(config));
   }
 
   ~SlacknessSquaredHingePenalty() override = default;

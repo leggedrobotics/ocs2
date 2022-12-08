@@ -63,7 +63,7 @@ class PenaltyBaseWrapper final : public augmented::AugmentedPenaltyBase {
 };
 
 std::unique_ptr<PenaltyBaseWrapper> createWrapper(std::unique_ptr<PenaltyBase> penaltyPtr) {
-  return std::unique_ptr<PenaltyBaseWrapper>(new PenaltyBaseWrapper(std::move(penaltyPtr)));
+  return std::make_unique<PenaltyBaseWrapper>(std::move(penaltyPtr));
 }
 
 scalar_t getMultiplier(const vector_t* l, size_t ind) {

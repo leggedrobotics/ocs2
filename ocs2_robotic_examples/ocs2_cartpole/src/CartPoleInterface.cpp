@@ -92,8 +92,8 @@ CartPoleInterface::CartPoleInterface(const std::string& taskFile, const std::str
     std::cerr << "Q_final:\n" << Qf << "\n";
   }
 
-  problem_.costPtr->add("cost", std::unique_ptr<StateInputCost>(new QuadraticStateInputCost(Q, R)));
-  problem_.finalCostPtr->add("finalCost", std::unique_ptr<StateCost>(new QuadraticStateCost(Qf)));
+  problem_.costPtr->add("cost", std::make_unique<QuadraticStateInputCost>(Q, R));
+  problem_.finalCostPtr->add("finalCost", std::make_unique<QuadraticStateCost>(Qf));
 
   // Dynamics
   CartPoleParameters cartPoleParameters;
@@ -117,7 +117,7 @@ CartPoleInterface::CartPoleInterface(const std::string& taskFile, const std::str
     const vector_t e = (vector_t(numIneqConstraint) << cartPoleParameters.maxInput_, cartPoleParameters.maxInput_).finished();
     const vector_t D = (vector_t(numIneqConstraint) << 1.0, -1.0).finished();
     const matrix_t C = matrix_t::Zero(numIneqConstraint, STATE_DIM);
-    return std::unique_ptr<StateInputConstraint>(new LinearStateInputConstraint(e, C, D));
+    return std::make_unique<LinearStateInputConstraint>(e, C, D);
   };
   problem_.inequalityLagrangianPtr->add("InputLimits", create(getConstraint(), getPenalty()));
 

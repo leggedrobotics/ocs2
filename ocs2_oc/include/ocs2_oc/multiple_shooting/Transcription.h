@@ -44,7 +44,6 @@ namespace multiple_shooting {
 struct Transcription {
   VectorFunctionLinearApproximation dynamics;
   ScalarFunctionQuadraticApproximation cost;
-  matrix_t constraintPseudoInverse;
   ProjectionMultiplierCoefficients projectionMultiplierCoefficients;
   VectorFunctionLinearApproximation constraintsProjection;
   VectorFunctionLinearApproximation stateInputEqConstraints;

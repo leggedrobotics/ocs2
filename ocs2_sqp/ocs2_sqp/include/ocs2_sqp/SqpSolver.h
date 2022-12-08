@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_core/thread_support/ThreadPool.h>
 
+#include <ocs2_oc/multiple_shooting/ProjectionMultiplierCoefficients.h>
 #include <ocs2_oc/oc_data/TimeDiscretization.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/oc_solver/SolverBase.h>
@@ -173,6 +174,7 @@ class SqpSolver : public SolverBase {
   std::vector<VectorFunctionLinearApproximation> dynamics_;
   std::vector<ScalarFunctionQuadraticApproximation> cost_;
   std::vector<VectorFunctionLinearApproximation> constraintsProjection_;
+  std::vector<multiple_shooting::ProjectionMultiplierCoefficients> projectionMultiplierCoefficients_;
   std::vector<VectorFunctionLinearApproximation> stateInputEqConstraints_;
   std::vector<VectorFunctionLinearApproximation> stateIneqConstraints_;
   std::vector<VectorFunctionLinearApproximation> stateInputIneqConstraints_;

@@ -87,7 +87,6 @@ void projectTranscription(Transcription& transcription, bool extractEqualityCons
   auto& dynamics = transcription.dynamics;
   auto& cost = transcription.cost;
   auto& projection = transcription.constraintsProjection;
-  auto& constraintPseudoInverse = transcription.constraintPseudoInverse;
   auto& projectionMultiplierCoefficients = transcription.projectionMultiplierCoefficients;
   auto& stateInputEqConstraints = transcription.stateInputEqConstraints;
   auto& stateInputIneqConstraints = transcription.stateInputIneqConstraints;
@@ -95,11 +94,11 @@ void projectTranscription(Transcription& transcription, bool extractEqualityCons
   if (stateInputEqConstraints.f.size() > 0) {
     // Projection stored instead of constraint, // TODO: benchmark between lu and qr method. LU seems slightly faster.
     if (extractEqualityConstraintsPseudoInverse) {
+      matrix_t constraintPseudoInverse;
       std::tie(projection, constraintPseudoInverse) = LinearAlgebra::qrConstraintProjection(stateInputEqConstraints);
       projectionMultiplierCoefficients.compute(dynamics, cost, projection, constraintPseudoInverse);
     } else {
       projection = LinearAlgebra::luConstraintProjection(stateInputEqConstraints).first;
-      constraintPseudoInverse = matrix_t();
       projectionMultiplierCoefficients = ProjectionMultiplierCoefficients();
     }
     stateInputEqConstraints = VectorFunctionLinearApproximation();

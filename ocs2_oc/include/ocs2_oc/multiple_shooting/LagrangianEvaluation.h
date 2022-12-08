@@ -37,7 +37,7 @@ namespace multiple_shooting {
 /**
  * Computes the SSE of the residual in the dual feasibilities.
  *
- * @param[in] lagrangian : Quadratic approximation of the Lagrangian for a single node.
+ * @param lagrangian : Quadratic approximation of the Lagrangian for a single node.
  * @return SSE of the residual in the dual feasibilities
  */
 inline scalar_t evaluateDualFeasibilities(const ScalarFunctionQuadraticApproximation& lagrangian) {
@@ -47,39 +47,40 @@ inline scalar_t evaluateDualFeasibilities(const ScalarFunctionQuadraticApproxima
 /**
  * Evaluates the quadratic approximation of the Lagrangian for a single intermediate node.
  *
- * @param[in] lmd : Costate at start of the interval
- * @param[in] lmd_next : Costate at the end of the interval
- * @param[in] nu : Lagrange multiplier of the projection constraint.
- * @param[in] dynamics : Linear approximation of the dynamics
- * @param[in] stateInputEqConstraints : Linear approximation of the state-input equality constraints
- * @param[in, out] lagrangian : Should be initially filled with the quadratic approximation of the cost. Then this is overwritten into the
- * quadratic approximation of the Lagrangian.
+ * @param lmd : Costate at start of the interval
+ * @param lmd_next : Costate at the end of the interval
+ * @param nu : Lagrange multiplier of the projection constraint.
+ * @param cost : Quadratic approximation of the cost.
+ * @param dynamics : Linear approximation of the dynamics
+ * @param stateInputEqConstraints : Linear approximation of the state-input equality constraints
+ * @return Quadratic approximation of the Lagrangian.
  */
-void evaluateLagrangianIntermediateNode(const vector_t& lmd, const vector_t& lmd_next, const vector_t& nu,
-                                        const VectorFunctionLinearApproximation& dynamics,
-                                        const VectorFunctionLinearApproximation& stateInputEqConstraints,
-                                        ScalarFunctionQuadraticApproximation& lagrangian);
+ScalarFunctionQuadraticApproximation evaluateLagrangianIntermediateNode(const vector_t& lmd, const vector_t& lmd_next, const vector_t& nu,
+                                                                        ScalarFunctionQuadraticApproximation&& cost,
+                                                                        const VectorFunctionLinearApproximation& dynamics,
+                                                                        const VectorFunctionLinearApproximation& stateInputEqConstraints);
 
 /**
  * Evaluates the quadratic approximation of the Lagrangian for the terminal node.
  *
- * @param[in] lmd : Costate at start of the interval
- * @param[in, out] lagrangian : Should be initially filled with the quadratic approximation of the cost. Then this is overwritten into the
- * quadratic approximation of the Lagrangian.
+ * @param lmd : Costate at start of the interval
+ * @param cost : Quadratic approximation of the cost.
+ * @return Quadratic approximation of the Lagrangian.
  */
-void evaluateLagrangianTerminalNode(const vector_t& lmd, ScalarFunctionQuadraticApproximation& lagrangian);
+ScalarFunctionQuadraticApproximation evaluateLagrangianTerminalNode(const vector_t& lmd, ScalarFunctionQuadraticApproximation&& cost);
 
 /**
  * Evaluates the quadratic approximation of the Lagrangian for the event node.
  *
- * @param[in] lmd : Costate at start of the interval
- * @param[in] lmd_next : Costate at the end of the the interval
- * @param[in] dynamics : Dynamics
- * @param[in, out] lagrangian : Should be initially filled with the quadratic approximation of the cost. Then this is overwritten into the
- * quadratic approximation of the Lagrangian.
+ * @param lmd : Costate at start of the interval
+ * @param lmd_next : Costate at the end of the the interval
+ * @param cost : Quadratic approximation of the cost.
+ * @param dynamics : Dynamics
+ * @return Quadratic approximation of the Lagrangian.
  */
-void evaluateLagrangianEventNode(const vector_t& lmd, const vector_t& lmd_next, const VectorFunctionLinearApproximation& dynamics,
-                                 ScalarFunctionQuadraticApproximation& lagrangian);
+ScalarFunctionQuadraticApproximation evaluateLagrangianEventNode(const vector_t& lmd, const vector_t& lmd_next,
+                                                                 ScalarFunctionQuadraticApproximation&& cost,
+                                                                 const VectorFunctionLinearApproximation& dynamics);
 
 }  // namespace multiple_shooting
 }  // namespace ocs2

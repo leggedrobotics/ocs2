@@ -291,6 +291,7 @@ PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<Annotated
   dynamics_.resize(N);
   cost_.resize(N + 1);
   constraintsProjection_.resize(N);
+  projectionMultiplierCoefficients_.resize(N);
   stateInputEqConstraints_.resize(N + 1);
   stateIneqConstraints_.resize(N + 1);
   stateInputIneqConstraints_.resize(N);
@@ -321,12 +322,12 @@ PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<Annotated
         auto result = multiple_shooting::setupIntermediateNode(ocpDefinition, sensitivityDiscretizer_, ti, dt, x[i], x[i + 1], u[i]);
         workerPerformance += multiple_shooting::computeIntermediatePerformance(result, dt);
         if (settings_.projectStateInputEqualityConstraints) {
-          constexpr bool extractProjectionMultiplierCoefficients = false;
-          multiple_shooting::projectTranscription(result, extractProjectionMultiplierCoefficients);
+          multiple_shooting::projectTranscription(result, settings_.extractProjectionMultiplierCoefficients);
         }
         dynamics_[i] = std::move(result.dynamics);
         cost_[i] = std::move(result.cost);
         constraintsProjection_[i] = std::move(result.constraintsProjection);
+        projectionMultiplierCoefficients_[i] = std::move(result.projectionMultiplierCoefficients);
         stateInputEqConstraints_[i] = std::move(result.stateInputEqConstraints);
         stateIneqConstraints_[i] = std::move(result.stateIneqConstraints);
         stateInputIneqConstraints_[i] = std::move(result.stateInputIneqConstraints);

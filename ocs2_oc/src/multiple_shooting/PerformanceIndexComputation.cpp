@@ -29,8 +29,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_oc/multiple_shooting/PerformanceIndexComputation.h"
 
-#include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
-#include "ocs2_core/model_data/Metrics.h"
+#include <ocs2_core/model_data/Metrics.h>
+
+#include "ocs2_oc/approximate_model/LinearQuadraticApproximator.h"
+#include "ocs2_oc/multiple_shooting/MetricsComputation.h"
 
 namespace ocs2 {
 namespace multiple_shooting {
@@ -57,49 +59,13 @@ PerformanceIndex computeIntermediatePerformance(const Transcription& transcripti
 
 PerformanceIndex computeIntermediatePerformance(const OptimalControlProblem& optimalControlProblem, DynamicsDiscretizer& discretizer,
                                                 scalar_t t, scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u) {
-  PerformanceIndex performance;
-
-  // Dynamics
-  vector_t dynamicsGap = discretizer(*optimalControlProblem.dynamicsPtr, t, x, u, dt);
-  dynamicsGap -= x_next;
-  performance.dynamicsViolationSSE = dt * dynamicsGap.squaredNorm();
-
-  // Precomputation for other terms
-  constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Constraint;
-  optimalControlProblem.preComputationPtr->request(request, t, x, u);
-
-  // Costs
-  performance.cost = dt * computeCost(optimalControlProblem, t, x, u);
-
-  // State equality constraints
-  if (!optimalControlProblem.stateEqualityConstraintPtr->empty()) {
-    const auto stateEqConstraints =
-        optimalControlProblem.stateEqualityConstraintPtr->getValue(t, x, *optimalControlProblem.preComputationPtr);
-    performance.equalityConstraintsSSE += dt * getEqConstraintsSSE(stateEqConstraints);
-  }
-
-  // State-input equality constraints
-  if (!optimalControlProblem.equalityConstraintPtr->empty()) {
-    const auto stateInputEqConstraints =
-        optimalControlProblem.equalityConstraintPtr->getValue(t, x, u, *optimalControlProblem.preComputationPtr);
-    performance.equalityConstraintsSSE += dt * getEqConstraintsSSE(stateInputEqConstraints);
-  }
-
-  // State inequality constraints.
-  if (!optimalControlProblem.stateInequalityConstraintPtr->empty()) {
-    const auto stateIneqConstraints =
-        optimalControlProblem.stateInequalityConstraintPtr->getValue(t, x, *optimalControlProblem.preComputationPtr);
-    performance.inequalityConstraintsSSE += dt * getIneqConstraintsSSE(stateIneqConstraints);
-  }
-
-  // State-input inequality constraints.
-  if (!optimalControlProblem.inequalityConstraintPtr->empty()) {
-    const auto stateInputIneqConstraints =
-        optimalControlProblem.inequalityConstraintPtr->getValue(t, x, u, *optimalControlProblem.preComputationPtr);
-    performance.inequalityConstraintsSSE += dt * getIneqConstraintsSSE(stateInputIneqConstraints);
-  }
-
-  return performance;
+  const auto metrics = computeIntermediateMetrics(optimalControlProblem, discretizer, t, dt, x, x_next, u);
+  auto performanceIndex = toPerformanceIndex(metrics);
+  //  performanceIndex.cost *= dt  no need since it is already considered in computeIntermediateMetrics()
+  performanceIndex.dynamicsViolationSSE *= dt;
+  performanceIndex.equalityConstraintsSSE *= dt;
+  performanceIndex.inequalityConstraintsSSE *= dt;
+  return performanceIndex;
 }
 
 PerformanceIndex computeTerminalPerformance(const TerminalTranscription& transcription) {
@@ -117,25 +83,8 @@ PerformanceIndex computeTerminalPerformance(const TerminalTranscription& transcr
 }
 
 PerformanceIndex computeTerminalPerformance(const OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x) {
-  PerformanceIndex performance;
-
-  constexpr auto request = Request::Cost + Request::SoftConstraint;
-  optimalControlProblem.preComputationPtr->requestFinal(request, t, x);
-
-  performance.cost = computeFinalCost(optimalControlProblem, t, x);
-
-  if (!optimalControlProblem.finalEqualityConstraintPtr->empty()) {
-    const auto eqConstraints = optimalControlProblem.finalEqualityConstraintPtr->getValue(t, x, *optimalControlProblem.preComputationPtr);
-    performance.equalityConstraintsSSE = getEqConstraintsSSE(eqConstraints);
-  }
-
-  if (!optimalControlProblem.finalInequalityConstraintPtr->empty()) {
-    const auto ineqConstraints =
-        optimalControlProblem.finalInequalityConstraintPtr->getValue(t, x, *optimalControlProblem.preComputationPtr);
-    performance.inequalityConstraintsSSE = getIneqConstraintsSSE(ineqConstraints);
-  }
-
-  return performance;
+  const auto metrics = computeTerminalMetrics(optimalControlProblem, t, x);
+  return toPerformanceIndex(metrics);
 }
 
 PerformanceIndex computeEventPerformance(const EventTranscription& transcription) {
@@ -157,29 +106,8 @@ PerformanceIndex computeEventPerformance(const EventTranscription& transcription
 
 PerformanceIndex computeEventPerformance(const OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x,
                                          const vector_t& x_next) {
-  PerformanceIndex performance;
-
-  constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Dynamics;
-  optimalControlProblem.preComputationPtr->requestPreJump(request, t, x);
-
-  // Dynamics
-  const vector_t dynamicsGap = optimalControlProblem.dynamicsPtr->computeJumpMap(t, x) - x_next;
-  performance.dynamicsViolationSSE = dynamicsGap.squaredNorm();
-
-  performance.cost = computeEventCost(optimalControlProblem, t, x);
-
-  if (!optimalControlProblem.preJumpEqualityConstraintPtr->empty()) {
-    const auto eqConstraints = optimalControlProblem.preJumpEqualityConstraintPtr->getValue(t, x, *optimalControlProblem.preComputationPtr);
-    performance.equalityConstraintsSSE = getEqConstraintsSSE(eqConstraints);
-  }
-
-  if (!optimalControlProblem.preJumpInequalityConstraintPtr->empty()) {
-    const auto ineqConstraints =
-        optimalControlProblem.preJumpInequalityConstraintPtr->getValue(t, x, *optimalControlProblem.preComputationPtr);
-    performance.inequalityConstraintsSSE = getIneqConstraintsSSE(ineqConstraints);
-  }
-
-  return performance;
+  const auto metrics = computeEventMetrics(optimalControlProblem, t, x, x_next);
+  return toPerformanceIndex(metrics);
 }
 
 }  // namespace multiple_shooting

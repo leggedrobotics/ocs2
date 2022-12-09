@@ -52,6 +52,7 @@ add_library(${PROJECT_NAME}
   src/multiple_shooting/Helpers.cpp
   src/multiple_shooting/Initialization.cpp
   src/multiple_shooting/LagrangianEvaluation.cpp
+  src/multiple_shooting/MetricsComputation.cpp
   src/multiple_shooting/PerformanceIndexComputation.cpp
   src/multiple_shooting/ProjectionMultiplierCoefficients.cpp
   src/multiple_shooting/Transcription.cpp

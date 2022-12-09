@@ -95,10 +95,10 @@ void approximatePreJumpLQ(OptimalControlProblem& problem, const scalar_t& time, 
   modelData.time = time;
   modelData.stateDim = state.rows();
   modelData.inputDim = 0;
-  modelData.dynamicsBias.setZero(state.rows());
 
   // Jump map
   modelData.dynamics = problem.dynamicsPtr->jumpMapLinearApproximation(time, state, preComputation);
+  modelData.dynamicsBias.setZero(modelData.dynamics.dfdx.rows());
 
   // Pre-jump cost
   modelData.cost = approximateEventCost(problem, time, state);

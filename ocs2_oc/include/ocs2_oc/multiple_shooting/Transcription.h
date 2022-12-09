@@ -44,6 +44,7 @@ namespace multiple_shooting {
 struct Transcription {
   ScalarFunctionQuadraticApproximation cost;
   VectorFunctionLinearApproximation dynamics;
+  VectorFunctionLinearApproximation stateEqConstraints;
   VectorFunctionLinearApproximation stateInputEqConstraints;
   VectorFunctionLinearApproximation stateIneqConstraints;
   VectorFunctionLinearApproximation stateInputIneqConstraints;

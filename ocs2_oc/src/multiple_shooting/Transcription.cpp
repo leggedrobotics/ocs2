@@ -44,6 +44,7 @@ Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlP
   Transcription transcription;
   auto& dynamics = transcription.dynamics;
   auto& cost = transcription.cost;
+  auto& stateEqConstraints = transcription.stateEqConstraints;
   auto& stateInputEqConstraints = transcription.stateInputEqConstraints;
   auto& stateIneqConstraints = transcription.stateIneqConstraints;
   auto& stateInputIneqConstraints = transcription.stateInputIneqConstraints;
@@ -61,9 +62,14 @@ Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlP
   cost = approximateCost(optimalControlProblem, t, x, u);
   cost *= dt;
 
+  // State equality constraints
+  if (!optimalControlProblem.stateEqualityConstraintPtr->empty()) {
+    stateEqConstraints =
+        optimalControlProblem.stateEqualityConstraintPtr->getLinearApproximation(t, x, *optimalControlProblem.preComputationPtr);
+  }
+
   // State-input equality constraints
   if (!optimalControlProblem.equalityConstraintPtr->empty()) {
-    // C_{k} * dx_{k} + D_{k} * du_{k} + e_{k} = 0
     stateInputEqConstraints =
         optimalControlProblem.equalityConstraintPtr->getLinearApproximation(t, x, u, *optimalControlProblem.preComputationPtr);
   }

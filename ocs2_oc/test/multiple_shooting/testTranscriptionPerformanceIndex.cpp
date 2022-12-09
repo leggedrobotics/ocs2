@@ -60,7 +60,7 @@ TEST(test_transcription, intermediate_performance) {
 
   const auto performance = multiple_shooting::computeIntermediatePerformance(problem, discretizer, t, dt, x, x_next, u);
 
-  ASSERT_TRUE(areIdentical(performance, multiple_shooting::computeIntermediatePerformance(transcription, dt)));
+  ASSERT_TRUE(performance.isApprox(multiple_shooting::computeIntermediatePerformance(transcription, dt), 1e-12));
 }
 
 TEST(test_transcription, event_performance) {
@@ -89,7 +89,7 @@ TEST(test_transcription, event_performance) {
   const auto transcription = multiple_shooting::setupEventNode(problem, t, x, x_next);
   const auto performance = multiple_shooting::computeEventPerformance(problem, t, x, x_next);
 
-  ASSERT_TRUE(performance.isApprox(multiple_shooting::computeEventPerformance(transcription). 1e-12));
+  ASSERT_TRUE(performance.isApprox(multiple_shooting::computeEventPerformance(transcription), 1e-12));
 }
 
 TEST(test_transcription, terminal_performance) {

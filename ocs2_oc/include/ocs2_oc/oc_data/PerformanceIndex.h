@@ -48,6 +48,13 @@ struct PerformanceIndex {
   /** The total cost of a rollout. */
   scalar_t cost = 0.0;
 
+  /** Sum of Squared Error (SSE) of the dual feasibilities:
+   * - Final: squared norm of violation in the dual feasibilities
+   * - PreJumps: sum of squared norm of violation in the dual feasibilities
+   * - Intermediates: sum of squared norm of violation in the dual feasibilities
+   */
+  scalar_t dualFeasibilitiesSSE = 0.0;
+
   /** Sum of Squared Error (SSE) of system dynamics violation */
   scalar_t dynamicsViolationSSE = 0.0;
 
@@ -64,13 +71,6 @@ struct PerformanceIndex {
    * - Intermediates: Integral of squared norm violation in state/state-input inequality constraints
    */
   scalar_t inequalityConstraintsSSE = 0.0;
-
-  /** Sum of Squared Error (SSE) of the dual feasibilities:
-   * - Final: squared norm of violation in the dual feasibilities
-   * - PreJumps: sum of squared norm of violation in the dual feasibilities
-   * - Intermediates: sum of squared norm of violation in the dual feasibilities
-   */
-  scalar_t dualFeasibilitiesSSE = 0.0;
 
   /** Sum of equality Lagrangians:
    * - Final: penalty for violation in state equality constraints
@@ -90,10 +90,10 @@ struct PerformanceIndex {
   PerformanceIndex& operator+=(const PerformanceIndex& rhs) {
     this->merit += rhs.merit;
     this->cost += rhs.cost;
+    this->dualFeasibilitiesSSE += rhs.dualFeasibilitiesSSE;
     this->dynamicsViolationSSE += rhs.dynamicsViolationSSE;
     this->equalityConstraintsSSE += rhs.equalityConstraintsSSE;
     this->inequalityConstraintsSSE += rhs.inequalityConstraintsSSE;
-    this->dualFeasibilitiesSSE += rhs.dualFeasibilitiesSSE;
     this->equalityLagrangian += rhs.equalityLagrangian;
     this->inequalityLagrangian += rhs.inequalityLagrangian;
     return *this;
@@ -104,8 +104,10 @@ struct PerformanceIndex {
   PerformanceIndex& operator*=(const SCALAR_T c) {
     this->merit *= static_cast<scalar_t>(c);
     this->cost *= static_cast<scalar_t>(c);
+    this->dualFeasibilitiesSSE *= static_cast<scalar_t>(c);
     this->dynamicsViolationSSE *= static_cast<scalar_t>(c);
     this->equalityConstraintsSSE *= static_cast<scalar_t>(c);
+    this->inequalityConstraintsSSE *= static_cast<scalar_t>(c);
     this->equalityLagrangian *= static_cast<scalar_t>(c);
     this->inequalityLagrangian *= static_cast<scalar_t>(c);
     return *this;
@@ -118,8 +120,10 @@ struct PerformanceIndex {
     };
     bool isEqual = fuzzyCompares(this->merit, other.merit);
     isEqual = isEqual && fuzzyCompares(this->cost, other.cost);
+    isEqual = isEqual && fuzzyCompares(this->dualFeasibilitiesSSE, other.dualFeasibilitiesSSE);
     isEqual = isEqual && fuzzyCompares(this->dynamicsViolationSSE, other.dynamicsViolationSSE);
     isEqual = isEqual && fuzzyCompares(this->equalityConstraintsSSE, other.equalityConstraintsSSE);
+    isEqual = isEqual && fuzzyCompares(this->inequalityConstraintsSSE, other.inequalityConstraintsSSE);
     isEqual = isEqual && fuzzyCompares(this->equalityLagrangian, other.equalityLagrangian);
     isEqual = isEqual && fuzzyCompares(this->inequalityLagrangian, other.inequalityLagrangian);
     return isEqual;
@@ -147,10 +151,10 @@ PerformanceIndex operator*(const SCALAR_T c, PerformanceIndex rhs) {
 inline void swap(PerformanceIndex& lhs, PerformanceIndex& rhs) {
   std::swap(lhs.merit, rhs.merit);
   std::swap(lhs.cost, rhs.cost);
+  std::swap(lhs.dualFeasibilitiesSSE, rhs.dualFeasibilitiesSSE);
   std::swap(lhs.dynamicsViolationSSE, rhs.dynamicsViolationSSE);
   std::swap(lhs.equalityConstraintsSSE, rhs.equalityConstraintsSSE);
   std::swap(lhs.inequalityConstraintsSSE, rhs.inequalityConstraintsSSE);
-  std::swap(lhs.dualFeasibilitiesSSE, rhs.dualFeasibilitiesSSE);
   std::swap(lhs.equalityLagrangian, rhs.equalityLagrangian);
   std::swap(lhs.inequalityLagrangian, rhs.inequalityLagrangian);
 }
@@ -165,12 +169,12 @@ inline std::ostream& operator<<(std::ostream& stream, const PerformanceIndex& pe
   stream << "Rollout Cost:               " << std::setw(tabSpace) << performanceIndex.cost << '\n';
 
   stream << std::setw(indentation) << "";
-  stream << "Dynamics violation SSE:     " << std::setw(tabSpace) << performanceIndex.dynamicsViolationSSE;
-  stream << "Equality constraints SSE:   " << std::setw(tabSpace) << performanceIndex.equalityConstraintsSSE << '\n';
+  stream << "Dual feasibilities SSE:     " << std::setw(tabSpace) << performanceIndex.dualFeasibilitiesSSE;
+  stream << "Dynamics violation SSE:     " << std::setw(tabSpace) << performanceIndex.dynamicsViolationSSE << '\n';
 
   stream << std::setw(indentation) << "";
-  stream << "Inequality constraints SSE: " << std::setw(tabSpace) << performanceIndex.inequalityConstraintsSSE;
-  stream << "Dual feasibilities SSE:     " << std::setw(tabSpace) << performanceIndex.dualFeasibilitiesSSE << '\n';
+  stream << "Equality constraints SSE:   " << std::setw(tabSpace) << performanceIndex.equalityConstraintsSSE;
+  stream << "Inequality constraints SSE: " << std::setw(tabSpace) << performanceIndex.inequalityConstraintsSSE << '\n';
 
   stream << std::setw(indentation) << "";
   stream << "Equality Lagrangian:        " << std::setw(tabSpace) << performanceIndex.equalityLagrangian;
@@ -184,8 +188,11 @@ inline PerformanceIndex toPerformanceIndex(const Metrics& m) {
   PerformanceIndex performanceIndex;
   performanceIndex.merit = 0.0;  // left for the solver to fill
   performanceIndex.cost = m.cost;
-  performanceIndex.dynamicsViolationSSE = m.dynamicsViolation.squaredNorm();
-  performanceIndex.equalityConstraintsSSE = constraintsSquaredNorm(m.stateEqConstraint) + constraintsSquaredNorm(m.stateInputEqConstraint);
+  performanceIndex.dualFeasibilitiesSSE = 0.0;  // left for the solver to fill
+  performanceIndex.dynamicsViolationSSE = getEqConstraintsSSE(m.dynamicsViolation);
+  performanceIndex.equalityConstraintsSSE = getEqConstraintsSSE(m.stateEqConstraint) + getEqConstraintsSSE(m.stateInputEqConstraint);
+  performanceIndex.inequalityConstraintsSSE =
+      getIneqConstraintsSSE(m.stateIneqConstraint) + getIneqConstraintsSSE(m.stateInputIneqConstraint);
   performanceIndex.equalityLagrangian = sumPenalties(m.stateEqLagrangian) + sumPenalties(m.stateInputEqLagrangian);
   performanceIndex.inequalityLagrangian = sumPenalties(m.stateIneqLagrangian) + sumPenalties(m.stateInputIneqLagrangian);
   return performanceIndex;

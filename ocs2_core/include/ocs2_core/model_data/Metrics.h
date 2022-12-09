@@ -56,16 +56,19 @@ struct LagrangianMetricsConstRef {
  * The collection of cost, equality constraints, and LagrangianMetrics structure for all possible constraint terms (handled by
  * Lagrangian method) in a particular time point.
  * cost : The total cost in a particular time point.
- * stateEqConstraint : A vector of all active state equality constraints.
- * stateInputEqConstraint : A vector of all active state-input equality constraints.
+ * stateEqConstraint : An array of all state equality constraints.
+ * stateInputEqConstraint : An array of all state-input equality constraints.
  * stateEqLagrangian : An array of state equality constraint terms handled by Lagrangian method.
  * stateIneqLagrangian : An array of state inequality constraint terms handled by Lagrangian method.
  * stateInputEqLagrangian : An array of state-input equality constraint terms handled by Lagrangian method.
  * stateInputIneqLagrangian : An array of state-input inequality constraint terms handled by Lagrangian method.
  */
-struct MetricsCollection {
+struct Metrics {
   // Cost
   scalar_t cost;
+
+  // Dynamics violation
+  vector_t dynamicsViolation;
 
   // Equality constraints
   vector_array_t stateEqConstraint;
@@ -77,10 +80,12 @@ struct MetricsCollection {
   std::vector<LagrangianMetrics> stateInputEqLagrangian;
   std::vector<LagrangianMetrics> stateInputIneqLagrangian;
 
-  /** Exchanges the values of MetricsCollection */
-  void swap(MetricsCollection& other) {
+  /** Exchanges the values of Metrics */
+  void swap(Metrics& other) {
     // Cost
     std::swap(cost, other.cost);
+    // Dynamics violation
+    dynamicsViolation.swap(other.dynamicsViolation);
     // Equality constraints
     stateEqConstraint.swap(other.stateEqConstraint);
     stateInputEqConstraint.swap(other.stateInputEqConstraint);
@@ -91,10 +96,12 @@ struct MetricsCollection {
     stateInputIneqLagrangian.swap(other.stateInputIneqLagrangian);
   }
 
-  /** Clears the value of the MetricsCollection */
+  /** Clears the value of the Metrics */
   void clear() {
     // Cost
     cost = 0.0;
+    // Dynamics violation
+    dynamicsViolation = vector_t();
     // Equality constraints
     stateEqConstraint.clear();
     stateInputEqConstraint.clear();
@@ -104,6 +111,9 @@ struct MetricsCollection {
     stateInputEqLagrangian.clear();
     stateInputIneqLagrangian.clear();
   }
+
+  /** Returns true if *this is approximately equal to other, within the precision determined by prec. */
+  bool isApprox(const Metrics& other, scalar_t prec = 1e-8) const;
 };
 
 /** Sums penalties of an array of LagrangianMetrics */
@@ -194,13 +204,13 @@ namespace LinearInterpolation {
 LagrangianMetrics interpolate(const index_alpha_t& indexAlpha, const std::vector<LagrangianMetricsConstRef>& dataArray);
 
 /**
- * Linearly interpolates a trajectory of MetricsCollection.
+ * Linearly interpolates a trajectory of Metrics.
  *
  * @param [in] indexAlpha : index and interpolation coefficient (alpha) pair.
- * @param [in] dataArray : A trajectory of MetricsCollection.
- * @return The interpolated MetricsCollection at indexAlpha.
+ * @param [in] dataArray : A trajectory of Metrics.
+ * @return The interpolated Metrics at indexAlpha.
  */
-MetricsCollection interpolate(const index_alpha_t& indexAlpha, const std::vector<MetricsCollection>& dataArray);
+Metrics interpolate(const index_alpha_t& indexAlpha, const std::vector<Metrics>& dataArray);
 
 }  // namespace LinearInterpolation
 }  // namespace ocs2

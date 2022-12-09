@@ -30,9 +30,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <iomanip>
+#include <limits>
 #include <ostream>
 
 #include <ocs2_core/Types.h>
+#include <ocs2_core/model_data/Metrics.h>
 
 namespace ocs2 {
 
@@ -80,11 +82,49 @@ struct PerformanceIndex {
     this->inequalityLagrangian += rhs.inequalityLagrangian;
     return *this;
   }
+
+  /** Multiply by a scalar */
+  template <typename SCALAR_T>
+  PerformanceIndex& operator*=(const SCALAR_T c) {
+    this->merit *= static_cast<scalar_t>(c);
+    this->cost *= static_cast<scalar_t>(c);
+    this->dynamicsViolationSSE *= static_cast<scalar_t>(c);
+    this->equalityConstraintsSSE *= static_cast<scalar_t>(c);
+    this->equalityLagrangian *= static_cast<scalar_t>(c);
+    this->inequalityLagrangian *= static_cast<scalar_t>(c);
+    return *this;
+  }
+
+  /** Returns true if *this is approximately equal to other, within the precision determined by prec. */
+  bool isApprox(const PerformanceIndex other, const scalar_t prec = 1e-8) const {
+    auto fuzzyCompares = [&](const scalar_t a, const scalar_t b) {
+      return std::abs(a - b) <= prec * std::min(std::abs(a), std::abs(b)) || std::abs(a - b) < std::numeric_limits<scalar_t>::min();
+    };
+    bool isEqual = fuzzyCompares(this->merit, other.merit);
+    isEqual = isEqual && fuzzyCompares(this->cost, other.cost);
+    isEqual = isEqual && fuzzyCompares(this->dynamicsViolationSSE, other.dynamicsViolationSSE);
+    isEqual = isEqual && fuzzyCompares(this->equalityConstraintsSSE, other.equalityConstraintsSSE);
+    isEqual = isEqual && fuzzyCompares(this->equalityLagrangian, other.equalityLagrangian);
+    isEqual = isEqual && fuzzyCompares(this->inequalityLagrangian, other.inequalityLagrangian);
+    return isEqual;
+  }
 };
 
 inline PerformanceIndex operator+(PerformanceIndex lhs, const PerformanceIndex& rhs) {
-  lhs += rhs;  // Copied lhs, add rhs to it.
+  lhs += rhs;  // copied lhs, add rhs to it.
   return lhs;
+}
+
+template <typename SCALAR_T>
+PerformanceIndex operator*(PerformanceIndex lhs, const SCALAR_T c) {
+  lhs *= c;  // copied lhs
+  return lhs;
+}
+
+template <typename SCALAR_T>
+PerformanceIndex operator*(const SCALAR_T c, PerformanceIndex rhs) {
+  rhs *= c;  // copied rhs
+  return rhs;
 }
 
 /** Swaps performance indices */
@@ -115,6 +155,18 @@ inline std::ostream& operator<<(std::ostream& stream, const PerformanceIndex& pe
   stream << "Inequality Lagrangian:      " << std::setw(tabSpace) << performanceIndex.inequalityLagrangian;
 
   return stream;
+}
+
+/** Computes the PerformanceIndex based on a given Metrics */
+inline PerformanceIndex toPerformanceIndex(const Metrics& m) {
+  PerformanceIndex performanceIndex;
+  performanceIndex.merit = 0.0;  // left for the solver to fill
+  performanceIndex.cost = m.cost;
+  performanceIndex.dynamicsViolationSSE = m.dynamicsViolation.squaredNorm();
+  performanceIndex.equalityConstraintsSSE = constraintsSquaredNorm(m.stateEqConstraint) + constraintsSquaredNorm(m.stateInputEqConstraint);
+  performanceIndex.equalityLagrangian = sumPenalties(m.stateEqLagrangian) + sumPenalties(m.stateInputEqLagrangian);
+  performanceIndex.inequalityLagrangian = sumPenalties(m.stateIneqLagrangian) + sumPenalties(m.stateInputIneqLagrangian);
+  return performanceIndex;
 }
 
 }  // namespace ocs2

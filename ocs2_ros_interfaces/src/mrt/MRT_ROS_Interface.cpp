@@ -190,9 +190,9 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
 /******************************************************************************************************/
 void MRT_ROS_Interface::mpcPolicyCallback(const ocs2_msgs::mpc_flattened_controller::ConstPtr& msg) {
   // read new policy and command from msg
-  std::unique_ptr<CommandData> commandPtr(new CommandData);
-  std::unique_ptr<PrimalSolution> primalSolutionPtr(new PrimalSolution);
-  std::unique_ptr<PerformanceIndex> performanceIndicesPtr(new PerformanceIndex);
+  auto commandPtr = std::make_unique<CommandData>();
+  auto primalSolutionPtr = std::make_unique<PrimalSolution>();
+  auto performanceIndicesPtr = std::make_unique<PerformanceIndex>();
   readPolicyMsg(*msg, *commandPtr, *primalSolutionPtr, *performanceIndicesPtr);
 
   this->moveToBuffer(std::move(commandPtr), std::move(primalSolutionPtr), std::move(performanceIndicesPtr));

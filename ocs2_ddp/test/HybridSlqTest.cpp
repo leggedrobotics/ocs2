@@ -70,6 +70,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 TEST(HybridSlqTest, state_rollout_slq) {
   using namespace ocs2;
 
+  constexpr scalar_t minRelCost = 1e-6;  // to avoid early termination
+
   const ddp::Settings ddpSettings = [&]() {
     ddp::Settings settings;
 
@@ -78,7 +80,7 @@ TEST(HybridSlqTest, state_rollout_slq) {
     settings.displayShortSummary_ = true;
     settings.maxNumIterations_ = 100;
     settings.nThreads_ = 1;
-    settings.minRelCost_ = 1e-6;  // to avoid early termination
+    settings.minRelCost_ = minRelCost;
     settings.checkNumericalStability_ = false;
     settings.absTolODE_ = 1e-10;
     settings.relTolODE_ = 1e-7;
@@ -111,18 +113,14 @@ TEST(HybridSlqTest, state_rollout_slq) {
   // cost function
   const matrix_t Q = (matrix_t(STATE_DIM, STATE_DIM) << 50, 0, 0, 0, 50, 0, 0, 0, 0).finished();
   const matrix_t R = (matrix_t(INPUT_DIM, INPUT_DIM) << 1).finished();
-  std::unique_ptr<ocs2::StateInputCost> cost(new QuadraticStateInputCost(Q, R));
-  std::unique_ptr<ocs2::StateCost> preJumpCost(new QuadraticStateCost(Q));
-  std::unique_ptr<ocs2::StateCost> finalCost(new QuadraticStateCost(Q));
-
   // constraints
-  std::unique_ptr<StateInputConstraint> boundsConstraints(new HybridSysBounds);
+  auto boundsConstraints = std::make_unique<HybridSysBounds>();
 
   OptimalControlProblem problem;
   problem.dynamicsPtr.reset(systemDynamics.clone());
-  problem.costPtr->add("cost", std::move(cost));
-  problem.preJumpCostPtr->add("preJumpCost", std::move(preJumpCost));
-  problem.finalCostPtr->add("finalCost", std::move(finalCost));
+  problem.costPtr->add("cost", std::make_unique<QuadraticStateInputCost>(Q, R));
+  problem.preJumpCostPtr->add("preJumpCost", std::make_unique<QuadraticStateCost>(Q));
+  problem.finalCostPtr->add("finalCost", std::make_unique<QuadraticStateCost>(Q));
   problem.inequalityLagrangianPtr->add("bounds",
                                        create(std::move(boundsConstraints), augmented::SlacknessSquaredHingePenalty::create({200.0, 0.1})));
 
@@ -168,5 +166,5 @@ TEST(HybridSlqTest, state_rollout_slq) {
 
   // Test 3: Check of cost
   const auto performanceIndecesST = slq.getPerformanceIndeces();
-  EXPECT_LT(performanceIndecesST.cost - 20.1, 10.0 * ddpSettings.minRelCost_);
+  EXPECT_LT(performanceIndecesST.cost - 20.1, 10.0 * minRelCost);
 }

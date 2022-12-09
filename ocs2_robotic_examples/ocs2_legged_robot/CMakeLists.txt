@@ -94,6 +94,7 @@ add_library(${PROJECT_NAME}
   src/foot_planner/SwingTrajectoryPlanner.cpp
   src/gait/Gait.cpp
   src/gait/GaitSchedule.cpp
+  src/gait/LegLogic.cpp
   src/gait/ModeSequenceTemplate.cpp
   src/LeggedRobotInterface.cpp
   src/LeggedRobotPreComputation.cpp

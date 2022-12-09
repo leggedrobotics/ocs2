@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
-#include "ocs2_sqp/MultipleShootingSolver.h"
+#include "ocs2_sqp/SqpSolver.h"
 
 #include <ocs2_core/initialization/DefaultInitializer.h>
 
@@ -56,7 +56,7 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithFeedbackSettin
 
   // Reference Managaer
   ocs2::TargetTrajectories targetTrajectories({0.0}, {ocs2::vector_t::Ones(n)}, {ocs2::vector_t::Ones(m)});
-  std::shared_ptr<ReferenceManager> referenceManagerPtr(new ReferenceManager(targetTrajectories));
+  auto referenceManagerPtr = std::make_shared<ReferenceManager>(targetTrajectories);
 
   problem.targetTrajectoriesPtr = &referenceManagerPtr->getTargetTrajectories();
 
@@ -67,7 +67,7 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithFeedbackSettin
   ocs2::DefaultInitializer zeroInitializer(m);
 
   // Solver settings
-  ocs2::multiple_shooting::Settings settings;
+  ocs2::sqp::Settings settings;
   settings.dt = 0.05;
   settings.sqpIteration = 10;
   settings.projectStateInputEqualityConstraints = true;
@@ -83,7 +83,7 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithFeedbackSettin
   const ocs2::vector_t initState = ocs2::vector_t::Ones(n);
 
   // Construct solver
-  ocs2::MultipleShootingSolver solver(settings, problem, zeroInitializer);
+  ocs2::SqpSolver solver(settings, problem, zeroInitializer);
   solver.setReferenceManager(referenceManagerPtr);
 
   // Solve

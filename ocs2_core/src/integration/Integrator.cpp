@@ -80,24 +80,24 @@ IntegratorType fromString(const std::string& name) {
 std::unique_ptr<IntegratorBase> newIntegrator(IntegratorType integratorType, const std::shared_ptr<SystemEventHandler>& eventHandlerPtr) {
   switch (integratorType) {
     case (IntegratorType::EULER):
-      return std::unique_ptr<IntegratorBase>(new IntegratorEuler(eventHandlerPtr));
+      return std::make_unique<IntegratorEuler>(eventHandlerPtr);
     case (IntegratorType::ODE45):
-      return std::unique_ptr<IntegratorBase>(new ODE45(eventHandlerPtr));
+      return std::make_unique<ODE45>(eventHandlerPtr);
     case (IntegratorType::ODE45_OCS2):
-      return std::unique_ptr<IntegratorBase>(new RungeKuttaDormandPrince5(eventHandlerPtr));
+      return std::make_unique<RungeKuttaDormandPrince5>(eventHandlerPtr);
     case (IntegratorType::ADAMS_BASHFORTH):
-      return std::unique_ptr<IntegratorBase>(new IntegratorAdamsBashforth<1>(eventHandlerPtr));
+      return std::make_unique<IntegratorAdamsBashforth<1>>(eventHandlerPtr);
     case (IntegratorType::BULIRSCH_STOER):
-      return std::unique_ptr<IntegratorBase>(new IntegratorBulirschStoer(eventHandlerPtr));
+      return std::make_unique<IntegratorBulirschStoer>(eventHandlerPtr);
     case (IntegratorType::MODIFIED_MIDPOINT):
-      return std::unique_ptr<IntegratorBase>(new IntegratorModifiedMidpoint(eventHandlerPtr));
+      return std::make_unique<IntegratorModifiedMidpoint>(eventHandlerPtr);
     case (IntegratorType::RK4):
-      return std::unique_ptr<IntegratorBase>(new IntegratorRK4(eventHandlerPtr));
+      return std::make_unique<IntegratorRK4>(eventHandlerPtr);
     case (IntegratorType::RK5_VARIABLE):
-      return std::unique_ptr<IntegratorBase>(new IntegratorRK5Variable(eventHandlerPtr));
+      return std::make_unique<IntegratorRK5Variable>(eventHandlerPtr);
 #if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 55)
     case (IntegratorType::ADAMS_BASHFORTH_MOULTON):
-      return std::unique_ptr<IntegratorBase>(new IntegratorAdamsBashforthMoulton<1>(eventHandlerPtr));
+      return std::make_unique<IntegratorAdamsBashforthMoulton<1>>(eventHandlerPtr);
 #endif
     default:
       throw std::runtime_error("Integrator of type " + integrator_type::toString(integratorType) + " not supported.");

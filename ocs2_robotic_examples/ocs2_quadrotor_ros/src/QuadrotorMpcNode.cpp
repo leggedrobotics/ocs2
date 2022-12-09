@@ -56,8 +56,7 @@ int main(int argc, char** argv) {
   ocs2::quadrotor::QuadrotorInterface quadrotorInterface(taskFile, libFolder);
 
   // ROS ReferenceManager
-  std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr(
-      new ocs2::RosReferenceManager(robotName, quadrotorInterface.getReferenceManagerPtr()));
+  auto rosReferenceManagerPtr = std::make_shared<ocs2::RosReferenceManager>(robotName, quadrotorInterface.getReferenceManagerPtr());
   rosReferenceManagerPtr->subscribe(nodeHandle);
 
   // MPC

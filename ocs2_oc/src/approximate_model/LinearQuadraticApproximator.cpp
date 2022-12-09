@@ -47,11 +47,11 @@ void approximateIntermediateLQ(OptimalControlProblem& problem, const scalar_t ti
   modelData.time = time;
   modelData.stateDim = state.rows();
   modelData.inputDim = input.rows();
-  modelData.dynamicsBias.setZero(state.rows());
 
   // Dynamics
   modelData.dynamicsCovariance = problem.dynamicsPtr->dynamicsCovariance(time, state, input);
   modelData.dynamics = problem.dynamicsPtr->linearApproximation(time, state, input, preComputation);
+  modelData.dynamicsBias.setZero(modelData.dynamics.dfdx.rows());
 
   // Cost
   modelData.cost = ocs2::approximateCost(problem, time, state, input);

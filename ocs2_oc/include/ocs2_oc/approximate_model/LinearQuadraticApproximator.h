@@ -170,12 +170,43 @@ ScalarFunctionQuadraticApproximation approximateFinalCost(const OptimalControlPr
  * @param [in] time: The current time.
  * @param [in] state: The current state.
  * @param [in] input: The current input.
+ * @param [in] dynamicsViolation: The violation of dynamics. It depends on the transcription method.
+ * @return The output Metrics.
+ */
+Metrics computeIntermediateMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state, const vector_t& input,
+                                   vector_t&& dynamicsViolation = vector_t());
+
+/**
+ * Compute the intermediate-time Metrics (i.e. cost, softConstraints, and constraints).
+ *
+ * @note It is assumed that the precomputation request is already made.
+ * problem.preComputationPtr->request(Request::Cost + Request::Constraint + Request::SoftConstraint, t, x, u)
+ *
+ * @param [in] problem: The optimal control probelm
+ * @param [in] time: The current time.
+ * @param [in] state: The current state.
+ * @param [in] input: The current input.
  * @param [in] multipliers: The current multipliers associated to the equality and inequality Lagrangians.
  * @param [in] dynamicsViolation: The violation of dynamics. It depends on the transcription method.
  * @return The output Metrics.
  */
 Metrics computeIntermediateMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state, const vector_t& input,
-                                   const MultiplierCollection& multipliers, const vector_t& dynamicsViolation = vector_t());
+                                   const MultiplierCollection& multipliers, vector_t&& dynamicsViolation = vector_t());
+
+/**
+ * Compute the event-time Metrics based on pre-jump state value (i.e. cost, softConstraints, and constraints).
+ *
+ * @note It is assumed that the precomputation request is already made.
+ * problem.preComputationPtr->requestPreJump(Request::Cost + Request::Constraint + Request::SoftConstraint, t, x)
+ *
+ * @param [in] problem: The optimal control probelm
+ * @param [in] time: The current time.
+ * @param [in] state: The current state.
+ * @param [in] dynamicsViolation: The violation of dynamics. It depends on the transcription method.
+ * @return The output Metrics.
+ */
+Metrics computePreJumpMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
+                              vector_t&& dynamicsViolation = vector_t());
 
 /**
  * Compute the event-time Metrics based on pre-jump state value (i.e. cost, softConstraints, and constraints).
@@ -191,7 +222,20 @@ Metrics computeIntermediateMetrics(OptimalControlProblem& problem, const scalar_
  * @return The output Metrics.
  */
 Metrics computePreJumpMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
-                              const MultiplierCollection& multipliers, const vector_t& dynamicsViolation = vector_t());
+                              const MultiplierCollection& multipliers, vector_t&& dynamicsViolation = vector_t());
+
+/**
+ * Compute the final-time Metrics (i.e. cost, softConstraints, and constraints).
+ *
+ * @note It is assumed that the precomputation request is already made.
+ * problem.preComputationPtr->requestFinal(Request::Cost + Request::Constraint + Request::SoftConstraint, t, x)
+ *
+ * @param [in] problem: The optimal control probelm
+ * @param [in] time: The current time.
+ * @param [in] state: The current state.
+ * @return The output Metrics.
+ */
+Metrics computeFinalMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state);
 
 /**
  * Compute the final-time Metrics (i.e. cost, softConstraints, and constraints).

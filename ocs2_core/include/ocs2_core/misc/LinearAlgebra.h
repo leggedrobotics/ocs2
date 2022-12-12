@@ -38,41 +38,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace LinearAlgebra {
 
-// forward declarations
-void makePsdEigenvalue(matrix_t& squareMatrix, scalar_t minEigenvalue);
-
-void makePsdCholesky(matrix_t& A, scalar_t minEigenvalue);
-
-void computeConstraintProjection(const matrix_t& Dm, const matrix_t& RmInvUmUmT, matrix_t& DmDagger, matrix_t& DmDaggerTRmDmDaggerUUT,
-                                 matrix_t& RmInvConstrainedUUT);
-
 /**
  *  Set the eigenvalues of a triangular matrix to a minimum magnitude (maintaining the sign).
  */
-inline void setTriangularMinimumEigenvalues(matrix_t& Lr, scalar_t minEigenValue = numeric_traits::weakEpsilon<scalar_t>()) {
-  for (Eigen::Index i = 0; i < Lr.rows(); ++i) {
-    scalar_t& eigenValue = Lr(i, i);  // diagonal element is the eigenvalue
-    if (eigenValue < 0.0) {
-      eigenValue = std::min(-minEigenValue, eigenValue);
-    } else {
-      eigenValue = std::max(minEigenValue, eigenValue);
-    }
-  }
-}
+void setTriangularMinimumEigenvalues(matrix_t& Lr, scalar_t minEigenValue = numeric_traits::weakEpsilon<scalar_t>());
 
 /**
  * Makes the input matrix PSD using a eigenvalue decomposition.
  *
- * @tparam Derived type.
- * @param squareMatrix: The matrix to become PSD.
+ * @param [in, out] squareMatrix: The matrix to become PSD.
  * @param [in] minEigenvalue: minimum eigenvalue.
  */
-template <typename Derived>
-void makePsdEigenvalue(Eigen::MatrixBase<Derived>& squareMatrix, scalar_t minEigenvalue = numeric_traits::limitEpsilon<scalar_t>()) {
-  matrix_t mat = squareMatrix;
-  makePsdEigenvalue(mat, minEigenvalue);
-  squareMatrix = mat;
-}
+void makePsdEigenvalue(matrix_t& squareMatrix, scalar_t minEigenvalue = numeric_traits::limitEpsilon<scalar_t>());
 
 /**
  * Makes the input matrix PSD based on Gershgorin circle theorem. If the input matrix is positive definite and diagonally dominant,
@@ -89,20 +66,10 @@ void makePsdEigenvalue(Eigen::MatrixBase<Derived>& squareMatrix, scalar_t minEig
  * (1) Aii < minEigenvalue + Ri ==> minEigenvalue < lambda < minEigenvalue + 2 Ri
  * (2) Aii > minEigenvalue + Ri ==> minEigenvalue < Aii - Ri < lambda < Aii + Ri
  *
- * @tparam Derived type.
- * @param squareMatrix: The matrix to become PSD.
+ * @param [in, out] squareMatrix: The matrix to become PSD.
  * @param [in] minEigenvalue: minimum eigenvalue.
  */
-template <typename Derived>
-void makePsdGershgorin(Eigen::MatrixBase<Derived>& squareMatrix, scalar_t minEigenvalue = numeric_traits::limitEpsilon<scalar_t>()) {
-  assert(squareMatrix.rows() == squareMatrix.cols());
-  squareMatrix = 0.5 * (squareMatrix + squareMatrix.transpose()).eval();
-  for (size_t i = 0; i < squareMatrix.rows(); i++) {
-    // Gershgorin radius: since the matrix is symmetric we use column sum instead of row sum
-    auto Ri = squareMatrix.col(i).cwiseAbs().sum() - std::abs(squareMatrix(i, i));
-    squareMatrix(i, i) = std::max(squareMatrix(i, i), Ri + minEigenvalue);
-  }
-}
+void makePsdGershgorin(matrix_t& squareMatrix, scalar_t minEigenvalue = numeric_traits::limitEpsilon<scalar_t>());
 
 /**
  * Makes the input matrix PSD based on modified Cholesky decomposition.
@@ -116,32 +83,19 @@ void makePsdGershgorin(Eigen::MatrixBase<Derived>& squareMatrix, scalar_t minEig
  * References : C-J. Lin and J. J. Moré, Incomplete Cholesky Factorizations with Limited memory, SIAM J. Sci. Comput.
  * 21(1), pp. 24-45, 1999
  *
- * @tparam Derived type.
- * @param A: The matrix to become PSD.
+ * @param [in, out] A: The matrix to become PSD.
  * @param [in] minEigenvalue: minimum eigenvalue.
  */
-template <typename Derived>
-void makePsdCholesky(Eigen::MatrixBase<Derived>& A, scalar_t minEigenvalue = numeric_traits::limitEpsilon<scalar_t>()) {
-  matrix_t mat = A;
-  makePsdCholesky(mat, minEigenvalue);
-  A = mat;
-}
+void makePsdCholesky(matrix_t& A, scalar_t minEigenvalue = numeric_traits::limitEpsilon<scalar_t>());
 
 /**
  * Computes the U*U^T decomposition associated to the inverse of the input matrix, where U is an upper triangular
  * matrix. Note that the U*U^T decomposition is different from the Cholesky decomposition (U^T*U).
  *
- * @tparam Derived type.
  * @param [in] Am: A symmetric square positive definite matrix
  * @param [out] AmInvUmUmT: The upper-triangular matrix associated to the UUT decomposition of inv(Am) matrix.
  */
-template <typename Derived>
-void computeInverseMatrixUUT(const Derived& Am, Derived& AmInvUmUmT) {
-  // Am = Lm Lm^T --> inv(Am) = inv(Lm^T) inv(Lm) where Lm^T is upper triangular
-  Eigen::LLT<Derived> lltOfA(Am);
-  AmInvUmUmT.setIdentity(Am.rows(), Am.cols());  // for dynamic size matrices
-  lltOfA.matrixU().solveInPlace(AmInvUmUmT);
-}
+void computeInverseMatrixUUT(const matrix_t& Am, matrix_t& AmInvUmUmT);
 
 /**
  * Computes constraint projection for linear constraints  C*x + D*u - e = 0, with the weighting inv(Rm)
@@ -154,11 +108,36 @@ void computeInverseMatrixUUT(const Derived& Am, Derived& AmInvUmUmT) {
  * @param [out] RmInvConstrainedUUT: The VVT decomposition of (I-DmDagger*Dm) * inv(Rm) * (I-DmDagger*Dm)^T where V is of
  * the dimension n_u*(n_u-n_c) with n_u = Rm.rows() and n_c = Dm.rows().
  */
-template <typename DerivedInputMatrix>
-void computeConstraintProjection(const matrix_t& Dm, const DerivedInputMatrix& RmInvUmUmT, matrix_t& DmDagger,
-                                 matrix_t& DmDaggerTRmDmDaggerUUT, matrix_t& RmInvConstrainedUUT) {
-  computeConstraintProjection(Dm, matrix_t(RmInvUmUmT), DmDagger, DmDaggerTRmDmDaggerUUT, RmInvConstrainedUUT);
-}
+void computeConstraintProjection(const matrix_t& Dm, const matrix_t& RmInvUmUmT, matrix_t& DmDagger, matrix_t& DmDaggerTRmDmDaggerUUT,
+                                 matrix_t& RmInvConstrainedUUT);
+
+/**
+ * Returns the linear projection
+ *  u = Pu * \tilde{u} + Px * x + Pe
+ *
+ * s.t. C*x + D*u + e = 0 is satisfied for any \tilde{u}
+ *
+ * Implementation based on the QR decomposition
+ *
+ * @param [in] constraint : C = dfdx, D = dfdu, e = f;
+ * @return Projection terms Px = dfdx, Pu = dfdu, Pe = f (first) and left pseudo-inverse of D^T (second);
+ */
+std::pair<VectorFunctionLinearApproximation, matrix_t> qrConstraintProjection(const VectorFunctionLinearApproximation& constraint);
+
+/**
+ * Returns the linear projection
+ *  u = Pu * \tilde{u} + Px * x + Pe
+ *
+ * s.t. C*x + D*u + e = 0 is satisfied for any \tilde{u}
+ *
+ * Implementation based on the LU decomposition
+ *
+ * @param [in] constraint : C = dfdx, D = dfdu, e = f;
+ * @param [in] extractPseudoInverse : If true, left pseudo-inverse of D^T is returned. If false, an empty matrix is returned;
+ * @return Projection terms Px = dfdx, Pu = dfdu, Pe = f (first) and left pseudo-inverse of D^T (second);
+ */
+std::pair<VectorFunctionLinearApproximation, matrix_t> luConstraintProjection(const VectorFunctionLinearApproximation& constraint,
+                                                                              bool extractPseudoInverse = false);
 
 /** Computes the rank of a matrix */
 template <typename Derived>

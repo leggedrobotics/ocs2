@@ -62,6 +62,14 @@ inline Metrics interpolateNew(const LinearInterpolation::index_alpha_t& indexAlp
     const auto rhs_stateInputEqConst = toVector(dataArray[index + 1].stateInputEqConstraint);
     areSameSize = areSameSize && (lhs_stateInputEqConst.size() == rhs_stateInputEqConst.size());
 
+    const auto lhs_stateIneqConst = toVector(dataArray[index].stateIneqConstraint);
+    const auto rhs_stateIneqConst = toVector(dataArray[index + 1].stateIneqConstraint);
+    areSameSize = areSameSize && (lhs_stateIneqConst.size() == rhs_stateIneqConst.size());
+
+    const auto lhs_stateInputIneqConst = toVector(dataArray[index].stateInputIneqConstraint);
+    const auto rhs_stateInputIneqConst = toVector(dataArray[index + 1].stateInputIneqConstraint);
+    areSameSize = areSameSize && (lhs_stateInputIneqConst.size() == rhs_stateInputIneqConst.size());
+
     const auto lhs_stateEqLag = toVector(dataArray[index].stateEqLagrangian);
     const auto rhs_stateEqLag = toVector(dataArray[index + 1].stateEqLagrangian);
     areSameSize = areSameSize && (lhs_stateEqLag.size() == rhs_stateEqLag.size());
@@ -87,9 +95,12 @@ inline Metrics interpolateNew(const LinearInterpolation::index_alpha_t& indexAlp
       // dynamics violation
       out.dynamicsViolation = LinearInterpolation::interpolate(
           indexAlpha, dataArray, [](const std::vector<Metrics>& array, size_t t) -> const vector_t& { return array[t].dynamicsViolation; });
-      // constraints
+      // equality constraints
       out.stateEqConstraint = toConstraintArray(getSizes(dataArray[index].stateEqConstraint), f(lhs_stateEqConst, rhs_stateEqConst));
       out.stateInputEqConstraint = toConstraintArray(getSizes(dataArray[index].stateInputEqConstraint), f(lhs_stateInputEqConst, rhs_stateInputEqConst));
+      // inequality constraints
+      out.stateIneqConstraint = toConstraintArray(getSizes(dataArray[index].stateIneqConstraint), f(lhs_stateIneqConst, rhs_stateIneqConst));
+      out.stateInputIneqConstraint = toConstraintArray(getSizes(dataArray[index].stateInputIneqConstraint), f(lhs_stateInputIneqConst, rhs_stateInputIneqConst));
       // lagrangian
       out.stateEqLagrangian = toLagrangianMetrics(getSizes(dataArray[index].stateEqLagrangian), f(lhs_stateEqLag, rhs_stateEqLag));
       out.stateIneqLagrangian = toLagrangianMetrics(getSizes(dataArray[index].stateIneqLagrangian), f(lhs_stateIneqLag, rhs_stateIneqLag));
@@ -145,6 +156,8 @@ TEST(TestMetrics, testSwap) {
   termsMetrics.dynamicsViolation.setRandom(2);
   ocs2::random(termsSize, termsMetrics.stateEqConstraint);
   ocs2::random(termsSize, termsMetrics.stateInputEqConstraint);
+  ocs2::random(termsSize, termsMetrics.stateIneqConstraint);
+  ocs2::random(termsSize, termsMetrics.stateInputIneqConstraint);
   ocs2::random(termsSize, termsMetrics.stateEqLagrangian);
   ocs2::random(termsSize, termsMetrics.stateIneqLagrangian);
   ocs2::random(termsSize, termsMetrics.stateInputEqLagrangian);
@@ -181,6 +194,8 @@ TEST(TestMetrics, testInterpolation) {
     metricsTrajectory[i].dynamicsViolation.setRandom(2);
     ocs2::random(stateEqTermsSize, metricsTrajectory[i].stateEqConstraint);
     ocs2::random(stateInputEqTermsSize, metricsTrajectory[i].stateInputEqConstraint);
+    ocs2::random(stateIneqTermsSize, metricsTrajectory[i].stateIneqConstraint);
+    ocs2::random(stateInputIneqTermsSize, metricsTrajectory[i].stateInputIneqConstraint);
     ocs2::random(stateEqTermsSize, metricsTrajectory[i].stateEqLagrangian);
     ocs2::random(stateIneqTermsSize, metricsTrajectory[i].stateIneqLagrangian);
     ocs2::random(stateInputEqTermsSize, metricsTrajectory[i].stateInputEqLagrangian);

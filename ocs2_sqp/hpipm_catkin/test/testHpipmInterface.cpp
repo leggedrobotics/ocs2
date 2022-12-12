@@ -50,7 +50,7 @@ TEST(test_hpiphm_interface, solve_and_check_dynamic) {
   cost.emplace_back(ocs2::getRandomCost(nx, 0));
 
   // Interface
-  ocs2::HpipmInterface::OcpSize ocpSize(N, nx, nu);
+  ocs2::OcpSize ocpSize(N, nx, nu);
   ocs2::HpipmInterface hpipmInterface(ocpSize);
 
   // Solve!
@@ -87,7 +87,7 @@ TEST(test_hpiphm_interface, solve_after_resize) {
   cost.emplace_back(ocs2::getRandomCost(nx, 0));
 
   // Resize Interface
-  ocs2::HpipmInterface::OcpSize ocpSize(N, nx, nu);
+  ocs2::OcpSize ocpSize(N, nx, nu);
   hpipmInterface.resize(ocpSize);
 
   // Solve!
@@ -137,7 +137,7 @@ TEST(test_hpiphm_interface, knownSolution) {
   cost[N].dfdx = -cost[N].dfdxx * xSolGiven[N];
 
   // Interface
-  ocs2::HpipmInterface::OcpSize ocpSize(N, nx, nu);
+  ocs2::OcpSize ocpSize(N, nx, nu);
   ocs2::HpipmInterface hpipmInterface(ocpSize);
 
   // Solve!
@@ -174,7 +174,7 @@ TEST(test_hpiphm_interface, with_constraints) {
   constraints.emplace_back(ocs2::getRandomConstraints(nx, 0, nc));
 
   // Resize Interface
-  ocs2::HpipmInterface::OcpSize ocpSize(N, nx, nu);
+  ocs2::OcpSize ocpSize(N, nx, nu);
   std::fill(ocpSize.numIneqConstraints.begin(), ocpSize.numIneqConstraints.end(), nc);
 
   // Set one of the constraints to empty
@@ -241,7 +241,7 @@ TEST(test_hpiphm_interface, noInputs) {
   cost.emplace_back(ocs2::getRandomCost(nx, 0));
   cost[N].dfdx = -cost[N].dfdxx * xSolGiven[N];
 
-  const auto ocpSize = ocs2::hpipm_interface::extractSizesFromProblem(system, cost, nullptr);
+  const auto ocpSize = ocs2::extractSizesFromProblem(system, cost, nullptr);
   hpipmInterface.resize(ocpSize);
 
   // Solve!
@@ -304,7 +304,7 @@ TEST(test_hpiphm_interface, retrieveRiccati) {
   }
 
   // Interface
-  ocs2::HpipmInterface::OcpSize ocpSize(N, nx, nu);
+  ocs2::OcpSize ocpSize(N, nx, nu);
   ocs2::HpipmInterface hpipmInterface(ocpSize);
 
   // Solve!

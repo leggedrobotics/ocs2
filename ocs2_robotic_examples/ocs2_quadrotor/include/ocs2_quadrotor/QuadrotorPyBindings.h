@@ -59,9 +59,9 @@ class QuadrotorPyBindings final : public PythonInterface {
     QuadrotorInterface quadrotorInterface(taskFile, libraryFolder);
 
     // MPC
-    std::unique_ptr<GaussNewtonDDP_MPC> mpcPtr(
-        new GaussNewtonDDP_MPC(quadrotorInterface.mpcSettings(), quadrotorInterface.ddpSettings(), quadrotorInterface.getRollout(),
-                               quadrotorInterface.getOptimalControlProblem(), quadrotorInterface.getInitializer()));
+    auto mpcPtr = std::make_unique<GaussNewtonDDP_MPC>(quadrotorInterface.mpcSettings(), quadrotorInterface.ddpSettings(),
+                                                       quadrotorInterface.getRollout(), quadrotorInterface.getOptimalControlProblem(),
+                                                       quadrotorInterface.getInitializer());
     mpcPtr->getSolverPtr()->setReferenceManager(quadrotorInterface.getReferenceManagerPtr());
 
     // Python interface

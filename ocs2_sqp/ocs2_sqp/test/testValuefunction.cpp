@@ -29,11 +29,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
-#include "ocs2_sqp/MultipleShootingSolver.h"
-#include "ocs2_sqp/TimeDiscretization.h"
+#include "ocs2_sqp/SqpSolver.h"
 
 #include <ocs2_core/initialization/DefaultInitializer.h>
 
+#include <ocs2_oc/oc_data/TimeDiscretization.h>
 #include <ocs2_oc/synchronized_module/ReferenceManager.h>
 #include <ocs2_oc/test/testProblemsGeneration.h>
 
@@ -44,7 +44,7 @@ TEST(test_valuefunction, linear_quadratic_problem) {
   constexpr int Nsample = 10;
   constexpr ocs2::scalar_t tol = 1e-9;
   const ocs2::scalar_t startTime = 0.0;
-  const ocs2::scalar_t eventTime = 1.0/3.0;
+  const ocs2::scalar_t eventTime = 1.0 / 3.0;
   const ocs2::scalar_t finalTime = 1.0;
 
   ocs2::OptimalControlProblem problem;
@@ -62,17 +62,17 @@ TEST(test_valuefunction, linear_quadratic_problem) {
   // Reference Manager
   const ocs2::ModeSchedule modeSchedule({eventTime}, {0, 1});
   const ocs2::TargetTrajectories targetTrajectories({0.0}, {ocs2::vector_t::Random(n)}, {ocs2::vector_t::Random(m)});
-  std::shared_ptr<ocs2::ReferenceManager> referenceManagerPtr(new ocs2::ReferenceManager(targetTrajectories, modeSchedule));
+  auto referenceManagerPtr = std::make_shared<ocs2::ReferenceManager>(targetTrajectories, modeSchedule);
 
   problem.targetTrajectoriesPtr = &targetTrajectories;
 
   // Constraint
-  problem.equalityConstraintPtr->add("constraint",  ocs2::getOcs2Constraints(ocs2::getRandomConstraints(n, m, nc)));
+  problem.equalityConstraintPtr->add("constraint", ocs2::getOcs2Constraints(ocs2::getRandomConstraints(n, m, nc)));
 
   ocs2::DefaultInitializer zeroInitializer(m);
 
   // Solver settings
-  ocs2::multiple_shooting::Settings settings;
+  ocs2::sqp::Settings settings;
   settings.dt = 0.05;
   settings.sqpIteration = 1;
   settings.projectStateInputEqualityConstraints = true;
@@ -83,14 +83,14 @@ TEST(test_valuefunction, linear_quadratic_problem) {
   settings.createValueFunction = true;
 
   // Set up solver
-  ocs2::MultipleShootingSolver solver(settings, problem, zeroInitializer);
+  ocs2::SqpSolver solver(settings, problem, zeroInitializer);
   solver.setReferenceManager(referenceManagerPtr);
 
   // Get value function
   const ocs2::vector_t zeroState = ocs2::vector_t::Random(n);
   solver.reset();
   solver.run(startTime, zeroState, finalTime);
-  const auto costToGo = solver.getValueFunction(startTime,  zeroState);
+  const auto costToGo = solver.getValueFunction(startTime, zeroState);
   const ocs2::scalar_t zeroCost = solver.getPerformanceIndeces().cost;
 
   // Solve for random states and check consistency with value function

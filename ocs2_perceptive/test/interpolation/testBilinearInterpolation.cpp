@@ -102,6 +102,7 @@ constexpr bool TestBilinearInterpolation::verbose;
 constexpr size_t TestBilinearInterpolation::numSamples;
 constexpr size_t TestBilinearInterpolation::variableDim;
 constexpr size_t TestBilinearInterpolation::parameterDim;
+constexpr scalar_t TestBilinearInterpolation::precision;
 constexpr scalar_t TestBilinearInterpolation::resolution;
 
 TEST_F(TestBilinearInterpolation, testAdFunction) {

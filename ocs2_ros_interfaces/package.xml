@@ -19,7 +19,6 @@
   <depend>roscpp</depend>
   <depend>ocs2_msgs</depend>
   <depend>ocs2_core</depend>
-  <depend>ocs2_ddp</depend>
   <depend>ocs2_mpc</depend>
   <depend>std_msgs</depend>
   <depend>visualization_msgs</depend>

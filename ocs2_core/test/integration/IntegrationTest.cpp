@@ -37,19 +37,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace ocs2;
 
-std::unique_ptr<OdeBase> getSystem() {
+std::unique_ptr<OdeBase> getSystem(LinearController& controller) {
   matrix_t A(2, 2);
   A << -2, -1,  // clang-format off
         1,  0;  // clang-format on
   matrix_t B(2, 1);
   B << 1, 0;
-  auto sys = std::unique_ptr<ControlledSystemBase>(new LinearSystemDynamics(A, B));
 
-  scalar_array_t cntTimeStamp{0, 10};
-  vector_array_t uff(2, vector_t::Ones(1));
-  matrix_array_t k(2, matrix_t::Zero(1, 2));
-  static std::shared_ptr<LinearController> controller = std::make_shared<LinearController>(cntTimeStamp, uff, k);
-  sys->setController(controller.get());
+  auto sys = std::make_unique<LinearSystemDynamics>(std::move(A), std::move(B));
+  sys->setController(&controller);
 
   return std::move(sys);
 }
@@ -60,7 +56,11 @@ void testSecondOrderSystem(IntegratorType integrator_type) {
   const scalar_t dt = 0.05;
   const vector_t x0 = vector_t::Zero(2);
 
-  auto sys = getSystem();
+  const scalar_array_t cntTimeStamp{0, 10};
+  const vector_array_t uff(2, vector_t::Ones(1));
+  const matrix_array_t k(2, matrix_t::Zero(1, 2));
+  LinearController controller(cntTimeStamp, uff, k);
+  auto sys = getSystem(controller);
 
   std::unique_ptr<IntegratorBase> integrator = newIntegrator(integrator_type);
 

@@ -245,7 +245,7 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getQuadraticInputCos
   std::cerr << "inputCost.R:  \n" << R << '\n';
   std::cerr << " #### =============================================================================\n";
 
-  return std::unique_ptr<StateInputCost>(new QuadraticInputCost(std::move(R), manipulatorModelInfo_.stateDim));
+  return std::make_unique<QuadraticInputCost>(std::move(R), manipulatorModelInfo_.stateDim);
 }
 
 /******************************************************************************************************/
@@ -285,10 +285,10 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
   }
 
   std::vector<std::unique_ptr<PenaltyBase>> penaltyArray(6);
-  std::generate_n(penaltyArray.begin(), 3, [&] { return std::unique_ptr<PenaltyBase>(new QuadraticPenalty(muPosition)); });
-  std::generate_n(penaltyArray.begin() + 3, 3, [&] { return std::unique_ptr<PenaltyBase>(new QuadraticPenalty(muOrientation)); });
+  std::generate_n(penaltyArray.begin(), 3, [&] { return std::make_unique<QuadraticPenalty>(muPosition); });
+  std::generate_n(penaltyArray.begin() + 3, 3, [&] { return std::make_unique<QuadraticPenalty>(muOrientation); });
 
-  return std::unique_ptr<StateCost>(new StateSoftConstraint(std::move(constraint), std::move(penaltyArray)));
+  return std::make_unique<StateSoftConstraint>(std::move(constraint), std::move(penaltyArray));
 }
 
 /******************************************************************************************************/
@@ -323,17 +323,17 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstrain
 
   std::unique_ptr<StateConstraint> constraint;
   if (usePreComputation) {
-    constraint = std::unique_ptr<StateConstraint>(new MobileManipulatorSelfCollisionConstraint(
-        MobileManipulatorPinocchioMapping(manipulatorModelInfo_), std::move(geometryInterface), minimumDistance));
+    constraint = std::make_unique<MobileManipulatorSelfCollisionConstraint>(MobileManipulatorPinocchioMapping(manipulatorModelInfo_),
+                                                                            std::move(geometryInterface), minimumDistance);
   } else {
-    constraint = std::unique_ptr<StateConstraint>(new SelfCollisionConstraintCppAd(
+    constraint = std::make_unique<SelfCollisionConstraintCppAd>(
         pinocchioInterface, MobileManipulatorPinocchioMapping(manipulatorModelInfo_), std::move(geometryInterface), minimumDistance,
-        "self_collision", libraryFolder, recompileLibraries, false));
+        "self_collision", libraryFolder, recompileLibraries, false);
   }
 
-  std::unique_ptr<PenaltyBase> penalty(new RelaxedBarrierPenalty({mu, delta}));
+  auto penalty = std::make_unique<RelaxedBarrierPenalty>(RelaxedBarrierPenalty::Config{mu, delta});
 
-  return std::unique_ptr<StateCost>(new StateSoftConstraint(std::move(constraint), std::move(penalty)));
+  return std::make_unique<StateSoftConstraint>(std::move(constraint), std::move(penalty));
 }
 
 /******************************************************************************************************/
@@ -431,7 +431,7 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointLimitSoftCon
     }
   }
 
-  auto boxConstraints = std::unique_ptr<StateInputSoftBoxConstraint>(new StateInputSoftBoxConstraint(stateLimits, inputLimits));
+  auto boxConstraints = std::make_unique<StateInputSoftBoxConstraint>(stateLimits, inputLimits);
   boxConstraints->initializeOffset(0.0, vector_t::Zero(manipulatorModelInfo_.stateDim), vector_t::Zero(manipulatorModelInfo_.inputDim));
   return boxConstraints;
 }

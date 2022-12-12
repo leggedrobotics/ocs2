@@ -58,6 +58,8 @@ struct LagrangianMetricsConstRef {
  * cost : The total cost in a particular time point.
  * stateEqConstraint : An array of all state equality constraints.
  * stateInputEqConstraint : An array of all state-input equality constraints.
+ * stateIneqConstraint : An array of all state inequality constraints.
+ * stateInputIneqConstraint : An array of all state-input inequality constraints.
  * stateEqLagrangian : An array of state equality constraint terms handled by Lagrangian method.
  * stateIneqLagrangian : An array of state inequality constraint terms handled by Lagrangian method.
  * stateInputEqLagrangian : An array of state-input equality constraint terms handled by Lagrangian method.
@@ -74,6 +76,10 @@ struct Metrics {
   vector_array_t stateEqConstraint;
   vector_array_t stateInputEqConstraint;
 
+  // Inequality constraints
+  vector_array_t stateIneqConstraint;
+  vector_array_t stateInputIneqConstraint;
+
   // Lagrangians
   std::vector<LagrangianMetrics> stateEqLagrangian;
   std::vector<LagrangianMetrics> stateIneqLagrangian;
@@ -89,6 +95,9 @@ struct Metrics {
     // Equality constraints
     stateEqConstraint.swap(other.stateEqConstraint);
     stateInputEqConstraint.swap(other.stateInputEqConstraint);
+    // Inequality constraints
+    stateIneqConstraint.swap(other.stateIneqConstraint);
+    stateInputIneqConstraint.swap(other.stateInputIneqConstraint);
     // Lagrangians
     stateEqLagrangian.swap(other.stateEqLagrangian);
     stateIneqLagrangian.swap(other.stateIneqLagrangian);
@@ -105,6 +114,9 @@ struct Metrics {
     // Equality constraints
     stateEqConstraint.clear();
     stateInputEqConstraint.clear();
+    // Inequality constraints
+    stateIneqConstraint.clear();
+    stateInputIneqConstraint.clear();
     // Lagrangians
     stateEqLagrangian.clear();
     stateIneqLagrangian.clear();
@@ -116,24 +128,49 @@ struct Metrics {
   bool isApprox(const Metrics& other, scalar_t prec = 1e-8) const;
 };
 
-/** Sums penalties of an array of LagrangianMetrics */
+/** Sums penalties of an array of LagrangianMetrics. */
 inline scalar_t sumPenalties(const std::vector<LagrangianMetrics>& metricsArray) {
   scalar_t s = 0.0;
   std::for_each(metricsArray.begin(), metricsArray.end(), [&s](const LagrangianMetrics& m) { s += m.penalty; });
   return s;
 }
 
-/** Computes the sum of squared norm of constraints of an array of LagrangianMetrics */
+/** Computes the sum of squared norm of constraints of an array of LagrangianMetrics. */
 inline scalar_t constraintsSquaredNorm(const std::vector<LagrangianMetrics>& metricsArray) {
   scalar_t s = 0.0;
   std::for_each(metricsArray.begin(), metricsArray.end(), [&s](const LagrangianMetrics& m) { s += m.constraint.squaredNorm(); });
   return s;
 }
 
-/** Computes the sum of squared norm of an array of constraint terms */
-inline scalar_t constraintsSquaredNorm(const vector_array_t& constraintArray) {
+/** Computes the sum of squared norm of a vector of equality constraints violation. */
+inline scalar_t getEqConstraintsSSE(const vector_t& eqConstraint) {
+  if (eqConstraint.size() == 0) {
+    return 0.0;
+  } else {
+    return eqConstraint.squaredNorm();
+  }
+}
+
+/** Computes the sum of squared norm of a vector of inequality constraints violation. */
+inline scalar_t getIneqConstraintsSSE(const vector_t& ineqConstraint) {
+  if (ineqConstraint.size() == 0) {
+    return 0.0;
+  } else {
+    return ineqConstraint.cwiseMin(0.0).squaredNorm();
+  }
+}
+
+/** Computes the sum of squared norm of an array of equality constraints violation. */
+inline scalar_t getEqConstraintsSSE(const vector_array_t& eqConstraint) {
   scalar_t s = 0.0;
-  std::for_each(constraintArray.begin(), constraintArray.end(), [&s](const vector_t& v) { s += v.squaredNorm(); });
+  std::for_each(eqConstraint.begin(), eqConstraint.end(), [&s](const vector_t& v) { s += getEqConstraintsSSE(v); });
+  return s;
+}
+
+/** Computes the sum of squared norm of an array of inequality constraints violation. */
+inline scalar_t getIneqConstraintsSSE(const vector_array_t& ineqConstraint) {
+  scalar_t s = 0.0;
+  std::for_each(ineqConstraint.begin(), ineqConstraint.end(), [&s](const vector_t& v) { s += getIneqConstraintsSSE(v); });
   return s;
 }
 
@@ -156,18 +193,28 @@ vector_t toVector(const vector_array_t& constraintArray);
 /**
  * Gets the size of constraint terms.
  *
+ * @ param [in] constraintArray : An array of constraint terms.
+ * @return An array of constraint terms size. It has the same size as the input array.
+ */
+size_array_t getSizes(const vector_array_t& constraintArray);
+
+/**
+ * Gets the size of constraint Lagrangian terms.
+ *
  * @ param [in] termsLagrangianMetrics : LagrangianMetrics associated to an array of constraint terms.
  * @return An array of constraint terms size. It has the same size as the input array.
  */
 size_array_t getSizes(const std::vector<LagrangianMetrics>& termsLagrangianMetrics);
 
 /**
- * Gets the size of constraint terms.
+ * Deserializes the vector to an array of constraint terms.
  *
- * @ param [in] constraintArray : An array of constraint terms.
- * @return An array of constraint terms size. It has the same size as the input array.
+ * @param [in] termsSize : An array of constraint terms size. It as the same size as the output array.
+ * @param [in] vec : Serialized array of constraint terms of the format :
+ *                   (..., constraintArray[i], ...)
+ * @return An array of constraint terms.
  */
-size_array_t getSizes(const vector_array_t& constraintArray);
+vector_array_t toConstraintArray(const size_array_t& termsSize, const vector_t& vec);
 
 /**
  * Deserializes the vector to an array of LagrangianMetrics structures based on size of constraint terms.
@@ -178,16 +225,6 @@ size_array_t getSizes(const vector_array_t& constraintArray);
  * @return An array of LagrangianMetrics structures associated to an array of constraint terms
  */
 std::vector<LagrangianMetrics> toLagrangianMetrics(const size_array_t& termsSize, const vector_t& vec);
-
-/**
- * Deserializes the vector to an array of constraint terms.
- *
- * @param [in] termsSize : An array of constraint terms size. It as the same size as the output array.
- * @param [in] vec : Serialized array of constraint terms of the format :
- *                   (..., constraintArray[i], ...)
- * @return An array of LagrangianMetrics structures associated to an array of constraint terms
- */
-vector_array_t toConstraintArray(const size_array_t& termsSize, const vector_t& vec);
 
 }  // namespace ocs2
 

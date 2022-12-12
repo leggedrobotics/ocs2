@@ -88,8 +88,8 @@ QuadrotorInterface::QuadrotorInterface(const std::string& taskFile, const std::s
   std::cerr << "R:  \n" << R << "\n";
   std::cerr << "Q_final:\n" << Qf << "\n";
 
-  problem_.costPtr->add("cost", std::unique_ptr<StateInputCost>(new QuadraticStateInputCost(Q, R)));
-  problem_.finalCostPtr->add("finalCost", std::unique_ptr<StateCost>(new QuadraticStateCost(Qf)));
+  problem_.costPtr->add("cost", std::make_unique<QuadraticStateInputCost>(Q, R));
+  problem_.finalCostPtr->add("finalCost", std::make_unique<QuadraticStateCost>(Qf));
 
   // Dynamics
   auto quadrotorParameters = quadrotor::loadSettings(taskFile, "QuadrotorParameters", true);

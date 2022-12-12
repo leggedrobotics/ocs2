@@ -98,6 +98,46 @@ Optional Dependencies
 
 * `Grid Map <https://github.com/ANYbotics/grid_map>`__ catkin package, which may be installed with ``sudo apt install ros-noetic-grid-map-msgs``.
 
+* `ONNX Runtime  <https://github.com/microsoft/onnxruntime>`__ is an inferencing and training accelerator. Here, it is used for deploying learned :ref:`MPC-Net <doxid-ocs2_doc_mpcnet>` policies in C++ code. To locally install it, do the following:
+
+    .. code-block:: bash
+
+        cd /tmp
+        wget https://github.com/microsoft/onnxruntime/releases/download/v1.7.0/onnxruntime-linux-x64-1.7.0.tgz
+        tar xf onnxruntime-linux-x64-1.7.0.tgz
+        mkdir -p ~/.local/bin ~/.local/include/onnxruntime ~/.local/lib ~/.local/share/cmake/onnxruntime
+        rsync -a /tmp/onnxruntime-linux-x64-1.7.0/include/ ~/.local/include/onnxruntime
+        rsync -a /tmp/onnxruntime-linux-x64-1.7.0/lib/ ~/.local/lib
+        rsync -a ~/git/ocs2/ocs2_mpcnet/ocs2_mpcnet_core/misc/onnxruntime/cmake/ ~/.local/share/cmake/onnxruntime
+
+    We provide custom cmake config and version files to enable ``find_package(onnxruntime)`` without modifying ``LIBRARY_PATH`` and ``LD_LIBRARY_PATH``. Note that the last command above assumes that you cloned OCS2 into the folder ``git`` in your user's home directory.
+
+* `Virtual environments  <https://docs.python.org/3/library/venv.html>`__ are recommended when training :ref:`MPC-Net <doxid-ocs2_doc_mpcnet>` policies:
+
+    .. code-block:: bash
+
+        sudo apt-get install python3-venv
+
+    Create an environment and give it access to the system site packages:
+
+    .. code-block:: bash
+
+        mkdir venvs && cd venvs
+        python3 -m venv mpcnet
+
+    Activate the environment and install the requirements:
+
+    .. code-block:: bash
+
+        source ~/venvs/mpcnet/bin/activate
+        python3 -m pip install -r ~/git/ocs2/ocs2_mpcnet/ocs2_mpcnet_core/requirements.txt
+
+    Newer graphics cards might require a CUDA capability which is currently not supported by the standard PyTorch installation.
+    In that case check `PyTorch Start Locally  <https://pytorch.org/get-started/locally/>`__ for a compatible version and, e.g., run:
+
+    .. code-block:: bash
+
+        pip3 install torch==1.10.2+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html
 
 .. _doxid-ocs2_doc_installation_ocs2_doc_install:
 

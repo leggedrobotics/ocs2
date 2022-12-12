@@ -270,7 +270,7 @@ ScalarFunctionQuadraticApproximation approximateFinalCost(const OptimalControlPr
 /******************************************************************************************************/
 /******************************************************************************************************/
 Metrics computeIntermediateMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state, const vector_t& input,
-                                   const MultiplierCollection& multipliers, const vector_t& dynamicsViolation) {
+                                   vector_t&& dynamicsViolation) {
   auto& preComputation = *problem.preComputationPtr;
 
   Metrics metrics;
@@ -279,16 +279,43 @@ Metrics computeIntermediateMetrics(OptimalControlProblem& problem, const scalar_
   metrics.cost = computeCost(problem, time, state, input);
 
   // Dynamics violation
-  metrics.dynamicsViolation = dynamicsViolation;
+  metrics.dynamicsViolation = std::move(dynamicsViolation);
 
   // Equality constraints
-  metrics.stateEqConstraint = problem.stateEqualityConstraintPtr->getValue(time, state, preComputation);
-  metrics.stateInputEqConstraint = problem.equalityConstraintPtr->getValue(time, state, input, preComputation);
+  if (!problem.stateEqualityConstraintPtr->empty()) {
+    metrics.stateEqConstraint = problem.stateEqualityConstraintPtr->getValue(time, state, preComputation);
+  }
+  if (!problem.equalityConstraintPtr->empty()) {
+    metrics.stateInputEqConstraint = problem.equalityConstraintPtr->getValue(time, state, input, preComputation);
+  }
 
-  // Lagrangians
+  // Inequality constraints
+  if (!problem.stateInequalityConstraintPtr->empty()) {
+    metrics.stateIneqConstraint = problem.stateInequalityConstraintPtr->getValue(time, state, preComputation);
+  }
+  if (!problem.inequalityConstraintPtr->empty()) {
+    metrics.stateInputIneqConstraint = problem.inequalityConstraintPtr->getValue(time, state, input, preComputation);
+  }
+
+  return metrics;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+Metrics computeIntermediateMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state, const vector_t& input,
+                                   const MultiplierCollection& multipliers, vector_t&& dynamicsViolation) {
+  auto& preComputation = *problem.preComputationPtr;
+
+  // cost, dynamics violation, equlaity constraints, inequlaity constraints
+  auto metrics = computeIntermediateMetrics(problem, time, state, input, std::move(dynamicsViolation));
+
+  // Equality Lagrangians
   metrics.stateEqLagrangian = problem.stateEqualityLagrangianPtr->getValue(time, state, multipliers.stateEq, preComputation);
-  metrics.stateIneqLagrangian = problem.stateInequalityLagrangianPtr->getValue(time, state, multipliers.stateIneq, preComputation);
   metrics.stateInputEqLagrangian = problem.equalityLagrangianPtr->getValue(time, state, input, multipliers.stateInputEq, preComputation);
+
+  // Inequality Lagrangians
+  metrics.stateIneqLagrangian = problem.stateInequalityLagrangianPtr->getValue(time, state, multipliers.stateIneq, preComputation);
   metrics.stateInputIneqLagrangian =
       problem.inequalityLagrangianPtr->getValue(time, state, input, multipliers.stateInputIneq, preComputation);
 
@@ -298,8 +325,7 @@ Metrics computeIntermediateMetrics(OptimalControlProblem& problem, const scalar_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-Metrics computePreJumpMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
-                              const MultiplierCollection& multipliers, const vector_t& dynamicsViolation) {
+Metrics computePreJumpMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state, vector_t&& dynamicsViolation) {
   auto& preComputation = *problem.preComputationPtr;
 
   Metrics metrics;
@@ -308,13 +334,35 @@ Metrics computePreJumpMetrics(OptimalControlProblem& problem, const scalar_t tim
   metrics.cost = computeEventCost(problem, time, state);
 
   // Dynamics violation
-  metrics.dynamicsViolation = dynamicsViolation;
+  metrics.dynamicsViolation = std::move(dynamicsViolation);
 
   // Equality constraint
-  metrics.stateEqConstraint = problem.preJumpEqualityConstraintPtr->getValue(time, state, preComputation);
+  if (!problem.preJumpEqualityConstraintPtr->empty()) {
+    metrics.stateEqConstraint = problem.preJumpEqualityConstraintPtr->getValue(time, state, preComputation);
+  }
 
-  // Lagrangians
+  // Inequality constraint
+  if (!problem.preJumpInequalityConstraintPtr->empty()) {
+    metrics.stateIneqConstraint = problem.preJumpInequalityConstraintPtr->getValue(time, state, preComputation);
+  }
+
+  return metrics;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+Metrics computePreJumpMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
+                              const MultiplierCollection& multipliers, vector_t&& dynamicsViolation) {
+  auto& preComputation = *problem.preComputationPtr;
+
+  // cost, dynamics violation, equlaity constraints, inequlaity constraints
+  auto metrics = computePreJumpMetrics(problem, time, state, std::move(dynamicsViolation));
+
+  // Equality Lagrangians
   metrics.stateEqLagrangian = problem.preJumpEqualityLagrangianPtr->getValue(time, state, multipliers.stateEq, preComputation);
+
+  // Inequality Lagrangians
   metrics.stateIneqLagrangian = problem.preJumpInequalityLagrangianPtr->getValue(time, state, multipliers.stateIneq, preComputation);
 
   return metrics;
@@ -323,8 +371,7 @@ Metrics computePreJumpMetrics(OptimalControlProblem& problem, const scalar_t tim
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-Metrics computeFinalMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
-                            const MultiplierCollection& multipliers) {
+Metrics computeFinalMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state) {
   auto& preComputation = *problem.preComputationPtr;
 
   Metrics metrics;
@@ -336,10 +383,32 @@ Metrics computeFinalMetrics(OptimalControlProblem& problem, const scalar_t time,
   // metrics.dynamicsViolation = vector_t();
 
   // Equality constraint
-  metrics.stateEqConstraint = problem.finalEqualityConstraintPtr->getValue(time, state, preComputation);
+  if (!problem.finalEqualityConstraintPtr->empty()) {
+    metrics.stateEqConstraint = problem.finalEqualityConstraintPtr->getValue(time, state, preComputation);
+  }
 
-  // Lagrangians
+  // Inequality constraint
+  if (!problem.finalInequalityConstraintPtr->empty()) {
+    metrics.stateIneqConstraint = problem.finalInequalityConstraintPtr->getValue(time, state, preComputation);
+  }
+
+  return metrics;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+Metrics computeFinalMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
+                            const MultiplierCollection& multipliers) {
+  auto& preComputation = *problem.preComputationPtr;
+
+  // cost, equlaity constraints, inequlaity constraints
+  auto metrics = computeFinalMetrics(problem, time, state);
+
+  // Equality Lagrangians
   metrics.stateEqLagrangian = problem.finalEqualityLagrangianPtr->getValue(time, state, multipliers.stateEq, preComputation);
+
+  // Inequality Lagrangians
   metrics.stateIneqLagrangian = problem.finalInequalityLagrangianPtr->getValue(time, state, multipliers.stateIneq, preComputation);
 
   return metrics;

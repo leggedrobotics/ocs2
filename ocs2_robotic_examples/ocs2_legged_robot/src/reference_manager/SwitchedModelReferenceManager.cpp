@@ -44,6 +44,14 @@ SwitchedModelReferenceManager::SwitchedModelReferenceManager(std::shared_ptr<Gai
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+void SwitchedModelReferenceManager::setModeSchedule(const ModeSchedule& modeSchedule) {
+  ReferenceManager::setModeSchedule(modeSchedule);
+  gaitSchedulePtr_->setModeSchedule(modeSchedule);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 contact_flag_t SwitchedModelReferenceManager::getContactFlags(scalar_t time) const {
   return modeNumber2StanceLeg(this->getModeSchedule().modeAtTime(time));
 }

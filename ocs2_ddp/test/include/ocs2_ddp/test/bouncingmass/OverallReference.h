@@ -59,15 +59,7 @@ class OverallReference {
    * @param [in] trajTimes: list of times at which the reference is defined
    * @param [in] trajState: list of waypoints at which the reference is defined
    */
-  OverallReference(const scalar_array_t trajTimes, const vector_array_t trajState);
-
-  /*
-   * Calculate the input at a certain time
-   *
-   * @param [in] time: time moment at which the input is calculated
-   * @param [out] input: input corresponding to time
-   */
-  void getInput(scalar_t time, vector_t& input) const;
+  OverallReference(const scalar_array_t& trajTimes, const vector_array_t& trajState);
 
   /*
    * Calculate the input at a certain time
@@ -76,14 +68,6 @@ class OverallReference {
    * @return input corresponding to time
    */
   vector_t getInput(scalar_t time) const;
-
-  /*
-   * Calculate the reference state at a certain time
-   *
-   * @param [in] time: time moment at which the input is calculated
-   * @param [out] state: state corresponding to time
-   */
-  void getState(scalar_t time, vector_t& x) const;
 
   /*
    * Calculate the reference state at a certain time
@@ -103,15 +87,6 @@ class OverallReference {
   vector_t getState(int idx, scalar_t time) const;
 
   /*
-   * Calculate the reference state at a certain time and mode
-   *
-   * @param [in] idx: mode at which the input is calculated
-   * @param [in] time: time moment at which the input is calculated
-   * @param [out] state: state corresponding to time and mode
-   */
-  void getState(int idx, scalar_t time, vector_t& x) const;
-
-  /*
    * Extend the reference past the event times, by integrating the input signal
    * without applying the jump map
    *
@@ -128,22 +103,11 @@ class OverallReference {
 
  private:
   /*
-   * Find the index of the currently active reference
-   *
-   * @param [in] time: time moment at which the index is requested
-   *
-   * @return currently active index
-   */
-  int getIndex(scalar_t time) const;
-
-  /*
    * Jump map of the system
-   *
    * @param [in] x: State before event
-   *
-   * @return currently active index
+   * @return state after event
    */
-  void jumpMap(vector_t& x) const;
+  vector_t jumpMap(const vector_t& x) const;
 
   std::vector<Reference> References_;
   std::vector<scalar_t> switchtimes_;

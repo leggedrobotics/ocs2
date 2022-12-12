@@ -95,7 +95,7 @@ LeggedRobotInterface::LeggedRobotInterface(const std::string& taskFile, const st
   ddpSettings_ = ddp::loadSettings(taskFile, "ddp", verbose);
   mpcSettings_ = mpc::loadSettings(taskFile, "mpc", verbose);
   rolloutSettings_ = rollout::loadSettings(taskFile, "rollout", verbose);
-  sqpSettings_ = multiple_shooting::loadSettings(taskFile, "multiple_shooting", verbose);
+  sqpSettings_ = sqp::loadSettings(taskFile, "sqp", verbose);
 
   // OptimalConrolProblem
   setupOptimalConrolProblem(taskFile, urdfFile, referenceFile, verbose);
@@ -120,8 +120,8 @@ void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile
       modelSettings_.contactNames6DoF);
 
   // Swing trajectory planner
-  std::unique_ptr<SwingTrajectoryPlanner> swingTrajectoryPlanner(
-      new SwingTrajectoryPlanner(loadSwingTrajectorySettings(taskFile, "swing_trajectory_config", verbose), 4));
+  auto swingTrajectoryPlanner =
+      std::make_unique<SwingTrajectoryPlanner>(loadSwingTrajectorySettings(taskFile, "swing_trajectory_config", verbose), 4);
 
   // Mode schedule manager
   referenceManagerPtr_ =
@@ -279,7 +279,7 @@ std::unique_ptr<StateInputCost> LeggedRobotInterface::getBaseTrackingCost(const 
     std::cerr << " #### =============================================================================\n";
   }
 
-  return std::unique_ptr<StateInputCost>(new LeggedRobotStateInputQuadraticCost(std::move(Q), std::move(R), info, *referenceManagerPtr_));
+  return std::make_unique<LeggedRobotStateInputQuadraticCost>(std::move(Q), std::move(R), info, *referenceManagerPtr_);
 }
 
 /******************************************************************************************************/
@@ -313,19 +313,19 @@ std::pair<scalar_t, RelaxedBarrierPenalty::Config> LeggedRobotInterface::loadFri
 std::unique_ptr<StateInputCost> LeggedRobotInterface::getFrictionConeConstraint(size_t contactPointIndex, scalar_t frictionCoefficient,
                                                                                 const RelaxedBarrierPenalty::Config& barrierPenaltyConfig) {
   FrictionConeConstraint::Config frictionConeConConfig(frictionCoefficient);
-  std::unique_ptr<FrictionConeConstraint> frictionConeConstraintPtr(
-      new FrictionConeConstraint(*referenceManagerPtr_, std::move(frictionConeConConfig), contactPointIndex, centroidalModelInfo_));
+  auto frictionConeConstraintPtr = std::make_unique<FrictionConeConstraint>(*referenceManagerPtr_, std::move(frictionConeConConfig),
+                                                                            contactPointIndex, centroidalModelInfo_);
 
-  std::unique_ptr<PenaltyBase> penalty(new RelaxedBarrierPenalty(barrierPenaltyConfig));
+  auto penalty = std::make_unique<RelaxedBarrierPenalty>(barrierPenaltyConfig);
 
-  return std::unique_ptr<StateInputCost>(new StateInputSoftConstraint(std::move(frictionConeConstraintPtr), std::move(penalty)));
+  return std::make_unique<StateInputSoftConstraint>(std::move(frictionConeConstraintPtr), std::move(penalty));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::unique_ptr<StateInputConstraint> LeggedRobotInterface::getZeroForceConstraint(size_t contactPointIndex) {
-  return std::unique_ptr<StateInputConstraint>(new ZeroForceConstraint(*referenceManagerPtr_, contactPointIndex, centroidalModelInfo_));
+  return std::make_unique<ZeroForceConstraint>(*referenceManagerPtr_, contactPointIndex, centroidalModelInfo_);
 }
 
 /******************************************************************************************************/
@@ -349,8 +349,8 @@ std::unique_ptr<StateInputConstraint> LeggedRobotInterface::getZeroVelocityConst
     throw std::runtime_error(
         "[LeggedRobotInterface::getZeroVelocityConstraint] The analytical end-effector zero velocity constraint is not implemented!");
   } else {
-    return std::unique_ptr<StateInputConstraint>(new ZeroVelocityConstraintCppAd(*referenceManagerPtr_, eeKinematics, contactPointIndex,
-                                                                                 eeZeroVelConConfig(modelSettings_.positionErrorGain)));
+    return std::make_unique<ZeroVelocityConstraintCppAd>(*referenceManagerPtr_, eeKinematics, contactPointIndex,
+                                                         eeZeroVelConConfig(modelSettings_.positionErrorGain));
   }
 }
 
@@ -364,7 +364,7 @@ std::unique_ptr<StateInputConstraint> LeggedRobotInterface::getNormalVelocityCon
     throw std::runtime_error(
         "[LeggedRobotInterface::getNormalVelocityConstraint] The analytical end-effector normal velocity constraint is not implemented!");
   } else {
-    return std::unique_ptr<StateInputConstraint>(new NormalVelocityConstraintCppAd(*referenceManagerPtr_, eeKinematics, contactPointIndex));
+    return std::make_unique<NormalVelocityConstraintCppAd>(*referenceManagerPtr_, eeKinematics, contactPointIndex);
   }
 }
 

@@ -60,12 +60,7 @@ PerformanceIndex computeIntermediatePerformance(const Transcription& transcripti
 PerformanceIndex computeIntermediatePerformance(OptimalControlProblem& optimalControlProblem, DynamicsDiscretizer& discretizer, scalar_t t,
                                                 scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u) {
   const auto metrics = computeIntermediateMetrics(optimalControlProblem, discretizer, t, dt, x, x_next, u);
-  auto performanceIndex = toPerformanceIndex(metrics);
-  //  performanceIndex.cost *= dt  no need since it is already considered in multiple_shooting::computeIntermediateMetrics()
-  performanceIndex.dynamicsViolationSSE *= dt;
-  performanceIndex.equalityConstraintsSSE *= dt;
-  performanceIndex.inequalityConstraintsSSE *= dt;
-  return performanceIndex;
+  return toPerformanceIndex(metrics, dt);
 }
 
 PerformanceIndex computeTerminalPerformance(const TerminalTranscription& transcription) {

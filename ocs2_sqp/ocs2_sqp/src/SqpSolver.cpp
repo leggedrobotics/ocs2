@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_oc/multiple_shooting/Helpers.h>
 #include <ocs2_oc/multiple_shooting/Initialization.h>
+#include <ocs2_oc/multiple_shooting/MetricsComputation.h>
 #include <ocs2_oc/multiple_shooting/PerformanceIndexComputation.h>
 #include <ocs2_oc/multiple_shooting/Transcription.h>
 #include <ocs2_oc/oc_problem/OcpSize.h>
@@ -176,6 +177,7 @@ void SqpSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
 
   // Bookkeeping
   performanceIndeces_.clear();
+  std::vector<Metrics> metrics(timeDiscretization.size());
 
   int iter = 0;
   sqp::Convergence convergence = sqp::Convergence::FALSE;
@@ -197,7 +199,7 @@ void SqpSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
 
     // Apply step
     linesearchTimer_.startTimer();
-    const auto stepInfo = takeStep(baselinePerformance, timeDiscretization, initState, deltaSolution, x, u);
+    const auto stepInfo = takeStep(baselinePerformance, timeDiscretization, initState, deltaSolution, x, u, metrics);
     performanceIndeces_.push_back(stepInfo.performanceAfterStep);
     linesearchTimer_.endTimer();
 
@@ -211,6 +213,7 @@ void SqpSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
 
   computeControllerTimer_.startTimer();
   primalSolution_ = toPrimalSolution(timeDiscretization, std::move(x), std::move(u));
+  problemMetrics_ = multiple_shooting::toProblemMetrics(timeDiscretization, metrics);
   computeControllerTimer_.endTimer();
 
   ++numProblems_;
@@ -362,21 +365,11 @@ PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<Annotated
 }
 
 PerformanceIndex SqpSolver::computePerformance(const std::vector<AnnotatedTime>& time, const vector_t& initState, const vector_array_t& x,
-                                               const vector_array_t& u, ProblemMetrics& problemMetrics) {
-  // Problem horizon
+                                               const vector_array_t& u, std::vector<Metrics>& metrics) {
+  // Problem size
   const int N = static_cast<int>(time.size()) - 1;
-
-  // extract indices for setting up problemMetrics
-  int numEvents = 0, numIntermediates = 0;
-  std::vector<int> indices(N);
-  for (int i = 0; i < N; ++i) {
-    indices[i] = (time[i].event == AnnotatedTime::Event::PreEvent) ? numEvents++ : numIntermediates++;
-  }
-
-  // resize
-  problemMetrics.clear();
-  problemMetrics.preJumps.resize(numEvents);
-  problemMetrics.intermediates.resize(numIntermediates);
+  metrics.clear();
+  metrics.resize(N + 1);
 
   std::vector<PerformanceIndex> performance(settings_.nThreads, PerformanceIndex());
   std::atomic_int timeIndex{0};
@@ -386,18 +379,16 @@ PerformanceIndex SqpSolver::computePerformance(const std::vector<AnnotatedTime>&
 
     int i = timeIndex++;
     while (i < N) {
-      const auto problemMetricsIndex = indices[i];
       if (time[i].event == AnnotatedTime::Event::PreEvent) {
         // Event node
-        problemMetrics.preJumps[problemMetricsIndex] = multiple_shooting::computeEventMetrics(ocpDefinition, time[i].time, x[i], x[i + 1]);
-        performance[workerId] += toPerformanceIndex(problemMetrics.preJumps[problemMetricsIndex]);
+        metrics[i] = multiple_shooting::computeEventMetrics(ocpDefinition, time[i].time, x[i], x[i + 1]);
+        performance[workerId] += toPerformanceIndex(metrics[i]);
       } else {
         // Normal, intermediate node
         const scalar_t ti = getIntervalStart(time[i]);
         const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
-        problemMetrics.intermediates[problemMetricsIndex] =
-            multiple_shooting::computeIntermediateMetrics(ocpDefinition, discretizer_, ti, dt, x[i], x[i + 1], u[i]);
-        performance[workerId] += toPerformanceIndex(problemMetrics.intermediates[problemMetricsIndex], dt);
+        metrics[i] = multiple_shooting::computeIntermediateMetrics(ocpDefinition, discretizer_, ti, dt, x[i], x[i + 1], u[i]);
+        performance[workerId] += toPerformanceIndex(metrics[i], dt);
       }
 
       i = timeIndex++;
@@ -405,15 +396,15 @@ PerformanceIndex SqpSolver::computePerformance(const std::vector<AnnotatedTime>&
 
     if (i == N) {  // Only one worker will execute this
       const scalar_t tN = getIntervalStart(time[N]);
-      problemMetrics.final = multiple_shooting::computeTerminalMetrics(ocpDefinition, tN, x[N]);
-      performance[workerId] += toPerformanceIndex(problemMetrics.final);
+      metrics[N] = multiple_shooting::computeTerminalMetrics(ocpDefinition, tN, x[N]);
+      performance[workerId] += toPerformanceIndex(metrics[N]);
     }
   };
   runParallel(std::move(parallelTask));
 
   // Account for initial state in performance
   const vector_t initDynamicsViolation = initState - x.front();
-  problemMetrics.intermediates.front().dynamicsViolation += initDynamicsViolation;
+  metrics.front().dynamicsViolation += initDynamicsViolation;
   performance.front().dynamicsViolationSSE += initDynamicsViolation.squaredNorm();
 
   // Sum performance of the threads
@@ -424,7 +415,7 @@ PerformanceIndex SqpSolver::computePerformance(const std::vector<AnnotatedTime>&
 
 sqp::StepInfo SqpSolver::takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization,
                                   const vector_t& initState, const OcpSubproblemSolution& subproblemSolution, vector_array_t& x,
-                                  vector_array_t& u) {
+                                  vector_array_t& u, std::vector<Metrics>& metrics) {
   using StepType = FilterLinesearch::StepType;
 
   /*
@@ -450,13 +441,14 @@ sqp::StepInfo SqpSolver::takeStep(const PerformanceIndex& baseline, const std::v
   scalar_t alpha = 1.0;
   vector_array_t xNew(x.size());
   vector_array_t uNew(u.size());
+  std::vector<Metrics> metricsNew(x.size());
   do {
     // Compute step
     multiple_shooting::incrementTrajectory(u, du, alpha, uNew);
     multiple_shooting::incrementTrajectory(x, dx, alpha, xNew);
 
     // Compute cost and constraints
-    const PerformanceIndex performanceNew = computePerformance(timeDiscretization, initState, xNew, uNew);
+    const PerformanceIndex performanceNew = computePerformance(timeDiscretization, initState, xNew, uNew, metricsNew);
 
     // Step acceptance and record step type
     bool stepAccepted;
@@ -474,7 +466,7 @@ sqp::StepInfo SqpSolver::takeStep(const PerformanceIndex& baseline, const std::v
     if (stepAccepted) {  // Return if step accepted
       x = std::move(xNew);
       u = std::move(uNew);
-      problemMetrics.swap(problemMetricsNew_);
+      metrics = std::move(metricsNew);
 
       // Prepare step info
       sqp::StepInfo stepInfo;
@@ -508,8 +500,8 @@ sqp::StepInfo SqpSolver::takeStep(const PerformanceIndex& baseline, const std::v
   stepInfo.du_norm = 0.0;
   stepInfo.performanceAfterStep = baseline;
   stepInfo.totalConstraintViolationAfterStep = FilterLinesearch::totalConstraintViolation(baseline);
-
-  std::ignore = computePerformance(timeDiscretization, initState, xNew, uNew, problemMetrics);
+  // compute metrics for the baseline rollout
+  std::ignore = computePerformance(timeDiscretization, initState, x, u, metrics);
 
   if (settings_.printLinesearch) {
     std::cerr << "[Linesearch terminated] Step size: " << stepInfo.stepSize << ", Step Type: " << toString(stepInfo.stepType) << "\n";

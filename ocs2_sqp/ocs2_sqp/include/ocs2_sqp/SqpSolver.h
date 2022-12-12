@@ -125,7 +125,7 @@ class SqpSolver : public SolverBase {
 
   /** Computes only the performance metrics at the current {t, x(t), u(t)} */
   PerformanceIndex computePerformance(const std::vector<AnnotatedTime>& time, const vector_t& initState, const vector_array_t& x,
-                                      const vector_array_t& u, ProblemMetrics& problemMetrics);
+                                      const vector_array_t& u, std::vector<Metrics>& metrics);
 
   /** Returns solution of the QP subproblem in delta coordinates: */
   struct OcpSubproblemSolution {
@@ -143,7 +143,8 @@ class SqpSolver : public SolverBase {
 
   /** Decides on the step to take and overrides given trajectories {x(t), u(t)} <- {x(t) + a*dx(t), u(t) + a*du(t)} */
   sqp::StepInfo takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization, const vector_t& initState,
-                         const OcpSubproblemSolution& subproblemSolution, vector_array_t& x, vector_array_t& u);
+                         const OcpSubproblemSolution& subproblemSolution, vector_array_t& x, vector_array_t& u,
+                         std::vector<Metrics>& metrics);
 
   /** Determine convergence after a step */
   sqp::Convergence checkConvergence(int iteration, const PerformanceIndex& baseline, const sqp::StepInfo& stepInfo) const;
@@ -184,8 +185,6 @@ class SqpSolver : public SolverBase {
 
   // The ProblemMetrics associated to primalSolution_
   ProblemMetrics problemMetrics_;
-  // Memory used within the search strategy
-  ProblemMetrics problemMetricsNew_;
 
   // Benchmarking
   size_t numProblems_{0};

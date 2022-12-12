@@ -115,8 +115,11 @@ inline PerformanceIndex operator*(const scalar_t c, PerformanceIndex rhs) {
 /** Swaps performance indices. */
 void swap(PerformanceIndex& lhs, PerformanceIndex& rhs);
 
-/** Computes the PerformanceIndex based on a given Metrics. */
+/** Computes the PerformanceIndex based on a given continuous-time Metrics. */
 PerformanceIndex toPerformanceIndex(const Metrics& m);
+
+/** Computes the PerformanceIndex based on a given discrete-time Metrics. */
+PerformanceIndex toPerformanceIndex(const Metrics& m, const scalar_t dt);
 
 /** Overloads the stream insertion operator. */
 std::ostream& operator<<(std::ostream& stream, const PerformanceIndex& performanceIndex);

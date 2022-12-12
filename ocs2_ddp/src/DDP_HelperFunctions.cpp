@@ -73,7 +73,7 @@ void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution&
   problemMetrics.intermediates.reserve(tTrajectory.size());
 
   auto nextPostEventIndexItr = postEventIndices.begin();
-  const auto request = Request::Cost + Request::Constraint + Request::SoftConstraint;
+  constexpr auto request = Request::Cost + Request::Constraint + Request::SoftConstraint;
   for (size_t k = 0; k < tTrajectory.size(); k++) {
     // intermediate time cost and constraints
     problem.preComputationPtr->request(request, tTrajectory[k], xTrajectory[k], uTrajectory[k]);

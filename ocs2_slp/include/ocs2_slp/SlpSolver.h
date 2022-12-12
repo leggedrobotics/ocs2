@@ -65,10 +65,8 @@ class SlpSolver : public SolverBase {
 
   void getPrimalSolution(scalar_t finalTime, PrimalSolution* primalSolutionPtr) const override { *primalSolutionPtr = primalSolution_; }
 
-  const DualSolution* getDualSolution() const override { return nullptr; }
-
   const ProblemMetrics& getSolutionMetrics() const override {
-    throw std::runtime_error("[SqpSolver] getSolutionMetrics() not available yet.");
+    throw std::runtime_error("[SlpSolver] getSolutionMetrics() not available yet.");
   }
 
   size_t getNumIterations() const override { return totalNumIterations_; }

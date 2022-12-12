@@ -57,6 +57,7 @@ add_library(${PROJECT_NAME}
   src/multiple_shooting/ProjectionMultiplierCoefficients.cpp
   src/multiple_shooting/Transcription.cpp
   src/oc_data/LoopshapingPrimalSolution.cpp
+  src/oc_data/PerformanceIndex.cpp
   src/oc_data/TimeDiscretization.cpp
   src/oc_problem/OptimalControlProblem.cpp
   src/oc_problem/LoopshapingOptimalControlProblem.cpp

@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_slp/SlpSolver.h"
 
+#include <iomanip>
 #include <iostream>
 #include <numeric>
 

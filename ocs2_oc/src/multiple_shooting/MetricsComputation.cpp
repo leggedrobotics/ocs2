@@ -34,89 +34,41 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace multiple_shooting {
 
-Metrics computeIntermediateMetrics(const OptimalControlProblem& optimalControlProblem, DynamicsDiscretizer& discretizer, scalar_t t,
-                                   scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u) {
-  Metrics metrics;
-
+Metrics computeIntermediateMetrics(OptimalControlProblem& optimalControlProblem, DynamicsDiscretizer& discretizer, scalar_t t, scalar_t dt,
+                                   const vector_t& x, const vector_t& x_next, const vector_t& u) {
   // Dynamics
-  metrics.dynamicsViolation = discretizer(*optimalControlProblem.dynamicsPtr, t, x, u, dt);
-  metrics.dynamicsViolation -= x_next;
+  auto dynamicsViolation = discretizer(*optimalControlProblem.dynamicsPtr, t, x, u, dt);
+  dynamicsViolation -= x_next;
 
-  // Precomputation for other terms
+  // Precomputation
   constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Constraint;
   optimalControlProblem.preComputationPtr->request(request, t, x, u);
 
-  // Costs
-  metrics.cost = dt * computeCost(optimalControlProblem, t, x, u);
-
-  // State equality constraints
-  if (!optimalControlProblem.stateEqualityConstraintPtr->empty()) {
-    metrics.stateEqConstraint = optimalControlProblem.stateEqualityConstraintPtr->getValue(t, x, *optimalControlProblem.preComputationPtr);
-  }
-
-  // State-input equality constraints
-  if (!optimalControlProblem.equalityConstraintPtr->empty()) {
-    metrics.stateInputEqConstraint =
-        optimalControlProblem.equalityConstraintPtr->getValue(t, x, u, *optimalControlProblem.preComputationPtr);
-  }
-
-  // State inequality constraints.
-  if (!optimalControlProblem.stateInequalityConstraintPtr->empty()) {
-    metrics.stateIneqConstraint =
-        optimalControlProblem.stateInequalityConstraintPtr->getValue(t, x, *optimalControlProblem.preComputationPtr);
-  }
-
-  // State-input inequality constraints.
-  if (!optimalControlProblem.inequalityConstraintPtr->empty()) {
-    metrics.stateInputIneqConstraint =
-        optimalControlProblem.inequalityConstraintPtr->getValue(t, x, u, *optimalControlProblem.preComputationPtr);
-  }
+  // Compute metrics
+  auto metrics = computeIntermediateMetrics(optimalControlProblem, t, x, u, std::move(dynamicsViolation));
+  metrics.cost *= dt;  // consider dt
 
   return metrics;
 }
 
-Metrics computeTerminalMetrics(const OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x) {
-  Metrics metrics;
-
-  constexpr auto request = Request::Cost + Request::SoftConstraint;
+Metrics computeTerminalMetrics(OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x) {
+  // Precomputation
+  constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Constraint;
   optimalControlProblem.preComputationPtr->requestFinal(request, t, x);
 
-  metrics.cost = computeFinalCost(optimalControlProblem, t, x);
-
-  if (!optimalControlProblem.finalEqualityConstraintPtr->empty()) {
-    metrics.stateEqConstraint = optimalControlProblem.finalEqualityConstraintPtr->getValue(t, x, *optimalControlProblem.preComputationPtr);
-  }
-
-  if (!optimalControlProblem.finalInequalityConstraintPtr->empty()) {
-    metrics.stateIneqConstraint =
-        optimalControlProblem.finalInequalityConstraintPtr->getValue(t, x, *optimalControlProblem.preComputationPtr);
-  }
-
-  return metrics;
+  return computeFinalMetrics(optimalControlProblem, t, x);
 }
 
-Metrics computeEventMetrics(const OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x, const vector_t& x_next) {
-  Metrics metrics;
-
-  constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Dynamics;
+Metrics computeEventMetrics(OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x, const vector_t& x_next) {
+  // Precomputation
+  constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Constraint + Request::Dynamics;
   optimalControlProblem.preComputationPtr->requestPreJump(request, t, x);
 
   // Dynamics
-  metrics.dynamicsViolation = optimalControlProblem.dynamicsPtr->computeJumpMap(t, x) - x_next;
+  auto dynamicsViolation = optimalControlProblem.dynamicsPtr->computeJumpMap(t, x);
+  dynamicsViolation -= x_next;
 
-  metrics.cost = computeEventCost(optimalControlProblem, t, x);
-
-  if (!optimalControlProblem.preJumpEqualityConstraintPtr->empty()) {
-    metrics.stateEqConstraint =
-        optimalControlProblem.preJumpEqualityConstraintPtr->getValue(t, x, *optimalControlProblem.preComputationPtr);
-  }
-
-  if (!optimalControlProblem.preJumpInequalityConstraintPtr->empty()) {
-    metrics.stateIneqConstraint =
-        optimalControlProblem.preJumpInequalityConstraintPtr->getValue(t, x, *optimalControlProblem.preComputationPtr);
-  }
-
-  return metrics;
+  return computePreJumpMetrics(optimalControlProblem, t, x, std::move(dynamicsViolation));
 }
 
 }  // namespace multiple_shooting

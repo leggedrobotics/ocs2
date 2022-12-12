@@ -49,17 +49,8 @@ namespace multiple_shooting {
  * @param u : Input, taken to be constant across the interval.
  * @return Metrics for a single intermediate node.
  */
-Metrics computeIntermediateMetrics(const OptimalControlProblem& optimalControlProblem, DynamicsDiscretizer& discretizer, scalar_t t,
-                                   scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u);
-
-/**
- * Compute only the Metrics for the terminal node.
- * @param optimalControlProblem : Definition of the optimal control problem
- * @param t : Time at the terminal node
- * @param x : Terminal state
- * @return Metrics for the terminal node.
- */
-Metrics computeTerminalMetrics(const OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x);
+Metrics computeIntermediateMetrics(OptimalControlProblem& optimalControlProblem, DynamicsDiscretizer& discretizer, scalar_t t, scalar_t dt,
+                                   const vector_t& x, const vector_t& x_next, const vector_t& u);
 
 /**
  * Compute only the Metrics for the event node.
@@ -69,7 +60,16 @@ Metrics computeTerminalMetrics(const OptimalControlProblem& optimalControlProble
  * @param x_next : Post-event state
  * @return Metrics for the event node.
  */
-Metrics computeEventMetrics(const OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x, const vector_t& x_next);
+Metrics computeEventMetrics(OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x, const vector_t& x_next);
+
+/**
+ * Compute only the Metrics for the terminal node.
+ * @param optimalControlProblem : Definition of the optimal control problem
+ * @param t : Time at the terminal node
+ * @param x : Terminal state
+ * @return Metrics for the terminal node.
+ */
+Metrics computeTerminalMetrics(OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x);
 
 }  // namespace multiple_shooting
 }  // namespace ocs2

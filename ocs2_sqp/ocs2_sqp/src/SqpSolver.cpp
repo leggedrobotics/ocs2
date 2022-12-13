@@ -187,7 +187,7 @@ void SqpSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
     }
     // Make QP approximation
     linearQuadraticApproximationTimer_.startTimer();
-    const auto baselinePerformance = setupQuadraticSubproblem(timeDiscretization, initState, x, u);
+    const auto baselinePerformance = setupQuadraticSubproblem(timeDiscretization, initState, x, u, metrics);
     linearQuadraticApproximationTimer_.endTimer();
 
     // Solve QP
@@ -213,7 +213,7 @@ void SqpSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
 
   computeControllerTimer_.startTimer();
   primalSolution_ = toPrimalSolution(timeDiscretization, std::move(x), std::move(u));
-  problemMetrics_ = multiple_shooting::toProblemMetrics(timeDiscretization, metrics);
+  problemMetrics_ = multiple_shooting::toProblemMetrics(timeDiscretization, std::move(metrics));
   computeControllerTimer_.endTimer();
 
   ++numProblems_;
@@ -287,7 +287,7 @@ PrimalSolution SqpSolver::toPrimalSolution(const std::vector<AnnotatedTime>& tim
 }
 
 PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<AnnotatedTime>& time, const vector_t& initState,
-                                                     const vector_array_t& x, const vector_array_t& u) {
+                                                     const vector_array_t& x, const vector_array_t& u, std::vector<Metrics>& metrics) {
   // Problem horizon
   const int N = static_cast<int>(time.size()) - 1;
 
@@ -299,6 +299,7 @@ PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<Annotated
   stateInputIneqConstraints_.resize(N);
   constraintsProjection_.resize(N);
   projectionMultiplierCoefficients_.resize(N);
+  metrics.resize(N + 1);
 
   std::atomic_int timeIndex{0};
   auto parallelTask = [&](int workerId) {
@@ -311,6 +312,7 @@ PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<Annotated
       if (time[i].event == AnnotatedTime::Event::PreEvent) {
         // Event node
         auto result = multiple_shooting::setupEventNode(ocpDefinition, time[i].time, x[i], x[i + 1]);
+        metrics[i] = multiple_shooting::computeMetrics(result);
         workerPerformance += multiple_shooting::computeEventPerformance(result);
         cost_[i] = std::move(result.cost);
         dynamics_[i] = std::move(result.dynamics);
@@ -324,6 +326,7 @@ PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<Annotated
         const scalar_t ti = getIntervalStart(time[i]);
         const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
         auto result = multiple_shooting::setupIntermediateNode(ocpDefinition, sensitivityDiscretizer_, ti, dt, x[i], x[i + 1], u[i]);
+        metrics[i] = multiple_shooting::computeMetrics(result);
         workerPerformance += multiple_shooting::computeIntermediatePerformance(result, dt);
         if (settings_.projectStateInputEqualityConstraints) {
           multiple_shooting::projectTranscription(result, settings_.extractProjectionMultiplier);
@@ -343,6 +346,7 @@ PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<Annotated
     if (i == N) {  // Only one worker will execute this
       const scalar_t tN = getIntervalStart(time[N]);
       auto result = multiple_shooting::setupTerminalNode(ocpDefinition, tN, x[N]);
+      metrics[i] = multiple_shooting::computeMetrics(result);
       workerPerformance += multiple_shooting::computeTerminalPerformance(result);
       cost_[i] = std::move(result.cost);
       stateInputEqConstraints_[i].resize(0, x[i].size());
@@ -500,8 +504,6 @@ sqp::StepInfo SqpSolver::takeStep(const PerformanceIndex& baseline, const std::v
   stepInfo.du_norm = 0.0;
   stepInfo.performanceAfterStep = baseline;
   stepInfo.totalConstraintViolationAfterStep = FilterLinesearch::totalConstraintViolation(baseline);
-  // compute metrics for the baseline rollout
-  std::ignore = computePerformance(timeDiscretization, initState, x, u, metrics);
 
   if (settings_.printLinesearch) {
     std::cerr << "[Linesearch terminated] Step size: " << stepInfo.stepSize << ", Step Type: " << toString(stepInfo.stepType) << "\n";

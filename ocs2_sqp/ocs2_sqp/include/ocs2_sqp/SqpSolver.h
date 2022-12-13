@@ -119,7 +119,7 @@ class SqpSolver : public SolverBase {
 
   /** Creates QP around t, x(t), u(t). Returns performance metrics at the current {t, x(t), u(t)} */
   PerformanceIndex setupQuadraticSubproblem(const std::vector<AnnotatedTime>& time, const vector_t& initState, const vector_array_t& x,
-                                            const vector_array_t& u);
+                                            const vector_array_t& u, std::vector<Metrics>& metrics);
 
   /** Computes only the performance metrics at the current {t, x(t), u(t)} */
   PerformanceIndex computePerformance(const std::vector<AnnotatedTime>& time, const vector_t& initState, const vector_array_t& x,

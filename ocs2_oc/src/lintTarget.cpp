@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/multiple_shooting/Helpers.h>
 #include <ocs2_oc/multiple_shooting/Initialization.h>
 #include <ocs2_oc/multiple_shooting/LagrangianEvaluation.h>
+#include <ocs2_oc/multiple_shooting/MetricsComputation.h>
 #include <ocs2_oc/multiple_shooting/PerformanceIndexComputation.h>
 #include <ocs2_oc/multiple_shooting/ProjectionMultiplierCoefficients.h>
 #include <ocs2_oc/multiple_shooting/Transcription.h>

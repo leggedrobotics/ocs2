@@ -109,7 +109,7 @@ PrimalSolution toPrimalSolution(const std::vector<AnnotatedTime>& time, ModeSche
  * @param [in] metrics: The metrics array.
  * @return The ProblemMetrics.
  */
-ProblemMetrics toProblemMetrics(const std::vector<AnnotatedTime>& time, const std::vector<Metrics>& metrics);
+ProblemMetrics toProblemMetrics(const std::vector<AnnotatedTime>& time, std::vector<Metrics>&& metrics);
 
 }  // namespace multiple_shooting
 }  // namespace ocs2

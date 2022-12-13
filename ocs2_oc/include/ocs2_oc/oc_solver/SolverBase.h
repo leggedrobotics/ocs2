@@ -134,8 +134,8 @@ class SolverBase {
   }
 
   /**
-   * Adds one observer to the vector of modules that observe solver's dual solution and optimized metrics.
-   * @note: These observer can slow down the MPC. Only employ them during debugging and remove them for deployment.
+   * Adds an observer to probe the dual solution or optimized metrics.
+   * @note: Observers will slow down the MPC. Only employ them during debugging and remove them for deployment.
    */
   void addSolverObserver(std::unique_ptr<SolverObserver> observerModule) { solverObservers_.push_back(std::move(observerModule)); }
 

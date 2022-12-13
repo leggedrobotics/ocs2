@@ -188,6 +188,9 @@ const vector_t* extractFinalTermConstraint(const OptimalControlProblem& ocp, con
   if (ocp.finalEqualityConstraintPtr->getTermIndex(name, index)) {
     return &metrics.stateEqConstraint[index];
 
+  } else if (ocp.finalInequalityConstraintPtr->getTermIndex(name, index)) {
+    return &metrics.stateIneqConstraint[index];
+
   } else {
     return nullptr;
   }
@@ -222,6 +225,13 @@ bool extractPreJumpTermConstraint(const OptimalControlProblem& ocp, const std::s
     constraintArray.reserve(metricsArray.size());
     for (const auto& m : metricsArray) {
       constraintArray.emplace_back(m.stateEqConstraint[index]);
+    }
+    return true;
+
+  } else if (ocp.preJumpInequalityConstraintPtr->getTermIndex(name, index)) {
+    constraintArray.reserve(metricsArray.size());
+    for (const auto& m : metricsArray) {
+      constraintArray.emplace_back(m.stateIneqConstraint[index]);
     }
     return true;
 
@@ -277,6 +287,20 @@ bool extractIntermediateTermConstraint(const OptimalControlProblem& ocp, const s
     constraintTraj.reserve(metricsTraj.size());
     for (const auto& m : metricsTraj) {
       constraintTraj.emplace_back(m.stateEqConstraint[index]);
+    }
+    return true;
+
+  } else if (ocp.inequalityConstraintPtr->getTermIndex(name, index)) {
+    constraintTraj.reserve(metricsTraj.size());
+    for (const auto& m : metricsTraj) {
+      constraintTraj.emplace_back(m.stateInputIneqConstraint[index]);
+    }
+    return true;
+
+  } else if (ocp.stateInequalityConstraintPtr->getTermIndex(name, index)) {
+    constraintTraj.reserve(metricsTraj.size());
+    for (const auto& m : metricsTraj) {
+      constraintTraj.emplace_back(m.stateIneqConstraint[index]);
     }
     return true;
 

@@ -30,7 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_oc/oc_data/PerformanceIndex.h"
 
 #include <iomanip>
-#include <limits>
+
+#include <ocs2_core/misc/Numerics.h>
 
 namespace ocs2 {
 
@@ -58,19 +59,14 @@ PerformanceIndex& PerformanceIndex::operator*=(const scalar_t c) {
   return *this;
 }
 
-bool PerformanceIndex::isApprox(const PerformanceIndex other, const scalar_t prec) const {
-  auto fuzzyCompares = [&](const scalar_t a, const scalar_t b) {
-    return std::abs(a - b) <= prec * std::min(std::abs(a), std::abs(b)) || std::abs(a - b) < std::numeric_limits<scalar_t>::min();
-  };
-  bool isEqual = fuzzyCompares(this->merit, other.merit);
-  isEqual = isEqual && fuzzyCompares(this->cost, other.cost);
-  isEqual = isEqual && fuzzyCompares(this->dualFeasibilitiesSSE, other.dualFeasibilitiesSSE);
-  isEqual = isEqual && fuzzyCompares(this->dynamicsViolationSSE, other.dynamicsViolationSSE);
-  isEqual = isEqual && fuzzyCompares(this->equalityConstraintsSSE, other.equalityConstraintsSSE);
-  isEqual = isEqual && fuzzyCompares(this->inequalityConstraintsSSE, other.inequalityConstraintsSSE);
-  isEqual = isEqual && fuzzyCompares(this->equalityLagrangian, other.equalityLagrangian);
-  isEqual = isEqual && fuzzyCompares(this->inequalityLagrangian, other.inequalityLagrangian);
-  return isEqual;
+bool PerformanceIndex::isApprox(const PerformanceIndex& other, const scalar_t prec) const {
+  return numerics::almost_eq(this->merit, other.merit, prec) && numerics::almost_eq(this->cost, other.cost, prec) &&
+         numerics::almost_eq(this->dualFeasibilitiesSSE, other.dualFeasibilitiesSSE, prec) &&
+         numerics::almost_eq(this->dynamicsViolationSSE, other.dynamicsViolationSSE, prec) &&
+         numerics::almost_eq(this->equalityConstraintsSSE, other.equalityConstraintsSSE, prec) &&
+         numerics::almost_eq(this->inequalityConstraintsSSE, other.inequalityConstraintsSSE, prec) &&
+         numerics::almost_eq(this->equalityLagrangian, other.equalityLagrangian, prec) &&
+         numerics::almost_eq(this->inequalityLagrangian, other.inequalityLagrangian, prec);
 }
 
 void swap(PerformanceIndex& lhs, PerformanceIndex& rhs) {

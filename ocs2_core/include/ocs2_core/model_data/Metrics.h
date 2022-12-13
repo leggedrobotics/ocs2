@@ -53,17 +53,18 @@ struct LagrangianMetricsConstRef {
 };
 
 /**
- * The collection of cost, equality constraints, and LagrangianMetrics structure for all possible constraint terms (handled by
- * Lagrangian method) in a particular time point.
- * cost : The total cost in a particular time point.
- * stateEqConstraint : An array of all state equality constraints.
- * stateInputEqConstraint : An array of all state-input equality constraints.
- * stateIneqConstraint : An array of all state inequality constraints.
- * stateInputIneqConstraint : An array of all state-input inequality constraints.
- * stateEqLagrangian : An array of state equality constraint terms handled by Lagrangian method.
- * stateIneqLagrangian : An array of state inequality constraint terms handled by Lagrangian method.
- * stateInputEqLagrangian : An array of state-input equality constraint terms handled by Lagrangian method.
- * stateInputIneqLagrangian : An array of state-input inequality constraint terms handled by Lagrangian method.
+ * The collection of cost, dynamics violation, constraints, and LagrangianMetrics structure for all possible constraint
+ * terms (handled by Lagrangian method) in a point of time.
+ *     cost : The total cost in a particular time point.
+ *     dynamicsViolation : The vector of dynamics violation.
+ *     stateEqConstraint : An array of all state equality constraints.
+ *     stateInputEqConstraint : An array of all state-input equality constraints.
+ *     stateIneqConstraint : An array of all state inequality constraints.
+ *     stateInputIneqConstraint : An array of all state-input inequality constraints.
+ *     stateEqLagrangian : An array of state equality constraint terms handled by Lagrangian method.
+ *     stateIneqLagrangian : An array of state inequality constraint terms handled by Lagrangian method.
+ *     stateInputEqLagrangian : An array of state-input equality constraint terms handled by Lagrangian method.
+ *     stateInputIneqLagrangian : An array of state-input inequality constraint terms handled by Lagrangian method.
  */
 struct Metrics {
   // Cost
@@ -87,42 +88,10 @@ struct Metrics {
   std::vector<LagrangianMetrics> stateInputIneqLagrangian;
 
   /** Exchanges the values of Metrics */
-  void swap(Metrics& other) {
-    // Cost
-    std::swap(cost, other.cost);
-    // Dynamics violation
-    dynamicsViolation.swap(other.dynamicsViolation);
-    // Equality constraints
-    stateEqConstraint.swap(other.stateEqConstraint);
-    stateInputEqConstraint.swap(other.stateInputEqConstraint);
-    // Inequality constraints
-    stateIneqConstraint.swap(other.stateIneqConstraint);
-    stateInputIneqConstraint.swap(other.stateInputIneqConstraint);
-    // Lagrangians
-    stateEqLagrangian.swap(other.stateEqLagrangian);
-    stateIneqLagrangian.swap(other.stateIneqLagrangian);
-    stateInputEqLagrangian.swap(other.stateInputEqLagrangian);
-    stateInputIneqLagrangian.swap(other.stateInputIneqLagrangian);
-  }
+  void swap(Metrics& other);
 
   /** Clears the value of the Metrics */
-  void clear() {
-    // Cost
-    cost = 0.0;
-    // Dynamics violation
-    dynamicsViolation = vector_t();
-    // Equality constraints
-    stateEqConstraint.clear();
-    stateInputEqConstraint.clear();
-    // Inequality constraints
-    stateIneqConstraint.clear();
-    stateInputIneqConstraint.clear();
-    // Lagrangians
-    stateEqLagrangian.clear();
-    stateIneqLagrangian.clear();
-    stateInputEqLagrangian.clear();
-    stateInputIneqLagrangian.clear();
-  }
+  void clear();
 
   /** Returns true if *this is approximately equal to other, within the precision determined by prec. */
   bool isApprox(const Metrics& other, scalar_t prec = 1e-8) const;

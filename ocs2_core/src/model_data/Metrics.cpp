@@ -29,27 +29,65 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_core/model_data/Metrics.h"
 
-#include <limits>
+#include <ocs2_core/misc/Numerics.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/** Returns true if *this is approximately equal to other, within the precision determined by prec. */
+void Metrics::swap(Metrics& other) {
+  // Cost
+  std::swap(cost, other.cost);
+  // Dynamics violation
+  dynamicsViolation.swap(other.dynamicsViolation);
+  // Equality constraints
+  stateEqConstraint.swap(other.stateEqConstraint);
+  stateInputEqConstraint.swap(other.stateInputEqConstraint);
+  // Inequality constraints
+  stateIneqConstraint.swap(other.stateIneqConstraint);
+  stateInputIneqConstraint.swap(other.stateInputIneqConstraint);
+  // Lagrangians
+  stateEqLagrangian.swap(other.stateEqLagrangian);
+  stateIneqLagrangian.swap(other.stateIneqLagrangian);
+  stateInputEqLagrangian.swap(other.stateInputEqLagrangian);
+  stateInputIneqLagrangian.swap(other.stateInputIneqLagrangian);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void Metrics::clear() {
+  // Cost
+  cost = 0.0;
+  // Dynamics violation
+  dynamicsViolation = vector_t();
+  // Equality constraints
+  stateEqConstraint.clear();
+  stateInputEqConstraint.clear();
+  // Inequality constraints
+  stateIneqConstraint.clear();
+  stateInputIneqConstraint.clear();
+  // Lagrangians
+  stateEqLagrangian.clear();
+  stateIneqLagrangian.clear();
+  stateInputEqLagrangian.clear();
+  stateInputIneqLagrangian.clear();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 bool Metrics::isApprox(const Metrics& other, scalar_t prec) const {
-  bool flag = std::abs(this->cost - other.cost) <= prec * std::min(std::abs(this->cost), std::abs(other.cost)) ||
-              std::abs(this->cost - other.cost) < std::numeric_limits<scalar_t>::min();
-  flag = flag && this->dynamicsViolation.isApprox(other.dynamicsViolation, prec);
-  flag = flag && toVector(this->stateEqConstraint).isApprox(toVector(other.stateEqConstraint), prec);
-  flag = flag && toVector(this->stateInputEqConstraint).isApprox(toVector(other.stateInputEqConstraint), prec);
-  flag = flag && toVector(this->stateIneqConstraint).isApprox(toVector(other.stateIneqConstraint), prec);
-  flag = flag && toVector(this->stateInputIneqConstraint).isApprox(toVector(other.stateInputIneqConstraint), prec);
-  flag = flag && toVector(this->stateEqLagrangian).isApprox(toVector(other.stateEqLagrangian), prec);
-  flag = flag && toVector(this->stateIneqLagrangian).isApprox(toVector(other.stateIneqLagrangian), prec);
-  flag = flag && toVector(this->stateInputEqLagrangian).isApprox(toVector(other.stateInputEqLagrangian), prec);
-  flag = flag && toVector(this->stateInputIneqLagrangian).isApprox(toVector(other.stateInputIneqLagrangian), prec);
-  return flag;
+  return numerics::almost_eq(this->cost, other.cost, prec) && this->dynamicsViolation.isApprox(other.dynamicsViolation, prec) &&
+         toVector(this->stateEqConstraint).isApprox(toVector(other.stateEqConstraint), prec) &&
+         toVector(this->stateInputEqConstraint).isApprox(toVector(other.stateInputEqConstraint), prec) &&
+         toVector(this->stateIneqConstraint).isApprox(toVector(other.stateIneqConstraint), prec) &&
+         toVector(this->stateInputIneqConstraint).isApprox(toVector(other.stateInputIneqConstraint), prec) &&
+         toVector(this->stateEqLagrangian).isApprox(toVector(other.stateEqLagrangian), prec) &&
+         toVector(this->stateIneqLagrangian).isApprox(toVector(other.stateIneqLagrangian), prec) &&
+         toVector(this->stateInputEqLagrangian).isApprox(toVector(other.stateInputEqLagrangian), prec) &&
+         toVector(this->stateInputIneqLagrangian).isApprox(toVector(other.stateInputIneqLagrangian), prec);
 }
 
 /******************************************************************************************************/

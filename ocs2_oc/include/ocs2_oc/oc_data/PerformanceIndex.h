@@ -91,7 +91,7 @@ struct PerformanceIndex {
   PerformanceIndex& operator*=(const scalar_t c);
 
   /** Returns true if *this is approximately equal to other, within the precision determined by prec. */
-  bool isApprox(const PerformanceIndex other, const scalar_t prec = 1e-8) const;
+  bool isApprox(const PerformanceIndex& other, const scalar_t prec = 1e-8) const;
 };
 
 /** Add performance indices. */

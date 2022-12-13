@@ -48,10 +48,12 @@ class LoopshapingStateConstraint final : public StateConstraintCollection {
   LoopshapingStateConstraint* clone() const override { return new LoopshapingStateConstraint(*this); }
 
   vector_array_t getValue(scalar_t time, const vector_t& state, const PreComputation& preComp) const override;
-  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state,
-                                                           const PreComputation& preComp) const override;
-  VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                 const PreComputation& preComp) const override;
+
+  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const PreComputation& preComp,
+                                                           size_array_t* termsSizePtr = nullptr) const override;
+
+  VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const PreComputation& preComp,
+                                                                 size_array_t* termsSizePtr = nullptr) const override;
 
  private:
   LoopshapingStateConstraint(const LoopshapingStateConstraint& other) = default;

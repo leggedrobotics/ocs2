@@ -54,7 +54,8 @@ vector_array_t LoopshapingStateConstraint::getValue(scalar_t t, const vector_t& 
 /******************************************************************************************************/
 /******************************************************************************************************/
 VectorFunctionLinearApproximation LoopshapingStateConstraint::getLinearApproximation(scalar_t t, const vector_t& x,
-                                                                                     const PreComputation& preComp) const {
+                                                                                     const PreComputation& preComp,
+                                                                                     size_array_t* termsSizePtr) const {
   if (this->empty()) {
     return VectorFunctionLinearApproximation::Zero(0, x.rows());
   }
@@ -67,7 +68,7 @@ VectorFunctionLinearApproximation LoopshapingStateConstraint::getLinearApproxima
   const auto filtStateDim = x.rows() - sysStateDim;
 
   // Not const so we can move
-  auto c_system = StateConstraintCollection::getLinearApproximation(t, x_system, preComp_system);
+  auto c_system = StateConstraintCollection::getLinearApproximation(t, x_system, preComp_system, termsSizePtr);
   const auto numConstraints = c_system.f.rows();
 
   VectorFunctionLinearApproximation c;
@@ -85,7 +86,8 @@ VectorFunctionLinearApproximation LoopshapingStateConstraint::getLinearApproxima
 /******************************************************************************************************/
 /******************************************************************************************************/
 VectorFunctionQuadraticApproximation LoopshapingStateConstraint::getQuadraticApproximation(scalar_t t, const vector_t& x,
-                                                                                           const PreComputation& preComp) const {
+                                                                                           const PreComputation& preComp,
+                                                                                           size_array_t* termsSizePtr) const {
   if (this->empty()) {
     return VectorFunctionQuadraticApproximation::Zero(0, x.rows());
   }
@@ -98,7 +100,7 @@ VectorFunctionQuadraticApproximation LoopshapingStateConstraint::getQuadraticApp
   const auto filtStateDim = x.rows() - sysStateDim;
 
   // Not const so we can move
-  const auto c_system = StateConstraintCollection::getQuadraticApproximation(t, x_system, preComp_system);
+  const auto c_system = StateConstraintCollection::getQuadraticApproximation(t, x_system, preComp_system, termsSizePtr);
   const auto numConstraints = c_system.f.rows();
 
   VectorFunctionQuadraticApproximation c;

@@ -76,18 +76,28 @@ vector_array_t StateConstraintCollection::getValue(scalar_t time, const vector_t
 /******************************************************************************************************/
 /******************************************************************************************************/
 VectorFunctionLinearApproximation StateConstraintCollection::getLinearApproximation(scalar_t time, const vector_t& state,
-                                                                                    const PreComputation& preComp) const {
+                                                                                    const PreComputation& preComp,
+                                                                                    size_array_t* termsSizePtr) const {
   VectorFunctionLinearApproximation linearApproximation(getNumConstraints(time), state.rows());
+
+  if (termsSizePtr != nullptr) {
+    termsSizePtr->clear();
+    termsSizePtr->reserve(this->terms_.size());
+  }
 
   // append linearApproximation of each constraintTerm
   size_t i = 0;
   for (const auto& constraintTerm : this->terms_) {
+    size_t nc = 0;
     if (constraintTerm->isActive(time)) {
       const auto constraintTermApproximation = constraintTerm->getLinearApproximation(time, state, preComp);
-      const size_t nc = constraintTermApproximation.f.rows();
+      nc = constraintTermApproximation.f.rows();
       linearApproximation.f.segment(i, nc) = constraintTermApproximation.f;
       linearApproximation.dfdx.middleRows(i, nc) = constraintTermApproximation.dfdx;
       i += nc;
+    }
+    if (termsSizePtr != nullptr) {
+      termsSizePtr->push_back(nc);
     }
   }
 
@@ -98,7 +108,8 @@ VectorFunctionLinearApproximation StateConstraintCollection::getLinearApproximat
 /******************************************************************************************************/
 /******************************************************************************************************/
 VectorFunctionQuadraticApproximation StateConstraintCollection::getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                                          const PreComputation& preComp) const {
+                                                                                          const PreComputation& preComp,
+                                                                                          size_array_t* termsSizePtr) const {
   const auto numConstraints = getNumConstraints(time);
 
   VectorFunctionQuadraticApproximation quadraticApproximation;
@@ -106,16 +117,25 @@ VectorFunctionQuadraticApproximation StateConstraintCollection::getQuadraticAppr
   quadraticApproximation.dfdx.resize(numConstraints, state.rows());
   quadraticApproximation.dfdxx.reserve(numConstraints);  // Use reserve instead of resize to avoid unnecessary allocations.
 
+  if (termsSizePtr != nullptr) {
+    termsSizePtr->clear();
+    termsSizePtr->reserve(this->terms_.size());
+  }
+
   // append quadraticApproximation of each constraintTerm
   size_t i = 0;
   for (const auto& constraintTerm : this->terms_) {
+    size_t nc = 0;
     if (constraintTerm->isActive(time)) {
       auto constraintTermApproximation = constraintTerm->getQuadraticApproximation(time, state, preComp);
-      const size_t nc = constraintTermApproximation.f.rows();
+      nc = constraintTermApproximation.f.rows();
       quadraticApproximation.f.segment(i, nc) = constraintTermApproximation.f;
       quadraticApproximation.dfdx.middleRows(i, nc) = constraintTermApproximation.dfdx;
       appendVectorToVectorByMoving(quadraticApproximation.dfdxx, std::move(constraintTermApproximation.dfdxx));
       i += nc;
+    }
+    if (termsSizePtr != nullptr) {
+      termsSizePtr->push_back(nc);
     }
   }
 

@@ -177,7 +177,7 @@ void SqpSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
 
   // Bookkeeping
   performanceIndeces_.clear();
-  std::vector<Metrics> metrics(timeDiscretization.size());
+  std::vector<Metrics> metrics;
 
   int iter = 0;
   sqp::Convergence convergence = sqp::Convergence::FALSE;
@@ -445,7 +445,7 @@ sqp::StepInfo SqpSolver::takeStep(const PerformanceIndex& baseline, const std::v
   scalar_t alpha = 1.0;
   vector_array_t xNew(x.size());
   vector_array_t uNew(u.size());
-  std::vector<Metrics> metricsNew(x.size());
+  std::vector<Metrics> metricsNew(metrics.size());
   do {
     // Compute step
     multiple_shooting::incrementTrajectory(u, du, alpha, uNew);

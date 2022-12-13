@@ -37,13 +37,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace ocs2;
 
-TEST(test_transcription, intermediate_performance) {
+TEST(test_transcription_performance, intermediate) {
   constexpr int nx = 2;
   constexpr int nu = 2;
 
   // optimal control problem
   OptimalControlProblem problem = createCircularKinematicsProblem("/tmp/sqp_test_generated");
 
+  // equality constraints
+  problem.equalityConstraintPtr->add("equalityConstraint", getOcs2Constraints(getRandomConstraints(nx, nu, 2)));
+  problem.stateEqualityConstraintPtr->add("stateEqualityConstraint", getOcs2StateOnlyConstraints(getRandomConstraints(nx, 0, 1)));
   // inequality constraints
   problem.inequalityConstraintPtr->add("inequalityConstraint", getOcs2Constraints(getRandomConstraints(nx, nu, 3)));
   problem.stateInequalityConstraintPtr->add("stateInequalityConstraint", getOcs2StateOnlyConstraints(getRandomConstraints(nx, 0, 4)));
@@ -51,19 +54,18 @@ TEST(test_transcription, intermediate_performance) {
   auto discretizer = selectDynamicsDiscretization(SensitivityIntegratorType::RK4);
   auto sensitivityDiscretizer = selectDynamicsSensitivityDiscretization(SensitivityIntegratorType::RK4);
 
-  scalar_t t = 0.5;
-  scalar_t dt = 0.1;
+  const scalar_t t = 0.5;
+  const scalar_t dt = 0.1;
   const vector_t x = (vector_t(nx) << 1.0, 0.1).finished();
   const vector_t x_next = (vector_t(nx) << 1.1, 0.2).finished();
   const vector_t u = (vector_t(nu) << 0.1, 1.3).finished();
   const auto transcription = multiple_shooting::setupIntermediateNode(problem, sensitivityDiscretizer, t, dt, x, x_next, u);
-
   const auto performance = multiple_shooting::computeIntermediatePerformance(problem, discretizer, t, dt, x, x_next, u);
 
-  ASSERT_TRUE(performance.isApprox(multiple_shooting::computeIntermediatePerformance(transcription, dt), 1e-12));
+  ASSERT_TRUE(performance.isApprox(multiple_shooting::computePerformanceIndex(transcription, dt), 1e-12));
 }
 
-TEST(test_transcription, event_performance) {
+TEST(test_transcription_performance, event) {
   constexpr int nx = 2;
 
   // optimal control problem
@@ -77,7 +79,8 @@ TEST(test_transcription, event_performance) {
   // cost
   problem.preJumpCostPtr->add("eventCost", getOcs2StateCost(getRandomCost(nx, 0)));
 
-  // inequality constraints
+  // constraints
+  problem.preJumpEqualityConstraintPtr->add("preJumpEqualityConstraint", getOcs2StateOnlyConstraints(getRandomConstraints(nx, 0, 3)));
   problem.preJumpInequalityConstraintPtr->add("preJumpInequalityConstraint", getOcs2StateOnlyConstraints(getRandomConstraints(nx, 0, 4)));
 
   const TargetTrajectories targetTrajectories({0.0}, {vector_t::Random(nx)}, {vector_t::Random(0)});
@@ -89,10 +92,10 @@ TEST(test_transcription, event_performance) {
   const auto transcription = multiple_shooting::setupEventNode(problem, t, x, x_next);
   const auto performance = multiple_shooting::computeEventPerformance(problem, t, x, x_next);
 
-  ASSERT_TRUE(performance.isApprox(multiple_shooting::computeEventPerformance(transcription), 1e-12));
+  ASSERT_TRUE(performance.isApprox(multiple_shooting::computePerformanceIndex(transcription), 1e-12));
 }
 
-TEST(test_transcription, terminal_performance) {
+TEST(test_transcription_performance, terminal) {
   constexpr int nx = 3;
 
   // optimal control problem
@@ -102,16 +105,17 @@ TEST(test_transcription, terminal_performance) {
   problem.finalCostPtr->add("finalCost", getOcs2StateCost(getRandomCost(nx, 0)));
   problem.finalSoftConstraintPtr->add("finalSoftCost", getOcs2StateCost(getRandomCost(nx, 0)));
 
-  // inequality constraints
+  // constraints
+  problem.finalEqualityConstraintPtr->add("finalEqualityConstraint", getOcs2StateOnlyConstraints(getRandomConstraints(nx, 0, 3)));
   problem.finalInequalityConstraintPtr->add("finalInequalityConstraint", getOcs2StateOnlyConstraints(getRandomConstraints(nx, 0, 4)));
 
   const TargetTrajectories targetTrajectories({0.0}, {vector_t::Random(nx)}, {vector_t::Random(0)});
   problem.targetTrajectoriesPtr = &targetTrajectories;
 
-  scalar_t t = 0.5;
+  const scalar_t t = 0.5;
   const vector_t x = vector_t::Random(nx);
   const auto transcription = multiple_shooting::setupTerminalNode(problem, t, x);
   const auto performance = multiple_shooting::computeTerminalPerformance(problem, t, x);
 
-  ASSERT_TRUE(performance.isApprox(multiple_shooting::computeTerminalPerformance(transcription), 1e-12));
+  ASSERT_TRUE(performance.isApprox(multiple_shooting::computePerformanceIndex(transcription), 1e-12));
 }

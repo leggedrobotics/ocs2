@@ -313,7 +313,7 @@ PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<Annotated
         // Event node
         auto result = multiple_shooting::setupEventNode(ocpDefinition, time[i].time, x[i], x[i + 1]);
         metrics[i] = multiple_shooting::computeMetrics(result);
-        workerPerformance += multiple_shooting::computeEventPerformance(result);
+        workerPerformance += multiple_shooting::computePerformanceIndex(result);
         cost_[i] = std::move(result.cost);
         dynamics_[i] = std::move(result.dynamics);
         stateInputEqConstraints_[i].resize(0, x[i].size());
@@ -327,7 +327,7 @@ PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<Annotated
         const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
         auto result = multiple_shooting::setupIntermediateNode(ocpDefinition, sensitivityDiscretizer_, ti, dt, x[i], x[i + 1], u[i]);
         metrics[i] = multiple_shooting::computeMetrics(result);
-        workerPerformance += multiple_shooting::computeIntermediatePerformance(result, dt);
+        workerPerformance += multiple_shooting::computePerformanceIndex(result, dt);
         if (settings_.projectStateInputEqualityConstraints) {
           multiple_shooting::projectTranscription(result, settings_.extractProjectionMultiplier);
         }
@@ -347,7 +347,7 @@ PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<Annotated
       const scalar_t tN = getIntervalStart(time[N]);
       auto result = multiple_shooting::setupTerminalNode(ocpDefinition, tN, x[N]);
       metrics[i] = multiple_shooting::computeMetrics(result);
-      workerPerformance += multiple_shooting::computeTerminalPerformance(result);
+      workerPerformance += multiple_shooting::computePerformanceIndex(result);
       cost_[i] = std::move(result.cost);
       stateInputEqConstraints_[i].resize(0, x[i].size());
       stateIneqConstraints_[i] = std::move(result.ineqConstraints);

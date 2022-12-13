@@ -314,7 +314,7 @@ PerformanceIndex SlpSolver::setupQuadraticSubproblem(const std::vector<Annotated
       if (time[i].event == AnnotatedTime::Event::PreEvent) {
         // Event node
         auto result = multiple_shooting::setupEventNode(ocpDefinition, time[i].time, x[i], x[i + 1]);
-        workerPerformance += multiple_shooting::computeEventPerformance(result);
+        workerPerformance += multiple_shooting::computePerformanceIndex(result);
         cost_[i] = std::move(result.cost);
         dynamics_[i] = std::move(result.dynamics);
         stateInputEqConstraints_[i].resize(0, x[i].size());
@@ -327,7 +327,7 @@ PerformanceIndex SlpSolver::setupQuadraticSubproblem(const std::vector<Annotated
         const scalar_t ti = getIntervalStart(time[i]);
         const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
         auto result = multiple_shooting::setupIntermediateNode(ocpDefinition, sensitivityDiscretizer_, ti, dt, x[i], x[i + 1], u[i]);
-        workerPerformance += multiple_shooting::computeIntermediatePerformance(result, dt);
+        workerPerformance += multiple_shooting::computePerformanceIndex(result, dt);
         multiple_shooting::projectTranscription(result, settings_.extractProjectionMultiplier);
         cost_[i] = std::move(result.cost);
         dynamics_[i] = std::move(result.dynamics);
@@ -344,7 +344,7 @@ PerformanceIndex SlpSolver::setupQuadraticSubproblem(const std::vector<Annotated
     if (i == N) {  // Only one worker will execute this
       const scalar_t tN = getIntervalStart(time[N]);
       auto result = multiple_shooting::setupTerminalNode(ocpDefinition, tN, x[N]);
-      workerPerformance += multiple_shooting::computeTerminalPerformance(result);
+      workerPerformance += multiple_shooting::computePerformanceIndex(result);
       cost_[i] = std::move(result.cost);
       stateIneqConstraints_[i] = std::move(result.ineqConstraints);
     }

@@ -39,9 +39,20 @@ namespace ocs2 {
 namespace multiple_shooting {
 
 /**
+ * The size of each constraint terms for each type.
+ */
+struct ConstraintsSize {
+  size_array_t stateEq;
+  size_array_t stateInputEq;
+  size_array_t stateIneq;
+  size_array_t stateInputIneq;
+};
+
+/**
  * Results of the transcription at an intermediate node
  */
 struct Transcription {
+  ConstraintsSize constraintsSize;
   ScalarFunctionQuadraticApproximation cost;
   VectorFunctionLinearApproximation dynamics;
   VectorFunctionLinearApproximation stateEqConstraints;
@@ -80,6 +91,7 @@ void projectTranscription(Transcription& transcription, bool extractProjectionMu
  * Results of the transcription at a terminal node
  */
 struct TerminalTranscription {
+  ConstraintsSize constraintsSize;
   ScalarFunctionQuadraticApproximation cost;
   VectorFunctionLinearApproximation eqConstraints;
   VectorFunctionLinearApproximation ineqConstraints;
@@ -99,6 +111,7 @@ TerminalTranscription setupTerminalNode(const OptimalControlProblem& optimalCont
  * Results of the transcription at an event
  */
 struct EventTranscription {
+  ConstraintsSize constraintsSize;
   ScalarFunctionQuadraticApproximation cost;
   VectorFunctionLinearApproximation dynamics;
   VectorFunctionLinearApproximation eqConstraints;

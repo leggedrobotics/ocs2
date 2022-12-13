@@ -37,9 +37,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace multiple_shooting {
 
-Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlProblem,
-                                    DynamicsSensitivityDiscretizer& sensitivityDiscretizer, scalar_t t, scalar_t dt, const vector_t& x,
-                                    const vector_t& x_next, const vector_t& u) {
+Transcription setupIntermediateNode(OptimalControlProblem& optimalControlProblem, DynamicsSensitivityDiscretizer& sensitivityDiscretizer,
+                                    scalar_t t, scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u) {
   // Results and short-hand notation
   Transcription transcription;
   auto& dynamics = transcription.dynamics;
@@ -118,7 +117,7 @@ void projectTranscription(Transcription& transcription, bool extractProjectionMu
   }
 }
 
-TerminalTranscription setupTerminalNode(const OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x) {
+TerminalTranscription setupTerminalNode(OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x) {
   // Results and short-hand notation
   TerminalTranscription transcription;
   auto& cost = transcription.cost;
@@ -146,8 +145,7 @@ TerminalTranscription setupTerminalNode(const OptimalControlProblem& optimalCont
   return transcription;
 }
 
-EventTranscription setupEventNode(const OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x,
-                                  const vector_t& x_next) {
+EventTranscription setupEventNode(OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x, const vector_t& x_next) {
   // Results and short-hand notation
   EventTranscription transcription;
   auto& cost = transcription.cost;

@@ -57,13 +57,11 @@ class StateInputConstraintCollection : public Collection<StateInputConstraint> {
 
   /** Get the constraint linear approximation */
   virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                                   const PreComputation& preComp,
-                                                                   size_array_t* termsSizePtr = nullptr) const;
+                                                                   const PreComputation& preComp) const;
 
   /** Get the constraint quadratic approximation */
   virtual VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                                         const PreComputation& preComp,
-                                                                         size_array_t* termsSizePtr = nullptr) const;
+                                                                         const PreComputation& preComp) const;
 
  protected:
   /** Copy constructor */

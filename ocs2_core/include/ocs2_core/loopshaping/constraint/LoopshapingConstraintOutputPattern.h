@@ -50,12 +50,10 @@ class LoopshapingConstraintOutputPattern final : public LoopshapingStateInputCon
   LoopshapingConstraintOutputPattern* clone() const override { return new LoopshapingConstraintOutputPattern(*this); };
 
   VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                           const PreComputation& preComp,
-                                                           size_array_t* termsSizePtr = nullptr) const override;
+                                                           const PreComputation& preComp) const override;
 
   VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                                 const PreComputation& preComp,
-                                                                 size_array_t* termsSizePtr = nullptr) const override;
+                                                                 const PreComputation& preComp) const override;
 
  protected:
   using BASE::loopshapingDefinition_;

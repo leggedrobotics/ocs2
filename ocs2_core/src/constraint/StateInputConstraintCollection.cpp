@@ -79,29 +79,19 @@ vector_array_t StateInputConstraintCollection::getValue(scalar_t time, const vec
 /******************************************************************************************************/
 VectorFunctionLinearApproximation StateInputConstraintCollection::getLinearApproximation(scalar_t time, const vector_t& state,
                                                                                          const vector_t& input,
-                                                                                         const PreComputation& preComp,
-                                                                                         size_array_t* termsSizePtr) const {
+                                                                                         const PreComputation& preComp) const {
   VectorFunctionLinearApproximation linearApproximation(getNumConstraints(time), state.rows(), input.rows());
-
-  if (termsSizePtr != nullptr) {
-    termsSizePtr->clear();
-    termsSizePtr->reserve(this->terms_.size());
-  }
 
   // append linearApproximation of each constraintTerm
   size_t i = 0;
   for (const auto& constraintTerm : this->terms_) {
-    size_t nc = 0;
     if (constraintTerm->isActive(time)) {
       const auto constraintTermApproximation = constraintTerm->getLinearApproximation(time, state, input, preComp);
-      nc = constraintTermApproximation.f.rows();
+      const size_t nc = constraintTermApproximation.f.rows();
       linearApproximation.f.segment(i, nc) = constraintTermApproximation.f;
       linearApproximation.dfdx.middleRows(i, nc) = constraintTermApproximation.dfdx;
       linearApproximation.dfdu.middleRows(i, nc) = constraintTermApproximation.dfdu;
       i += nc;
-    }
-    if (termsSizePtr != nullptr) {
-      termsSizePtr->push_back(nc);
     }
   }
 
@@ -113,8 +103,7 @@ VectorFunctionLinearApproximation StateInputConstraintCollection::getLinearAppro
 /******************************************************************************************************/
 VectorFunctionQuadraticApproximation StateInputConstraintCollection::getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                                                const vector_t& input,
-                                                                                               const PreComputation& preComp,
-                                                                                               size_array_t* termsSizePtr) const {
+                                                                                               const PreComputation& preComp) const {
   const auto numConstraints = getNumConstraints(time);
 
   VectorFunctionQuadraticApproximation quadraticApproximation;
@@ -125,18 +114,12 @@ VectorFunctionQuadraticApproximation StateInputConstraintCollection::getQuadrati
   quadraticApproximation.dfdux.reserve(numConstraints);
   quadraticApproximation.dfduu.reserve(numConstraints);
 
-  if (termsSizePtr != nullptr) {
-    termsSizePtr->clear();
-    termsSizePtr->reserve(this->terms_.size());
-  }
-
   // append quadraticApproximation of each constraintTerm
   size_t i = 0;
   for (const auto& constraintTerm : this->terms_) {
-    size_t nc = 0;
     if (constraintTerm->isActive(time)) {
       auto constraintTermApproximation = constraintTerm->getQuadraticApproximation(time, state, input, preComp);
-      nc = constraintTermApproximation.f.rows();
+      const size_t nc = constraintTermApproximation.f.rows();
       quadraticApproximation.f.segment(i, nc) = constraintTermApproximation.f;
       quadraticApproximation.dfdx.middleRows(i, nc) = constraintTermApproximation.dfdx;
       quadraticApproximation.dfdu.middleRows(i, nc) = constraintTermApproximation.dfdu;
@@ -144,9 +127,6 @@ VectorFunctionQuadraticApproximation StateInputConstraintCollection::getQuadrati
       appendVectorToVectorByMoving(quadraticApproximation.dfdux, std::move(constraintTermApproximation.dfdux));
       appendVectorToVectorByMoving(quadraticApproximation.dfduu, std::move(constraintTermApproximation.dfduu));
       i += nc;
-    }
-    if (termsSizePtr != nullptr) {
-      termsSizePtr->push_back(nc);
     }
   }
 

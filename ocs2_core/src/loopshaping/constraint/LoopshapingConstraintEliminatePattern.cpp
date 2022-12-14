@@ -37,8 +37,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 VectorFunctionLinearApproximation LoopshapingConstraintEliminatePattern::getLinearApproximation(scalar_t t, const vector_t& x,
                                                                                                 const vector_t& u,
-                                                                                                const PreComputation& preComp,
-                                                                                                size_array_t* termsSizePtr) const {
+                                                                                                const PreComputation& preComp) const {
   if (this->empty()) {
     return VectorFunctionLinearApproximation::Zero(0, x.rows(), u.rows());
   }
@@ -54,7 +53,7 @@ VectorFunctionLinearApproximation LoopshapingConstraintEliminatePattern::getLine
   const auto filtStateDim = s_filter.getNumStates();
 
   // Not const so we can move
-  auto g_system = StateInputConstraintCollection::getLinearApproximation(t, x_system, u_system, preComp_system, termsSizePtr);
+  auto g_system = StateInputConstraintCollection::getLinearApproximation(t, x_system, u_system, preComp_system);
   const auto numConstraints = g_system.f.rows();
 
   VectorFunctionLinearApproximation g;
@@ -84,8 +83,7 @@ VectorFunctionLinearApproximation LoopshapingConstraintEliminatePattern::getLine
 /******************************************************************************************************/
 VectorFunctionQuadraticApproximation LoopshapingConstraintEliminatePattern::getQuadraticApproximation(scalar_t t, const vector_t& x,
                                                                                                       const vector_t& u,
-                                                                                                      const PreComputation& preComp,
-                                                                                                      size_array_t* termsSizePtr) const {
+                                                                                                      const PreComputation& preComp) const {
   if (this->empty()) {
     return VectorFunctionQuadraticApproximation::Zero(0, x.rows(), u.rows());
   }
@@ -103,7 +101,7 @@ VectorFunctionQuadraticApproximation LoopshapingConstraintEliminatePattern::getQ
   const auto filtStateDim = x_filter.rows();
 
   // Not const so we can move
-  auto h_system = StateInputConstraintCollection::getQuadraticApproximation(t, x_system, u_system, preComp_system, termsSizePtr);
+  auto h_system = StateInputConstraintCollection::getQuadraticApproximation(t, x_system, u_system, preComp_system);
   const auto numConstraints = h_system.f.rows();
 
   VectorFunctionQuadraticApproximation h;

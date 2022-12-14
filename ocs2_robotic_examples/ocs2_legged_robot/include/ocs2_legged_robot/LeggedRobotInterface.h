@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/penalties/Penalties.h>
 #include <ocs2_ddp/DDP_Settings.h>
+#include <ocs2_ipm/IpmSettings.h>
 #include <ocs2_mpc/MPC_Settings.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
@@ -62,8 +63,10 @@ class LeggedRobotInterface final : public RobotInterface {
    * @param [in] taskFile: The absolute path to the configuration file for the MPC.
    * @param [in] urdfFile: The absolute path to the URDF file for the robot.
    * @param [in] referenceFile: The absolute path to the reference configuration file.
+   * @param [in] useHardFrictionConeConstraint: Which to use hard or soft friction cone constraints.
    */
-  LeggedRobotInterface(const std::string& taskFile, const std::string& urdfFile, const std::string& referenceFile);
+  LeggedRobotInterface(const std::string& taskFile, const std::string& urdfFile, const std::string& referenceFile,
+                       bool useHardFrictionConeConstraint = false);
 
   ~LeggedRobotInterface() override = default;
 
@@ -74,6 +77,7 @@ class LeggedRobotInterface final : public RobotInterface {
   const mpc::Settings& mpcSettings() const { return mpcSettings_; }
   const rollout::Settings& rolloutSettings() const { return rolloutSettings_; }
   const sqp::Settings& sqpSettings() { return sqpSettings_; }
+  const ipm::Settings& ipmSettings() { return ipmSettings_; }
 
   const vector_t& getInitialState() const { return initialState_; }
   const RolloutBase& getRollout() const { return *rolloutPtr_; }
@@ -93,8 +97,9 @@ class LeggedRobotInterface final : public RobotInterface {
   matrix_t initializeInputCostWeight(const std::string& taskFile, const CentroidalModelInfo& info);
 
   std::pair<scalar_t, RelaxedBarrierPenalty::Config> loadFrictionConeSettings(const std::string& taskFile, bool verbose) const;
-  std::unique_ptr<StateInputCost> getFrictionConeConstraint(size_t contactPointIndex, scalar_t frictionCoefficient,
-                                                            const RelaxedBarrierPenalty::Config& barrierPenaltyConfig);
+  std::unique_ptr<StateInputConstraint> getFrictionConeConstraint(size_t contactPointIndex, scalar_t frictionCoefficient);
+  std::unique_ptr<StateInputCost> getFrictionConeSoftConstraint(size_t contactPointIndex, scalar_t frictionCoefficient,
+                                                                const RelaxedBarrierPenalty::Config& barrierPenaltyConfig);
   std::unique_ptr<StateInputConstraint> getZeroForceConstraint(size_t contactPointIndex);
   std::unique_ptr<StateInputConstraint> getZeroVelocityConstraint(const EndEffectorKinematics<scalar_t>& eeKinematics,
                                                                   size_t contactPointIndex, bool useAnalyticalGradients);
@@ -105,6 +110,8 @@ class LeggedRobotInterface final : public RobotInterface {
   ddp::Settings ddpSettings_;
   mpc::Settings mpcSettings_;
   sqp::Settings sqpSettings_;
+  ipm::Settings ipmSettings_;
+  bool useHardFrictionConeConstraint_;
 
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
   CentroidalModelInfo centroidalModelInfo_;

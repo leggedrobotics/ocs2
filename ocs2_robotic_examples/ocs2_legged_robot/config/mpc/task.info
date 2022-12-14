@@ -46,6 +46,42 @@ sqp
   threadPriority                        50
 }
 
+; Multiple_Shooting IPM settings
+ipm
+{
+  nThreads                              3
+  dt                                    0.015
+  sqpIteration                          1
+  deltaTol                              1e-4
+  g_max                                 10.0
+  g_min                                 1e-4
+  inequalityConstraintMu                0.1
+  inequalityConstraintDelta             5.0
+  projectStateInputEqualityConstraints  true
+  computeLagrangeMultipliers            false
+  printSolverStatistics                 true
+  printSolverStatus                     false
+  printLinesearch                       false
+  useFeedbackPolicy                     true
+  integratorType                        RK2
+  threadPriority                        50
+
+  initialBarrierParameter               1e-4
+  targetBarrierParameter                1e-4
+  barrierLinearDecreaseFactor           0.2
+  barrierSuperlinearDecreasePower       1.5
+  barrierReductionCostTol               1e-3
+  barrierReductionConstraintTol         1e-3
+
+  fractionToBoundaryMargin              0.995
+  usePrimalStepSizeForDual              false
+
+  initialSlackLowerBound                1e-4
+  initialDualLowerBound                 1e-4
+  initialSlackMarginRate                1e-2
+  initialDualMarginRate                 1e-2
+}
+
 ; DDP settings
 ddp
 {

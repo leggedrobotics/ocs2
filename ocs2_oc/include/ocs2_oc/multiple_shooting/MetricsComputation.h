@@ -29,43 +29,47 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/PreComputation.h>
 #include <ocs2_core/Types.h>
-#include <ocs2_core/constraint/StateInputConstraint.h>
-#include <ocs2_core/misc/Collection.h>
+#include <ocs2_core/integration/SensitivityIntegrator.h>
+#include <ocs2_core/model_data/Metrics.h>
+
+#include "ocs2_oc/oc_problem/OptimalControlProblem.h"
 
 namespace ocs2 {
+namespace multiple_shooting {
 
 /**
- * Constraint collection class
- *
- * This class collects a variable number of constraint functions and provides methods to get the
- * concatenated constraint vectors and approximations. Each constraint can be accessed through its
- * string name and can be activated or deactivated.
+ * Compute only the Metrics for a single intermediate node.
+ * @param optimalControlProblem : Definition of the optimal control problem
+ * @param discretizer : Integrator to use for creating the discrete dynamics.
+ * @param t : Start of the discrete interval
+ * @param dt : Duration of the interval
+ * @param x : State at start of the interval
+ * @param x_next : State at the end of the interval
+ * @param u : Input, taken to be constant across the interval.
+ * @return Metrics for a single intermediate node.
  */
-class StateInputConstraintCollection : public Collection<StateInputConstraint> {
- public:
-  StateInputConstraintCollection() = default;
-  ~StateInputConstraintCollection() override = default;
-  StateInputConstraintCollection* clone() const override;
+Metrics computeIntermediateMetrics(OptimalControlProblem& optimalControlProblem, DynamicsDiscretizer& discretizer, scalar_t t, scalar_t dt,
+                                   const vector_t& x, const vector_t& x_next, const vector_t& u);
 
-  /** Returns the number of active constraints at given time. */
-  virtual size_t getNumConstraints(scalar_t time) const;
+/**
+ * Compute only the Metrics for the event node.
+ * @param optimalControlProblem : Definition of the optimal control problem
+ * @param t : Time at the event node
+ * @param x : Pre-event state
+ * @param x_next : Post-event state
+ * @return Metrics for the event node.
+ */
+Metrics computeEventMetrics(OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x, const vector_t& x_next);
 
-  /** Get an array of all constraints */
-  virtual vector_array_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation& preComp) const;
+/**
+ * Compute only the Metrics for the terminal node.
+ * @param optimalControlProblem : Definition of the optimal control problem
+ * @param t : Time at the terminal node
+ * @param x : Terminal state
+ * @return Metrics for the terminal node.
+ */
+Metrics computeTerminalMetrics(OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x);
 
-  /** Get the constraint linear approximation */
-  virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                                   const PreComputation& preComp) const;
-
-  /** Get the constraint quadratic approximation */
-  virtual VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                                         const PreComputation& preComp) const;
-
- protected:
-  /** Copy constructor */
-  StateInputConstraintCollection(const StateInputConstraintCollection& other);
-};
-
+}  // namespace multiple_shooting
 }  // namespace ocs2

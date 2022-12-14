@@ -44,6 +44,7 @@ namespace multiple_shooting {
 struct Transcription {
   ScalarFunctionQuadraticApproximation cost;
   VectorFunctionLinearApproximation dynamics;
+  VectorFunctionLinearApproximation stateEqConstraints;
   VectorFunctionLinearApproximation stateInputEqConstraints;
   VectorFunctionLinearApproximation stateIneqConstraints;
   VectorFunctionLinearApproximation stateInputIneqConstraints;
@@ -63,9 +64,8 @@ struct Transcription {
  * @param u : Input, taken to be constant across the interval.
  * @return multiple shooting transcription for this node.
  */
-Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlProblem,
-                                    DynamicsSensitivityDiscretizer& sensitivityDiscretizer, scalar_t t, scalar_t dt, const vector_t& x,
-                                    const vector_t& x_next, const vector_t& u);
+Transcription setupIntermediateNode(OptimalControlProblem& optimalControlProblem, DynamicsSensitivityDiscretizer& sensitivityDiscretizer,
+                                    scalar_t t, scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u);
 
 /**
  * Apply the state-input equality constraint projection for a single intermediate node transcription.
@@ -92,7 +92,7 @@ struct TerminalTranscription {
  * @param x : Terminal state
  * @return multiple shooting transcription for the terminal node.
  */
-TerminalTranscription setupTerminalNode(const OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x);
+TerminalTranscription setupTerminalNode(OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x);
 
 /**
  * Results of the transcription at an event
@@ -113,8 +113,7 @@ struct EventTranscription {
  * @param x_next : Post-event state
  * @return multiple shooting transcription for the event node.
  */
-EventTranscription setupEventNode(const OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x,
-                                  const vector_t& x_next);
+EventTranscription setupEventNode(OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x, const vector_t& x_next);
 
 }  // namespace multiple_shooting
 }  // namespace ocs2

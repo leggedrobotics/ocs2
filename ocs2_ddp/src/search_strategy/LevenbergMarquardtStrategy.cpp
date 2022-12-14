@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_ddp/search_strategy/LevenbergMarquardtStrategy.h"
 
+#include <iomanip>
+
 #include "ocs2_ddp/DDP_HelperFunctions.h"
 #include "ocs2_ddp/HessianCorrection.h"
 

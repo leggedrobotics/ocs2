@@ -52,10 +52,12 @@ add_library(${PROJECT_NAME}
   src/multiple_shooting/Helpers.cpp
   src/multiple_shooting/Initialization.cpp
   src/multiple_shooting/LagrangianEvaluation.cpp
+  src/multiple_shooting/MetricsComputation.cpp
   src/multiple_shooting/PerformanceIndexComputation.cpp
   src/multiple_shooting/ProjectionMultiplierCoefficients.cpp
   src/multiple_shooting/Transcription.cpp
   src/oc_data/LoopshapingPrimalSolution.cpp
+  src/oc_data/PerformanceIndex.cpp
   src/oc_data/TimeDiscretization.cpp
   src/oc_problem/OptimalControlProblem.cpp
   src/oc_problem/LoopshapingOptimalControlProblem.cpp
@@ -74,7 +76,7 @@ add_library(${PROJECT_NAME}
   src/synchronized_module/ReferenceManager.cpp
   src/synchronized_module/LoopshapingReferenceManager.cpp
   src/synchronized_module/LoopshapingSynchronizedModule.cpp
-  src/synchronized_module/AugmentedLagrangianObserver.cpp
+  src/synchronized_module/SolverObserver.cpp
   src/search_strategy/FilterLinesearch.cpp
   src/trajectory_adjustment/TrajectorySpreading.cpp
 )
@@ -82,7 +84,6 @@ target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
-
 
 add_executable(${PROJECT_NAME}_lintTarget
   src/lintTarget.cpp

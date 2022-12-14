@@ -202,7 +202,7 @@ vector_t PythonInterface::valueFunctionStateDerivative(scalar_t t, Eigen::Ref<co
 /******************************************************************************************************/
 vector_t PythonInterface::stateInputEqualityConstraint(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::Ref<const vector_t> u) {
   problem_.preComputationPtr->request(Request::Constraint, t, x, u);
-  return problem_.equalityConstraintPtr->getValue(t, x, u, *problem_.preComputationPtr);
+  return toVector(problem_.equalityConstraintPtr->getValue(t, x, u, *problem_.preComputationPtr));
 }
 
 /******************************************************************************************************/

@@ -35,15 +35,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_oc/test/circular_kinematics.h"
 #include "ocs2_oc/test/testProblemsGeneration.h"
 
-namespace {
-/** Helper to compare if two performance indices are identical */
-bool areIdentical(const ocs2::PerformanceIndex& lhs, const ocs2::PerformanceIndex& rhs) {
-  return lhs.merit == rhs.merit && lhs.cost == rhs.cost && lhs.dynamicsViolationSSE == rhs.dynamicsViolationSSE &&
-         lhs.equalityConstraintsSSE == rhs.equalityConstraintsSSE && lhs.equalityLagrangian == rhs.equalityLagrangian &&
-         lhs.inequalityLagrangian == rhs.inequalityLagrangian;
-}
-}  // namespace
-
 using namespace ocs2;
 
 TEST(test_transcription, intermediate_performance) {
@@ -69,7 +60,7 @@ TEST(test_transcription, intermediate_performance) {
 
   const auto performance = multiple_shooting::computeIntermediatePerformance(problem, discretizer, t, dt, x, x_next, u);
 
-  ASSERT_TRUE(areIdentical(performance, multiple_shooting::computeIntermediatePerformance(transcription, dt)));
+  ASSERT_TRUE(performance.isApprox(multiple_shooting::computeIntermediatePerformance(transcription, dt), 1e-12));
 }
 
 TEST(test_transcription, event_performance) {
@@ -98,7 +89,7 @@ TEST(test_transcription, event_performance) {
   const auto transcription = multiple_shooting::setupEventNode(problem, t, x, x_next);
   const auto performance = multiple_shooting::computeEventPerformance(problem, t, x, x_next);
 
-  ASSERT_TRUE(areIdentical(performance, multiple_shooting::computeEventPerformance(transcription)));
+  ASSERT_TRUE(performance.isApprox(multiple_shooting::computeEventPerformance(transcription), 1e-12));
 }
 
 TEST(test_transcription, terminal_performance) {
@@ -122,5 +113,5 @@ TEST(test_transcription, terminal_performance) {
   const auto transcription = multiple_shooting::setupTerminalNode(problem, t, x);
   const auto performance = multiple_shooting::computeTerminalPerformance(problem, t, x);
 
-  ASSERT_TRUE(areIdentical(performance, multiple_shooting::computeTerminalPerformance(transcription)));
+  ASSERT_TRUE(performance.isApprox(multiple_shooting::computeTerminalPerformance(transcription), 1e-12));
 }

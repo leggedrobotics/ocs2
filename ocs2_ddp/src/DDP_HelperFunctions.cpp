@@ -102,69 +102,21 @@ void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution&
 PerformanceIndex computeRolloutPerformanceIndex(const scalar_array_t& timeTrajectory, const ProblemMetrics& problemMetrics) {
   assert(timeTrajectory.size() == problemMetrics.intermediates.size());
 
-  PerformanceIndex performanceIndex;
+  // Final
+  PerformanceIndex performanceIndex = toPerformanceIndex(problemMetrics.final);
 
-  // Total cost:
-  // - Final: state cost, state soft-constraints
-  // - PreJumps: state cost, state soft-constraints
-  // - Intermediates: state/state-input cost, state/state-input soft-constraints
-  performanceIndex.cost = problemMetrics.final.cost;
+  // PreJumps
+  std::for_each(problemMetrics.preJumps.cbegin(), problemMetrics.preJumps.cend(),
+                [&performanceIndex](const Metrics& m) { performanceIndex += toPerformanceIndex(m); });
 
-  std::for_each(problemMetrics.preJumps.begin(), problemMetrics.preJumps.end(),
-                [&](const MetricsCollection& m) { performanceIndex.cost += m.cost; });
+  // Intermediates
+  std::vector<PerformanceIndex> performanceIndexTrajectory;
+  performanceIndexTrajectory.reserve(problemMetrics.intermediates.size());
+  std::for_each(problemMetrics.intermediates.cbegin(), problemMetrics.intermediates.cend(),
+                [&performanceIndexTrajectory](const Metrics& m) { performanceIndexTrajectory.push_back(toPerformanceIndex(m)); });
 
-  scalar_array_t costTrajectory(timeTrajectory.size());
-  std::transform(problemMetrics.intermediates.begin(), problemMetrics.intermediates.end(), costTrajectory.begin(),
-                 [](const MetricsCollection& m) { return m.cost; });
-  performanceIndex.cost += trapezoidalIntegration(timeTrajectory, costTrajectory);
-
-  // Dynamics violation:
-  performanceIndex.dynamicsViolationSSE = 0.0;
-
-  // Equality constraints' SSE:
-  // - Final: state equality constraints
-  // - PreJumps: state equality constraints
-  // - Intermediates: state/state-input equality constraints
-  performanceIndex.equalityConstraintsSSE = problemMetrics.final.stateEqConstraint.squaredNorm();
-
-  std::for_each(problemMetrics.preJumps.begin(), problemMetrics.preJumps.end(),
-                [&](const MetricsCollection& m) { performanceIndex.equalityConstraintsSSE += m.stateEqConstraint.squaredNorm(); });
-
-  scalar_array_t equalityNorm2Trajectory(timeTrajectory.size());
-  std::transform(problemMetrics.intermediates.begin(), problemMetrics.intermediates.end(), equalityNorm2Trajectory.begin(),
-                 [](const MetricsCollection& m) { return m.stateEqConstraint.squaredNorm() + m.stateInputEqConstraint.squaredNorm(); });
-  performanceIndex.equalityConstraintsSSE += trapezoidalIntegration(timeTrajectory, equalityNorm2Trajectory);
-
-  // Equality Lagrangians penalty
-  // - Final: state equality Lagrangians
-  // - PreJumps: state equality Lagrangians
-  // - Intermediates: state/state-input equality Lagrangians
-  performanceIndex.equalityLagrangian = sumPenalties(problemMetrics.final.stateEqLagrangian);
-
-  std::for_each(problemMetrics.preJumps.begin(), problemMetrics.preJumps.end(),
-                [&](const MetricsCollection& m) { performanceIndex.equalityLagrangian += sumPenalties(m.stateEqLagrangian); });
-
-  scalar_array_t equalityPenaltyTrajectory(timeTrajectory.size());
-  std::transform(problemMetrics.intermediates.begin(), problemMetrics.intermediates.end(), equalityPenaltyTrajectory.begin(),
-                 [&](const MetricsCollection& m) { return sumPenalties(m.stateEqLagrangian) + sumPenalties(m.stateInputEqLagrangian); });
-  performanceIndex.equalityLagrangian += trapezoidalIntegration(timeTrajectory, equalityPenaltyTrajectory);
-
-  // Inequality Lagrangians penalty
-  // - Final: state inequality Lagrangians
-  // - PreJumps: state inequality Lagrangians
-  // - Intermediates: state/state-input inequality Lagrangians
-  performanceIndex.inequalityLagrangian = sumPenalties(problemMetrics.final.stateIneqLagrangian);
-
-  std::for_each(problemMetrics.preJumps.begin(), problemMetrics.preJumps.end(),
-                [&](const MetricsCollection& m) { performanceIndex.inequalityLagrangian += sumPenalties(m.stateIneqLagrangian); });
-
-  scalar_array_t inequalityPenaltyTrajectory(timeTrajectory.size());
-  std::transform(
-      problemMetrics.intermediates.begin(), problemMetrics.intermediates.end(), inequalityPenaltyTrajectory.begin(),
-      [&](const MetricsCollection& m) { return sumPenalties(m.stateIneqLagrangian) + sumPenalties(m.stateInputIneqLagrangian); });
-  performanceIndex.inequalityLagrangian += trapezoidalIntegration(timeTrajectory, inequalityPenaltyTrajectory);
-
-  return performanceIndex;
+  // Intermediates
+  return trapezoidalIntegration(timeTrajectory, performanceIndexTrajectory, performanceIndex);
 }
 
 /******************************************************************************************************/
@@ -335,7 +287,7 @@ scalar_t computeControllerUpdateIS(const LinearController& controller) {
   std::transform(controller.deltaBiasArray_.begin(), controller.deltaBiasArray_.end(), biasArraySquaredNorm.begin(),
                  [](const vector_t& b) { return b.squaredNorm(); });
   // integrates using the trapezoidal approximation method
-  return trapezoidalIntegration(controller.timeStamp_, biasArraySquaredNorm);
+  return trapezoidalIntegration(controller.timeStamp_, biasArraySquaredNorm, 0.0);
 }
 
 /******************************************************************************************************/

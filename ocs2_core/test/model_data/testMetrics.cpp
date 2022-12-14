@@ -39,14 +39,14 @@ namespace ocs2 {
 namespace {
 
 /**
- * Linearly interpolates a trajectory of MetricsCollections.
+ * Linearly interpolates a trajectory of Metricss.
  *
  * @param [in] indexAlpha : index and interpolation coefficient (alpha) pair.
- * @param [in] dataArray : A trajectory of MetricsCollections.
- * @return The interpolated MetricsCollection at indexAlpha.
+ * @param [in] dataArray : A trajectory of Metricss.
+ * @return The interpolated Metrics at indexAlpha.
  */
-inline MetricsCollection interpolateNew(const LinearInterpolation::index_alpha_t& indexAlpha,
-                                        const std::vector<MetricsCollection>& dataArray) {
+inline Metrics interpolateNew(const LinearInterpolation::index_alpha_t& indexAlpha,
+                                        const std::vector<Metrics>& dataArray) {
   assert(dataArray.size() > 0);
   if (dataArray.size() > 1) {
     // Normal interpolation case
@@ -54,48 +54,60 @@ inline MetricsCollection interpolateNew(const LinearInterpolation::index_alpha_t
     const scalar_t alpha = indexAlpha.second;
     bool areSameSize = true;
 
-    const auto lhs_stateEq = toVector(dataArray[index].stateEqLagrangian);
-    const auto rhs_stateEq = toVector(dataArray[index + 1].stateEqLagrangian);
-    areSameSize = areSameSize && (lhs_stateEq.size() == rhs_stateEq.size());
+    const auto lhs_stateEqConst = toVector(dataArray[index].stateEqConstraint);
+    const auto rhs_stateEqConst = toVector(dataArray[index + 1].stateEqConstraint);
+    areSameSize = areSameSize && (lhs_stateEqConst.size() == rhs_stateEqConst.size());
 
-    const auto lhs_stateIneq = toVector(dataArray[index].stateIneqLagrangian);
-    const auto rhs_stateIneq = toVector(dataArray[index + 1].stateIneqLagrangian);
-    areSameSize = areSameSize && (lhs_stateIneq.size() == rhs_stateIneq.size());
+    const auto lhs_stateInputEqConst = toVector(dataArray[index].stateInputEqConstraint);
+    const auto rhs_stateInputEqConst = toVector(dataArray[index + 1].stateInputEqConstraint);
+    areSameSize = areSameSize && (lhs_stateInputEqConst.size() == rhs_stateInputEqConst.size());
 
-    const auto lhs_stateInputEq = toVector(dataArray[index].stateInputEqLagrangian);
-    const auto rhs_stateInputEq = toVector(dataArray[index + 1].stateInputEqLagrangian);
-    areSameSize = areSameSize && (lhs_stateInputEq.size() == rhs_stateInputEq.size());
+    const auto lhs_stateIneqConst = toVector(dataArray[index].stateIneqConstraint);
+    const auto rhs_stateIneqConst = toVector(dataArray[index + 1].stateIneqConstraint);
+    areSameSize = areSameSize && (lhs_stateIneqConst.size() == rhs_stateIneqConst.size());
 
-    const auto lhs_stateInputIneq = toVector(dataArray[index].stateInputIneqLagrangian);
-    const auto rhs_stateInputIneq = toVector(dataArray[index + 1].stateInputIneqLagrangian);
-    areSameSize = areSameSize && (lhs_stateInputIneq.size() == rhs_stateInputIneq.size());
+    const auto lhs_stateInputIneqConst = toVector(dataArray[index].stateInputIneqConstraint);
+    const auto rhs_stateInputIneqConst = toVector(dataArray[index + 1].stateInputIneqConstraint);
+    areSameSize = areSameSize && (lhs_stateInputIneqConst.size() == rhs_stateInputIneqConst.size());
+
+    const auto lhs_stateEqLag = toVector(dataArray[index].stateEqLagrangian);
+    const auto rhs_stateEqLag = toVector(dataArray[index + 1].stateEqLagrangian);
+    areSameSize = areSameSize && (lhs_stateEqLag.size() == rhs_stateEqLag.size());
+
+    const auto lhs_stateIneqLag = toVector(dataArray[index].stateIneqLagrangian);
+    const auto rhs_stateIneqLag = toVector(dataArray[index + 1].stateIneqLagrangian);
+    areSameSize = areSameSize && (lhs_stateIneqLag.size() == rhs_stateIneqLag.size());
+
+    const auto lhs_stateInputEqLag = toVector(dataArray[index].stateInputEqLagrangian);
+    const auto rhs_stateInputEqLag = toVector(dataArray[index + 1].stateInputEqLagrangian);
+    areSameSize = areSameSize && (lhs_stateInputEqLag.size() == rhs_stateInputEqLag.size());
+
+    const auto lhs_stateInputIneqLag = toVector(dataArray[index].stateInputIneqLagrangian);
+    const auto rhs_stateInputIneqLag = toVector(dataArray[index + 1].stateInputIneqLagrangian);
+    areSameSize = areSameSize && (lhs_stateInputIneqLag.size() == rhs_stateInputIneqLag.size());
 
     if (areSameSize) {
       const auto f = [alpha](const vector_t& lhs, const vector_t& rhs) -> vector_t { return alpha * lhs + (scalar_t(1.0) - alpha) * rhs; };
-      MetricsCollection out;
+      Metrics out;
       // cost
       out.cost = LinearInterpolation::interpolate(
-          indexAlpha, dataArray, [](const std::vector<MetricsCollection>& array, size_t t) -> const scalar_t& { return array[t].cost; });
-      // constraints
-      out.stateEqConstraint = LinearInterpolation::interpolate(
-          indexAlpha, dataArray,
-          [](const std::vector<MetricsCollection>& array, size_t t) -> const vector_t& { return array[t].stateEqConstraint; });
-      out.stateInputEqConstraint = LinearInterpolation::interpolate(
-          indexAlpha, dataArray,
-          [](const std::vector<MetricsCollection>& array, size_t t) -> const vector_t& { return array[t].stateInputEqConstraint; });
+          indexAlpha, dataArray, [](const std::vector<Metrics>& array, size_t t) -> const scalar_t& { return array[t].cost; });
+      // dynamics violation
+      out.dynamicsViolation = LinearInterpolation::interpolate(
+          indexAlpha, dataArray, [](const std::vector<Metrics>& array, size_t t) -> const vector_t& { return array[t].dynamicsViolation; });
+      // equality constraints
+      out.stateEqConstraint = toConstraintArray(getSizes(dataArray[index].stateEqConstraint), f(lhs_stateEqConst, rhs_stateEqConst));
+      out.stateInputEqConstraint = toConstraintArray(getSizes(dataArray[index].stateInputEqConstraint), f(lhs_stateInputEqConst, rhs_stateInputEqConst));
       // inequality constraints
-      out.stateIneqConstraint = LinearInterpolation::interpolate(
-          indexAlpha, dataArray,
-          [](const std::vector<MetricsCollection>& array, size_t t) -> const vector_t& { return array[t].stateIneqConstraint; });
-      out.stateInputIneqConstraint = LinearInterpolation::interpolate(
-          indexAlpha, dataArray,
-          [](const std::vector<MetricsCollection>& array, size_t t) -> const vector_t& { return array[t].stateInputIneqConstraint; });
-      out.stateEqLagrangian = toLagrangianMetrics(getSizes(dataArray[index].stateEqLagrangian), f(lhs_stateEq, rhs_stateEq));
-      out.stateIneqLagrangian = toLagrangianMetrics(getSizes(dataArray[index].stateIneqLagrangian), f(lhs_stateIneq, rhs_stateIneq));
+      out.stateIneqConstraint = toConstraintArray(getSizes(dataArray[index].stateIneqConstraint), f(lhs_stateIneqConst, rhs_stateIneqConst));
+      out.stateInputIneqConstraint = toConstraintArray(getSizes(dataArray[index].stateInputIneqConstraint), f(lhs_stateInputIneqConst, rhs_stateInputIneqConst));
+      // lagrangian
+      out.stateEqLagrangian = toLagrangianMetrics(getSizes(dataArray[index].stateEqLagrangian), f(lhs_stateEqLag, rhs_stateEqLag));
+      out.stateIneqLagrangian = toLagrangianMetrics(getSizes(dataArray[index].stateIneqLagrangian), f(lhs_stateIneqLag, rhs_stateIneqLag));
       out.stateInputEqLagrangian =
-          toLagrangianMetrics(getSizes(dataArray[index].stateInputEqLagrangian), f(lhs_stateInputEq, rhs_stateInputEq));
+          toLagrangianMetrics(getSizes(dataArray[index].stateInputEqLagrangian), f(lhs_stateInputEqLag, rhs_stateInputEqLag));
       out.stateInputIneqLagrangian =
-          toLagrangianMetrics(getSizes(dataArray[index].stateInputIneqLagrangian), f(lhs_stateInputIneq, rhs_stateInputIneq));
+          toLagrangianMetrics(getSizes(dataArray[index].stateInputIneqLagrangian), f(lhs_stateInputIneqLag, rhs_stateInputIneqLag));
       return out;
 
     } else {
@@ -113,17 +125,10 @@ void random(const size_array_t& termsSize, std::vector<LagrangianMetrics>& lagra
   lagrangianMetrics = toLagrangianMetrics(termsSize, serializedLagrangianMetrics);
 }
 
-bool isApprox(const MetricsCollection& lhs, const MetricsCollection& rhs, scalar_t prec) {
-  bool flag = std::abs(lhs.cost - rhs.cost) < prec;
-  flag = flag && lhs.stateEqConstraint.isApprox(rhs.stateEqConstraint, prec);
-  flag = flag && lhs.stateInputEqConstraint.isApprox(rhs.stateInputEqConstraint, prec);
-  flag = flag && lhs.stateIneqConstraint.isApprox(rhs.stateIneqConstraint, prec);
-  flag = flag && lhs.stateInputIneqConstraint.isApprox(rhs.stateInputIneqConstraint, prec);
-  flag = flag && toVector(lhs.stateEqLagrangian).isApprox(toVector(rhs.stateEqLagrangian), prec);
-  flag = flag && toVector(lhs.stateIneqLagrangian).isApprox(toVector(rhs.stateIneqLagrangian), prec);
-  flag = flag && toVector(lhs.stateInputEqLagrangian).isApprox(toVector(rhs.stateInputEqLagrangian), prec);
-  flag = flag && toVector(lhs.stateInputIneqLagrangian).isApprox(toVector(rhs.stateInputIneqLagrangian), prec);
-  return flag;
+void random(const size_array_t& termsSize, vector_array_t& constraintArray) {
+  const size_t length = std::accumulate(termsSize.begin(), termsSize.end(), termsSize.size());
+  const vector_t serializedConstraintArray = vector_t::Random(length);
+  constraintArray = toConstraintArray(termsSize, serializedConstraintArray);
 }
 
 }  // unnamed namespace
@@ -135,36 +140,37 @@ TEST(TestMetrics, testSerialization) {
   const size_t length = std::accumulate(termsSize.begin(), termsSize.end(), numConstraint);
 
   const ocs2::vector_t randomVec = ocs2::vector_t::Random(length);
-  const std::vector<ocs2::LagrangianMetrics> termsMetricsCollection = ocs2::toLagrangianMetrics(termsSize, randomVec);
-  const ocs2::vector_t serializedMetricsCollection = ocs2::toVector(termsMetricsCollection);
+  const std::vector<ocs2::LagrangianMetrics> l = ocs2::toLagrangianMetrics(termsSize, randomVec);
+  const ocs2::vector_t serialized_l = ocs2::toVector(l);
 
-  EXPECT_TRUE(serializedMetricsCollection == randomVec);
-  EXPECT_TRUE(serializedMetricsCollection.size() == length);
-  EXPECT_TRUE(getSizes(termsMetricsCollection) == termsSize);
+  EXPECT_TRUE(serialized_l == randomVec);
+  EXPECT_TRUE(serialized_l.size() == length);
+  EXPECT_TRUE(getSizes(l) == termsSize);
 }
 
 TEST(TestMetrics, testSwap) {
   const ocs2::size_array_t termsSize{0, 2, 0, 0, 3, 5};
 
-  ocs2::MetricsCollection termsMetricsCollection;
-  termsMetricsCollection.cost = ocs2::vector_t::Random(1)(0);
-  termsMetricsCollection.stateEqConstraint = ocs2::vector_t::Random(2);
-  termsMetricsCollection.stateInputEqConstraint = ocs2::vector_t::Random(3);
-  termsMetricsCollection.stateIneqConstraint = ocs2::vector_t::Random(2);
-  termsMetricsCollection.stateInputIneqConstraint = ocs2::vector_t::Random(3);
-  ocs2::random(termsSize, termsMetricsCollection.stateEqLagrangian);
-  ocs2::random(termsSize, termsMetricsCollection.stateIneqLagrangian);
-  ocs2::random(termsSize, termsMetricsCollection.stateInputEqLagrangian);
-  ocs2::random(termsSize, termsMetricsCollection.stateInputIneqLagrangian);
+  ocs2::Metrics termsMetrics;
+  termsMetrics.cost = ocs2::vector_t::Random(1)(0);
+  termsMetrics.dynamicsViolation.setRandom(2);
+  ocs2::random(termsSize, termsMetrics.stateEqConstraint);
+  ocs2::random(termsSize, termsMetrics.stateInputEqConstraint);
+  ocs2::random(termsSize, termsMetrics.stateIneqConstraint);
+  ocs2::random(termsSize, termsMetrics.stateInputIneqConstraint);
+  ocs2::random(termsSize, termsMetrics.stateEqLagrangian);
+  ocs2::random(termsSize, termsMetrics.stateIneqLagrangian);
+  ocs2::random(termsSize, termsMetrics.stateInputEqLagrangian);
+  ocs2::random(termsSize, termsMetrics.stateInputIneqLagrangian);
 
-  auto termsMetricsCollectionRef = termsMetricsCollection;
-  ocs2::MetricsCollection termsMultiplierNew;
-  termsMetricsCollection.swap(termsMultiplierNew);
+  auto termsMetricsRef = termsMetrics;
+  ocs2::Metrics termsMetricsNew;
+  termsMetrics.swap(termsMetricsNew);
 
-  EXPECT_TRUE(ocs2::isApprox(termsMultiplierNew, termsMetricsCollectionRef, 1e-10));
+  EXPECT_TRUE(termsMetricsNew.isApprox(termsMetricsRef, 1e-10));
 
-  termsMetricsCollectionRef.clear();
-  EXPECT_TRUE(ocs2::isApprox(termsMetricsCollection, termsMetricsCollectionRef, 1e-10));
+  termsMetricsRef.clear();
+  EXPECT_TRUE(termsMetrics.isApprox(termsMetricsRef, 1e-10));
 }
 
 TEST(TestMetrics, testInterpolation) {
@@ -181,18 +187,19 @@ TEST(TestMetrics, testInterpolation) {
   ocs2::vector_array_t stateIneqTrajectory(N);
   ocs2::vector_array_t stateInputEqTrajectory(N);
   ocs2::vector_array_t stateInputIneqTrajectory(N);
-  std::vector<ocs2::MetricsCollection> metricsCollectionTrajectory(N);
+  std::vector<ocs2::Metrics> metricsTrajectory(N);
   for (size_t i = 0; i < N; i++) {
     timeTrajectory[i] = i * 0.1;
-    metricsCollectionTrajectory[i].cost = ocs2::vector_t::Random(1)(0);
-    metricsCollectionTrajectory[i].stateEqConstraint = ocs2::vector_t::Random(2);
-    metricsCollectionTrajectory[i].stateInputEqConstraint = ocs2::vector_t::Random(3);
-    metricsCollectionTrajectory[i].stateIneqConstraint = ocs2::vector_t::Random(2);
-    metricsCollectionTrajectory[i].stateInputIneqConstraint = ocs2::vector_t::Random(3);
-    ocs2::random(stateEqTermsSize, metricsCollectionTrajectory[i].stateEqLagrangian);
-    ocs2::random(stateIneqTermsSize, metricsCollectionTrajectory[i].stateIneqLagrangian);
-    ocs2::random(stateInputEqTermsSize, metricsCollectionTrajectory[i].stateInputEqLagrangian);
-    ocs2::random(stateInputIneqTermsSize, metricsCollectionTrajectory[i].stateInputIneqLagrangian);
+    metricsTrajectory[i].cost = ocs2::vector_t::Random(1)(0);
+    metricsTrajectory[i].dynamicsViolation.setRandom(2);
+    ocs2::random(stateEqTermsSize, metricsTrajectory[i].stateEqConstraint);
+    ocs2::random(stateInputEqTermsSize, metricsTrajectory[i].stateInputEqConstraint);
+    ocs2::random(stateIneqTermsSize, metricsTrajectory[i].stateIneqConstraint);
+    ocs2::random(stateInputIneqTermsSize, metricsTrajectory[i].stateInputIneqConstraint);
+    ocs2::random(stateEqTermsSize, metricsTrajectory[i].stateEqLagrangian);
+    ocs2::random(stateIneqTermsSize, metricsTrajectory[i].stateIneqLagrangian);
+    ocs2::random(stateInputEqTermsSize, metricsTrajectory[i].stateInputEqLagrangian);
+    ocs2::random(stateInputIneqTermsSize, metricsTrajectory[i].stateInputIneqLagrangian);
   }  // end of i loop
 
   constexpr ocs2::scalar_t prec = 1e-8;
@@ -200,9 +207,9 @@ TEST(TestMetrics, testInterpolation) {
   for (size_t i = 0; i < timeTrajectoryTest.size(); i++) {
     const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(timeTrajectoryTest[i], timeTrajectory);
 
-    const auto metricsCollection = ocs2::LinearInterpolation::interpolate(indexAlpha, metricsCollectionTrajectory);
-    const auto metricsCollectionNew = ocs2::interpolateNew(indexAlpha, metricsCollectionTrajectory);
+    const auto metrics = ocs2::LinearInterpolation::interpolate(indexAlpha, metricsTrajectory);
+    const auto metricsNew = ocs2::interpolateNew(indexAlpha, metricsTrajectory);
 
-    EXPECT_TRUE(ocs2::isApprox(metricsCollection, metricsCollectionNew, prec));
+    EXPECT_TRUE(metrics.isApprox(metricsNew, prec));
   }  // end of i loop
 }

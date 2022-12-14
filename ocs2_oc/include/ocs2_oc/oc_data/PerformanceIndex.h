@@ -29,10 +29,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <iomanip>
 #include <ostream>
 
 #include <ocs2_core/Types.h>
+#include <ocs2_core/model_data/Metrics.h>
 
 namespace ocs2 {
 
@@ -45,6 +45,13 @@ struct PerformanceIndex {
 
   /** The total cost of a rollout. */
   scalar_t cost = 0.0;
+
+  /** Sum of Squared Error (SSE) of the dual feasibilities:
+   * - Final: squared norm of violation in the dual feasibilities
+   * - PreJumps: sum of squared norm of violation in the dual feasibilities
+   * - Intermediates: sum of squared norm of violation in the dual feasibilities
+   */
+  scalar_t dualFeasibilitiesSSE = 0.0;
 
   /** Sum of Squared Error (SSE) of system dynamics violation */
   scalar_t dynamicsViolationSSE = 0.0;
@@ -63,13 +70,6 @@ struct PerformanceIndex {
    */
   scalar_t inequalityConstraintsSSE = 0.0;
 
-  /** Sum of Squared Error (SSE) of the dual feasibilities:
-   * - Final: squared norm of violation in the dual feasibilities
-   * - PreJumps: sum of squared norm of violation in the dual feasibilities
-   * - Intermediates: sum of squared norm of violation in the dual feasibilities
-   */
-  scalar_t dualFeasibilitiesSSE = 0.0;
-
   /** Sum of equality Lagrangians:
    * - Final: penalty for violation in state equality constraints
    * - PreJumps: penalty for violation in state equality constraints
@@ -84,59 +84,41 @@ struct PerformanceIndex {
    */
   scalar_t inequalityLagrangian = 0.0;
 
-  /** Add performance indices */
-  PerformanceIndex& operator+=(const PerformanceIndex& rhs) {
-    this->merit += rhs.merit;
-    this->cost += rhs.cost;
-    this->dynamicsViolationSSE += rhs.dynamicsViolationSSE;
-    this->equalityConstraintsSSE += rhs.equalityConstraintsSSE;
-    this->inequalityConstraintsSSE += rhs.inequalityConstraintsSSE;
-    this->dualFeasibilitiesSSE += rhs.dualFeasibilitiesSSE;
-    this->equalityLagrangian += rhs.equalityLagrangian;
-    this->inequalityLagrangian += rhs.inequalityLagrangian;
-    return *this;
-  }
+  /** Add performance indices. */
+  PerformanceIndex& operator+=(const PerformanceIndex& rhs);
+
+  /** Multiply by a scalar. */
+  PerformanceIndex& operator*=(const scalar_t c);
+
+  /** Returns true if *this is approximately equal to other, within the precision determined by prec. */
+  bool isApprox(const PerformanceIndex& other, const scalar_t prec = 1e-8) const;
 };
 
+/** Add performance indices. */
 inline PerformanceIndex operator+(PerformanceIndex lhs, const PerformanceIndex& rhs) {
-  lhs += rhs;  // Copied lhs, add rhs to it.
+  lhs += rhs;  // copied lhs, add rhs to it.
   return lhs;
 }
 
-/** Swaps performance indices */
-inline void swap(PerformanceIndex& lhs, PerformanceIndex& rhs) {
-  std::swap(lhs.merit, rhs.merit);
-  std::swap(lhs.cost, rhs.cost);
-  std::swap(lhs.dynamicsViolationSSE, rhs.dynamicsViolationSSE);
-  std::swap(lhs.equalityConstraintsSSE, rhs.equalityConstraintsSSE);
-  std::swap(lhs.inequalityConstraintsSSE, rhs.inequalityConstraintsSSE);
-  std::swap(lhs.dualFeasibilitiesSSE, rhs.dualFeasibilitiesSSE);
-  std::swap(lhs.equalityLagrangian, rhs.equalityLagrangian);
-  std::swap(lhs.inequalityLagrangian, rhs.inequalityLagrangian);
+/** Multiply by a scalar. */
+inline PerformanceIndex operator*(PerformanceIndex lhs, const scalar_t c) {
+  lhs *= c;  // copied lhs
+  return lhs;
 }
 
-inline std::ostream& operator<<(std::ostream& stream, const PerformanceIndex& performanceIndex) {
-  const size_t tabSpace = 12;
-  const auto indentation = stream.width();
-  stream << std::left;  // fill from left
-
-  stream << std::setw(indentation) << "";
-  stream << "Rollout Merit:              " << std::setw(tabSpace) << performanceIndex.merit;
-  stream << "Rollout Cost:               " << std::setw(tabSpace) << performanceIndex.cost << '\n';
-
-  stream << std::setw(indentation) << "";
-  stream << "Dynamics violation SSE:     " << std::setw(tabSpace) << performanceIndex.dynamicsViolationSSE;
-  stream << "Equality constraints SSE:   " << std::setw(tabSpace) << performanceIndex.equalityConstraintsSSE << '\n';
-
-  stream << std::setw(indentation) << "";
-  stream << "Inequality constraints SSE: " << std::setw(tabSpace) << performanceIndex.inequalityConstraintsSSE;
-  stream << "Dual feasibilities SSE:     " << std::setw(tabSpace) << performanceIndex.dualFeasibilitiesSSE << '\n';
-
-  stream << std::setw(indentation) << "";
-  stream << "Equality Lagrangian:        " << std::setw(tabSpace) << performanceIndex.equalityLagrangian;
-  stream << "Inequality Lagrangian:      " << std::setw(tabSpace) << performanceIndex.inequalityLagrangian;
-
-  return stream;
+/** Multiply by a scalar. */
+inline PerformanceIndex operator*(const scalar_t c, PerformanceIndex rhs) {
+  rhs *= c;  // copied rhs
+  return rhs;
 }
+
+/** Swaps performance indices. */
+void swap(PerformanceIndex& lhs, PerformanceIndex& rhs);
+
+/** Computes the PerformanceIndex based on a given Metrics. */
+PerformanceIndex toPerformanceIndex(const Metrics& m);
+
+/** Overloads the stream insertion operator. */
+std::ostream& operator<<(std::ostream& stream, const PerformanceIndex& performanceIndex);
 
 }  // namespace ocs2

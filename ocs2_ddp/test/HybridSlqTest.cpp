@@ -33,8 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
-#include <ocs2_oc/synchronized_module/AugmentedLagrangianObserver.h>
 #include <ocs2_oc/synchronized_module/ReferenceManager.h>
+#include <ocs2_oc/synchronized_module/SolverObserver.h>
 #include <ocs2_oc/test/dynamics_hybrid_slq_test.h>
 
 #include <ocs2_core/augmented_lagrangian/AugmentedLagrangian.h>
@@ -135,8 +135,8 @@ TEST(HybridSlqTest, state_rollout_slq) {
   OperatingPoints operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
 
   // Test 1: Check constraint compliance. It uses a solver observer to get metrics for the bounds constraints
-  auto boundsConstraintsObserverPtr = std::make_unique<AugmentedLagrangianObserver>("bounds");
-  boundsConstraintsObserverPtr->setMetricsCallback(
+  auto boundsConstraintsObserverPtr = SolverObserver::LagrangianTermObserver(
+      SolverObserver::Type::Intermediate, "bounds",
       [&](const scalar_array_t& timeTraj, const std::vector<LagrangianMetricsConstRef>& metricsTraj) {
         constexpr scalar_t constraintViolationTolerance = 1e-1;
         for (size_t i = 0; i < metricsTraj.size(); i++) {
@@ -151,7 +151,7 @@ TEST(HybridSlqTest, state_rollout_slq) {
   // setup SLQ
   SLQ slq(ddpSettings, stateTriggeredRollout, problem, operatingTrajectories);
   slq.setReferenceManager(referenceManager);
-  slq.addAugmentedLagrangianObserver(std::move(boundsConstraintsObserverPtr));
+  slq.addSolverObserver(std::move(boundsConstraintsObserverPtr));
 
   // run SLQ
   slq.run(startTime, initState, finalTime);

@@ -4,7 +4,7 @@
     <!-- visualization config -->
     <arg name="rviz"               default="true" />
     <arg name="description_name"   default="legged_robot_description"/>
-    <arg name="multiplot"          default="false"/>
+    <arg name="multiplot"          default="true"/>
 
     <!-- The task file for the mpc. -->
     <arg name="taskFile"          default="$(find ocs2_legged_robot)/config/mpc/task.info"/>

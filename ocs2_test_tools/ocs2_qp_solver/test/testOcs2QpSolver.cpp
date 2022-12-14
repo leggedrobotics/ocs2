@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/cost/QuadraticStateCost.h>
 #include <ocs2_core/cost/QuadraticStateInputCost.h>
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
+#include <ocs2_core/model_data/Metrics.h>
 
 #include <ocs2_core/test/testTools.h>
 
@@ -129,7 +130,7 @@ TEST_F(Ocs2QpSolverTest, satisfiesConstraints) {
   const auto& u0 = constrainedSolution.inputTrajectory[0];
   preComputation.request(ocs2::Request::Constraint, t0, x0, u0);
 
-  const auto g0 = unconstrainedProblem.equalityConstraintPtr->getValue(t0, x0, u0, preComputation);
+  const auto g0 = ocs2::toVector(unconstrainedProblem.equalityConstraintPtr->getValue(t0, x0, u0, preComputation));
   ASSERT_TRUE(g0.isZero(precision));
 
   for (int k = 1; k < N; ++k) {
@@ -138,10 +139,10 @@ TEST_F(Ocs2QpSolverTest, satisfiesConstraints) {
     const auto& u = constrainedSolution.inputTrajectory[k];
     preComputation.request(ocs2::Request::Constraint, t, x, u);
 
-    const auto g = unconstrainedProblem.equalityConstraintPtr->getValue(t, x, u, preComputation);
+    const auto g = ocs2::toVector(unconstrainedProblem.equalityConstraintPtr->getValue(t, x, u, preComputation));
     ASSERT_TRUE(g.isZero(precision));
 
-    const auto h = unconstrainedProblem.stateEqualityConstraintPtr->getValue(t, x, preComputation);
+    const auto h = ocs2::toVector(unconstrainedProblem.stateEqualityConstraintPtr->getValue(t, x, preComputation));
     ASSERT_TRUE(h.isZero(precision));
   }
 
@@ -149,7 +150,7 @@ TEST_F(Ocs2QpSolverTest, satisfiesConstraints) {
   const auto& xf = constrainedSolution.stateTrajectory[N];
   preComputation.requestFinal(ocs2::Request::Constraint, tf, xf);
 
-  const auto gf = unconstrainedProblem.finalEqualityConstraintPtr->getValue(tf, xf, preComputation);
+  const auto gf = ocs2::toVector(unconstrainedProblem.finalEqualityConstraintPtr->getValue(tf, xf, preComputation));
   ASSERT_TRUE(gf.isZero(precision));
 }
 

@@ -19,6 +19,7 @@ add_message_files(
     mpc_flattened_controller.msg
     lagrangian_metrics.msg
     multiplier.msg
+    constraint.msg
 )
 
 add_service_files(

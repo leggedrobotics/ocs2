@@ -59,8 +59,8 @@ PerformanceIndex computeIntermediatePerformance(const Transcription& transcripti
  * @param u : Input, taken to be constant across the interval.
  * @return Performance index for a single intermediate node.
  */
-PerformanceIndex computeIntermediatePerformance(const OptimalControlProblem& optimalControlProblem, DynamicsDiscretizer& discretizer,
-                                                scalar_t t, scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u);
+PerformanceIndex computeIntermediatePerformance(OptimalControlProblem& optimalControlProblem, DynamicsDiscretizer& discretizer, scalar_t t,
+                                                scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u);
 
 /**
  * Compute the performance index from the transcription for the terminal node.
@@ -77,7 +77,7 @@ PerformanceIndex computeTerminalPerformance(const TerminalTranscription& transcr
  * @param x : Terminal state
  * @return Performance index for the terminal node.
  */
-PerformanceIndex computeTerminalPerformance(const OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x);
+PerformanceIndex computeTerminalPerformance(OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x);
 
 /**
  * Compute the performance index from the transcription for the event node.
@@ -95,7 +95,7 @@ PerformanceIndex computeEventPerformance(const EventTranscription& transcription
  * @param x_next : Post-event state
  * @return Performance index for the event node.
  */
-PerformanceIndex computeEventPerformance(const OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x,
+PerformanceIndex computeEventPerformance(OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x,
                                          const vector_t& x_next);
 
 }  // namespace multiple_shooting

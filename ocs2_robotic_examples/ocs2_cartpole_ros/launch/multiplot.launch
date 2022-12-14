@@ -1,6 +1,6 @@
 <launch>
   <arg name="observation_config"  default="$(find ocs2_cartpole)/config/multiplot/mpc_observation.xml" />
-  <arg name="metrics_config"      default="$(find ocs2_cartpole)/config/multiplot/mpc_metrics.xml" />
+  <arg name="metrics_config"      default="$(find ocs2_cartpole)/config/multiplot/zero_velocity.xml" />
 
   <!-- Launch RQT Multi-plot -->
   <node name="mpc_observation" pkg="rqt_multiplot" type="rqt_multiplot" 

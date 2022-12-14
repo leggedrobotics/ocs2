@@ -372,7 +372,6 @@ PerformanceIndex SqpSolver::computePerformance(const std::vector<AnnotatedTime>&
                                                const vector_array_t& u, std::vector<Metrics>& metrics) {
   // Problem size
   const int N = static_cast<int>(time.size()) - 1;
-  metrics.clear();
   metrics.resize(N + 1);
 
   std::vector<PerformanceIndex> performance(settings_.nThreads, PerformanceIndex());

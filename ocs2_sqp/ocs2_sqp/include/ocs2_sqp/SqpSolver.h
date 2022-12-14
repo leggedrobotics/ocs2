@@ -66,11 +66,7 @@ class SqpSolver : public SolverBase {
 
   void getPrimalSolution(scalar_t finalTime, PrimalSolution* primalSolutionPtr) const override { *primalSolutionPtr = primalSolution_; }
 
-  const DualSolution& getDualSolution() const override { throw std::runtime_error("[SqpSolver] getDualSolution() not available yet."); }
-
-  const ProblemMetrics& getSolutionMetrics() const override {
-    throw std::runtime_error("[SqpSolver] getSolutionMetrics() not available yet.");
-  }
+  const ProblemMetrics& getSolutionMetrics() const override { return problemMetrics_; }
 
   size_t getNumIterations() const override { return totalNumIterations_; }
 
@@ -123,11 +119,11 @@ class SqpSolver : public SolverBase {
 
   /** Creates QP around t, x(t), u(t). Returns performance metrics at the current {t, x(t), u(t)} */
   PerformanceIndex setupQuadraticSubproblem(const std::vector<AnnotatedTime>& time, const vector_t& initState, const vector_array_t& x,
-                                            const vector_array_t& u);
+                                            const vector_array_t& u, std::vector<Metrics>& metrics);
 
   /** Computes only the performance metrics at the current {t, x(t), u(t)} */
   PerformanceIndex computePerformance(const std::vector<AnnotatedTime>& time, const vector_t& initState, const vector_array_t& x,
-                                      const vector_array_t& u);
+                                      const vector_array_t& u, std::vector<Metrics>& metrics);
 
   /** Returns solution of the QP subproblem in delta coordinates: */
   struct OcpSubproblemSolution {
@@ -145,7 +141,8 @@ class SqpSolver : public SolverBase {
 
   /** Decides on the step to take and overrides given trajectories {x(t), u(t)} <- {x(t) + a*dx(t), u(t) + a*du(t)} */
   sqp::StepInfo takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization, const vector_t& initState,
-                         const OcpSubproblemSolution& subproblemSolution, vector_array_t& x, vector_array_t& u);
+                         const OcpSubproblemSolution& subproblemSolution, vector_array_t& x, vector_array_t& u,
+                         std::vector<Metrics>& metrics);
 
   /** Determine convergence after a step */
   sqp::Convergence checkConvergence(int iteration, const PerformanceIndex& baseline, const sqp::StepInfo& stepInfo) const;
@@ -183,6 +180,9 @@ class SqpSolver : public SolverBase {
 
   // Iteration performance log
   std::vector<PerformanceIndex> performanceIndeces_;
+
+  // The ProblemMetrics associated to primalSolution_
+  ProblemMetrics problemMetrics_;
 
   // Benchmarking
   size_t numProblems_{0};

@@ -34,6 +34,65 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace multiple_shooting {
 
+Metrics computeMetrics(const Transcription& transcription) {
+  const auto& constraintsSize = transcription.constraintsSize;
+
+  Metrics metrics;
+
+  // Cost
+  metrics.cost = transcription.cost.f;
+
+  // Dynamics
+  metrics.dynamicsViolation = transcription.dynamics.f;
+
+  // Equality constraints
+  metrics.stateEqConstraint = toConstraintArray(constraintsSize.stateEq, transcription.stateEqConstraints.f);
+  metrics.stateInputEqConstraint = toConstraintArray(constraintsSize.stateInputEq, transcription.stateInputEqConstraints.f);
+
+  // Inequality constraints.
+  metrics.stateIneqConstraint = toConstraintArray(constraintsSize.stateIneq, transcription.stateIneqConstraints.f);
+  metrics.stateInputIneqConstraint = toConstraintArray(constraintsSize.stateInputIneq, transcription.stateInputIneqConstraints.f);
+
+  return metrics;
+}
+
+Metrics computeMetrics(const EventTranscription& transcription) {
+  const auto& constraintsSize = transcription.constraintsSize;
+
+  Metrics metrics;
+
+  // Cost
+  metrics.cost = transcription.cost.f;
+
+  // Dynamics
+  metrics.dynamicsViolation = transcription.dynamics.f;
+
+  // Equality constraints
+  metrics.stateEqConstraint = toConstraintArray(constraintsSize.stateEq, transcription.eqConstraints.f);
+
+  // Inequality constraints.
+  metrics.stateIneqConstraint = toConstraintArray(constraintsSize.stateIneq, transcription.ineqConstraints.f);
+
+  return metrics;
+}
+
+Metrics computeMetrics(const TerminalTranscription& transcription) {
+  const auto& constraintsSize = transcription.constraintsSize;
+
+  Metrics metrics;
+
+  // Cost
+  metrics.cost = transcription.cost.f;
+
+  // Equality constraints
+  metrics.stateEqConstraint = toConstraintArray(constraintsSize.stateEq, transcription.eqConstraints.f);
+
+  // Inequality constraints.
+  metrics.stateIneqConstraint = toConstraintArray(constraintsSize.stateIneq, transcription.ineqConstraints.f);
+
+  return metrics;
+}
+
 Metrics computeIntermediateMetrics(OptimalControlProblem& optimalControlProblem, DynamicsDiscretizer& discretizer, scalar_t t, scalar_t dt,
                                    const vector_t& x, const vector_t& x_next, const vector_t& u) {
   // Dynamics

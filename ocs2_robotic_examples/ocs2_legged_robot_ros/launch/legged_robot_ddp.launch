@@ -4,7 +4,7 @@
     <!-- visualization config -->
     <arg name="rviz"               default="true" />
     <arg name="description_name"   default="legged_robot_description"/>
-    <arg name="multiplot"          default="true"/>
+    <arg name="multiplot"          default="false"/>
 
     <!-- The task file for the mpc. -->
     <arg name="taskFile"          default="$(find ocs2_legged_robot)/config/mpc/task.info"/>
@@ -28,6 +28,7 @@
     </group>
 
     <!-- make the files into global parameters -->
+    <param name="multiplot"         value="$(arg multiplot)"/>
     <param name="taskFile"          value="$(arg taskFile)" />
     <param name="referenceFile"     value="$(arg referenceFile)" />
     <param name="urdfFile"          value="$(arg urdfFile)" />

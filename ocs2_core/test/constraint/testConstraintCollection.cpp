@@ -27,6 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <numeric>
+
 #include <gtest/gtest.h>
 
 #include <ocs2_core/constraint/StateConstraintCollection.h>
@@ -54,6 +56,37 @@ TEST(TestConstraintCollection, numberOfConstraints) {
 
   // Check the right constraint size is incremented
   EXPECT_EQ(constraintCollection.getNumConstraints(0.0), addedConstraints);
+}
+
+TEST(TestConstraintCollection, termsSize) {
+  ocs2::StateInputConstraintCollection constraintCollection;
+
+  // Initially we have zero constraints for all types
+  auto termsSize = constraintCollection.getTermsSize(0.0);
+  EXPECT_EQ(termsSize.size(), 0);
+  EXPECT_EQ(std::accumulate(termsSize.begin(), termsSize.end(), 0), 0);
+
+  // Add 2 Linear inequality constraint term, which has 2 constraints
+  constraintCollection.add("Constraint1", std::make_unique<TestDummyConstraint>());
+  constraintCollection.add("Constraint2", std::make_unique<TestDummyConstraint>());
+  constraintCollection.add("Constraint3", std::make_unique<TestDummyConstraint>());
+  auto& constraint1 = constraintCollection.get<TestDummyConstraint>("Constraint1");
+  const size_t constraint1Size = constraint1.getNumConstraints(0.0);
+
+  // Check the right constraint size
+  termsSize = constraintCollection.getTermsSize(0.0);
+  EXPECT_EQ(termsSize.size(), 3);
+  if (termsSize.size() == 3) {
+    EXPECT_EQ(termsSize[0], constraint1Size);
+    EXPECT_EQ(termsSize[1], constraint1Size);
+    EXPECT_EQ(termsSize[2], constraint1Size);
+  }
+
+  // Deactivate constraint1
+  constraint1.setActivity(false);
+  termsSize = constraintCollection.getTermsSize(0.0);
+  EXPECT_EQ(termsSize.size(), 3);
+  EXPECT_EQ(std::accumulate(termsSize.begin(), termsSize.end(), 0), 2 * constraint1Size);
 }
 
 TEST(TestConstraintCollection, activatingConstraints) {

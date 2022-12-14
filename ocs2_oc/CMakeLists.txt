@@ -132,6 +132,7 @@ install(DIRECTORY test/include/${PROJECT_NAME}/
 
 catkin_add_gtest(test_${PROJECT_NAME}_multiple_shooting
   test/multiple_shooting/testProjectionMultiplierCoefficients.cpp
+  test/multiple_shooting/testTranscriptionMetrics.cpp
   test/multiple_shooting/testTranscriptionPerformanceIndex.cpp
 )
 add_dependencies(test_${PROJECT_NAME}_multiple_shooting

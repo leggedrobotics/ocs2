@@ -33,13 +33,35 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/integration/SensitivityIntegrator.h>
 #include <ocs2_core/model_data/Metrics.h>
 
+#include "ocs2_oc/multiple_shooting/Transcription.h"
 #include "ocs2_oc/oc_problem/OptimalControlProblem.h"
 
 namespace ocs2 {
 namespace multiple_shooting {
 
 /**
- * Compute only the Metrics for a single intermediate node.
+ * Compute the Metrics for a single intermediate node.
+ * @param transcription: multiple shooting transcription for an intermediate node.
+ * @return Metrics for a single intermediate node.
+ */
+Metrics computeMetrics(const Transcription& transcription);
+
+/**
+ * Compute the Metrics for the event node.
+ * @param transcription: multiple shooting transcription for event node.
+ * @return Metrics for a event node.
+ */
+Metrics computeMetrics(const EventTranscription& transcription);
+
+/**
+ * Compute the Metrics for the terminal node.
+ * @param transcription: multiple shooting transcription for terminal node.
+ * @return Metrics for a terminal node.
+ */
+Metrics computeMetrics(const TerminalTranscription& transcription);
+
+/**
+ * Compute the Metrics for a single intermediate node.
  * @param optimalControlProblem : Definition of the optimal control problem
  * @param discretizer : Integrator to use for creating the discrete dynamics.
  * @param t : Start of the discrete interval
@@ -53,7 +75,7 @@ Metrics computeIntermediateMetrics(OptimalControlProblem& optimalControlProblem,
                                    const vector_t& x, const vector_t& x_next, const vector_t& u);
 
 /**
- * Compute only the Metrics for the event node.
+ * Compute the Metrics for the event node.
  * @param optimalControlProblem : Definition of the optimal control problem
  * @param t : Time at the event node
  * @param x : Pre-event state
@@ -63,7 +85,7 @@ Metrics computeIntermediateMetrics(OptimalControlProblem& optimalControlProblem,
 Metrics computeEventMetrics(OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x, const vector_t& x_next);
 
 /**
- * Compute only the Metrics for the terminal node.
+ * Compute the Metrics for the terminal node.
  * @param optimalControlProblem : Definition of the optimal control problem
  * @param t : Time at the terminal node
  * @param x : Terminal state

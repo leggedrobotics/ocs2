@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_oc/oc_data/PerformanceIndex.h"
 #include "ocs2_oc/oc_data/PrimalSolution.h"
+#include "ocs2_oc/oc_data/ProblemMetrics.h"
 #include "ocs2_oc/oc_data/TimeDiscretization.h"
 
 namespace ocs2 {
@@ -100,6 +101,15 @@ PrimalSolution toPrimalSolution(const std::vector<AnnotatedTime>& time, ModeSche
  */
 PrimalSolution toPrimalSolution(const std::vector<AnnotatedTime>& time, ModeSchedule&& modeSchedule, vector_array_t&& x, vector_array_t&& u,
                                 matrix_array_t&& KMatrices);
+
+/**
+ * Constructs a ProblemMetrics from an array of metrics.
+ *
+ * @param [in] time : The annotated time trajectory
+ * @param [in] metrics: The metrics array.
+ * @return The ProblemMetrics.
+ */
+ProblemMetrics toProblemMetrics(const std::vector<AnnotatedTime>& time, std::vector<Metrics>&& metrics);
 
 }  // namespace multiple_shooting
 }  // namespace ocs2

@@ -48,15 +48,25 @@ StateConstraintCollection* StateConstraintCollection::clone() const {
 /******************************************************************************************************/
 size_t StateConstraintCollection::getNumConstraints(scalar_t time) const {
   size_t numConstraints = 0;
-
-  // accumulate number of constraints for each constraintTerm
   for (const auto& constraintTerm : this->terms_) {
     if (constraintTerm->isActive(time)) {
       numConstraints += constraintTerm->getNumConstraints(time);
     }
   }
-
   return numConstraints;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+size_array_t StateConstraintCollection::getTermsSize(scalar_t time) const {
+  size_array_t termsSize(this->terms_.size(), 0);
+  for (size_t i = 0; i < this->terms_.size(); ++i) {
+    if (this->terms_[i]->isActive(time)) {
+      termsSize[i] = this->terms_[i]->getNumConstraints(time);
+    }
+  }
+  return termsSize;
 }
 
 /******************************************************************************************************/

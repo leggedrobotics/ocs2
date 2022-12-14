@@ -94,6 +94,16 @@ PerformanceIndex toPerformanceIndex(const Metrics& m) {
   return performanceIndex;
 }
 
+PerformanceIndex toPerformanceIndex(const Metrics& m, const scalar_t dt) {
+  auto performanceIndex = toPerformanceIndex(m);
+  //  performanceIndex.cost *= dt  no need since it is already considered in multiple_shooting::computeIntermediateMetrics()
+  performanceIndex.dualFeasibilitiesSSE *= dt;
+  performanceIndex.dynamicsViolationSSE *= dt;
+  performanceIndex.equalityConstraintsSSE *= dt;
+  performanceIndex.inequalityConstraintsSSE *= dt;
+  return performanceIndex;
+}
+
 std::ostream& operator<<(std::ostream& stream, const PerformanceIndex& performanceIndex) {
   const size_t tabSpace = 12;
   const auto indentation = stream.width();

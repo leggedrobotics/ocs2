@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_oc/multiple_shooting/Helpers.h>
 #include <ocs2_oc/multiple_shooting/Initialization.h>
+#include <ocs2_oc/multiple_shooting/MetricsComputation.h>
 #include <ocs2_oc/multiple_shooting/PerformanceIndexComputation.h>
 #include <ocs2_oc/multiple_shooting/Transcription.h>
 #include <ocs2_oc/precondition/Ruzi.h>
@@ -177,6 +178,7 @@ void SlpSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
 
   // Bookkeeping
   performanceIndeces_.clear();
+  std::vector<Metrics> metrics;
 
   int iter = 0;
   slp::Convergence convergence = slp::Convergence::FALSE;
@@ -186,7 +188,7 @@ void SlpSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
     }
     // Make QP approximation
     linearQuadraticApproximationTimer_.startTimer();
-    const auto baselinePerformance = setupQuadraticSubproblem(timeDiscretization, initState, x, u);
+    const auto baselinePerformance = setupQuadraticSubproblem(timeDiscretization, initState, x, u, metrics);
     linearQuadraticApproximationTimer_.endTimer();
 
     // Solve LP
@@ -197,7 +199,7 @@ void SlpSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
 
     // Apply step
     linesearchTimer_.startTimer();
-    const auto stepInfo = takeStep(baselinePerformance, timeDiscretization, initState, deltaSolution, x, u);
+    const auto stepInfo = takeStep(baselinePerformance, timeDiscretization, initState, deltaSolution, x, u, metrics);
     performanceIndeces_.push_back(stepInfo.performanceAfterStep);
     linesearchTimer_.endTimer();
 
@@ -211,6 +213,7 @@ void SlpSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
 
   computeControllerTimer_.startTimer();
   primalSolution_ = toPrimalSolution(timeDiscretization, std::move(x), std::move(u));
+  problemMetrics_ = multiple_shooting::toProblemMetrics(timeDiscretization, std::move(metrics));
   computeControllerTimer_.endTimer();
 
   ++numProblems_;
@@ -290,7 +293,7 @@ PrimalSolution SlpSolver::toPrimalSolution(const std::vector<AnnotatedTime>& tim
 }
 
 PerformanceIndex SlpSolver::setupQuadraticSubproblem(const std::vector<AnnotatedTime>& time, const vector_t& initState,
-                                                     const vector_array_t& x, const vector_array_t& u) {
+                                                     const vector_array_t& x, const vector_array_t& u, std::vector<Metrics>& metrics) {
   // Problem horizon
   const int N = static_cast<int>(time.size()) - 1;
 
@@ -302,6 +305,7 @@ PerformanceIndex SlpSolver::setupQuadraticSubproblem(const std::vector<Annotated
   stateInputIneqConstraints_.resize(N);
   constraintsProjection_.resize(N);
   projectionMultiplierCoefficients_.resize(N);
+  metrics.resize(N + 1);
 
   std::atomic_int timeIndex{0};
   auto parallelTask = [&](int workerId) {
@@ -314,7 +318,8 @@ PerformanceIndex SlpSolver::setupQuadraticSubproblem(const std::vector<Annotated
       if (time[i].event == AnnotatedTime::Event::PreEvent) {
         // Event node
         auto result = multiple_shooting::setupEventNode(ocpDefinition, time[i].time, x[i], x[i + 1]);
-        workerPerformance += multiple_shooting::computeEventPerformance(result);
+        metrics[i] = multiple_shooting::computeMetrics(result);
+        workerPerformance += multiple_shooting::computePerformanceIndex(result);
         cost_[i] = std::move(result.cost);
         dynamics_[i] = std::move(result.dynamics);
         stateInputEqConstraints_[i].resize(0, x[i].size());
@@ -327,7 +332,8 @@ PerformanceIndex SlpSolver::setupQuadraticSubproblem(const std::vector<Annotated
         const scalar_t ti = getIntervalStart(time[i]);
         const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
         auto result = multiple_shooting::setupIntermediateNode(ocpDefinition, sensitivityDiscretizer_, ti, dt, x[i], x[i + 1], u[i]);
-        workerPerformance += multiple_shooting::computeIntermediatePerformance(result, dt);
+        metrics[i] = multiple_shooting::computeMetrics(result);
+        workerPerformance += multiple_shooting::computePerformanceIndex(result, dt);
         multiple_shooting::projectTranscription(result, settings_.extractProjectionMultiplier);
         cost_[i] = std::move(result.cost);
         dynamics_[i] = std::move(result.dynamics);
@@ -344,7 +350,8 @@ PerformanceIndex SlpSolver::setupQuadraticSubproblem(const std::vector<Annotated
     if (i == N) {  // Only one worker will execute this
       const scalar_t tN = getIntervalStart(time[N]);
       auto result = multiple_shooting::setupTerminalNode(ocpDefinition, tN, x[N]);
-      workerPerformance += multiple_shooting::computeTerminalPerformance(result);
+      metrics[i] = multiple_shooting::computeMetrics(result);
+      workerPerformance += multiple_shooting::computePerformanceIndex(result);
       cost_[i] = std::move(result.cost);
       stateIneqConstraints_[i] = std::move(result.ineqConstraints);
     }
@@ -365,27 +372,29 @@ PerformanceIndex SlpSolver::setupQuadraticSubproblem(const std::vector<Annotated
 }
 
 PerformanceIndex SlpSolver::computePerformance(const std::vector<AnnotatedTime>& time, const vector_t& initState, const vector_array_t& x,
-                                               const vector_array_t& u) {
-  // Problem horizon
+                                               const vector_array_t& u, std::vector<Metrics>& metrics) {
+  // Problem size
   const int N = static_cast<int>(time.size()) - 1;
+  metrics.resize(N + 1);
 
   std::vector<PerformanceIndex> performance(settings_.nThreads, PerformanceIndex());
   std::atomic_int timeIndex{0};
   auto parallelTask = [&](int workerId) {
     // Get worker specific resources
     OptimalControlProblem& ocpDefinition = ocpDefinitions_[workerId];
-    PerformanceIndex workerPerformance;  // Accumulate performance in local variable
 
     int i = timeIndex++;
     while (i < N) {
       if (time[i].event == AnnotatedTime::Event::PreEvent) {
         // Event node
-        workerPerformance += multiple_shooting::computeEventPerformance(ocpDefinition, time[i].time, x[i], x[i + 1]);
+        metrics[i] = multiple_shooting::computeEventMetrics(ocpDefinition, time[i].time, x[i], x[i + 1]);
+        performance[workerId] += toPerformanceIndex(metrics[i]);
       } else {
         // Normal, intermediate node
         const scalar_t ti = getIntervalStart(time[i]);
         const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
-        workerPerformance += multiple_shooting::computeIntermediatePerformance(ocpDefinition, discretizer_, ti, dt, x[i], x[i + 1], u[i]);
+        metrics[i] = multiple_shooting::computeIntermediateMetrics(ocpDefinition, discretizer_, ti, dt, x[i], x[i + 1], u[i]);
+        performance[workerId] += toPerformanceIndex(metrics[i], dt);
       }
 
       i = timeIndex++;
@@ -393,16 +402,16 @@ PerformanceIndex SlpSolver::computePerformance(const std::vector<AnnotatedTime>&
 
     if (i == N) {  // Only one worker will execute this
       const scalar_t tN = getIntervalStart(time[N]);
-      workerPerformance += multiple_shooting::computeTerminalPerformance(ocpDefinition, tN, x[N]);
+      metrics[N] = multiple_shooting::computeTerminalMetrics(ocpDefinition, tN, x[N]);
+      performance[workerId] += toPerformanceIndex(metrics[N]);
     }
-
-    // Accumulate! Same worker might run multiple tasks
-    performance[workerId] += workerPerformance;
   };
   runParallel(std::move(parallelTask));
 
-  // Account for init state in performance
-  performance.front().dynamicsViolationSSE += (initState - x.front()).squaredNorm();
+  // Account for initial state in performance
+  const vector_t initDynamicsViolation = initState - x.front();
+  metrics.front().dynamicsViolation += initDynamicsViolation;
+  performance.front().dynamicsViolationSSE += initDynamicsViolation.squaredNorm();
 
   // Sum performance of the threads
   PerformanceIndex totalPerformance = std::accumulate(std::next(performance.begin()), performance.end(), performance.front());
@@ -412,7 +421,7 @@ PerformanceIndex SlpSolver::computePerformance(const std::vector<AnnotatedTime>&
 
 slp::StepInfo SlpSolver::takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization,
                                   const vector_t& initState, const OcpSubproblemSolution& subproblemSolution, vector_array_t& x,
-                                  vector_array_t& u) {
+                                  vector_array_t& u, std::vector<Metrics>& metrics) {
   using StepType = FilterLinesearch::StepType;
 
   /*
@@ -438,13 +447,14 @@ slp::StepInfo SlpSolver::takeStep(const PerformanceIndex& baseline, const std::v
   scalar_t alpha = 1.0;
   vector_array_t xNew(x.size());
   vector_array_t uNew(u.size());
+  std::vector<Metrics> metricsNew(metrics.size());
   do {
     // Compute step
     multiple_shooting::incrementTrajectory(u, du, alpha, uNew);
     multiple_shooting::incrementTrajectory(x, dx, alpha, xNew);
 
     // Compute cost and constraints
-    const PerformanceIndex performanceNew = computePerformance(timeDiscretization, initState, xNew, uNew);
+    const PerformanceIndex performanceNew = computePerformance(timeDiscretization, initState, xNew, uNew, metricsNew);
 
     // Step acceptance and record step type
     bool stepAccepted;
@@ -462,6 +472,7 @@ slp::StepInfo SlpSolver::takeStep(const PerformanceIndex& baseline, const std::v
     if (stepAccepted) {  // Return if step accepted
       x = std::move(xNew);
       u = std::move(uNew);
+      metrics = std::move(metricsNew);
 
       // Prepare step info
       slp::StepInfo stepInfo;

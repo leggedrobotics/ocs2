@@ -41,8 +41,9 @@ Transcription setupIntermediateNode(OptimalControlProblem& optimalControlProblem
                                     scalar_t t, scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u) {
   // Results and short-hand notation
   Transcription transcription;
-  auto& dynamics = transcription.dynamics;
   auto& cost = transcription.cost;
+  auto& dynamics = transcription.dynamics;
+  auto& constraintsSize = transcription.constraintsSize;
   auto& stateEqConstraints = transcription.stateEqConstraints;
   auto& stateInputEqConstraints = transcription.stateInputEqConstraints;
   auto& stateIneqConstraints = transcription.stateIneqConstraints;
@@ -63,24 +64,28 @@ Transcription setupIntermediateNode(OptimalControlProblem& optimalControlProblem
 
   // State equality constraints
   if (!optimalControlProblem.stateEqualityConstraintPtr->empty()) {
+    constraintsSize.stateEq = optimalControlProblem.stateEqualityConstraintPtr->getTermsSize(t);
     stateEqConstraints =
         optimalControlProblem.stateEqualityConstraintPtr->getLinearApproximation(t, x, *optimalControlProblem.preComputationPtr);
   }
 
   // State-input equality constraints
   if (!optimalControlProblem.equalityConstraintPtr->empty()) {
+    constraintsSize.stateInputEq = optimalControlProblem.equalityConstraintPtr->getTermsSize(t);
     stateInputEqConstraints =
         optimalControlProblem.equalityConstraintPtr->getLinearApproximation(t, x, u, *optimalControlProblem.preComputationPtr);
   }
 
   // State inequality constraints.
   if (!optimalControlProblem.stateInequalityConstraintPtr->empty()) {
+    constraintsSize.stateIneq = optimalControlProblem.stateInequalityConstraintPtr->getTermsSize(t);
     stateIneqConstraints =
         optimalControlProblem.stateInequalityConstraintPtr->getLinearApproximation(t, x, *optimalControlProblem.preComputationPtr);
   }
 
   // State-input inequality constraints.
   if (!optimalControlProblem.inequalityConstraintPtr->empty()) {
+    constraintsSize.stateInputIneq = optimalControlProblem.inequalityConstraintPtr->getTermsSize(t);
     stateInputIneqConstraints =
         optimalControlProblem.inequalityConstraintPtr->getLinearApproximation(t, x, u, *optimalControlProblem.preComputationPtr);
   }
@@ -121,6 +126,7 @@ TerminalTranscription setupTerminalNode(OptimalControlProblem& optimalControlPro
   // Results and short-hand notation
   TerminalTranscription transcription;
   auto& cost = transcription.cost;
+  auto& constraintsSize = transcription.constraintsSize;
   auto& eqConstraints = transcription.eqConstraints;
   auto& ineqConstraints = transcription.ineqConstraints;
 
@@ -132,12 +138,14 @@ TerminalTranscription setupTerminalNode(OptimalControlProblem& optimalControlPro
 
   // State equality constraints.
   if (!optimalControlProblem.finalEqualityConstraintPtr->empty()) {
+    constraintsSize.stateEq = optimalControlProblem.finalEqualityConstraintPtr->getTermsSize(t);
     eqConstraints =
         optimalControlProblem.finalEqualityConstraintPtr->getLinearApproximation(t, x, *optimalControlProblem.preComputationPtr);
   }
 
   // State inequality constraints.
   if (!optimalControlProblem.finalInequalityConstraintPtr->empty()) {
+    constraintsSize.stateIneq = optimalControlProblem.finalInequalityConstraintPtr->getTermsSize(t);
     ineqConstraints =
         optimalControlProblem.finalInequalityConstraintPtr->getLinearApproximation(t, x, *optimalControlProblem.preComputationPtr);
   }
@@ -150,6 +158,7 @@ EventTranscription setupEventNode(OptimalControlProblem& optimalControlProblem, 
   EventTranscription transcription;
   auto& cost = transcription.cost;
   auto& dynamics = transcription.dynamics;
+  auto& constraintsSize = transcription.constraintsSize;
   auto& eqConstraints = transcription.eqConstraints;
   auto& ineqConstraints = transcription.ineqConstraints;
 
@@ -167,12 +176,14 @@ EventTranscription setupEventNode(OptimalControlProblem& optimalControlProblem, 
 
   // State equality constraints.
   if (!optimalControlProblem.preJumpEqualityConstraintPtr->empty()) {
+    constraintsSize.stateEq = optimalControlProblem.preJumpEqualityConstraintPtr->getTermsSize(t);
     eqConstraints =
         optimalControlProblem.preJumpEqualityConstraintPtr->getLinearApproximation(t, x, *optimalControlProblem.preComputationPtr);
   }
 
   // State inequality constraints.
   if (!optimalControlProblem.preJumpInequalityConstraintPtr->empty()) {
+    constraintsSize.stateIneq = optimalControlProblem.preJumpInequalityConstraintPtr->getTermsSize(t);
     ineqConstraints =
         optimalControlProblem.preJumpInequalityConstraintPtr->getLinearApproximation(t, x, *optimalControlProblem.preComputationPtr);
   }

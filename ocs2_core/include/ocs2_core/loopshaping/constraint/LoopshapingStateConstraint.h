@@ -50,6 +50,7 @@ class LoopshapingStateConstraint final : public StateConstraintCollection {
   vector_array_t getValue(scalar_t time, const vector_t& state, const PreComputation& preComp) const override;
   VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state,
                                                            const PreComputation& preComp) const override;
+
   VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                  const PreComputation& preComp) const override;
 

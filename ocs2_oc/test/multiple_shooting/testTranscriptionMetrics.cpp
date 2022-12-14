@@ -29,15 +29,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
+#include <ocs2_oc/multiple_shooting/MetricsComputation.h>
 #include <ocs2_oc/multiple_shooting/Transcription.h>
-#include <ocs2_oc/multiple_shooting/PerformanceIndexComputation.h>
 
 #include "ocs2_oc/test/circular_kinematics.h"
 #include "ocs2_oc/test/testProblemsGeneration.h"
 
 using namespace ocs2;
 
-TEST(test_transcription_performance, intermediate) {
+TEST(test_transcription_metrics, intermediate) {
   constexpr int nx = 2;
   constexpr int nu = 2;
 
@@ -60,12 +60,12 @@ TEST(test_transcription_performance, intermediate) {
   const vector_t x_next = (vector_t(nx) << 1.1, 0.2).finished();
   const vector_t u = (vector_t(nu) << 0.1, 1.3).finished();
   const auto transcription = multiple_shooting::setupIntermediateNode(problem, sensitivityDiscretizer, t, dt, x, x_next, u);
-  const auto performance = multiple_shooting::computeIntermediatePerformance(problem, discretizer, t, dt, x, x_next, u);
+  const auto metrics = multiple_shooting::computeIntermediateMetrics(problem, discretizer, t, dt, x, x_next, u);
 
-  ASSERT_TRUE(performance.isApprox(multiple_shooting::computePerformanceIndex(transcription, dt), 1e-12));
+  ASSERT_TRUE(metrics.isApprox(multiple_shooting::computeMetrics(transcription), 1e-12));
 }
 
-TEST(test_transcription_performance, event) {
+TEST(test_transcription_metrics, event) {
   constexpr int nx = 2;
 
   // optimal control problem
@@ -90,12 +90,12 @@ TEST(test_transcription_performance, event) {
   const vector_t x = (vector_t(nx) << 1.0, 0.1).finished();
   const vector_t x_next = (vector_t(nx) << 1.1, 0.2).finished();
   const auto transcription = multiple_shooting::setupEventNode(problem, t, x, x_next);
-  const auto performance = multiple_shooting::computeEventPerformance(problem, t, x, x_next);
+  const auto metrics = multiple_shooting::computeEventMetrics(problem, t, x, x_next);
 
-  ASSERT_TRUE(performance.isApprox(multiple_shooting::computePerformanceIndex(transcription), 1e-12));
+  ASSERT_TRUE(metrics.isApprox(multiple_shooting::computeMetrics(transcription), 1e-12));
 }
 
-TEST(test_transcription_performance, terminal) {
+TEST(test_transcription_metrics, terminal) {
   constexpr int nx = 3;
 
   // optimal control problem
@@ -115,7 +115,7 @@ TEST(test_transcription_performance, terminal) {
   const scalar_t t = 0.5;
   const vector_t x = vector_t::Random(nx);
   const auto transcription = multiple_shooting::setupTerminalNode(problem, t, x);
-  const auto performance = multiple_shooting::computeTerminalPerformance(problem, t, x);
+  const auto metrics = multiple_shooting::computeTerminalMetrics(problem, t, x);
 
-  ASSERT_TRUE(performance.isApprox(multiple_shooting::computePerformanceIndex(transcription), 1e-12));
+  ASSERT_TRUE(metrics.isApprox(multiple_shooting::computeMetrics(transcription), 1e-12));
 }

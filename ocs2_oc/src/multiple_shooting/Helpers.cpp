@@ -119,5 +119,29 @@ PrimalSolution toPrimalSolution(const std::vector<AnnotatedTime>& time, ModeSche
   return primalSolution;
 }
 
+ProblemMetrics toProblemMetrics(const std::vector<AnnotatedTime>& time, std::vector<Metrics>&& metrics) {
+  assert(time.size() > 1);
+  assert(metrics.size() == time.size());
+
+  // Problem horizon
+  const int N = static_cast<int>(time.size()) - 1;
+
+  // resize
+  ProblemMetrics problemMetrics;
+  problemMetrics.intermediates.reserve(N);
+  problemMetrics.preJumps.reserve(N / 10);  // the size is just a guess
+  problemMetrics.final = std::move(metrics.back());
+
+  for (int i = 0; i < N; ++i) {
+    if (time[i].event == AnnotatedTime::Event::PreEvent) {
+      problemMetrics.preJumps.push_back(std::move(metrics[i]));
+    } else {
+      problemMetrics.intermediates.push_back(std::move(metrics[i]));
+    }
+  }
+
+  return problemMetrics;
+}
+
 }  // namespace multiple_shooting
 }  // namespace ocs2

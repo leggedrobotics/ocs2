@@ -129,7 +129,7 @@ ProblemMetrics toProblemMetrics(const std::vector<AnnotatedTime>& time, std::vec
   // resize
   ProblemMetrics problemMetrics;
   problemMetrics.intermediates.reserve(N);
-  problemMetrics.preJumps.reserve(8);  // the size is just a guess
+  problemMetrics.preJumps.reserve(N / 10);  // the size is just a guess
   problemMetrics.final = std::move(metrics.back());
 
   for (int i = 0; i < N; ++i) {

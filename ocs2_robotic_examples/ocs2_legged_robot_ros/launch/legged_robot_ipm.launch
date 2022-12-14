@@ -24,7 +24,9 @@
 
     <!-- multiplot -->
     <group if="$(arg multiplot)">
-      <include file="$(find ocs2_legged_robot_ros)/launch/multiplot.launch"/>
+      <include file="$(find ocs2_legged_robot_ros)/launch/multiplot.launch">
+        <arg name="metrics_config" value="$(find ocs2_legged_robot)/config/multiplot/friction_cone.xml" />
+      </include>
     </group>
 
     <!-- make the files into global parameters -->

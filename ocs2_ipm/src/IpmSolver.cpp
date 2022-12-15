@@ -203,9 +203,8 @@ void IpmSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
   }
 
   // Interior point variables
-  vector_array_t slackStateIneq, slackStateInputIneq, dualStateIneq, dualStateInputIneq;
-
   scalar_t barrierParam = settings_.initialBarrierParameter;
+  vector_array_t slackStateIneq, slackStateInputIneq, dualStateIneq, dualStateInputIneq;
 
   // Bookkeeping
   performanceIndeces_.clear();

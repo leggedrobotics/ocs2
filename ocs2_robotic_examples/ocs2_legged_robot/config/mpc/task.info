@@ -55,7 +55,6 @@ ipm
   deltaTol                              1e-4
   g_max                                 10.0
   g_min                                 1e-4
-  projectStateInputEqualityConstraints  true
   computeLagrangeMultipliers            true
   printSolverStatistics                 true
   printSolverStatus                     false

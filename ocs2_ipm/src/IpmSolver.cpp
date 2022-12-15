@@ -386,27 +386,20 @@ IpmSolver::OcpSubproblemSolution IpmSolver::getOCPSolution(const vector_t& delta
   solution.armijoDescentMetric = armijoDescentMetric(lagrangian_, deltaXSol, deltaUSol);
 
   // Extract value function
-  auto& deltaLmdSol = solution.deltaLmdSol;
   if (settings_.createValueFunction) {
     valueFunction_ = hpipmInterface_.getRiccatiCostToGo(dynamics_[0], lagrangian_[0]);
-    // Extract costate directions
-    if (settings_.computeLagrangeMultipliers) {
-      deltaLmdSol.resize(deltaXSol.size());
-      for (int i = 0; i < deltaXSol.size(); ++i) {
-        deltaLmdSol[i] = valueFunction_[i].dfdx;
-        deltaLmdSol[i].noalias() += valueFunction_[i].dfdxx * deltaXSol[i];
-      }
-    }
   }
 
   // Problem horizon
   const int N = static_cast<int>(deltaXSol.size()) - 1;
 
+  auto& deltaLmdSol = solution.deltaLmdSol;
   auto& deltaNuSol = solution.deltaNuSol;
   auto& deltaSlackStateIneq = solution.deltaSlackStateIneq;
   auto& deltaSlackStateInputIneq = solution.deltaSlackStateInputIneq;
   auto& deltaDualStateIneq = solution.deltaDualStateIneq;
   auto& deltaDualStateInputIneq = solution.deltaDualStateInputIneq;
+  deltaLmdSol.resize(N + 1);
   deltaNuSol.resize(N);
   deltaSlackStateIneq.resize(N + 1);
   deltaSlackStateInputIneq.resize(N + 1);
@@ -437,7 +430,14 @@ IpmSolver::OcpSubproblemSolution IpmSolver::getOCPSolution(const vector_t& delta
           {dualStepSizes[workerId],
            ipm::fractionToBoundaryStepSize(dualStateIneq[i], deltaDualStateIneq[i], settings_.fractionToBoundaryMargin),
            ipm::fractionToBoundaryStepSize(dualStateInputIneq[i], deltaDualStateInputIneq[i], settings_.fractionToBoundaryMargin)});
+
+      // Extract Newton directions of the costate
+      if (settings_.computeLagrangeMultipliers) {
+        deltaLmdSol[i] = valueFunction_[i].dfdx;
+        deltaLmdSol[i].noalias() += valueFunction_[i].dfdxx * deltaXSol[i];
+      }
       if (constraintsProjection_[i].f.size() > 0) {
+        // Extract Newton directions of the Lagrange multiplier associated with the state-input equality constraints
         if (settings_.computeLagrangeMultipliers) {
           deltaNuSol[i] = projectionMultiplierCoefficients_[i].f;
           deltaNuSol[i].noalias() += projectionMultiplierCoefficients_[i].dfdx * deltaXSol[i];
@@ -461,6 +461,11 @@ IpmSolver::OcpSubproblemSolution IpmSolver::getOCPSolution(const vector_t& delta
                    ipm::fractionToBoundaryStepSize(slackStateIneq[i], deltaSlackStateIneq[i], settings_.fractionToBoundaryMargin));
       dualStepSizes[workerId] = std::min(dualStepSizes[workerId], ipm::fractionToBoundaryStepSize(dualStateIneq[i], deltaDualStateIneq[i],
                                                                                                   settings_.fractionToBoundaryMargin));
+      // Extract Newton directions of the costate
+      if (settings_.computeLagrangeMultipliers) {
+        deltaLmdSol[i] = valueFunction_[i].dfdx;
+        deltaLmdSol[i].noalias() += valueFunction_[i].dfdxx * deltaXSol[i];
+      }
     }
   };
   runParallel(std::move(parallelTask));

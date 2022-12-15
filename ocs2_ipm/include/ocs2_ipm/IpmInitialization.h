@@ -43,7 +43,9 @@ namespace ipm {
  * @param initialSlackMarginRate : Additional margin rate of the initial slack variables. Corresponds to `slack_bound_frac` option of IPOPT.
  * @return Initialized slack variable.
  */
-vector_t initializeSlackVariable(const vector_t& ineqConstraint, scalar_t initialSlackLowerBound, scalar_t initialSlackMarginRate);
+inline vector_t initializeSlackVariable(const vector_t& ineqConstraint, scalar_t initialSlackLowerBound, scalar_t initialSlackMarginRate) {
+  return (1.0 + initialSlackMarginRate) * ineqConstraint.cwiseMax(initialSlackLowerBound);
+}
 
 /**
  * Initializes the dual variable. The initialization of dual variables follows IPOPT option `bound_mult_init_method`: `mu-based`
@@ -55,8 +57,10 @@ vector_t initializeSlackVariable(const vector_t& ineqConstraint, scalar_t initia
  * @param initialDualMarginRate : Additional margin rate of the initial dual variables.
  * @return Initialized dual variable.
  */
-vector_t initializeDualVariable(const vector_t& slack, scalar_t barrierParam, scalar_t initialSlackLowerBound,
-                                scalar_t initialSlackMarginRate);
+inline vector_t initializeDualVariable(const vector_t& slack, scalar_t barrierParam, scalar_t initialDualLowerBound,
+                                       scalar_t initialDualMarginRate) {
+  return (1.0 + initialDualMarginRate) * (barrierParam * slack.cwiseInverse()).cwiseMax(initialDualLowerBound);
+}
 
 }  // namespace ipm
 }  // namespace ocs2

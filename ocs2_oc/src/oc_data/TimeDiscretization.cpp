@@ -122,6 +122,19 @@ scalar_array_t toTime(const std::vector<AnnotatedTime>& annotatedTime) {
   return timeTrajectory;
 }
 
+scalar_array_t toInterpolationTime(const std::vector<AnnotatedTime>& annotatedTime) {
+  scalar_array_t timeTrajectory;
+  timeTrajectory.reserve(annotatedTime.size());
+  for (size_t i = 0; i < annotatedTime.size(); i++) {
+    if (annotatedTime[i].event == AnnotatedTime::Event::PostEvent) {
+      timeTrajectory.push_back(getInterpolationTime(annotatedTime[i]));
+    } else {
+      timeTrajectory.push_back(annotatedTime[i].time);
+    }
+  }
+  return timeTrajectory;
+}
+
 size_array_t toPostEventIndices(const std::vector<AnnotatedTime>& annotatedTime) {
   size_array_t postEventIndices;
   for (size_t i = 0; i < annotatedTime.size(); i++) {

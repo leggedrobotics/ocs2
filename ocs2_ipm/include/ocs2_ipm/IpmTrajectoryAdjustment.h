@@ -57,18 +57,19 @@ DualSolution toDualSolution(const std::vector<AnnotatedTime>& time, vector_array
 std::pair<vector_array_t, vector_array_t> fromDualSolution(const std::vector<AnnotatedTime>& time, DualSolution&& dualSolution);
 
 /**
- * Initializes the interior point trajectory based on the stored trajectory. The part of the new trajectory that is uncovered by the stored
- * trajectory is set by zero-sized vectors.
+ * Interpolates the interior point trajectory using the stored interior point trajectory. The part of the new trajectory that is not
+ * covered by the stored trajectory is set by vectors of zero size.
  *
- * @param time: The time discretization.
- * @param stateIneq: The slack/dual of the state inequality constraints.
- * @param stateInputIneq: The slack/dual of the state-input inequality constraints.
- * @return A dual solution.
+ * @param oldModeSchedule: Mode schedule of the previous optimization.
+ * @param newModeSchedule: Mode schedule of the new optimization.
+ * @param time: Time discretization.
+ * @param oldDualSolution: The old dual solution that stored the previous interior point trajectory.
+ * @return Interpolated interior point trajectory.
  */
-std::pair<vector_array_t, vector_array_t> initializeInteriorPointTrajectory(const ModeSchedule& oldModeSchedule,
-                                                                            const ModeSchedule& newModeSchedule,
-                                                                            const std::vector<AnnotatedTime>& time,
-                                                                            DualSolution&& oldDualSolution);
+std::pair<vector_array_t, vector_array_t> interpolateInteriorPointTrajectory(const ModeSchedule& oldModeSchedule,
+                                                                             const ModeSchedule& newModeSchedule,
+                                                                             const std::vector<AnnotatedTime>& time,
+                                                                             DualSolution&& oldDualSolution);
 
 }  // namespace ipm
 }  // namespace ocs2

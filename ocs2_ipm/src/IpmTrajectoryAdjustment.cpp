@@ -63,7 +63,7 @@ DualSolution toDualSolution(const std::vector<AnnotatedTime>& time, vector_array
   const int N = static_cast<int>(time.size()) - 1;
 
   DualSolution dualSolution;
-  dualSolution.timeTrajectory = toTime(time);
+  const auto newTimeTrajectory = toInterpolationTime(time);
   dualSolution.postEventIndices = toPostEventIndices(time);
 
   dualSolution.preJumps.reserve(dualSolution.postEventIndices.size());
@@ -113,10 +113,10 @@ std::pair<vector_array_t, vector_array_t> fromDualSolution(const std::vector<Ann
   return std::make_pair(std::move(stateIneq), std::move(stateInputIneq));
 }
 
-std::pair<vector_array_t, vector_array_t> initializeInteriorPointTrajectory(const ModeSchedule& oldModeSchedule,
-                                                                            const ModeSchedule& newModeSchedule,
-                                                                            const std::vector<AnnotatedTime>& time,
-                                                                            DualSolution&& oldDualSolution) {
+std::pair<vector_array_t, vector_array_t> interpolateInteriorPointTrajectory(const ModeSchedule& oldModeSchedule,
+                                                                             const ModeSchedule& newModeSchedule,
+                                                                             const std::vector<AnnotatedTime>& time,
+                                                                             DualSolution&& oldDualSolution) {
   const auto oldTimeTrajectory = oldDualSolution.timeTrajectory;
   const auto oldPostEventIndices = oldDualSolution.postEventIndices;
 
@@ -124,7 +124,7 @@ std::pair<vector_array_t, vector_array_t> initializeInteriorPointTrajectory(cons
     std::ignore = trajectorySpread(oldModeSchedule, newModeSchedule, oldDualSolution);
   }
 
-  const auto newTimeTrajectory = toTime(time);
+  const auto newTimeTrajectory = toInterpolationTime(time);
   const auto newPostEventIndices = toPostEventIndices(time);
 
   // find the time period that we can interpolate the cached solution

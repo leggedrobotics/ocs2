@@ -200,9 +200,9 @@ void IpmSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
   // Interior point variables
   scalar_t barrierParam = settings_.initialBarrierParameter;
   vector_array_t slackStateIneq, slackStateInputIneq, dualStateIneq, dualStateInputIneq;
-  std::tie(slackStateIneq, slackStateInputIneq) = ipm::initializeInteriorPointTrajectory(
+  std::tie(slackStateIneq, slackStateInputIneq) = ipm::interpolateInteriorPointTrajectory(
       primalSolution_.modeSchedule_, this->getReferenceManager().getModeSchedule(), timeDiscretization, std::move(slackIneqTrajectory_));
-  std::tie(dualStateIneq, dualStateInputIneq) = ipm::initializeInteriorPointTrajectory(
+  std::tie(dualStateIneq, dualStateInputIneq) = ipm::interpolateInteriorPointTrajectory(
       primalSolution_.modeSchedule_, this->getReferenceManager().getModeSchedule(), timeDiscretization, std::move(dualIneqTrajectory_));
 
   // Bookkeeping

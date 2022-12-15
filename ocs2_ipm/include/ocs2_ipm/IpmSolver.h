@@ -119,11 +119,11 @@ class IpmSolver : public SolverBase {
 
   /** Initializes for the costate trajectories */
   void initializeCostateTrajectory(const std::vector<AnnotatedTime>& timeDiscretization, const vector_array_t& stateTrajectory,
-                                   vector_array_t& costateTrajectory);
+                                   vector_array_t& costateTrajectory) const;
 
   /** Initializes for the Lagrange multiplier trajectories of the constraint projection */
   void initializeProjectionMultiplierTrajectory(const std::vector<AnnotatedTime>& timeDiscretization,
-                                                vector_array_t& projectionMultiplierTrajectory);
+                                                vector_array_t& projectionMultiplierTrajectory) const;
 
   /** Creates QP around t, x(t), u(t). Returns performance metrics at the current {t, x(t), u(t)} */
   PerformanceIndex setupQuadraticSubproblem(const std::vector<AnnotatedTime>& time, const vector_t& initState, const vector_array_t& x,

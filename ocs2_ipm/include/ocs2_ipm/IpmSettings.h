@@ -64,10 +64,7 @@ struct Settings {
   scalar_t dt = 0.01;  // user-defined time discretization
   SensitivityIntegratorType integratorType = SensitivityIntegratorType::RK2;
 
-  // Inequality penalty relaxed barrier parameters
-  scalar_t inequalityConstraintMu = 0.0;
-  scalar_t inequalityConstraintDelta = 1e-6;
-
+  // Equality constraints
   bool projectStateInputEqualityConstraints = true;  // Use a projection method to resolve the state-input constraint Cx+Du+e
   bool computeLagrangeMultipliers = true;            // compute the Lagrange multipliers to evaluate the SSE of the dual feasibilities
 

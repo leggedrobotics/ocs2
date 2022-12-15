@@ -5,7 +5,6 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
   ocs2_mpc
   ocs2_oc
-  ocs2_qp_solver
   blasfeo_catkin
   hpipm_catkin
 )
@@ -90,7 +89,8 @@ install(
 )
 
 install(DIRECTORY include/${PROJECT_NAME}/
-        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
 
 #############
 ## Testing ##

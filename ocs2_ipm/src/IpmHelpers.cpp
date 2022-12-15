@@ -52,18 +52,17 @@ void condenseIneqConstraints(scalar_t barrierParam, const vector_t& slack, const
   }
 
   // coefficients for condensing
-  const vector_t condensingLinearCoeff = ((dual.array() * ineqConstraint.f.array() - barrierParam) / slack.array()).matrix();
+  const vector_t condensingLinearCoeff = (dual.array() * ineqConstraint.f.array() - barrierParam) / slack.array();
   const vector_t condensingQuadraticCoeff = dual.cwiseQuotient(slack);
-  matrix_t condensingQuadraticCoeff_dfdx, condensingQuadraticCoeff_dfdu;
 
   // condensing
   lagrangian.dfdx.noalias() += ineqConstraint.dfdx.transpose() * condensingLinearCoeff;
-  condensingQuadraticCoeff_dfdx.noalias() = condensingQuadraticCoeff.asDiagonal() * ineqConstraint.dfdx;
+  const matrix_t condensingQuadraticCoeff_dfdx = condensingQuadraticCoeff.asDiagonal() * ineqConstraint.dfdx;
   lagrangian.dfdxx.noalias() += ineqConstraint.dfdx.transpose() * condensingQuadraticCoeff_dfdx;
 
   if (nu > 0) {
     lagrangian.dfdu.noalias() += ineqConstraint.dfdu.transpose() * condensingLinearCoeff;
-    condensingQuadraticCoeff_dfdu.noalias() = condensingQuadraticCoeff.asDiagonal() * ineqConstraint.dfdu;
+    const matrix_t condensingQuadraticCoeff_dfdu = condensingQuadraticCoeff.asDiagonal() * ineqConstraint.dfdu;
     lagrangian.dfduu.noalias() += ineqConstraint.dfdu.transpose() * condensingQuadraticCoeff_dfdu;
     lagrangian.dfdux.noalias() += ineqConstraint.dfdu.transpose() * condensingQuadraticCoeff_dfdx;
   }

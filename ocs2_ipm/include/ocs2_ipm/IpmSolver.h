@@ -130,7 +130,7 @@ class IpmSolver : public SolverBase {
                                             const vector_array_t& u, const vector_array_t& lmd, const vector_array_t& nu,
                                             scalar_t barrierParam, vector_array_t& slackStateIneq, vector_array_t& slackStateInputIneq,
                                             vector_array_t& dualStateIneq, vector_array_t& dualStateInputIneq,
-                                            bool initializeSlackAndDualVariables, std::vector<Metrics>& metrics);
+                                            std::vector<Metrics>& metrics);
 
   /** Computes only the performance metrics at the current {t, x(t), u(t)} */
   PerformanceIndex computePerformance(const std::vector<AnnotatedTime>& time, const vector_t& initState, const vector_array_t& x,
@@ -191,10 +191,8 @@ class IpmSolver : public SolverBase {
   PrimalSolution primalSolution_;
   vector_array_t costateTrajectory_;
   vector_array_t projectionMultiplierTrajectory_;
-  vector_array_t slackStateIneqTrajectory_;
-  vector_array_t dualStateIneqTrajectory_;
-  vector_array_t slackStateInputIneqTrajectory_;
-  vector_array_t dualStateInputIneqTrajectory_;
+  DualSolution slackIneqTrajectory_;
+  DualSolution dualIneqTrajectory_;
 
   // Value function in absolute state coordinates (without the constant value)
   std::vector<ScalarFunctionQuadraticApproximation> valueFunction_;

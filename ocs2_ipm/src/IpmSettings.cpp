@@ -62,6 +62,7 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   loadData::loadPtreeValue(pt, settings.dt, fieldName + ".dt", verbose);
   loadData::loadPtreeValue(pt, settings.useFeedbackPolicy, fieldName + ".useFeedbackPolicy", verbose);
   loadData::loadPtreeValue(pt, settings.createValueFunction, fieldName + ".createValueFunction", verbose);
+  loadData::loadPtreeValue(pt, settings.computeLagrangeMultipliers, fieldName + ".computeLagrangeMultipliers", verbose);
   auto integratorName = sensitivity_integrator::toString(settings.integratorType);
   loadData::loadPtreeValue(pt, integratorName, fieldName + ".integratorType", verbose);
   settings.integratorType = sensitivity_integrator::fromString(integratorName);
@@ -74,7 +75,6 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   loadData::loadPtreeValue(pt, settings.fractionToBoundaryMargin, fieldName + ".fractionToBoundaryMargin", verbose);
   loadData::loadPtreeValue(pt, settings.usePrimalStepSizeForDual, fieldName + ".usePrimalStepSizeForDual", verbose);
   loadData::loadPtreeValue(pt, settings.projectStateInputEqualityConstraints, fieldName + ".projectStateInputEqualityConstraints", verbose);
-  loadData::loadPtreeValue(pt, settings.computeLagrangeMultipliers, fieldName + ".computeLagrangeMultipliers", verbose);
   loadData::loadPtreeValue(pt, settings.initialSlackLowerBound, fieldName + ".initialSlackLowerBound", verbose);
   loadData::loadPtreeValue(pt, settings.initialDualLowerBound, fieldName + ".initialDualLowerBound", verbose);
   loadData::loadPtreeValue(pt, settings.initialSlackMarginRate, fieldName + ".initialSlackMarginRate", verbose);

@@ -49,7 +49,6 @@ include_directories(
 
 # Multiple shooting solver library
 add_library(${PROJECT_NAME}
-  src/IpmInitialization.cpp
   src/IpmHelpers.cpp
   src/IpmPerformanceIndexComputation.cpp
   src/IpmSettings.cpp
@@ -75,7 +74,7 @@ if(cmake_clang_tools_FOUND)
     TARGETS ${PROJECT_NAME}
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
-    CF_WERROR
+    CF_FIX
   )
 endif(cmake_clang_tools_FOUND)
 

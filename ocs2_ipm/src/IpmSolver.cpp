@@ -636,8 +636,10 @@ PerformanceIndex IpmSolver::setupQuadraticSubproblem(const std::vector<Annotated
   };
   runParallel(std::move(parallelTask));
 
-  // Account for init state in performance
-  performance.front().dynamicsViolationSSE += (initState - x.front()).squaredNorm();
+  // Account for initial state in performance
+  const vector_t initDynamicsViolation = initState - x.front();
+  metrics.front().dynamicsViolation += initDynamicsViolation;
+  performance.front().dynamicsViolationSSE += initDynamicsViolation.squaredNorm();
 
   // Sum performance of the threads
   PerformanceIndex totalPerformance = std::accumulate(std::next(performance.begin()), performance.end(), performance.front());

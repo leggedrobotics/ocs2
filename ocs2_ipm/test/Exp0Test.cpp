@@ -1,3 +1,32 @@
+/******************************************************************************
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
+
 #include <gtest/gtest.h>
 #include <cstdlib>
 #include <ctime>
@@ -7,7 +36,6 @@
 #include "ocs2_ipm/IpmSolver.h"
 
 #include <ocs2_core/initialization/DefaultInitializer.h>
-
 #include <ocs2_oc/test/EXP0.h>
 
 using namespace ocs2;
@@ -75,24 +103,26 @@ TEST(Exp0Test, Unconstrained) {
   static constexpr size_t INPUT_DIM = 1;
 
   // Solver settings
-  ipm::Settings settings;
-  settings.dt = 0.01;
-  settings.ipmIteration = 20;
-  settings.projectStateInputEqualityConstraints = true;
-  settings.useFeedbackPolicy = true;
-  settings.printSolverStatistics = true;
-  settings.printSolverStatus = true;
-  settings.printLinesearch = true;
-  settings.printSolverStatistics = true;
-  settings.printSolverStatus = true;
-  settings.printLinesearch = true;
-  settings.nThreads = 1;
-
-  settings.initialBarrierParameter = 1.0e-02;
-  settings.targetBarrierParameter = 1.0e-04;
-  settings.barrierLinearDecreaseFactor = 0.2;
-  settings.barrierSuperlinearDecreasePower = 1.5;
-  settings.fractionToBoundaryMargin = 0.995;
+  const auto settings = []() {
+    ipm::Settings s;
+    s.dt = 0.01;
+    s.ipmIteration = 20;
+    s.projectStateInputEqualityConstraints = true;
+    s.useFeedbackPolicy = true;
+    s.printSolverStatistics = true;
+    s.printSolverStatus = true;
+    s.printLinesearch = true;
+    s.printSolverStatistics = true;
+    s.printSolverStatus = true;
+    s.printLinesearch = true;
+    s.nThreads = 1;
+    s.initialBarrierParameter = 1.0e-02;
+    s.targetBarrierParameter = 1.0e-04;
+    s.barrierLinearDecreaseFactor = 0.2;
+    s.barrierSuperlinearDecreasePower = 1.5;
+    s.fractionToBoundaryMargin = 0.995;
+    return s;
+  }();
 
   const scalar_array_t initEventTimes{0.1897};
   const size_array_t modeSequence{0, 1};
@@ -109,16 +139,6 @@ TEST(Exp0Test, Unconstrained) {
   IpmSolver solver(settings, problem, zeroInitializer);
   solver.setReferenceManager(referenceManagerPtr);
   solver.run(startTime, initState, finalTime);
-  solver.run(startTime, initState, finalTime);
-  solver.run(startTime, initState, finalTime);
-
-  const auto primalSolution = solver.primalSolution(finalTime);
-  std::cout << "Optimal unconstrained trajectory" << std::endl;
-  for (int i = 0; i < primalSolution.timeTrajectory_.size(); i++) {
-    std::cout << "time: " << std::setprecision(4) << primalSolution.timeTrajectory_[i]
-              << "\t state: " << primalSolution.stateTrajectory_[i].transpose()
-              << "\t input: " << primalSolution.inputTrajectory_[i].transpose() << std::endl;
-  }
 }
 
 TEST(Exp0Test, Constrained) {
@@ -126,24 +146,26 @@ TEST(Exp0Test, Constrained) {
   static constexpr size_t INPUT_DIM = 1;
 
   // Solver settings
-  ipm::Settings settings;
-  settings.dt = 0.01;
-  settings.ipmIteration = 20;
-  settings.projectStateInputEqualityConstraints = true;
-  settings.useFeedbackPolicy = true;
-  settings.printSolverStatistics = true;
-  settings.printSolverStatus = true;
-  settings.printLinesearch = true;
-  settings.printSolverStatistics = true;
-  settings.printSolverStatus = true;
-  settings.printLinesearch = true;
-  settings.nThreads = 1;
-
-  settings.initialBarrierParameter = 1.0e-02;
-  settings.targetBarrierParameter = 1.0e-04;
-  settings.barrierLinearDecreaseFactor = 0.2;
-  settings.barrierSuperlinearDecreasePower = 1.5;
-  settings.fractionToBoundaryMargin = 0.995;
+  const auto settings = []() {
+    ipm::Settings s;
+    s.dt = 0.01;
+    s.ipmIteration = 20;
+    s.projectStateInputEqualityConstraints = true;
+    s.useFeedbackPolicy = true;
+    s.printSolverStatistics = true;
+    s.printSolverStatus = true;
+    s.printLinesearch = true;
+    s.printSolverStatistics = true;
+    s.printSolverStatus = true;
+    s.printLinesearch = true;
+    s.nThreads = 1;
+    s.initialBarrierParameter = 1.0e-02;
+    s.targetBarrierParameter = 1.0e-04;
+    s.barrierLinearDecreaseFactor = 0.2;
+    s.barrierSuperlinearDecreasePower = 1.5;
+    s.fractionToBoundaryMargin = 0.995;
+    return s;
+  }();
 
   const scalar_array_t initEventTimes{0.1897};
   const size_array_t modeSequence{0, 1};
@@ -153,12 +175,12 @@ TEST(Exp0Test, Constrained) {
   // add inequality constraints
   const scalar_t umin = -7.5;
   const scalar_t umax = 7.5;
-  std::unique_ptr<StateInputConstraint> stateInputIneqConstraint(new EXP0_StateInputIneqConstraints(umin, umax));
+  auto stateInputIneqConstraint = std::make_unique<EXP0_StateInputIneqConstraints>(umin, umax);
   problem.inequalityConstraintPtr->add("ubound", std::move(stateInputIneqConstraint));
   const vector_t xmin = (vector_t(2) << -7.5, -7.5).finished();
   const vector_t xmax = (vector_t(2) << 7.5, 7.5).finished();
-  std::unique_ptr<StateConstraint> stateIneqConstraint(new EXP0_StateIneqConstraints(xmin, xmax));
-  std::unique_ptr<StateConstraint> finalStateIneqConstraint(new EXP0_StateIneqConstraints(xmin, xmax));
+  auto stateIneqConstraint = std::make_unique<EXP0_StateIneqConstraints>(xmin, xmax);
+  auto finalStateIneqConstraint = std::make_unique<EXP0_StateIneqConstraints>(xmin, xmax);
   problem.stateInequalityConstraintPtr->add("xbound", std::move(stateIneqConstraint));
   problem.finalInequalityConstraintPtr->add("xbound", std::move(finalStateIneqConstraint));
 
@@ -172,29 +194,22 @@ TEST(Exp0Test, Constrained) {
   IpmSolver solver(settings, problem, zeroInitializer);
   solver.setReferenceManager(referenceManagerPtr);
   solver.run(startTime, initState, finalTime);
-  // std::cout << solver.getBenchmarkingInformation() << std::endl;
 
   const auto primalSolution = solver.primalSolution(finalTime);
-  std::cout << "Optimal unconstrained trajectory" << std::endl;
-  for (int i = 0; i < primalSolution.timeTrajectory_.size(); i++) {
-    std::cout << "time: " << std::setprecision(4) << primalSolution.timeTrajectory_[i]
-              << "\t state: " << primalSolution.stateTrajectory_[i].transpose()
-              << "\t input: " << primalSolution.inputTrajectory_[i].transpose() << std::endl;
-  }
 
   // check constraint satisfaction
   for (const auto& e : primalSolution.stateTrajectory_) {
     if (e.size() > 0) {
-      EXPECT_TRUE(e.coeff(0) >= xmin.coeff(0));
-      EXPECT_TRUE(e.coeff(1) >= xmin.coeff(1));
-      EXPECT_TRUE(e.coeff(0) <= xmax.coeff(0));
-      EXPECT_TRUE(e.coeff(1) <= xmax.coeff(1));
+      ASSERT_TRUE(e.coeff(0) >= xmin.coeff(0));
+      ASSERT_TRUE(e.coeff(1) >= xmin.coeff(1));
+      ASSERT_TRUE(e.coeff(0) <= xmax.coeff(0));
+      ASSERT_TRUE(e.coeff(1) <= xmax.coeff(1));
     }
   }
   for (const auto& e : primalSolution.inputTrajectory_) {
     if (e.size() > 0) {
-      EXPECT_TRUE(e.coeff(0) >= umin);
-      EXPECT_TRUE(e.coeff(0) <= umax);
+      ASSERT_TRUE(e.coeff(0) >= umin);
+      ASSERT_TRUE(e.coeff(0) <= umax);
     }
   }
 }

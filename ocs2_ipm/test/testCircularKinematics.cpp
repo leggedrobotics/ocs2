@@ -140,16 +140,26 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints) {
   ocs2::DefaultInitializer zeroInitializer(2);
 
   // Solver settings
-  ocs2::ipm::Settings settings;
-  settings.dt = 0.01;
-  settings.ipmIteration = 20;
-  settings.projectStateInputEqualityConstraints = true;
-  settings.computeLagrangeMultipliers = true;
-  settings.useFeedbackPolicy = true;
-  settings.printSolverStatistics = true;
-  settings.printSolverStatus = true;
-  settings.printLinesearch = true;
-  settings.nThreads = 1;
+  const auto settings = []() {
+    ocs2::ipm::Settings s;
+    s.dt = 0.01;
+    s.ipmIteration = 20;
+    s.projectStateInputEqualityConstraints = true;
+    s.useFeedbackPolicy = true;
+    s.printSolverStatistics = true;
+    s.printSolverStatus = true;
+    s.printLinesearch = true;
+    s.printSolverStatistics = true;
+    s.printSolverStatus = true;
+    s.printLinesearch = true;
+    s.nThreads = 1;
+    s.initialBarrierParameter = 1.0e-02;
+    s.targetBarrierParameter = 1.0e-04;
+    s.barrierLinearDecreaseFactor = 0.2;
+    s.barrierSuperlinearDecreasePower = 1.5;
+    s.fractionToBoundaryMargin = 0.995;
+    return s;
+  }();
 
   // Additional problem definitions
   const ocs2::scalar_t startTime = 0.0;
@@ -195,15 +205,26 @@ TEST(test_circular_kinematics, solve_EqConstraints_inQPSubproblem) {
   ocs2::DefaultInitializer zeroInitializer(2);
 
   // Solver settings
-  ocs2::ipm::Settings settings;
-  settings.dt = 0.01;
-  settings.ipmIteration = 20;
-  settings.projectStateInputEqualityConstraints = false;  // <- false to turn off projection of state-input equalities
-  settings.computeLagrangeMultipliers = true;
-  settings.useFeedbackPolicy = true;
-  settings.printSolverStatistics = true;
-  settings.printSolverStatus = true;
-  settings.printLinesearch = true;
+  const auto settings = []() {
+    ocs2::ipm::Settings s;
+    s.dt = 0.01;
+    s.ipmIteration = 20;
+    s.projectStateInputEqualityConstraints = false;  // <- false to turn off projection of state-input equalities
+    s.useFeedbackPolicy = true;
+    s.printSolverStatistics = true;
+    s.printSolverStatus = true;
+    s.printLinesearch = true;
+    s.printSolverStatistics = true;
+    s.printSolverStatus = true;
+    s.printLinesearch = true;
+    s.nThreads = 1;
+    s.initialBarrierParameter = 1.0e-02;
+    s.targetBarrierParameter = 1.0e-04;
+    s.barrierLinearDecreaseFactor = 0.2;
+    s.barrierSuperlinearDecreasePower = 1.5;
+    s.fractionToBoundaryMargin = 0.995;
+    return s;
+  }();
 
   // Additional problem definitions
   const ocs2::scalar_t startTime = 0.0;
@@ -248,12 +269,12 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints_IneqConstraints) {
   // inequality constraints
   const ocs2::vector_t umin = (ocs2::vector_t(2) << -0.5, -0.5).finished();
   const ocs2::vector_t umax = (ocs2::vector_t(2) << 0.5, 0.5).finished();
-  std::unique_ptr<ocs2::StateInputConstraint> stateInputIneqConstraint(new ocs2::CircleKinematics_StateInputIneqConstraints(umin, umax));
+  auto stateInputIneqConstraint = std::make_unique<ocs2::CircleKinematics_StateInputIneqConstraints>(umin, umax);
   problem.inequalityConstraintPtr->add("ubound", std::move(stateInputIneqConstraint));
   const ocs2::vector_t xmin = (ocs2::vector_t(2) << -0.5, -0.5).finished();
   const ocs2::vector_t xmax = (ocs2::vector_t(2) << 1.0e03, 1.0e03).finished();  // no upper bound
-  std::unique_ptr<ocs2::StateConstraint> stateIneqConstraint(new ocs2::CircleKinematics_StateIneqConstraints(xmin, xmax));
-  std::unique_ptr<ocs2::StateConstraint> finalStateIneqConstraint(new ocs2::CircleKinematics_StateIneqConstraints(xmin, xmax));
+  auto stateIneqConstraint = std::make_unique<ocs2::CircleKinematics_StateIneqConstraints>(xmin, xmax);
+  auto finalStateIneqConstraint = std::make_unique<ocs2::CircleKinematics_StateIneqConstraints>(xmin, xmax);
   problem.stateInequalityConstraintPtr->add("xbound", std::move(stateIneqConstraint));
   problem.finalInequalityConstraintPtr->add("xbound", std::move(finalStateIneqConstraint));
 
@@ -261,22 +282,26 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints_IneqConstraints) {
   ocs2::DefaultInitializer zeroInitializer(2);
 
   // Solver settings
-  ocs2::ipm::Settings settings;
-  settings.dt = 0.01;
-  settings.ipmIteration = 40;
-  settings.projectStateInputEqualityConstraints = true;
-  settings.computeLagrangeMultipliers = true;
-  settings.useFeedbackPolicy = true;
-  settings.printSolverStatistics = true;
-  settings.printSolverStatus = true;
-  settings.printLinesearch = true;
-  settings.nThreads = 1;
-
-  settings.initialBarrierParameter = 1.0e-02;
-  settings.targetBarrierParameter = 1.0e-04;
-  settings.barrierLinearDecreaseFactor = 0.2;
-  settings.barrierSuperlinearDecreasePower = 1.5;
-  settings.fractionToBoundaryMargin = 0.995;
+  const auto settings = []() {
+    ocs2::ipm::Settings s;
+    s.dt = 0.01;
+    s.ipmIteration = 20;
+    s.projectStateInputEqualityConstraints = true;
+    s.useFeedbackPolicy = true;
+    s.printSolverStatistics = true;
+    s.printSolverStatus = true;
+    s.printLinesearch = true;
+    s.printSolverStatistics = true;
+    s.printSolverStatus = true;
+    s.printLinesearch = true;
+    s.nThreads = 1;
+    s.initialBarrierParameter = 1.0e-02;
+    s.targetBarrierParameter = 1.0e-04;
+    s.barrierLinearDecreaseFactor = 0.2;
+    s.barrierSuperlinearDecreasePower = 1.5;
+    s.fractionToBoundaryMargin = 0.995;
+    return s;
+  }();
 
   // Additional problem definitions
   const ocs2::scalar_t startTime = 0.0;
@@ -306,18 +331,18 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints_IneqConstraints) {
   // check constraint satisfaction
   for (const auto& e : primalSolution.stateTrajectory_) {
     if (e.size() > 0) {
-      EXPECT_TRUE(e.coeff(0) >= xmin.coeff(0));
-      EXPECT_TRUE(e.coeff(1) >= xmin.coeff(1));
-      EXPECT_TRUE(e.coeff(0) <= xmax.coeff(0));
-      EXPECT_TRUE(e.coeff(1) <= xmax.coeff(1));
+      ASSERT_TRUE(e.coeff(0) >= xmin.coeff(0));
+      ASSERT_TRUE(e.coeff(1) >= xmin.coeff(1));
+      ASSERT_TRUE(e.coeff(0) <= xmax.coeff(0));
+      ASSERT_TRUE(e.coeff(1) <= xmax.coeff(1));
     }
   }
   for (const auto& e : primalSolution.inputTrajectory_) {
     if (e.size() > 0) {
-      EXPECT_TRUE(e.coeff(0) >= umin.coeff(0));
-      EXPECT_TRUE(e.coeff(1) >= umin.coeff(1));
-      EXPECT_TRUE(e.coeff(0) <= umax.coeff(0));
-      EXPECT_TRUE(e.coeff(1) <= umax.coeff(1));
+      ASSERT_TRUE(e.coeff(0) >= umin.coeff(0));
+      ASSERT_TRUE(e.coeff(1) >= umin.coeff(1));
+      ASSERT_TRUE(e.coeff(0) <= umax.coeff(0));
+      ASSERT_TRUE(e.coeff(1) <= umax.coeff(1));
     }
   }
 
@@ -348,8 +373,7 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints_MixedIneqConstraint
   // inequality constraints
   const ocs2::scalar_t xumin = -2.0;
   const ocs2::scalar_t xumax = 2.0;
-  std::unique_ptr<ocs2::StateInputConstraint> stateInputIneqConstraint(
-      new ocs2::CircleKinematics_MixedStateInputIneqConstraints(xumin, xumax));
+  auto stateInputIneqConstraint = std::make_unique<ocs2::CircleKinematics_MixedStateInputIneqConstraints>(xumin, xumax);
   auto stateInputIneqConstraintCloned = stateInputIneqConstraint->clone();
   problem.inequalityConstraintPtr->add("xubound", std::move(stateInputIneqConstraint));
 
@@ -357,22 +381,26 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints_MixedIneqConstraint
   ocs2::DefaultInitializer zeroInitializer(2);
 
   // Solver settings
-  ocs2::ipm::Settings settings;
-  settings.dt = 0.01;
-  settings.ipmIteration = 100;
-  settings.projectStateInputEqualityConstraints = true;
-  settings.computeLagrangeMultipliers = true;
-  settings.useFeedbackPolicy = true;
-  settings.printSolverStatistics = true;
-  settings.printSolverStatus = true;
-  settings.printLinesearch = true;
-  settings.nThreads = 1;
-
-  settings.initialBarrierParameter = 1.0e-02;
-  settings.targetBarrierParameter = 1.0e-04;
-  settings.barrierLinearDecreaseFactor = 0.2;
-  settings.barrierSuperlinearDecreasePower = 1.5;
-  settings.fractionToBoundaryMargin = 0.995;
+  const auto settings = []() {
+    ocs2::ipm::Settings s;
+    s.dt = 0.01;
+    s.ipmIteration = 20;
+    s.projectStateInputEqualityConstraints = true;
+    s.useFeedbackPolicy = true;
+    s.printSolverStatistics = true;
+    s.printSolverStatus = true;
+    s.printLinesearch = true;
+    s.printSolverStatistics = true;
+    s.printSolverStatus = true;
+    s.printLinesearch = true;
+    s.nThreads = 1;
+    s.initialBarrierParameter = 1.0e-02;
+    s.targetBarrierParameter = 1.0e-04;
+    s.barrierLinearDecreaseFactor = 0.2;
+    s.barrierSuperlinearDecreasePower = 1.5;
+    s.fractionToBoundaryMargin = 0.995;
+    return s;
+  }();
 
   // Additional problem definitions
   const ocs2::scalar_t startTime = 0.0;
@@ -406,7 +434,7 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints_MixedIneqConstraint
     const auto& x = primalSolution.stateTrajectory_[i];
     const auto& u = primalSolution.inputTrajectory_[i];
     const auto constraintValue = stateInputIneqConstraintCloned->getValue(t, x, u, ocs2::PreComputation());
-    EXPECT_TRUE(constraintValue.minCoeff() >= 0.0);
+    ASSERT_TRUE(constraintValue.minCoeff() >= 0.0);
   }
 
   // Check initial condition

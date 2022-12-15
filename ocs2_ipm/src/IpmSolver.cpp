@@ -421,8 +421,8 @@ IpmSolver::OcpSubproblemSolution IpmSolver::getOCPSolution(const vector_t& delta
 
       // Extract Newton directions of the costate
       if (settings_.computeLagrangeMultipliers) {
-        deltaLmdSol[i] = valueFunction_[i].dfdx;
-        deltaLmdSol[i].noalias() += valueFunction_[i].dfdxx * deltaXSol[i];
+        deltaLmdSol[i + 1] = valueFunction_[i + 1].dfdx;
+        deltaLmdSol[i + 1].noalias() += valueFunction_[i + 1].dfdxx * deltaXSol[i + 1];
       }
       if (constraintsProjection_[i].f.size() > 0) {
         // Extract Newton directions of the Lagrange multiplier associated with the state-input equality constraints
@@ -451,8 +451,8 @@ IpmSolver::OcpSubproblemSolution IpmSolver::getOCPSolution(const vector_t& delta
                                                                                                   settings_.fractionToBoundaryMargin));
       // Extract Newton directions of the costate
       if (settings_.computeLagrangeMultipliers) {
-        deltaLmdSol[i] = valueFunction_[i].dfdx;
-        deltaLmdSol[i].noalias() += valueFunction_[i].dfdxx * deltaXSol[i];
+        deltaLmdSol[0] = valueFunction_[0].dfdx;
+        deltaLmdSol[0].noalias() += valueFunction_[i].dfdxx * deltaXSol[0];
       }
     }
   };

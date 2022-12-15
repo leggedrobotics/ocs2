@@ -129,7 +129,6 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithEventTime(scal
   ocs2::ipm::Settings settings;
   settings.dt = 0.05;
   settings.ipmIteration = 20;
-  settings.projectStateInputEqualityConstraints = true;
   settings.printSolverStatistics = true;
   settings.printSolverStatus = true;
   settings.printLinesearch = true;

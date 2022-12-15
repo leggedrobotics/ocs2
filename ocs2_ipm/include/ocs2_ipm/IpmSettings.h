@@ -65,9 +65,6 @@ struct Settings {
   scalar_t dt = 0.01;  // user-defined time discretization
   SensitivityIntegratorType integratorType = SensitivityIntegratorType::RK2;
 
-  // Equality constraints
-  bool projectStateInputEqualityConstraints = true;  // Use a projection method to resolve the state-input constraint Cx+Du+e
-
   // Barrier strategy of the primal-dual interior point method. Conventions follows Ipopt.
   scalar_t initialBarrierParameter = 1.0e-02;  // Initial value of the barrier parameter
   scalar_t targetBarrierParameter = 1.0e-04;   // Targer value of the barrier parameter. The barreir will decrease until reaches this value.

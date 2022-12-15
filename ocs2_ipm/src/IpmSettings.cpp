@@ -74,7 +74,6 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   loadData::loadPtreeValue(pt, settings.barrierSuperlinearDecreasePower, fieldName + ".barrierSuperlinearDecreasePower", verbose);
   loadData::loadPtreeValue(pt, settings.fractionToBoundaryMargin, fieldName + ".fractionToBoundaryMargin", verbose);
   loadData::loadPtreeValue(pt, settings.usePrimalStepSizeForDual, fieldName + ".usePrimalStepSizeForDual", verbose);
-  loadData::loadPtreeValue(pt, settings.projectStateInputEqualityConstraints, fieldName + ".projectStateInputEqualityConstraints", verbose);
   loadData::loadPtreeValue(pt, settings.initialSlackLowerBound, fieldName + ".initialSlackLowerBound", verbose);
   loadData::loadPtreeValue(pt, settings.initialDualLowerBound, fieldName + ".initialDualLowerBound", verbose);
   loadData::loadPtreeValue(pt, settings.initialSlackMarginRate, fieldName + ".initialSlackMarginRate", verbose);

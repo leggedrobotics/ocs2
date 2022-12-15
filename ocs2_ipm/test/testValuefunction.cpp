@@ -75,7 +75,6 @@ TEST(test_valuefunction, linear_quadratic_problem) {
   ocs2::ipm::Settings settings;
   settings.dt = 0.05;
   settings.ipmIteration = 1;
-  settings.projectStateInputEqualityConstraints = true;
   settings.printSolverStatistics = false;
   settings.printSolverStatus = false;
   settings.printLinesearch = false;

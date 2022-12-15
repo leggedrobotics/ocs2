@@ -54,10 +54,6 @@ ipm::Settings rectifySettings(const OptimalControlProblem& ocp, ipm::Settings&& 
   if (settings.computeLagrangeMultipliers) {
     settings.createValueFunction = true;
   }
-  // True does not make sense if there are no constraints.
-  if (ocp.equalityConstraintPtr->empty()) {
-    settings.projectStateInputEqualityConstraints = false;
-  }
   // Turn off the barrier update strategy if there are no inequality constraints.
   if (ocp.inequalityConstraintPtr->empty() && ocp.stateInequalityConstraintPtr->empty() && ocp.preJumpInequalityConstraintPtr->empty() &&
       ocp.finalInequalityConstraintPtr->empty()) {
@@ -244,9 +240,7 @@ void IpmSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
         settings_.usePrimalStepSizeForDual ? std::min(stepInfo.stepSize, deltaSolution.maxDualStepSize) : deltaSolution.maxDualStepSize;
     if (settings_.computeLagrangeMultipliers) {
       multiple_shooting::incrementTrajectory(lmd, deltaSolution.deltaLmdSol, stepInfo.stepSize, lmd);
-      if (settings_.projectStateInputEqualityConstraints) {
-        multiple_shooting::incrementTrajectory(nu, deltaSolution.deltaNuSol, stepInfo.stepSize, nu);
-      }
+      multiple_shooting::incrementTrajectory(nu, deltaSolution.deltaNuSol, stepInfo.stepSize, nu);
     }
     multiple_shooting::incrementTrajectory(dualStateIneq, deltaSolution.deltaDualStateIneq, stepInfo.stepSize, dualStateIneq);
     multiple_shooting::incrementTrajectory(dualStateInputIneq, deltaSolution.deltaDualStateInputIneq, stepInfo.stepSize,
@@ -369,14 +363,8 @@ IpmSolver::OcpSubproblemSolution IpmSolver::getOCPSolution(const vector_t& delta
   auto& deltaXSol = solution.deltaXSol;
   auto& deltaUSol = solution.deltaUSol;
   hpipm_status status;
-  if (!settings_.projectStateInputEqualityConstraints) {
-    hpipmInterface_.resize(extractSizesFromProblem(dynamics_, lagrangian_, &stateInputEqConstraints_));
-    status = hpipmInterface_.solve(delta_x0, dynamics_, lagrangian_, &stateInputEqConstraints_, deltaXSol, deltaUSol,
-                                   settings_.printSolverStatus);
-  } else {  // without constraints, or when using projection, we have an unconstrained QP.
-    hpipmInterface_.resize(extractSizesFromProblem(dynamics_, lagrangian_, nullptr));
-    status = hpipmInterface_.solve(delta_x0, dynamics_, lagrangian_, nullptr, deltaXSol, deltaUSol, settings_.printSolverStatus);
-  }
+  hpipmInterface_.resize(extractSizesFromProblem(dynamics_, lagrangian_, nullptr));
+  status = hpipmInterface_.solve(delta_x0, dynamics_, lagrangian_, nullptr, deltaXSol, deltaUSol, settings_.printSolverStatus);
 
   if (status != hpipm_status::SUCCESS) {
     throw std::runtime_error("[IpmSolver] Failed to solve QP");
@@ -493,9 +481,7 @@ PrimalSolution IpmSolver::toPrimalSolution(const std::vector<AnnotatedTime>& tim
   if (settings_.useFeedbackPolicy) {
     ModeSchedule modeSchedule = this->getReferenceManager().getModeSchedule();
     matrix_array_t KMatrices = hpipmInterface_.getRiccatiFeedback(dynamics_[0], lagrangian_[0]);
-    if (settings_.projectStateInputEqualityConstraints) {
-      multiple_shooting::remapProjectedGain(constraintsProjection_, KMatrices);
-    }
+    multiple_shooting::remapProjectedGain(constraintsProjection_, KMatrices);
     return multiple_shooting::toPrimalSolution(time, std::move(modeSchedule), std::move(x), std::move(u), std::move(KMatrices));
 
   } else {
@@ -586,9 +572,7 @@ PerformanceIndex IpmSolver::setupQuadraticSubproblem(const std::vector<Annotated
                                                               settings_.initialDualMarginRate);
         }
         performance[workerId] += ipm::computePerformanceIndex(result, dt, barrierParam, slackStateIneq[i], slackStateInputIneq[i]);
-        if (settings_.projectStateInputEqualityConstraints) {
-          multiple_shooting::projectTranscription(result, settings_.computeLagrangeMultipliers);
-        }
+        multiple_shooting::projectTranscription(result, settings_.computeLagrangeMultipliers);
         dynamics_[i] = std::move(result.dynamics);
         stateInputEqConstraints_[i] = std::move(result.stateInputEqConstraints);
         stateIneqConstraints_[i] = std::move(result.stateIneqConstraints);

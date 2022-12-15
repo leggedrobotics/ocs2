@@ -70,7 +70,6 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithFeedbackSettin
   ocs2::ipm::Settings settings;
   settings.dt = 0.05;
   settings.ipmIteration = 10;
-  settings.projectStateInputEqualityConstraints = true;
   settings.useFeedbackPolicy = feedback;
   settings.printSolverStatistics = true;
   settings.printSolverStatus = true;

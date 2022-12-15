@@ -294,54 +294,44 @@ void IpmSolver::runParallel(std::function<void(int)> taskFunction) {
 }
 
 void IpmSolver::initializeCostateTrajectory(const std::vector<AnnotatedTime>& timeDiscretization, const vector_array_t& stateTrajectory,
-                                            vector_array_t& costateTrajectory) {
+                                            vector_array_t& costateTrajectory) const {
   const size_t N = static_cast<int>(timeDiscretization.size()) - 1;  // size of the input trajectory
   costateTrajectory.clear();
   costateTrajectory.reserve(N + 1);
-  const auto& ocpDefinition = ocpDefinitions_[0];
-
-  constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Approximation;
-  ocpDefinition.preComputationPtr->requestFinal(request, timeDiscretization[N].time, stateTrajectory[N]);
-  const vector_t lmdN = -approximateFinalCost(ocpDefinition, timeDiscretization[N].time, stateTrajectory[N]).dfdx;
 
   // Determine till when to use the previous solution
-  scalar_t interpolateCostateTill = timeDiscretization.front().time;
-  if (primalSolution_.timeTrajectory_.size() >= 2) {
-    interpolateCostateTill = primalSolution_.timeTrajectory_.back();
-  }
+  const auto interpolateTill =
+      primalSolution_.timeTrajectory_.size() < 2 ? timeDiscretization.front().time : primalSolution_.timeTrajectory_.back();
 
   const scalar_t initTime = getIntervalStart(timeDiscretization[0]);
-  if (initTime < interpolateCostateTill) {
+  if (initTime < interpolateTill) {
     costateTrajectory.push_back(LinearInterpolation::interpolate(initTime, primalSolution_.timeTrajectory_, costateTrajectory_));
   } else {
-    costateTrajectory.push_back(lmdN);
-    // costateTrajectory.push_back(vector_t::Zero(stateTrajectory[0].size()));
+    costateTrajectory.push_back(vector_t::Zero(stateTrajectory[0].size()));
   }
 
   for (int i = 0; i < N; i++) {
     const scalar_t nextTime = getIntervalEnd(timeDiscretization[i + 1]);
-    if (nextTime > interpolateCostateTill) {  // Initialize with zero
-      // costateTrajectory.push_back(vector_t::Zero(stateTrajectory[i + 1].size()));
-      costateTrajectory.push_back(lmdN);
-    } else {  // interpolate previous solution
+    if (nextTime < interpolateTill) {  // interpolate previous solution
       costateTrajectory.push_back(LinearInterpolation::interpolate(nextTime, primalSolution_.timeTrajectory_, costateTrajectory_));
+    } else {  // Initialize with zero
+      costateTrajectory.push_back(vector_t::Zero(stateTrajectory[i + 1].size()));
     }
   }
 }
 
 void IpmSolver::initializeProjectionMultiplierTrajectory(const std::vector<AnnotatedTime>& timeDiscretization,
-                                                         vector_array_t& projectionMultiplierTrajectory) {
+                                                         vector_array_t& projectionMultiplierTrajectory) const {
   const size_t N = static_cast<int>(timeDiscretization.size()) - 1;  // size of the input trajectory
   projectionMultiplierTrajectory.clear();
   projectionMultiplierTrajectory.reserve(N);
   const auto& ocpDefinition = ocpDefinitions_[0];
 
   // Determine till when to use the previous solution
-  scalar_t interpolateInputTill = timeDiscretization.front().time;
-  if (primalSolution_.timeTrajectory_.size() >= 2) {
-    interpolateInputTill = primalSolution_.timeTrajectory_[primalSolution_.timeTrajectory_.size() - 2];
-  }
+  const auto interpolateTill =
+      primalSolution_.timeTrajectory_.size() < 2 ? timeDiscretization.front().time : *std::prev(primalSolution_.timeTrajectory_.end(), 2);
 
+  // @todo Fix this using trajectory spreading
   auto interpolateProjectionMultiplierTrajectory = [&](scalar_t time) -> vector_t {
     const size_t numConstraints = ocpDefinition.equalityConstraintPtr->getNumConstraints(time);
     const size_t index = LinearInterpolation::timeSegment(time, primalSolution_.timeTrajectory_).first;
@@ -367,10 +357,10 @@ void IpmSolver::initializeProjectionMultiplierTrajectory(const std::vector<Annot
       // Intermediate node
       const scalar_t time = getIntervalStart(timeDiscretization[i]);
       const size_t numConstraints = ocpDefinition.equalityConstraintPtr->getNumConstraints(time);
-      if (time > interpolateInputTill) {  // Initialize with zero
-        projectionMultiplierTrajectory.push_back(vector_t::Zero(numConstraints));
-      } else {  // interpolate previous solution
+      if (time < interpolateTill) {  // interpolate previous solution
         projectionMultiplierTrajectory.push_back(interpolateProjectionMultiplierTrajectory(time));
+      } else {  // Initialize with zero
+        projectionMultiplierTrajectory.push_back(vector_t::Zero(numConstraints));
       }
     }
   }

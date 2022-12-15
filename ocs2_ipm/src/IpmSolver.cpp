@@ -244,8 +244,7 @@ void IpmSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
     if (settings_.computeLagrangeMultipliers) {
       multiple_shooting::incrementTrajectory(lmd, deltaLmdSol, stepInfo.stepSize, lmd);
       if (settings_.projectStateInputEqualityConstraints) {
-        // Computes the deltaNuSol wirht r
-        // remaining term that depends on the costate
+        // Remaining term that depends on the costate
         auto deltaNuSol = std::move(deltaSolution.deltaNuSol);
         for (int i = 0; i < nu.size(); i++) {
           if (nu[i].size() > 0) {

@@ -57,7 +57,8 @@ DualSolution toDualSolution(const std::vector<AnnotatedTime>& time, vector_array
 std::pair<vector_array_t, vector_array_t> fromDualSolution(const std::vector<AnnotatedTime>& time, DualSolution&& dualSolution);
 
 /**
- * Initializes the interior point trajectory.
+ * Initializes the interior point trajectory based on the stored trajectory. The part of the new trajectory that is uncovered by the stored
+ * trajectory is set by zero-sized vectors.
  *
  * @param time: The time discretization.
  * @param stateIneq: The slack/dual of the state inequality constraints.

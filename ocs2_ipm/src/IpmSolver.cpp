@@ -230,8 +230,7 @@ void IpmSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
     const vector_t delta_x0 = initState - x[0];
     const auto deltaSolution =
         getOCPSolution(delta_x0, barrierParam, slackStateIneq, slackStateInputIneq, dualStateIneq, dualStateInputIneq);
-    vector_array_t deltaLmdSol;
-    extractValueFunction(timeDiscretization, x, lmd, deltaSolution.deltaXSol, deltaLmdSol);
+    extractValueFunction(timeDiscretization, x, lmd, deltaSolution.deltaXSol);
     solveQpTimer_.endTimer();
 
     // Apply step
@@ -243,23 +242,16 @@ void IpmSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
                                    slackStateInputIneq, metrics);
     const scalar_t dualStepSize =
         settings_.usePrimalStepSizeForDual ? std::min(stepInfo.stepSize, deltaSolution.maxDualStepSize) : deltaSolution.maxDualStepSize;
-    performanceIndeces_.push_back(stepInfo.performanceAfterStep);
     if (settings_.computeLagrangeMultipliers) {
-      multiple_shooting::incrementTrajectory(lmd, deltaLmdSol, stepInfo.stepSize, lmd);
+      multiple_shooting::incrementTrajectory(lmd, deltaSolution.deltaLmdSol, stepInfo.stepSize, lmd);
       if (settings_.projectStateInputEqualityConstraints) {
-        // Remaining term that depends on the costate
-        auto deltaNuSol = std::move(deltaSolution.deltaNuSol);
-        for (int i = 0; i < nu.size(); i++) {
-          if (nu[i].size() > 0) {
-            deltaNuSol[i].noalias() += projectionMultiplierCoefficients_[i].dfdcostate * deltaLmdSol[i + 1];
-          }
-        }
-        multiple_shooting::incrementTrajectory(nu, deltaNuSol, stepInfo.stepSize, nu);
+        multiple_shooting::incrementTrajectory(nu, deltaSolution.deltaNuSol, stepInfo.stepSize, nu);
       }
     }
     multiple_shooting::incrementTrajectory(dualStateIneq, deltaSolution.deltaDualStateIneq, stepInfo.stepSize, dualStateIneq);
     multiple_shooting::incrementTrajectory(dualStateInputIneq, deltaSolution.deltaDualStateInputIneq, stepInfo.stepSize,
                                            dualStateInputIneq);
+    performanceIndeces_.push_back(stepInfo.performanceAfterStep);
     linesearchTimer_.endTimer();
 
     // Check convergence
@@ -393,6 +385,20 @@ IpmSolver::OcpSubproblemSolution IpmSolver::getOCPSolution(const vector_t& delta
   // to determine if the solution is a descent direction for the cost: compute gradient(cost)' * [dx; du]
   solution.armijoDescentMetric = armijoDescentMetric(lagrangian_, deltaXSol, deltaUSol);
 
+  // Extract value function
+  auto& deltaLmdSol = solution.deltaLmdSol;
+  if (settings_.createValueFunction) {
+    valueFunction_ = hpipmInterface_.getRiccatiCostToGo(dynamics_[0], lagrangian_[0]);
+    // Extract costate directions
+    if (settings_.computeLagrangeMultipliers) {
+      deltaLmdSol.resize(deltaXSol.size());
+      for (int i = 0; i < deltaXSol.size(); ++i) {
+        deltaLmdSol[i] = valueFunction_[i].dfdx;
+        deltaLmdSol[i].noalias() += valueFunction_[i].dfdxx * deltaXSol[i];
+      }
+    }
+  }
+
   // Problem horizon
   const int N = static_cast<int>(deltaXSol.size()) - 1;
 
@@ -436,6 +442,7 @@ IpmSolver::OcpSubproblemSolution IpmSolver::getOCPSolution(const vector_t& delta
           deltaNuSol[i] = projectionMultiplierCoefficients_[i].f;
           deltaNuSol[i].noalias() += projectionMultiplierCoefficients_[i].dfdx * deltaXSol[i];
           deltaNuSol[i].noalias() += projectionMultiplierCoefficients_[i].dfdu * deltaUSol[i];
+          deltaNuSol[i].noalias() += projectionMultiplierCoefficients_[i].dfdcostate * deltaLmdSol[i + 1];
         }
         // Re-map the projected input back to the original space.
         tmp.noalias() = constraintsProjection_[i].dfdu * deltaUSol[i];
@@ -465,16 +472,9 @@ IpmSolver::OcpSubproblemSolution IpmSolver::getOCPSolution(const vector_t& delta
 }
 
 void IpmSolver::extractValueFunction(const std::vector<AnnotatedTime>& time, const vector_array_t& x, const vector_array_t& lmd,
-                                     const vector_array_t& deltaXSol, vector_array_t& deltaLmdSol) {
+                                     const vector_array_t& deltaXSol) {
   if (settings_.createValueFunction) {
-    valueFunction_ = hpipmInterface_.getRiccatiCostToGo(dynamics_[0], lagrangian_[0]);
-    // Compute costate directions
-    deltaLmdSol.resize(deltaXSol.size());
-    for (int i = 0; i < time.size(); ++i) {
-      deltaLmdSol[i] = valueFunction_[i].dfdx;
-      deltaLmdSol[i].noalias() += valueFunction_[i].dfdxx * x[i];
-    }
-    // Correct for linearization state
+    // Correct for linearization state. Naive value function of hpipm is already extracted and stored in valueFunction_ in getOCPSolution().
     for (int i = 0; i < time.size(); ++i) {
       valueFunction_[i].dfdx.noalias() -= valueFunction_[i].dfdxx * x[i];
       if (settings_.computeLagrangeMultipliers) {

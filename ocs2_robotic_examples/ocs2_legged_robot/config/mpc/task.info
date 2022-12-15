@@ -51,17 +51,17 @@ ipm
 {
   nThreads                              3
   dt                                    0.015
-  sqpIteration                          1
+  ipmIteration                          1
   deltaTol                              1e-4
   g_max                                 10.0
   g_min                                 1e-4
   inequalityConstraintMu                0.1
   inequalityConstraintDelta             5.0
   projectStateInputEqualityConstraints  true
-  computeLagrangeMultipliers            false
+  computeLagrangeMultipliers            true
   printSolverStatistics                 true
   printSolverStatus                     false
-  printLinesearch                       false
+  printLinesearch                       true
   useFeedbackPolicy                     true
   integratorType                        RK2
   threadPriority                        50

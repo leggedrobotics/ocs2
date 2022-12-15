@@ -526,13 +526,13 @@ PerformanceIndex IpmSolver::setupQuadraticSubproblem(const std::vector<Annotated
       if (time[i].event == AnnotatedTime::Event::PreEvent) {
         // Event node
         auto result = multiple_shooting::setupEventNode(ocpDefinition, time[i].time, x[i], x[i + 1]);
+        metrics[i] = multiple_shooting::computeMetrics(result);
         if (slackStateIneq[i].size() != result.ineqConstraints.f.size()) {
           slackStateIneq[i] =
               ipm::initializeSlackVariable(result.ineqConstraints.f, settings_.initialSlackLowerBound, settings_.initialSlackMarginRate);
           dualStateIneq[i] = ipm::initializeDualVariable(slackStateIneq[i], barrierParam, settings_.initialDualLowerBound,
                                                          settings_.initialDualMarginRate);
         }
-        metrics[i] = multiple_shooting::computeMetrics(result);
         performance[workerId] += ipm::computePerformanceIndex(result, barrierParam, slackStateIneq[i]);
         dynamics_[i] = std::move(result.dynamics);
         stateInputEqConstraints_[i].resize(0, x[i].size());
@@ -555,6 +555,7 @@ PerformanceIndex IpmSolver::setupQuadraticSubproblem(const std::vector<Annotated
         const scalar_t ti = getIntervalStart(time[i]);
         const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
         auto result = multiple_shooting::setupIntermediateNode(ocpDefinition, sensitivityDiscretizer_, ti, dt, x[i], x[i + 1], u[i]);
+        metrics[i] = multiple_shooting::computeMetrics(result);
         // Disable the state-only inequality constraints at the initial node
         if (i == 0) {
           result.stateIneqConstraints.setZero(0, x[i].size());
@@ -572,7 +573,6 @@ PerformanceIndex IpmSolver::setupQuadraticSubproblem(const std::vector<Annotated
           dualStateInputIneq[i] = ipm::initializeDualVariable(slackStateInputIneq[i], barrierParam, settings_.initialDualLowerBound,
                                                               settings_.initialDualMarginRate);
         }
-        metrics[i] = multiple_shooting::computeMetrics(result);
         performance[workerId] += ipm::computePerformanceIndex(result, dt, barrierParam, slackStateIneq[i], slackStateInputIneq[i]);
         if (settings_.projectStateInputEqualityConstraints) {
           multiple_shooting::projectTranscription(result, settings_.computeLagrangeMultipliers);
@@ -606,13 +606,13 @@ PerformanceIndex IpmSolver::setupQuadraticSubproblem(const std::vector<Annotated
     if (i == N) {  // Only one worker will execute this
       const scalar_t tN = getIntervalStart(time[N]);
       auto result = multiple_shooting::setupTerminalNode(ocpDefinition, tN, x[N]);
-      if (slackStateIneq[i].size() != result.ineqConstraints.f.size()) {
+      metrics[N] = multiple_shooting::computeMetrics(result);
+      if (slackStateIneq[N].size() != result.ineqConstraints.f.size()) {
         slackStateIneq[N] =
             ipm::initializeSlackVariable(result.ineqConstraints.f, settings_.initialSlackLowerBound, settings_.initialSlackMarginRate);
         dualStateIneq[N] =
             ipm::initializeDualVariable(slackStateIneq[N], barrierParam, settings_.initialDualLowerBound, settings_.initialDualMarginRate);
       }
-      metrics[i] = multiple_shooting::computeMetrics(result);
       performance[workerId] += ipm::computePerformanceIndex(result, barrierParam, slackStateIneq[N]);
       stateInputEqConstraints_[i].resize(0, x[i].size());
       stateIneqConstraints_[i] = std::move(result.ineqConstraints);

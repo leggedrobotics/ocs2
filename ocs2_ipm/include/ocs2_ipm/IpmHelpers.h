@@ -61,7 +61,7 @@ inline scalar_t evaluateComplementarySlackness(scalar_t barrierParam, const vect
 }
 
 /**
- * Retrieves the Newton directions of the slack variable.
+ * Retrieves the Newton directions of the slack variable associated with state-input inequality constraints.
  *
  * @param[in] stateInputIneqConstraints : State-input inequality constraints
  * @param[in] dx : Newton direction of the state
@@ -74,7 +74,7 @@ vector_t retrieveSlackDirection(const VectorFunctionLinearApproximation& stateIn
                                 scalar_t barrierParam, const vector_t& slackStateInputIneq);
 
 /**
- * Retrieves the Newton directions of the slack variable.
+ * Retrieves the Newton directions of the slack variable associated with state-only inequality constraints.
  *
  * @param[in] stateIneqConstraints : State-only inequality constraints
  * @param[in] dx : Newton direction of the state

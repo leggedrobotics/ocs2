@@ -48,9 +48,8 @@ class IpmMpc final : public MPC_BASE {
    */
   IpmMpc(mpc::Settings mpcSettings, ipm::Settings settings, const OptimalControlProblem& optimalControlProblem,
          const Initializer& initializer)
-      : MPC_BASE(std::move(mpcSettings)) {
-    solverPtr_.reset(new IpmSolver(std::move(settings), optimalControlProblem, initializer));
-  };
+      : MPC_BASE(std::move(mpcSettings)),
+        solverPtr_(std::make_unique<IpmSolver>(std::move(settings), optimalControlProblem, initializer)) {}
 
   ~IpmMpc() override = default;
 

@@ -42,10 +42,10 @@ namespace ipm {
  *
  * @param transcription : transcription computed by "multiple_shooting::setupIntermediateNode"
  * @param dt : Duration of the interval
- * @param barrierParam : Barrier parameter of the interior point method.
- * @param slackStateIneq : Slack variable of the state inequality constraints.
- * @param slackStateInputIneq : Slack variable of the state-input inequality constraints.
- * @return Performance index for a single intermediate node.
+ * @param barrierParam : Barrier parameter of the interior point method
+ * @param slackStateIneq : Slack variable of the state inequality constraints
+ * @param slackStateInputIneq : Slack variable of the state-input inequality constraints
+ * @return Performance index for a single intermediate node
  */
 PerformanceIndex computePerformanceIndex(const multiple_shooting::Transcription& transcription, scalar_t dt, scalar_t barrierParam,
                                          const vector_t& slackStateIneq, const vector_t& slackStateInputIneq);
@@ -54,9 +54,9 @@ PerformanceIndex computePerformanceIndex(const multiple_shooting::Transcription&
  * Compute the performance index from the transcription for the terminal node.
  *
  * @param transcription : transcription computed by "multiple_shooting::setupTerminalNode"
- * @param barrierParam : Barrier parameter of the interior point method.
- * @param slackIneq : Slack variable of the inequality constraints.
- * @return Performance index for the terminal node.
+ * @param barrierParam : Barrier parameter of the interior point method
+ * @param slackIneq : Slack variable of the inequality constraints
+ * @return Performance index for the terminal node
  */
 PerformanceIndex computePerformanceIndex(const multiple_shooting::TerminalTranscription& transcription, scalar_t barrierParam,
                                          const vector_t& slackIneq);
@@ -65,9 +65,9 @@ PerformanceIndex computePerformanceIndex(const multiple_shooting::TerminalTransc
  * Compute the performance index from the transcription for the event node.
  *
  * @param transcription : transcription computed by "multiple_shooting::setupEventNode"
- * @param barrierParam : Barrier parameter of the interior point method.
- * @param slackIneq : Slack variable of the inequality constraints.
- * @return Performance index for the event node.
+ * @param barrierParam : Barrier parameter of the interior point method
+ * @param slackIneq : Slack variable of the inequality constraints
+ * @return Performance index for the event node
  */
 PerformanceIndex computePerformanceIndex(const multiple_shooting::EventTranscription& transcription, scalar_t barrierParam,
                                          const vector_t& slackIneq);
@@ -78,17 +78,17 @@ PerformanceIndex computePerformanceIndex(const multiple_shooting::EventTranscrip
  * "multiple_shooting::setupIntermediateNode"
  *
  * @param optimalControlProblem : Definition of the optimal control problem
- * @param discretizer : Integrator to use for creating the discrete dynamics.
+ * @param discretizer : Integrator to use for creating the discrete dynamics
  * @param t : Start of the discrete interval
  * @param dt : Duration of the interval
  * @param x : State at start of the interval
  * @param x_next : State at the end of the interval
- * @param u : Input, taken to be constant across the interval.
- * @param barrierParam : Barrier parameter of the interior point method.
- * @param slackStateIneq : Slack variable of the state inequality constraints.
- * @param slackStateInputIneq : Slack variable of the state-input inequality constraints.
- * @param enableStateInequalityConstraints : Should be disabled at the initial node (i = 0).
- * @return Performance index for a single intermediate node.
+ * @param u : Input, taken to be constant across the interval
+ * @param barrierParam : Barrier parameter of the interior point method
+ * @param slackStateIneq : Slack variable of the state inequality constraints
+ * @param slackStateInputIneq : Slack variable of the state-input inequality constraints
+ * @param enableStateInequalityConstraints : Should be disabled at the initial node (i = 0)
+ * @return Performance index for a single intermediate node
  */
 PerformanceIndex computeIntermediatePerformance(OptimalControlProblem& optimalControlProblem, DynamicsDiscretizer& discretizer, scalar_t t,
                                                 scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u,
@@ -103,9 +103,9 @@ PerformanceIndex computeIntermediatePerformance(OptimalControlProblem& optimalCo
  * @param optimalControlProblem : Definition of the optimal control problem
  * @param t : Time at the terminal node
  * @param x : Terminal state
- * @param barrierParam : Barrier parameter of the interior point method.
- * @param slackIneq : Slack variable of the inequality constraints.
- * @return Performance index for the terminal node.
+ * @param barrierParam : Barrier parameter of the interior point method
+ * @param slackIneq : Slack variable of the inequality constraints
+ * @return Performance index for the terminal node
  */
 PerformanceIndex computeTerminalPerformance(OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x,
                                             scalar_t barrierParam, const vector_t& slackIneq);
@@ -119,16 +119,35 @@ PerformanceIndex computeTerminalPerformance(OptimalControlProblem& optimalContro
  * @param t : Time at the event node
  * @param x : Pre-event state
  * @param x_next : Post-event state
- * @param barrierParam : Barrier parameter of the interior point method.
- * @param slackIneq : Slack variable of the inequality constraints.
- * @return Performance index for the event node.
+ * @param barrierParam : Barrier parameter of the interior point method
+ * @param slackIneq : Slack variable of the inequality constraints
+ * @return Performance index for the event node
  */
 PerformanceIndex computeEventPerformance(OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x,
                                          const vector_t& x_next, scalar_t barrierParam, const vector_t& slackIneq);
 
+/**
+ * Computes the PerformanceIndex of the interior point method based on a given Metrics at an intermediate node.
+ *
+ * @param metrics : Metrics at an intermediate node
+ * @param dt : Duration of the interval
+ * @param barrierParam : Barrier parameter of the interior point method
+ * @param slackStateIneq : Slack variable of the state inequality constraints
+ * @param slackStateInputIneq : Slack variable of the state-input inequality constraints
+ * @param enableStateInequalityConstraints : Should be disabled at the initial node (i = 0)
+ * @return Performance index of the interior point method
+ */
 PerformanceIndex toPerformanceIndex(const Metrics& metrics, scalar_t dt, scalar_t barrierParam, const vector_t& slackStateIneq,
                                     const vector_t& slackStateInputIneq, bool enableStateInequalityConstraints);
 
+/**
+ * Computes the PerformanceIndex of the interior point method based on a given Metrics at the event or terminal node.
+ *
+ * @param metrics : Metrics at the event or terminal node
+ * @param barrierParam : Barrier parameter of the interior point method
+ * @param slackIneq : Slack variable of the inequality constraints
+ * @return Performance index of the interior point method
+ */
 PerformanceIndex toPerformanceIndex(const Metrics& metrics, scalar_t barrierParam, const vector_t& slackIneq);
 
 }  // namespace ipm

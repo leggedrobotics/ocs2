@@ -144,6 +144,7 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints) {
   settings.dt = 0.01;
   settings.ipmIteration = 20;
   settings.projectStateInputEqualityConstraints = true;
+  settings.computeLagrangeMultipliers = true;
   settings.useFeedbackPolicy = true;
   settings.printSolverStatistics = true;
   settings.printSolverStatus = true;
@@ -198,6 +199,7 @@ TEST(test_circular_kinematics, solve_EqConstraints_inQPSubproblem) {
   settings.dt = 0.01;
   settings.ipmIteration = 20;
   settings.projectStateInputEqualityConstraints = false;  // <- false to turn off projection of state-input equalities
+  settings.computeLagrangeMultipliers = true;
   settings.useFeedbackPolicy = true;
   settings.printSolverStatistics = true;
   settings.printSolverStatus = true;
@@ -263,6 +265,7 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints_IneqConstraints) {
   settings.dt = 0.01;
   settings.ipmIteration = 40;
   settings.projectStateInputEqualityConstraints = true;
+  settings.computeLagrangeMultipliers = true;
   settings.useFeedbackPolicy = true;
   settings.printSolverStatistics = true;
   settings.printSolverStatus = true;
@@ -358,6 +361,7 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints_MixedIneqConstraint
   settings.dt = 0.01;
   settings.ipmIteration = 100;
   settings.projectStateInputEqualityConstraints = true;
+  settings.computeLagrangeMultipliers = true;
   settings.useFeedbackPolicy = true;
   settings.printSolverStatistics = true;
   settings.printSolverStatus = true;

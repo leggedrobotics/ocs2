@@ -127,15 +127,15 @@ class IpmSolver : public SolverBase {
 
   /** Creates QP around t, x(t), u(t). Returns performance metrics at the current {t, x(t), u(t)} */
   PerformanceIndex setupQuadraticSubproblem(const std::vector<AnnotatedTime>& time, const vector_t& initState, const vector_array_t& x,
-                                            const vector_array_t& u, std::vector<Metrics>& metrics, const vector_array_t& lmd,
-                                            const vector_array_t& nu, scalar_t barrierParam, vector_array_t& slackStateIneq,
-                                            vector_array_t& slackStateInputIneq, vector_array_t& dualStateIneq,
-                                            vector_array_t& dualStateInputIneq, bool initializeSlackAndDualVariables);
+                                            const vector_array_t& u, const vector_array_t& lmd, const vector_array_t& nu,
+                                            scalar_t barrierParam, vector_array_t& slackStateIneq, vector_array_t& slackStateInputIneq,
+                                            vector_array_t& dualStateIneq, vector_array_t& dualStateInputIneq,
+                                            bool initializeSlackAndDualVariables, std::vector<Metrics>& metrics);
 
   /** Computes only the performance metrics at the current {t, x(t), u(t)} */
   PerformanceIndex computePerformance(const std::vector<AnnotatedTime>& time, const vector_t& initState, const vector_array_t& x,
-                                      const vector_array_t& u, std::vector<Metrics>& metrics, scalar_t barrierParam,
-                                      const vector_array_t& slackStateIneq, const vector_array_t& slackStateInputIneq);
+                                      const vector_array_t& u, scalar_t barrierParam, const vector_array_t& slackStateIneq,
+                                      const vector_array_t& slackStateInputIneq, std::vector<Metrics>& metrics);
 
   /** Returns solution of the QP subproblem in delta coordinates: */
   struct OcpSubproblemSolution {
@@ -163,9 +163,8 @@ class IpmSolver : public SolverBase {
 
   /** Decides on the step to take and overrides given trajectories {x(t), u(t)} <- {x(t) + a*dx(t), u(t) + a*du(t)} */
   ipm::StepInfo takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization, const vector_t& initState,
-                         const OcpSubproblemSolution& subproblemSolution, vector_array_t& x, vector_array_t& u,
-                         std::vector<Metrics>& metrics, scalar_t barrierParam, vector_array_t& slackStateIneq,
-                         vector_array_t& slackStateInputIneq);
+                         const OcpSubproblemSolution& subproblemSolution, vector_array_t& x, vector_array_t& u, scalar_t barrierParam,
+                         vector_array_t& slackStateIneq, vector_array_t& slackStateInputIneq, std::vector<Metrics>& metrics);
 
   /** Updates the barrier parameter */
   scalar_t updateBarrierParameter(scalar_t currentBarrierParameter, const PerformanceIndex& baseline, const ipm::StepInfo& stepInfo) const;
@@ -218,7 +217,6 @@ class IpmSolver : public SolverBase {
   ProblemMetrics problemMetrics_;
 
   // Benchmarking
-  size_t numProblems_{0};
   size_t totalNumIterations_{0};
   benchmark::RepeatedTimer initializationTimer_;
   benchmark::RepeatedTimer linearQuadraticApproximationTimer_;

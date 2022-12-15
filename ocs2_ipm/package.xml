@@ -2,18 +2,18 @@
 <package format="2">
   <name>ocs2_ipm</name>
   <version>0.0.0</version>
-  <description>The ocs2_hpipm package</description>
+  <description>The ocs2_ipm package</description>
 
-  <maintainer email="huier@todo.todo">huier</maintainer>
+  <maintainer email="sotaro.katayama@gmail.com">Sotaro Katayama</maintainer>
 
-  <license>TODO</license>
+  <license>BSD-3</license>
 
   <buildtool_depend>catkin</buildtool_depend>
   <depend>ocs2_core</depend>
   <depend>ocs2_mpc</depend>
   <depend>ocs2_oc</depend>
-  <depend>ocs2_qp_solver</depend>
   <depend>blasfeo_catkin</depend>
   <depend>hpipm_catkin</depend>
+  <test_depend>ocs2_qp_solver</test_depend>
 
 </package>

@@ -5,7 +5,6 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
   ocs2_mpc
   ocs2_oc
-  ocs2_qp_solver
   blasfeo_catkin
   hpipm_catkin
 )
@@ -75,7 +74,7 @@ if(cmake_clang_tools_FOUND)
     TARGETS ${PROJECT_NAME}
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
-    CF_WERROR
+    CF_FIX
   )
 endif(cmake_clang_tools_FOUND)
 
@@ -90,7 +89,8 @@ install(
 )
 
 install(DIRECTORY include/${PROJECT_NAME}/
-        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
 
 #############
 ## Testing ##

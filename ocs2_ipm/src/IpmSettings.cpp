@@ -65,8 +65,6 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   auto integratorName = sensitivity_integrator::toString(settings.integratorType);
   loadData::loadPtreeValue(pt, integratorName, fieldName + ".integratorType", verbose);
   settings.integratorType = sensitivity_integrator::fromString(integratorName);
-  loadData::loadPtreeValue(pt, settings.inequalityConstraintMu, fieldName + ".inequalityConstraintMu", verbose);
-  loadData::loadPtreeValue(pt, settings.inequalityConstraintDelta, fieldName + ".inequalityConstraintDelta", verbose);
   loadData::loadPtreeValue(pt, settings.initialBarrierParameter, fieldName + ".initialBarrierParameter", verbose);
   loadData::loadPtreeValue(pt, settings.targetBarrierParameter, fieldName + ".targetBarrierParameter", verbose);
   loadData::loadPtreeValue(pt, settings.barrierReductionCostTol, fieldName + ".barrierReductionCostTol ", verbose);

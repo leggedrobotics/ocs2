@@ -54,8 +54,9 @@ struct Settings {
   scalar_t gamma_c = 1e-6;       // (3): ELSE REQUIRE c{i+1} < (c{i} - gamma_c * g{i}) OR g{i+1} < (1-gamma_c) * g{i}
 
   // controller type
-  bool useFeedbackPolicy = true;     // true to use feedback, false to use feedforward
-  bool createValueFunction = false;  // true to store the value function, false to ignore it
+  bool useFeedbackPolicy = true;            // true to use feedback, false to use feedforward
+  bool createValueFunction = false;         // true to store the value function, false to ignore it
+  bool computeLagrangeMultipliers = false;  // true to compute the Lagrange multipliers
 
   // QP subproblem solver settings
   hpipm_interface::Settings hpipmSettings = hpipm_interface::Settings();
@@ -66,7 +67,6 @@ struct Settings {
 
   // Equality constraints
   bool projectStateInputEqualityConstraints = true;  // Use a projection method to resolve the state-input constraint Cx+Du+e
-  bool computeLagrangeMultipliers = true;            // compute the Lagrange multipliers to evaluate the SSE of the dual feasibilities
 
   // Barrier strategy of the primal-dual interior point method. Conventions follows Ipopt.
   scalar_t initialBarrierParameter = 1.0e-02;  // Initial value of the barrier parameter
@@ -107,7 +107,7 @@ struct Settings {
  * @param [in] verbose: Flag to determine whether to print out the loaded settings or not.
  * @return The settings
  */
-Settings loadSettings(const std::string& filename, const std::string& fieldName = "multiple_shooting", bool verbose = true);
+Settings loadSettings(const std::string& filename, const std::string& fieldName = "ipm", bool verbose = true);
 
 }  // namespace ipm
 }  // namespace ocs2

@@ -50,6 +50,10 @@ namespace ocs2 {
 
 namespace {
 ipm::Settings rectifySettings(const OptimalControlProblem& ocp, ipm::Settings&& settings) {
+  // We have to create the value function if we want to compute the Lagrange multipliers.
+  if (settings.computeLagrangeMultipliers) {
+    settings.createValueFunction = true;
+  }
   // True does not make sense if there are no constraints.
   if (ocp.equalityConstraintPtr->empty()) {
     settings.projectStateInputEqualityConstraints = false;
@@ -463,18 +467,20 @@ IpmSolver::OcpSubproblemSolution IpmSolver::getOCPSolution(const vector_t& delta
 
 void IpmSolver::extractValueFunction(const std::vector<AnnotatedTime>& time, const vector_array_t& x, const vector_array_t& lmd,
                                      const vector_array_t& deltaXSol, vector_array_t& deltaLmdSol) {
-  valueFunction_ = hpipmInterface_.getRiccatiCostToGo(dynamics_[0], lagrangian_[0]);
-  // Compute costate directions
-  deltaLmdSol.resize(deltaXSol.size());
-  for (int i = 0; i < time.size(); ++i) {
-    deltaLmdSol[i] = valueFunction_[i].dfdx;
-    deltaLmdSol[i].noalias() += valueFunction_[i].dfdxx * x[i];
-  }
-  // Correct for linearization state
-  for (int i = 0; i < time.size(); ++i) {
-    valueFunction_[i].dfdx.noalias() -= valueFunction_[i].dfdxx * x[i];
-    if (settings_.computeLagrangeMultipliers) {
-      valueFunction_[i].dfdx.noalias() += lmd[i];
+  if (settings_.createValueFunction) {
+    valueFunction_ = hpipmInterface_.getRiccatiCostToGo(dynamics_[0], lagrangian_[0]);
+    // Compute costate directions
+    deltaLmdSol.resize(deltaXSol.size());
+    for (int i = 0; i < time.size(); ++i) {
+      deltaLmdSol[i] = valueFunction_[i].dfdx;
+      deltaLmdSol[i].noalias() += valueFunction_[i].dfdxx * x[i];
+    }
+    // Correct for linearization state
+    for (int i = 0; i < time.size(); ++i) {
+      valueFunction_[i].dfdx.noalias() -= valueFunction_[i].dfdxx * x[i];
+      if (settings_.computeLagrangeMultipliers) {
+        valueFunction_[i].dfdx.noalias() += lmd[i];
+      }
     }
   }
 }
@@ -551,9 +557,7 @@ PerformanceIndex IpmSolver::setupQuadraticSubproblem(const std::vector<Annotated
         }
 
         ipm::condenseIneqConstraints(barrierParam, slackStateIneq[i], dualStateIneq[i], stateIneqConstraints_[i], lagrangian_[i]);
-        if (settings_.computeLagrangeMultipliers) {
-          performance[workerId].dualFeasibilitiesSSE += multiple_shooting::evaluateDualFeasibilities(lagrangian_[i]);
-        }
+        performance[workerId].dualFeasibilitiesSSE += multiple_shooting::evaluateDualFeasibilities(lagrangian_[i]);
         performance[workerId].dualFeasibilitiesSSE +=
             ipm::evaluateComplementarySlackness(barrierParam, slackStateIneq[i], dualStateIneq[i]);
       } else {
@@ -597,9 +601,7 @@ PerformanceIndex IpmSolver::setupQuadraticSubproblem(const std::vector<Annotated
         ipm::condenseIneqConstraints(barrierParam, slackStateIneq[i], dualStateIneq[i], stateIneqConstraints_[i], lagrangian_[i]);
         ipm::condenseIneqConstraints(barrierParam, slackStateInputIneq[i], dualStateInputIneq[i], stateInputIneqConstraints_[i],
                                      lagrangian_[i]);
-        if (settings_.computeLagrangeMultipliers) {
-          performance[workerId].dualFeasibilitiesSSE += multiple_shooting::evaluateDualFeasibilities(lagrangian_[i]);
-        }
+        performance[workerId].dualFeasibilitiesSSE += multiple_shooting::evaluateDualFeasibilities(lagrangian_[i]);
         performance[workerId].dualFeasibilitiesSSE +=
             ipm::evaluateComplementarySlackness(barrierParam, slackStateIneq[i], dualStateIneq[i]);
         performance[workerId].dualFeasibilitiesSSE +=
@@ -628,9 +630,7 @@ PerformanceIndex IpmSolver::setupQuadraticSubproblem(const std::vector<Annotated
         lagrangian_[i] = std::move(result.cost);
       }
       ipm::condenseIneqConstraints(barrierParam, slackStateIneq[N], dualStateIneq[N], stateIneqConstraints_[N], lagrangian_[N]);
-      if (settings_.computeLagrangeMultipliers) {
-        performance[workerId].dualFeasibilitiesSSE += multiple_shooting::evaluateDualFeasibilities(lagrangian_[N]);
-      }
+      performance[workerId].dualFeasibilitiesSSE += multiple_shooting::evaluateDualFeasibilities(lagrangian_[N]);
       performance[workerId].dualFeasibilitiesSSE += ipm::evaluateComplementarySlackness(barrierParam, slackStateIneq[N], dualStateIneq[N]);
     }
   };

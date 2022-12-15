@@ -136,7 +136,6 @@ TEST(Exp1Test, Unconstrained) {
     ipm::Settings s;
     s.dt = 0.01;
     s.ipmIteration = 20;
-    s.projectStateInputEqualityConstraints = true;
     s.useFeedbackPolicy = true;
     s.printSolverStatistics = true;
     s.printSolverStatus = true;
@@ -179,7 +178,6 @@ TEST(Exp1Test, Constrained) {
     ipm::Settings s;
     s.dt = 0.01;
     s.ipmIteration = 20;
-    s.projectStateInputEqualityConstraints = true;
     s.useFeedbackPolicy = true;
     s.printSolverStatistics = true;
     s.printSolverStatus = true;
@@ -252,7 +250,6 @@ TEST(Exp1Test, MixedConstrained) {
     ipm::Settings s;
     s.dt = 0.01;
     s.ipmIteration = 20;
-    s.projectStateInputEqualityConstraints = true;
     s.useFeedbackPolicy = true;
     s.printSolverStatistics = true;
     s.printSolverStatus = true;

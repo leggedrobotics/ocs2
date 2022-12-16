@@ -31,73 +31,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_ipm/IpmSolver.h"
 
+#include <ocs2_core/constraint/LinearStateConstraint.h>
+#include <ocs2_core/constraint/LinearStateInputConstraint.h>
 #include <ocs2_core/initialization/DefaultInitializer.h>
-
 #include <ocs2_oc/test/circular_kinematics.h>
 
-namespace ocs2 {
-
-class CircleKinematics_StateIneqConstraints final : public StateConstraint {
- public:
-  CircleKinematics_StateIneqConstraints(const vector_t& xmin, const vector_t& xmax)
-      : StateConstraint(ConstraintOrder::Linear), xmin_(xmin), xmax_(xmax) {}
-  ~CircleKinematics_StateIneqConstraints() override = default;
-
-  CircleKinematics_StateIneqConstraints* clone() const override { return new CircleKinematics_StateIneqConstraints(*this); }
-
-  size_t getNumConstraints(scalar_t time) const override { return 4; }
-
-  vector_t getValue(scalar_t t, const vector_t& x, const PreComputation&) const override {
-    vector_t e(4);
-    e.head(2) = x - xmin_;
-    e.tail(2) = xmax_ - x;
-    return e;
-  }
-
-  VectorFunctionLinearApproximation getLinearApproximation(scalar_t t, const vector_t& x, const PreComputation& preComp) const override {
-    VectorFunctionLinearApproximation e;
-    e.f = getValue(t, x, preComp);
-    e.dfdx = matrix_t::Zero(4, x.size());
-    e.dfdx.topLeftCorner(2, 2) = matrix_t::Identity(2, 2);
-    e.dfdx.bottomRightCorner(2, 2) = -matrix_t::Identity(2, 2);
-    return e;
-  }
-
- private:
-  vector_t xmin_, xmax_;
-};
-
-class CircleKinematics_StateInputIneqConstraints final : public StateInputConstraint {
- public:
-  CircleKinematics_StateInputIneqConstraints(const vector_t& umin, const vector_t& umax)
-      : StateInputConstraint(ConstraintOrder::Linear), umin_(umin), umax_(umax) {}
-  ~CircleKinematics_StateInputIneqConstraints() override = default;
-
-  CircleKinematics_StateInputIneqConstraints* clone() const override { return new CircleKinematics_StateInputIneqConstraints(*this); }
-
-  size_t getNumConstraints(scalar_t time) const override { return 4; }
-
-  vector_t getValue(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) const override {
-    vector_t e(4);
-    e.head(2) = u - umin_;
-    e.tail(2) = umax_ - u;
-    return e;
-  }
-
-  VectorFunctionLinearApproximation getLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
-                                                           const PreComputation& preComp) const override {
-    VectorFunctionLinearApproximation e;
-    e.f = getValue(t, x, u, preComp);
-    e.dfdx = matrix_t::Zero(4, x.size());
-    e.dfdu = matrix_t::Zero(4, u.size());
-    e.dfdu.topLeftCorner(2, 2) = matrix_t::Identity(2, 2);
-    e.dfdu.bottomRightCorner(2, 2) = -matrix_t::Identity(2, 2);
-    return e;
-  }
-
- private:
-  vector_t umin_, umax_;
-};
+using namespace ocs2;
 
 class CircleKinematics_MixedStateInputIneqConstraints final : public StateInputConstraint {
  public:
@@ -113,35 +52,33 @@ class CircleKinematics_MixedStateInputIneqConstraints final : public StateInputC
 
   vector_t getValue(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) const override {
     vector_t e(2);
-    e << (x.coeff(0) * u.coeff(0) - xumin_), (xumax_ - x.coeff(1) * u.coeff(1));
+    e << (x(0) * u(0) - xumin_), (xumax_ - x(1) * u(1));
     return e;
   }
 
   VectorFunctionLinearApproximation getLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
                                                            const PreComputation& preComp) const override {
-    VectorFunctionLinearApproximation e;
+    VectorFunctionLinearApproximation e(2, x.size(), u.size());
     e.f = getValue(t, x, u, preComp);
-    e.dfdx = (matrix_t(2, 2) << u.coeff(0), 0, 0, -u.coeff(1)).finished();
-    e.dfdu = (matrix_t(2, 2) << x.coeff(0), 0, 0, -x.coeff(1)).finished();
+    e.dfdx << u(0), 0, 0, -u(1);
+    e.dfdu << x(0), 0, 0, -x(1);
     return e;
   }
 
  private:
-  scalar_t xumin_, xumax_;
+  const scalar_t xumin_, xumax_;
 };
-
-}  // namespace ocs2
 
 TEST(test_circular_kinematics, solve_projected_EqConstraints) {
   // optimal control problem
-  ocs2::OptimalControlProblem problem = ocs2::createCircularKinematicsProblem("/tmp/ocs2/ipm_test_generated");
+  OptimalControlProblem problem = createCircularKinematicsProblem("/tmp/ocs2/ipm_test_generated");
 
   // Initializer
-  ocs2::DefaultInitializer zeroInitializer(2);
+  DefaultInitializer zeroInitializer(2);
 
   // Solver settings
   const auto settings = []() {
-    ocs2::ipm::Settings s;
+    ipm::Settings s;
     s.dt = 0.01;
     s.ipmIteration = 20;
     s.useFeedbackPolicy = true;
@@ -161,20 +98,15 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints) {
   }();
 
   // Additional problem definitions
-  const ocs2::scalar_t startTime = 0.0;
-  const ocs2::scalar_t finalTime = 1.0;
-  const ocs2::vector_t initState = (ocs2::vector_t(2) << 1.0, 0.0).finished();  // radius 1.0
+  const scalar_t startTime = 0.0;
+  const scalar_t finalTime = 1.0;
+  const vector_t initState = (vector_t(2) << 1.0, 0.0).finished();  // radius 1.0
 
   // Solve
-  ocs2::IpmSolver solver(settings, problem, zeroInitializer);
+  IpmSolver solver(settings, problem, zeroInitializer);
   solver.run(startTime, initState, finalTime);
 
-  // Inspect solution
   const auto primalSolution = solver.primalSolution(finalTime);
-  for (int i = 0; i < primalSolution.timeTrajectory_.size(); i++) {
-    std::cout << "time: " << primalSolution.timeTrajectory_[i] << "\t state: " << primalSolution.stateTrajectory_[i].transpose()
-              << "\t input: " << primalSolution.inputTrajectory_[i].transpose() << std::endl;
-  }
 
   // Check initial condition
   ASSERT_TRUE(primalSolution.stateTrajectory_.front().isApprox(initState));
@@ -197,27 +129,46 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints) {
 }
 
 TEST(test_circular_kinematics, solve_projected_EqConstraints_IneqConstraints) {
+  constexpr size_t STATE_DIM = 2;
+  constexpr size_t INPUT_DIM = 2;
+
   // optimal control problem
-  ocs2::OptimalControlProblem problem = ocs2::createCircularKinematicsProblem("/tmp/ocs2/ipm_test_generated");
+  OptimalControlProblem problem = createCircularKinematicsProblem("/tmp/ocs2/ipm_test_generated");
+
+  auto getStateBoxConstraint = [&](const vector_t& minState, const vector_t& maxState) {
+    constexpr size_t numIneqConstraint = 2 * STATE_DIM;
+    const vector_t e = (vector_t(numIneqConstraint) << -minState, maxState).finished();
+    const matrix_t C =
+        (matrix_t(numIneqConstraint, STATE_DIM) << matrix_t::Identity(STATE_DIM, STATE_DIM), -matrix_t::Identity(STATE_DIM, STATE_DIM))
+            .finished();
+    return std::make_unique<LinearStateConstraint>(std::move(e), std::move(C));
+  };
+
+  auto getInputBoxConstraint = [&](const vector_t& minInput, const vector_t& maxInput) {
+    constexpr size_t numIneqConstraint = 2 * INPUT_DIM;
+    const vector_t e = (vector_t(numIneqConstraint) << -minInput, maxInput).finished();
+    const matrix_t C = matrix_t::Zero(numIneqConstraint, STATE_DIM);
+    const matrix_t D =
+        (matrix_t(numIneqConstraint, INPUT_DIM) << matrix_t::Identity(INPUT_DIM, INPUT_DIM), -matrix_t::Identity(INPUT_DIM, INPUT_DIM))
+            .finished();
+    return std::make_unique<LinearStateInputConstraint>(std::move(e), std::move(C), std::move(D));
+  };
 
   // inequality constraints
-  const ocs2::vector_t umin = (ocs2::vector_t(2) << -0.5, -0.5).finished();
-  const ocs2::vector_t umax = (ocs2::vector_t(2) << 0.5, 0.5).finished();
-  auto stateInputIneqConstraint = std::make_unique<ocs2::CircleKinematics_StateInputIneqConstraints>(umin, umax);
-  problem.inequalityConstraintPtr->add("ubound", std::move(stateInputIneqConstraint));
-  const ocs2::vector_t xmin = (ocs2::vector_t(2) << -0.5, -0.5).finished();
-  const ocs2::vector_t xmax = (ocs2::vector_t(2) << 1.0e03, 1.0e03).finished();  // no upper bound
-  auto stateIneqConstraint = std::make_unique<ocs2::CircleKinematics_StateIneqConstraints>(xmin, xmax);
-  auto finalStateIneqConstraint = std::make_unique<ocs2::CircleKinematics_StateIneqConstraints>(xmin, xmax);
-  problem.stateInequalityConstraintPtr->add("xbound", std::move(stateIneqConstraint));
-  problem.finalInequalityConstraintPtr->add("xbound", std::move(finalStateIneqConstraint));
+  const vector_t umin = (vector_t(2) << -0.5, -0.5).finished();
+  const vector_t umax = (vector_t(2) << 0.5, 0.5).finished();
+  problem.inequalityConstraintPtr->add("ubound", getInputBoxConstraint(umin, umax));
+  const vector_t xmin = (vector_t(2) << -0.5, -0.5).finished();
+  const vector_t xmax = (vector_t(2) << 1.0e03, 1.0e03).finished();  // no upper bound
+  problem.stateInequalityConstraintPtr->add("xbound", getStateBoxConstraint(xmin, xmax));
+  problem.finalInequalityConstraintPtr->add("xbound", getStateBoxConstraint(xmin, xmax));
 
   // Initializer
-  ocs2::DefaultInitializer zeroInitializer(2);
+  DefaultInitializer zeroInitializer(2);
 
   // Solver settings
   const auto settings = []() {
-    ocs2::ipm::Settings s;
+    ipm::Settings s;
     s.dt = 0.01;
     s.ipmIteration = 20;
     s.useFeedbackPolicy = true;
@@ -237,45 +188,35 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints_IneqConstraints) {
   }();
 
   // Additional problem definitions
-  const ocs2::scalar_t startTime = 0.0;
-  const ocs2::scalar_t finalTime = 1.0;
-  const ocs2::vector_t initState = (ocs2::vector_t(2) << 1.0, 0.0).finished();  // radius 1.0
+  const scalar_t startTime = 0.0;
+  const scalar_t finalTime = 1.0;
+  const vector_t initState = (vector_t(2) << 1.0, 0.0).finished();  // radius 1.0
 
   // Solve
-  ocs2::IpmSolver solver(settings, problem, zeroInitializer);
+  IpmSolver solver(settings, problem, zeroInitializer);
   solver.run(startTime, initState, finalTime);
 
-  // Inspect solution
   const auto primalSolution = solver.primalSolution(finalTime);
-  for (int i = 0; i < primalSolution.timeTrajectory_.size(); i++) {
-    std::cout << "time: " << std::setprecision(4) << primalSolution.timeTrajectory_[i]
-              << "\t state: " << primalSolution.stateTrajectory_[i].transpose()
-              << "\t input: " << primalSolution.inputTrajectory_[i].transpose() << std::endl;
-  }
 
   // check constraint satisfaction
   for (int i = 0; i < primalSolution.timeTrajectory_.size() - 1; i++) {
     if (primalSolution.inputTrajectory_[i].size() > 0) {
-      const ocs2::scalar_t projectionConstraintViolation = primalSolution.stateTrajectory_[i].dot(primalSolution.inputTrajectory_[i]);
+      const scalar_t projectionConstraintViolation = primalSolution.stateTrajectory_[i].dot(primalSolution.inputTrajectory_[i]);
       EXPECT_LT(std::abs(projectionConstraintViolation), 1.0e-06);
     }
   }
 
   // check constraint satisfaction
-  for (const auto& e : primalSolution.stateTrajectory_) {
-    if (e.size() > 0) {
-      ASSERT_TRUE(e.coeff(0) >= xmin.coeff(0));
-      ASSERT_TRUE(e.coeff(1) >= xmin.coeff(1));
-      ASSERT_TRUE(e.coeff(0) <= xmax.coeff(0));
-      ASSERT_TRUE(e.coeff(1) <= xmax.coeff(1));
+  for (const auto& x : primalSolution.stateTrajectory_) {
+    if (x.size() > 0) {
+      ASSERT_TRUE((x - xmin).minCoeff() >= 0);
+      ASSERT_TRUE((xmax - x).minCoeff() >= 0);
     }
   }
-  for (const auto& e : primalSolution.inputTrajectory_) {
-    if (e.size() > 0) {
-      ASSERT_TRUE(e.coeff(0) >= umin.coeff(0));
-      ASSERT_TRUE(e.coeff(1) >= umin.coeff(1));
-      ASSERT_TRUE(e.coeff(0) <= umax.coeff(0));
-      ASSERT_TRUE(e.coeff(1) <= umax.coeff(1));
+  for (const auto& u : primalSolution.inputTrajectory_) {
+    if (u.size() > 0) {
+      ASSERT_TRUE((u - umin).minCoeff() >= 0);
+      ASSERT_TRUE((umax - u).minCoeff() >= 0);
     }
   }
 
@@ -301,24 +242,25 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints_IneqConstraints) {
 
 TEST(test_circular_kinematics, solve_projected_EqConstraints_MixedIneqConstraints) {
   // optimal control problem
-  ocs2::OptimalControlProblem problem = ocs2::createCircularKinematicsProblem("/tmp/ocs2/ipm_test_generated");
+  OptimalControlProblem problem = createCircularKinematicsProblem("/tmp/ocs2/ipm_test_generated");
 
   // inequality constraints
-  const ocs2::scalar_t xumin = -2.0;
-  const ocs2::scalar_t xumax = 2.0;
-  auto stateInputIneqConstraint = std::make_unique<ocs2::CircleKinematics_MixedStateInputIneqConstraints>(xumin, xumax);
+  const scalar_t xumin = -2.0;
+  const scalar_t xumax = 2.0;
+  auto stateInputIneqConstraint = std::make_unique<CircleKinematics_MixedStateInputIneqConstraints>(xumin, xumax);
   auto stateInputIneqConstraintCloned = stateInputIneqConstraint->clone();
   problem.inequalityConstraintPtr->add("xubound", std::move(stateInputIneqConstraint));
 
   // Initializer
-  ocs2::DefaultInitializer zeroInitializer(2);
+  DefaultInitializer zeroInitializer(2);
 
   // Solver settings
   const auto settings = []() {
-    ocs2::ipm::Settings s;
+    ipm::Settings s;
     s.dt = 0.01;
     s.ipmIteration = 20;
     s.useFeedbackPolicy = true;
+    s.computeLagrangeMultipliers = true;
     s.printSolverStatistics = true;
     s.printSolverStatus = true;
     s.printLinesearch = true;
@@ -335,26 +277,20 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints_MixedIneqConstraint
   }();
 
   // Additional problem definitions
-  const ocs2::scalar_t startTime = 0.0;
-  const ocs2::scalar_t finalTime = 1.0;
-  const ocs2::vector_t initState = (ocs2::vector_t(2) << 1.0, 0.0).finished();  // radius 1.0
+  const scalar_t startTime = 0.0;
+  const scalar_t finalTime = 1.0;
+  const vector_t initState = (vector_t(2) << 1.0, 0.0).finished();  // radius 1.0
 
   // Solve
-  ocs2::IpmSolver solver(settings, problem, zeroInitializer);
+  IpmSolver solver(settings, problem, zeroInitializer);
   solver.run(startTime, initState, finalTime);
 
-  // Inspect solution
   const auto primalSolution = solver.primalSolution(finalTime);
-  for (int i = 0; i < primalSolution.timeTrajectory_.size(); i++) {
-    std::cout << "time: " << std::setprecision(4) << primalSolution.timeTrajectory_[i]
-              << "\t state: " << primalSolution.stateTrajectory_[i].transpose()
-              << "\t input: " << primalSolution.inputTrajectory_[i].transpose() << std::endl;
-  }
 
   // check constraint satisfaction
   for (int i = 0; i < primalSolution.timeTrajectory_.size() - 1; i++) {
     if (primalSolution.inputTrajectory_[i].size() > 0) {
-      const ocs2::scalar_t projectionConstraintViolation = primalSolution.stateTrajectory_[i].dot(primalSolution.inputTrajectory_[i]);
+      const scalar_t projectionConstraintViolation = primalSolution.stateTrajectory_[i].dot(primalSolution.inputTrajectory_[i]);
       EXPECT_LT(std::abs(projectionConstraintViolation), 1.0e-06);
     }
   }
@@ -365,7 +301,7 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints_MixedIneqConstraint
     const auto t = primalSolution.timeTrajectory_[i];
     const auto& x = primalSolution.stateTrajectory_[i];
     const auto& u = primalSolution.inputTrajectory_[i];
-    const auto constraintValue = stateInputIneqConstraintCloned->getValue(t, x, u, ocs2::PreComputation());
+    const auto constraintValue = stateInputIneqConstraintCloned->getValue(t, x, u, PreComputation());
     ASSERT_TRUE(constraintValue.minCoeff() >= 0.0);
   }
 
@@ -386,5 +322,14 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints_MixedIneqConstraint
     const auto& u = primalSolution.inputTrajectory_[i];
     // Feed forward part
     ASSERT_TRUE(u.isApprox(primalSolution.controllerPtr_->computeInput(t, x)));
+  }
+
+  // Check Lagrange multipliers
+  for (int i = 0; i < primalSolution.timeTrajectory_.size() - 1; i++) {
+    std::cerr << "i: " << i << std::endl;
+    const auto t = primalSolution.timeTrajectory_[i];
+    const auto& x = primalSolution.stateTrajectory_[i];
+    const auto& u = primalSolution.inputTrajectory_[i];
+    ASSERT_NO_THROW(const auto multiplier = solver.getStateInputEqualityConstraintLagrangian(t, x););
   }
 }

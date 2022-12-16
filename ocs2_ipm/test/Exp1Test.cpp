@@ -35,68 +35,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_ipm/IpmSolver.h"
 
+#include <ocs2_core/constraint/LinearStateConstraint.h>
+#include <ocs2_core/constraint/LinearStateInputConstraint.h>
 #include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_oc/test/EXP1.h>
 
 using namespace ocs2;
-
-class EXP1_StateIneqConstraints final : public StateConstraint {
- public:
-  EXP1_StateIneqConstraints(const vector_t& xmin, const vector_t& xmax)
-      : StateConstraint(ConstraintOrder::Linear), xmin_(xmin), xmax_(xmax) {}
-  ~EXP1_StateIneqConstraints() override = default;
-
-  EXP1_StateIneqConstraints* clone() const override { return new EXP1_StateIneqConstraints(*this); }
-
-  size_t getNumConstraints(scalar_t time) const override { return 4; }
-
-  vector_t getValue(scalar_t t, const vector_t& x, const PreComputation&) const override {
-    vector_t e(4);
-    e.head(2) = x - xmin_;
-    e.tail(2) = xmax_ - x;
-    return e;
-  }
-
-  VectorFunctionLinearApproximation getLinearApproximation(scalar_t t, const vector_t& x, const PreComputation& preComp) const override {
-    VectorFunctionLinearApproximation e;
-    e.f = getValue(t, x, preComp);
-    e.dfdx = matrix_t::Zero(4, x.size());
-    e.dfdx.topLeftCorner(2, 2) = matrix_t::Identity(2, 2);
-    e.dfdx.bottomRightCorner(2, 2) = -matrix_t::Identity(2, 2);
-    return e;
-  }
-
- private:
-  vector_t xmin_, xmax_;
-};
-
-class EXP1_StateInputIneqConstraints final : public StateInputConstraint {
- public:
-  EXP1_StateInputIneqConstraints(scalar_t umin, scalar_t umax) : StateInputConstraint(ConstraintOrder::Linear), umin_(umin), umax_(umax) {}
-  ~EXP1_StateInputIneqConstraints() override = default;
-
-  EXP1_StateInputIneqConstraints* clone() const override { return new EXP1_StateInputIneqConstraints(*this); }
-
-  size_t getNumConstraints(scalar_t time) const override { return 2; }
-
-  vector_t getValue(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) const override {
-    vector_t e(2);
-    e << (u.coeff(0) - umin_), (umax_ - u.coeff(0));
-    return e;
-  }
-
-  VectorFunctionLinearApproximation getLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
-                                                           const PreComputation& preComp) const override {
-    VectorFunctionLinearApproximation e;
-    e.f = getValue(t, x, u, preComp);
-    e.dfdx = matrix_t::Zero(2, x.size());
-    e.dfdu = (matrix_t(2, 1) << 1, -1).finished();
-    return e;
-  }
-
- private:
-  scalar_t umin_, umax_;
-};
 
 class EXP1_MixedStateInputIneqConstraints final : public StateInputConstraint {
  public:
@@ -110,26 +54,26 @@ class EXP1_MixedStateInputIneqConstraints final : public StateInputConstraint {
 
   vector_t getValue(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) const override {
     vector_t e(2);
-    e << (x.coeff(0) * u.coeff(0) - xumin_), (xumax_ - x.coeff(1) * u.coeff(0));
+    e << (x(0) * u(0) - xumin_), (xumax_ - x(1) * u(0));
     return e;
   }
 
   VectorFunctionLinearApproximation getLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
                                                            const PreComputation& preComp) const override {
-    VectorFunctionLinearApproximation e;
+    VectorFunctionLinearApproximation e(2, x.size(), u.size());
     e.f = getValue(t, x, u, preComp);
-    e.dfdx = (matrix_t(2, 2) << u.coeff(0), 0, 0, -u.coeff(0)).finished();
-    e.dfdu = (matrix_t(2, 1) << x.coeff(0), -x.coeff(1)).finished();
+    e.dfdx << u(0), 0, 0, -u(0);
+    e.dfdu << x(0), -x(1);
     return e;
   }
 
  private:
-  scalar_t xumin_, xumax_;
+  const scalar_t xumin_, xumax_;
 };
 
 TEST(Exp1Test, Unconstrained) {
-  static constexpr size_t STATE_DIM = 2;
-  static constexpr size_t INPUT_DIM = 1;
+  constexpr size_t STATE_DIM = 2;
+  constexpr size_t INPUT_DIM = 1;
 
   // Solver settings
   const auto settings = []() {
@@ -170,8 +114,27 @@ TEST(Exp1Test, Unconstrained) {
 }
 
 TEST(Exp1Test, Constrained) {
-  static constexpr size_t STATE_DIM = 2;
-  static constexpr size_t INPUT_DIM = 1;
+  constexpr size_t STATE_DIM = 2;
+  constexpr size_t INPUT_DIM = 1;
+
+  auto getStateBoxConstraint = [&](const vector_t& minState, const vector_t& maxState) {
+    constexpr size_t numIneqConstraint = 2 * STATE_DIM;
+    const vector_t e = (vector_t(numIneqConstraint) << -minState, maxState).finished();
+    const matrix_t C =
+        (matrix_t(numIneqConstraint, STATE_DIM) << matrix_t::Identity(STATE_DIM, STATE_DIM), -matrix_t::Identity(STATE_DIM, STATE_DIM))
+            .finished();
+    return std::make_unique<LinearStateConstraint>(std::move(e), std::move(C));
+  };
+
+  auto getInputBoxConstraint = [&](scalar_t minInput, scalar_t maxInput) {
+    constexpr size_t numIneqConstraint = 2 * INPUT_DIM;
+    const vector_t e = (vector_t(numIneqConstraint) << -minInput, maxInput).finished();
+    const matrix_t C = matrix_t::Zero(numIneqConstraint, STATE_DIM);
+    const matrix_t D =
+        (matrix_t(numIneqConstraint, INPUT_DIM) << matrix_t::Identity(INPUT_DIM, INPUT_DIM), -matrix_t::Identity(INPUT_DIM, INPUT_DIM))
+            .finished();
+    return std::make_unique<LinearStateInputConstraint>(std::move(e), std::move(C), std::move(D));
+  };
 
   // Solver settings
   const auto settings = []() {
@@ -202,14 +165,11 @@ TEST(Exp1Test, Constrained) {
   // add inequality constraints
   const scalar_t umin = -1.0;
   const scalar_t umax = 1.0;
-  auto stateInputIneqConstraint = std::make_unique<EXP1_StateInputIneqConstraints>(umin, umax);
-  problem.inequalityConstraintPtr->add("ubound", std::move(stateInputIneqConstraint));
+  problem.inequalityConstraintPtr->add("ubound", getInputBoxConstraint(umin, umax));
   const vector_t xmin = (vector_t(2) << -0.0, -0.0).finished();
   const vector_t xmax = (vector_t(2) << 3.0, 4.0).finished();
-  auto stateIneqConstraint = std::make_unique<EXP1_StateIneqConstraints>(xmin, xmax);
-  auto finalStateIneqConstraint = std::make_unique<EXP1_StateIneqConstraints>(xmin, xmax);
-  problem.stateInequalityConstraintPtr->add("xbound", std::move(stateIneqConstraint));
-  problem.finalInequalityConstraintPtr->add("xbound", std::move(finalStateIneqConstraint));
+  problem.stateInequalityConstraintPtr->add("xbound", getStateBoxConstraint(xmin, xmax));
+  problem.finalInequalityConstraintPtr->add("xbound", getStateBoxConstraint(xmin, xmax));
 
   const scalar_t startTime = 0.0;
   const scalar_t finalTime = 3.0;
@@ -225,25 +185,23 @@ TEST(Exp1Test, Constrained) {
   const auto primalSolution = solver.primalSolution(finalTime);
 
   // check constraint satisfaction
-  for (const auto& e : primalSolution.stateTrajectory_) {
-    if (e.size() > 0) {
-      ASSERT_TRUE(e.coeff(0) >= xmin.coeff(0));
-      ASSERT_TRUE(e.coeff(1) >= xmin.coeff(1));
-      ASSERT_TRUE(e.coeff(0) <= xmax.coeff(0));
-      ASSERT_TRUE(e.coeff(1) <= xmax.coeff(1));
+  for (const auto& x : primalSolution.stateTrajectory_) {
+    if (x.size() > 0) {
+      ASSERT_TRUE((x - xmin).minCoeff() >= 0);
+      ASSERT_TRUE((xmax - x).minCoeff() >= 0);
     }
   }
-  for (const auto& e : primalSolution.inputTrajectory_) {
-    if (e.size() > 0) {
-      ASSERT_TRUE(e.coeff(0) >= umin);
-      ASSERT_TRUE(e.coeff(0) <= umax);
+  for (const auto& u : primalSolution.inputTrajectory_) {
+    if (u.size() > 0) {
+      ASSERT_TRUE(u(0) - umin >= 0);
+      ASSERT_TRUE(umax - u(0) >= 0);
     }
   }
 }
 
 TEST(Exp1Test, MixedConstrained) {
-  static constexpr size_t STATE_DIM = 2;
-  static constexpr size_t INPUT_DIM = 1;
+  constexpr size_t STATE_DIM = 2;
+  constexpr size_t INPUT_DIM = 1;
 
   // Solver settings
   const auto settings = []() {

@@ -87,7 +87,6 @@ PerformanceIndex computePerformanceIndex(const multiple_shooting::EventTranscrip
  * @param barrierParam : Barrier parameter of the interior point method
  * @param slackStateIneq : Slack variable of the state inequality constraints
  * @param slackStateInputIneq : Slack variable of the state-input inequality constraints
- * @param enableStateInequalityConstraints : Should be disabled at the initial node (i = 0)
  * @return Performance index for a single intermediate node
  */
 PerformanceIndex computeIntermediatePerformance(OptimalControlProblem& optimalControlProblem, DynamicsDiscretizer& discretizer, scalar_t t,
@@ -134,11 +133,10 @@ PerformanceIndex computeEventPerformance(OptimalControlProblem& optimalControlPr
  * @param barrierParam : Barrier parameter of the interior point method
  * @param slackStateIneq : Slack variable of the state inequality constraints
  * @param slackStateInputIneq : Slack variable of the state-input inequality constraints
- * @param enableStateInequalityConstraints : Should be disabled at the initial node (i = 0)
  * @return Performance index of the interior point method
  */
 PerformanceIndex toPerformanceIndex(const Metrics& metrics, scalar_t dt, scalar_t barrierParam, const vector_t& slackStateIneq,
-                                    const vector_t& slackStateInputIneq, bool enableStateInequalityConstraints);
+                                    const vector_t& slackStateInputIneq);
 
 /**
  * Computes the PerformanceIndex of the interior point method based on a given Metrics at the event or terminal node.

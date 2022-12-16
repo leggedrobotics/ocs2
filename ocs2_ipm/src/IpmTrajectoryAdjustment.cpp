@@ -90,7 +90,7 @@ std::pair<vector_array_t, vector_array_t> fromDualSolution(const std::vector<Ann
   vector_array_t stateIneq;
   vector_array_t stateInputIneq;
   stateIneq.reserve(N + 1);
-  stateInputIneq.reserve(N + 1);
+  stateInputIneq.reserve(N);
 
   int preJumpIdx = 0;
   for (int i = 0; i < N; ++i) {
@@ -108,7 +108,6 @@ std::pair<vector_array_t, vector_array_t> fromDualSolution(const std::vector<Ann
 
   auto result = fromMultiplierCollection(std::move(dualSolution.final));
   stateIneq.emplace_back(std::move(result.first));
-  stateInputIneq.emplace_back(std::move(result.second));
 
   return std::make_pair(std::move(stateIneq), std::move(stateInputIneq));
 }

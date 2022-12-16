@@ -108,10 +108,9 @@ scalar_t fractionToBoundaryStepSize(const vector_t& v, const vector_t& dv, scala
     return 1.0;
   }
 
-  vector_t fractionToBoundary = -marginRate * v.cwiseQuotient(dv);
-  fractionToBoundary.unaryExpr([](scalar_t ftb) { return ftb > 0.0 ? ftb : 1.0; });
-
-  return std::min(1.0, fractionToBoundary.minCoeff());
+  const vector_t invFractionToBoundary = (-1.0 / marginRate) * dv.cwiseQuotient(v);
+  const auto alpha = invFractionToBoundary.maxCoeff();
+  return alpha > 0.0? std::min(1.0 / alpha, 1.0): 1.0;
 }
 
 }  // namespace ipm

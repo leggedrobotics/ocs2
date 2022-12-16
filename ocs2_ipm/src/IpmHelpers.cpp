@@ -37,7 +37,6 @@ namespace ipm {
 void condenseIneqConstraints(scalar_t barrierParam, const vector_t& slack, const vector_t& dual,
                              const VectorFunctionLinearApproximation& ineqConstraint, ScalarFunctionQuadraticApproximation& lagrangian) {
   assert(barrierParam > 0.0);
-
   const size_t nc = ineqConstraint.f.size();
   const size_t nu = ineqConstraint.dfdu.cols();
 
@@ -95,8 +94,9 @@ vector_t retrieveSlackDirection(const VectorFunctionLinearApproximation& stateIn
 
 vector_t retrieveDualDirection(scalar_t barrierParam, const vector_t& slack, const vector_t& dual, const vector_t& slackDirection) {
   assert(barrierParam > 0.0);
-  vector_t dualDirection(slackDirection.size());
-  dualDirection.array() = -(dual.array() * slackDirection.array() + (slack.array() * dual.array() - barrierParam)) / slack.array();
+  vector_t dualDirection = dual.cwiseProduct(slack + slackDirection);
+  dualDirection.array() -= barrierParam;
+  dualDirection.array() /= -slack.array();
   return dualDirection;
 }
 
@@ -108,14 +108,9 @@ scalar_t fractionToBoundaryStepSize(const vector_t& v, const vector_t& dv, scala
     return 1.0;
   }
 
-  scalar_t minFractionToBoundary = 1.0;
-  vector_t fractionToBoundary = -marginRate * v.cwiseQuotient(dv);
-  for (int i = 0; i < fractionToBoundary.size(); ++i) {
-    if (fractionToBoundary[i] <= 0.0) {
-      fractionToBoundary[i] = 1.0;
-    }
-  }
-  return std::min(1.0, fractionToBoundary.minCoeff());
+  const vector_t invFractionToBoundary = (-1.0 / marginRate) * dv.cwiseQuotient(v);
+  const auto alpha = invFractionToBoundary.maxCoeff();
+  return alpha > 0.0? std::min(1.0 / alpha, 1.0): 1.0;
 }
 
 }  // namespace ipm

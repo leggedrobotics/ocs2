@@ -38,11 +38,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace ocs2;
 
-namespace {
-constexpr size_t STATE_DIM = 2;
-constexpr size_t INPUT_DIM = 2;
-}  // namespace
-
 class CircleKinematics_MixedStateInputIneqConstraints final : public StateInputConstraint {
  public:
   CircleKinematics_MixedStateInputIneqConstraints(scalar_t xumin, scalar_t xumax)
@@ -111,12 +106,7 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints) {
   IpmSolver solver(settings, problem, zeroInitializer);
   solver.run(startTime, initState, finalTime);
 
-  // Inspect solution
   const auto primalSolution = solver.primalSolution(finalTime);
-  for (int i = 0; i < primalSolution.timeTrajectory_.size(); i++) {
-    std::cout << "time: " << primalSolution.timeTrajectory_[i] << "\t state: " << primalSolution.stateTrajectory_[i].transpose()
-              << "\t input: " << primalSolution.inputTrajectory_[i].transpose() << std::endl;
-  }
 
   // Check initial condition
   ASSERT_TRUE(primalSolution.stateTrajectory_.front().isApprox(initState));
@@ -139,6 +129,9 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints) {
 }
 
 TEST(test_circular_kinematics, solve_projected_EqConstraints_IneqConstraints) {
+  constexpr size_t STATE_DIM = 2;
+  constexpr size_t INPUT_DIM = 2;
+
   // optimal control problem
   OptimalControlProblem problem = createCircularKinematicsProblem("/tmp/ocs2/ipm_test_generated");
 
@@ -203,13 +196,7 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints_IneqConstraints) {
   IpmSolver solver(settings, problem, zeroInitializer);
   solver.run(startTime, initState, finalTime);
 
-  // Inspect solution
   const auto primalSolution = solver.primalSolution(finalTime);
-  for (int i = 0; i < primalSolution.timeTrajectory_.size(); i++) {
-    std::cout << "time: " << std::setprecision(4) << primalSolution.timeTrajectory_[i]
-              << "\t state: " << primalSolution.stateTrajectory_[i].transpose()
-              << "\t input: " << primalSolution.inputTrajectory_[i].transpose() << std::endl;
-  }
 
   // check constraint satisfaction
   for (int i = 0; i < primalSolution.timeTrajectory_.size() - 1; i++) {
@@ -220,20 +207,16 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints_IneqConstraints) {
   }
 
   // check constraint satisfaction
-  for (const auto& e : primalSolution.stateTrajectory_) {
-    if (e.size() > 0) {
-      ASSERT_TRUE(e.coeff(0) >= xmin.coeff(0));
-      ASSERT_TRUE(e.coeff(1) >= xmin.coeff(1));
-      ASSERT_TRUE(e.coeff(0) <= xmax.coeff(0));
-      ASSERT_TRUE(e.coeff(1) <= xmax.coeff(1));
+  for (const auto& x : primalSolution.stateTrajectory_) {
+    if (x.size() > 0) {
+      ASSERT_TRUE((x - xmin).minCoeff() >= 0);
+      ASSERT_TRUE((xmax - x).minCoeff() >= 0);
     }
   }
-  for (const auto& e : primalSolution.inputTrajectory_) {
-    if (e.size() > 0) {
-      ASSERT_TRUE(e.coeff(0) >= umin.coeff(0));
-      ASSERT_TRUE(e.coeff(1) >= umin.coeff(1));
-      ASSERT_TRUE(e.coeff(0) <= umax.coeff(0));
-      ASSERT_TRUE(e.coeff(1) <= umax.coeff(1));
+  for (const auto& u : primalSolution.inputTrajectory_) {
+    if (u.size() > 0) {
+      ASSERT_TRUE((u - umin).minCoeff() >= 0);
+      ASSERT_TRUE((umax - u).minCoeff() >= 0);
     }
   }
 
@@ -302,13 +285,7 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints_MixedIneqConstraint
   IpmSolver solver(settings, problem, zeroInitializer);
   solver.run(startTime, initState, finalTime);
 
-  // Inspect solution
   const auto primalSolution = solver.primalSolution(finalTime);
-  for (int i = 0; i < primalSolution.timeTrajectory_.size(); i++) {
-    std::cout << "time: " << std::setprecision(4) << primalSolution.timeTrajectory_[i]
-              << "\t state: " << primalSolution.stateTrajectory_[i].transpose()
-              << "\t input: " << primalSolution.inputTrajectory_[i].transpose() << std::endl;
-  }
 
   // check constraint satisfaction
   for (int i = 0; i < primalSolution.timeTrajectory_.size() - 1; i++) {

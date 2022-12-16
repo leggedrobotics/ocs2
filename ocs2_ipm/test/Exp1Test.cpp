@@ -200,8 +200,8 @@ TEST(Exp1Test, Constrained) {
 }
 
 TEST(Exp1Test, MixedConstrained) {
-  static constexpr size_t STATE_DIM = 2;
-  static constexpr size_t INPUT_DIM = 1;
+  constexpr size_t STATE_DIM = 2;
+  constexpr size_t INPUT_DIM = 1;
 
   // Solver settings
   const auto settings = []() {

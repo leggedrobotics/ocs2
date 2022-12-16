@@ -42,23 +42,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <hpipm_catkin/HpipmInterface.h>
 
-#include "ocs2_sqp/SqpSettings.h"
-#include "ocs2_sqp/SqpSolverStatus.h"
+#include "ocs2_ipm/IpmSettings.h"
+#include "ocs2_ipm/IpmSolverStatus.h"
 
 namespace ocs2 {
 
-class SqpSolver : public SolverBase {
+class IpmSolver : public SolverBase {
  public:
   /**
    * Constructor
    *
-   * @param settings : settings for the multiple shooting SQP solver.
+   * @param settings : settings for the multiple shooting IPM solver.
    * @param [in] optimalControlProblem: The optimal control problem formulation.
    * @param [in] initializer: This class initializes the state-input for the time steps that no controller is available.
    */
-  SqpSolver(sqp::Settings settings, const OptimalControlProblem& optimalControlProblem, const Initializer& initializer);
+  IpmSolver(ipm::Settings settings, const OptimalControlProblem& optimalControlProblem, const Initializer& initializer);
 
-  ~SqpSolver() override;
+  ~IpmSolver() override;
 
   void reset() override;
 
@@ -79,15 +79,13 @@ class SqpSolver : public SolverBase {
   ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const override;
 
   ScalarFunctionQuadraticApproximation getHamiltonian(scalar_t time, const vector_t& state, const vector_t& input) override {
-    throw std::runtime_error("[SqpSolver] getHamiltonian() not available yet.");
+    throw std::runtime_error("[IpmSolver] getHamiltonian() not available yet.");
   }
 
-  vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const override {
-    throw std::runtime_error("[SqpSolver] getStateInputEqualityConstraintLagrangian() not available yet.");
-  }
+  vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const override;
 
   MultiplierCollection getIntermediateDualSolution(scalar_t time) const override {
-    throw std::runtime_error("[SqpSolver] getIntermediateDualSolution() not available yet.");
+    throw std::runtime_error("[IpmSolver] getIntermediateDualSolution() not available yet.");
   }
 
  private:
@@ -97,7 +95,7 @@ class SqpSolver : public SolverBase {
     if (externalControllerPtr == nullptr) {
       runImpl(initTime, initState, finalTime);
     } else {
-      throw std::runtime_error("[SqpSolver::run] This solver does not support external controller!");
+      throw std::runtime_error("[IpmSolver::run] This solver does not support external controller!");
     }
   }
 
@@ -117,38 +115,71 @@ class SqpSolver : public SolverBase {
   /** Get profiling information as a string */
   std::string getBenchmarkingInformation() const;
 
+  /** Initializes for the costate trajectories */
+  void initializeCostateTrajectory(const std::vector<AnnotatedTime>& timeDiscretization, const vector_array_t& stateTrajectory,
+                                   vector_array_t& costateTrajectory) const;
+
+  /** Initializes for the Lagrange multiplier trajectories of the constraint projection */
+  void initializeProjectionMultiplierTrajectory(const std::vector<AnnotatedTime>& timeDiscretization,
+                                                vector_array_t& projectionMultiplierTrajectory) const;
+
   /** Creates QP around t, x(t), u(t). Returns performance metrics at the current {t, x(t), u(t)} */
   PerformanceIndex setupQuadraticSubproblem(const std::vector<AnnotatedTime>& time, const vector_t& initState, const vector_array_t& x,
-                                            const vector_array_t& u, std::vector<Metrics>& metrics);
+                                            const vector_array_t& u, const vector_array_t& lmd, const vector_array_t& nu,
+                                            scalar_t barrierParam, vector_array_t& slackStateIneq, vector_array_t& slackStateInputIneq,
+                                            vector_array_t& dualStateIneq, vector_array_t& dualStateInputIneq,
+                                            bool initializeSlackAndDualVariables, std::vector<Metrics>& metrics);
 
   /** Computes only the performance metrics at the current {t, x(t), u(t)} */
   PerformanceIndex computePerformance(const std::vector<AnnotatedTime>& time, const vector_t& initState, const vector_array_t& x,
-                                      const vector_array_t& u, std::vector<Metrics>& metrics);
+                                      const vector_array_t& u, scalar_t barrierParam, const vector_array_t& slackStateIneq,
+                                      const vector_array_t& slackStateInputIneq, std::vector<Metrics>& metrics);
 
   /** Returns solution of the QP subproblem in delta coordinates: */
   struct OcpSubproblemSolution {
-    vector_array_t deltaXSol;      // delta_x(t)
-    vector_array_t deltaUSol;      // delta_u(t)
+    vector_array_t deltaXSol;    // delta_x(t)
+    vector_array_t deltaUSol;    // delta_u(t)
+    vector_array_t deltaLmdSol;  // delta_lmd(t)
+    vector_array_t deltaNuSol;   // delta_nu(t)
+    vector_array_t deltaSlackStateIneq;
+    vector_array_t deltaSlackStateInputIneq;
+    vector_array_t deltaDualStateIneq;
+    vector_array_t deltaDualStateInputIneq;
     scalar_t armijoDescentMetric;  // inner product of the cost gradient and decision variable step
+    scalar_t maxPrimalStepSize;
+    scalar_t maxDualStepSize;
   };
-  OcpSubproblemSolution getOCPSolution(const vector_t& delta_x0);
+  OcpSubproblemSolution getOCPSolution(const vector_t& delta_x0, scalar_t barrierParam, const vector_array_t& slackStateIneq,
+                                       const vector_array_t& slackStateInputIneq, const vector_array_t& dualStateIneq,
+                                       const vector_array_t& dualStateInputIneq);
 
   /** Extract the value function based on the last solved QP */
-  void extractValueFunction(const std::vector<AnnotatedTime>& time, const vector_array_t& x);
+  void extractValueFunction(const std::vector<AnnotatedTime>& time, const vector_array_t& x, const vector_array_t& lmd,
+                            const vector_array_t& deltaXSol);
 
   /** Constructs the primal solution based on the optimized state and input trajectories */
   PrimalSolution toPrimalSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& x, vector_array_t&& u);
 
-  /** Decides on the step to take and overrides given trajectories {x(t), u(t)} <- {x(t) + a*dx(t), u(t) + a*du(t)} */
-  sqp::StepInfo takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization, const vector_t& initState,
-                         const OcpSubproblemSolution& subproblemSolution, vector_array_t& x, vector_array_t& u,
-                         std::vector<Metrics>& metrics);
+  /** Decides on the step to take and overrides given trajectories {x(t), u(t), slackStateIneq(t), slackStateInputIneq(t)}
+   * <- {x(t) + a*dx(t), u(t) + a*du(t), slackStateIneq(t) + a*dslackStateIneq(t), slackStateInputIneq(t) + a*dslackStateInputIneq(t)} */
+  ipm::StepInfo takePrimalStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization,
+                               const vector_t& initState, const OcpSubproblemSolution& subproblemSolution, vector_array_t& x,
+                               vector_array_t& u, scalar_t barrierParam, vector_array_t& slackStateIneq,
+                               vector_array_t& slackStateInputIneq, std::vector<Metrics>& metrics);
+
+  /** Updates the Lagrange multipliers */
+  void takeDualStep(const OcpSubproblemSolution& subproblemSolution, const ipm::StepInfo& stepInfo, vector_array_t& lmd, vector_array_t& nu,
+                    vector_array_t& dualStateIneq, vector_array_t& dualStateInputIneq) const;
+
+  /** Updates the barrier parameter */
+  scalar_t updateBarrierParameter(scalar_t currentBarrierParameter, const PerformanceIndex& baseline, const ipm::StepInfo& stepInfo) const;
 
   /** Determine convergence after a step */
-  sqp::Convergence checkConvergence(int iteration, const PerformanceIndex& baseline, const sqp::StepInfo& stepInfo) const;
+  ipm::Convergence checkConvergence(int iteration, scalar_t barrierParam, const PerformanceIndex& baseline,
+                                    const ipm::StepInfo& stepInfo) const;
 
   // Problem definition
-  const sqp::Settings settings_;
+  const ipm::Settings settings_;
   DynamicsDiscretizer discretizer_;
   DynamicsSensitivityDiscretizer sensitivityDiscretizer_;
   std::vector<OptimalControlProblem> ocpDefinitions_;
@@ -163,12 +194,18 @@ class SqpSolver : public SolverBase {
 
   // Solution
   PrimalSolution primalSolution_;
+  vector_array_t costateTrajectory_;
+  vector_array_t projectionMultiplierTrajectory_;
+  vector_array_t slackStateIneqTrajectory_;
+  vector_array_t dualStateIneqTrajectory_;
+  vector_array_t slackStateInputIneqTrajectory_;
+  vector_array_t dualStateInputIneqTrajectory_;
 
   // Value function in absolute state coordinates (without the constant value)
   std::vector<ScalarFunctionQuadraticApproximation> valueFunction_;
 
   // LQ approximation
-  std::vector<ScalarFunctionQuadraticApproximation> cost_;
+  std::vector<ScalarFunctionQuadraticApproximation> lagrangian_;
   std::vector<VectorFunctionLinearApproximation> dynamics_;
   std::vector<VectorFunctionLinearApproximation> stateInputEqConstraints_;
   std::vector<VectorFunctionLinearApproximation> stateIneqConstraints_;

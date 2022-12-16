@@ -91,7 +91,6 @@ void SqpSolver::reset() {
   performanceIndeces_.clear();
 
   // reset timers
-  numProblems_ = 0;
   totalNumIterations_ = 0;
   linearQuadraticApproximationTimer_.reset();
   solveQpTimer_.reset();
@@ -215,8 +214,6 @@ void SqpSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
   primalSolution_ = toPrimalSolution(timeDiscretization, std::move(x), std::move(u));
   problemMetrics_ = multiple_shooting::toProblemMetrics(timeDiscretization, std::move(metrics));
   computeControllerTimer_.endTimer();
-
-  ++numProblems_;
 
   if (settings_.printSolverStatus || settings_.printLinesearch) {
     std::cerr << "\nConvergence : " << toString(convergence) << "\n";
@@ -358,8 +355,10 @@ PerformanceIndex SqpSolver::setupQuadraticSubproblem(const std::vector<Annotated
   };
   runParallel(std::move(parallelTask));
 
-  // Account for init state in performance
-  performance.front().dynamicsViolationSSE += (initState - x.front()).squaredNorm();
+  // Account for initial state in performance
+  const vector_t initDynamicsViolation = initState - x.front();
+  metrics.front().dynamicsViolation += initDynamicsViolation;
+  performance.front().dynamicsViolationSSE += initDynamicsViolation.squaredNorm();
 
   // Sum performance of the threads
   PerformanceIndex totalPerformance = std::accumulate(std::next(performance.begin()), performance.end(), performance.front());

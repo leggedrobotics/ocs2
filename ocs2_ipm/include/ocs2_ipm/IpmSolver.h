@@ -82,9 +82,7 @@ class IpmSolver : public SolverBase {
     throw std::runtime_error("[IpmSolver] getHamiltonian() not available yet.");
   }
 
-  vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const override {
-    throw std::runtime_error("[IpmSolver] getStateInputEqualityConstraintLagrangian() not available yet.");
-  }
+  vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const override;
 
   MultiplierCollection getIntermediateDualSolution(scalar_t time) const override {
     throw std::runtime_error("[IpmSolver] getIntermediateDualSolution() not available yet.");

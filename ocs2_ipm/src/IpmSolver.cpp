@@ -170,6 +170,25 @@ ScalarFunctionQuadraticApproximation IpmSolver::getValueFunction(scalar_t time, 
   }
 }
 
+vector_t IpmSolver::getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const {
+  if (settings_.computeLagrangeMultipliers && !projectionMultiplierTrajectory_.empty()) {
+    // Interpolation
+    using LinearInterpolation::interpolate;
+    const auto nominalMultiplier = interpolate(time, primalSolution_.timeTrajectory_, projectionMultiplierTrajectory_);
+    const auto nominalState = interpolate(time, primalSolution_.timeTrajectory_, primalSolution_.stateTrajectory_);
+
+    const auto indexAlpha = LinearInterpolation::timeSegment(time, primalSolution_.timeTrajectory_);
+    using T = std::vector<multiple_shooting::ProjectionMultiplierCoefficients>;
+    const auto sensitivityWrtState =
+        interpolate(indexAlpha, projectionMultiplierCoefficients_, [](const T& v, size_t ind) -> const matrix_t& { return v[ind].dfdx; });
+
+    return nominalMultiplier + sensitivityWrtState * (state - nominalState);
+
+  } else {
+    throw std::runtime_error("[IpmSolver] getStateInputEqualityConstraintLagrangian() not available yet.");
+  }
+}
+
 void IpmSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
   if (settings_.printSolverStatus || settings_.printLinesearch) {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";

@@ -160,7 +160,8 @@ class IpmSolver : public SolverBase {
   /** Constructs the primal solution based on the optimized state and input trajectories */
   PrimalSolution toPrimalSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& x, vector_array_t&& u);
 
-  /** Decides on the step to take and overrides given trajectories {x(t), u(t)} <- {x(t) + a*dx(t), u(t) + a*du(t)} */
+  /** Decides on the step to take and overrides given trajectories {x(t), u(t), slackStateIneq(t), slackStateInputIneq(t)}
+   * <- {x(t) + a*dx(t), u(t) + a*du(t), slackStateIneq(t) + a*dslackStateIneq(t), slackStateInputIneq(t) + a*dslackStateInputIneq(t)} */
   ipm::StepInfo takePrimalStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization,
                                const vector_t& initState, const OcpSubproblemSolution& subproblemSolution, vector_array_t& x,
                                vector_array_t& u, scalar_t barrierParam, vector_array_t& slackStateIneq,

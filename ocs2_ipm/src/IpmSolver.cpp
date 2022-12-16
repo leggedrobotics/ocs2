@@ -542,6 +542,8 @@ PerformanceIndex IpmSolver::setupQuadraticSubproblem(const std::vector<Annotated
               ipm::initializeSlackVariable(result.ineqConstraints.f, settings_.initialSlackLowerBound, settings_.initialSlackMarginRate);
           dualStateIneq[i] = ipm::initializeDualVariable(slackStateIneq[i], barrierParam, settings_.initialDualLowerBound,
                                                          settings_.initialDualMarginRate);
+          slackStateInputIneq[i].resize(0);
+          dualStateInputIneq[i].resize(0);
         }
         performance[workerId] += ipm::computePerformanceIndex(result, barrierParam, slackStateIneq[i]);
         dynamics_[i] = std::move(result.dynamics);

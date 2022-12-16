@@ -43,8 +43,8 @@ enum class Convergence { FALSE, ITERATIONS, STEPSIZE, METRICS, PRIMAL };
 
 /** Struct to contain the result and logging data of the stepsize computation */
 struct StepInfo {
-  // Step size and type
-  scalar_t stepSize = 0.0;
+  // Step sizes and type
+  scalar_t primalStepSize = 0.0;
   scalar_t dualStepSize = 0.0;
   FilterLinesearch::StepType stepType = FilterLinesearch::StepType::UNKNOWN;
 

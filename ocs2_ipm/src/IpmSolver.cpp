@@ -296,7 +296,7 @@ void IpmSolver::runParallel(std::function<void(int)> taskFunction) {
 void IpmSolver::initializeCostateTrajectory(const std::vector<AnnotatedTime>& timeDiscretization, const vector_array_t& stateTrajectory,
                                             vector_array_t& costateTrajectory) const {
   costateTrajectory.clear();
-  costateTrajectory.reserve(timeDiscretization.size());
+  costateTrajectory.reserve(stateTrajectory.size());
 
   // Determine till when to use the previous solution
   const auto interpolateTill =
@@ -309,12 +309,12 @@ void IpmSolver::initializeCostateTrajectory(const std::vector<AnnotatedTime>& ti
     costateTrajectory.push_back(vector_t::Zero(stateTrajectory[0].size()));
   }
 
-  for (int i = 0; i < timeDiscretization.size() - 1; i++) {
-    const scalar_t nextTime = getIntervalEnd(timeDiscretization[i + 1]);
-    if (nextTime < interpolateTill) {  // interpolate previous solution
-      costateTrajectory.push_back(LinearInterpolation::interpolate(nextTime, primalSolution_.timeTrajectory_, costateTrajectory_));
+  for (int i = 1; i < stateTrajectory.size(); i++) {
+    const auto time = getIntervalEnd(timeDiscretization[i]);
+    if (time < interpolateTill) {  // interpolate previous solution
+      costateTrajectory.push_back(LinearInterpolation::interpolate(time, primalSolution_.timeTrajectory_, costateTrajectory_));
     } else {  // Initialize with zero
-      costateTrajectory.push_back(vector_t::Zero(stateTrajectory[i + 1].size()));
+      costateTrajectory.push_back(vector_t::Zero(stateTrajectory[i].size()));
     }
   }
 }
@@ -400,9 +400,9 @@ IpmSolver::OcpSubproblemSolution IpmSolver::getOCPSolution(const vector_t& delta
   deltaLmdSol.resize(N + 1);
   deltaNuSol.resize(N);
   deltaSlackStateIneq.resize(N + 1);
-  deltaSlackStateInputIneq.resize(N + 1);
+  deltaSlackStateInputIneq.resize(N);
   deltaDualStateIneq.resize(N + 1);
-  deltaDualStateInputIneq.resize(N + 1);
+  deltaDualStateInputIneq.resize(N);
 
   scalar_array_t primalStepSizes(settings_.nThreads, 1.0);
   scalar_array_t dualStepSizes(settings_.nThreads, 1.0);
@@ -521,9 +521,9 @@ PerformanceIndex IpmSolver::setupQuadraticSubproblem(const std::vector<Annotated
 
   if (initializeSlackAndDualVariables) {
     slackStateIneq.resize(N + 1);
-    slackStateInputIneq.resize(N + 1);
+    slackStateInputIneq.resize(N);
     dualStateIneq.resize(N + 1);
-    dualStateInputIneq.resize(N + 1);
+    dualStateInputIneq.resize(N);
   }
 
   std::atomic_int timeIndex{0};

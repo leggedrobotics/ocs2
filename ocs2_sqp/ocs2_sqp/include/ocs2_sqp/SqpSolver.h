@@ -185,7 +185,6 @@ class SqpSolver : public SolverBase {
   ProblemMetrics problemMetrics_;
 
   // Benchmarking
-  size_t numProblems_{0};
   size_t totalNumIterations_{0};
   benchmark::RepeatedTimer initializationTimer_;
   benchmark::RepeatedTimer linearQuadraticApproximationTimer_;

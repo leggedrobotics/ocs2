@@ -170,6 +170,25 @@ ScalarFunctionQuadraticApproximation IpmSolver::getValueFunction(scalar_t time, 
   }
 }
 
+vector_t IpmSolver::getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const {
+  if (settings_.computeLagrangeMultipliers && !projectionMultiplierTrajectory_.empty()) {
+    using T = std::vector<multiple_shooting::ProjectionMultiplierCoefficients>;
+    const auto indexAlpha = LinearInterpolation::timeSegment(time, primalSolution_.timeTrajectory_);
+
+    const auto nominalState = LinearInterpolation::interpolate(indexAlpha, primalSolution_.stateTrajectory_);
+    const auto sensitivityWrtState = LinearInterpolation::interpolate(
+        indexAlpha, projectionMultiplierCoefficients_, [](const T& v, size_t ind) -> const matrix_t& { return v[ind].dfdx; });
+
+    auto multiplier = LinearInterpolation::interpolate(indexAlpha, projectionMultiplierTrajectory_);
+    multiplier.noalias() += sensitivityWrtState * (state - nominalState);
+
+    return multiplier;
+
+  } else {
+    throw std::runtime_error("[IpmSolver] getStateInputEqualityConstraintLagrangian() not available yet.");
+  }
+}
+
 void IpmSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
   if (settings_.printSolverStatus || settings_.printLinesearch) {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
@@ -234,17 +253,9 @@ void IpmSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
     const scalar_t maxPrimalStepSize = settings_.usePrimalStepSizeForDual
                                            ? std::min(deltaSolution.maxDualStepSize, deltaSolution.maxPrimalStepSize)
                                            : deltaSolution.maxPrimalStepSize;
-    const auto stepInfo = takeStep(baselinePerformance, timeDiscretization, initState, deltaSolution, x, u, barrierParam, slackStateIneq,
-                                   slackStateInputIneq, metrics);
-    const scalar_t dualStepSize =
-        settings_.usePrimalStepSizeForDual ? std::min(stepInfo.stepSize, deltaSolution.maxDualStepSize) : deltaSolution.maxDualStepSize;
-    if (settings_.computeLagrangeMultipliers) {
-      multiple_shooting::incrementTrajectory(lmd, deltaSolution.deltaLmdSol, stepInfo.stepSize, lmd);
-      multiple_shooting::incrementTrajectory(nu, deltaSolution.deltaNuSol, stepInfo.stepSize, nu);
-    }
-    multiple_shooting::incrementTrajectory(dualStateIneq, deltaSolution.deltaDualStateIneq, stepInfo.stepSize, dualStateIneq);
-    multiple_shooting::incrementTrajectory(dualStateInputIneq, deltaSolution.deltaDualStateInputIneq, stepInfo.stepSize,
-                                           dualStateInputIneq);
+    const auto stepInfo = takePrimalStep(baselinePerformance, timeDiscretization, initState, deltaSolution, x, u, barrierParam,
+                                         slackStateIneq, slackStateInputIneq, metrics);
+    takeDualStep(deltaSolution, stepInfo, lmd, nu, dualStateIneq, dualStateInputIneq);
     performanceIndeces_.push_back(stepInfo.performanceAfterStep);
     linesearchTimer_.endTimer();
 
@@ -284,9 +295,8 @@ void IpmSolver::runParallel(std::function<void(int)> taskFunction) {
 
 void IpmSolver::initializeCostateTrajectory(const std::vector<AnnotatedTime>& timeDiscretization, const vector_array_t& stateTrajectory,
                                             vector_array_t& costateTrajectory) const {
-  const size_t N = static_cast<int>(timeDiscretization.size()) - 1;  // size of the input trajectory
   costateTrajectory.clear();
-  costateTrajectory.reserve(N + 1);
+  costateTrajectory.reserve(stateTrajectory.size());
 
   // Determine till when to use the previous solution
   const auto interpolateTill =
@@ -299,12 +309,12 @@ void IpmSolver::initializeCostateTrajectory(const std::vector<AnnotatedTime>& ti
     costateTrajectory.push_back(vector_t::Zero(stateTrajectory[0].size()));
   }
 
-  for (int i = 0; i < N; i++) {
-    const scalar_t nextTime = getIntervalEnd(timeDiscretization[i + 1]);
-    if (nextTime < interpolateTill) {  // interpolate previous solution
-      costateTrajectory.push_back(LinearInterpolation::interpolate(nextTime, primalSolution_.timeTrajectory_, costateTrajectory_));
+  for (int i = 1; i < stateTrajectory.size(); i++) {
+    const auto time = getIntervalEnd(timeDiscretization[i]);
+    if (time < interpolateTill) {  // interpolate previous solution
+      costateTrajectory.push_back(LinearInterpolation::interpolate(time, primalSolution_.timeTrajectory_, costateTrajectory_));
     } else {  // Initialize with zero
-      costateTrajectory.push_back(vector_t::Zero(stateTrajectory[i + 1].size()));
+      costateTrajectory.push_back(vector_t::Zero(stateTrajectory[i].size()));
     }
   }
 }
@@ -390,9 +400,9 @@ IpmSolver::OcpSubproblemSolution IpmSolver::getOCPSolution(const vector_t& delta
   deltaLmdSol.resize(N + 1);
   deltaNuSol.resize(N);
   deltaSlackStateIneq.resize(N + 1);
-  deltaSlackStateInputIneq.resize(N + 1);
+  deltaSlackStateInputIneq.resize(N);
   deltaDualStateIneq.resize(N + 1);
-  deltaDualStateInputIneq.resize(N + 1);
+  deltaDualStateInputIneq.resize(N);
 
   scalar_array_t primalStepSizes(settings_.nThreads, 1.0);
   scalar_array_t dualStepSizes(settings_.nThreads, 1.0);
@@ -511,9 +521,9 @@ PerformanceIndex IpmSolver::setupQuadraticSubproblem(const std::vector<Annotated
 
   if (initializeSlackAndDualVariables) {
     slackStateIneq.resize(N + 1);
-    slackStateInputIneq.resize(N + 1);
+    slackStateInputIneq.resize(N);
     dualStateIneq.resize(N + 1);
-    dualStateInputIneq.resize(N + 1);
+    dualStateInputIneq.resize(N);
   }
 
   std::atomic_int timeIndex{0};
@@ -532,6 +542,8 @@ PerformanceIndex IpmSolver::setupQuadraticSubproblem(const std::vector<Annotated
               ipm::initializeSlackVariable(result.ineqConstraints.f, settings_.initialSlackLowerBound, settings_.initialSlackMarginRate);
           dualStateIneq[i] = ipm::initializeDualVariable(slackStateIneq[i], barrierParam, settings_.initialDualLowerBound,
                                                          settings_.initialDualMarginRate);
+          slackStateInputIneq[i].resize(0);
+          dualStateInputIneq[i].resize(0);
         }
         performance[workerId] += ipm::computePerformanceIndex(result, barrierParam, slackStateIneq[i]);
         dynamics_[i] = std::move(result.dynamics);
@@ -687,10 +699,10 @@ PerformanceIndex IpmSolver::computePerformance(const std::vector<AnnotatedTime>&
   return totalPerformance;
 }
 
-ipm::StepInfo IpmSolver::takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization,
-                                  const vector_t& initState, const OcpSubproblemSolution& subproblemSolution, vector_array_t& x,
-                                  vector_array_t& u, scalar_t barrierParam, vector_array_t& slackStateIneq,
-                                  vector_array_t& slackStateInputIneq, std::vector<Metrics>& metrics) {
+ipm::StepInfo IpmSolver::takePrimalStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization,
+                                        const vector_t& initState, const OcpSubproblemSolution& subproblemSolution, vector_array_t& x,
+                                        vector_array_t& u, scalar_t barrierParam, vector_array_t& slackStateIneq,
+                                        vector_array_t& slackStateInputIneq, std::vector<Metrics>& metrics) {
   using StepType = FilterLinesearch::StepType;
 
   /*
@@ -754,7 +766,7 @@ ipm::StepInfo IpmSolver::takeStep(const PerformanceIndex& baseline, const std::v
 
       // Prepare step info
       ipm::StepInfo stepInfo;
-      stepInfo.stepSize = alpha;
+      stepInfo.primalStepSize = alpha;
       stepInfo.stepType = stepType;
       stepInfo.dx_norm = alpha * deltaXnorm;
       stepInfo.du_norm = alpha * deltaUnorm;
@@ -778,7 +790,7 @@ ipm::StepInfo IpmSolver::takeStep(const PerformanceIndex& baseline, const std::v
 
   // Alpha_min reached -> Don't take a step
   ipm::StepInfo stepInfo;
-  stepInfo.stepSize = 0.0;
+  stepInfo.primalStepSize = 0.0;
   stepInfo.stepType = StepType::ZERO;
   stepInfo.dx_norm = 0.0;
   stepInfo.du_norm = 0.0;
@@ -786,10 +798,23 @@ ipm::StepInfo IpmSolver::takeStep(const PerformanceIndex& baseline, const std::v
   stepInfo.totalConstraintViolationAfterStep = FilterLinesearch::totalConstraintViolation(baseline);
 
   if (settings_.printLinesearch) {
-    std::cerr << "[Linesearch terminated] Step size: " << stepInfo.stepSize << ", Step Type: " << toString(stepInfo.stepType) << "\n";
+    std::cerr << "[Linesearch terminated] Primal Step size: " << stepInfo.primalStepSize << ", Step Type: " << toString(stepInfo.stepType)
+              << "\n";
   }
 
   return stepInfo;
+}
+
+void IpmSolver::takeDualStep(const OcpSubproblemSolution& subproblemSolution, const ipm::StepInfo& stepInfo, vector_array_t& lmd,
+                             vector_array_t& nu, vector_array_t& dualStateIneq, vector_array_t& dualStateInputIneq) const {
+  if (settings_.computeLagrangeMultipliers) {
+    multiple_shooting::incrementTrajectory(lmd, subproblemSolution.deltaLmdSol, stepInfo.primalStepSize, lmd);
+    multiple_shooting::incrementTrajectory(nu, subproblemSolution.deltaNuSol, stepInfo.primalStepSize, nu);
+  }
+  const scalar_t dualStepSize = settings_.usePrimalStepSizeForDual ? std::min(stepInfo.primalStepSize, subproblemSolution.maxDualStepSize)
+                                                                   : subproblemSolution.maxDualStepSize;
+  multiple_shooting::incrementTrajectory(dualStateIneq, subproblemSolution.deltaDualStateIneq, dualStepSize, dualStateIneq);
+  multiple_shooting::incrementTrajectory(dualStateInputIneq, subproblemSolution.deltaDualStateInputIneq, dualStepSize, dualStateInputIneq);
 }
 
 scalar_t IpmSolver::updateBarrierParameter(scalar_t currentBarrierParameter, const PerformanceIndex& baseline,
@@ -811,7 +836,7 @@ ipm::Convergence IpmSolver::checkConvergence(int iteration, scalar_t barrierPara
   if ((iteration + 1) >= settings_.ipmIteration) {
     // Converged because the next iteration would exceed the specified number of iterations
     return Convergence::ITERATIONS;
-  } else if (stepInfo.stepSize < settings_.alpha_min) {
+  } else if (stepInfo.primalStepSize < settings_.alpha_min) {
     // Converged because step size is below the specified minimum
     return Convergence::STEPSIZE;
   } else if (std::abs(stepInfo.performanceAfterStep.merit - baseline.merit) < settings_.costTol &&

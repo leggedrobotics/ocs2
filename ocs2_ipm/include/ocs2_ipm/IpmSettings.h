@@ -56,7 +56,8 @@ struct Settings {
   // controller type
   bool useFeedbackPolicy = true;            // true to use feedback, false to use feedforward
   bool createValueFunction = false;         // true to store the value function, false to ignore it
-  bool computeLagrangeMultipliers = false;  // true to compute the Lagrange multipliers
+  bool computeLagrangeMultipliers = false;  // If set to true to compute the Lagrange multipliers. If set to false the dualFeasibilitiesSSE
+                                            // in the PerformanceIndex log is incorrect but it will not affect algorithm correctness.
 
   // QP subproblem solver settings
   hpipm_interface::Settings hpipmSettings = hpipm_interface::Settings();

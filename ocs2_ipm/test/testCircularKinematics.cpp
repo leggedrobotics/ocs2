@@ -319,6 +319,7 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints_MixedIneqConstraint
     s.dt = 0.01;
     s.ipmIteration = 20;
     s.useFeedbackPolicy = true;
+    s.computeLagrangeMultipliers = true;
     s.printSolverStatistics = true;
     s.printSolverStatus = true;
     s.printLinesearch = true;
@@ -386,5 +387,14 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints_MixedIneqConstraint
     const auto& u = primalSolution.inputTrajectory_[i];
     // Feed forward part
     ASSERT_TRUE(u.isApprox(primalSolution.controllerPtr_->computeInput(t, x)));
+  }
+
+  // Check Lagrange multipliers
+  for (int i = 0; i < primalSolution.timeTrajectory_.size() - 1; i++) {
+    std::cerr << "i: " << i << std::endl;
+    const auto t = primalSolution.timeTrajectory_[i];
+    const auto& x = primalSolution.stateTrajectory_[i];
+    const auto& u = primalSolution.inputTrajectory_[i];
+    ASSERT_NO_THROW(const auto multiplier = solver.getStateInputEqualityConstraintLagrangian(t, x););
   }
 }

@@ -58,7 +58,7 @@ ipm
   computeLagrangeMultipliers            true
   printSolverStatistics                 true
   printSolverStatus                     false
-  printLinesearch                       true
+  printLinesearch                       false
   useFeedbackPolicy                     true
   integratorType                        RK2
   threadPriority                        50

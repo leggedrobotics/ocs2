@@ -329,7 +329,6 @@ std::unique_ptr<StateInputConstraint> LeggedRobotInterface::getFrictionConeConst
 /******************************************************************************************************/
 std::unique_ptr<StateInputCost> LeggedRobotInterface::getFrictionConeSoftConstraint(
     size_t contactPointIndex, scalar_t frictionCoefficient, const RelaxedBarrierPenalty::Config& barrierPenaltyConfig) {
-  auto penalty = std::make_unique<RelaxedBarrierPenalty>(barrierPenaltyConfig);
   return std::make_unique<StateInputSoftConstraint>(getFrictionConeConstraint(contactPointIndex, frictionCoefficient),
                                                     std::make_unique<RelaxedBarrierPenalty>(barrierPenaltyConfig));
 }

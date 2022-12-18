@@ -41,6 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/multiple_shooting/PerformanceIndexComputation.h>
 #include <ocs2_oc/multiple_shooting/Transcription.h>
 #include <ocs2_oc/oc_problem/OcpSize.h>
+#include <ocs2_oc/trajectory_adjustment/TrajectorySpreadingHelperFunctions.h>
 
 #include "ocs2_ipm/IpmHelpers.h"
 #include "ocs2_ipm/IpmInitialization.h"
@@ -205,7 +206,28 @@ void IpmSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
     ocpDefinition.targetTrajectoriesPtr = &targetTrajectories;
   }
 
-  // Initialize the state and input
+  // Interior point variables
+  scalar_t barrierParam = settings_.initialBarrierParameter;
+  vector_array_t slackStateIneq, slackStateInputIneq, dualStateIneq, dualStateInputIneq;
+  if (!slackIneqTrajectory_.timeTrajectory.empty()) {
+    const auto& newModeSchedule = this->getReferenceManager().getModeSchedule();
+    std::tie(slackStateIneq, slackStateInputIneq) = ipm::interpolateInteriorPointTrajectory(
+        primalSolution_.modeSchedule_, newModeSchedule, timeDiscretization, std::move(slackIneqTrajectory_));
+    std::tie(dualStateIneq, dualStateInputIneq) = ipm::interpolateInteriorPointTrajectory(
+        primalSolution_.modeSchedule_, newModeSchedule, timeDiscretization, std::move(dualIneqTrajectory_));
+  } else {
+    slackStateIneq.resize(timeDiscretization.size());
+    slackStateInputIneq.resize(timeDiscretization.size() - 1);
+    dualStateIneq.resize(timeDiscretization.size());
+    dualStateInputIneq.resize(timeDiscretization.size() - 1);
+  }
+
+  // Trajectory spread of primalSolution_ after trajectory spread of the interior point variables
+  if (!primalSolution_.timeTrajectory_.empty()) {
+    std::ignore = trajectorySpread(primalSolution_.modeSchedule_, this->getReferenceManager().getModeSchedule(), primalSolution_);
+  }
+
+  // Initialize the state and input after trajectory spread of primalSolution_
   vector_array_t x, u;
   multiple_shooting::initializeStateInputTrajectories(initState, timeDiscretization, primalSolution_, *initializerPtr_, x, u);
 
@@ -215,14 +237,6 @@ void IpmSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
     initializeCostateTrajectory(timeDiscretization, x, lmd);
     initializeProjectionMultiplierTrajectory(timeDiscretization, nu);
   }
-
-  // Interior point variables
-  scalar_t barrierParam = settings_.initialBarrierParameter;
-  vector_array_t slackStateIneq, slackStateInputIneq, dualStateIneq, dualStateInputIneq;
-  std::tie(slackStateIneq, slackStateInputIneq) = ipm::interpolateInteriorPointTrajectory(
-      primalSolution_.modeSchedule_, this->getReferenceManager().getModeSchedule(), timeDiscretization, std::move(slackIneqTrajectory_));
-  std::tie(dualStateIneq, dualStateInputIneq) = ipm::interpolateInteriorPointTrajectory(
-      primalSolution_.modeSchedule_, this->getReferenceManager().getModeSchedule(), timeDiscretization, std::move(dualIneqTrajectory_));
 
   // Bookkeeping
   performanceIndeces_.clear();

@@ -38,19 +38,13 @@ namespace {
 MultiplierCollection toMultiplierCollection(vector_t&& stateIneq, vector_t&& stateInputIneq = vector_t()) {
   MultiplierCollection multiplierCollection;
   multiplierCollection.stateIneq.emplace_back(0.0, std::move(stateIneq));
-  if (stateInputIneq.size() > 0) {
-    multiplierCollection.stateInputIneq.emplace_back(0.0, std::move(stateInputIneq));
-  }
+  multiplierCollection.stateInputIneq.emplace_back(0.0, std::move(stateInputIneq));
   return multiplierCollection;
 }
 
 std::pair<vector_t, vector_t> fromMultiplierCollection(MultiplierCollection&& multiplierCollection) {
-  if (multiplierCollection.stateInputIneq.empty()) {
-    return std::make_pair(std::move(multiplierCollection.stateIneq.front().lagrangian), vector_t());
-  } else {
-    return std::make_pair(std::move(multiplierCollection.stateIneq.front().lagrangian),
-                          std::move(multiplierCollection.stateInputIneq.front().lagrangian));
-  }
+  return std::make_pair(std::move(multiplierCollection.stateIneq.front().lagrangian),
+                        std::move(multiplierCollection.stateInputIneq.front().lagrangian));
 }
 }  // namespace
 }  // namespace ocs2

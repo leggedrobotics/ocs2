@@ -46,7 +46,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_ipm/IpmHelpers.h"
 #include "ocs2_ipm/IpmInitialization.h"
 #include "ocs2_ipm/IpmPerformanceIndexComputation.h"
-#include "ocs2_ipm/IpmTrajectoryAdjustment.h"
 
 namespace ocs2 {
 

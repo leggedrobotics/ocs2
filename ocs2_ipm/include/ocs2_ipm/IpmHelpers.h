@@ -30,6 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
+#include <ocs2_oc/oc_data/DualSolution.h>
+#include <ocs2_oc/oc_data/TimeDiscretization.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 
 namespace ocs2 {
@@ -106,6 +108,40 @@ vector_t retrieveDualDirection(scalar_t barrierParam, const vector_t& slack, con
  * @param [in] marginRate: Margin rate to avoid the slack or dual variables becoming too close to 0. Typical values are 0.95 or 0.995.
  */
 scalar_t fractionToBoundaryStepSize(const vector_t& v, const vector_t& dv, scalar_t marginRate = 0.995);
+
+/**
+ * Convert the optimized slack or dual trajectories as a DualSolution.
+ *
+ * @param time: The time discretization.
+ * @param stateIneq: The slack/dual of the state inequality constraints.
+ * @param stateInputIneq: The slack/dual of the state-input inequality constraints.
+ * @return A dual solution.
+ */
+DualSolution toDualSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& stateIneq, vector_array_t&& stateInputIneq);
+
+/**
+ * Convert the optimized slack or dual trajectories as a DualSolution.
+ *
+ * @param time: The time discretization.
+ * @param dualSolution: The dual solution.
+ * @return The slack/dual of the state inequality constraints (first) and state-input inequality constraints (second).
+ */
+std::pair<vector_array_t, vector_array_t> fromDualSolution(const std::vector<AnnotatedTime>& time, DualSolution&& dualSolution);
+
+/**
+ * Interpolates the interior point trajectory using the stored interior point trajectory. The part of the new trajectory that is not
+ * covered by the stored trajectory is set by vectors of zero size.
+ *
+ * @param oldModeSchedule: Mode schedule of the previous optimization.
+ * @param newModeSchedule: Mode schedule of the new optimization.
+ * @param time: Time discretization.
+ * @param oldDualSolution: The old dual solution that stored the previous interior point trajectory.
+ * @return Interpolated interior point trajectory.
+ */
+std::pair<vector_array_t, vector_array_t> interpolateInteriorPointTrajectory(const ModeSchedule& oldModeSchedule,
+                                                                             const ModeSchedule& newModeSchedule,
+                                                                             const std::vector<AnnotatedTime>& time,
+                                                                             DualSolution&& oldDualSolution);
 
 }  // namespace ipm
 }  // namespace ocs2

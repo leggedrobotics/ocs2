@@ -54,11 +54,11 @@ ipm
   ipmIteration                          1
   deltaTol                              1e-4
   g_max                                 10.0
-  g_min                                 1e-4
+  g_min                                 1e-6
   computeLagrangeMultipliers            true
   printSolverStatistics                 true
   printSolverStatus                     false
-  printLinesearch                       true
+  printLinesearch                       false
   useFeedbackPolicy                     true
   integratorType                        RK2
   threadPriority                        50

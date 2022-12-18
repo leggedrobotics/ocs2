@@ -111,7 +111,7 @@ class LeggedRobotInterface final : public RobotInterface {
   mpc::Settings mpcSettings_;
   sqp::Settings sqpSettings_;
   ipm::Settings ipmSettings_;
-  bool useHardFrictionConeConstraint_;
+  const bool useHardFrictionConeConstraint_;
 
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
   CentroidalModelInfo centroidalModelInfo_;

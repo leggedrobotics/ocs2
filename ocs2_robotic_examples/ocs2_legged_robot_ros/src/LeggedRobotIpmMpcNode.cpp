@@ -72,7 +72,7 @@ int main(int argc, char** argv) {
   mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
   mpc.getSolverPtr()->addSynchronizedModule(gaitReceiverPtr);
 
-  // observer for zero velocity constraints (only add this for debugging as it slows down the solver)
+  // observer for friction cone constraints (only add this for debugging as it slows down the solver)
   if (multiplot) {
     auto createStateInputBoundsObserver = [&](const std::string& termName) {
       const ocs2::scalar_array_t observingTimePoints{0.0};

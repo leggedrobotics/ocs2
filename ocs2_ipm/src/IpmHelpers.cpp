@@ -110,7 +110,7 @@ scalar_t fractionToBoundaryStepSize(const vector_t& v, const vector_t& dv, scala
 
   const vector_t invFractionToBoundary = (-1.0 / marginRate) * dv.cwiseQuotient(v);
   const auto alpha = invFractionToBoundary.maxCoeff();
-  return alpha > 0.0? std::min(1.0 / alpha, 1.0): 1.0;
+  return alpha > 0.0 ? std::min(1.0 / alpha, 1.0) : 1.0;
 }
 
 }  // namespace ipm

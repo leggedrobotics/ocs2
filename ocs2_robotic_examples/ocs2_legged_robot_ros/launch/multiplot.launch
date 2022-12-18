@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <launch>
-  <arg name="metrics_config"      default="$(find ocs2_legged_robot)/config/multiplot/mpc_metrics.xml" />
+  <arg name="metrics_config"      default="$(find ocs2_legged_robot)/config/multiplot/zero_velocity.xml" />
 
   <node name="mpc_metrics" pkg="rqt_multiplot" type="rqt_multiplot"
     args="--multiplot-run-all --multiplot-config $(arg metrics_config)"

@@ -210,11 +210,14 @@ void IpmSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
   scalar_t barrierParam = settings_.initialBarrierParameter;
   vector_array_t slackStateIneq, slackStateInputIneq, dualStateIneq, dualStateInputIneq;
   if (!slackIneqTrajectory_.timeTrajectory.empty()) {
+    const auto& oldModeSchedule = primalSolution_.modeSchedule_;
     const auto& newModeSchedule = this->getReferenceManager().getModeSchedule();
-    std::tie(slackStateIneq, slackStateInputIneq) = ipm::interpolateInteriorPointTrajectory(
-        primalSolution_.modeSchedule_, newModeSchedule, timeDiscretization, std::move(slackIneqTrajectory_));
-    std::tie(dualStateIneq, dualStateInputIneq) = ipm::interpolateInteriorPointTrajectory(
-        primalSolution_.modeSchedule_, newModeSchedule, timeDiscretization, std::move(dualIneqTrajectory_));
+    std::ignore = trajectorySpread(oldModeSchedule, newModeSchedule, slackIneqTrajectory_);
+    std::ignore = trajectorySpread(oldModeSchedule, newModeSchedule, dualIneqTrajectory_);
+    std::tie(slackStateIneq, slackStateInputIneq) =
+        ipm::interpolateInteriorPointTrajectory(oldModeSchedule, newModeSchedule, timeDiscretization, std::move(slackIneqTrajectory_));
+    std::tie(dualStateIneq, dualStateInputIneq) =
+        ipm::interpolateInteriorPointTrajectory(oldModeSchedule, newModeSchedule, timeDiscretization, std::move(dualIneqTrajectory_));
   } else {
     slackStateIneq.resize(timeDiscretization.size());
     slackStateInputIneq.resize(timeDiscretization.size() - 1);

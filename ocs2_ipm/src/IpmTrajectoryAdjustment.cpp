@@ -112,11 +112,6 @@ std::pair<vector_array_t, vector_array_t> interpolateInteriorPointTrajectory(con
                                                                              DualSolution&& oldDualSolution) {
   const auto oldTimeTrajectory = oldDualSolution.timeTrajectory;
   const auto oldPostEventIndices = oldDualSolution.postEventIndices;
-
-  if (!oldTimeTrajectory.empty()) {
-    std::ignore = trajectorySpread(oldModeSchedule, newModeSchedule, oldDualSolution);
-  }
-
   const auto newTimeTrajectory = toInterpolationTime(time);
   const auto newPostEventIndices = toPostEventIndices(time);
 

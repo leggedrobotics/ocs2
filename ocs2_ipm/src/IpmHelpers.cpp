@@ -184,8 +184,7 @@ std::pair<vector_array_t, vector_array_t> fromDualSolution(const std::vector<Ann
   return std::make_pair(std::move(stateIneq), std::move(stateInputIneq));
 }
 
-std::pair<vector_array_t, vector_array_t> interpolateInteriorPointTrajectory(const ModeSchedule& oldModeSchedule,
-                                                                             const ModeSchedule& newModeSchedule,
+std::pair<vector_array_t, vector_array_t> interpolateInteriorPointTrajectory(const ModeSchedule& modeSchedule,
                                                                              const std::vector<AnnotatedTime>& time,
                                                                              DualSolution&& oldDualSolution) {
   const auto oldTimeTrajectory = oldDualSolution.timeTrajectory;
@@ -195,7 +194,7 @@ std::pair<vector_array_t, vector_array_t> interpolateInteriorPointTrajectory(con
 
   // find the time period that we can interpolate the cached solution
   const auto timePeriod = std::make_pair(newTimeTrajectory.front(), newTimeTrajectory.back());
-  const auto interpolatableTimePeriod = findIntersectionToExtendableInterval(oldTimeTrajectory, newModeSchedule.eventTimes, timePeriod);
+  const auto interpolatableTimePeriod = findIntersectionToExtendableInterval(oldTimeTrajectory, modeSchedule.eventTimes, timePeriod);
   const bool interpolateTillFinalTime = numerics::almost_eq(interpolatableTimePeriod.second, timePeriod.second);
 
   DualSolution newDualSolution;

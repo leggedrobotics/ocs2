@@ -132,14 +132,12 @@ std::pair<vector_array_t, vector_array_t> fromDualSolution(const std::vector<Ann
  * Interpolates the interior point trajectory using the stored interior point trajectory. The part of the new trajectory that is not
  * covered by the stored trajectory is set by vectors of zero size.
  *
- * @param oldModeSchedule: Mode schedule of the previous optimization.
- * @param newModeSchedule: Mode schedule of the new optimization.
+ * @param modeSchedule: Mode schedule.
  * @param time: Time discretization.
  * @param oldDualSolution: The old dual solution that stored the previous interior point trajectory.
  * @return Interpolated interior point trajectory.
  */
-std::pair<vector_array_t, vector_array_t> interpolateInteriorPointTrajectory(const ModeSchedule& oldModeSchedule,
-                                                                             const ModeSchedule& newModeSchedule,
+std::pair<vector_array_t, vector_array_t> interpolateInteriorPointTrajectory(const ModeSchedule& modeSchedule,
                                                                              const std::vector<AnnotatedTime>& time,
                                                                              DualSolution&& oldDualSolution);
 

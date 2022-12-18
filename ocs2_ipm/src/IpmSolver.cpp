@@ -214,9 +214,9 @@ void IpmSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
     std::ignore = trajectorySpread(oldModeSchedule, newModeSchedule, slackIneqTrajectory_);
     std::ignore = trajectorySpread(oldModeSchedule, newModeSchedule, dualIneqTrajectory_);
     std::tie(slackStateIneq, slackStateInputIneq) =
-        ipm::interpolateInteriorPointTrajectory(oldModeSchedule, newModeSchedule, timeDiscretization, std::move(slackIneqTrajectory_));
+        ipm::interpolateInteriorPointTrajectory(newModeSchedule, timeDiscretization, std::move(slackIneqTrajectory_));
     std::tie(dualStateIneq, dualStateInputIneq) =
-        ipm::interpolateInteriorPointTrajectory(oldModeSchedule, newModeSchedule, timeDiscretization, std::move(dualIneqTrajectory_));
+        ipm::interpolateInteriorPointTrajectory(newModeSchedule, timeDiscretization, std::move(dualIneqTrajectory_));
   } else {
     slackStateIneq.resize(timeDiscretization.size());
     slackStateInputIneq.resize(timeDiscretization.size() - 1);

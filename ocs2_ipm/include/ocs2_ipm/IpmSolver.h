@@ -67,6 +67,8 @@ class IpmSolver : public SolverBase {
 
   void getPrimalSolution(scalar_t finalTime, PrimalSolution* primalSolutionPtr) const override { *primalSolutionPtr = primalSolution_; }
 
+  const DualSolution* getDualSolution() const override { return &dualIneqTrajectory_; }
+
   const ProblemMetrics& getSolutionMetrics() const override { return problemMetrics_; }
 
   size_t getNumIterations() const override { return totalNumIterations_; }

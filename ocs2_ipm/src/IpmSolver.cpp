@@ -408,7 +408,7 @@ void IpmSolver::initializeSlackDualTrajectory(const std::vector<AnnotatedTime>& 
       if (cachedEventIndex < slackDualTrajectory_.preJumps.size()) {
         ipm::toSlackDual(std::move(slackDualTrajectory_.preJumps[cachedEventIndex]), slackStateIneq[i], dualStateIneq[i]);
       } else {
-        const auto time = newTimeTrajectory[i];
+        const auto time = getIntervalStart(timeDiscretization[i]);
         const auto& state = x[i];
         constexpr auto request = Request::Constraint;
         ocpDefinition.preComputationPtr->requestPreJump(request, time, state);
@@ -428,7 +428,7 @@ void IpmSolver::initializeSlackDualTrajectory(const std::vector<AnnotatedTime>& 
       dualStateInputIneq[i].resize(0);
       ++eventIdx;
     } else {
-      const auto time = newTimeTrajectory[i];
+      const auto time = getIntervalStart(timeDiscretization[i]);
       if (interpolatableTimePeriod.first <= time && time <= interpolatableTimePeriod.second) {
         ipm::toSlackDual(getIntermediateDualSolutionAtTime(slackDualTrajectory_, time), slackStateIneq[i], dualStateIneq[i],
                          slackStateInputIneq[i], dualStateInputIneq[i]);

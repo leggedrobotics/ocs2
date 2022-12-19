@@ -202,7 +202,8 @@ class IpmSolver : public SolverBase {
   PrimalSolution primalSolution_;
   vector_array_t costateTrajectory_;
   vector_array_t projectionMultiplierTrajectory_;
-  DualSolution slackDualTrajectory_;
+  DualSolution slackIneqTrajectory_;
+  DualSolution dualIneqTrajectory_;
 
   // Value function in absolute state coordinates (without the constant value)
   std::vector<ScalarFunctionQuadraticApproximation> valueFunction_;

@@ -100,7 +100,8 @@ void IpmSolver::reset() {
   primalSolution_ = PrimalSolution();
   costateTrajectory_.clear();
   projectionMultiplierTrajectory_.clear();
-  slackDualTrajectory_.clear();
+  slackIneqTrajectory_.clear();
+  dualIneqTrajectory_.clear();
   valueFunction_.clear();
   performanceIndeces_.clear();
 
@@ -215,8 +216,9 @@ void IpmSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
   multiple_shooting::initializeStateInputTrajectories(initState, timeDiscretization, primalSolution_, *initializerPtr_, x, u);
 
   // Initialize the slack and dual variables of the interior point method
-  if (!slackDualTrajectory_.timeTrajectory.empty()) {
-    std::ignore = trajectorySpread(oldModeSchedule, newModeSchedule, slackDualTrajectory_);
+  if (!slackIneqTrajectory_.timeTrajectory.empty()) {
+    std::ignore = trajectorySpread(oldModeSchedule, newModeSchedule, slackIneqTrajectory_);
+    std::ignore = trajectorySpread(oldModeSchedule, newModeSchedule, dualIneqTrajectory_);
   }
   scalar_t barrierParam = settings_.initialBarrierParameter;
   vector_array_t slackStateIneq, dualStateIneq, slackStateInputIneq, dualStateInputIneq;
@@ -281,8 +283,8 @@ void IpmSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
   primalSolution_ = toPrimalSolution(timeDiscretization, std::move(x), std::move(u));
   costateTrajectory_ = std::move(lmd);
   projectionMultiplierTrajectory_ = std::move(nu);
-  slackDualTrajectory_ =
-      ipm::toDualSolution(timeDiscretization, constraintsSize_, slackStateIneq, dualStateIneq, slackStateInputIneq, dualStateInputIneq);
+  slackIneqTrajectory_ = ipm::toDualSolution(timeDiscretization, constraintsSize_, slackStateIneq, slackStateInputIneq);
+  dualIneqTrajectory_ = ipm::toDualSolution(timeDiscretization, constraintsSize_, dualStateIneq, dualStateInputIneq);
   problemMetrics_ = multiple_shooting::toProblemMetrics(timeDiscretization, std::move(metrics));
   computeControllerTimer_.endTimer();
 
@@ -374,8 +376,8 @@ void IpmSolver::initializeSlackDualTrajectory(const std::vector<AnnotatedTime>& 
                                               const vector_array_t& u, scalar_t barrierParam, vector_array_t& slackStateIneq,
                                               vector_array_t& dualStateIneq, vector_array_t& slackStateInputIneq,
                                               vector_array_t& dualStateInputIneq) {
-  const auto& oldTimeTrajectory = slackDualTrajectory_.timeTrajectory;
-  const auto& oldPostEventIndices = slackDualTrajectory_.postEventIndices;
+  const auto& oldTimeTrajectory = slackIneqTrajectory_.timeTrajectory;
+  const auto& oldPostEventIndices = slackIneqTrajectory_.postEventIndices;
   const auto newTimeTrajectory = toInterpolationTime(timeDiscretization);
   const auto newPostEventIndices = toPostEventIndices(timeDiscretization);
 
@@ -404,8 +406,9 @@ void IpmSolver::initializeSlackDualTrajectory(const std::vector<AnnotatedTime>& 
   for (size_t i = 0; i < N; i++) {
     if (timeDiscretization[i].event == AnnotatedTime::Event::PreEvent) {
       const auto cachedEventIndex = cacheEventIndexBias + eventIdx;
-      if (cachedEventIndex < slackDualTrajectory_.preJumps.size()) {
-        ipm::toSlackDual(std::move(slackDualTrajectory_.preJumps[cachedEventIndex]), slackStateIneq[i], dualStateIneq[i]);
+      if (cachedEventIndex < slackIneqTrajectory_.preJumps.size()) {
+        std::tie(slackStateIneq[i], std::ignore) = ipm::fromDualSolution(slackIneqTrajectory_.preJumps[cachedEventIndex]);
+        std::tie(dualStateIneq[i], std::ignore) = ipm::fromDualSolution(dualIneqTrajectory_.preJumps[cachedEventIndex]);
       } else {
         const auto time = getIntervalStart(timeDiscretization[i]);
         const auto& state = x[i];
@@ -429,8 +432,10 @@ void IpmSolver::initializeSlackDualTrajectory(const std::vector<AnnotatedTime>& 
     } else {
       const auto time = getIntervalStart(timeDiscretization[i]);
       if (interpolatableTimePeriod.first <= time && time <= interpolatableTimePeriod.second) {
-        ipm::toSlackDual(getIntermediateDualSolutionAtTime(slackDualTrajectory_, time), slackStateIneq[i], dualStateIneq[i],
-                         slackStateInputIneq[i], dualStateInputIneq[i]);
+        std::tie(slackStateIneq[i], slackStateInputIneq[i]) =
+            ipm::fromDualSolution(getIntermediateDualSolutionAtTime(slackIneqTrajectory_, time));
+        std::tie(dualStateIneq[i], dualStateInputIneq[i]) =
+            ipm::fromDualSolution(getIntermediateDualSolutionAtTime(slackIneqTrajectory_, time));
       } else {
         constexpr auto request = Request::Constraint;
         const auto& state = x[i];
@@ -463,7 +468,8 @@ void IpmSolver::initializeSlackDualTrajectory(const std::vector<AnnotatedTime>& 
   }
 
   if (interpolateTillFinalTime) {
-    ipm::toSlackDual(std::move(slackDualTrajectory_.final), slackStateIneq[N], dualStateIneq[N]);
+    std::tie(slackStateIneq[N], std::ignore) = ipm::fromDualSolution(slackIneqTrajectory_.final);
+    std::tie(dualStateIneq[N], std::ignore) = ipm::fromDualSolution(dualIneqTrajectory_.final);
   } else {
     const auto time = newTimeTrajectory[N];
     const auto& state = x[N];

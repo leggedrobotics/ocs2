@@ -115,36 +115,20 @@ scalar_t fractionToBoundaryStepSize(const vector_t& v, const vector_t& dv, scala
  *
  * @param time: The time discretization.
  * @param constraintsSize: The constraint tems size.
- * @param slackStateIneq: The slack variable trajectory of the state inequality constraints.
- * @param dualStateIneq: The dual variable trajectory of the state inequality constraints.
- * @param slackStateInputIneq: The slack variable trajectory of the state-input inequality constraints.
- * @param dualStateInputIneq: The dual variable trajectory of the state-input inequality constraints.
+ * @param stateIneq: The slack/dual variable trajectory of the state inequality constraints.
+ * @param stateInputIneq: The slack/dual variable trajectory of the state-input inequality constraints.
  * @return A dual solution.
  */
 DualSolution toDualSolution(const std::vector<AnnotatedTime>& time, const std::vector<multiple_shooting::ConstraintsSize>& constraintsSize,
-                            const vector_array_t& slackStateIneq, const vector_array_t& dualStateIneq,
-                            const vector_array_t& slackStateInputIneq, const vector_array_t& dualStateInputIneq);
+                            const vector_array_t& stateIneq, const vector_array_t& stateInputIneq);
 
 /**
- * Extracts a slack variable of the state-only and state-input constraints from a MultiplierCollection
+ * Extracts slack/dual variables of the state-only and state-input constraints from a MultiplierCollection
  *
- * @param[in] multiplierCollection: The MultiplierCollection.
- * @param[out] slackStateIneq: The slack variable of the state inequality constraints.
- * @param[out] dualStateIneq: The dual variable of the state inequality constraints.
- * @param[out] slackStateInputIneq: The slack variable of the state-input inequality constraints.
- * @param[out] dualStateInputIneq: The dual variable of the state-input inequality constraints.
+ * @param multiplierCollection: The MultiplierCollection.
+ * @return slack/dual variables of the state-only (first) and state-input constraints (second).
  */
-void toSlackDual(const MultiplierCollection& multiplierCollection, vector_t& slackStateIneq, vector_t& dualStateIneq,
-                 vector_t& slackStateInputIneq, vector_t& dualStateInputIneq);
-
-/**
- * Extracts a slack variable of the state-only constraints from a MultiplierCollection
- *
- * @param[in] multiplierCollection: The MultiplierCollection.
- * @param[out] slackStateIneq: The slack variable of the state inequality constraints.
- * @param[out] dualStateIneq: The dual variable of the state inequality constraints.
- */
-void toSlackDual(const MultiplierCollection& multiplierCollection, vector_t& slackStateIneq, vector_t& dualStateIneq);
+std::pair<vector_t, vector_t> fromDualSolution(const MultiplierCollection& multiplierCollection);
 
 }  // namespace ipm
 }  // namespace ocs2

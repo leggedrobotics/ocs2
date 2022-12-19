@@ -114,26 +114,23 @@ scalar_t fractionToBoundaryStepSize(const vector_t& v, const vector_t& dv, scala
 }
 
 namespace {
-MultiplierCollection toMultiplierCollection(const multiple_shooting::ConstraintsSize constraintsSize, const vector_t& slackStateIneq,
-                                            const vector_t& dualStateIneq) {
+MultiplierCollection toMultiplierCollection(const multiple_shooting::ConstraintsSize constraintsSize, const vector_t& stateIneq) {
   MultiplierCollection multiplierCollection;
   size_t head = 0;
   for (const size_t size : constraintsSize.stateIneq) {
-    multiplierCollection.stateIneq.emplace_back(0.0, slackStateIneq.segment(head, size));
-    multiplierCollection.stateEq.emplace_back(0.0, dualStateIneq.segment(head, size));
+    multiplierCollection.stateIneq.emplace_back(0.0, stateIneq.segment(head, size));
     head += size;
   }
   return multiplierCollection;
 }
 
-MultiplierCollection toMultiplierCollection(const multiple_shooting::ConstraintsSize constraintsSize, const vector_t& slackStateIneq,
-                                            const vector_t& dualStateIneq, const vector_t& slackStateInputIneq,
-                                            const vector_t& dualStateInputIneq) {
-  MultiplierCollection multiplierCollection = toMultiplierCollection(constraintsSize, slackStateIneq, dualStateIneq);
+MultiplierCollection toMultiplierCollection(const multiple_shooting::ConstraintsSize constraintsSize, const vector_t& stateIneq,
+                                            const vector_t& stateInputIneq) {
+  MultiplierCollection multiplierCollection = toMultiplierCollection(constraintsSize, stateIneq);
   size_t head = 0;
   for (const size_t size : constraintsSize.stateInputIneq) {
-    multiplierCollection.stateInputIneq.emplace_back(0.0, slackStateInputIneq.segment(head, size));
-    multiplierCollection.stateInputEq.emplace_back(0.0, dualStateInputIneq.segment(head, size));
+    multiplierCollection.stateInputIneq.emplace_back(0.0, stateInputIneq.segment(head, size));
+    head += size;
   }
   return multiplierCollection;
 }
@@ -153,22 +150,8 @@ vector_t extractLagrangian(const std::vector<Multiplier>& termsMultiplier) {
 }
 }  // namespace
 
-void toSlackDual(const MultiplierCollection& multiplierCollection, vector_t& slackStateIneq, vector_t& dualStateIneq,
-                 vector_t& slackStateInputIneq, vector_t& dualStateInputIneq) {
-  slackStateIneq = extractLagrangian(multiplierCollection.stateIneq);
-  dualStateIneq = extractLagrangian(multiplierCollection.stateEq);
-  slackStateInputIneq = extractLagrangian(multiplierCollection.stateInputIneq);
-  dualStateInputIneq = extractLagrangian(multiplierCollection.stateInputEq);
-}
-
-void toSlackDual(const MultiplierCollection& multiplierCollection, vector_t& slackStateIneq, vector_t& dualStateIneq) {
-  slackStateIneq = extractLagrangian(multiplierCollection.stateIneq);
-  dualStateIneq = extractLagrangian(multiplierCollection.stateEq);
-}
-
 DualSolution toDualSolution(const std::vector<AnnotatedTime>& time, const std::vector<multiple_shooting::ConstraintsSize>& constraintsSize,
-                            const vector_array_t& slackStateIneq, const vector_array_t& dualStateIneq,
-                            const vector_array_t& slackStateInputIneq, const vector_array_t& dualStateInputIneq) {
+                            const vector_array_t& stateIneq, const vector_array_t& stateInputIneq) {
   // Problem horizon
   const int N = static_cast<int>(time.size()) - 1;
 
@@ -181,17 +164,20 @@ DualSolution toDualSolution(const std::vector<AnnotatedTime>& time, const std::v
 
   for (int i = 0; i < N; ++i) {
     if (time[i].event == AnnotatedTime::Event::PreEvent) {
-      dualSolution.preJumps.emplace_back(toMultiplierCollection(constraintsSize[i], slackStateIneq[i], dualStateIneq[i]));
+      dualSolution.preJumps.emplace_back(toMultiplierCollection(constraintsSize[i], stateIneq[i]));
       dualSolution.intermediates.push_back(dualSolution.intermediates.back());  // no event at the initial node
     } else {
-      dualSolution.intermediates.emplace_back(
-          toMultiplierCollection(constraintsSize[i], slackStateIneq[i], dualStateIneq[i], slackStateInputIneq[i], dualStateInputIneq[i]));
+      dualSolution.intermediates.emplace_back(toMultiplierCollection(constraintsSize[i], stateIneq[i], stateInputIneq[i]));
     }
   }
-  dualSolution.final = toMultiplierCollection(constraintsSize[N], slackStateIneq[N], dualStateIneq[N]);
+  dualSolution.final = toMultiplierCollection(constraintsSize[N], stateIneq[N]);
   dualSolution.intermediates.push_back(dualSolution.intermediates.back());
 
   return dualSolution;
+}
+
+std::pair<vector_t, vector_t> fromDualSolution(const MultiplierCollection& multiplierCollection) {
+  return std::make_pair(extractLagrangian(multiplierCollection.stateIneq), extractLagrangian(multiplierCollection.stateInputIneq));
 }
 
 }  // namespace ipm

@@ -80,7 +80,7 @@ inline vector_t initializeDualVariable(const vector_t& slack, scalar_t barrierPa
  * @param input : Input
  * @param initialSlackLowerBound : Lower bound of the initial slack variables. Corresponds to `slack_bound_push` option of IPOPT.
  * @param initialSlackMarginRate : Additional margin rate of the initial slack variables. Corresponds to `slack_bound_frac` option of IPOPT.
- * @return Initialized slack variable.
+ * @return Initialized slack variables of the intermediate state-only (first) and state-input (second) constraints.
  */
 std::pair<vector_t, vector_t> initializeIntermediateSlackVariable(OptimalControlProblem& ocpDefinition, scalar_t time,
                                                                   const vector_t& state, const vector_t& input,
@@ -94,7 +94,7 @@ std::pair<vector_t, vector_t> initializeIntermediateSlackVariable(OptimalControl
  * @param state : Terminal state
  * @param initialSlackLowerBound : Lower bound of the initial slack variables. Corresponds to `slack_bound_push` option of IPOPT.
  * @param initialSlackMarginRate : Additional margin rate of the initial slack variables. Corresponds to `slack_bound_frac` option of IPOPT.
- * @return Initialized slack variable.
+ * @return Initialized slack variable of the terminal state-only constraints.
  */
 vector_t initializeTerminalSlackVariable(OptimalControlProblem& ocpDefinition, scalar_t time, const vector_t& state,
                                          scalar_t initialSlackLowerBound, scalar_t initialSlackMarginRate);
@@ -107,7 +107,7 @@ vector_t initializeTerminalSlackVariable(OptimalControlProblem& ocpDefinition, s
  * @param state : Pre-event state
  * @param initialSlackLowerBound : Lower bound of the initial slack variables. Corresponds to `slack_bound_push` option of IPOPT.
  * @param initialSlackMarginRate : Additional margin rate of the initial slack variables. Corresponds to `slack_bound_frac` option of IPOPT.
- * @return Initialized slack variable.
+ * @return Initialized slack variable of the pre-jump state-only constraints.
  */
 vector_t initializePreJumpSlackVariable(OptimalControlProblem& ocpDefinition, scalar_t time, const vector_t& state,
                                         scalar_t initialSlackLowerBound, scalar_t initialSlackMarginRate);

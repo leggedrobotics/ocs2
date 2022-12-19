@@ -114,32 +114,61 @@ scalar_t fractionToBoundaryStepSize(const vector_t& v, const vector_t& dv, scala
 }
 
 namespace {
-MultiplierCollection toMultiplierCollection(vector_t&& slackStateIneq, vector_t&& dualStateIneq,
-                                            vector_t&& slackStateInputIneq = vector_t(), vector_t&& dualStateInputIneq = vector_t()) {
+MultiplierCollection toMultiplierCollection(const multiple_shooting::ConstraintsSize constraintsSize, const vector_t& slackStateIneq,
+                                            const vector_t& dualStateIneq) {
   MultiplierCollection multiplierCollection;
-  multiplierCollection.stateIneq.emplace_back(0.0, std::move(slackStateIneq));
-  multiplierCollection.stateEq.emplace_back(0.0, std::move(dualStateIneq));
-  multiplierCollection.stateInputIneq.emplace_back(0.0, std::move(slackStateInputIneq));
-  multiplierCollection.stateInputEq.emplace_back(0.0, std::move(dualStateInputIneq));
+  size_t head = 0;
+  for (const size_t size : constraintsSize.stateIneq) {
+    multiplierCollection.stateIneq.emplace_back(0.0, slackStateIneq.segment(head, size));
+    multiplierCollection.stateEq.emplace_back(0.0, dualStateIneq.segment(head, size));
+    head += size;
+  }
   return multiplierCollection;
+}
+
+MultiplierCollection toMultiplierCollection(const multiple_shooting::ConstraintsSize constraintsSize, const vector_t& slackStateIneq,
+                                            const vector_t& dualStateIneq, const vector_t& slackStateInputIneq,
+                                            const vector_t& dualStateInputIneq) {
+  MultiplierCollection multiplierCollection = toMultiplierCollection(constraintsSize, slackStateIneq, dualStateIneq);
+  size_t head = 0;
+  for (const size_t size : constraintsSize.stateInputIneq) {
+    multiplierCollection.stateInputIneq.emplace_back(0.0, slackStateInputIneq.segment(head, size));
+    multiplierCollection.stateInputEq.emplace_back(0.0, dualStateInputIneq.segment(head, size));
+  }
+  return multiplierCollection;
+}
+
+vector_t extractLagrangian(const std::vector<Multiplier>& termsMultiplier) {
+  size_t n = 0;
+  std::for_each(termsMultiplier.begin(), termsMultiplier.end(), [&](const Multiplier& m) { n += m.lagrangian.size(); });
+
+  vector_t vec(n);
+  size_t head = 0;
+  for (const auto& m : termsMultiplier) {
+    vec.segment(head, m.lagrangian.size()) = m.lagrangian;
+    head += m.lagrangian.size();
+  }  // end of i loop
+
+  return vec;
 }
 }  // namespace
 
-void toSlackDual(MultiplierCollection&& multiplierCollection, vector_t& slackStateIneq, vector_t& dualStateIneq,
+void toSlackDual(const MultiplierCollection& multiplierCollection, vector_t& slackStateIneq, vector_t& dualStateIneq,
                  vector_t& slackStateInputIneq, vector_t& dualStateInputIneq) {
-  slackStateIneq = std::move(multiplierCollection.stateIneq.front().lagrangian);
-  dualStateIneq = std::move(multiplierCollection.stateEq.front().lagrangian);
-  slackStateInputIneq = std::move(multiplierCollection.stateInputIneq.front().lagrangian);
-  dualStateInputIneq = std::move(multiplierCollection.stateInputEq.front().lagrangian);
+  slackStateIneq = extractLagrangian(multiplierCollection.stateIneq);
+  dualStateIneq = extractLagrangian(multiplierCollection.stateEq);
+  slackStateInputIneq = extractLagrangian(multiplierCollection.stateInputIneq);
+  dualStateInputIneq = extractLagrangian(multiplierCollection.stateInputEq);
 }
 
-void toSlackDual(MultiplierCollection&& multiplierCollection, vector_t& slackStateIneq, vector_t& dualStateIneq) {
-  slackStateIneq = std::move(multiplierCollection.stateIneq.front().lagrangian);
-  dualStateIneq = std::move(multiplierCollection.stateEq.front().lagrangian);
+void toSlackDual(const MultiplierCollection& multiplierCollection, vector_t& slackStateIneq, vector_t& dualStateIneq) {
+  slackStateIneq = extractLagrangian(multiplierCollection.stateIneq);
+  dualStateIneq = extractLagrangian(multiplierCollection.stateEq);
 }
 
-DualSolution toDualSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& slackStateIneq, vector_array_t&& dualStateIneq,
-                            vector_array_t&& slackStateInputIneq, vector_array_t&& dualStateInputIneq) {
+DualSolution toDualSolution(const std::vector<AnnotatedTime>& time, const std::vector<multiple_shooting::ConstraintsSize>& constraintsSize,
+                            const vector_array_t& slackStateIneq, const vector_array_t& dualStateIneq,
+                            const vector_array_t& slackStateInputIneq, const vector_array_t& dualStateInputIneq) {
   // Problem horizon
   const int N = static_cast<int>(time.size()) - 1;
 
@@ -152,14 +181,14 @@ DualSolution toDualSolution(const std::vector<AnnotatedTime>& time, vector_array
 
   for (int i = 0; i < N; ++i) {
     if (time[i].event == AnnotatedTime::Event::PreEvent) {
-      dualSolution.preJumps.emplace_back(toMultiplierCollection(std::move(slackStateIneq[i]), std::move(dualStateIneq[i])));
+      dualSolution.preJumps.emplace_back(toMultiplierCollection(constraintsSize[i], slackStateIneq[i], dualStateIneq[i]));
       dualSolution.intermediates.push_back(dualSolution.intermediates.back());  // no event at the initial node
     } else {
-      dualSolution.intermediates.emplace_back(toMultiplierCollection(std::move(slackStateIneq[i]), std::move(dualStateIneq[i]),
-                                                                     std::move(slackStateInputIneq[i]), std::move(dualStateInputIneq[i])));
+      dualSolution.intermediates.emplace_back(
+          toMultiplierCollection(constraintsSize[i], slackStateIneq[i], dualStateIneq[i], slackStateInputIneq[i], dualStateInputIneq[i]));
     }
   }
-  dualSolution.final = toMultiplierCollection(std::move(slackStateIneq[N]), std::move(dualStateIneq[N]));
+  dualSolution.final = toMultiplierCollection(constraintsSize[N], slackStateIneq[N], dualStateIneq[N]);
   dualSolution.intermediates.push_back(dualSolution.intermediates.back());
 
   return dualSolution;

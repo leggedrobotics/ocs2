@@ -39,7 +39,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/multiple_shooting/LagrangianEvaluation.h>
 #include <ocs2_oc/multiple_shooting/MetricsComputation.h>
 #include <ocs2_oc/multiple_shooting/PerformanceIndexComputation.h>
-#include <ocs2_oc/multiple_shooting/Transcription.h>
 #include <ocs2_oc/oc_problem/OcpSize.h>
 #include <ocs2_oc/trajectory_adjustment/TrajectorySpreadingHelperFunctions.h>
 
@@ -282,8 +281,8 @@ void IpmSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
   primalSolution_ = toPrimalSolution(timeDiscretization, std::move(x), std::move(u));
   costateTrajectory_ = std::move(lmd);
   projectionMultiplierTrajectory_ = std::move(nu);
-  slackDualTrajectory_ = ipm::toDualSolution(timeDiscretization, std::move(slackStateIneq), std::move(dualStateIneq),
-                                             std::move(slackStateInputIneq), std::move(dualStateInputIneq));
+  slackDualTrajectory_ =
+      ipm::toDualSolution(timeDiscretization, constraintsSize_, slackStateIneq, dualStateIneq, slackStateInputIneq, dualStateInputIneq);
   problemMetrics_ = multiple_shooting::toProblemMetrics(timeDiscretization, std::move(metrics));
   computeControllerTimer_.endTimer();
 
@@ -635,6 +634,7 @@ PerformanceIndex IpmSolver::setupQuadraticSubproblem(const std::vector<Annotated
   stateInputIneqConstraints_.resize(N + 1);
   constraintsProjection_.resize(N);
   projectionMultiplierCoefficients_.resize(N);
+  constraintsSize_.resize(N + 1);
   metrics.resize(N + 1);
 
   std::atomic_int timeIndex{0};
@@ -655,6 +655,7 @@ PerformanceIndex IpmSolver::setupQuadraticSubproblem(const std::vector<Annotated
         stateInputIneqConstraints_[i].resize(0, x[i].size());
         constraintsProjection_[i].resize(0, x[i].size());
         projectionMultiplierCoefficients_[i] = multiple_shooting::ProjectionMultiplierCoefficients();
+        constraintsSize_[i] = std::move(result.constraintsSize);
         if (settings_.computeLagrangeMultipliers) {
           lagrangian_[i] = multiple_shooting::evaluateLagrangianEventNode(lmd[i], lmd[i + 1], std::move(result.cost), dynamics_[i]);
         } else {
@@ -684,6 +685,7 @@ PerformanceIndex IpmSolver::setupQuadraticSubproblem(const std::vector<Annotated
         stateInputIneqConstraints_[i] = std::move(result.stateInputIneqConstraints);
         constraintsProjection_[i] = std::move(result.constraintsProjection);
         projectionMultiplierCoefficients_[i] = std::move(result.projectionMultiplierCoefficients);
+        constraintsSize_[i] = std::move(result.constraintsSize);
         if (settings_.computeLagrangeMultipliers) {
           lagrangian_[i] = multiple_shooting::evaluateLagrangianIntermediateNode(lmd[i], lmd[i + 1], nu[i], std::move(result.cost),
                                                                                  dynamics_[i], stateInputEqConstraints_[i]);
@@ -711,6 +713,7 @@ PerformanceIndex IpmSolver::setupQuadraticSubproblem(const std::vector<Annotated
       performance[workerId] += ipm::computePerformanceIndex(result, barrierParam, slackStateIneq[N]);
       stateInputEqConstraints_[i].resize(0, x[i].size());
       stateIneqConstraints_[i] = std::move(result.ineqConstraints);
+      constraintsSize_[i] = std::move(result.constraintsSize);
       if (settings_.computeLagrangeMultipliers) {
         lagrangian_[i] = multiple_shooting::evaluateLagrangianTerminalNode(lmd[i], std::move(result.cost));
       } else {

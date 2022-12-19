@@ -238,6 +238,12 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints_IneqConstraints) {
     // Feed forward part
     ASSERT_TRUE(u.isApprox(primalSolution.controllerPtr_->computeInput(t, x)));
   }
+
+  // solve with shifted horizon
+  const scalar_array_t shiftTime = {0.05, 0.1, 0.3, 0.5, 0.8, 0.12, 0.16, 0.19};
+  for (const auto e : shiftTime) {
+    solver.run(startTime + e, initState, finalTime + e);
+  }
 }
 
 TEST(test_circular_kinematics, solve_projected_EqConstraints_MixedIneqConstraints) {
@@ -326,10 +332,15 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints_MixedIneqConstraint
 
   // Check Lagrange multipliers
   for (int i = 0; i < primalSolution.timeTrajectory_.size() - 1; i++) {
-    std::cerr << "i: " << i << std::endl;
     const auto t = primalSolution.timeTrajectory_[i];
     const auto& x = primalSolution.stateTrajectory_[i];
     const auto& u = primalSolution.inputTrajectory_[i];
     ASSERT_NO_THROW(const auto multiplier = solver.getStateInputEqualityConstraintLagrangian(t, x););
+  }
+
+  // solve with shifted horizon
+  const scalar_array_t shiftTime = {0.05, 0.1, 0.3, 0.5, 0.8, 0.12, 0.16, 0.19};
+  for (const auto e : shiftTime) {
+    solver.run(startTime + e, initState, finalTime + e);
   }
 }

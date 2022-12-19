@@ -197,6 +197,12 @@ TEST(Exp1Test, Constrained) {
       ASSERT_TRUE(umax - u(0) >= 0);
     }
   }
+
+  // solve with shifted horizon
+  const scalar_array_t shiftTime = {0.05, 0.1, 0.3, 0.5, 0.8, 0.12, 0.16, 0.19};
+  for (const auto e : shiftTime) {
+    solver.run(startTime + e, initState, finalTime + e);
+  }
 }
 
 TEST(Exp1Test, MixedConstrained) {
@@ -256,5 +262,11 @@ TEST(Exp1Test, MixedConstrained) {
     const auto& u = primalSolution.inputTrajectory_[i];
     const auto constraintValue = stateInputIneqConstraintCloned->getValue(t, x, u, PreComputation());
     ASSERT_TRUE(constraintValue.minCoeff() >= 0.0);
+  }
+
+  // solve with shifted horizon
+  const scalar_array_t shiftTime = {0.05, 0.1, 0.3, 0.5, 0.8, 0.12, 0.16, 0.19};
+  for (const auto e : shiftTime) {
+    solver.run(startTime + e, initState, finalTime + e);
   }
 }

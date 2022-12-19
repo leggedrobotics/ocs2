@@ -168,4 +168,10 @@ TEST(Exp0Test, Constrained) {
       ASSERT_TRUE(umax - u(0) >= 0);
     }
   }
+
+  // solve with shifted horizon
+  const scalar_array_t shiftTime = {0.05, 0.1, 0.3, 0.5, 0.8, 0.12, 0.16, 0.19};
+  for (const auto e : shiftTime) {
+    solver.run(startTime + e, initState, finalTime + e);
+  }
 }

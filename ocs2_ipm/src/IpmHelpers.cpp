@@ -176,7 +176,7 @@ DualSolution toDualSolution(const std::vector<AnnotatedTime>& time, const std::v
   return dualSolution;
 }
 
-std::pair<vector_t, vector_t> fromDualSolution(const MultiplierCollection& multiplierCollection) {
+std::pair<vector_t, vector_t> fromMultiplierCollection(const MultiplierCollection& multiplierCollection) {
   return std::make_pair(extractLagrangian(multiplierCollection.stateIneq), extractLagrangian(multiplierCollection.stateInputIneq));
 }
 

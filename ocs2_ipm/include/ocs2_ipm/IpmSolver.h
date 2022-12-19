@@ -85,9 +85,7 @@ class IpmSolver : public SolverBase {
 
   vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const override;
 
-  MultiplierCollection getIntermediateDualSolution(scalar_t time) const override {
-    throw std::runtime_error("[IpmSolver] getIntermediateDualSolution() not available yet.");
-  }
+  MultiplierCollection getIntermediateDualSolution(scalar_t time) const override;
 
  private:
   void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override;

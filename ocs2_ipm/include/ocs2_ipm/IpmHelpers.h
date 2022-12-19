@@ -128,7 +128,7 @@ DualSolution toDualSolution(const std::vector<AnnotatedTime>& time, const std::v
  * @param multiplierCollection: The MultiplierCollection.
  * @return slack/dual variables of the state-only (first) and state-input constraints (second).
  */
-std::pair<vector_t, vector_t> fromDualSolution(const MultiplierCollection& multiplierCollection);
+std::pair<vector_t, vector_t> fromMultiplierCollection(const MultiplierCollection& multiplierCollection);
 
 }  // namespace ipm
 }  // namespace ocs2

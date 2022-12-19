@@ -113,33 +113,35 @@ scalar_t fractionToBoundaryStepSize(const vector_t& v, const vector_t& dv, scala
  * Convert the optimized slack or dual trajectories as a DualSolution.
  *
  * @param time: The time discretization.
- * @param stateIneq: The slack/dual of the state inequality constraints.
- * @param stateInputIneq: The slack/dual of the state-input inequality constraints.
+ * @param slackStateIneq: The slack variable trajectory of the state inequality constraints.
+ * @param dualStateIneq: The dual variable trajectory of the state inequality constraints.
+ * @param slackStateInputIneq: The slack variable trajectory of the state-input inequality constraints.
+ * @param dualStateInputIneq: The dual variable trajectory of the state-input inequality constraints.
  * @return A dual solution.
  */
-DualSolution toDualSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& stateIneq, vector_array_t&& stateInputIneq);
+DualSolution toDualSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& slackStateIneq, vector_array_t&& dualStateIneq,
+                            vector_array_t&& slackStateInputIneq, vector_array_t&& dualStateInputIneq);
 
 /**
- * Convert the optimized slack or dual trajectories as a DualSolution.
+ * Extracts a slack variable of the state-only and state-input constraints from a MultiplierCollection
  *
- * @param time: The time discretization.
- * @param dualSolution: The dual solution.
- * @return The slack/dual of the state inequality constraints (first) and state-input inequality constraints (second).
+ * @param[in] multiplierCollection: The MultiplierCollection.
+ * @param[out] slackStateIneq: The slack variable of the state inequality constraints.
+ * @param[out] dualStateIneq: The dual variable of the state inequality constraints.
+ * @param[out] slackStateInputIneq: The slack variable of the state-input inequality constraints.
+ * @param[out] dualStateInputIneq: The dual variable of the state-input inequality constraints.
  */
-std::pair<vector_array_t, vector_array_t> fromDualSolution(const std::vector<AnnotatedTime>& time, DualSolution&& dualSolution);
+void toSlackDual(MultiplierCollection&& multiplierCollection, vector_t& slackStateIneq, vector_t& dualStateIneq,
+                 vector_t& slackStateInputIneq, vector_t& dualStateInputIneq);
 
 /**
- * Interpolates the interior point trajectory using the stored interior point trajectory. The part of the new trajectory that is not
- * covered by the stored trajectory is set by vectors of zero size.
+ * Extracts a slack variable of the state-only constraints from a MultiplierCollection
  *
- * @param modeSchedule: Mode schedule.
- * @param time: Time discretization.
- * @param oldDualSolution: The old dual solution that stored the previous interior point trajectory.
- * @return Interpolated interior point trajectory.
+ * @param[in] multiplierCollection: The MultiplierCollection.
+ * @param[out] slackStateIneq: The slack variable of the state inequality constraints.
+ * @param[out] dualStateIneq: The dual variable of the state inequality constraints.
  */
-std::pair<vector_array_t, vector_array_t> interpolateInteriorPointTrajectory(const ModeSchedule& modeSchedule,
-                                                                             const std::vector<AnnotatedTime>& time,
-                                                                             DualSolution&& oldDualSolution);
+void toSlackDual(MultiplierCollection&& multiplierCollection, vector_t& slackStateIneq, vector_t& dualStateIneq);
 
 }  // namespace ipm
 }  // namespace ocs2

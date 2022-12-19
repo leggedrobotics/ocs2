@@ -125,13 +125,14 @@ scalar_array_t toTime(const std::vector<AnnotatedTime>& annotatedTime) {
 scalar_array_t toInterpolationTime(const std::vector<AnnotatedTime>& annotatedTime) {
   scalar_array_t timeTrajectory;
   timeTrajectory.reserve(annotatedTime.size());
-  for (size_t i = 0; i < annotatedTime.size(); i++) {
+  for (size_t i = 0; i < annotatedTime.size() - 1; i++) {
     if (annotatedTime[i].event == AnnotatedTime::Event::PostEvent) {
       timeTrajectory.push_back(getInterpolationTime(annotatedTime[i]));
     } else {
       timeTrajectory.push_back(annotatedTime[i].time);
     }
   }
+  timeTrajectory.push_back(annotatedTime.back().time - numeric_traits::limitEpsilon<scalar_t>());
   return timeTrajectory;
 }
 

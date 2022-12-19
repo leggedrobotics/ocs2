@@ -101,8 +101,7 @@ void IpmSolver::reset() {
   primalSolution_ = PrimalSolution();
   costateTrajectory_.clear();
   projectionMultiplierTrajectory_.clear();
-  slackIneqTrajectory_.clear();
-  dualIneqTrajectory_.clear();
+  slackDualTrajectory_.clear();
   valueFunction_.clear();
   performanceIndeces_.clear();
 
@@ -205,33 +204,25 @@ void IpmSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
     ocpDefinition.targetTrajectoriesPtr = &targetTrajectories;
   }
 
-  // Interior point variables
-  scalar_t barrierParam = settings_.initialBarrierParameter;
-  vector_array_t slackStateIneq, slackStateInputIneq, dualStateIneq, dualStateInputIneq;
-  if (!slackIneqTrajectory_.timeTrajectory.empty()) {
-    const auto& oldModeSchedule = primalSolution_.modeSchedule_;
-    const auto& newModeSchedule = this->getReferenceManager().getModeSchedule();
-    std::ignore = trajectorySpread(oldModeSchedule, newModeSchedule, slackIneqTrajectory_);
-    std::ignore = trajectorySpread(oldModeSchedule, newModeSchedule, dualIneqTrajectory_);
-    std::tie(slackStateIneq, slackStateInputIneq) =
-        ipm::interpolateInteriorPointTrajectory(newModeSchedule, timeDiscretization, std::move(slackIneqTrajectory_));
-    std::tie(dualStateIneq, dualStateInputIneq) =
-        ipm::interpolateInteriorPointTrajectory(newModeSchedule, timeDiscretization, std::move(dualIneqTrajectory_));
-  } else {
-    slackStateIneq.resize(timeDiscretization.size());
-    slackStateInputIneq.resize(timeDiscretization.size() - 1);
-    dualStateIneq.resize(timeDiscretization.size());
-    dualStateInputIneq.resize(timeDiscretization.size() - 1);
-  }
+  // old and new mode schedules for the trajectory spreading
+  const auto oldModeSchedule = primalSolution_.modeSchedule_;
+  const auto& newModeSchedule = this->getReferenceManager().getModeSchedule();
 
-  // Trajectory spread of primalSolution_ after trajectory spread of the interior point variables
+  // Initialize the state and input
   if (!primalSolution_.timeTrajectory_.empty()) {
-    std::ignore = trajectorySpread(primalSolution_.modeSchedule_, this->getReferenceManager().getModeSchedule(), primalSolution_);
+    std::ignore = trajectorySpread(oldModeSchedule, newModeSchedule, primalSolution_);
   }
-
-  // Initialize the state and input after trajectory spread of primalSolution_
   vector_array_t x, u;
   multiple_shooting::initializeStateInputTrajectories(initState, timeDiscretization, primalSolution_, *initializerPtr_, x, u);
+
+  // Initialize the slack and dual variables of the interior point method
+  if (!slackDualTrajectory_.timeTrajectory.empty()) {
+    std::ignore = trajectorySpread(oldModeSchedule, newModeSchedule, slackDualTrajectory_);
+  }
+  scalar_t barrierParam = settings_.initialBarrierParameter;
+  vector_array_t slackStateIneq, dualStateIneq, slackStateInputIneq, dualStateInputIneq;
+  initializeSlackDualTrajectory(timeDiscretization, x, u, barrierParam, slackStateIneq, dualStateIneq, slackStateInputIneq,
+                                dualStateInputIneq);
 
   // Initialize the costate and projection multiplier
   vector_array_t lmd, nu;
@@ -261,7 +252,7 @@ void IpmSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
     solveQpTimer_.startTimer();
     const vector_t delta_x0 = initState - x[0];
     const auto deltaSolution =
-        getOCPSolution(delta_x0, barrierParam, slackStateIneq, slackStateInputIneq, dualStateIneq, dualStateInputIneq);
+        getOCPSolution(delta_x0, barrierParam, slackStateIneq, dualStateIneq, slackStateInputIneq, dualStateInputIneq);
     extractValueFunction(timeDiscretization, x, lmd, deltaSolution.deltaXSol);
     solveQpTimer_.endTimer();
 
@@ -291,8 +282,8 @@ void IpmSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
   primalSolution_ = toPrimalSolution(timeDiscretization, std::move(x), std::move(u));
   costateTrajectory_ = std::move(lmd);
   projectionMultiplierTrajectory_ = std::move(nu);
-  slackIneqTrajectory_ = ipm::toDualSolution(timeDiscretization, std::move(slackStateIneq), std::move(slackStateInputIneq));
-  dualIneqTrajectory_ = ipm::toDualSolution(timeDiscretization, std::move(dualStateIneq), std::move(dualStateInputIneq));
+  slackDualTrajectory_ = ipm::toDualSolution(timeDiscretization, std::move(slackStateIneq), std::move(dualStateIneq),
+                                             std::move(slackStateInputIneq), std::move(dualStateInputIneq));
   problemMetrics_ = multiple_shooting::toProblemMetrics(timeDiscretization, std::move(metrics));
   computeControllerTimer_.endTimer();
 
@@ -380,9 +371,122 @@ void IpmSolver::initializeProjectionMultiplierTrajectory(const std::vector<Annot
   }
 }
 
+void IpmSolver::initializeSlackDualTrajectory(const std::vector<AnnotatedTime>& timeDiscretization, const vector_array_t& x,
+                                              const vector_array_t& u, scalar_t barrierParam, vector_array_t& slackStateIneq,
+                                              vector_array_t& dualStateIneq, vector_array_t& slackStateInputIneq,
+                                              vector_array_t& dualStateInputIneq) {
+  const auto& oldTimeTrajectory = slackDualTrajectory_.timeTrajectory;
+  const auto& oldPostEventIndices = slackDualTrajectory_.postEventIndices;
+  const auto newTimeTrajectory = toInterpolationTime(timeDiscretization);
+  const auto newPostEventIndices = toPostEventIndices(timeDiscretization);
+
+  // find the time period that we can interpolate the cached solution
+  const auto timePeriod = std::make_pair(newTimeTrajectory.front(), newTimeTrajectory.back());
+  const auto interpolatableTimePeriod =
+      findIntersectionToExtendableInterval(oldTimeTrajectory, this->getReferenceManager().getModeSchedule().eventTimes, timePeriod);
+  const bool interpolateTillFinalTime = numerics::almost_eq(interpolatableTimePeriod.second, timePeriod.second);
+  const auto cacheEventIndexBias = [&]() -> size_t {
+    if (!newPostEventIndices.empty()) {
+      const auto firstEventTime = newTimeTrajectory[newPostEventIndices[0] - 1];
+      return getNumberOfPrecedingEvents(oldTimeTrajectory, oldPostEventIndices, firstEventTime);
+    } else {
+      return 0;
+    }
+  }();
+
+  auto& ocpDefinition = ocpDefinitions_.front();
+  const size_t N = static_cast<int>(timeDiscretization.size()) - 1;  // size of the input trajectory
+  slackStateIneq.resize(N + 1);
+  dualStateIneq.resize(N + 1);
+  slackStateInputIneq.resize(N);
+  dualStateInputIneq.resize(N);
+
+  int eventIdx = 0;
+  for (size_t i = 0; i < N; i++) {
+    if (timeDiscretization[i].event == AnnotatedTime::Event::PreEvent) {
+      const auto cachedEventIndex = cacheEventIndexBias + eventIdx;
+      if (cachedEventIndex < slackDualTrajectory_.preJumps.size()) {
+        ipm::toSlackDual(std::move(slackDualTrajectory_.preJumps[cachedEventIndex]), slackStateIneq[i], dualStateIneq[i]);
+      } else {
+        const auto time = newTimeTrajectory[i];
+        const auto& state = x[i];
+        constexpr auto request = Request::Constraint;
+        ocpDefinition.preComputationPtr->requestPreJump(request, time, state);
+        auto& preComputation = *ocpDefinition.preComputationPtr;
+        if (!ocpDefinition.preJumpInequalityConstraintPtr->empty()) {
+          const auto ineqConstraint = toVector(ocpDefinition.preJumpInequalityConstraintPtr->getValue(time, state, preComputation));
+          slackStateIneq[i] =
+              ipm::initializeSlackVariable(ineqConstraint, settings_.initialSlackLowerBound, settings_.initialSlackMarginRate);
+          dualStateIneq[i] = ipm::initializeDualVariable(slackStateIneq[i], barrierParam, settings_.initialDualLowerBound,
+                                                         settings_.initialDualMarginRate);
+        } else {
+          slackStateIneq[i].resize(0);
+          dualStateIneq[i].resize(0);
+        }
+      }
+      slackStateInputIneq[i].resize(0);
+      dualStateInputIneq[i].resize(0);
+      ++eventIdx;
+    } else {
+      const auto time = newTimeTrajectory[i];
+      if (interpolatableTimePeriod.first <= time && time <= interpolatableTimePeriod.second) {
+        ipm::toSlackDual(getIntermediateDualSolutionAtTime(slackDualTrajectory_, time), slackStateIneq[i], dualStateIneq[i],
+                         slackStateInputIneq[i], dualStateInputIneq[i]);
+      } else {
+        constexpr auto request = Request::Constraint;
+        const auto& state = x[i];
+        const auto& input = u[i];
+        ocpDefinition.preComputationPtr->request(request, time, state, input);
+        if (!ocpDefinition.stateInequalityConstraintPtr->empty() && i > 0) {
+          const auto ineqConstraint =
+              toVector(ocpDefinition.stateInequalityConstraintPtr->getValue(time, state, *ocpDefinition.preComputationPtr));
+          slackStateIneq[i] =
+              ipm::initializeSlackVariable(ineqConstraint, settings_.initialSlackLowerBound, settings_.initialSlackMarginRate);
+          dualStateIneq[i] = ipm::initializeDualVariable(slackStateIneq[i], barrierParam, settings_.initialDualLowerBound,
+                                                         settings_.initialDualMarginRate);
+        } else {
+          slackStateIneq[i].resize(0);
+          dualStateIneq[i].resize(0);
+        }
+        if (!ocpDefinition.inequalityConstraintPtr->empty()) {
+          const auto ineqConstraint =
+              toVector(ocpDefinition.inequalityConstraintPtr->getValue(time, state, input, *ocpDefinition.preComputationPtr));
+          slackStateInputIneq[i] =
+              ipm::initializeSlackVariable(ineqConstraint, settings_.initialSlackLowerBound, settings_.initialSlackMarginRate);
+          dualStateInputIneq[i] = ipm::initializeDualVariable(slackStateInputIneq[i], barrierParam, settings_.initialDualLowerBound,
+                                                              settings_.initialDualMarginRate);
+        } else {
+          slackStateInputIneq[i].resize(0);
+          dualStateInputIneq[i].resize(0);
+        }
+      }
+    }
+  }
+
+  if (interpolateTillFinalTime) {
+    ipm::toSlackDual(std::move(slackDualTrajectory_.final), slackStateIneq[N], dualStateIneq[N]);
+  } else {
+    const auto time = newTimeTrajectory[N];
+    const auto& state = x[N];
+    constexpr auto request = Request::Constraint;
+    ocpDefinition.preComputationPtr->requestFinal(request, time, state);
+    auto& preComputation = *ocpDefinition.preComputationPtr;
+    if (!ocpDefinition.finalInequalityConstraintPtr->empty()) {
+      const auto ineqConstraint = toVector(ocpDefinition.finalInequalityConstraintPtr->getValue(time, state, preComputation));
+      slackStateIneq[N] = ipm::initializeSlackVariable(ineqConstraint, settings_.initialSlackLowerBound, settings_.initialSlackMarginRate);
+      dualStateIneq[N] =
+          ipm::initializeDualVariable(slackStateIneq[N], barrierParam, settings_.initialDualLowerBound, settings_.initialDualMarginRate);
+    } else {
+      slackStateIneq[N].resize(0);
+      dualStateIneq[N].resize(0);
+    }
+  }
+}
+
 IpmSolver::OcpSubproblemSolution IpmSolver::getOCPSolution(const vector_t& delta_x0, scalar_t barrierParam,
-                                                           const vector_array_t& slackStateIneq, const vector_array_t& slackStateInputIneq,
-                                                           const vector_array_t& dualStateIneq, const vector_array_t& dualStateInputIneq) {
+                                                           const vector_array_t& slackStateIneq, const vector_array_t& dualStateIneq,
+                                                           const vector_array_t& slackStateInputIneq,
+                                                           const vector_array_t& dualStateInputIneq) {
   // Solve the QP
   OcpSubproblemSolution solution;
   auto& deltaXSol = solution.deltaXSol;
@@ -409,14 +513,14 @@ IpmSolver::OcpSubproblemSolution IpmSolver::getOCPSolution(const vector_t& delta
   auto& deltaLmdSol = solution.deltaLmdSol;
   auto& deltaNuSol = solution.deltaNuSol;
   auto& deltaSlackStateIneq = solution.deltaSlackStateIneq;
-  auto& deltaSlackStateInputIneq = solution.deltaSlackStateInputIneq;
   auto& deltaDualStateIneq = solution.deltaDualStateIneq;
+  auto& deltaSlackStateInputIneq = solution.deltaSlackStateInputIneq;
   auto& deltaDualStateInputIneq = solution.deltaDualStateInputIneq;
   deltaLmdSol.resize(N + 1);
   deltaNuSol.resize(N);
   deltaSlackStateIneq.resize(N + 1);
-  deltaSlackStateInputIneq.resize(N);
   deltaDualStateIneq.resize(N + 1);
+  deltaSlackStateInputIneq.resize(N);
   deltaDualStateInputIneq.resize(N);
 
   scalar_array_t primalStepSizes(settings_.nThreads, 1.0);
@@ -517,9 +621,9 @@ PrimalSolution IpmSolver::toPrimalSolution(const std::vector<AnnotatedTime>& tim
 
 PerformanceIndex IpmSolver::setupQuadraticSubproblem(const std::vector<AnnotatedTime>& time, const vector_t& initState,
                                                      const vector_array_t& x, const vector_array_t& u, const vector_array_t& lmd,
-                                                     const vector_array_t& nu, scalar_t barrierParam, vector_array_t& slackStateIneq,
-                                                     vector_array_t& slackStateInputIneq, vector_array_t& dualStateIneq,
-                                                     vector_array_t& dualStateInputIneq, std::vector<Metrics>& metrics) {
+                                                     const vector_array_t& nu, scalar_t barrierParam, const vector_array_t& slackStateIneq,
+                                                     const vector_array_t& slackStateInputIneq, const vector_array_t& dualStateIneq,
+                                                     const vector_array_t& dualStateInputIneq, std::vector<Metrics>& metrics) {
   // Problem horizon
   const int N = static_cast<int>(time.size()) - 1;
 
@@ -543,14 +647,6 @@ PerformanceIndex IpmSolver::setupQuadraticSubproblem(const std::vector<Annotated
       if (time[i].event == AnnotatedTime::Event::PreEvent) {
         // Event node
         auto result = multiple_shooting::setupEventNode(ocpDefinition, time[i].time, x[i], x[i + 1]);
-        if (slackStateIneq[i].size() != result.ineqConstraints.f.size()) {
-          slackStateIneq[i] =
-              ipm::initializeSlackVariable(result.ineqConstraints.f, settings_.initialSlackLowerBound, settings_.initialSlackMarginRate);
-          dualStateIneq[i] = ipm::initializeDualVariable(slackStateIneq[i], barrierParam, settings_.initialDualLowerBound,
-                                                         settings_.initialDualMarginRate);
-          slackStateInputIneq[i].resize(0);
-          dualStateInputIneq[i].resize(0);
-        }
         metrics[i] = multiple_shooting::computeMetrics(result);
         performance[workerId] += ipm::computePerformanceIndex(result, barrierParam, slackStateIneq[i]);
         dynamics_[i] = std::move(result.dynamics);
@@ -578,18 +674,6 @@ PerformanceIndex IpmSolver::setupQuadraticSubproblem(const std::vector<Annotated
         if (i == 0) {
           result.stateIneqConstraints.setZero(0, x[i].size());
           std::fill(result.constraintsSize.stateIneq.begin(), result.constraintsSize.stateIneq.end(), 0);
-        }
-        if (slackStateIneq[i].size() != result.stateIneqConstraints.f.size()) {
-          slackStateIneq[i] = ipm::initializeSlackVariable(result.stateIneqConstraints.f, settings_.initialSlackLowerBound,
-                                                           settings_.initialSlackMarginRate);
-          dualStateIneq[i] = ipm::initializeDualVariable(slackStateIneq[i], barrierParam, settings_.initialDualLowerBound,
-                                                         settings_.initialDualMarginRate);
-        }
-        if (slackStateInputIneq[i].size() != result.stateInputIneqConstraints.f.size()) {
-          slackStateInputIneq[i] = ipm::initializeSlackVariable(result.stateInputIneqConstraints.f, settings_.initialSlackLowerBound,
-                                                                settings_.initialSlackMarginRate);
-          dualStateInputIneq[i] = ipm::initializeDualVariable(slackStateInputIneq[i], barrierParam, settings_.initialDualLowerBound,
-                                                              settings_.initialDualMarginRate);
         }
         metrics[i] = multiple_shooting::computeMetrics(result);
         performance[workerId] += ipm::computePerformanceIndex(result, dt, barrierParam, slackStateIneq[i], slackStateInputIneq[i]);
@@ -623,12 +707,6 @@ PerformanceIndex IpmSolver::setupQuadraticSubproblem(const std::vector<Annotated
     if (i == N) {  // Only one worker will execute this
       const scalar_t tN = getIntervalStart(time[N]);
       auto result = multiple_shooting::setupTerminalNode(ocpDefinition, tN, x[N]);
-      if (slackStateIneq[N].size() != result.ineqConstraints.f.size()) {
-        slackStateIneq[N] =
-            ipm::initializeSlackVariable(result.ineqConstraints.f, settings_.initialSlackLowerBound, settings_.initialSlackMarginRate);
-        dualStateIneq[N] =
-            ipm::initializeDualVariable(slackStateIneq[N], barrierParam, settings_.initialDualLowerBound, settings_.initialDualMarginRate);
-      }
       metrics[i] = multiple_shooting::computeMetrics(result);
       performance[workerId] += ipm::computePerformanceIndex(result, barrierParam, slackStateIneq[N]);
       stateInputEqConstraints_[i].resize(0, x[i].size());

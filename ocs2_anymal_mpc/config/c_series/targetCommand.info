@@ -1,0 +1,20 @@
+targetDisplacementVelocity    0.5;
+targetRotationVelocity        0.3;
+
+comHeight                     0.57;
+
+defaultJointState
+{
+   (0,0)  -0.25;    LF_HAA
+   (1,0)   0.60;    LF_HFE
+   (2,0)  -0.85;    LF_KFE
+   (3,0)   0.25;    RF_HAA
+   (4,0)   0.60;    RF_HFE
+   (5,0)  -0.85;    RF_KFE
+   (6,0)  -0.25;    LH_HAA
+   (7,0)  -0.60;    LH_HFE
+   (8,0)   0.85;    LH_KFE
+   (9,0)   0.25;    RH_HAA
+   (10,0) -0.60;    RH_HFE
+   (11,0)  0.85;    RH_KFE
+}

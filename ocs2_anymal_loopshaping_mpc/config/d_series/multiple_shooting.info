@@ -1,0 +1,21 @@
+multiple_shooting
+{
+  dt                                    0.015
+  alpha_min                             1e-2 ; = 7 tries before terminating
+  sqpIteration                          1
+  deltaTol                              1e-4
+  g_max                                 1e-2
+  g_min                                 1e-5
+  inequalityConstraintMu                0.1
+  inequalityConstraintDelta             5.0
+  projectStateInputEqualityConstraints  true
+  printSolverStatistics                 true
+  printSolverStatus                     false
+  printLinesearch                       false
+  enableLogging                         true
+  logSize                               50000
+  useFeedbackPolicy                     true
+  integratorType                        RK2
+  nThreads                              4
+  threadPriority                        50
+}

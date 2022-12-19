@@ -1,0 +1,46 @@
+<launch>
+
+  <arg name="robot_name"/>
+  <arg name="description_name"/>
+
+  <!-- Load cerberus description -->
+  <group if="$(eval arg('robot_name') == 'cerberus')">
+    <include file="$(find rosparam_tools)/launch/load_rosparam.launch">
+      <arg name="parameter"       value="$(arg description_name)"/>
+      <arg name="file"            value="$(find ocs2_anymal_models)/urdf/anymal_cerberus_rsl.urdf"/>
+    </include>
+  </group>
+
+  <!-- Load chimera description -->
+  <group if="$(eval arg('robot_name') == 'chimera')">
+    <include file="$(find rosparam_tools)/launch/load_rosparam.launch">
+      <arg name="parameter"       value="$(arg description_name)"/>
+      <arg name="file"            value="$(find ocs2_anymal_models)/urdf/anymal_chimera_rsl.urdf"/>
+    </include>
+  </group>
+
+  <!-- Load camel description -->
+  <group if="$(eval arg('robot_name') == 'camel')">
+    <include file="$(find rosparam_tools)/launch/load_rosparam.launch">
+      <arg name="parameter"       value="$(arg description_name)"/>
+      <arg name="file"            value="$(find ocs2_anymal_models)/urdf/anymal_camel_rsl.urdf"/>
+    </include>
+  </group>
+
+  <!-- Load dingo description -->
+  <group if="$(eval arg('robot_name') == 'dingo')">
+    <include file="$(find rosparam_tools)/launch/load_rosparam.launch">
+      <arg name="parameter"       value="$(arg description_name)"/>
+      <arg name="file"            value="$(find anymal_dingo_rsl)/urdf/cached_anymal_dingo_rsl.urdf"/>
+    </include>
+  </group>
+
+  <!-- Load donkey description -->
+  <group if="$(eval arg('robot_name') == 'donkey')">
+    <include file="$(find rosparam_tools)/launch/load_rosparam.launch">
+      <arg name="parameter"       value="$(arg description_name)"/>
+      <arg name="file"            value="$(find anymal_donkey_rsl)/urdf/cached_anymal_donkey_rsl.urdf"/>
+    </include>
+  </group>
+
+</launch>

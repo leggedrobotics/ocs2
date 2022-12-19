@@ -1,0 +1,11 @@
+<launch>
+
+  <arg name="description_name"      default=""/>
+
+  <!-- Launch rviz with specific configuration -->
+  <node name="rviz_ocs2" pkg="rviz" type="rviz"  args="-d $(find ocs2_quadruped_interface)/config/config.rviz">
+  </node>
+
+</launch>
+
+

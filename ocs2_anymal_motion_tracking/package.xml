@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ocs2_anymal_motion_tracking</name>
+  <version>0.0.0</version>
+  <description>ocs2_anymal_motion_tracking</description>
+
+  <maintainer email="rgrandia@ethz.ch">ruben</maintainer>
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>roslib</depend>
+  <depend>ocs2_anymal_mpc</depend>
+  <depend>ocs2_quadruped_loopshaping_interface</depend>
+  <depend>ocs2_robotic_assets</depend>
+  <depend>ocs2_pinocchio_interface</depend>
+  <depend>ocs2_anymal_loopshaping_mpc</depend>
+
+</package>

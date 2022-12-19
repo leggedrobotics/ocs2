@@ -1,0 +1,18 @@
+multiple_shooting
+{
+  dt                                    0.015
+  sqpIteration                          1
+  deltaTol                              1e-4
+  g_max                                 1e-2
+  g_min                                 1e-6
+  inequalityConstraintMu                0.1
+  inequalityConstraintDelta             5.0
+  projectStateInputEqualityConstraints  true
+  printSolverStatistics                 true
+  printSolverStatus                     false
+  printLinesearch                       false
+  useFeedbackPolicy                     true
+  integratorType                        RK2
+  nThreads                              4
+  threadPriority                        50
+}

@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ocs2_anymal_models</name>
+  <version>0.0.1</version>
+  <description>The ocs2_anymal_models package</description>
+
+  <maintainer email="farbod.farshidian@gmail.com">Farbod Farshidian</maintainer>
+  <maintainer email="jcarius@ethz.ch">Jan Carius</maintainer>
+  <maintainer email="rgrandia@ethz.ch">Ruben Grandia</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>ocs2_switched_model_interface</depend>
+  <depend>ocs2_pinocchio_interface</depend>
+  <depend>ocs2_robotic_tools</depend>
+  <depend>roslib</depend>
+  <exec_depend>rosparam_tools</exec_depend>
+  <exec_depend>anymal_cerberus_rsl</exec_depend>
+  <exec_depend>anymal_chimera_rsl</exec_depend>
+  <exec_depend>anymal_camel_rsl</exec_depend>
+  <exec_depend>anymal_dingo_rsl</exec_depend>
+  <exec_depend>anymal_donkey_rsl</exec_depend>
+
+</package>

@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ocs2_anymal_mpc</name>
+  <version>0.0.0</version>
+  <description>The ocs2_anymal_mpc package</description>
+
+  <maintainer email="farbod@todo.todo">farbod</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>roslib</depend>
+  <depend>ocs2_anymal_models</depend>
+  <depend>ocs2_quadruped_interface</depend>
+
+  <exec_depend>ocs2_anymal_commands</exec_depend>
+
+</package>

@@ -1,0 +1,8 @@
+<launch>
+
+  <include file="$(find ocs2_anymal_loopshaping_mpc)/launch/mpc.launch">
+   <arg name="robot_name"           value="dingo"/>
+   <arg name="config_name"          value="d_series"/>
+  </include>
+
+</launch>

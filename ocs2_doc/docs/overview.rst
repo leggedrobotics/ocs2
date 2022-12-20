@@ -9,11 +9,11 @@ Overview
 for **S**\ witched **S**\ ystems (OCS2). The toolbox provides an 
 efficient implementation of the following algorithms:
 
-* **SLQ**\: Continuous-time domain constrained DDP
-* **iLQR**\: Discrete-time domain constrained DDP
-* **SQP**\: Multiple-shooting algorithm based on `HPIPM <href="https://github.com/giaf/hpipm"/>`__
-* **IPM**\: Multiple-shooting algorithm based on nonlinear interior point method
-* **SLP**\: Sequential Linear Programming based on `PIPG <href="https://arxiv.org/abs/2009.06980"/>`__
+* **SLQ**\: Continuous-time domain constrained DDP.
+* **iLQR**\: Discrete-time domain constrained DDP.
+* **SQP**\: Multiple-shooting algorithm based on `HPIPM <https://github.com/giaf/hpipm>`__.
+* **SLP**\: Sequential Linear Programming based on `PIPG <https://arxiv.org/abs/2009.06980>`__.
+* **IPM**\: Multiple-shooting algorithm based on nonlinear interior point method.
 
 OCS2 handles general path constraints through Augmented Lagrangian or 
 relaxed barrier methods. To facilitate the application of OCS2 in robotic 
@@ -81,9 +81,10 @@ supports the development of OCS2.
 
 Citing OCS2
 ~~~~~~~~~~~
+
 To cite the toolbox in your academic research, please use the following:
 
-.. code-block::
+.. code-block:: latex
 
       @misc{OCS2,
          title = {{OCS2}:  An  open  source  library  for  Optimal  Control  of  Switched Systems},
@@ -93,10 +94,10 @@ To cite the toolbox in your academic research, please use the following:
 
 Tutorials
 ~~~~~~~~~
-* Tutorial on OCS2 Toolbox, Farbod Farshidian, 
-MPC Workshop at RSS 2021 `link <href="https://youtu.be/RYmQN9GbFYg"/>`__
-* Real-time optimal control for legged locomotion & manipulation, Marco Hutter, 
-MPC Workshop at RSS 2021 `link <href="https://youtu.be/sjAENmtO4bA"/>`__
+
+* Tutorial on OCS2 toolbox, Farbod Farshidian, MPC Workshop, RSS 2021 (`link <https://youtu.be/RYmQN9GbFYg>`__).
+
+* Real-time optimal control for legged locomotion and manipulation, Marco Hutter, MPC Workshop, RSS 2021 (`link <https://youtu.be/sjAENmtO4bA>`__).
 
 
 Related publications

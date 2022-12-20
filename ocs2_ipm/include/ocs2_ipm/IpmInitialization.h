@@ -109,8 +109,8 @@ vector_t initializeTerminalSlackVariable(OptimalControlProblem& ocpDefinition, s
  * @param initialSlackMarginRate : Additional margin rate of the initial slack variables. Corresponds to `slack_bound_frac` option of IPOPT.
  * @return Initialized slack variable of the pre-jump state-only constraints.
  */
-vector_t initializePreJumpSlackVariable(OptimalControlProblem& ocpDefinition, scalar_t time, const vector_t& state,
-                                        scalar_t initialSlackLowerBound, scalar_t initialSlackMarginRate);
+vector_t initializeEventSlackVariable(OptimalControlProblem& ocpDefinition, scalar_t time, const vector_t& state,
+                                      scalar_t initialSlackLowerBound, scalar_t initialSlackMarginRate);
 
 }  // namespace ipm
 }  // namespace ocs2

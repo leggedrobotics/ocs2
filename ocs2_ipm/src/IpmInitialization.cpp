@@ -69,8 +69,8 @@ vector_t initializeTerminalSlackVariable(OptimalControlProblem& ocpDefinition, s
   return initializeSlackVariable(ineqConstraint, initialSlackLowerBound, initialSlackMarginRate);
 }
 
-vector_t initializePreJumpSlackVariable(OptimalControlProblem& ocpDefinition, scalar_t time, const vector_t& state,
-                                        scalar_t initialSlackLowerBound, scalar_t initialSlackMarginRate) {
+vector_t initializeEventSlackVariable(OptimalControlProblem& ocpDefinition, scalar_t time, const vector_t& state,
+                                      scalar_t initialSlackLowerBound, scalar_t initialSlackMarginRate) {
   if (ocpDefinition.preJumpInequalityConstraintPtr->empty()) {
     return vector_t();
   }

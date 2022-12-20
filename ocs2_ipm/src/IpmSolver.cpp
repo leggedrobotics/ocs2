@@ -425,8 +425,8 @@ void IpmSolver::initializeSlackDualTrajectory(const std::vector<AnnotatedTime>& 
         std::tie(slackStateIneq[i], std::ignore) = ipm::fromMultiplierCollection(slackIneqTrajectory_.preJumps[cachedEventIndex]);
         std::tie(dualStateIneq[i], std::ignore) = ipm::fromMultiplierCollection(dualIneqTrajectory_.preJumps[cachedEventIndex]);
       } else {
-        slackStateIneq[i] = ipm::initializePreJumpSlackVariable(ocpDefinition, getIntervalStart(timeDiscretization[i]), x[i],
-                                                                settings_.initialSlackLowerBound, settings_.initialSlackMarginRate);
+        slackStateIneq[i] = ipm::initializeEventSlackVariable(ocpDefinition, getIntervalStart(timeDiscretization[i]), x[i],
+                                                              settings_.initialSlackLowerBound, settings_.initialSlackMarginRate);
         dualStateIneq[i] =
             ipm::initializeDualVariable(slackStateIneq[i], barrierParam, settings_.initialDualLowerBound, settings_.initialDualMarginRate);
       }

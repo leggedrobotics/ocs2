@@ -425,7 +425,8 @@ void IpmSolver::initializeSlackDualTrajectory(const std::vector<AnnotatedTime>& 
         std::tie(slackStateIneq[i], std::ignore) = ipm::fromMultiplierCollection(slackIneqTrajectory_.preJumps[cachedEventIndex]);
         std::tie(dualStateIneq[i], std::ignore) = ipm::fromMultiplierCollection(dualIneqTrajectory_.preJumps[cachedEventIndex]);
       } else {
-        slackStateIneq[i] = ipm::initializeEventSlackVariable(ocpDefinition, getIntervalStart(timeDiscretization[i]), x[i],
+        scalar_t time = timeDiscretization[i].time;
+        slackStateIneq[i] = ipm::initializeEventSlackVariable(ocpDefinition, timeDiscretization[i].time, x[i],
                                                               settings_.initialSlackLowerBound, settings_.initialSlackMarginRate);
         dualStateIneq[i] =
             ipm::initializeDualVariable(slackStateIneq[i], barrierParam, settings_.initialDualLowerBound, settings_.initialDualMarginRate);
@@ -434,7 +435,7 @@ void IpmSolver::initializeSlackDualTrajectory(const std::vector<AnnotatedTime>& 
       dualStateInputIneq[i].resize(0);
       ++eventIdx;
     } else {
-      const auto time = getIntervalStart(timeDiscretization[i]);
+      const scalar_t time = getIntervalStart(timeDiscretization[i]);
       if (interpolatableTimePeriod.first <= time && time <= interpolatableTimePeriod.second) {
         std::tie(slackStateIneq[i], slackStateInputIneq[i]) =
             ipm::fromMultiplierCollection(getIntermediateDualSolutionAtTime(slackIneqTrajectory_, time));

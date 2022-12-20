@@ -108,6 +108,7 @@
 <li class="toctree-l1"><a class="reference internal" href="robotic_examples.html">Robotic Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="from_urdf_to_ocp.html">From URDF to OCP</a></li>
 <li class="toctree-l1"><a class="reference internal" href="profiling.html">How to Profile the Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mpcnet.html">MPC-Net</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
 </ul>
 
@@ -263,6 +264,42 @@ make -j4 <span class="o">&amp;&amp;</span> sudo checkinstall
 </div></blockquote>
 </li>
 <li><p><a class="reference external" href="https://github.com/ANYbotics/grid_map">Grid Map</a> catkin package, which may be installed with <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">apt</span> <span class="pre">install</span> <span class="pre">ros-noetic-grid-map-msgs</span></code>.</p></li>
+<li><p><a class="reference external" href="https://github.com/microsoft/onnxruntime">ONNX Runtime</a> is an inferencing and training accelerator. Here, it is used for deploying learned <a class="reference internal" href="mpcnet.html#doxid-ocs2-doc-mpcnet"><span class="std std-ref">MPC-Net</span></a> policies in C++ code. To locally install it, do the following:</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> /tmp
+wget https://github.com/microsoft/onnxruntime/releases/download/v1.7.0/onnxruntime-linux-x64-1.7.0.tgz
+tar xf onnxruntime-linux-x64-1.7.0.tgz
+mkdir -p ~/.local/bin ~/.local/include/onnxruntime ~/.local/lib ~/.local/share/cmake/onnxruntime
+rsync -a /tmp/onnxruntime-linux-x64-1.7.0/include/ ~/.local/include/onnxruntime
+rsync -a /tmp/onnxruntime-linux-x64-1.7.0/lib/ ~/.local/lib
+rsync -a ~/git/ocs2/ocs2_mpcnet/ocs2_mpcnet_core/misc/onnxruntime/cmake/ ~/.local/share/cmake/onnxruntime
+</pre></div>
+</div>
+<p>We provide custom cmake config and version files to enable <code class="docutils literal notranslate"><span class="pre">find_package(onnxruntime)</span></code> without modifying <code class="docutils literal notranslate"><span class="pre">LIBRARY_PATH</span></code> and <code class="docutils literal notranslate"><span class="pre">LD_LIBRARY_PATH</span></code>. Note that the last command above assumes that you cloned OCS2 into the folder <code class="docutils literal notranslate"><span class="pre">git</span></code> in your user’s home directory.</p>
+</div></blockquote>
+</li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/venv.html">Virtual environments</a> are recommended when training <a class="reference internal" href="mpcnet.html#doxid-ocs2-doc-mpcnet"><span class="std std-ref">MPC-Net</span></a> policies:</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo apt-get install python3-venv
+</pre></div>
+</div>
+<p>Create an environment and give it access to the system site packages:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir venvs <span class="o">&amp;&amp;</span> <span class="nb">cd</span> venvs
+python3 -m venv mpcnet
+</pre></div>
+</div>
+<p>Activate the environment and install the requirements:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span> ~/venvs/mpcnet/bin/activate
+python3 -m pip install -r ~/git/ocs2/ocs2_mpcnet/ocs2_mpcnet_core/requirements.txt
+</pre></div>
+</div>
+<p>Newer graphics cards might require a CUDA capability which is currently not supported by the standard PyTorch installation.
+In that case check <a class="reference external" href="https://pytorch.org/get-started/locally/">PyTorch Start Locally</a> for a compatible version and, e.g., run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip3 install <span class="nv">torch</span><span class="o">==</span><span class="m">1</span>.10.2+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html
+</pre></div>
+</div>
+</div></blockquote>
+</li>
 </ul>
 </div>
 </div>

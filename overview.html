@@ -92,6 +92,8 @@
 <li class="toctree-l2"><a class="reference internal" href="#how-to-use-the-ocs2-toolbox">How to use the OCS2 toolbox?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#licence">Licence</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#credits">Credits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#citing-ocs2">Citing OCS2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#tutorials">Tutorials</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#related-publications">Related publications</a></li>
 </ul>
 </li>
@@ -101,6 +103,7 @@
 <li class="toctree-l1"><a class="reference internal" href="robotic_examples.html">Robotic Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="from_urdf_to_ocp.html">From URDF to OCP</a></li>
 <li class="toctree-l1"><a class="reference internal" href="profiling.html">How to Profile the Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mpcnet.html">MPC-Net</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
 </ul>
 
@@ -175,10 +178,11 @@
 for <strong>S</strong>witched <strong>S</strong>ystems (OCS2). The toolbox provides an
 efficient implementation of the following algorithms:</p>
 <ul class="simple">
-<li><p><strong>SLQ</strong>: Continuous-time domain DDP</p></li>
-<li><p><strong>iLQR</strong>: Discrete-time domain DDP</p></li>
+<li><p><strong>SLQ</strong>: Continuous-time domain constrained DDP</p></li>
+<li><p><strong>iLQR</strong>: Discrete-time domain constrained DDP</p></li>
 <li><p><strong>SQP</strong>: Multiple-shooting algorithm based on <a class="reference external" href="href=&quot;https://github.com/giaf/hpipm&quot;/">HPIPM</a></p></li>
-<li><p><strong>PISOC</strong>: Path integral stochastic optimal control</p></li>
+<li><p><strong>IPM</strong>: Multiple-shooting algorithm based on nonlinear interior point method</p></li>
+<li><p><strong>SLP</strong>: Sequential Linear Programming based on <a class="reference external" href="href=&quot;https://arxiv.org/abs/2009.06980&quot;/">PIPG</a></p></li>
 </ul>
 <p>OCS2 handles general path constraints through Augmented Lagrangian or
 relaxed barrier methods. To facilitate the application of OCS2 in robotic
@@ -208,15 +212,18 @@ note the license and notice files in the source directory.</p>
 <h2>Credits<a class="headerlink" href="#credits" title="Permalink to this headline">¶</a></h2>
 <p>The following people have been involved in the development of OCS2:</p>
 <p><strong>Project Manager</strong>:
-Farbod Farshidian (ETHZ).</p>
+Farbod Farshidian.</p>
 <p><strong>Main Developers</strong>:
-Farbod Farshidian (ETHZ),
-Ruben Grandia (ETHZ),
-Michael Spieler (ETHZ),
-Jan Carius (ETHZ),
-Jean-Pierre Sleiman (ETHZ).</p>
+Farbod Farshidian,
+Ruben Grandia,
+Michael Spieler,
+Jan Carius,
+Jean-Pierre Sleiman.</p>
 <p><strong>Other Developers</strong>:
+Alexander Reske,
+Sotaro Katayama,
 Mayank Mittal,
+Jia-​Ruei Chiu,
 Johannes Pankert,
 Perry Franklin,
 Tom Lankhorst,
@@ -227,6 +234,26 @@ Edo Jelavic.</p>
 <p><strong>Acknowledgement</strong>: The OCS2 toolbox development initiated by the ADRL team at ETH Zurich, and the
 project has continued to evolve at RSL, ETH Zurich. The RSL team now actively
 supports the development of OCS2.</p>
+</div>
+<div class="section" id="citing-ocs2">
+<h2>Citing OCS2<a class="headerlink" href="#citing-ocs2" title="Permalink to this headline">¶</a></h2>
+<p>To cite the toolbox in your academic research, please use the following:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@misc</span><span class="p">{</span><span class="n">OCS2</span><span class="p">,</span>
+   <span class="n">title</span> <span class="o">=</span> <span class="p">{{</span><span class="n">OCS2</span><span class="p">}:</span>  <span class="n">An</span>  <span class="nb">open</span>  <span class="n">source</span>  <span class="n">library</span>  <span class="k">for</span>  <span class="n">Optimal</span>  <span class="n">Control</span>  <span class="n">of</span>  <span class="n">Switched</span> <span class="n">Systems</span><span class="p">},</span>
+   <span class="n">note</span> <span class="o">=</span> <span class="p">{[</span><span class="n">Online</span><span class="p">]</span><span class="o">.</span> <span class="n">Available</span><span class="p">:</span> \<span class="n">url</span><span class="p">{</span><span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">leggedrobotics</span><span class="o">/</span><span class="n">ocs2</span><span class="p">}},</span>
+   <span class="n">author</span> <span class="o">=</span> <span class="p">{</span><span class="n">Farbod</span> <span class="n">Farshidian</span> <span class="ow">and</span> <span class="n">others</span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="tutorials">
+<h2>Tutorials<a class="headerlink" href="#tutorials" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Tutorial on OCS2 Toolbox, Farbod Farshidian,</p></li>
+</ul>
+<p>MPC Workshop at RSS 2021 <a class="reference external" href="href=&quot;https://youtu.be/RYmQN9GbFYg&quot;/">link</a>
+* Real-time optimal control for legged locomotion &amp; manipulation, Marco Hutter,
+MPC Workshop at RSS 2021 <a class="reference external" href="href=&quot;https://youtu.be/sjAENmtO4bA&quot;/">link</a></p>
 </div>
 <div class="section" id="related-publications">
 <h2>Related publications<a class="headerlink" href="#related-publications" title="Permalink to this headline">¶</a></h2>

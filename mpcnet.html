@@ -1,0 +1,388 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>MPC-Net &mdash; OCS2 1.0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Frequently Asked Questions" href="faq.html" />
+    <link rel="prev" title="How to Profile the Solvers" href="profiling.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> OCS2
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optimal_control_modules.html">Optimal Control Modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="robotic_examples.html">Robotic Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="from_urdf_to_ocp.html">From URDF to OCP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="profiling.html">How to Profile the Solvers</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">MPC-Net</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#robots">Robots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#training">Training</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deployment">Deployment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#how-to-set-up-a-new-robot">How to Set Up a New Robot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#known-issues">Known Issues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">OCS2</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>MPC-Net</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/mpcnet.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="mpc-net">
+<span id="doxid-ocs2-doc-mpcnet"></span><span id="index-0"></span><h1>MPC-Net<a class="headerlink" href="#mpc-net" title="Permalink to this headline">¶</a></h1>
+<p>MPC-Net is an imitation learning approach that uses solutions from MPC to guide the policy search.
+The main idea is to imitate MPC by minimizing the control Hamiltonian while representing the corresponding control inputs by a parametrized policy.
+MPC-Net can be used to clone a model predictive controller into a neural network policy, which can be evaluated much faster than MPC.
+Therefore, MPC-Net is a useful proxy for MPC in computationally demanding applications that do not require the most exact solution.</p>
+<p>The multi-threaded data generation and policy evaluation run asynchronously with the policy training.
+The data generation and policy evaluation are implemented in C++ and run on CPU, while the policy training is implemented in Python and runs on GPU.
+The control Hamiltonian is represented by a linear-quadratic approximation.
+Therefore, the training can run on GPU without callbacks to OCS2 C++ code running on CPU to evaluate the Hamiltonian, and one can exploit batch processing on GPU.</p>
+<div class="section" id="robots">
+<h2>Robots<a class="headerlink" href="#robots" title="Permalink to this headline">¶</a></h2>
+<p>MPC-Net has been implemented for the following <a class="reference internal" href="robotic_examples.html#doxid-ocs2-doc-robotic-examples"><span class="std std-ref">Robotic Examples</span></a>:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 19%" />
+<col style="width: 24%" />
+<col style="width: 25%" />
+<col style="width: 12%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Robot</p></th>
+<th class="head"><p>Recom. CPU Cores</p></th>
+<th class="head"><p>Recom. GPU Memory</p></th>
+<th class="head"><p>RaiSim</p></th>
+<th class="head"><p>Training Time</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>ballbot</p></td>
+<td><p>4</p></td>
+<td><p>2 GB</p></td>
+<td><p>No</p></td>
+<td><p>0m 20s</p></td>
+</tr>
+<tr class="row-odd"><td><p>legged_robot</p></td>
+<td><p>12</p></td>
+<td><p>8 GB</p></td>
+<td><p>Yes / No</p></td>
+<td><p>7m 40s</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="setup">
+<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
+<p>Make sure to follow the <a class="reference internal" href="installation.html#doxid-ocs2-doc-installation"><span class="std std-ref">Installation</span></a> page.
+Follow all the instructions for the dependencies.
+Regarding the optional dependencies, make sure to follow the instruction for ONNX Runtime and the virtual environment, optionally set up RaiSim.</p>
+<p>To build all MPC-Net packages, build the meta package:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> &lt;path_to_catkin_ws&gt;
+catkin_build ocs2_mpcnet
+
+<span class="c1"># Example:</span>
+<span class="nb">cd</span> ~/catkin_ws
+catkin_build ocs2_mpcnet
+</pre></div>
+</div>
+<p>To build a robot-specific package, replace <code class="code docutils literal notranslate"><span class="pre">&lt;robot&gt;</span></code> with the robot name:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> &lt;path_to_catkin_ws&gt;
+catkin_build ocs2_&lt;robot&gt;_mpcnet
+
+<span class="c1"># Example:</span>
+<span class="nb">cd</span> ~/catkin_ws
+catkin_build ocs2_ballbot_mpcnet
+</pre></div>
+</div>
+</div>
+<div class="section" id="training">
+<h2>Training<a class="headerlink" href="#training" title="Permalink to this headline">¶</a></h2>
+<p>To train an MPC-Net policy, run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> &lt;path_to_ocs2_repo&gt;/ocs2_mpcnet/ocs2_&lt;robot&gt;_mpcnet/python/ocs2_&lt;robot&gt;_mpcnet
+<span class="nb">source</span> &lt;path_to_catkin_ws&gt;/devel/setup.bash
+<span class="nb">source</span> &lt;path_to_venvs&gt;/mpcnet/bin/activate
+python3 train.py
+
+<span class="c1"># Example:</span>
+<span class="nb">cd</span> ~/git/ocs2/ocs2_mpcnet/ocs2_ballbot_mpcnet/python/ocs2_ballbot_mpcnet
+<span class="nb">source</span> ~/catkin_ws/devel/setup.bash
+<span class="nb">source</span> ~/venvs/mpcnet/bin/activate
+python3 train.py
+</pre></div>
+</div>
+<p>To monitor the training progress with Tensorboard, run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> &lt;path_to_ocs2_repo&gt;/ocs2_mpcnet/ocs2_&lt;robot&gt;_mpcnet/python/ocs2_&lt;robot&gt;_mpcnet
+<span class="nb">source</span> &lt;path_to_venvs&gt;/mpcnet/bin/activate
+tensorboard --logdir<span class="o">=</span>runs
+
+<span class="c1"># Example:</span>
+<span class="nb">cd</span> ~/git/ocs2/ocs2_mpcnet/ocs2_ballbot_mpcnet/python/ocs2_ballbot_mpcnet
+<span class="nb">source</span> ~/venvs/mpcnet/bin/activate
+tensorboard --logdir<span class="o">=</span>runs
+</pre></div>
+</div>
+<p>If you use RaiSim, you can visualize the data generation and policy evaluation rollouts with RaiSim Unity, where pre-built executables are provided in RaiSim’s <code class="code docutils literal notranslate"><span class="pre">raisimUnity</span></code> folder. For example, on Linux run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&lt;path_to_raisimLib_repo&gt;/raisimUnity/linux/raisimUnity.x86_64
+
+<span class="c1"># Example:</span>
+~/git/raisimLib/raisimUnity/linux/raisimUnity.x86_64
+</pre></div>
+</div>
+</div>
+<div class="section" id="deployment">
+<h2>Deployment<a class="headerlink" href="#deployment" title="Permalink to this headline">¶</a></h2>
+<p>To deploy the default policy stored in the robot-specific package’s <code class="code docutils literal notranslate"><span class="pre">policy</span></code> folder, run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> &lt;path_to_catkin_ws&gt;
+<span class="nb">source</span> devel/setup.bash
+roslaunch ocs2_&lt;robot&gt;_mpcnet &lt;robot&gt;_mpcnet.launch
+
+<span class="c1"># Example:</span>
+<span class="nb">cd</span> ~/catkin_ws
+<span class="nb">source</span> devel/setup.bash
+roslaunch ocs2_ballbot_mpcnet ballbot_mpcnet.launch
+</pre></div>
+</div>
+<p>To deploy a new policy stored in the robot-specific package’s <code class="code docutils literal notranslate"><span class="pre">python/ocs2_&lt;robot&gt;_mpcnet/runs</span></code> folder, replace <code class="code docutils literal notranslate"><span class="pre">&lt;path&gt;</span></code> with the absolute file path to the final policy and run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> &lt;path_to_catkin_ws&gt;
+<span class="nb">source</span> devel/setup.bash
+roslaunch ocs2_&lt;robot&gt;_mpcnet &lt;robot&gt;_mpcnet.launch policyFile:<span class="o">=</span>&lt;path&gt;
+
+<span class="c1"># Example:</span>
+<span class="nb">cd</span> ~/catkin_ws
+<span class="nb">source</span> devel/setup.bash
+roslaunch ocs2_ballbot_mpcnet ballbot_mpcnet.launch policyFile:<span class="o">=</span><span class="s1">&#39;/home/user/git/ocs2/ocs2_mpcnet/ocs2_ballbot_mpcnet/python/ocs2_ballbot_mpcnet/runs/2022-04-01_12-00-00_ballbot_description/final_policy.onnx&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="how-to-set-up-a-new-robot">
+<h2>How to Set Up a New Robot<a class="headerlink" href="#how-to-set-up-a-new-robot" title="Permalink to this headline">¶</a></h2>
+<p>Setting up MPC-Net for a new robot is relatively easy, as the <strong>ocs2_mpcnet_core</strong> package takes care of the data generation as well as policy evaluation rollouts and implements important learning components, such as the memory, policy, and loss function.</p>
+<p>This section assumes that you already have the packages for the robot-specific MPC implementation:</p>
+<ol class="arabic simple">
+<li><p><strong>ocs2_&lt;robot&gt;</strong>: Provides the library with the robot-specific MPC implementation.</p></li>
+<li><p><strong>ocs2_&lt;robot&gt;_ros</strong>:  Wraps around the MPC implementation with ROS to define ROS nodes.</p></li>
+<li><p><strong>ocs2_&lt;robot&gt;_raisim</strong>:  (Optional) interface between the robot-specific MPC implementation and RaiSim.</p></li>
+</ol>
+<p>For the actual <strong>ocs2_&lt;robot&gt;_mpcnet</strong> package, follow the structure of existing robot-specific MPC-Net packages.
+The most important classes/files that have to be implemented are:</p>
+<ul class="simple">
+<li><p><strong>&lt;Robot&gt;MpcnetDefinition</strong>: Defines how OCS2 state variables are transformed to the policy observations. and how policy actions are transformed to OCS2 control inputs.</p></li>
+<li><p><strong>&lt;Robot&gt;MpcnetInterface</strong>: Provides the interface between C++ and Python, allowing to exchange data and policies.</p></li>
+<li><p><strong>&lt;robot&gt;.yaml</strong>: Stores the configuration parameters.</p></li>
+<li><p><strong>mpcnet.py</strong>: Adds robot-specific methods, e.g. implements the tasks that the robot should execute, for the MPC-Net training.</p></li>
+<li><p><strong>train.py</strong>: Starts the main training script.</p></li>
+</ul>
+</div>
+<div class="section" id="known-issues">
+<h2>Known Issues<a class="headerlink" href="#known-issues" title="Permalink to this headline">¶</a></h2>
+<p>Stiff inequality constraints can lead to very large Hamiltonians and gradients of the Hamilltonian near the log barrier.
+This can obstruct the learning process and the policy might not learn something useful.
+In that case, enable the gradient clipping in the robot’s MPC-Net YAML configuration file and tune the gradient clipping value.</p>
+</div>
+<div class="section" id="references">
+<h2>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h2>
+<p>This part of the toolbox has been developed based on the following publications:</p>
+<p id="id1"><ol class="arabic simple" start="1">
+<li id="id9"><p>Jan Carius, Farbod Farshidian, and Marco Hutter. Mpc-net: a first principles guided policy search. <em>IEEE Robotics and Automation Letters</em>, 5(2):2897–2904, 2020.</p></li>
+<li id="id16"><p>Alexander Reske, Jan Carius, Yuntao Ma, Farbod Farshidian, and Marco Hutter. Imitation learning from mpc for quadrupedal multi-gait control. In <em>2021 IEEE International Conference on Robotics and Automation (ICRA)</em>. IEEE, 2021.</p></li>
+</ol>
+</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="faq.html" class="btn btn-neutral float-right" title="Frequently Asked Questions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="profiling.html" class="btn btn-neutral float-left" title="How to Profile the Solvers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright Farbod Farshidian.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

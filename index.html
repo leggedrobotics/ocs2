@@ -94,6 +94,7 @@
 <li class="toctree-l1"><a class="reference internal" href="robotic_examples.html">Robotic Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="from_urdf_to_ocp.html">From URDF to OCP</a></li>
 <li class="toctree-l1"><a class="reference internal" href="profiling.html">How to Profile the Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mpcnet.html">MPC-Net</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
 </ul>
 
@@ -168,10 +169,11 @@
 <strong>S</strong>witched <strong>S</strong>ystems (OCS2). The toolbox provides an efficient
 implementation of the following algorithms:</p>
 <ul class="simple">
-<li><p><strong>SLQ</strong>: Continuous-time domain DDP</p></li>
-<li><p><strong>iLQR</strong>: Discrete-time domain DDP</p></li>
+<li><p><strong>SLQ</strong>: Continuous-time domain constrained DDP</p></li>
+<li><p><strong>iLQR</strong>: Discrete-time domain constrained DDP</p></li>
 <li><p><strong>SQP</strong>: Multiple-shooting algorithm based on <a class="reference external" href="href=&quot;https://github.com/giaf/hpipm&quot;/">HPIPM</a></p></li>
-<li><p><strong>PISOC</strong>: Path integral stochastic optimal control</p></li>
+<li><p><strong>IPM</strong>: Multiple-shooting algorithm based on nonlinear interior point method</p></li>
+<li><p><strong>SLP</strong>: Sequential Linear Programming based on <a class="reference external" href="href=&quot;https://arxiv.org/abs/2009.06980&quot;/">PIPG</a></p></li>
 </ul>
 <p>OCS2 handles general path constraints through Augmented Lagrangian or
 relaxed barrier methods. To facilitate the application of OCS2 in robotic
@@ -196,6 +198,8 @@ applications with limited onboard computation power.</p>
 <li class="toctree-l2"><a class="reference internal" href="overview.html#how-to-use-the-ocs2-toolbox">How to use the OCS2 toolbox?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="overview.html#licence">Licence</a></li>
 <li class="toctree-l2"><a class="reference internal" href="overview.html#credits">Credits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#citing-ocs2">Citing OCS2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#tutorials">Tutorials</a></li>
 <li class="toctree-l2"><a class="reference internal" href="overview.html#related-publications">Related publications</a></li>
 </ul>
 </li>
@@ -267,6 +271,16 @@ applications with limited onboard computation power.</p>
 <li class="toctree-l3"><a class="reference internal" href="profiling.html#cachegrind-a-cache-and-branch-prediction-profiler">Cachegrind: A Cache and Branch-prediction Profiler</a></li>
 </ul>
 </li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mpcnet.html">MPC-Net</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mpcnet.html#robots">Robots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mpcnet.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mpcnet.html#training">Training</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mpcnet.html#deployment">Deployment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mpcnet.html#how-to-set-up-a-new-robot">How to Set Up a New Robot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mpcnet.html#known-issues">Known Issues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mpcnet.html#references">References</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a><ul>

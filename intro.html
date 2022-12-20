@@ -93,6 +93,7 @@
 <li class="toctree-l1"><a class="reference internal" href="robotic_examples.html">Robotic Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="from_urdf_to_ocp.html">From URDF to OCP</a></li>
 <li class="toctree-l1"><a class="reference internal" href="profiling.html">How to Profile the Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mpcnet.html">MPC-Net</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
 </ul>
 
@@ -167,10 +168,11 @@
 <strong>S</strong>witched <strong>S</strong>ystems (OCS2). The toolbox provides an efficient
 implementation of the following algorithms:</p>
 <ul class="simple">
-<li><p><strong>SLQ</strong>: Continuous-time domain DDP</p></li>
-<li><p><strong>iLQR</strong>: Discrete-time domain DDP</p></li>
+<li><p><strong>SLQ</strong>: Continuous-time domain constrained DDP</p></li>
+<li><p><strong>iLQR</strong>: Discrete-time domain constrained DDP</p></li>
 <li><p><strong>SQP</strong>: Multiple-shooting algorithm based on <a class="reference external" href="href=&quot;https://github.com/giaf/hpipm&quot;/">HPIPM</a></p></li>
-<li><p><strong>PISOC</strong>: Path integral stochastic optimal control</p></li>
+<li><p><strong>IPM</strong>: Multiple-shooting algorithm based on nonlinear interior point method</p></li>
+<li><p><strong>SLP</strong>: Sequential Linear Programming based on <a class="reference external" href="href=&quot;https://arxiv.org/abs/2009.06980&quot;/">PIPG</a></p></li>
 </ul>
 <p>OCS2 handles general path constraints through Augmented Lagrangian or
 relaxed barrier methods. To facilitate the application of OCS2 in robotic

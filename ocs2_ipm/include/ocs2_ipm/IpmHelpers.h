@@ -30,6 +30,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
+#include <ocs2_oc/multiple_shooting/Transcription.h>
+#include <ocs2_oc/oc_data/DualSolution.h>
+#include <ocs2_oc/oc_data/TimeDiscretization.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 
 namespace ocs2 {
@@ -106,6 +109,26 @@ vector_t retrieveDualDirection(scalar_t barrierParam, const vector_t& slack, con
  * @param [in] marginRate: Margin rate to avoid the slack or dual variables becoming too close to 0. Typical values are 0.95 or 0.995.
  */
 scalar_t fractionToBoundaryStepSize(const vector_t& v, const vector_t& dv, scalar_t marginRate = 0.995);
+
+/**
+ * Convert the optimized slack or dual trajectories as a DualSolution.
+ *
+ * @param time: The time discretization.
+ * @param constraintsSize: The constraint tems size.
+ * @param stateIneq: The slack/dual variable trajectory of the state inequality constraints.
+ * @param stateInputIneq: The slack/dual variable trajectory of the state-input inequality constraints.
+ * @return A dual solution.
+ */
+DualSolution toDualSolution(const std::vector<AnnotatedTime>& time, const std::vector<multiple_shooting::ConstraintsSize>& constraintsSize,
+                            const vector_array_t& stateIneq, const vector_array_t& stateInputIneq);
+
+/**
+ * Extracts slack/dual variables of the state-only and state-input constraints from a MultiplierCollection
+ *
+ * @param multiplierCollection: The MultiplierCollection.
+ * @return slack/dual variables of the state-only (first) and state-input constraints (second).
+ */
+std::pair<vector_t, vector_t> fromMultiplierCollection(const MultiplierCollection& multiplierCollection);
 
 }  // namespace ipm
 }  // namespace ocs2

@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 
 namespace ocs2 {
 namespace ipm {
@@ -44,7 +45,11 @@ namespace ipm {
  * @return Initialized slack variable.
  */
 inline vector_t initializeSlackVariable(const vector_t& ineqConstraint, scalar_t initialSlackLowerBound, scalar_t initialSlackMarginRate) {
-  return (1.0 + initialSlackMarginRate) * ineqConstraint.cwiseMax(initialSlackLowerBound);
+  if (ineqConstraint.size() > 0) {
+    return (1.0 + initialSlackMarginRate) * ineqConstraint.cwiseMax(initialSlackLowerBound);
+  } else {
+    return vector_t();
+  }
 }
 
 /**
@@ -59,8 +64,53 @@ inline vector_t initializeSlackVariable(const vector_t& ineqConstraint, scalar_t
  */
 inline vector_t initializeDualVariable(const vector_t& slack, scalar_t barrierParam, scalar_t initialDualLowerBound,
                                        scalar_t initialDualMarginRate) {
-  return (1.0 + initialDualMarginRate) * (barrierParam * slack.cwiseInverse()).cwiseMax(initialDualLowerBound);
+  if (slack.size() > 0) {
+    return (1.0 + initialDualMarginRate) * (barrierParam * slack.cwiseInverse()).cwiseMax(initialDualLowerBound);
+  } else {
+    return vector_t();
+  }
 }
+
+/**
+ * Initializes the slack variable at a single intermediate node.
+ *
+ * @param ocpDefinition: Definition of the optimal control problem.
+ * @param time : Time of this node
+ * @param state : State
+ * @param input : Input
+ * @param initialSlackLowerBound : Lower bound of the initial slack variables. Corresponds to `slack_bound_push` option of IPOPT.
+ * @param initialSlackMarginRate : Additional margin rate of the initial slack variables. Corresponds to `slack_bound_frac` option of IPOPT.
+ * @return Initialized slack variables of the intermediate state-only (first) and state-input (second) constraints.
+ */
+std::pair<vector_t, vector_t> initializeIntermediateSlackVariable(OptimalControlProblem& ocpDefinition, scalar_t time,
+                                                                  const vector_t& state, const vector_t& input,
+                                                                  scalar_t initialSlackLowerBound, scalar_t initialSlackMarginRate);
+
+/**
+ * Initializes the slack variable at the terminal node.
+ *
+ * @param ocpDefinition: Definition of the optimal control problem.
+ * @param time : Time at the terminal node
+ * @param state : Terminal state
+ * @param initialSlackLowerBound : Lower bound of the initial slack variables. Corresponds to `slack_bound_push` option of IPOPT.
+ * @param initialSlackMarginRate : Additional margin rate of the initial slack variables. Corresponds to `slack_bound_frac` option of IPOPT.
+ * @return Initialized slack variable of the terminal state-only constraints.
+ */
+vector_t initializeTerminalSlackVariable(OptimalControlProblem& ocpDefinition, scalar_t time, const vector_t& state,
+                                         scalar_t initialSlackLowerBound, scalar_t initialSlackMarginRate);
+
+/**
+ * Initializes the slack variable at an event node.
+ *
+ * @param ocpDefinition: Definition of the optimal control problem.
+ * @param time : Time at the event node
+ * @param state : Pre-event state
+ * @param initialSlackLowerBound : Lower bound of the initial slack variables. Corresponds to `slack_bound_push` option of IPOPT.
+ * @param initialSlackMarginRate : Additional margin rate of the initial slack variables. Corresponds to `slack_bound_frac` option of IPOPT.
+ * @return Initialized slack variable of the pre-jump state-only constraints.
+ */
+vector_t initializeEventSlackVariable(OptimalControlProblem& ocpDefinition, scalar_t time, const vector_t& state,
+                                      scalar_t initialSlackLowerBound, scalar_t initialSlackMarginRate);
 
 }  // namespace ipm
 }  // namespace ocs2

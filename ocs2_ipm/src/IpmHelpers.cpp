@@ -113,5 +113,72 @@ scalar_t fractionToBoundaryStepSize(const vector_t& v, const vector_t& dv, scala
   return alpha > 0.0 ? std::min(1.0 / alpha, 1.0) : 1.0;
 }
 
+namespace {
+MultiplierCollection toMultiplierCollection(const multiple_shooting::ConstraintsSize constraintsSize, const vector_t& stateIneq) {
+  MultiplierCollection multiplierCollection;
+  size_t head = 0;
+  for (const size_t size : constraintsSize.stateIneq) {
+    multiplierCollection.stateIneq.emplace_back(0.0, stateIneq.segment(head, size));
+    head += size;
+  }
+  return multiplierCollection;
+}
+
+MultiplierCollection toMultiplierCollection(const multiple_shooting::ConstraintsSize constraintsSize, const vector_t& stateIneq,
+                                            const vector_t& stateInputIneq) {
+  MultiplierCollection multiplierCollection = toMultiplierCollection(constraintsSize, stateIneq);
+  size_t head = 0;
+  for (const size_t size : constraintsSize.stateInputIneq) {
+    multiplierCollection.stateInputIneq.emplace_back(0.0, stateInputIneq.segment(head, size));
+    head += size;
+  }
+  return multiplierCollection;
+}
+
+vector_t extractLagrangian(const std::vector<Multiplier>& termsMultiplier) {
+  size_t n = 0;
+  std::for_each(termsMultiplier.begin(), termsMultiplier.end(), [&](const Multiplier& m) { n += m.lagrangian.size(); });
+
+  vector_t vec(n);
+  size_t head = 0;
+  for (const auto& m : termsMultiplier) {
+    vec.segment(head, m.lagrangian.size()) = m.lagrangian;
+    head += m.lagrangian.size();
+  }  // end of i loop
+
+  return vec;
+}
+}  // namespace
+
+DualSolution toDualSolution(const std::vector<AnnotatedTime>& time, const std::vector<multiple_shooting::ConstraintsSize>& constraintsSize,
+                            const vector_array_t& stateIneq, const vector_array_t& stateInputIneq) {
+  // Problem horizon
+  const int N = static_cast<int>(time.size()) - 1;
+
+  DualSolution dualSolution;
+  dualSolution.timeTrajectory = toInterpolationTime(time);
+  dualSolution.postEventIndices = toPostEventIndices(time);
+
+  dualSolution.preJumps.reserve(dualSolution.postEventIndices.size());
+  dualSolution.intermediates.reserve(time.size());
+
+  for (int i = 0; i < N; ++i) {
+    if (time[i].event == AnnotatedTime::Event::PreEvent) {
+      dualSolution.preJumps.emplace_back(toMultiplierCollection(constraintsSize[i], stateIneq[i]));
+      dualSolution.intermediates.push_back(dualSolution.intermediates.back());  // no event at the initial node
+    } else {
+      dualSolution.intermediates.emplace_back(toMultiplierCollection(constraintsSize[i], stateIneq[i], stateInputIneq[i]));
+    }
+  }
+  dualSolution.final = toMultiplierCollection(constraintsSize[N], stateIneq[N]);
+  dualSolution.intermediates.push_back(dualSolution.intermediates.back());
+
+  return dualSolution;
+}
+
+std::pair<vector_t, vector_t> fromMultiplierCollection(const MultiplierCollection& multiplierCollection) {
+  return std::make_pair(extractLagrangian(multiplierCollection.stateIneq), extractLagrangian(multiplierCollection.stateInputIneq));
+}
+
 }  // namespace ipm
 }  // namespace ocs2

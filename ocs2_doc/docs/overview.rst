@@ -9,10 +9,11 @@ Overview
 for **S**\ witched **S**\ ystems (OCS2). The toolbox provides an 
 efficient implementation of the following algorithms:
 
-* **SLQ**\: Continuous-time domain DDP
-* **iLQR**\: Discrete-time domain DDP
+* **SLQ**\: Continuous-time domain constrained DDP
+* **iLQR**\: Discrete-time domain constrained DDP
 * **SQP**\: Multiple-shooting algorithm based on `HPIPM <href="https://github.com/giaf/hpipm"/>`__
-* **PISOC**\: Path integral stochastic optimal control
+* **IPM**\: Multiple-shooting algorithm based on nonlinear interior point method
+* **SLP**\: Sequential Linear Programming based on `PIPG <href="https://arxiv.org/abs/2009.06980"/>`__
 
 OCS2 handles general path constraints through Augmented Lagrangian or 
 relaxed barrier methods. To facilitate the application of OCS2 in robotic 
@@ -51,18 +52,20 @@ Credits
 The following people have been involved in the development of OCS2:
 
 **Project Manager**: 
-Farbod Farshidian (ETHZ).
+Farbod Farshidian.
 
 **Main Developers**: 
-Farbod Farshidian (ETHZ), 
-Ruben Grandia (ETHZ), 
-Michael Spieler (ETHZ), 
-Jan Carius (ETHZ), 
-Jean-Pierre Sleiman (ETHZ).
+Farbod Farshidian,
+Ruben Grandia,
+Michael Spieler,
+Jan Carius,
+Jean-Pierre Sleiman.
 
 **Other Developers**:
 Alexander Reske,
+Sotaro Katayama,
 Mayank Mittal,
+Jia-​Ruei Chiu,
 Johannes Pankert,
 Perry Franklin,
 Tom Lankhorst,
@@ -75,6 +78,25 @@ Edo Jelavic.
 **Acknowledgement**: The OCS2 toolbox development initiated by the ADRL team at ETH Zurich, and the 
 project has continued to evolve at RSL, ETH Zurich. The RSL team now actively 
 supports the development of OCS2.
+
+Citing OCS2
+~~~~~~~~~~~
+To cite the toolbox in your academic research, please use the following:
+
+.. code-block::
+
+      @misc{OCS2,
+         title = {{OCS2}:  An  open  source  library  for  Optimal  Control  of  Switched Systems},
+         note = {[Online]. Available: \url{https://github.com/leggedrobotics/ocs2}},
+         author = {Farbod Farshidian and others}
+      }
+
+Tutorials
+~~~~~~~~~
+* Tutorial on OCS2 Toolbox, Farbod Farshidian, 
+MPC Workshop at RSS 2021 `link <href="https://youtu.be/RYmQN9GbFYg"/>`__
+* Real-time optimal control for legged locomotion & manipulation, Marco Hutter, 
+MPC Workshop at RSS 2021 `link <href="https://youtu.be/sjAENmtO4bA"/>`__
 
 
 Related publications

@@ -39,6 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/multiple_shooting/PerformanceIndexComputation.h>
 #include <ocs2_oc/multiple_shooting/Transcription.h>
 #include <ocs2_oc/precondition/Ruzi.h>
+#include <ocs2_oc/trajectory_adjustment/TrajectorySpreadingHelperFunctions.h>
 
 #include "ocs2_slp/Helpers.h"
 
@@ -170,6 +171,11 @@ void SlpSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
   for (auto& ocpDefinition : ocpDefinitions_) {
     const auto& targetTrajectories = this->getReferenceManager().getTargetTrajectories();
     ocpDefinition.targetTrajectoriesPtr = &targetTrajectories;
+  }
+
+  // Trajectory spread of primalSolution_
+  if (!primalSolution_.timeTrajectory_.empty()) {
+    std::ignore = trajectorySpread(primalSolution_.modeSchedule_, this->getReferenceManager().getModeSchedule(), primalSolution_);
   }
 
   // Initialize the state and input

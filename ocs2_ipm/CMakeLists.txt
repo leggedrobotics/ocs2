@@ -50,6 +50,7 @@ include_directories(
 # Multiple shooting solver library
 add_library(${PROJECT_NAME}
   src/IpmHelpers.cpp
+  src/IpmInitialization.cpp
   src/IpmPerformanceIndexComputation.cpp
   src/IpmSettings.cpp
   src/IpmSolver.cpp

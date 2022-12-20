@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/thread_support/ThreadPool.h>
 
 #include <ocs2_oc/multiple_shooting/ProjectionMultiplierCoefficients.h>
+#include <ocs2_oc/multiple_shooting/Transcription.h>
 #include <ocs2_oc/oc_data/TimeDiscretization.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/oc_solver/SolverBase.h>
@@ -66,6 +67,8 @@ class IpmSolver : public SolverBase {
 
   void getPrimalSolution(scalar_t finalTime, PrimalSolution* primalSolutionPtr) const override { *primalSolutionPtr = primalSolution_; }
 
+  const DualSolution* getDualSolution() const override { return &dualIneqTrajectory_; }
+
   const ProblemMetrics& getSolutionMetrics() const override { return problemMetrics_; }
 
   size_t getNumIterations() const override { return totalNumIterations_; }
@@ -84,9 +87,7 @@ class IpmSolver : public SolverBase {
 
   vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const override;
 
-  MultiplierCollection getIntermediateDualSolution(scalar_t time) const override {
-    throw std::runtime_error("[IpmSolver] getIntermediateDualSolution() not available yet.");
-  }
+  MultiplierCollection getIntermediateDualSolution(scalar_t time) const override;
 
  private:
   void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override;
@@ -123,12 +124,17 @@ class IpmSolver : public SolverBase {
   void initializeProjectionMultiplierTrajectory(const std::vector<AnnotatedTime>& timeDiscretization,
                                                 vector_array_t& projectionMultiplierTrajectory) const;
 
+  /** Initializes for the slack and dual trajectories of the hard inequality constraints */
+  void initializeSlackDualTrajectory(const std::vector<AnnotatedTime>& timeDiscretization, const vector_array_t& x, const vector_array_t& u,
+                                     scalar_t barrierParam, vector_array_t& slackStateIneq, vector_array_t& dualStateIneq,
+                                     vector_array_t& slackStateInputIneq, vector_array_t& dualStateInputIneq);
+
   /** Creates QP around t, x(t), u(t). Returns performance metrics at the current {t, x(t), u(t)} */
   PerformanceIndex setupQuadraticSubproblem(const std::vector<AnnotatedTime>& time, const vector_t& initState, const vector_array_t& x,
                                             const vector_array_t& u, const vector_array_t& lmd, const vector_array_t& nu,
-                                            scalar_t barrierParam, vector_array_t& slackStateIneq, vector_array_t& slackStateInputIneq,
-                                            vector_array_t& dualStateIneq, vector_array_t& dualStateInputIneq,
-                                            bool initializeSlackAndDualVariables, std::vector<Metrics>& metrics);
+                                            scalar_t barrierParam, const vector_array_t& slackStateIneq,
+                                            const vector_array_t& slackStateInputIneq, const vector_array_t& dualStateIneq,
+                                            const vector_array_t& dualStateInputIneq, std::vector<Metrics>& metrics);
 
   /** Computes only the performance metrics at the current {t, x(t), u(t)} */
   PerformanceIndex computePerformance(const std::vector<AnnotatedTime>& time, const vector_t& initState, const vector_array_t& x,
@@ -142,15 +148,15 @@ class IpmSolver : public SolverBase {
     vector_array_t deltaLmdSol;  // delta_lmd(t)
     vector_array_t deltaNuSol;   // delta_nu(t)
     vector_array_t deltaSlackStateIneq;
-    vector_array_t deltaSlackStateInputIneq;
     vector_array_t deltaDualStateIneq;
+    vector_array_t deltaSlackStateInputIneq;
     vector_array_t deltaDualStateInputIneq;
     scalar_t armijoDescentMetric;  // inner product of the cost gradient and decision variable step
     scalar_t maxPrimalStepSize;
     scalar_t maxDualStepSize;
   };
   OcpSubproblemSolution getOCPSolution(const vector_t& delta_x0, scalar_t barrierParam, const vector_array_t& slackStateIneq,
-                                       const vector_array_t& slackStateInputIneq, const vector_array_t& dualStateIneq,
+                                       const vector_array_t& dualStateIneq, const vector_array_t& slackStateInputIneq,
                                        const vector_array_t& dualStateInputIneq);
 
   /** Extract the value function based on the last solved QP */
@@ -196,10 +202,8 @@ class IpmSolver : public SolverBase {
   PrimalSolution primalSolution_;
   vector_array_t costateTrajectory_;
   vector_array_t projectionMultiplierTrajectory_;
-  vector_array_t slackStateIneqTrajectory_;
-  vector_array_t dualStateIneqTrajectory_;
-  vector_array_t slackStateInputIneqTrajectory_;
-  vector_array_t dualStateInputIneqTrajectory_;
+  DualSolution slackIneqTrajectory_;
+  DualSolution dualIneqTrajectory_;
 
   // Value function in absolute state coordinates (without the constant value)
   std::vector<ScalarFunctionQuadraticApproximation> valueFunction_;
@@ -211,6 +215,9 @@ class IpmSolver : public SolverBase {
   std::vector<VectorFunctionLinearApproximation> stateIneqConstraints_;
   std::vector<VectorFunctionLinearApproximation> stateInputIneqConstraints_;
   std::vector<VectorFunctionLinearApproximation> constraintsProjection_;
+
+  // Constraint terms size
+  std::vector<multiple_shooting::ConstraintsSize> constraintsSize_;
 
   // Lagrange multipliers
   std::vector<multiple_shooting::ProjectionMultiplierCoefficients> projectionMultiplierCoefficients_;

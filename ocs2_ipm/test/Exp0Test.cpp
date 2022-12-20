@@ -140,7 +140,7 @@ TEST(Exp0Test, Constrained) {
   const vector_t xmin = (vector_t(2) << -7.5, -7.5).finished();
   const vector_t xmax = (vector_t(2) << 7.5, 7.5).finished();
   problem.stateInequalityConstraintPtr->add("xbound", getStateBoxConstraint(xmin, xmax));
-  // problem.finalInequalityConstraintPtr->add("xbound", getStateBoxConstraint(xmin, xmax));
+  problem.finalInequalityConstraintPtr->add("xbound", getStateBoxConstraint(xmin, xmax));
 
   const scalar_t startTime = 0.0;
   const scalar_t finalTime = 2.0;

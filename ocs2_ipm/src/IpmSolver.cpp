@@ -107,6 +107,7 @@ void IpmSolver::reset() {
 
   // reset timers
   totalNumIterations_ = 0;
+  initializationTimer_.reset();
   linearQuadraticApproximationTimer_.reset();
   solveQpTimer_.reset();
   linesearchTimer_.reset();
@@ -114,12 +115,14 @@ void IpmSolver::reset() {
 }
 
 std::string IpmSolver::getBenchmarkingInformation() const {
+  const auto initializationTotal = initializationTimer_.getTotalInMilliseconds();
   const auto linearQuadraticApproximationTotal = linearQuadraticApproximationTimer_.getTotalInMilliseconds();
   const auto solveQpTotal = solveQpTimer_.getTotalInMilliseconds();
   const auto linesearchTotal = linesearchTimer_.getTotalInMilliseconds();
   const auto computeControllerTotal = computeControllerTimer_.getTotalInMilliseconds();
 
-  const auto benchmarkTotal = linearQuadraticApproximationTotal + solveQpTotal + linesearchTotal + computeControllerTotal;
+  const auto benchmarkTotal =
+      initializationTotal + linearQuadraticApproximationTotal + solveQpTotal + linesearchTotal + computeControllerTotal;
 
   std::stringstream infoStream;
   if (benchmarkTotal > 0.0) {
@@ -127,6 +130,8 @@ std::string IpmSolver::getBenchmarkingInformation() const {
     infoStream << "\n########################################################################\n";
     infoStream << "The benchmarking is computed over " << totalNumIterations_ << " iterations. \n";
     infoStream << "IPM Benchmarking\t   :\tAverage time [ms]   (% of total runtime)\n";
+    infoStream << "\tInitialization     :\t" << initializationTimer_.getAverageInMilliseconds() << " [ms] \t\t("
+               << initializationTotal / benchmarkTotal * inPercent << "%)\n";
     infoStream << "\tLQ Approximation   :\t" << linearQuadraticApproximationTimer_.getAverageInMilliseconds() << " [ms] \t\t("
                << linearQuadraticApproximationTotal / benchmarkTotal * inPercent << "%)\n";
     infoStream << "\tSolve QP           :\t" << solveQpTimer_.getAverageInMilliseconds() << " [ms] \t\t("
@@ -216,6 +221,7 @@ void IpmSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
   const auto oldModeSchedule = primalSolution_.modeSchedule_;
   const auto& newModeSchedule = this->getReferenceManager().getModeSchedule();
 
+  initializationTimer_.startTimer();
   // Initialize the state and input
   if (!primalSolution_.timeTrajectory_.empty()) {
     std::ignore = trajectorySpread(oldModeSchedule, newModeSchedule, primalSolution_);
@@ -239,6 +245,7 @@ void IpmSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
     initializeCostateTrajectory(timeDiscretization, x, lmd);
     initializeProjectionMultiplierTrajectory(timeDiscretization, nu);
   }
+  initializationTimer_.endTimer();
 
   // Bookkeeping
   performanceIndeces_.clear();
@@ -418,10 +425,8 @@ void IpmSolver::initializeSlackDualTrajectory(const std::vector<AnnotatedTime>& 
         std::tie(slackStateIneq[i], std::ignore) = ipm::fromMultiplierCollection(slackIneqTrajectory_.preJumps[cachedEventIndex]);
         std::tie(dualStateIneq[i], std::ignore) = ipm::fromMultiplierCollection(dualIneqTrajectory_.preJumps[cachedEventIndex]);
       } else {
-        const auto time = getIntervalStart(timeDiscretization[i]);
-        const auto& state = x[i];
-        slackStateIneq[i] = ipm::initializePreJumpSlackVariable(ocpDefinition, time, state, settings_.initialSlackLowerBound,
-                                                                settings_.initialSlackMarginRate);
+        slackStateIneq[i] = ipm::initializePreJumpSlackVariable(ocpDefinition, getIntervalStart(timeDiscretization[i]), x[i],
+                                                                settings_.initialSlackLowerBound, settings_.initialSlackMarginRate);
         dualStateIneq[i] =
             ipm::initializeDualVariable(slackStateIneq[i], barrierParam, settings_.initialDualLowerBound, settings_.initialDualMarginRate);
       }
@@ -436,14 +441,8 @@ void IpmSolver::initializeSlackDualTrajectory(const std::vector<AnnotatedTime>& 
         std::tie(dualStateIneq[i], dualStateInputIneq[i]) =
             ipm::fromMultiplierCollection(getIntermediateDualSolutionAtTime(slackIneqTrajectory_, time));
       } else {
-        const auto& state = x[i];
-        const auto& input = u[i];
         std::tie(slackStateIneq[i], slackStateInputIneq[i]) = ipm::initializeIntermediateSlackVariable(
-            ocpDefinition, time, state, input, settings_.initialSlackLowerBound, settings_.initialSlackMarginRate);
-        // Disable the state-only inequality constraints at the initial node
-        if (i == 0) {
-          slackStateIneq[i].resize(0);
-        }
+            ocpDefinition, time, x[i], u[i], settings_.initialSlackLowerBound, settings_.initialSlackMarginRate);
         dualStateIneq[i] =
             ipm::initializeDualVariable(slackStateIneq[i], barrierParam, settings_.initialDualLowerBound, settings_.initialDualMarginRate);
         dualStateInputIneq[i] = ipm::initializeDualVariable(slackStateInputIneq[i], barrierParam, settings_.initialDualLowerBound,
@@ -452,14 +451,16 @@ void IpmSolver::initializeSlackDualTrajectory(const std::vector<AnnotatedTime>& 
     }
   }
 
+  // Disable the state-only inequality constraints at the initial node
+  slackStateIneq[0].resize(0);
+  dualStateIneq[0].resize(0);
+
   if (interpolateTillFinalTime) {
     std::tie(slackStateIneq[N], std::ignore) = ipm::fromMultiplierCollection(slackIneqTrajectory_.final);
     std::tie(dualStateIneq[N], std::ignore) = ipm::fromMultiplierCollection(dualIneqTrajectory_.final);
   } else {
-    const auto time = getIntervalStart(timeDiscretization[N]);
-    const auto& state = x[N];
-    slackStateIneq[N] = ipm::initializeTerminalSlackVariable(ocpDefinition, time, state, settings_.initialSlackLowerBound,
-                                                             settings_.initialSlackMarginRate);
+    slackStateIneq[N] = ipm::initializeTerminalSlackVariable(ocpDefinition, getIntervalStart(timeDiscretization[N]), x[N],
+                                                             settings_.initialSlackLowerBound, settings_.initialSlackMarginRate);
     dualStateIneq[N] =
         ipm::initializeDualVariable(slackStateIneq[N], barrierParam, settings_.initialDualLowerBound, settings_.initialDualMarginRate);
   }

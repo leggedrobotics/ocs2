@@ -39,7 +39,7 @@ std::pair<vector_t, vector_t> initializeIntermediateSlackVariable(OptimalControl
 
   if (!ocpDefinition.stateInequalityConstraintPtr->empty() || !ocpDefinition.inequalityConstraintPtr->empty()) {
     constexpr auto request = Request::Constraint;
-    ocpDefinition.preComputationPtr->requestPreJump(request, time, state);
+    ocpDefinition.preComputationPtr->request(request, time, state, input);
   }
 
   if (!ocpDefinition.stateInequalityConstraintPtr->empty()) {

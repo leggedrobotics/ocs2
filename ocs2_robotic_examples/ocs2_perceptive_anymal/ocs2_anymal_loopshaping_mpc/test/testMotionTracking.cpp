@@ -111,7 +111,7 @@ TEST_F(TestAnymalLoopshapingMpc, motion_tracking) {
   const std::string path(__FILE__);
   const std::string dir = path.substr(0, path.find_last_of("/"));
   const std::string motionFilesPath = dir + "/../../ocs2_anymal_commands/config/motions/";
-  const std::string motionName = "mocap_20211126";
+  const std::string motionName = "demo_motion";
 
   const auto csvData = switched_model::readCsv(motionFilesPath + motionName + ".txt");
   const auto motionData = switched_model::readMotion(csvData);

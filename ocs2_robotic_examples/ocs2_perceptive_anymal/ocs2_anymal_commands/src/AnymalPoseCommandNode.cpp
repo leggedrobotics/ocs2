@@ -24,8 +24,8 @@ int main(int argc, char* argv[]) {
 
   // PoseCommand To TargetTrajectories
   switched_model::PoseCommandToCostDesiredRos targetPoseCommand(nodeHandle, filename);
-  auto commandLineToTargetTrajectoriesFun = [&](const ocs2::vector_t& commadLineTarget, const ocs2::SystemObservation& observation) {
-    return targetPoseCommand.commandLineToTargetTrajectories(commadLineTarget, observation);
+  auto commandLineToTargetTrajectoriesFun = [&](const ocs2::vector_t& commandLineTarget, const ocs2::SystemObservation& observation) {
+    return targetPoseCommand.commandLineToTargetTrajectories(commandLineTarget, observation);
   };
 
   // goalPose: [deltaX, deltaY, deltaZ, Roll, Pitch, deltaYaw]

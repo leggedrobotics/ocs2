@@ -34,12 +34,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 
-#include <ocs2_oc/oc_solver/PerformanceIndex.h>
+#include <ocs2_oc/oc_data/PerformanceIndex.h>
 
-#include "ocs2_sqp/MultipleShootingSolverStatus.h"
+#include "ocs2_sqp/SqpSolverStatus.h"
 
 namespace ocs2 {
-namespace multiple_shooting {
+namespace sqp {
 
 struct LogEntry {
   // Problem info
@@ -143,5 +143,5 @@ void Logger<T>::write(std::ostream& stream) const {
   }
 }
 
-}  // namespace multiple_shooting
+}  // namespace sqp
 }  // namespace ocs2

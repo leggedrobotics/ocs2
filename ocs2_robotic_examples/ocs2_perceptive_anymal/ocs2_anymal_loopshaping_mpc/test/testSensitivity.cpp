@@ -25,7 +25,7 @@ TEST(TestAnymalLoopshapingMotionTracking, testSensitivity) {
   const auto csvData = switched_model::readCsv(motionFilesPath + motionName + ".txt");
   const auto motionData = switched_model::readMotion(csvData, 0.05);
   const auto mpcSettings = ocs2::mpc::loadSettings(configFolder + "/task.info");
-  const auto sqpSettings = ocs2::multiple_shooting::loadSettings(configFolder + "/multiple_shooting.info");
+  const auto sqpSettings = ocs2::sqp::loadSettings(configFolder + "/multiple_shooting.info");
   auto quadrupedSettings = switched_model::loadQuadrupedSettings(configFolder + "/task.info");
   const auto frameDecl = anymal::frameDeclarationFromFile(configFolder + "/frame_declaration.info");
   auto loopshapingDefinition = ocs2::loopshaping_property_tree::load(configFolder + "/loopshaping.info");

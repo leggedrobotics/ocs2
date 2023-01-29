@@ -38,8 +38,7 @@ int main(int argc, char* argv[]) {
       break;
     }
     case switched_model::Algorithm::SQP: {
-      const auto sqpSettings =
-          ocs2::multiple_shooting::loadSettings(anymal::getConfigFolderLoopshaping(configName) + "/multiple_shooting.info");
+      const auto sqpSettings = ocs2::sqp::loadSettings(anymal::getConfigFolderLoopshaping(configName) + "/multiple_shooting.info");
       auto mpcPtr = getSqpMpc(*anymalInterface, mpcSettings, sqpSettings);
       quadrupedLoopshapingMpcNode(nodeHandle, *anymalInterface, std::move(mpcPtr));
       break;

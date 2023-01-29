@@ -188,7 +188,7 @@ int main(int argc, char* argv[]) {
   const auto mpcSettings = ocs2::mpc::loadSettings(taskFolder + configName + "/task.info");
 
   std::unique_ptr<ocs2::MPC_BASE> mpcPtr;
-  const auto sqpSettings = ocs2::multiple_shooting::loadSettings(taskFolder + configName + "/multiple_shooting.info");
+  const auto sqpSettings = ocs2::sqp::loadSettings(taskFolder + configName + "/multiple_shooting.info");
   switch (anymalInterface->modelSettings().algorithm_) {
     case switched_model::Algorithm::DDP: {
       const auto ddpSettings = ocs2::ddp::loadSettings(taskFolder + configName + "/task.info");

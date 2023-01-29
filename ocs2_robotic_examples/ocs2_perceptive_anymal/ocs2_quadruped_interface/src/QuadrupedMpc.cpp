@@ -5,7 +5,7 @@
 #include "ocs2_quadruped_interface/QuadrupedMpc.h"
 
 #include <ocs2_ddp/GaussNewtonDDP_MPC.h>
-#include <ocs2_sqp/MultipleShootingMpc.h>
+#include <ocs2_sqp/SqpMpc.h>
 
 namespace switched_model {
 
@@ -20,9 +20,9 @@ std::unique_ptr<ocs2::MPC_BASE> getDdpMpc(const QuadrupedInterface& quadrupedInt
 }
 
 std::unique_ptr<ocs2::MPC_BASE> getSqpMpc(const QuadrupedInterface& quadrupedInterface, const ocs2::mpc::Settings& mpcSettings,
-                                          const ocs2::multiple_shooting::Settings& sqpSettings) {
-  std::unique_ptr<ocs2::MPC_BASE> mpcPtr(new ocs2::MultipleShootingMpc(
-      mpcSettings, sqpSettings, quadrupedInterface.getOptimalControlProblem(), quadrupedInterface.getInitializer()));
+                                          const ocs2::sqp::Settings& sqpSettings) {
+  std::unique_ptr<ocs2::MPC_BASE> mpcPtr(
+      new ocs2::SqpMpc(mpcSettings, sqpSettings, quadrupedInterface.getOptimalControlProblem(), quadrupedInterface.getInitializer()));
   mpcPtr->getSolverPtr()->setReferenceManager(quadrupedInterface.getReferenceManagerPtr());
   mpcPtr->getSolverPtr()->setSynchronizedModules(quadrupedInterface.getSynchronizedModules());
   return mpcPtr;

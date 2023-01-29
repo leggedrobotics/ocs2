@@ -37,7 +37,7 @@ class TestAnymalLoopshapingMpc : public ::testing::Test {
     problem.targetTrajectoriesPtr = &targetTrajectories;
 
     const auto mpcSettings = ocs2::mpc::loadSettings(configFolder + "/task.info");
-    const auto sqpSettings = ocs2::multiple_shooting::loadSettings(configFolder + "/multiple_shooting.info");
+    const auto sqpSettings = ocs2::sqp::loadSettings(configFolder + "/multiple_shooting.info");
     mpcPtr = switched_model_loopshaping::getSqpMpc(*anymalInterface, mpcSettings, sqpSettings);
 
     // Initialize

@@ -27,12 +27,12 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_sqp/MultipleShootingLogging.h"
+#include "ocs2_sqp/SqpLogging.h"
 
 #include <iomanip>
 
 namespace ocs2 {
-namespace multiple_shooting {
+namespace sqp {
 
 std::ostream& operator<<(std::ostream& stream, const LogEntry& logEntry) {
   const std::string delim = ", ";
@@ -90,5 +90,5 @@ std::string logHeader() {
   return stream.str();
 }
 
-}  // namespace multiple_shooting
+}  // namespace sqp
 }  // namespace ocs2

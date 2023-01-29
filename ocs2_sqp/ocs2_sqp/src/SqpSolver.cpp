@@ -33,6 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <numeric>
 
+#include <boost/filesystem.hpp>
+
 #include <ocs2_oc/multiple_shooting/Helpers.h>
 #include <ocs2_oc/multiple_shooting/Initialization.h>
 #include <ocs2_oc/multiple_shooting/MetricsComputation.h>
@@ -98,11 +100,11 @@ SqpSolver::~SqpSolver() {
     // Write to file
     const std::string logFileName = settings_.logFilePath + "log_" + timeStamp + ".txt";
     if (std::ofstream logfile{logFileName}) {
-      logfile << multiple_shooting::logHeader();
+      logfile << sqp::logHeader();
       logger_.write(logfile);
-      std::cerr << "[MultipleShootingSolver] Log written to '" << logFileName << "'\n";
+      std::cerr << "[SqpSolver] Log written to '" << logFileName << "'\n";
     } else {
-      std::cerr << "[MultipleShootingSolver] Unable to open '" << logFileName << "'\n";
+      std::cerr << "[SqpSolver] Unable to open '" << logFileName << "'\n";
     }
   }
 }
@@ -114,8 +116,9 @@ void SqpSolver::reset() {
   performanceIndeces_.clear();
 
   // reset timers
+  numProblems_ = 0;
   totalNumIterations_ = 0;
-  logger_ = multiple_shooting::Logger<multiple_shooting::LogEntry>(settings_.logSize);
+  logger_ = sqp::Logger<sqp::LogEntry>(settings_.logSize);
   linearQuadraticApproximationTimer_.reset();
   solveQpTimer_.reset();
   linesearchTimer_.reset();
@@ -244,7 +247,7 @@ void SqpSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
       logEntry.solveQpTime = solveQpTimer_.getLastIntervalInMilliseconds();
       logEntry.linesearchTime = linesearchTimer_.getLastIntervalInMilliseconds();
       logEntry.baselinePerformanceIndex = baselinePerformance;
-      logEntry.totalConstraintViolationBaseline = totalConstraintViolation(baselinePerformance);
+      logEntry.totalConstraintViolationBaseline = FilterLinesearch::totalConstraintViolation(baselinePerformance);
       logEntry.stepInfo = stepInfo;
       logEntry.convergence = convergence;
       logger_.advance();
@@ -254,6 +257,8 @@ void SqpSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
     ++iter;
     ++totalNumIterations_;
   }
+
+  ++numProblems_;
 
   computeControllerTimer_.startTimer();
   primalSolution_ = toPrimalSolution(timeDiscretization, std::move(x), std::move(u));

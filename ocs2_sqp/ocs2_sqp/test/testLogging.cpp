@@ -29,13 +29,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
-#include "ocs2_sqp/MultipleShootingLogging.h"
+#include "ocs2_sqp/SqpLogging.h"
 
 using namespace ocs2;
 
 TEST(test_logging, wrap_around) {
   const int Ntest = 3;
-  multiple_shooting::Logger<int> logger(Ntest);
+  sqp::Logger<int> logger(Ntest);
 
   std::stringstream stream;
 

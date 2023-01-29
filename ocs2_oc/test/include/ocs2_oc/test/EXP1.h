@@ -222,8 +222,8 @@ inline OptimalControlProblem createExp1Problem(const std::shared_ptr<ocs2::Refer
   problem.dynamicsPtr.reset(new ocs2::EXP1_System(referenceManagerPtr));
 
   // cost function
-  problem.costPtr->add("cost", std::unique_ptr<ocs2::StateInputCost>(new ocs2::EXP1_Cost()));
-  problem.finalCostPtr->add("finalCost", std::unique_ptr<ocs2::StateCost>(new ocs2::EXP1_FinalCost()));
+  problem.costPtr->add("cost", std::make_unique<ocs2::EXP1_Cost>());
+  problem.finalCostPtr->add("finalCost", std::make_unique<ocs2::EXP1_FinalCost>());
 
   return problem;
 }

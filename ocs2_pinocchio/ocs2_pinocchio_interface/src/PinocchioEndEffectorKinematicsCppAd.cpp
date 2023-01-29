@@ -253,7 +253,7 @@ auto PinocchioEndEffectorKinematicsCppAd::getOrientationError(const vector_t& st
     -> std::vector<vector3_t> {
   vector_t params(4 * endEffectorIds_.size());
   for (int i = 0; i < endEffectorIds_.size(); i++) {
-    params.segment<4>(i) = referenceOrientations[i].coeffs();
+    params.segment<4>(4 * i) = referenceOrientations[i].coeffs();
   }
 
   const vector_t errorValues = orientationErrorCppAdInterfacePtr_->getFunctionValue(state, params);
@@ -272,7 +272,7 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematicsCpp
     const vector_t& state, const std::vector<quaternion_t>& referenceOrientations) const {
   vector_t params(4 * endEffectorIds_.size());
   for (int i = 0; i < endEffectorIds_.size(); i++) {
-    params.segment<4>(i) = referenceOrientations[i].coeffs();
+    params.segment<4>(4 * i) = referenceOrientations[i].coeffs();
   }
 
   const vector_t errorValues = orientationErrorCppAdInterfacePtr_->getFunctionValue(state, params);

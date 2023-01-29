@@ -49,11 +49,14 @@ class StateConstraintCollection : public Collection<StateConstraint> {
   ~StateConstraintCollection() override = default;
   StateConstraintCollection* clone() const override;
 
-  /** Returns the number of active constraints at given time. */
-  virtual size_t getNumConstraints(scalar_t time) const;
+  /** Returns the number of active constraints at a given time. */
+  size_t getNumConstraints(scalar_t time) const;
 
-  /** Get the constraint vector value */
-  virtual vector_t getValue(scalar_t time, const vector_t& state, const PreComputation& preComp) const;
+  /** Returns the number of active constraints at a given time for each term. If a term is inactive, its size is zero. */
+  size_array_t getTermsSize(scalar_t time) const;
+
+  /** Get an array of all constraints. If a term is inactive, the corresponding element is a vector of size zero. */
+  virtual vector_array_t getValue(scalar_t time, const vector_t& state, const PreComputation& preComp) const;
 
   /** Get the constraint linear approximation */
   virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state,

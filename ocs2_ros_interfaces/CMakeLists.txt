@@ -5,7 +5,6 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   roscpp
   ocs2_msgs
   ocs2_core
-  ocs2_ddp
   ocs2_mpc
   std_msgs
   visualization_msgs
@@ -64,7 +63,7 @@ add_library(${PROJECT_NAME}
   src/mrt/MRT_ROS_Dummy_Loop.cpp
   src/mrt/MRT_ROS_Interface.cpp
   src/synchronized_module/RosReferenceManager.cpp
-  src/synchronized_module/RosAugmentedLagrangianCallbacks.cpp
+  src/synchronized_module/SolverObserverRosCallbacks.cpp
   src/visualization/VisualizationHelpers.cpp
   src/visualization/VisualizationColors.cpp
 )

@@ -48,7 +48,7 @@ inline ScalarFunctionQuadraticApproximation getRandomCost(int n, int m) {
   ScalarFunctionQuadraticApproximation cost;
   cost.dfdxx = QPPR.topLeftCorner(n, n);
   cost.dfdx = vector_t::Random(n);
-  if (m > 0) {
+  if (m >= 0) {
     cost.dfdux = QPPR.bottomLeftCorner(m, n);
     cost.dfduu = QPPR.bottomRightCorner(m, m);
     cost.dfdu = vector_t::Random(m);
@@ -58,18 +58,18 @@ inline ScalarFunctionQuadraticApproximation getRandomCost(int n, int m) {
 }
 
 inline std::unique_ptr<ocs2::StateInputCost> getOcs2Cost(const ScalarFunctionQuadraticApproximation& cost) {
-  return std::unique_ptr<ocs2::StateInputCost>(new ocs2::QuadraticStateInputCost(cost.dfdxx, cost.dfduu, cost.dfdux));
+  return std::make_unique<ocs2::QuadraticStateInputCost>(cost.dfdxx, cost.dfduu, cost.dfdux);
 }
 
 inline std::unique_ptr<ocs2::StateCost> getOcs2StateCost(const ScalarFunctionQuadraticApproximation& costFinal) {
-  return std::unique_ptr<ocs2::StateCost>(new ocs2::QuadraticStateCost(costFinal.dfdxx));
+  return std::make_unique<ocs2::QuadraticStateCost>(costFinal.dfdxx);
 }
 
 /** Get random linear dynamics of n states and m inputs */
 inline VectorFunctionLinearApproximation getRandomDynamics(int n, int m) {
   VectorFunctionLinearApproximation dynamics;
   dynamics.dfdx = matrix_t::Random(n, n);
-  if (m > 0) {
+  if (m >= 0) {
     dynamics.dfdu = matrix_t::Random(n, m);
   }
   dynamics.f = vector_t::Random(n);
@@ -77,14 +77,14 @@ inline VectorFunctionLinearApproximation getRandomDynamics(int n, int m) {
 }
 
 inline std::unique_ptr<ocs2::LinearSystemDynamics> getOcs2Dynamics(const VectorFunctionLinearApproximation& dynamics) {
-  return std::unique_ptr<ocs2::LinearSystemDynamics>(new ocs2::LinearSystemDynamics(dynamics.dfdx, dynamics.dfdu));
+  return std::make_unique<ocs2::LinearSystemDynamics>(dynamics.dfdx, dynamics.dfdu);
 }
 
 /** Get random nc linear constraints of n states, and m inputs */
 inline VectorFunctionLinearApproximation getRandomConstraints(int n, int m, int nc) {
   VectorFunctionLinearApproximation constraints;
   constraints.dfdx = matrix_t::Random(nc, n);
-  if (m > 0) {
+  if (m >= 0) {
     constraints.dfdu = matrix_t::Random(nc, m);
   }
   constraints.f = vector_t::Random(nc);
@@ -92,12 +92,12 @@ inline VectorFunctionLinearApproximation getRandomConstraints(int n, int m, int 
 }
 
 inline std::unique_ptr<ocs2::StateInputConstraint> getOcs2Constraints(const VectorFunctionLinearApproximation& stateInputConstraints) {
-  return std::unique_ptr<ocs2::StateInputConstraint>(
-      new ocs2::LinearStateInputConstraint(stateInputConstraints.f, stateInputConstraints.dfdx, stateInputConstraints.dfdu));
+  return std::make_unique<ocs2::LinearStateInputConstraint>(stateInputConstraints.f, stateInputConstraints.dfdx,
+                                                            stateInputConstraints.dfdu);
 }
 
 inline std::unique_ptr<ocs2::StateConstraint> getOcs2StateOnlyConstraints(const VectorFunctionLinearApproximation& stateOnlyConstraints) {
-  return std::unique_ptr<ocs2::StateConstraint>(new ocs2::LinearStateConstraint(stateOnlyConstraints.f, stateOnlyConstraints.dfdx));
+  return std::make_unique<ocs2::LinearStateConstraint>(stateOnlyConstraints.f, stateOnlyConstraints.dfdx);
 }
 
 }  // namespace ocs2

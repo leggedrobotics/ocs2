@@ -116,9 +116,9 @@ class testEndEffectorLinearConstraint : public ::testing::Test {
 };
 
 TEST_F(testEndEffectorLinearConstraint, testValue) {
-  auto eeVelConstraintPtr = std::unique_ptr<EndEffectorLinearConstraint>(new EndEffectorLinearConstraint(*eeKinematicsPtr, 3));
+  auto eeVelConstraintPtr = std::make_unique<EndEffectorLinearConstraint>(*eeKinematicsPtr, 3);
   eeVelConstraintPtr->configure(config);
-  auto eeVelConstraintAdPtr = std::unique_ptr<EndEffectorLinearConstraint>(new EndEffectorLinearConstraint(*eeKinematicsAdPtr, 3));
+  auto eeVelConstraintAdPtr = std::make_unique<EndEffectorLinearConstraint>(*eeKinematicsAdPtr, 3);
   eeVelConstraintAdPtr->configure(config);
 
   dynamic_cast<PinocchioEndEffectorKinematics&>(eeVelConstraintPtr->getEndEffectorKinematics())
@@ -143,9 +143,9 @@ TEST_F(testEndEffectorLinearConstraint, testValue) {
 }
 
 TEST_F(testEndEffectorLinearConstraint, testLinearApproximation) {
-  auto eeVelConstraintPtr = std::unique_ptr<EndEffectorLinearConstraint>(new EndEffectorLinearConstraint(*eeKinematicsPtr, 3));
+  auto eeVelConstraintPtr = std::make_unique<EndEffectorLinearConstraint>(*eeKinematicsPtr, 3);
   eeVelConstraintPtr->configure(config);
-  auto eeVelConstraintAdPtr = std::unique_ptr<EndEffectorLinearConstraint>(new EndEffectorLinearConstraint(*eeKinematicsAdPtr, 3));
+  auto eeVelConstraintAdPtr = std::make_unique<EndEffectorLinearConstraint>(*eeKinematicsAdPtr, 3);
   eeVelConstraintAdPtr->configure(config);
 
   dynamic_cast<PinocchioEndEffectorKinematics&>(eeVelConstraintPtr->getEndEffectorKinematics())

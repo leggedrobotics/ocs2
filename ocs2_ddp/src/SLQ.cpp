@@ -239,7 +239,6 @@ void SLQ::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& 
    *  SsNormalized = [-10.0, ..., -2.0, -1.0, -0.0]
    */
   vector_array_t& allSsTrajectory = allSsTrajectoryStock_[workerIndex];
-  allSsTrajectory.clear();
   integrateRiccatiEquationNominalTime(*riccatiIntegratorPtrStock_[workerIndex], *riccatiEquationsPtrStock_[workerIndex], partitionInterval,
                                       nominalTimeTrajectory, nominalEventsPastTheEndIndices, std::move(allSsFinal), SsNormalizedTime,
                                       SsNormalizedPostEventIndices, allSsTrajectory);
@@ -266,7 +265,6 @@ void SLQ::integrateRiccatiEquationNominalTime(IntegratorBase& riccatiIntegrator,
   const int nominalTimeSize = SsNormalizedTime.size();
   const int numEvents = SsNormalizedPostEventIndices.size();
   auto partitionDuration = nominalTimeTrajectory[partitionInterval.second] - nominalTimeTrajectory[partitionInterval.first];
-  const auto numTimeSteps = static_cast<size_t>(settings().maxNumStepsPerSecond_ * std::max(1.0, partitionDuration));
 
   // Normalized switching time indices, start and end of the partition are added at the beginning and end
   using iterator_t = scalar_array_t::const_iterator;
@@ -281,15 +279,16 @@ void SLQ::integrateRiccatiEquationNominalTime(IntegratorBase& riccatiIntegrator,
 
   // integrating the Riccati equations
   allSsTrajectory.clear();
-  allSsTrajectory.reserve(numTimeSteps);
+  allSsTrajectory.reserve(nominalTimeSize);
   for (int i = 0; i <= numEvents; i++) {
     iterator_t beginTimeItr = SsNormalizedSwitchingTimesIndices[i].first;
     iterator_t endTimeItr = SsNormalizedSwitchingTimesIndices[i].second;
 
-    Observer observer(&allSsTrajectory);
     // solve Riccati equations
+    Observer observer(&allSsTrajectory);
+    const auto maxNumTimeSteps = static_cast<size_t>(settings().maxNumStepsPerSecond_ * std::max(1.0, partitionDuration));
     riccatiIntegrator.integrateTimes(riccatiEquation, observer, allSsFinal, beginTimeItr, endTimeItr, settings().timeStep_,
-                                     settings().absTolODE_, settings().relTolODE_, numTimeSteps);
+                                     settings().absTolODE_, settings().relTolODE_, maxNumTimeSteps);
 
     if (i < numEvents) {
       allSsFinal = riccatiEquation.computeJumpMap(*endTimeItr, allSsTrajectory.back());

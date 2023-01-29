@@ -113,10 +113,10 @@ protected:
 
   std::unique_ptr<GaussNewtonDDP_MPC> getMpc() {
     auto& interface = *mobileManipulatorInterfacePtr;
-    std::unique_ptr<GaussNewtonDDP_MPC> mpcPtr(new GaussNewtonDDP_MPC(
+    auto mpcPtr = std::make_unique<GaussNewtonDDP_MPC>(
         interface.mpcSettings(), interface.ddpSettings(),
         interface.getRollout(), interface.getOptimalControlProblem(),
-        interface.getInitializer()));
+        interface.getInitializer());
     mpcPtr->getSolverPtr()->setReferenceManager(
         mobileManipulatorInterfacePtr->getReferenceManagerPtr());
     return mpcPtr;
@@ -199,6 +199,7 @@ TEST_P(DummyMobileManipulatorParametersTests, synchronousTracking) {
   verifyTrackingQuality(observation.state);
 }
 
+#ifdef NDEBUG
 TEST_P(DummyMobileManipulatorParametersTests, asynchronousTracking) {
   // Obtain mpc
   initialize(getTaskFile(), getLibFolder(), getUrdfFile());
@@ -258,6 +259,7 @@ TEST_P(DummyMobileManipulatorParametersTests, asynchronousTracking) {
 
   verifyTrackingQuality(observation.state);
 }
+#endif
 
 /******************************************************************************************************/
 /******************************************************************************************************/

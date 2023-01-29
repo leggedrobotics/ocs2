@@ -42,22 +42,39 @@ namespace numerics {
  *
  * @tparam T1: data type of x.
  * @tparam T2: data type of y.
- * @param [in] x: a floating-point number.
- * @param [in] y: a floating-point number.
+ * @tparam T3: data type of prec.
+ * @param [in] x: First floating-point number.
+ * @param [in] y: Second floating-point number.
+ * @param [in] prec: The comparison precision.
+ * @return bool: true if x=y.
+ */
+template <class T1, class T2, class T3>
+bool almost_eq(T1&& x, T2&& y, T3&& prec) {
+  static_assert(std::is_floating_point<typename std::remove_reference<T1>::type>::value, "First argument is not floating point!");
+  static_assert(std::is_floating_point<typename std::remove_reference<T2>::type>::value, "Second argument is not floating point!");
+  static_assert(std::is_floating_point<typename std::remove_reference<T3>::type>::value, "prec is not floating point!");
+  // the machine epsilon has to be scaled to the magnitude of the values used
+  // and multiplied by the desired precision unless the result is subnormal
+  using Type = const std::remove_reference_t<T1>;
+  const auto absDiff = std::abs(x - static_cast<Type>(y));
+  const auto magnitude = std::min(std::abs(x), std::abs(static_cast<Type>(y)));
+  return absDiff <= static_cast<Type>(prec) * magnitude || absDiff < std::numeric_limits<Type>::min();
+}
+
+/**
+ * Almost equal which uses machine epsilon to compare floating-point values for equality.
+ * refer to: https://en.cppreference.com/w/cpp/types/numeric_limits/epsilon
+ *
+ * @tparam T1: data type of x.
+ * @tparam T2: data type of y.
+ * @param [in] x: First floating-point number.
+ * @param [in] y: Second floating-point number.
  * @return bool: true if x=y.
  */
 template <class T1, class T2>
-typename std::enable_if<std::is_floating_point<typename std::remove_reference<T1>::type>::value ||
-                            std::is_floating_point<typename std::remove_reference<T2>::type>::value,
-                        bool>::type
-almost_eq(T1&& x, T2&& y) {
-  using TypeResult = typename std::conditional<std::is_floating_point<typename std::remove_reference<T1>::type>::value,
-                                               typename std::remove_reference<T1>::type, typename std::remove_reference<T2>::type>::type;
-  // the machine epsilon has to be scaled to the magnitude of the values used
-  // and multiplied by the desired precision in ULPs (units in the last place)
-  return std::abs(x - y) <= std::numeric_limits<TypeResult>::epsilon() * std::abs(x + y)
-         // unless the result is subnormal
-         || std::abs(x - y) < std::numeric_limits<TypeResult>::min();
+bool almost_eq(T1&& x, T2&& y) {
+  const auto prec = std::numeric_limits<std::remove_reference_t<T1>>::epsilon();
+  return almost_eq(x, y, prec);
 }
 
 /**
@@ -65,15 +82,28 @@ almost_eq(T1&& x, T2&& y) {
  *
  * @tparam T1: data type of x.
  * @tparam T2: data type of y.
- * @param [in] x: a floating-point number.
- * @param [in] y: a floating-point number.
+ * @tparam T3: data type of prec.
+ * @param [in] x: First floating-point number.
+ * @param [in] y: Second floating-point number.
+ * @param [in] prec: The comparison precision.
  * @return bool: true if x<=y.
  */
-template <class T1, class T2>
-typename std::enable_if<std::is_floating_point<typename std::remove_reference<T1>::type>::value ||
-                            std::is_floating_point<typename std::remove_reference<T2>::type>::value,
-                        bool>::type
-almost_le(T1&& x, T2&& y) {
+template <class T1, class T2, class T3>
+bool almost_le(T1&& x, T2&& y, T3&& prec) {
+  return x < y || almost_eq(x, y, prec);
+}
+
+/**
+ * Almost less-equal which uses machine epsilon to compare floating-point values for equality.
+ *
+ * @tparam T1: data type of x.
+ * @tparam T2: data type of y.
+ * @param [in] x: First floating-point number.
+ * @param [in] y: Second floating-point number.
+ * @return bool: true if x<=y.
+ */
+template <class T1, class T2, class T3>
+bool almost_le(T1&& x, T2&& y) {
   return x < y || almost_eq(x, y);
 }
 
@@ -82,15 +112,28 @@ almost_le(T1&& x, T2&& y) {
  *
  * @tparam T1: data type of x.
  * @tparam T2: data type of y.
- * @param [in] x: a floating-point number.
- * @param [in] y: a floating-point number.
+ * @tparam T3: data type of prec.
+ * @param [in] x: First floating-point number.
+ * @param [in] y: Second floating-point number.
+ * @param [in] prec: The comparison precision.
+ * @return bool: true if x>=y.
+ */
+template <class T1, class T2, class T3>
+bool almost_ge(T1&& x, T2&& y, T3&& prec) {
+  return x > y || almost_eq(x, y, prec);
+}
+
+/**
+ * Almost greater-equal which uses machine epsilon to compare floating-point values for equality.
+ *
+ * @tparam T1: data type of x.
+ * @tparam T2: data type of y.
+ * @param [in] x: First floating-point number.
+ * @param [in] y: Second floating-point number.
  * @return bool: true if x>=y.
  */
 template <class T1, class T2>
-typename std::enable_if<std::is_floating_point<typename std::remove_reference<T1>::type>::value ||
-                            std::is_floating_point<typename std::remove_reference<T2>::type>::value,
-                        bool>::type
-almost_ge(T1&& x, T2&& y) {
+bool almost_ge(T1&& x, T2&& y) {
   return x > y || almost_eq(x, y);
 }
 

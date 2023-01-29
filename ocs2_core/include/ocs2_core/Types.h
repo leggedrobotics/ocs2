@@ -71,17 +71,8 @@ using matrix_array2_t = std::vector<matrix_array_t>;
 /** Array of arrays of dynamic matrix trajectory type. */
 using matrix_array3_t = std::vector<matrix_array2_t>;
 
-/** Eigen scalar type. */
-using eigen_scalar_t = Eigen::Matrix<scalar_t, 1, 1>;
-/** Eigen scalar trajectory type. */
-using eigen_scalar_array_t = std::vector<eigen_scalar_t>;
-/** Array of eigen scalar trajectory type. */
-using eigen_scalar_array2_t = std::vector<eigen_scalar_array_t>;
-/** Array of arrays of eigen scalar trajectory type. */
-using eigen_scalar_array3_t = std::vector<eigen_scalar_array2_t>;
-
 /**
- * Defines the linear approximation
+ * Defines the linear approximation of a scalar function
  * f(x,u) = dfdx' dx + dfdu' du + f
  */
 struct ScalarFunctionLinearApproximation {
@@ -134,7 +125,7 @@ std::ostream& operator<<(std::ostream& out, const ScalarFunctionLinearApproximat
  *
  * @param[in] stateDim: Number of states.
  * @param[in] inputDim: Number of inputs.
- * @param[in] data: Given quadratic approximation.
+ * @param[in] data: Given linear approximation.
  * @param[in] dataName: The name of the data which appears in the output error message.
  * @return The description of the error. If there was no error it would be empty;
  */
@@ -148,7 +139,7 @@ inline ScalarFunctionLinearApproximation operator*(scalar_t scalar, ScalarFuncti
 }
 
 /**
- * Defines the quadratic approximation
+ * Defines the quadratic approximation of a scalar function
  * f(x,u) = 1/2 dx' dfdxx dx + du' dfdux dx + 1/2 du' dfduu du + dfdx' dx + dfdu' du + f
  */
 struct ScalarFunctionQuadraticApproximation {

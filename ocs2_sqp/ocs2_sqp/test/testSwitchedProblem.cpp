@@ -29,15 +29,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
-#include "ocs2_sqp/MultipleShootingSolver.h"
-#include "ocs2_sqp/TimeDiscretization.h"
+#include "ocs2_sqp/SqpSolver.h"
 
 #include <ocs2_core/constraint/LinearStateInputConstraint.h>
 #include <ocs2_core/constraint/StateInputConstraint.h>
 #include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
-
+#include <ocs2_oc/oc_data/TimeDiscretization.h>
 #include <ocs2_oc/synchronized_module/ReferenceManager.h>
+
 #include <ocs2_oc/test/testProblemsGeneration.h>
 
 namespace ocs2 {
@@ -116,18 +116,17 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithEventTime(scal
   // Reference Manager
   const ocs2::ModeSchedule modeSchedule({eventTime}, {0, 1});
   const ocs2::TargetTrajectories targetTrajectories({0.0}, {ocs2::vector_t::Random(n)}, {ocs2::vector_t::Random(m)});
-  std::shared_ptr<ocs2::ReferenceManager> referenceManagerPtr(new ocs2::ReferenceManager(targetTrajectories, modeSchedule));
+  auto referenceManagerPtr = std::make_shared<ocs2::ReferenceManager>(targetTrajectories, modeSchedule);
 
   problem.targetTrajectoriesPtr = &targetTrajectories;
 
   // Constraint
-  problem.equalityConstraintPtr->add("switchedConstraint",
-                                     std::unique_ptr<StateInputConstraint>(new ocs2::SwitchedConstraint(referenceManagerPtr)));
+  problem.equalityConstraintPtr->add("switchedConstraint", std::make_unique<SwitchedConstraint>(referenceManagerPtr));
 
   ocs2::DefaultInitializer zeroInitializer(m);
 
   // Solver settings
-  ocs2::multiple_shooting::Settings settings;
+  ocs2::sqp::Settings settings;
   settings.dt = 0.05;
   settings.sqpIteration = 20;
   settings.projectStateInputEqualityConstraints = true;
@@ -141,7 +140,7 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithEventTime(scal
   const ocs2::vector_t initState = ocs2::vector_t::Random(n);
 
   // Set up solver
-  ocs2::MultipleShootingSolver solver(settings, problem, zeroInitializer);
+  ocs2::SqpSolver solver(settings, problem, zeroInitializer);
   solver.setReferenceManager(referenceManagerPtr);
 
   // Solve

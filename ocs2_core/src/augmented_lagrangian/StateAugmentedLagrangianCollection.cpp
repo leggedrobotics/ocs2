@@ -90,9 +90,17 @@ ScalarFunctionQuadraticApproximation StateAugmentedLagrangianCollection::getQuad
   // accumulate terms
   for (size_t i = firstActiveInd + 1; i < terms_.size(); i++) {
     if (terms_[i]->isActive(time)) {
-      penalty += terms_[i]->getQuadraticApproximation(time, state, termsMultiplier[i], preComp);
+      const auto termPenalty = terms_[i]->getQuadraticApproximation(time, state, termsMultiplier[i], preComp);
+      penalty.f += termPenalty.f;
+      penalty.dfdx += termPenalty.dfdx;
+      penalty.dfdxx += termPenalty.dfdxx;
     }
   }
+
+  // make sure that input derivatives are empty
+  penalty.dfdu = vector_t();
+  penalty.dfduu = matrix_t();
+  penalty.dfdux = matrix_t();
 
   return penalty;
 }

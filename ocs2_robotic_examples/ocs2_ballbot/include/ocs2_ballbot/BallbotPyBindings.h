@@ -59,9 +59,9 @@ class BallbotPyBindings final : public PythonInterface {
     BallbotInterface ballbotInterface(taskFile, libraryFolder);
 
     // MPC
-    std::unique_ptr<GaussNewtonDDP_MPC> mpcPtr(
-        new GaussNewtonDDP_MPC(ballbotInterface.mpcSettings(), ballbotInterface.ddpSettings(), ballbotInterface.getRollout(),
-                               ballbotInterface.getOptimalControlProblem(), ballbotInterface.getInitializer()));
+    auto mpcPtr =
+        std::make_unique<GaussNewtonDDP_MPC>(ballbotInterface.mpcSettings(), ballbotInterface.ddpSettings(), ballbotInterface.getRollout(),
+                                             ballbotInterface.getOptimalControlProblem(), ballbotInterface.getInitializer());
     mpcPtr->getSolverPtr()->setReferenceManager(ballbotInterface.getReferenceManagerPtr());
 
     // Python interface

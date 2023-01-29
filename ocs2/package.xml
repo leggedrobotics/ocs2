@@ -16,14 +16,17 @@
   <exec_depend>ocs2_oc</exec_depend>
   <exec_depend>ocs2_qp_solver</exec_depend>
   <exec_depend>ocs2_ddp</exec_depend>
+  <exec_depend>ocs2_slp</exec_depend>
   <exec_depend>ocs2_sqp</exec_depend>
   <exec_depend>ocs2_ros_interfaces</exec_depend>
   <exec_depend>ocs2_python_interface</exec_depend>
   <exec_depend>ocs2_pinocchio</exec_depend>
   <exec_depend>ocs2_robotic_tools</exec_depend>
+  <exec_depend>ocs2_perceptive</exec_depend>
   <exec_depend>ocs2_robotic_examples</exec_depend>
   <exec_depend>ocs2_thirdparty</exec_depend>
   <exec_depend>ocs2_raisim</exec_depend>
+  <exec_depend>ocs2_mpcnet</exec_depend>
 
    <export>
    	  <metapackage />

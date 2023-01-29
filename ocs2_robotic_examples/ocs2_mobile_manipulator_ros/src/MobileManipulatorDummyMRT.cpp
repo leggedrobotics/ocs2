@@ -64,8 +64,7 @@ int main(int argc, char** argv) {
   mrt.launchNodes(nodeHandle);
 
   // Visualization
-  std::shared_ptr<mobile_manipulator::MobileManipulatorDummyVisualization> dummyVisualization(
-      new mobile_manipulator::MobileManipulatorDummyVisualization(nodeHandle, interface));
+  auto dummyVisualization = std::make_shared<mobile_manipulator::MobileManipulatorDummyVisualization>(nodeHandle, interface);
 
   // Dummy MRT
   MRT_ROS_Dummy_Loop dummy(mrt, interface.mpcSettings().mrtDesiredFrequency_, interface.mpcSettings().mpcDesiredFrequency_);

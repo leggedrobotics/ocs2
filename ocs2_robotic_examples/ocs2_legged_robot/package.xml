@@ -17,6 +17,7 @@
   <depend>ocs2_ddp</depend>
   <depend>ocs2_mpc</depend>
   <depend>ocs2_sqp</depend>
+  <depend>ocs2_ipm</depend>
   <depend>ocs2_robotic_assets</depend>
   <depend>ocs2_robotic_tools</depend>
   <depend>ocs2_pinocchio_interface</depend>

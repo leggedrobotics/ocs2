@@ -101,8 +101,8 @@ int main(int argc, char** argv) {
   CentroidalModelPinocchioMapping pinocchioMapping(interface.getCentroidalModelInfo());
   PinocchioEndEffectorKinematics endEffectorKinematics(interface.getPinocchioInterface(), pinocchioMapping,
                                                        interface.modelSettings().contactNames3DoF);
-  std::shared_ptr<LeggedRobotRaisimVisualizer> leggedRobotRaisimVisualizer(new LeggedRobotRaisimVisualizer(
-      interface.getPinocchioInterface(), interface.getCentroidalModelInfo(), endEffectorKinematics, nodeHandle));
+  auto leggedRobotRaisimVisualizer = std::make_shared<LeggedRobotRaisimVisualizer>(
+      interface.getPinocchioInterface(), interface.getCentroidalModelInfo(), endEffectorKinematics, nodeHandle);
   leggedRobotRaisimVisualizer->updateTerrain();
 
   // legged robot dummy

@@ -89,7 +89,7 @@ class GaussNewtonDDP : public SolverBase {
 
   void getPrimalSolution(scalar_t finalTime, PrimalSolution* primalSolutionPtr) const final;
 
-  const DualSolution& getDualSolution() const override { return optimizedDualSolution_; }
+  const DualSolution* getDualSolution() const override { return &optimizedDualSolution_; }
 
   const ProblemMetrics& getSolutionMetrics() const override { return optimizedProblemMetrics_; }
 
@@ -121,7 +121,9 @@ class GaussNewtonDDP : public SolverBase {
    * @param [in] taskFunction: task function
    * @param [in] N: number of times to run taskFunction, if N = 1 it is run in the main thread
    */
-  void runParallel(std::function<void(void)> taskFunction, size_t N);
+  void runParallel(std::function<void(void)> taskFunction, size_t N) {
+    threadPool_.runParallel([&](int) { taskFunction(); }, N);
+  }
 
   /**
    * Takes the following steps: (1) Computes the Hessian of the Hamiltonian (i.e., Hm) (2) Based on Hm, it calculates
@@ -168,7 +170,7 @@ class GaussNewtonDDP : public SolverBase {
   /**
    * Solves Riccati equations.
    *
-   * @param [in] finalValueFunction The final Sm(dfdxx), Sv(dfdx), s(f), for Riccati equation.
+   * @param [in] finalValueFunction: The final value of Sm (dfdxx), Sv (dfdx), s (f), for Riccati equation.
    * @return average time step
    */
   virtual scalar_t solveSequentialRiccatiEquations(const ScalarFunctionQuadraticApproximation& finalValueFunction) = 0;
@@ -230,35 +232,33 @@ class GaussNewtonDDP : public SolverBase {
   }
 
   /**
-   * Get the Partition Intervals From Time Trajectory. Intervals are defined as [start, end).
+   * Forward integrate the system dynamics with the controller in inputPrimalSolution. In general, it uses the given
+   * control policies and the initial state, to integrate the system dynamics in the time period [initTime, finalTime].
+   * However, if inputPrimalSolution's controller does not cover the period [initTime, finalTime], it will use the
+   * controller till the final time of the controller
    *
-   * Pay attention, the rightmost index of the end partition is (..., timeArray.size() - 1) , as the last value function is filled manually.
-   * The reason is though we don’t write to the end index, we do have to read it. Adding the last index to the final partition will
-   * cause a segmentation fault. There is no trivial method to distinguish the final partition from other partitions because, by design,
-   * partitions should be treated equally.
-   *
-   * Every time point that is equal or larger to the desiredPartitionPoint should be included in that partition. This logic here is the same
-   * as the event times.
-   *
-   * The last time of desiredPartitionPoints is filled manually. There is no round-off error involved. So it is safe to use == for
-   * floating-point numbers. The last time point is naturally included by using std::lower_bound.
-   *
-   * @param [in] timeTrajectory: time trajectory that will be divided
-   * @param [in] numWorkers: number of worker i.e. number of partitions
-   * @return array of index pairs indicating the start and end of each partition
+   * @param [in] inputPrimalSolution: Its controller will be used for rollout.
+   * @param [out] outputPrimalSolution: The resulting PrimalSolution.
+   * @return True if the rollout was successful.
    */
-  std::vector<std::pair<int, int>> getPartitionIntervalsFromTimeTrajectory(const scalar_array_t& timeTrajectory, int numWorkers);
+  bool rolloutInitialController(PrimalSolution& inputPrimalSolution, PrimalSolution& outputPrimalSolution);
 
   /**
-   * Forward integrate the system dynamics with given controller in primalSolution and operating trajectories. In general, it uses
-   * the given control policies and initial state, to integrate the system dynamics in the time period [initTime, finalTime].
-   * However, if the provided controller does not cover the period [initTime, finalTime], it will use the controller till the
-   * final time of the controller and after it uses the operating trajectories.
+   * Extracts the PrimalSolution trajectories from inputPrimalSolution. In general, it will try to extract in time period
+   * [initTime, finalTime]. However, if inputPrimalSolution's timeTrajectory does not cover the period [initTime, finalTime],
+   * it will extract the solution until the last time of the timeTrajectory
    *
-   * @param [in, out] primalSolution: The resulting state-input trajectory. The primal solution is initialized with the controller
-   *                                  and the modeSchedule. However, for StateTriggered Rollout the modeSchedule can be overwritten.
+   * @param [in] inputPrimalSolution: Its controller will be used for rollout.
+   * @param [out] outputPrimalSolution: The resulting PrimalSolution.
+   * @return True if the extraction was successful.
    */
-  void rolloutInitialTrajectory(PrimalSolution& primalSolution);
+  bool extractInitialTrajectories(PrimalSolution& inputPrimalSolution, PrimalSolution& outputPrimalSolution);
+
+  /**
+   * It will check the content of the primalSolution, and if its final time is smaller than the current solver finalTime_,
+   * it will concatenate it with the result of Initializer.
+   */
+  void rolloutInitializer(PrimalSolution& primalSolution);
 
   /**
    * Calculates the controller. This method uses the following variables. The method modifies unoptimizedController_.
@@ -277,21 +277,6 @@ class GaussNewtonDDP : public SolverBase {
    * @return The merit function
    */
   scalar_t calculateRolloutMerit(const PerformanceIndex& performanceIndex) const;
-
-  /**
-   * Calculates max feedforward update norm and max type-1 error update norm.
-   *
-   * @param maxDeltaUffNorm: max feedforward update norm.
-   * @param maxDeltaUeeNorm: max type-1 error update norm.
-   */
-
-  /**
-   * Calculates max feedforward update norm of the controller.
-   *
-   * @param [in] controller: Control policy
-   * @return max feedforward update norm.
-   */
-  scalar_t maxControllerUpdateNorm(const LinearController& controller) const;
 
   /**
    * Approximates the nonlinear problem as a linear-quadratic problem around the
@@ -316,20 +301,7 @@ class GaussNewtonDDP : public SolverBase {
   void computeProjections(const matrix_t& Hm, const matrix_t& Dm, matrix_t& constraintRangeProjector,
                           matrix_t& constraintNullProjector) const;
 
-  /**
-   * Projects the unconstrained LQ coefficients to constrained ones.
-   *
-   * @param [in] modelData: The model data.
-   * @param [in] constraintRangeProjector: The projection matrix to the constrained subspace.
-   * @param [in] constraintNullProjector: The projection matrix to the null space of constrained.
-   * @param [out] projectedModelData: The projected model data.
-   */
-  void projectLQ(const ModelData& modelData, const matrix_t& constraintRangeProjector, const matrix_t& constraintNullProjector,
-                 ModelData& projectedModelData) const;
-
-  /**
-   * Initialize the constraint penalty coefficients.
-   */
+  /** Initialize the constraint penalty coefficients. */
   void initializeConstraintPenalties();
 
   /**
@@ -338,16 +310,19 @@ class GaussNewtonDDP : public SolverBase {
    */
   void updateConstraintPenalties(scalar_t equalityConstraintsSSE);
 
-  /**
-   * Runs the initialization method for Gauss-Newton DDP.
+  /** Initializes the nominal primal based on the optimized ones.
+   * @return True if the rollout is not purely from the Initializer.
    */
-  void runInit();
+  bool initializePrimalSolution();
 
   /**
-   * Runs a single iteration of Gauss-Newton DDP.
-   * @param [in] lqModelExpectedCost: The expected cost based on the LQ model optimization.
+   * Initializes the nominal dual solutions based on the optimized ones and nominal primal solution.
+   * Moreover, it updates ProblemMetrics.
    */
-  void runIteration(scalar_t lqModelExpectedCost);
+  void initializeDualSolutionAndMetrics();
+
+  /** Based on the current LQ solution updates the optimized primal and dual solutions. */
+  void takePrimalDualStep(scalar_t lqModelExpectedCost);
 
   /**
    * Checks convergence of the main loop of DDP.
@@ -364,13 +339,7 @@ class GaussNewtonDDP : public SolverBase {
 
   void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const ControllerBase* externalControllerPtr) override;
 
-  void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const PrimalSolution& primalSolution) override {
-    if (primalSolution.controllerPtr_ == nullptr) {
-      std::cerr
-          << "[GaussNewtonDDP] DDP cannot be warm started without a controller in the primal solution. Will revert to a cold start.\n";
-    }
-    runImpl(initTime, initState, finalTime, primalSolution.controllerPtr_.get());
-  }
+  void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const PrimalSolution& primalSolution) override;
 
  protected:
   // nominal data

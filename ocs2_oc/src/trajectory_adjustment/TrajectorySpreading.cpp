@@ -44,23 +44,6 @@ std::ostream& operator<<(std::ostream& os, const std::pair<int, int>& ind) {
   os << "(" << ind.first << ", " << ind.second << ")";
   return os;
 }
-
-/**
- * Returns the first mismatching pair of elements from two ranges: one defined by [first1, last1) and
- * another defined by [first2,last2).
- *
- * TODO deprecate this function once switched to c++14 and use: std::mismatch(first1, last1, first2, last2)
- */
-template <class InputIt1, class InputIt2>
-std::pair<InputIt1, InputIt2> mismatch(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2) {
-  auto mismatchedIndex = std::mismatch(first1, last1, first2);
-  while (std::distance(last2, mismatchedIndex.second) > 0) {
-    --mismatchedIndex.first;
-    --mismatchedIndex.second;
-  }
-  return mismatchedIndex;
-}
-
 }  // anonymous namespace
 
 /******************************************************************************************************/
@@ -90,12 +73,11 @@ auto TrajectorySpreading::set(const ModeSchedule& oldModeSchedule, const ModeSch
   // this means: mode[firstMatchingModeIndex + w] != updatedMode[updatedFirstMatchingModeIndex + w]
   size_t w = 0;
   while (oldStartIndexOfMatchedSequence < oldModeSchedule.modeSequence.size()) {
-    // TODO: change to std::mismatch(first1, last1, first2, last2). It is supported since c++14
     // +1 to include the last active mode
-    const auto mismatchedIndex = mismatch(oldModeSchedule.modeSequence.cbegin() + oldStartIndexOfMatchedSequence,
-                                          oldModeSchedule.modeSequence.cbegin() + oldLastActiveModeIndex + 1,
-                                          newModeSchedule.modeSequence.cbegin() + newStartIndexOfMatchedSequence,
-                                          newModeSchedule.modeSequence.cbegin() + newLastActiveModeIndex + 1);
+    const auto mismatchedIndex = std::mismatch(oldModeSchedule.modeSequence.cbegin() + oldStartIndexOfMatchedSequence,
+                                               oldModeSchedule.modeSequence.cbegin() + oldLastActiveModeIndex + 1,
+                                               newModeSchedule.modeSequence.cbegin() + newStartIndexOfMatchedSequence,
+                                               newModeSchedule.modeSequence.cbegin() + newLastActiveModeIndex + 1);
 
     w = std::distance(oldModeSchedule.modeSequence.begin() + oldStartIndexOfMatchedSequence, mismatchedIndex.first);
 
@@ -170,7 +152,7 @@ auto TrajectorySpreading::set(const ModeSchedule& oldModeSchedule, const ModeSch
   // if last mode of the new mode sequence is NOT matched
   else if (!isLastActiveModeOfNewModeSequenceMatched) {
     const auto mismatchEventTime = newModeSchedule.eventTimes[newStartIndexOfMatchedSequence + w - 1];
-    eraseFromIndex_ = upperBoundIndex(oldTimeTrajectory, mismatchEventTime);
+    eraseFromIndex_ = lowerBoundIndex(oldTimeTrajectory, mismatchEventTime);
   }
 
   // computes the index of the spreading values and intervals

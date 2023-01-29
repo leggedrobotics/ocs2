@@ -28,6 +28,7 @@
     </group>
 
     <!-- make the files into global parameters -->
+    <param name="multiplot"         value="$(arg multiplot)"/>
     <param name="taskFile"          value="$(arg taskFile)" />
     <param name="referenceFile"     value="$(arg referenceFile)" />
     <param name="urdfFile"          value="$(arg urdfFile)" />

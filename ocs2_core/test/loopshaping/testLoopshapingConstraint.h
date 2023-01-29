@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_core/loopshaping/LoopshapingPreComputation.h"
 #include "ocs2_core/loopshaping/LoopshapingPropertyTree.h"
 #include "ocs2_core/loopshaping/constraint/LoopshapingConstraint.h"
+#include "ocs2_core/model_data/Metrics.h"
 
 #include "testLoopshapingConfigurations.h"
 #include "testQuadraticConstraint.h"
@@ -62,14 +63,15 @@ class TestFixtureLoopShapingConstraint : LoopshapingTestConfiguration {
 
   void testStateInputConstraintEvaluation() const {
     // Evaluate system
-    vector_t g_system = systemConstraint->getValue(t, x_sys_, u_sys_, PreComputation());
+    const auto g_system = systemConstraint->getValue(t, x_sys_, u_sys_, PreComputation());
 
     // Evaluate loopshaping system
     preComp_->request(Request::Constraint, t, x_, u_);
-    vector_t g = loopshapingConstraint->getValue(t, x_, u_, *preComp_);
+    const auto g = toVector(loopshapingConstraint->getValue(t, x_, u_, *preComp_));
 
     // The constraint should stay the same
-    EXPECT_LE((g_system - g).array().abs().maxCoeff(), tol);
+    EXPECT_TRUE(g_system.size() == g.size());
+    EXPECT_TRUE(g_system.isApprox(g, tol));
   }
 
   void testStateInputConstraintLinearApproximation() const {
@@ -90,7 +92,7 @@ class TestFixtureLoopShapingConstraint : LoopshapingTestConfiguration {
 
     // Reevaluate at disturbed state
     preComp_->request(Request::Constraint, t, x_ + x_disturbance_, u_ + u_disturbance_);
-    vector_t h_disturbance = loopshapingConstraint->getValue(t, x_ + x_disturbance_, u_ + u_disturbance_, *preComp_);
+    const auto h_disturbance = toVector(loopshapingConstraint->getValue(t, x_ + x_disturbance_, u_ + u_disturbance_, *preComp_));
 
     // Evaluate approximation
     for (size_t i = 0; i < h.f.rows(); i++) {
@@ -98,20 +100,20 @@ class TestFixtureLoopShapingConstraint : LoopshapingTestConfiguration {
                                  0.5 * x_disturbance_.transpose() * h.dfdxx[i] * x_disturbance_ +
                                  0.5 * u_disturbance_.transpose() * h.dfduu[i] * u_disturbance_ +
                                  u_disturbance_.transpose() * h.dfdux[i] * x_disturbance_;
-      EXPECT_LE(std::abs(h_disturbance[i] - h_approximation), tol);
+      EXPECT_NEAR(h_disturbance[i], h_approximation, tol);
     }
   }
 
   void testStateOnlyConstraintEvaluation() const {
     // Evaluate system
-    vector_t g_system = systemStateConstraint->getValue(t, x_sys_, PreComputation());
+    const auto g_system = systemStateConstraint->getValue(t, x_sys_, PreComputation());
 
     // Evaluate loopshaping system
     preComp_->requestFinal(Request::Constraint, t, x_);
-    vector_t g = loopshapingStateConstraint->getValue(t, x_, *preComp_);
+    const auto g = toVector(loopshapingStateConstraint->getValue(t, x_, *preComp_));
 
     // System part of the constraints should stay the same
-    EXPECT_LE((g_system - g).array().abs().maxCoeff(), tol);
+    EXPECT_TRUE(g_system.isApprox(g, tol));
   }
 
   void testStateOnlyConstraintLinearApproximation() const {
@@ -131,12 +133,12 @@ class TestFixtureLoopShapingConstraint : LoopshapingTestConfiguration {
 
     // Reevaluate at disturbed state
     preComp_->requestFinal(Request::Constraint, t, x_ + x_disturbance_);
-    vector_t h_disturbance = loopshapingStateConstraint->getValue(t, x_ + x_disturbance_, *preComp_);
+    const auto h_disturbance = toVector(loopshapingStateConstraint->getValue(t, x_ + x_disturbance_, *preComp_));
 
     // Evaluate approximation
     for (size_t i = 0; i < h.f.rows(); i++) {
-      scalar_t h_approximation = h.f(i) + h.dfdx.row(i) * x_disturbance_ + 0.5 * x_disturbance_.transpose() * h.dfdxx[i] * x_disturbance_;
-      EXPECT_LE(std::abs(h_disturbance[i] - h_approximation), tol);
+      const auto h_approximation = h.f(i) + h.dfdx.row(i) * x_disturbance_ + 0.5 * x_disturbance_.transpose() * h.dfdxx[i] * x_disturbance_;
+      EXPECT_NEAR(h_disturbance[i], h_approximation, tol);
     }
   }
 

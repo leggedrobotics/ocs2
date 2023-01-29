@@ -43,7 +43,7 @@ TEST(testLoopshapingFilterDynamics, Integration) {
   C << 0.0, 0.0, 0.0;
   D << 1.0;
   Filter filter(A, B, C, D);
-  auto loopshapingDefinition = std::shared_ptr<LoopshapingDefinition>(new LoopshapingDefinition(LoopshapingType::outputpattern, filter));
+  auto loopshapingDefinition = std::make_shared<LoopshapingDefinition>(LoopshapingType::outputpattern, filter);
   using TestLoopshapingFilterDynamics = LoopshapingFilterDynamics;
   TestLoopshapingFilterDynamics loopshapingFilterDynamics(loopshapingDefinition);
 

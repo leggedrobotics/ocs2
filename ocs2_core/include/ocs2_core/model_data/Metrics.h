@@ -53,23 +53,33 @@ struct LagrangianMetricsConstRef {
 };
 
 /**
- * The collection of cost, equality constraints, and LagrangianMetrics structure for all possible constraint terms (handled by
- * Lagrangian method) in a particular time point.
- * cost : The total cost in a particular time point.
- * stateEqConstraint : A vector of all active state equality constraints.
- * stateInputEqConstraint : A vector of all active state-input equality constraints.
- * stateEqLagrangian : An array of state equality constraint terms handled by Lagrangian method.
- * stateIneqLagrangian : An array of state inequality constraint terms handled by Lagrangian method.
- * stateInputEqLagrangian : An array of state-input equality constraint terms handled by Lagrangian method.
- * stateInputIneqLagrangian : An array of state-input inequality constraint terms handled by Lagrangian method.
+ * The collection of cost, dynamics violation, constraints, and LagrangianMetrics structure for all possible constraint
+ * terms (handled by Lagrangian method) in a point of time.
+ *     cost : The total cost in a particular time point.
+ *     dynamicsViolation : The vector of dynamics violation.
+ *     stateEqConstraint : An array of all state equality constraints.
+ *     stateInputEqConstraint : An array of all state-input equality constraints.
+ *     stateIneqConstraint : An array of all state inequality constraints.
+ *     stateInputIneqConstraint : An array of all state-input inequality constraints.
+ *     stateEqLagrangian : An array of state equality constraint terms handled by Lagrangian method.
+ *     stateIneqLagrangian : An array of state inequality constraint terms handled by Lagrangian method.
+ *     stateInputEqLagrangian : An array of state-input equality constraint terms handled by Lagrangian method.
+ *     stateInputIneqLagrangian : An array of state-input inequality constraint terms handled by Lagrangian method.
  */
-struct MetricsCollection {
+struct Metrics {
   // Cost
   scalar_t cost;
 
+  // Dynamics violation
+  vector_t dynamicsViolation;
+
   // Equality constraints
-  vector_t stateEqConstraint;
-  vector_t stateInputEqConstraint;
+  vector_array_t stateEqConstraint;
+  vector_array_t stateInputEqConstraint;
+
+  // Inequality constraints
+  vector_array_t stateIneqConstraint;
+  vector_array_t stateInputIneqConstraint;
 
   // Lagrangians
   std::vector<LagrangianMetrics> stateEqLagrangian;
@@ -77,46 +87,59 @@ struct MetricsCollection {
   std::vector<LagrangianMetrics> stateInputEqLagrangian;
   std::vector<LagrangianMetrics> stateInputIneqLagrangian;
 
-  /** Exchanges the values of MetricsCollection */
-  void swap(MetricsCollection& other) {
-    // Cost
-    std::swap(cost, other.cost);
-    // Equality constraints
-    stateEqConstraint.swap(other.stateEqConstraint);
-    stateInputEqConstraint.swap(other.stateInputEqConstraint);
-    // Lagrangians
-    stateEqLagrangian.swap(other.stateEqLagrangian);
-    stateIneqLagrangian.swap(other.stateIneqLagrangian);
-    stateInputEqLagrangian.swap(other.stateInputEqLagrangian);
-    stateInputIneqLagrangian.swap(other.stateInputIneqLagrangian);
-  }
+  /** Exchanges the values of Metrics */
+  void swap(Metrics& other);
 
-  /** Clears the value of the MetricsCollection */
-  void clear() {
-    // Cost
-    cost = 0.0;
-    // Equality constraints
-    stateEqConstraint = vector_t();
-    stateInputEqConstraint = vector_t();
-    // Lagrangians
-    stateEqLagrangian.clear();
-    stateIneqLagrangian.clear();
-    stateInputEqLagrangian.clear();
-    stateInputIneqLagrangian.clear();
-  }
+  /** Clears the value of the Metrics */
+  void clear();
+
+  /** Returns true if *this is approximately equal to other, within the precision determined by prec. */
+  bool isApprox(const Metrics& other, scalar_t prec = 1e-8) const;
 };
 
-/** Sums penalties of an array of LagrangianMetrics */
+/** Sums penalties of an array of LagrangianMetrics. */
 inline scalar_t sumPenalties(const std::vector<LagrangianMetrics>& metricsArray) {
   scalar_t s = 0.0;
   std::for_each(metricsArray.begin(), metricsArray.end(), [&s](const LagrangianMetrics& m) { s += m.penalty; });
   return s;
 }
 
-/** Computes the sum of squared norm of constraints of an array of LagrangianMetrics */
+/** Computes the sum of squared norm of constraints of an array of LagrangianMetrics. */
 inline scalar_t constraintsSquaredNorm(const std::vector<LagrangianMetrics>& metricsArray) {
   scalar_t s = 0.0;
   std::for_each(metricsArray.begin(), metricsArray.end(), [&s](const LagrangianMetrics& m) { s += m.constraint.squaredNorm(); });
+  return s;
+}
+
+/** Computes the sum of squared norm of a vector of equality constraints violation. */
+inline scalar_t getEqConstraintsSSE(const vector_t& eqConstraint) {
+  if (eqConstraint.size() == 0) {
+    return 0.0;
+  } else {
+    return eqConstraint.squaredNorm();
+  }
+}
+
+/** Computes the sum of squared norm of a vector of inequality constraints violation. */
+inline scalar_t getIneqConstraintsSSE(const vector_t& ineqConstraint) {
+  if (ineqConstraint.size() == 0) {
+    return 0.0;
+  } else {
+    return ineqConstraint.cwiseMin(0.0).squaredNorm();
+  }
+}
+
+/** Computes the sum of squared norm of an array of equality constraints violation. */
+inline scalar_t getEqConstraintsSSE(const vector_array_t& eqConstraint) {
+  scalar_t s = 0.0;
+  std::for_each(eqConstraint.begin(), eqConstraint.end(), [&s](const vector_t& v) { s += getEqConstraintsSSE(v); });
+  return s;
+}
+
+/** Computes the sum of squared norm of an array of inequality constraints violation. */
+inline scalar_t getIneqConstraintsSSE(const vector_array_t& ineqConstraint) {
+  scalar_t s = 0.0;
+  std::for_each(ineqConstraint.begin(), ineqConstraint.end(), [&s](const vector_t& v) { s += getIneqConstraintsSSE(v); });
   return s;
 }
 
@@ -129,12 +152,38 @@ inline scalar_t constraintsSquaredNorm(const std::vector<LagrangianMetrics>& met
 vector_t toVector(const std::vector<LagrangianMetrics>& termsLagrangianMetrics);
 
 /**
+ * Serializes an array of constraint terms.
+ *
+ * @ param [in] constraintArray : An array of constraint terms.
+ * @return Serialized vector of the format : (...,  constraintArray[i], ...).
+ */
+vector_t toVector(const vector_array_t& constraintArray);
+
+/**
  * Gets the size of constraint terms.
+ *
+ * @ param [in] constraintArray : An array of constraint terms.
+ * @return An array of constraint terms size. It has the same size as the input array.
+ */
+size_array_t getSizes(const vector_array_t& constraintArray);
+
+/**
+ * Gets the size of constraint Lagrangian terms.
  *
  * @ param [in] termsLagrangianMetrics : LagrangianMetrics associated to an array of constraint terms.
  * @return An array of constraint terms size. It has the same size as the input array.
  */
 size_array_t getSizes(const std::vector<LagrangianMetrics>& termsLagrangianMetrics);
+
+/**
+ * Deserializes the vector to an array of constraint terms.
+ *
+ * @param [in] termsSize : An array of constraint terms size. It as the same size as the output array.
+ * @param [in] vec : Serialized array of constraint terms of the format :
+ *                   (..., constraintArray[i], ...)
+ * @return An array of constraint terms.
+ */
+vector_array_t toConstraintArray(const size_array_t& termsSize, const vector_t& vec);
 
 /**
  * Deserializes the vector to an array of LagrangianMetrics structures based on size of constraint terms.
@@ -161,13 +210,13 @@ namespace LinearInterpolation {
 LagrangianMetrics interpolate(const index_alpha_t& indexAlpha, const std::vector<LagrangianMetricsConstRef>& dataArray);
 
 /**
- * Linearly interpolates a trajectory of MetricsCollection.
+ * Linearly interpolates a trajectory of Metrics.
  *
  * @param [in] indexAlpha : index and interpolation coefficient (alpha) pair.
- * @param [in] dataArray : A trajectory of MetricsCollection.
- * @return The interpolated MetricsCollection at indexAlpha.
+ * @param [in] dataArray : A trajectory of Metrics.
+ * @return The interpolated Metrics at indexAlpha.
  */
-MetricsCollection interpolate(const index_alpha_t& indexAlpha, const std::vector<MetricsCollection>& dataArray);
+Metrics interpolate(const index_alpha_t& indexAlpha, const std::vector<Metrics>& dataArray);
 
 }  // namespace LinearInterpolation
 }  // namespace ocs2

@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/penalties/Penalties.h>
 #include <ocs2_ddp/ILQR.h>
 #include <ocs2_ddp/SLQ.h>
-#include <ocs2_oc/synchronized_module/AugmentedLagrangianObserver.h>
+#include <ocs2_oc/synchronized_module/SolverObserver.h>
 
 #include "ocs2_cartpole/CartPoleInterface.h"
 #include "ocs2_cartpole/package_path.h"
@@ -74,7 +74,7 @@ class TestCartpole : public testing::TestWithParam<std::tuple<ddp::Algorithm, Pe
       matrix_t Qf(STATE_DIM, STATE_DIM);
       loadData::loadEigenMatrix(taskFile, "Q_final", Qf);
       Qf *= (timeHorizon / cartPoleInterfacePtr->mpcSettings().timeHorizon_);  // scale cost
-      return std::unique_ptr<StateCost>(new QuadraticStateCost(Qf));
+      return std::make_unique<QuadraticStateCost>(Qf);
     };
     cartPoleInterfacePtr->optimalControlProblem().finalCostPtr->add(finalCostName, createFinalCost());
 
@@ -98,14 +98,14 @@ class TestCartpole : public testing::TestWithParam<std::tuple<ddp::Algorithm, Pe
 
     switch (algorithm) {
       case ddp::Algorithm::SLQ:
-        return std::unique_ptr<GaussNewtonDDP>(new SLQ(ddpSettings, cartPoleInterfacePtr->getRollout(),
-                                                       createOptimalControlProblem(PenaltyType::ModifiedRelaxedBarrierPenalty),
-                                                       cartPoleInterfacePtr->getInitializer()));
+        return std::make_unique<SLQ>(std::move(ddpSettings), cartPoleInterfacePtr->getRollout(),
+                                     createOptimalControlProblem(PenaltyType::ModifiedRelaxedBarrierPenalty),
+                                     cartPoleInterfacePtr->getInitializer());
 
       case ddp::Algorithm::ILQR:
-        return std::unique_ptr<GaussNewtonDDP>(new ILQR(ddpSettings, cartPoleInterfacePtr->getRollout(),
-                                                        createOptimalControlProblem(PenaltyType::ModifiedRelaxedBarrierPenalty),
-                                                        cartPoleInterfacePtr->getInitializer()));
+        return std::make_unique<ILQR>(std::move(ddpSettings), cartPoleInterfacePtr->getRollout(),
+                                      createOptimalControlProblem(PenaltyType::ModifiedRelaxedBarrierPenalty),
+                                      cartPoleInterfacePtr->getInitializer());
 
       default:
         throw std::runtime_error("[TestCartpole::getAlgorithm] undefined algorithm");
@@ -199,12 +199,12 @@ TEST_P(TestCartpole, testDDP) {
   ddpPtr->getReferenceManager().setTargetTrajectories(initTargetTrajectories);
 
   // observer for InputLimits violation
-  std::unique_ptr<AugmentedLagrangianObserver> inputLimitsObserverModulePtr(new AugmentedLagrangianObserver("InputLimits"));
-  inputLimitsObserverModulePtr->setMetricsCallback(
+  auto inputLimitsObserverModulePtr = SolverObserver::LagrangianTermObserver(
+      SolverObserver::Type::Intermediate, "InputLimits",
       [&](const scalar_array_t& timeTrajectory, const std::vector<LagrangianMetricsConstRef>& termMetrics) {
         testInputLimitsViolation(timeTrajectory, termMetrics);
       });
-  ddpPtr->addAugmentedLagrangianObserver(std::move(inputLimitsObserverModulePtr));
+  ddpPtr->addSolverObserver(std::move(inputLimitsObserverModulePtr));
 
   // run solver
   ddpPtr->run(0.0, cartPoleInterfacePtr->getInitialState(), timeHorizon);

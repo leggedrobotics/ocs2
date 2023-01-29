@@ -1,5 +1,5 @@
 <launch>
-    <arg name="robot_name"                          default="camel" />
+    <arg name="robot_name"                          default="anymal_c" />
     <arg name="config_name"                         default="c_series" />
     <arg name="description_name"                    default="ocs2_anymal_description"/>
     <arg name="perception_parameter_file"           default="$(find convex_plane_decomposition_ros)/config/parameters.yaml" />

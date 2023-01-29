@@ -17,23 +17,17 @@
 namespace anymal {
 
 std::string toString(AnymalModel model) {
-  static const std::unordered_map<AnymalModel, std::string> map{
-      {AnymalModel::Cerberus, "cerberus"}, {AnymalModel::Chimera, "chimera"}, {AnymalModel::Camel, "camel"}};
+  static const std::unordered_map<AnymalModel, std::string> map{{AnymalModel::Camel, "camel"}};
   return map.at(model);
 }
 
 AnymalModel stringToAnymalModel(const std::string& name) {
-  static const std::unordered_map<std::string, AnymalModel> map{
-      {"cerberus", AnymalModel::Cerberus}, {"chimera", AnymalModel::Chimera}, {"camel", AnymalModel::Camel}};
+  static const std::unordered_map<std::string, AnymalModel> map{{"camel", AnymalModel::Camel}};
   return map.at(name);
 }
 
 std::string getUrdfPath(AnymalModel model) {
   switch (model) {
-    case AnymalModel::Cerberus:
-      return getPath() + "/urdf/anymal_cerberus_rsl.urdf";
-    case AnymalModel::Chimera:
-      return getPath() + "/urdf/anymal_chimera_rsl.urdf";
     case AnymalModel::Camel:
       return getPath() + "/urdf/anymal_camel_rsl.urdf";
     default:

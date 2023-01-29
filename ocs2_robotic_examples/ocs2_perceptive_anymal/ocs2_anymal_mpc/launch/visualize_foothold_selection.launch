@@ -1,7 +1,0 @@
-<launch>
-
-  <!-- Test terrain -->
-  <node pkg="ocs2_anymal_mpc" type="ocs2_anymal_mpc_visualize_foothold_selection" name="ocs2_anymal_mpc_visualize_foothold_selection"/>
-  <node name="rviz_ocs2" pkg="rviz" type="rviz" args="-d $(find ocs2_anymal_mpc)/config/visualize_foothold_selection.rviz"/>
-
-</launch>

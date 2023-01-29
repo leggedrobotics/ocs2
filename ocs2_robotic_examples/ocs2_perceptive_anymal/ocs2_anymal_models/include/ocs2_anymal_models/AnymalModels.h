@@ -12,7 +12,7 @@
 
 namespace anymal {
 
-enum class AnymalModel { Cerberus, Chimera, Camel };
+enum class AnymalModel { Camel };
 
 std::string toString(AnymalModel model);
 

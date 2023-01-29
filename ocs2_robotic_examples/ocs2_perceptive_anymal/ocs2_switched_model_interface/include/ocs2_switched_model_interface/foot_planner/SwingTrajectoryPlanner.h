@@ -38,6 +38,7 @@ struct SwingTrajectoryPlannerSettings {
   scalar_t legOverExtensionPenalty = 5.0;  // Weight of the leg overextension penalty
 
   scalar_t referenceExtensionAfterHorizon = 1.0;  // base and foot references generated for this amount of seconds after the horizon ends.
+  scalar_t maximumReferenceSampleTime = 0.05;     // if the reference trajectory has samples with longer intervals, it will be subsampled.
 
   bool swingTrajectoryFromReference = false;  // Flag to take the swing trajectory from the reference trajectory
 };
@@ -97,6 +98,8 @@ class SwingTrajectoryPlanner {
 
   void applySwingMotionScaling(SwingPhase::SwingEvent& liftOff, SwingPhase::SwingEvent& touchDown,
                                SwingPhase::SwingProfile& swingProfile) const;
+
+  void subsampleReferenceTrajectory(const ocs2::TargetTrajectories& targetTrajectories, scalar_t initTime, scalar_t finalTime);
 
   // Apply IK to cartesian swing motion to update joint references
   void adaptJointReferencesWithInverseKinematics(scalar_t finalTime);

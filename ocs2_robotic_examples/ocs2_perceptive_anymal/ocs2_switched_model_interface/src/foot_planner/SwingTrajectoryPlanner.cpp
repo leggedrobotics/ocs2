@@ -44,8 +44,11 @@ void SwingTrajectoryPlanner::updateSwingMotions(scalar_t initTime, scalar_t fina
     throw std::runtime_error("[SwingTrajectoryPlanner] terrain cannot be null. Update the terrain before planning swing motions");
   }
 
-  // Need a copy to provide joint references later (possibly adapted with inverse kinematics)
-  targetTrajectories_ = targetTrajectories;
+  // Need a copy to
+  // 1. possibly overwrite joint references later (adapted with inverse kinematics)
+  // 2. ensure a maximum interval between references points.
+  // 3. unsure we have samples at start and end of the MPC horizon.
+  subsampleReferenceTrajectory(targetTrajectories, initTime, finalTime);
 
   const feet_array_t<std::vector<ContactTiming>> contactTimingsPerLeg = extractContactTimingsPerLeg(modeSchedule);
 
@@ -429,6 +432,56 @@ std::vector<ConvexTerrain> SwingTrajectoryPlanner::selectNominalFootholdTerrain(
   return nominalFootholdTerrain;
 }
 
+void SwingTrajectoryPlanner::subsampleReferenceTrajectory(const ocs2::TargetTrajectories& targetTrajectories, scalar_t initTime,
+                                                          scalar_t finalTime) {
+  if (targetTrajectories.empty()) {
+    throw std::runtime_error("[SwingTrajectoryPlanner] provided target trajectory cannot be empty.");
+  }
+
+  targetTrajectories_.clear();
+
+  // Add first reference
+  {
+    const auto initInterpIndex = ocs2::LinearInterpolation::timeSegment(initTime, targetTrajectories.timeTrajectory);
+    targetTrajectories_.timeTrajectory.push_back(initTime);
+    targetTrajectories_.stateTrajectory.push_back(
+        ocs2::LinearInterpolation::interpolate(initInterpIndex, targetTrajectories.stateTrajectory));
+    targetTrajectories_.inputTrajectory.push_back(
+        ocs2::LinearInterpolation::interpolate(initInterpIndex, targetTrajectories.inputTrajectory));
+  }
+
+  for (int k = 0; k < targetTrajectories.timeTrajectory.size(); ++k) {
+    if (targetTrajectories.timeTrajectory[k] < initTime) {
+      continue;  // Drop all samples before init time
+    } else if (targetTrajectories.timeTrajectory[k] > finalTime) {
+      // Add final time sample. Samples after final time are also kept for touchdowns after the horizon.
+      const auto finalInterpIndex = ocs2::LinearInterpolation::timeSegment(finalTime, targetTrajectories.timeTrajectory);
+      targetTrajectories_.timeTrajectory.push_back(finalTime);
+      targetTrajectories_.stateTrajectory.push_back(
+          ocs2::LinearInterpolation::interpolate(finalInterpIndex, targetTrajectories.stateTrajectory));
+      targetTrajectories_.inputTrajectory.push_back(
+          ocs2::LinearInterpolation::interpolate(finalInterpIndex, targetTrajectories.inputTrajectory));
+    }
+
+    // Check if we need to add extra intermediate samples
+    while (targetTrajectories_.timeTrajectory.back() + settings_.maximumReferenceSampleTime < targetTrajectories.timeTrajectory[k]) {
+      const scalar_t t = targetTrajectories_.timeTrajectory.back() + settings_.maximumReferenceSampleTime;
+      const auto interpIndex = ocs2::LinearInterpolation::timeSegment(t, targetTrajectories.timeTrajectory);
+
+      targetTrajectories_.timeTrajectory.push_back(t);
+      targetTrajectories_.stateTrajectory.push_back(
+          ocs2::LinearInterpolation::interpolate(interpIndex, targetTrajectories.stateTrajectory));
+      targetTrajectories_.inputTrajectory.push_back(
+          ocs2::LinearInterpolation::interpolate(interpIndex, targetTrajectories.inputTrajectory));
+    }
+
+    // Add the original reference sample
+    targetTrajectories_.timeTrajectory.push_back(targetTrajectories.timeTrajectory[k]);
+    targetTrajectories_.stateTrajectory.push_back(targetTrajectories.stateTrajectory[k]);
+    targetTrajectories_.inputTrajectory.push_back(targetTrajectories.inputTrajectory[k]);
+  }
+}
+
 void SwingTrajectoryPlanner::adaptJointReferencesWithInverseKinematics(scalar_t finalTime) {
   const scalar_t damping = 0.01;  // Quite some damping on the IK to get well conditions references.
 
@@ -548,6 +601,7 @@ SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& fi
   ocs2::loadData::loadPtreeValue(pt, settings.nominalLegExtension, prefix + "nominalLegExtension", verbose);
   ocs2::loadData::loadPtreeValue(pt, settings.legOverExtensionPenalty, prefix + "legOverExtensionPenalty", verbose);
   ocs2::loadData::loadPtreeValue(pt, settings.referenceExtensionAfterHorizon, prefix + "referenceExtensionAfterHorizon", verbose);
+  ocs2::loadData::loadPtreeValue(pt, settings.maximumReferenceSampleTime, prefix + "maximumReferenceSampleTime", verbose);
   ocs2::loadData::loadPtreeValue(pt, settings.swingTrajectoryFromReference, prefix + "swingTrajectoryFromReference", verbose);
 
   if (verbose) {

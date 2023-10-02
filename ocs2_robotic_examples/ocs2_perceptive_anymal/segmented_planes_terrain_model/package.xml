@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package format="2">
+    <name>segmented_planes_terrain_model</name>
+    <version>0.0.0</version>
+    <description>The segmented_planes_terrain_model package</description>
+
+    <maintainer email="rgrandia@ethz.ch">Ruben Grandia</maintainer>
+
+    <license>TODO</license>
+
+    <buildtool_depend>catkin</buildtool_depend>
+    <depend>convex_plane_decomposition</depend>
+    <depend>convex_plane_decomposition_msgs</depend>
+    <depend>convex_plane_decomposition_ros</depend>
+    <depend>grid_map_filters_rsl</depend>
+    <depend>grid_map_ros</depend>
+    <depend>grid_map_sdf</depend>
+    <depend>ocs2_ros_interfaces</depend>
+    <depend>ocs2_switched_model_interface</depend>
+    <depend>roscpp</depend>
+    <depend>sensor_msgs</depend>
+    <depend>visualization_msgs</depend>
+
+</package>

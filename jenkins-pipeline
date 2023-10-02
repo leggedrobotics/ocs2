@@ -3,6 +3,8 @@ ciPipeline("--ros-distro noetic --publish-doxygen --recipes onnxruntime raisimli
             --dependencies 'git@github.com:leggedrobotics/hpp-fcl.git;master;git'\
                            'git@github.com:leggedrobotics/pinocchio.git;master;git'\
                            'git@github.com:leggedrobotics/ocs2_robotic_assets.git;main;git'\
+                           'git@github.com:leggedrobotics/elevation_mapping_cupy.git;main;git'\
+                           'git@github.com:ANYbotics/grid_map.git;master;git'\
             --ignore ocs2_doc")
 
 node {

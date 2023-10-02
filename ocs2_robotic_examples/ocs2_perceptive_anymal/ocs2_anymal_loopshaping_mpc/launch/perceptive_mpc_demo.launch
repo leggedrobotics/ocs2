@@ -1,0 +1,29 @@
+<launch>
+    <arg name="robot_name"                          default="anymal_c" />
+    <arg name="config_name"                         default="c_series" />
+    <arg name="description_name"                    default="ocs2_anymal_description"/>
+    <arg name="perception_parameter_file"           default="$(find convex_plane_decomposition_ros)/config/parameters.yaml" />
+
+    <param name="config_name"                       value="$(arg config_name)"/>
+
+    <param name="forward_velocity"                  value="0.5"/>
+    <param name="terrain_name"                      value="step.png"/>
+    <param name="terrain_scale"                     value="0.35"/>
+    <param name="adaptReferenceToTerrain"           value="true"/>
+
+    <!-- Load robot description -->
+    <include file="$(find ocs2_anymal_models)/launch/load_urdf.launch">
+        <arg name="robot_name"                      value="$(arg robot_name)"/>
+        <arg name="description_name"                value="$(arg description_name)"/>
+    </include>
+
+    <!-- Launch rviz with specific configuration -->
+    <node name="rviz_ocs2" pkg="rviz" type="rviz"  args="-d $(find ocs2_anymal_loopshaping_mpc)/config/rviz/demo_config.rviz">
+    </node>
+
+    <!-- Launch node -->
+    <node pkg="ocs2_anymal_loopshaping_mpc" type="ocs2_anymal_loopshaping_mpc_perceptive_demo" name="ocs2_anymal_loopshaping_mpc_perceptive_demo"
+            output="screen" args="" launch-prefix="">
+           <rosparam file="$(arg perception_parameter_file)" command="load"/>
+    </node>
+</launch>

@@ -33,6 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <numeric>
 
+#include <boost/filesystem.hpp>
+
 #include <ocs2_oc/multiple_shooting/Helpers.h>
 #include <ocs2_oc/multiple_shooting/Initialization.h>
 #include <ocs2_oc/multiple_shooting/MetricsComputation.h>
@@ -56,7 +58,8 @@ sqp::Settings rectifySettings(const OptimalControlProblem& ocp, sqp::Settings&& 
 SqpSolver::SqpSolver(sqp::Settings settings, const OptimalControlProblem& optimalControlProblem, const Initializer& initializer)
     : settings_(rectifySettings(optimalControlProblem, std::move(settings))),
       hpipmInterface_(OcpSize(), settings_.hpipmSettings),
-      threadPool_(std::max(settings_.nThreads, size_t(1)) - 1, settings_.threadPriority) {
+      threadPool_(std::max(settings_.nThreads, size_t(1)) - 1, settings_.threadPriority),
+      logger_(settings_.logSize) {
   Eigen::setNbThreads(1);  // No multithreading within Eigen.
   Eigen::initParallel();
 
@@ -83,6 +86,27 @@ SqpSolver::~SqpSolver() {
   if (settings_.printSolverStatistics) {
     std::cerr << getBenchmarkingInformation() << std::endl;
   }
+
+  if (settings_.enableLogging) {
+    // Create the folder
+    boost::filesystem::create_directories(settings_.logFilePath);
+
+    // Get current time
+    const auto t = std::chrono::high_resolution_clock::to_time_t(std::chrono::high_resolution_clock::now());
+    std::string timeStamp = std::ctime(&t);
+    std::replace(timeStamp.begin(), timeStamp.end(), ' ', '_');
+    timeStamp.erase(std::remove(timeStamp.begin(), timeStamp.end(), '\n'), timeStamp.end());
+
+    // Write to file
+    const std::string logFileName = settings_.logFilePath + "log_" + timeStamp + ".txt";
+    if (std::ofstream logfile{logFileName}) {
+      logfile << sqp::logHeader();
+      logger_.write(logfile);
+      std::cerr << "[SqpSolver] Log written to '" << logFileName << "'\n";
+    } else {
+      std::cerr << "[SqpSolver] Unable to open '" << logFileName << "'\n";
+    }
+  }
 }
 
 void SqpSolver::reset() {
@@ -92,7 +116,9 @@ void SqpSolver::reset() {
   performanceIndeces_.clear();
 
   // reset timers
+  numProblems_ = 0;
   totalNumIterations_ = 0;
+  logger_ = sqp::Logger<sqp::LogEntry>(settings_.logSize);
   linearQuadraticApproximationTimer_.reset();
   solveQpTimer_.reset();
   linesearchTimer_.reset();
@@ -211,10 +237,28 @@ void SqpSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
     // Check convergence
     convergence = checkConvergence(iter, baselinePerformance, stepInfo);
 
+    // Logging
+    if (settings_.enableLogging) {
+      auto& logEntry = logger_.currentEntry();
+      logEntry.problemNumber = numProblems_;
+      logEntry.time = initTime;
+      logEntry.iteration = iter;
+      logEntry.linearQuadraticApproximationTime = linearQuadraticApproximationTimer_.getLastIntervalInMilliseconds();
+      logEntry.solveQpTime = solveQpTimer_.getLastIntervalInMilliseconds();
+      logEntry.linesearchTime = linesearchTimer_.getLastIntervalInMilliseconds();
+      logEntry.baselinePerformanceIndex = baselinePerformance;
+      logEntry.totalConstraintViolationBaseline = FilterLinesearch::totalConstraintViolation(baselinePerformance);
+      logEntry.stepInfo = stepInfo;
+      logEntry.convergence = convergence;
+      logger_.advance();
+    }
+
     // Next iteration
     ++iter;
     ++totalNumIterations_;
   }
+
+  ++numProblems_;
 
   computeControllerTimer_.startTimer();
   primalSolution_ = toPrimalSolution(timeDiscretization, std::move(x), std::move(u));

@@ -1,0 +1,23 @@
+<launch>
+
+  <arg name="robot_name"/>
+
+  <!-- Load robot description -->
+  <include file="$(find ocs2_anymal_models)/launch/load_urdf.launch">
+      <arg name="robot_name"         value="$(arg robot_name)"/>
+      <arg name="description_name"   value="robot_description"/>
+  </include>
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen">
+      <param name="publish_frequency" value="100"/>
+      <param name="use_tf_static"     value="true"/>
+  </node>
+  <node name="joint_state_publisher" pkg="joint_state_publisher_gui" type="joint_state_publisher_gui" output="screen">
+      <param name="use_gui"           value="true"/>
+      <param name="rate"              value="100"/>
+  </node>
+
+  <!-- Launch rviz with specific configuration -->
+  <node name="rviz_ocs2" pkg="rviz" type="rviz"  args="-d $(find ocs2_anymal_models)/config/visualize_urdf.rviz"/>
+
+</launch>

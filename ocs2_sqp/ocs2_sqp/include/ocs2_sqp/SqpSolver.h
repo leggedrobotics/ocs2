@@ -42,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <hpipm_catkin/HpipmInterface.h>
 
+#include "ocs2_sqp/SqpLogging.h"
 #include "ocs2_sqp/SqpSettings.h"
 #include "ocs2_sqp/SqpSolverStatus.h"
 
@@ -185,7 +186,9 @@ class SqpSolver : public SolverBase {
   ProblemMetrics problemMetrics_;
 
   // Benchmarking
+  size_t numProblems_{0};
   size_t totalNumIterations_{0};
+  sqp::Logger<sqp::LogEntry> logger_;
   benchmark::RepeatedTimer initializationTimer_;
   benchmark::RepeatedTimer linearQuadraticApproximationTimer_;
   benchmark::RepeatedTimer solveQpTimer_;

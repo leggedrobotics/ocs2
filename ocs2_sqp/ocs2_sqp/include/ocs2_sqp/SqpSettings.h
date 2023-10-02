@@ -76,6 +76,11 @@ struct Settings {
   bool printSolverStatistics = false;  // Print benchmarking of the multiple shooting method
   bool printLinesearch = false;        // Print linesearch information
 
+  // Logging
+  bool enableLogging = true;
+  size_t logSize = 1000;                           // the of the last N iterations will be stored
+  std::string logFilePath = "/tmp/ocs2/sqp_log/";  // Folder the log will be written to
+
   // Threading
   size_t nThreads = 4;
   int threadPriority = 50;

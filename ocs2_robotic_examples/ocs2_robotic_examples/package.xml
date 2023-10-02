@@ -22,6 +22,7 @@
   <run_depend>ocs2_quadrotor_ros</run_depend>
   <run_depend>ocs2_mobile_manipulator</run_depend>
   <run_depend>ocs2_mobile_manipulator_ros</run_depend>
+  <run_depend>ocs2_anymal</run_depend>
   <run_depend>ocs2_legged_robot</run_depend>
   <run_depend>ocs2_legged_robot_ros</run_depend>
   <run_depend>xacro</run_depend>

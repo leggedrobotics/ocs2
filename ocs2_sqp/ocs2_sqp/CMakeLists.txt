@@ -50,6 +50,7 @@ include_directories(
 
 # Multiple shooting solver library
 add_library(${PROJECT_NAME}
+  src/SqpLogging.cpp
   src/SqpSettings.cpp
   src/SqpSolver.cpp
 )

@@ -70,6 +70,9 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   loadData::loadPtreeValue(pt, settings.printSolverStatus, fieldName + ".printSolverStatus", verbose);
   loadData::loadPtreeValue(pt, settings.printSolverStatistics, fieldName + ".printSolverStatistics", verbose);
   loadData::loadPtreeValue(pt, settings.printLinesearch, fieldName + ".printLinesearch", verbose);
+  loadData::loadPtreeValue(pt, settings.enableLogging, fieldName + ".enableLogging", verbose);
+  loadData::loadPtreeValue(pt, settings.logSize, fieldName + ".logSize", verbose);
+  loadData::loadPtreeValue(pt, settings.logFilePath, fieldName + ".logFilePath", verbose);
   loadData::loadPtreeValue(pt, settings.nThreads, fieldName + ".nThreads", verbose);
   loadData::loadPtreeValue(pt, settings.threadPriority, fieldName + ".threadPriority", verbose);
 

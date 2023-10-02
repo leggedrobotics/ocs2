@@ -1,0 +1,37 @@
+s_inv_filter
+{
+    numFilters 2;
+
+    Filter0;  Filter for forces
+    {
+        numRepeats  12;
+        numPoles    1;
+        numZeros    1;
+        scaling     4;
+        zeros
+        {
+           (0)    0.0;
+        }
+        poles
+        {
+           (0) -100.0;
+        }
+    }
+
+    Filter1;  Filter for joint velocities
+    {
+        numRepeats  12;
+        numPoles    1;
+        numZeros    1;
+        scaling     3;
+        zeros
+        {
+           (0) 0.0;
+        }
+        poles
+        {
+           (0) -50.0;
+        }
+    }
+}
+

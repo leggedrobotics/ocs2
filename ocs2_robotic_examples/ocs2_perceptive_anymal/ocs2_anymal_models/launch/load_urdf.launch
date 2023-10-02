@@ -1,0 +1,16 @@
+<launch>
+
+  <arg name="robot_name"/>
+  <arg name="description_name"/>
+
+  <!-- Load general anymal C -->
+  <group if="$(eval arg('robot_name') == 'anymal_c')">
+    <param name="$(arg description_name)" textfile="$(find ocs2_robotic_assets)/resources/anymal_c/urdf/anymal.urdf"/>
+  </group>
+
+  <!-- Load camel description -->
+  <group if="$(eval arg('robot_name') == 'camel')">
+    <param name="$(arg description_name)" textfile="$(find ocs2_anymal_models)/urdf/anymal_camel_rsl.urdf"/>
+  </group>
+
+</launch>

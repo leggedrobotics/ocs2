@@ -38,7 +38,7 @@ jobs:
 
     - name: Rosdep
       run: |
-        rosdep update
+        DEBIAN_FRONTEND=noninteractive rosdep update
         rosdep install --from-paths src --ignore-src -r -y
 
     - name: Checkout dependencies

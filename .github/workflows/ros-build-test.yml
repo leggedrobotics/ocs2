@@ -46,6 +46,7 @@ jobs:
         git clone --recurse-submodules https://github.com/leggedrobotics/pinocchio.git src/pinocchio
         git clone --recurse-submodules https://github.com/leggedrobotics/hpp-fcl.git src/hpp-fcl
         git clone https://github.com/leggedrobotics/ocs2_robotic_assets.git src/ocs2_robotic_assets
+        git clone https://github.com/leggedrobotics/elevation_mapping_cupy.git src/elevation_mapping_cupy
         
     - name: Install RaiSim
       run: |

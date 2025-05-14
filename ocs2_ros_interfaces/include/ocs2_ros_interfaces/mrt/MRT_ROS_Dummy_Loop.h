@@ -99,6 +99,8 @@ class MRT_ROS_Dummy_Loop {
 
   scalar_t mrtDesiredFrequency_;
   scalar_t mpcDesiredFrequency_;
+
+  benchmark::RepeatedTimer mrtTimer_;
 };
 
 }  // namespace ocs2

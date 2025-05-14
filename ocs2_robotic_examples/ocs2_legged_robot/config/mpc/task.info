@@ -1,4 +1,4 @@
-centroidalModelType             1      // 0: FullCentroidalDynamics, 1: Single Rigid Body Dynamics
+centroidalModelType             0      // 0: FullCentroidalDynamics, 1: Single Rigid Body Dynamics
   
 legged_robot_interface
 {
@@ -13,7 +13,7 @@ model_settings
   phaseTransitionStanceTime     0.4
 
   verboseCppAd                  true
-  recompileLibrariesCppAd       true
+  recompileLibrariesCppAd       false
   modelFolderCppAd              /tmp/ocs2
 }
 
@@ -136,7 +136,7 @@ mpc
   solutionTimeWindow              -1   ; maximum [s]
   coldStart                       false
 
-  debugPrint                      false
+  debugPrint                      true
 
   mpcDesiredFrequency             50  ; [Hz]
   mrtDesiredFrequency             400 ; [Hz]

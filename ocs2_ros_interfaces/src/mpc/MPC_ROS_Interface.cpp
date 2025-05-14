@@ -271,7 +271,7 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   if (mpc_.settings().debugPrint_) {
     std::cerr << '\n';
     std::cerr << "\n### MPC_ROS Benchmarking";
-    std::cerr << "\n###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms].";
+    std::cerr << "\n###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms] in interval " << mpcTimer_.getMaxIntervalIndex() << ".";
     std::cerr << "\n###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms].";
     std::cerr << "\n###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
   }

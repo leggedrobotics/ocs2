@@ -79,7 +79,7 @@ mpc
   solutionTimeWindow              0.2   ; [s]
   coldStart                       false
   
-  debugPrint                      false
+  debugPrint                      true
 
   mpcDesiredFrequency             100   ; [Hz]
   mrtDesiredFrequency             400   ; [Hz]

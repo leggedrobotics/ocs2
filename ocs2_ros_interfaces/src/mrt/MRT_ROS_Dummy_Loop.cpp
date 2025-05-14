@@ -27,6 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <ocs2_core/misc/Benchmark.h>
 #include "ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h"
 
 namespace ocs2 {
@@ -104,8 +105,14 @@ void MRT_ROS_Dummy_Loop::synchronizedDummyLoop(const SystemObservation& initObse
       std::cout << "<<< New MPC policy starting at " << mrt_.getPolicy().timeTrajectory_.front() << "\n";
     }
 
+    // measure the delay in running MRT
+    mrtTimer_.startTimer();
+
     // Forward simulation
     currentObservation = forwardSimulation(currentObservation);
+
+    // measure the delay for sending ROS messages
+    mrtTimer_.endTimer();
 
     // User-defined modifications before publishing
     modifyObservation(currentObservation);
@@ -120,6 +127,13 @@ void MRT_ROS_Dummy_Loop::synchronizedDummyLoop(const SystemObservation& initObse
     for (auto& observer : observers_) {
       observer->update(currentObservation, mrt_.getPolicy(), mrt_.getCommand());
     }
+
+    //display
+    std::cerr << '\n';
+    std::cerr << "\n### FOR MRT_ROS Benchmarking";
+    std::cerr << "\n###   Maximum : " << mrtTimer_.getMaxIntervalInMilliseconds() << "[ms] in interval " << mrtTimer_.getMaxIntervalIndex() << ".";
+    std::cerr << "\n###   Average : " << mrtTimer_.getAverageInMilliseconds() << "[ms].";
+    std::cerr << "\n###   Latest  : " << mrtTimer_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
 
     ++loopCounter;
     ros::spinOnce();

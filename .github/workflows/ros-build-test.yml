@@ -13,10 +13,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build_type: [ Debug, Release ]
+        build_type: [Release]
 
     # environment: regular Ubuntu with a vanilla ROS container
-    runs-on: [sandbox.prod.amr.dind]
+    runs-on: [self-hosted, Linux, X64]
     container: 
       image: ros:noetic
 
@@ -26,11 +26,20 @@ jobs:
         pwd
         uname -r
         lsb_release -a
+        ls /etc/apt/sources.list.d/
 
     - name: System deps
+      shell: bash
       run: |
         apt-get update
+        apt-get upgrade -y
+        source /opt/ros/noetic/setup.bash
         DEBIAN_FRONTEND=noninteractive apt-get install keyboard-configuration --assume-yes
+        apt-get install libglpk-dev -y
+        apt-get install libmpfr-dev -y
+        apt-get install python3-catkin-tools -y
+        apt-get install ros-noetic-cv-bridge -y
+        apt-get install liburdfdom-dev liboctomap-dev libassimp-dev libeigen3-dev -y
         apt-get install -y git ninja-build liburdfdom-dev liboctomap-dev libassimp-dev checkinstall wget rsync
 
     - uses: actions/checkout@v2

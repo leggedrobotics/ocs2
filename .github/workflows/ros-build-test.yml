@@ -10,15 +10,14 @@ jobs:
   build:
 
     # build both Debug and Release mode
-    strategy:
-      fail-fast: false
-      matrix:
-        build_type: [Release]
+    #strategy:
+    #  fail-fast: false
+    #  matrix:
+    #    build_type: [Release]
 
     # environment: regular Ubuntu with a vanilla ROS container
     runs-on: [self-hosted, Linux, X64]
-    container: 
-      image: ros:noetic
+    container: ros:noetic
 
     steps:
     - name: Environment Info
@@ -26,21 +25,18 @@ jobs:
         pwd
         uname -r
         lsb_release -a
-        ls /etc/apt/sources.list.d/
 
     - name: System deps
       shell: bash
       run: |
         apt-get update
-        apt-get upgrade -y
         source /opt/ros/noetic/setup.bash
         DEBIAN_FRONTEND=noninteractive apt-get install keyboard-configuration --assume-yes
         apt-get install libglpk-dev -y
         apt-get install libmpfr-dev -y
         apt-get install python3-catkin-tools -y
         apt-get install ros-noetic-cv-bridge -y
-        apt-get install liburdfdom-dev liboctomap-dev libassimp-dev libeigen3-dev -y
-        apt-get install -y git ninja-build liburdfdom-dev liboctomap-dev libassimp-dev checkinstall wget rsync
+        apt-get install git liburdfdom-dev liboctomap-dev libassimp-dev libeigen3-dev -y
 
     - uses: actions/checkout@v2
       with: 
@@ -48,10 +44,30 @@ jobs:
 
     - name: Checkout dependencies
       run: |
+        if [ -d "src/pinocchio" ]; then
+          echo "Cleaning up existing src/pinocchio directory..."
+          rm -rf src/pinocchio
+        fi
         git clone --recurse-submodules https://github.com/leggedrobotics/pinocchio.git src/pinocchio
+        if [ -d "src/hpp-fcl" ]; then
+          echo "Cleaning up existing src/hpp-fcl directory..."
+          rm -rf src/hpp-fcl
+        fi
         git clone --recurse-submodules https://github.com/leggedrobotics/hpp-fcl.git src/hpp-fcl
+        if [ -d "src/ocs2_robotic_assets" ]; then
+          echo "Cleaning up existing src/ocs2_robotic_assets directory..."
+          rm -rf src/ocs2_robotic_assets
+        fi
         git clone https://github.com/leggedrobotics/ocs2_robotic_assets.git src/ocs2_robotic_assets
+        if [ -d "src/elevation_mapping_cupy" ]; then
+          echo "Cleaning up existing src/evelation_cupy directory..."
+          rm -rf src/elevation_mapping_cupy
+        fi
         git clone https://github.com/leggedrobotics/elevation_mapping_cupy.git src/elevation_mapping_cupy
+        if [ -d "src/grid_map" ]; then
+          echo "Cleaning up existing src/grid_map directory..."
+          rm -rf src/grid_map
+        fi
         git clone https://github.com/ANYbotics/grid_map.git src/grid_map
         
     - name: Rosdep
@@ -76,11 +92,11 @@ jobs:
     #     rsync -a tmp/microsoft/onnxruntime-linux-x64-1.7.0/lib/ /usr/local/lib
     #     rsync -a src/ocs2/ocs2_mpcnet/ocs2_mpcnet_core/misc/onnxruntime/cmake/ /usr/local/share/onnxruntime
 
-    - name: Build (${{ matrix.build_type }})
+    - name: Build
       shell: bash
       run: |
         source /opt/ros/noetic/setup.bash
-        catkin build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} 
+        catkin build -DCMAKE_BUILD_TYPE=Release 
         
     # - name: Test
     #   shell: bash

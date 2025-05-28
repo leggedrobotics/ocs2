@@ -11,8 +11,8 @@ target_distance_1 = (1.0, 1.0, 0.0, 0.0)  # movement distance (x, y, z, yaw)
 target_distance_2 = (-1.0, -1.0, 0.0, 0.0)  
 initial_translation = (0, 0, 0)
 translation = None
-tolerance = 0.01 
-max_iteration = 10
+tolerance = 0.03
+max_iteration = 300
 
 
 def set_gait():
@@ -47,15 +47,16 @@ def run_legged_robot_target(target_distance):
 
         # Input XYZ and Yaw displacements
         input_target = ' '.join(map(str, target_distance))
-        # print(input_target)
+        print("iteration input: " + input_target)
         process.stdin.write(input_target + '\n')
         process.stdin.flush()
 
         # To wait command published
+        time.sleep(1)
         while True:
             output = process.stdout.readline()
             if output:
-                # print(output.strip() + '\n')
+                print("output is: " + output.strip())
                 if "The following command is published" in output:
                     rospy.loginfo("Detected the target command published. Input: " + input_target)
                     break
@@ -84,14 +85,15 @@ class TFListener:
             self.subscriber = None
         rospy.signal_shutdown('Listener stopped')
 
-    def calculate_distance(self, trans1, trans2):
-        """Calculate two translations distance"""
-        dx = trans2[0] - trans1[0]
-        dy = trans2[1] - trans1[1]
-        return math.sqrt(dx**2 + dy**2)
+    # def calculate_distance(self, trans1, trans2):
+    #     """Calculate two translations distance"""
+    #     dx = trans2[0] - trans1[0]
+    #     dy = trans2[1] - trans1[1]
+    #     return math.sqrt(dx**2 + dy**2)
     
     def callback(self, data, target_distance):
         global translation, initial_translation
+        rate = rospy.Rate(100)
         for transform in data.transforms:
             if transform.child_frame_id == "base":
                 translation = (
@@ -100,18 +102,21 @@ class TFListener:
                     transform.transform.translation.z
                 )
                 
-                # calculate two translations distance
-                distance = self.calculate_distance(initial_translation, translation)
-                target_distance_xy = math.sqrt(target_distance[0]**2 + target_distance[1]**2)
-                
-                if abs(distance - target_distance_xy) <= tolerance:
+                # # calculate two translations distance
+                # distance = self.calculate_distance(initial_translation, translation)
+                # target_distance_xy = math.sqrt(target_distance[0]**2 + target_distance[1]**2)
+                dx = round(abs(translation[0] - initial_translation[0]), 2)
+                dy = round(abs(translation[1] - initial_translation[1]), 2)
+
+                if 1-dx <= tolerance and 1-dy <= tolerance:
                     
                     rospy.loginfo("Target reached within tolerance. Translation: x=%f, y=%f, z=%f", 
                             translation[0], 
                             translation[1], 
                             translation[2])
+                    # time.sleep(0.5)
                     initial_translation = translation  # update initial translation for next movement
-                    rospy.loginfo('movement ' + str(self.iteration))
+                    rospy.loginfo('Start movement ' + str(self.iteration))
                     if self.iteration % 2 == 0:
                         target_distance = target_distance_1
                     else:
@@ -120,6 +125,13 @@ class TFListener:
                     self.iteration += 1
                     if self.iteration > max_iteration:
                         rospy.signal_shutdown("Target reached")
+                # else:
+                #     rospy.loginfo("Current Translation: x=%f, y=%f, z=%f", 
+                #             translation[0], 
+                #             translation[1], 
+                #             translation[2])
+                #     rospy.loginfo("x distance=%f, y distance_xy=%f", dx, dy)
+                #     rate.sleep()
 
 
 def main():

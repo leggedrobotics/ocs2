@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import rospy
 import tf
@@ -7,7 +7,7 @@ from ocs2_msgs.msg import mpc_target_trajectories, mpc_state, mpc_input
 from geometry_msgs.msg import Pose
 from tf2_msgs.msg import TFMessage
 
-max_iteration = 10
+max_iteration = 300
 
 class MobileManipulatorNode:
     def __init__(self):

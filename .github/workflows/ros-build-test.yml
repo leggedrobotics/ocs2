@@ -2,9 +2,9 @@ name: Build and Test OCS2
 
 on:
   push:
-    branches: [ main ]
+    branches: [ ros2 ]
   pull_request:
-    branches: [ main ]
+    branches: [ ros2 ]
 
 jobs:
   build:
@@ -72,7 +72,7 @@ jobs:
         
     - name: Rosdep
       run: |
-        rosdep update
+        rosdep update --rosdistro noetic
         rosdep install --from-paths src --ignore-src -r -y
 
     # - name: Install RaiSim

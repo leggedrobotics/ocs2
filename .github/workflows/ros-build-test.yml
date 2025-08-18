@@ -17,7 +17,7 @@ jobs:
 
     # environment: regular Ubuntu with a vanilla ROS container
     runs-on: [self-hosted, Linux, X64]
-    container: ros:noetic
+    container: ros:humble
 
     steps:
     - name: Environment Info
@@ -30,13 +30,14 @@ jobs:
       shell: bash
       run: |
         apt-get update
-        source /opt/ros/noetic/setup.bash
+        source /opt/ros/humble/setup.bash
         DEBIAN_FRONTEND=noninteractive apt-get install keyboard-configuration --assume-yes
         apt-get install libglpk-dev -y
         apt-get install libmpfr-dev -y
-        apt-get install python3-catkin-tools -y
-        apt-get install ros-noetic-cv-bridge -y
+        apt-get install python3-colcon-common-extensions -y
+        apt-get install ros-humble-cv-bridge -y
         apt-get install git liburdfdom-dev liboctomap-dev libassimp-dev libeigen3-dev -y
+        apt-get install ros-humble-pinocchio ros-humble-hpp-fcl -y
 
     - uses: actions/checkout@v2
       with: 
@@ -48,31 +49,26 @@ jobs:
           echo "Cleaning up existing src/pinocchio directory..."
           rm -rf src/pinocchio
         fi
-        git clone --recurse-submodules https://github.com/leggedrobotics/pinocchio.git src/pinocchio
         if [ -d "src/hpp-fcl" ]; then
           echo "Cleaning up existing src/hpp-fcl directory..."
           rm -rf src/hpp-fcl
         fi
-        git clone --recurse-submodules https://github.com/leggedrobotics/hpp-fcl.git src/hpp-fcl
         if [ -d "src/ocs2_robotic_assets" ]; then
           echo "Cleaning up existing src/ocs2_robotic_assets directory..."
           rm -rf src/ocs2_robotic_assets
         fi
-        git clone https://github.com/leggedrobotics/ocs2_robotic_assets.git src/ocs2_robotic_assets
         if [ -d "src/elevation_mapping_cupy" ]; then
           echo "Cleaning up existing src/evelation_cupy directory..."
           rm -rf src/elevation_mapping_cupy
         fi
-        git clone https://github.com/leggedrobotics/elevation_mapping_cupy.git src/elevation_mapping_cupy
         if [ -d "src/grid_map" ]; then
           echo "Cleaning up existing src/grid_map directory..."
           rm -rf src/grid_map
         fi
-        git clone https://github.com/ANYbotics/grid_map.git src/grid_map
         
     - name: Rosdep
       run: |
-        rosdep update --rosdistro noetic
+        rosdep update --rosdistro humble
         rosdep install --from-paths src --ignore-src -r -y
 
     # - name: Install RaiSim
@@ -95,8 +91,9 @@ jobs:
     - name: Build
       shell: bash
       run: |
-        source /opt/ros/noetic/setup.bash
-        catkin build -DCMAKE_BUILD_TYPE=Release 
+        rm -fr build install log
+        source /opt/ros/humble/setup.bash
+        colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release 
         
     # - name: Test
     #   shell: bash

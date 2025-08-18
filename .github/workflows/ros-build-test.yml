@@ -35,13 +35,13 @@ jobs:
         apt-get install libglpk-dev -y
         apt-get install libmpfr-dev -y
         apt-get install python3-colcon-common-extensions -y
-        apt-get install ros-humble-cv-bridge -y
         apt-get install git liburdfdom-dev liboctomap-dev libassimp-dev libeigen3-dev -y
         apt-get install ros-humble-pinocchio ros-humble-hpp-fcl -y
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with: 
         path: src/ocs2 
+        submodules: false
 
     - name: Checkout dependencies
       run: |

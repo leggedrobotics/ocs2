@@ -3,9 +3,8 @@
 
 IMAGE_NAME="ros2_ocs2"
 IMAGE_TAG="latest"
-read -p "Enter your Docker Hub username: " DOCKER_USERNAME
-echo 
+IMAGE_REGISTRY="ecgfiscbuildserver1.sh.intel.com:5000"
 
 docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
-docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${DOCKER_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}
-docker push ${DOCKER_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}
+docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+docker push ${IMAGE_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}

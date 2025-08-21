@@ -17,7 +17,7 @@ jobs:
 
     # environment: regular Ubuntu with a vanilla ROS container
     runs-on: [self-hosted, Linux, X64]
-    container: jiex911/ros2_ocs2:latest
+    container: ecgfiscbuildserver1.sh.intel.com:5000/ros2_ocs2:latest
 
     steps:
     - name: Environment Info
@@ -94,4 +94,4 @@ jobs:
       run: |
         source install/setup.bash
         colcon test
-
+        colcon test-result --all --verbose

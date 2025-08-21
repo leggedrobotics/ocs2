@@ -17,7 +17,7 @@ jobs:
 
     # environment: regular Ubuntu with a vanilla ROS container
     runs-on: [self-hosted, Linux, X64]
-    container: ros:humble
+    container: jiex911/ros2_ocs2:latest
 
     steps:
     - name: Environment Info
@@ -31,12 +31,6 @@ jobs:
       run: |
         apt-get update
         source /opt/ros/humble/setup.bash
-        DEBIAN_FRONTEND=noninteractive apt-get install keyboard-configuration --assume-yes
-        apt-get install libglpk-dev -y
-        apt-get install libmpfr-dev -y
-        apt-get install python3-colcon-common-extensions -y
-        apt-get install git liburdfdom-dev liboctomap-dev libassimp-dev libeigen3-dev -y
-        apt-get install ros-humble-pinocchio ros-humble-hpp-fcl -y
 
     - uses: actions/checkout@v4
       with: 
@@ -95,9 +89,9 @@ jobs:
         source /opt/ros/humble/setup.bash
         colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release 
         
-    # - name: Test
-    #   shell: bash
-    #   run: |
-    #     source devel_isolated/setup.bash
-    #     catkin_make_isolated --use-ninja --merge --only-pkg-with-deps ocs2 --catkin-make-args run_tests
-    #     catkin_test_results
+    - name: Test
+      shell: bash
+      run: |
+        source install/setup.bash
+        colcon test
+

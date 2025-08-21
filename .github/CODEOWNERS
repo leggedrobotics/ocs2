@@ -2,4 +2,8 @@
 
 # Default Reviewers:
 *                          @RoboticsYY @baihe-liu @AnnikaWU
+
+# code owner
+/.docker                   @jzhao6x
+/.github                   @jzhao6x
 /ocs2_thirdpary            @xzhan34

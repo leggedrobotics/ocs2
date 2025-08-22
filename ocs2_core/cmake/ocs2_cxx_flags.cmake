@@ -22,5 +22,13 @@ list(APPEND OCS2_CXX_FLAGS
   )
 
 # Cpp standard version
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+  add_compile_options(-Wno-sign-compare -Wno-range-loop-construct -Wno-ignored-qualifiers)
+  add_compile_options(-Wno-unused-parameter -Wno-unused-variable -Wno-range-loop-construct)
+  add_compile_options(-Wno-implicit-fallthrough -Wno-reorder -Wno-redundant-move -Wno-missing-field-initializers)
+endif()

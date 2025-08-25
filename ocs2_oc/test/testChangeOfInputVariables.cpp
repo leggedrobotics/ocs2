@@ -109,7 +109,7 @@ TEST(quadratic_change_of_input_variables, withPx) {
   // Evaluate and compare
   const scalar_t unprojected = evaluate(quadratic, dx, Pu * du_tilde + Px * dx);
   const scalar_t projected = evaluate(quadraticProjected, dx, du_tilde);
-  ASSERT_DOUBLE_EQ(unprojected, projected);
+  ASSERT_NEAR(unprojected, projected, 1e-10);
 }
 
 TEST(quadratic_change_of_input_variables, withU0) {

@@ -60,6 +60,13 @@ jobs:
           rm -rf src/grid_map
         fi
         
+    - uses: actions/checkout@v4
+      with:
+        repository: intel-sandbox/ocs2_robotic_assets
+        ref: ros2
+        path: src/ocs2_robotic_assets
+        token: ${{ secrets.GH_PAT }}
+
     - name: Rosdep
       run: |
         rosdep update --rosdistro humble

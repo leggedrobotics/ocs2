@@ -1,57 +1,69 @@
-cmake_minimum_required(VERSION 3.0.2)
-project(ocs2_robotic_tools)
+cmake_minimum_required(VERSION 3.14.4)
+project(ocs2_robotic_tools LANGUAGES CXX)
+
+# Default to C++17
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+endif()
+
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
 
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-find_package(catkin REQUIRED COMPONENTS
-  ocs2_core
-  ocs2_oc
+## Find ament macros and libraries
+find_package(ament_cmake REQUIRED)
+find_package(ocs2_core REQUIRED)
+find_package(ocs2_oc REQUIRED)
+find_package(Boost REQUIRED COMPONENTS
+  system
+  filesystem
+  log_setup
+  log
 )
 
-find_package(Eigen3 3.3 REQUIRED NO_MODULE)
-
-###################################
-## catkin specific configuration ##
-###################################
-
-catkin_package(
-  INCLUDE_DIRS
-    include
-    ${EIGEN3_INCLUDE_DIRS}
-  LIBRARIES
-    ${PROJECT_NAME}
-  CATKIN_DEPENDS
-    ocs2_core
-    ocs2_oc
-  DEPENDS
-)
-
+find_package(eigen3_cmake_module REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 ###########
 ## Build ##
 ###########
 
-include_directories(
-  include
+set(includes_${PROJECT_NAME}
+  $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   ${EIGEN3_INCLUDE_DIRS}
-  ${catkin_INCLUDE_DIRS}
 )
 
-add_library(${PROJECT_NAME}
+add_library(${PROJECT_NAME} SHARED
   src/common/RotationTransforms.cpp
   src/common/LoopshapingRobotInterface.cpp
 )
-target_link_libraries(${PROJECT_NAME}
-  ${catkin_LIBRARIES}
+
+target_include_directories(${PROJECT_NAME} PUBLIC
+  ${includes_${PROJECT_NAME}}
 )
+
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
+
+# Link ament dependencies
+ament_target_dependencies(${PROJECT_NAME} ocs2_core ocs2_oc Eigen3)
 
 
 add_executable(${PROJECT_NAME}_lintTarget
   src/lintTarget.cpp
 )
+target_include_directories(${PROJECT_NAME}_lintTarget PUBLIC
+    ${includes_${PROJECT_NAME}}
+)
 
+ament_target_dependencies(${PROJECT_NAME}_lintTarget
+  ocs2_core
+  ocs2_oc
+  Eigen3
+)
 #########################
 ###   CLANG TOOLING   ###
 #########################
@@ -70,35 +82,42 @@ endif(cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
+# Install library
 install(
   TARGETS ${PROJECT_NAME}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
 )
 
-install(DIRECTORY
-            include/${PROJECT_NAME}/
-        DESTINATION
-            ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+# Install headers
+install(
+  DIRECTORY include/
+  DESTINATION include/${PROJECT_NAME}
+)
+
+# Export targets
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ament_export_dependencies(ocs2_core ocs2_oc Eigen3)
 
 #############
 ## Testing ##
 #############
-## Info ==============================
-## to run tests, cd package folder and run
-## $ catkin build -DCMAKE_BUILD_TYPE=RelWithDebInfo --this
-## $ catkin run_tests --no-deps --this
-## to see the summary of unit test results run
-## $ catkin_test_results ../../../build/ocs2_robotic_tools
 
-catkin_add_gtest(rotation_transform_tests
-  test/common/TestRotationTransforms.cpp
-  test/common/TestRotationDerivativesTransforms.cpp
-)
-target_link_libraries(rotation_transform_tests
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  gtest_main
-)
-target_compile_options(rotation_transform_tests PRIVATE ${OCS2_CXX_FLAGS})
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+
+  # Test rotation transforms
+  ament_add_gtest(rotation_transform_tests
+    test/common/TestRotationTransforms.cpp
+    test/common/TestRotationDerivativesTransforms.cpp
+  )
+  target_link_libraries(rotation_transform_tests
+    ${PROJECT_NAME}
+  )
+  target_compile_options(rotation_transform_tests PRIVATE ${OCS2_CXX_FLAGS})
+  ament_target_dependencies(rotation_transform_tests ocs2_core ocs2_oc)
+endif()
+
+ament_package()

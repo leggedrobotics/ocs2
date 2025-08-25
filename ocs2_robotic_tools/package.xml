@@ -1,5 +1,5 @@
-<?xml version="2.0"?>
-<package>
+<?xml version="1.0"?>
+<package format="3">
   <name>ocs2_robotic_tools</name>
   <version>0.0.0</version>
   <description>The ocs2_robotic_tools package</description>
@@ -8,14 +8,23 @@
   <maintainer email="jcarius@ethz.ch">Jan Carius</maintainer>
   <maintainer email="rgrandia@ethz.ch">Ruben Grandia</maintainer>
 
-  <license>TODO</license>
+  <license>BSD</license>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>eigen3_cmake_module</buildtool_depend>
+  <buildtool_export_depend>eigen3_cmake_module</buildtool_export_depend>
 
-  <build_depend>cmake_clang_tools</build_depend>
-  <build_depend>ocs2_core</build_depend>
-  <build_depend>ocs2_oc</build_depend>
-  <run_depend>ocs2_core</run_depend>
-  <run_depend>ocs2_oc</run_depend>
+  <depend>boost</depend>
+  <depend>eigen</depend>
+  <depend>ocs2_core</depend>
+  <depend>ocs2_oc</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+  <test_depend>ament_cmake_gtest</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 
 </package>

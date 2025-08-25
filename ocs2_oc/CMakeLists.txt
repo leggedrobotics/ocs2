@@ -37,7 +37,7 @@ set(dependencies
     ocs2_core
 )
 
-add_library(${PROJECT_NAME}
+add_library(${PROJECT_NAME} SHARED
   src/approximate_model/ChangeOfInputVariables.cpp
   src/approximate_model/LinearQuadraticApproximator.cpp
   src/multiple_shooting/Helpers.cpp

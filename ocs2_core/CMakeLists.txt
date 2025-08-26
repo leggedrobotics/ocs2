@@ -12,7 +12,7 @@ find_package(Boost REQUIRED COMPONENTS
   log
 )
 find_package(eigen3_cmake_module REQUIRED)
-find_package(Eigen3)
+find_package(Eigen3 REQUIRED)
 
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -133,7 +133,6 @@ add_library(${PROJECT_NAME} SHARED
 set(includes_${PROJECT_NAME}
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  ${EIGEN3_INCLUDE_DIRS}
 )
 target_include_directories(${PROJECT_NAME} PUBLIC
   ${includes_${PROJECT_NAME}}

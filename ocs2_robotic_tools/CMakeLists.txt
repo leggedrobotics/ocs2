@@ -7,7 +7,8 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
+  add_compile_options(-Wall -Wextra -Wpedantic -Wno-unknown-pragmas
+    -Wno-unused-function -Wno-unused-parameter)
 endif()
 
 # Generate compile_commands.json for clang tools
@@ -34,7 +35,6 @@ find_package(Eigen3 REQUIRED)
 set(includes_${PROJECT_NAME}
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  ${EIGEN3_INCLUDE_DIRS}
 )
 
 add_library(${PROJECT_NAME} SHARED
@@ -45,8 +45,6 @@ add_library(${PROJECT_NAME} SHARED
 target_include_directories(${PROJECT_NAME} PUBLIC
   ${includes_${PROJECT_NAME}}
 )
-
-target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
 # Link ament dependencies
 ament_target_dependencies(${PROJECT_NAME} ocs2_core ocs2_oc Eigen3)

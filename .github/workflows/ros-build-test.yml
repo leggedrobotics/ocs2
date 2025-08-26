@@ -8,15 +8,13 @@ on:
 
 jobs:
   build:
-
-    # build both Debug and Release mode
-    #strategy:
-    #  fail-fast: false
-    #  matrix:
-    #    build_type: [Release]
-
     # environment: regular Ubuntu with a vanilla ROS container
     runs-on: [self-hosted, Linux, X64]
+    # Registry the docker image to configure /etc/docker/daemon.json as:
+    # {
+    #   "insecure-registries": ["XXX.XXX.XXX.XXX:XXXX",
+    #                           "ecgfiscbuildserver1.sh.intel.com:5000"]
+    # }
     container: ecgfiscbuildserver1.sh.intel.com:5000/ros2_ocs2:latest
 
     steps:
@@ -36,29 +34,6 @@ jobs:
       with: 
         path: src/ocs2 
         submodules: false
-
-    - name: Checkout dependencies
-      run: |
-        if [ -d "src/pinocchio" ]; then
-          echo "Cleaning up existing src/pinocchio directory..."
-          rm -rf src/pinocchio
-        fi
-        if [ -d "src/hpp-fcl" ]; then
-          echo "Cleaning up existing src/hpp-fcl directory..."
-          rm -rf src/hpp-fcl
-        fi
-        if [ -d "src/ocs2_robotic_assets" ]; then
-          echo "Cleaning up existing src/ocs2_robotic_assets directory..."
-          rm -rf src/ocs2_robotic_assets
-        fi
-        if [ -d "src/elevation_mapping_cupy" ]; then
-          echo "Cleaning up existing src/evelation_cupy directory..."
-          rm -rf src/elevation_mapping_cupy
-        fi
-        if [ -d "src/grid_map" ]; then
-          echo "Cleaning up existing src/grid_map directory..."
-          rm -rf src/grid_map
-        fi
         
     - uses: actions/checkout@v4
       with:
@@ -71,23 +46,6 @@ jobs:
       run: |
         rosdep update --rosdistro humble
         rosdep install --from-paths src --ignore-src -r -y
-
-    # - name: Install RaiSim
-    #   run: |
-    #     git clone --depth 1 https://github.com/raisimTech/raisimLib.git -b v1.1.01 src/raisim_tech
-    #     cd src/raisim_tech
-    #     mkdir build
-    #     cd build
-    #     cmake .. -DPYTHON_EXECUTABLE=$(python3 -c "import sys; print(sys.executable)")
-    #     make -j4 && checkinstall
-        
-    # - name: Install ONNX Runtime
-    #   run: |
-    #     wget https://github.com/microsoft/onnxruntime/releases/download/v1.7.0/onnxruntime-linux-x64-1.7.0.tgz -P tmp/microsoft
-    #     tar xf tmp/microsoft/onnxruntime-linux-x64-1.7.0.tgz -C tmp/microsoft
-    #     rsync -a tmp/microsoft/onnxruntime-linux-x64-1.7.0/include/ /usr/local/include/onnxruntime
-    #     rsync -a tmp/microsoft/onnxruntime-linux-x64-1.7.0/lib/ /usr/local/lib
-    #     rsync -a src/ocs2/ocs2_mpcnet/ocs2_mpcnet_core/misc/onnxruntime/cmake/ /usr/local/share/onnxruntime
 
     - name: Build
       shell: bash

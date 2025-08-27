@@ -7,7 +7,15 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
 
 RUN apt-get install -y \
     libglpk-dev \
-    libmpfr-dev 
+    libmpfr-dev \
+    libglfw3 \
+    libglfw3-dev \
+    libosmesa6 \
+    freeglut3-dev \
+    mesa-common-dev \
+    python3-pip \
+    python3-wstool \
+    wget
 
 RUN apt-get install -y \
     ros-humble-pinocchio \

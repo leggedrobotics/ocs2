@@ -8,6 +8,9 @@ on:
 
 jobs:
   build:
+    strategy:
+      matrix:
+        mujoco-version: [2.3.7]
     # environment: regular Ubuntu with a vanilla ROS container
     runs-on: [self-hosted, Linux, X64]
     # Registry the docker image to configure /etc/docker/daemon.json as:
@@ -19,6 +22,7 @@ jobs:
 
     steps:
     - name: Environment Info
+      shell: bash
       run: |
         pwd
         uname -r
@@ -43,6 +47,7 @@ jobs:
         token: ${{ secrets.GH_PAT }}
 
     - name: Rosdep
+      shell: bash
       run: |
         rosdep update --rosdistro humble
         rosdep install --from-paths src --ignore-src -r -y
@@ -51,8 +56,27 @@ jobs:
       shell: bash
       run: |
         rm -fr build install log
+        if [ -d "src/MujocoRosUtils" ]; then
+          echo "Cleaning up existing src/MujocoRosUtils directory..."
+          rm -rf src/MujocoRosUtils
+        fi
         source /opt/ros/humble/setup.bash
         colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release 
+
+    - name: Download MuJoCo
+      shell: bash
+      run: |
+        wget https://github.com/deepmind/mujoco/releases/download/${{ matrix.mujoco-version }}/mujoco-${{ matrix.mujoco-version }}-linux-x86_64.tar.gz
+        tar -zxvf mujoco-${{ matrix.mujoco-version }}-linux-x86_64.tar.gz
+        rm -fr mujoco-${{ matrix.mujoco-version }}-linux-x86_64.tar.gz
+
+    - name: Build MuJoCoRosUtil
+      shell: bash
+      run: |
+        git clone --recurse-submodules https://github.com/isri-aist/MujocoRosUtils.git src/MujocoRosUtils
+        rosdep install -y -r --from-paths src --ignore-src
+        source /opt/ros/humble/setup.bash 
+        colcon build --packages-select mujoco_ros_utils --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo -DMUJOCO_ROOT_DIR=${PWD}/mujoco-${{ matrix.mujoco-version }}
         
     - name: Test
       shell: bash

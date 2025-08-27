@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
-<package format="2">
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>ocs2_mpc</name>
   <version>0.0.0</version>
   <description>Model Predictive Control for SLQ</description>
@@ -10,11 +11,18 @@
 
   <license>BSD3</license>
 
-  <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>cmake_modules</build_depend>
-  <build_depend>cmake_clang_tools</build_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>eigen3_cmake_module</buildtool_depend>
+  <buildtool_export_depend>eigen3_cmake_module</buildtool_export_depend>
+  
+  <depend>eigen</depend>
+  <depend>boost</depend>
   <depend>ocs2_core</depend>
   <depend>ocs2_oc</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 
 </package>
 

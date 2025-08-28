@@ -60,8 +60,9 @@ jobs:
           echo "Cleaning up existing src/MujocoRosUtils directory..."
           rm -rf src/MujocoRosUtils
         fi
+        rm -fr mujoco-*
         source /opt/ros/humble/setup.bash
-        colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release 
+        colcon build --packages-skip mujoco_ros_utils --cmake-args -DCMAKE_BUILD_TYPE=Release 
 
     - name: Download MuJoCo
       shell: bash

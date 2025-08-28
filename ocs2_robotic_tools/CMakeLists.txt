@@ -18,13 +18,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_package(ament_cmake REQUIRED)
 find_package(ocs2_core REQUIRED)
 find_package(ocs2_oc REQUIRED)
-find_package(Boost REQUIRED COMPONENTS
-  system
-  filesystem
-  log_setup
-  log
-)
-
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 
@@ -48,7 +41,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 
 # Link ament dependencies
 ament_target_dependencies(${PROJECT_NAME} ocs2_core ocs2_oc Eigen3)
-
+target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
 add_executable(${PROJECT_NAME}_lintTarget
   src/lintTarget.cpp

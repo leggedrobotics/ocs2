@@ -15,12 +15,6 @@ find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(ocs2_core REQUIRED)
 find_package(ocs2_oc REQUIRED)
-find_package(Boost REQUIRED COMPONENTS
-  system
-  filesystem
-  log_setup
-  log
-)
 
 ###########
 ## Build ##
@@ -47,6 +41,7 @@ ament_target_dependencies(${PROJECT_NAME}
   Eigen3
   Boost
 )
+target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
 #############
 ## Install ##

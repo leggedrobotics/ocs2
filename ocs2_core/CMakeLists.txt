@@ -1,16 +1,20 @@
 cmake_minimum_required(VERSION 3.14.4)
 project(ocs2_core LANGUAGES CXX)
 
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+endif()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+  add_compile_options(-Wno-sign-compare -Wno-range-loop-construct -Wno-ignored-qualifiers)
+  add_compile_options(-Wno-unused-parameter -Wno-unused-variable -Wno-range-loop-construct -Wno-empty-body -Wno-maybe-uninitialized)
+  add_compile_options(-Wno-implicit-fallthrough -Wno-reorder -Wno-redundant-move -Wno-missing-field-initializers)
+endif()
+
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 find_package(ament_cmake REQUIRED)
 find_package(ocs2_thirdparty REQUIRED)
-find_package(Boost REQUIRED COMPONENTS
-  system
-  filesystem
-  log_setup
-  log
-)
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 
@@ -402,4 +406,4 @@ target_link_libraries(${PROJECT_NAME}_test_core
   gtest_main
 )
 
-ament_package()
+ament_package(CONFIG_EXTRAS "cmake/ocs2_cxx_flags.cmake")

@@ -16,7 +16,6 @@
   <buildtool_export_depend>eigen3_cmake_module</buildtool_export_depend>
 
   <build_depend>cmake_modules</build_depend>
-  <build_depend>cmake_clang_tools</build_depend>
 
   <depend>eigen</depend>
   <depend>rclcpp</depend>
@@ -27,7 +26,6 @@
   <depend>visualization_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>interactive_markers</depend>
-  <exec_depend>rqt_multiplot</exec_depend>
   <exec_depend>ros2launch</exec_depend>
 
   <export>

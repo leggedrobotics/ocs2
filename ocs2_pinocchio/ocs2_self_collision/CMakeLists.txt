@@ -109,6 +109,6 @@ install(
 
 # Export targets
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
-ament_export_dependencies(ocs2_core ocs2_robotic_tools ocs2_pinocchio_interface pinocchio Eigen3 hpp-fcl::hpp-fcl)
+ament_export_dependencies(ocs2_core ocs2_robotic_tools ocs2_pinocchio_interface pinocchio Eigen3 hpp-fcl)
 
 ament_package()

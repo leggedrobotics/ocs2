@@ -1,10 +1,33 @@
-cmake_minimum_required(VERSION 3.0.2)
-project(ocs2_mobile_manipulator)
+cmake_minimum_required(VERSION 3.14.4)
+project(ocs2_mobile_manipulator LANGUAGES CXX)
 
-# Generate compile_commands.json for clang tools
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+endif()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wno-extra -Wpedantic -Wno-reorder -Wno-unused-function)
+endif()
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CATKIN_PACKAGE_DEPENDENCIES
+find_package(ament_cmake REQUIRED)
+find_package(ocs2_core REQUIRED)
+find_package(ocs2_ddp REQUIRED)
+find_package(ocs2_mpc REQUIRED)
+find_package(ocs2_robotic_tools REQUIRED)
+find_package(ocs2_robotic_assets REQUIRED)
+find_package(ocs2_pinocchio_interface REQUIRED)
+find_package(ocs2_self_collision REQUIRED)
+find_package(eigen3_cmake_module REQUIRED)
+find_package(Eigen3 REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system filesystem)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(pinocchio REQUIRED pinocchio)
+pkg_check_modules(hpp-fcl REQUIRED hpp-fcl)
+find_package(urdf REQUIRED)
+find_package(urdfdom REQUIRED)
+
+set(dependencies
   ocs2_core
   ocs2_ddp
   ocs2_mpc
@@ -12,37 +35,11 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_robotic_assets
   ocs2_pinocchio_interface
   ocs2_self_collision
-)
-
-find_package(catkin REQUIRED COMPONENTS
-  ${CATKIN_PACKAGE_DEPENDENCIES}
-)
-
-find_package(Boost REQUIRED COMPONENTS
-  system
-  filesystem
-)
-
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(pinocchio REQUIRED pinocchio)
-
-find_package(Eigen3 3.3 REQUIRED NO_MODULE)
-
-###################################
-## catkin specific configuration ##
-###################################
-
-catkin_package(
-  INCLUDE_DIRS
-    include
-    ${EIGEN3_INCLUDE_DIRS}
-  LIBRARIES
-    ${PROJECT_NAME}
-  CATKIN_DEPENDS
-    ${CATKIN_PACKAGE_DEPENDENCIES}
-  DEPENDS
-    Boost
-    pinocchio
+  Eigen3
+  Boost
+  urdf
+  urdfdom
+  hpp-fcl
 )
 
 ###########
@@ -58,26 +55,21 @@ set(FLAGS
   -DPINOCCHIO_URDFDOM_USE_STD_SHARED_PTR
 )
 
+link_directories(
+  ${pinocchio_LIBRARY_DIRS}
+)
+
 # Resolve for the package path at compile time.
 configure_file (
   "${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}/package_path.h.in"
   "${PROJECT_BINARY_DIR}/include/${PROJECT_NAME}/package_path.h" @ONLY
 )
 
-# Add directories for all targets
-include_directories(
-  include
-  ${EIGEN3_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS}
-  ${catkin_INCLUDE_DIRS}
+set(includes_${PROJECT_NAME}
+  $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
-
-link_directories(
-  ${pinocchio_LIBRARY_DIRS}
-)
-
-# mobile maniulator interface library
-add_library(${PROJECT_NAME}
+add_library(${PROJECT_NAME} SHARED
   src/FactoryFunctions.cpp
   src/MobileManipulatorPreComputation.cpp
   src/MobileManipulatorPinocchioMapping.cpp
@@ -88,13 +80,11 @@ add_library(${PROJECT_NAME}
   src/dynamics/FullyActuatedFloatingArmManipulatorDynamics.cpp
   src/MobileManipulatorInterface.cpp
 )
-add_dependencies(${PROJECT_NAME}
-  ${catkin_EXPORTED_TARGETS}
+target_include_directories(${PROJECT_NAME} PUBLIC
+  ${includes_${PROJECT_NAME}}
 )
-target_link_libraries(${PROJECT_NAME}
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES}
-  ${pinocchio_LIBRARIES}
+ament_target_dependencies(${PROJECT_NAME}
+  ${dependencies}
 )
 target_compile_options(${PROJECT_NAME} PUBLIC ${FLAGS})
 
@@ -103,8 +93,8 @@ target_compile_options(${PROJECT_NAME} PUBLIC ${FLAGS})
 ####################
 
 find_package(cmake_clang_tools QUIET)
-if (cmake_clang_tools_FOUND)
-  message(STATUS "Run clang tooling")
+if(cmake_clang_tools_FOUND)
+  message(STATUS "Run clang tooling for target " ${PROJECT_NAME})
   add_clang_tooling(
     TARGETS ${PROJECT_NAME}
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -117,38 +107,74 @@ endif (cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(TARGETS ${PROJECT_NAME}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+install(
+  TARGETS ${PROJECT_NAME}
+  EXPORT export_${PROJECT_NAME}
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  RUNTIME DESTINATION bin
 )
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+install(
+  DIRECTORY include/ 
+  DESTINATION include/${PROJECT_NAME}
 )
-install(DIRECTORY config
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+install(
+  DIRECTORY config 
+  DESTINATION share/${PROJECT_NAME}
 )
+
+
+ament_export_dependencies(${dependencies})
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 
 #############
 ## Testing ##
 #############
+find_package(gtest_vendor REQUIRED)
+find_package(ament_cmake_gtest REQUIRED)
 
-# Helper macro for adding target applications
-macro(add_ocs2_test APP_NAME APP_SRC)
-  catkin_add_gtest(${APP_NAME}
-    ${APP_SRC}
-  )
-  target_include_directories(${APP_NAME} PRIVATE
-    ${PROJECT_BINARY_DIR}/include
-  )
-  target_link_libraries(${APP_NAME}
-    gtest_main
-    ${PROJECT_NAME}
-    ${catkin_LIBRARIES}
-    ${Boost_LIBRARIES}
-  )
-endmacro()
+set(test_includes_${PROJECT_NAME}
+  ${includes_${PROJECT_NAME}}
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/test>
+  $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
+)
 
-add_ocs2_test(SelfCollisionTest test/testSelfCollision.cpp)
-add_ocs2_test(EndEffectorConstraintTest test/testEndEffectorConstraint.cpp)
-add_ocs2_test(DummyMobileManipulatorTest test/testDummyMobileManipulator.cpp)
+function(ament_add_gtest_wrapper test_name)
+  ament_add_gtest(${test_name} ${ARGN})
+  target_include_directories(${test_name} PUBLIC
+    ${test_includes_${PROJECT_NAME}}
+  )
+  set_tests_properties(${test_name} PROPERTIES TIMEOUT 150)
+endfunction()
+
+ament_add_gtest_wrapper(test_self_collision
+  test/testSelfCollision.cpp
+)
+ament_target_dependencies(test_self_collision
+  ${dependencies}
+)
+target_link_libraries(test_self_collision
+  ${PROJECT_NAME}
+)
+
+ament_add_gtest_wrapper(test_end_effector_constraint
+  test/testEndEffectorConstraint.cpp
+)
+ament_target_dependencies(test_end_effector_constraint
+  ${dependencies}
+)
+target_link_libraries(test_end_effector_constraint
+  ${PROJECT_NAME}
+)
+
+ament_add_gtest_wrapper(test_dummy_mobile_manipulator
+  test/testDummyMobileManipulator.cpp
+)
+ament_target_dependencies(test_dummy_mobile_manipulator
+  ${dependencies}
+)
+target_link_libraries(test_dummy_mobile_manipulator
+  ${PROJECT_NAME}
+)
+
+ament_package()

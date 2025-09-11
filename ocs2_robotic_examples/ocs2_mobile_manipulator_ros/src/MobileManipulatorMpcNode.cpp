@@ -27,8 +27,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include <ros/init.h>
-#include <ros/package.h>
 
 #include <ocs2_ddp/GaussNewtonDDP_MPC.h>
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
@@ -42,14 +40,21 @@ using namespace mobile_manipulator;
 int main(int argc, char** argv) {
   const std::string robotName = "mobile_manipulator";
 
-  // Initialize ros node
-  ros::init(argc, argv, robotName + "_mpc");
-  ros::NodeHandle nodeHandle;
+  // Initialize ROS2 node
+  rclcpp::init(argc, argv);
+  auto node = rclcpp::Node::make_shared(robotName + "_mpc",
+           rclcpp::NodeOptions()
+           .allow_undeclared_parameters(true)
+           .automatically_declare_parameters_from_overrides(true));
+
   // Get node parameters
   std::string taskFile, libFolder, urdfFile;
-  nodeHandle.getParam("/taskFile", taskFile);
-  nodeHandle.getParam("/libFolder", libFolder);
-  nodeHandle.getParam("/urdfFile", urdfFile);
+  node->declare_parameter("taskFile", std::string(""));
+  node->declare_parameter("libFolder", std::string(""));
+  node->declare_parameter("urdfFile", std::string(""));
+  taskFile = node->get_parameter("taskFile").as_string();
+  libFolder = node->get_parameter("libFolder").as_string();
+  urdfFile = node->get_parameter("urdfFile").as_string();
   std::cerr << "Loading task file: " << taskFile << std::endl;
   std::cerr << "Loading library folder: " << libFolder << std::endl;
   std::cerr << "Loading urdf file: " << urdfFile << std::endl;
@@ -58,7 +63,7 @@ int main(int argc, char** argv) {
 
   // ROS ReferenceManager
   auto rosReferenceManagerPtr = std::make_shared<ocs2::RosReferenceManager>(robotName, interface.getReferenceManagerPtr());
-  rosReferenceManagerPtr->subscribe(nodeHandle);
+  rosReferenceManagerPtr->subscribe(node);
 
   // MPC
   ocs2::GaussNewtonDDP_MPC mpc(interface.mpcSettings(), interface.ddpSettings(), interface.getRollout(),
@@ -67,7 +72,9 @@ int main(int argc, char** argv) {
 
   // Launch MPC ROS node
   MPC_ROS_Interface mpcNode(mpc, robotName);
-  mpcNode.launchNodes(nodeHandle);
+  mpcNode.launchNodes(node);
+
+  rclcpp::shutdown();
 
   // Successful exit
   return 0;

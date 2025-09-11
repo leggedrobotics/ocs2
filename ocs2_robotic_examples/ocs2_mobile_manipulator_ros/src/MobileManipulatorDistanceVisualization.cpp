@@ -41,9 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mobile_manipulator/ManipulatorModelInfo.h>
 #include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
 
-#include <ros/package.h>
-#include <ros/ros.h>
-#include <sensor_msgs/JointState.h>
+#include <sensor_msgs/msg/joint_state.hpp>
 
 using namespace ocs2;
 using namespace mobile_manipulator;
@@ -52,11 +50,11 @@ std::unique_ptr<PinocchioInterface> pInterface;
 std::shared_ptr<PinocchioGeometryInterface> gInterface;
 std::unique_ptr<GeometryInterfaceVisualization> vInterface;
 
-sensor_msgs::JointState lastMsg;
+sensor_msgs::msg::JointState lastMsg;
 
-std::unique_ptr<ros::Publisher> pub;
+rclcpp::Node::SharedPtr node;
 
-void jointStateCallback(sensor_msgs::JointStateConstPtr msg) {
+void jointStateCallback(const sensor_msgs::msg::JointState::SharedPtr msg) {
   if (lastMsg.position == msg->position) {
     return;
   }
@@ -72,13 +70,19 @@ void jointStateCallback(sensor_msgs::JointStateConstPtr msg) {
 }
 
 int main(int argc, char** argv) {
-  // Initialize ros node
-  ros::init(argc, argv, "distance_visualization");
-  ros::NodeHandle nodeHandle;
+  // Initialize ROS2 node
+  rclcpp::init(argc, argv);
+  node = rclcpp::Node::make_shared("distance_visualization",
+           rclcpp::NodeOptions()
+           .allow_undeclared_parameters(true)
+           .automatically_declare_parameters_from_overrides(true));
+
   // Get ROS parameters
   std::string urdfPath, taskFile;
-  nodeHandle.getParam("/taskFile", taskFile);
-  nodeHandle.getParam("/urdfFile", urdfPath);
+  node->declare_parameter("taskFile", std::string(""));
+  node->declare_parameter("urdfFile", std::string(""));
+  taskFile = node->get_parameter("taskFile").as_string();
+  urdfPath = node->get_parameter("urdfFile").as_string();
 
   // read the task file
   boost::property_tree::ptree pt;
@@ -120,11 +124,12 @@ int main(int argc, char** argv) {
 
   gInterface.reset(new PinocchioGeometryInterface(*pInterface, selfCollisionLinkPairs, selfCollisionObjectPairs));
 
-  vInterface.reset(new GeometryInterfaceVisualization(*pInterface, *gInterface, nodeHandle, baseFrame));
+  vInterface.reset(new GeometryInterfaceVisualization(node, *pInterface, *gInterface, baseFrame));
 
-  ros::Subscriber sub = nodeHandle.subscribe("joint_states", 1, &jointStateCallback);
+  auto sub = node->create_subscription<sensor_msgs::msg::JointState>("joint_states", 1, &jointStateCallback);
 
-  ros::spin();
+  rclcpp::spin(node);
+  rclcpp::shutdown();
 
   return 0;
 }

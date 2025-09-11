@@ -32,13 +32,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/algorithm/frames.hpp>
 #include <pinocchio/algorithm/kinematics.hpp>
 
-#include <ros/package.h>
-#include <tf/tf.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <geometry_msgs/msg/pose_array.hpp>
+
 #include <urdf/model.h>
 #include <kdl_parser/kdl_parser.hpp>
 
-#include <geometry_msgs/PoseArray.h>
-#include <visualization_msgs/MarkerArray.h>
+#include <geometry_msgs/msg/pose_array.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
+#include <std_msgs/msg/header.hpp>
 
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_core/misc/LoadStdVectorOfPair.h>
@@ -57,7 +60,7 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename It>
-void assignHeader(It firstIt, It lastIt, const std_msgs::Header& header) {
+void assignHeader(It firstIt, It lastIt, const std_msgs::msg::Header& header) {
   for (; firstIt != lastIt; ++firstIt) {
     firstIt->header = header;
   }
@@ -76,27 +79,43 @@ void assignIncreasingId(It firstIt, It lastIt, int startId = 0) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MobileManipulatorDummyVisualization::launchVisualizerNode(ros::NodeHandle& nodeHandle) {
+void MobileManipulatorDummyVisualization::launchVisualizerNode(rclcpp::Node::SharedPtr node) {
   // load a kdl-tree from the urdf robot description and initialize the robot state publisher
   const std::string urdfName = "robot_description";
+  std::string urdfString;
   urdf::Model model;
-  if (!model.initParam(urdfName)) {
-    ROS_ERROR("URDF model load was NOT successful");
+
+  // In ROS2, use get_parameter instead of initParam
+  if (!node->get_parameter(urdfName, urdfString)) {
+    RCLCPP_ERROR(node->get_logger(), "Failed to get URDF from parameter: %s", urdfName.c_str());
+    return;
   }
+
+  // Use initString instead of initParam for ROS2
+  if (!model.initString(urdfString)) {
+    RCLCPP_ERROR(node->get_logger(), "Failed to parse URDF string");
+    return;
+  }
+
   KDL::Tree tree;
   if (!kdl_parser::treeFromUrdfModel(model, tree)) {
-    ROS_ERROR("Failed to extract kdl tree from xml robot description");
+    RCLCPP_ERROR(node->get_logger(), "Failed to extract kdl tree from xml robot description");
   }
 
-  robotStatePublisherPtr_.reset(new robot_state_publisher::RobotStatePublisher(tree));
-  robotStatePublisherPtr_->publishFixedTransforms(true);
+  node->declare_parameter("publish_fixed_transforms", true);
+  jointStatePublisher_ = node->create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
+  // Initialize tf2 broadcaster
+  tfBroadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(node);
 
-  stateOptimizedPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("/mobile_manipulator/optimizedStateTrajectory", 1);
-  stateOptimizedPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/mobile_manipulator/optimizedPoseTrajectory", 1);
+  stateOptimizedPublisher_ = node->create_publisher<visualization_msgs::msg::MarkerArray>("/mobile_manipulator/optimizedStateTrajectory", 1);
+  stateOptimizedPosePublisher_ = node->create_publisher<geometry_msgs::msg::PoseArray>("/mobile_manipulator/optimizedPoseTrajectory", 1);
+
   // Get ROS parameter
   std::string urdfFile, taskFile;
-  nodeHandle.getParam("/urdfFile", urdfFile);
-  nodeHandle.getParam("/taskFile", taskFile);
+  node->declare_parameter("urdfFile", std::string(""));
+  node->declare_parameter("taskFile", std::string(""));
+  urdfFile = node->get_parameter("urdfFile").as_string();
+  taskFile = node->get_parameter("taskFile").as_string();
   // read manipulator type
   ManipulatorModelType modelType = mobile_manipulator::loadManipulatorType(taskFile, "model_information.manipulatorModelType");
   // read the joints to make fixed
@@ -114,7 +133,7 @@ void MobileManipulatorDummyVisualization::launchVisualizerNode(ros::NodeHandle& 
     loadData::loadStdVectorOfPair(taskFile, "selfCollision.collisionObjectPairs", collisionObjectPairs, true);
     PinocchioGeometryInterface geomInterface(pinocchioInterface, collisionObjectPairs);
     // set geometry visualization markers
-    geometryVisualization_.reset(new GeometryInterfaceVisualization(std::move(pinocchioInterface), geomInterface, nodeHandle));
+    geometryVisualization_.reset(new GeometryInterfaceVisualization(node, std::move(pinocchioInterface), geomInterface));
   }
 }
 
@@ -123,7 +142,7 @@ void MobileManipulatorDummyVisualization::launchVisualizerNode(ros::NodeHandle& 
 /******************************************************************************************************/
 void MobileManipulatorDummyVisualization::update(const SystemObservation& observation, const PrimalSolution& policy,
                                                  const CommandData& command) {
-  const ros::Time timeStamp = ros::Time::now();
+  const rclcpp::Time timeStamp = node_->now();
 
   publishObservation(timeStamp, observation);
   publishTargetTrajectories(timeStamp, command.mpcTargetTrajectories_);
@@ -136,71 +155,83 @@ void MobileManipulatorDummyVisualization::update(const SystemObservation& observ
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MobileManipulatorDummyVisualization::publishObservation(const ros::Time& timeStamp, const SystemObservation& observation) {
+void MobileManipulatorDummyVisualization::publishObservation(const rclcpp::Time& timeStamp, const SystemObservation& observation) {
   // publish world -> base transform
   const auto r_world_base = getBasePosition(observation.state, modelInfo_);
   const Eigen::Quaternion<scalar_t> q_world_base = getBaseOrientation(observation.state, modelInfo_);
 
-  geometry_msgs::TransformStamped base_tf;
+  geometry_msgs::msg::TransformStamped base_tf;
   base_tf.header.stamp = timeStamp;
   base_tf.header.frame_id = "world";
   base_tf.child_frame_id = modelInfo_.baseFrame;
   base_tf.transform.translation = ros_msg_helpers::getVectorMsg(r_world_base);
   base_tf.transform.rotation = ros_msg_helpers::getOrientationMsg(q_world_base);
-  tfBroadcaster_.sendTransform(base_tf);
+  tfBroadcaster_->sendTransform(base_tf);
 
-  // publish joints transforms
   const auto j_arm = getArmJointAngles(observation.state, modelInfo_);
   std::map<std::string, scalar_t> jointPositions;
   for (size_t i = 0; i < modelInfo_.dofNames.size(); i++) {
     jointPositions[modelInfo_.dofNames[i]] = j_arm(i);
   }
-  for (const auto& name : removeJointNames_) {
-    jointPositions[name] = 0.0;
+  // publish joints transforms
+  //
+
+  sensor_msgs::msg::JointState jointState;
+  jointState.header.stamp = timeStamp;
+  jointState.header.frame_id = "";
+
+  // fill joint name and position
+  for (const auto& joint : jointPositions) {
+    jointState.name.push_back(joint.first);
+    jointState.position.push_back(joint.second);
   }
-  robotStatePublisherPtr_->publishTransforms(jointPositions, timeStamp);
+
+  // pub JointState and let robot_state_publisher handle transform
+  if (jointStatePublisher_) {
+    jointStatePublisher_->publish(jointState);
+  }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MobileManipulatorDummyVisualization::publishTargetTrajectories(const ros::Time& timeStamp,
+void MobileManipulatorDummyVisualization::publishTargetTrajectories(const rclcpp::Time& timeStamp,
                                                                     const TargetTrajectories& targetTrajectories) {
   // publish command transform
   const Eigen::Vector3d eeDesiredPosition = targetTrajectories.stateTrajectory.back().head(3);
   Eigen::Quaterniond eeDesiredOrientation;
   eeDesiredOrientation.coeffs() = targetTrajectories.stateTrajectory.back().tail(4);
-  geometry_msgs::TransformStamped command_tf;
+  geometry_msgs::msg::TransformStamped command_tf;
   command_tf.header.stamp = timeStamp;
   command_tf.header.frame_id = "world";
   command_tf.child_frame_id = "command";
   command_tf.transform.translation = ros_msg_helpers::getVectorMsg(eeDesiredPosition);
   command_tf.transform.rotation = ros_msg_helpers::getOrientationMsg(eeDesiredOrientation);
-  tfBroadcaster_.sendTransform(command_tf);
+  tfBroadcaster_->sendTransform(command_tf);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MobileManipulatorDummyVisualization::publishOptimizedTrajectory(const ros::Time& timeStamp, const PrimalSolution& policy) {
+void MobileManipulatorDummyVisualization::publishOptimizedTrajectory(const rclcpp::Time& timeStamp, const PrimalSolution& policy) {
   const scalar_t TRAJECTORYLINEWIDTH = 0.005;
   const std::array<scalar_t, 3> red{0.6350, 0.0780, 0.1840};
   const std::array<scalar_t, 3> blue{0, 0.4470, 0.7410};
   const auto& mpcStateTrajectory = policy.stateTrajectory_;
 
-  visualization_msgs::MarkerArray markerArray;
+  visualization_msgs::msg::MarkerArray markerArray;
 
   // Base trajectory
-  std::vector<geometry_msgs::Point> baseTrajectory;
+  std::vector<geometry_msgs::msg::Point> baseTrajectory;
   baseTrajectory.reserve(mpcStateTrajectory.size());
-  geometry_msgs::PoseArray poseArray;
+  geometry_msgs::msg::PoseArray poseArray;
   poseArray.poses.reserve(mpcStateTrajectory.size());
 
   // End effector trajectory
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
 
-  std::vector<geometry_msgs::Point> endEffectorTrajectory;
+  std::vector<geometry_msgs::msg::Point> endEffectorTrajectory;
   endEffectorTrajectory.reserve(mpcStateTrajectory.size());
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const Eigen::VectorXd& state) {
     pinocchio::forwardKinematics(model, data, state);
@@ -220,7 +251,7 @@ void MobileManipulatorDummyVisualization::publishOptimizedTrajectory(const ros::
     const Eigen::Quaternion<scalar_t> q_world_base = getBaseOrientation(state, modelInfo_);
 
     // convert to ros message
-    geometry_msgs::Pose pose;
+    geometry_msgs::msg::Pose pose;
     pose.position = ros_msg_helpers::getPointMsg(r_world_base);
     pose.orientation = ros_msg_helpers::getOrientationMsg(q_world_base);
     baseTrajectory.push_back(pose.position);
@@ -234,8 +265,8 @@ void MobileManipulatorDummyVisualization::publishOptimizedTrajectory(const ros::
   assignIncreasingId(markerArray.markers.begin(), markerArray.markers.end());
   poseArray.header = ros_msg_helpers::getHeaderMsg("world", timeStamp);
 
-  stateOptimizedPublisher_.publish(markerArray);
-  stateOptimizedPosePublisher_.publish(poseArray);
+  stateOptimizedPublisher_->publish(markerArray);
+  stateOptimizedPosePublisher_->publish(poseArray);
 }
 
 }  // namespace mobile_manipulator

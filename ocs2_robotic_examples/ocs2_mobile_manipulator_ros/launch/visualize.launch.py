@@ -17,7 +17,8 @@ def generate_launch_description():
     # Launch arguments
     urdf_file_arg = DeclareLaunchArgument(
         'urdfFile',
-        description='The URDF model of the robot'
+        description='The URDF model of the robot',
+        default_value=get_package_share_directory('ocs2_robotic_assets') + "/resources/mobile_manipulator/franka/urdf/panda.urdf"
     )
 
     # Robot state publisher node
@@ -26,17 +27,7 @@ def generate_launch_description():
         executable='robot_state_publisher',
         name='robot_state_publisher',
         output='screen',
-        parameters=[
-            {'robot_description': LaunchConfiguration('urdfFile')}
-        ]
-    )
-
-    # Joint state publisher node
-    joint_state_publisher = Node(
-        package='joint_state_publisher',
-        executable='joint_state_publisher',
-        name='joint_state_publisher',
-        output='screen'
+        arguments=[LaunchConfiguration("urdfFile")]
     )
 
     # RViz node
@@ -57,6 +48,5 @@ def generate_launch_description():
     return LaunchDescription([
         urdf_file_arg,
         robot_state_publisher,
-        joint_state_publisher,
         rviz_node
     ])

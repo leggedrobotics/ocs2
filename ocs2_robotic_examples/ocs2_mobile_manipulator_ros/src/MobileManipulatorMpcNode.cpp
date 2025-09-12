@@ -49,9 +49,9 @@ int main(int argc, char** argv) {
 
   // Get node parameters
   std::string taskFile, libFolder, urdfFile;
-  node->declare_parameter("taskFile", std::string(""));
-  node->declare_parameter("libFolder", std::string(""));
-  node->declare_parameter("urdfFile", std::string(""));
+  // node->declare_parameter("taskFile", std::string(""));
+  // node->declare_parameter("libFolder", std::string(""));
+  // node->declare_parameter("urdfFile", std::string(""));
   taskFile = node->get_parameter("taskFile").as_string();
   libFolder = node->get_parameter("libFolder").as_string();
   urdfFile = node->get_parameter("urdfFile").as_string();

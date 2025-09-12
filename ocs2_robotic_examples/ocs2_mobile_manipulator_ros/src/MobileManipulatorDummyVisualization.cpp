@@ -80,29 +80,7 @@ void assignIncreasingId(It firstIt, It lastIt, int startId = 0) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MobileManipulatorDummyVisualization::launchVisualizerNode(rclcpp::Node::SharedPtr node) {
-  // load a kdl-tree from the urdf robot description and initialize the robot state publisher
-  const std::string urdfName = "robot_description";
-  std::string urdfString;
-  urdf::Model model;
-
-  // In ROS2, use get_parameter instead of initParam
-  if (!node->get_parameter(urdfName, urdfString)) {
-    RCLCPP_ERROR(node->get_logger(), "Failed to get URDF from parameter: %s", urdfName.c_str());
-    return;
-  }
-
-  // Use initString instead of initParam for ROS2
-  if (!model.initString(urdfString)) {
-    RCLCPP_ERROR(node->get_logger(), "Failed to parse URDF string");
-    return;
-  }
-
-  KDL::Tree tree;
-  if (!kdl_parser::treeFromUrdfModel(model, tree)) {
-    RCLCPP_ERROR(node->get_logger(), "Failed to extract kdl tree from xml robot description");
-  }
-
-  node->declare_parameter("publish_fixed_transforms", true);
+  
   jointStatePublisher_ = node->create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
   // Initialize tf2 broadcaster
   tfBroadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(node);
@@ -112,8 +90,8 @@ void MobileManipulatorDummyVisualization::launchVisualizerNode(rclcpp::Node::Sha
 
   // Get ROS parameter
   std::string urdfFile, taskFile;
-  node->declare_parameter("urdfFile", std::string(""));
-  node->declare_parameter("taskFile", std::string(""));
+  // node->declare_parameter("urdfFile", std::string(""));
+  // node->declare_parameter("taskFile", std::string(""));
   urdfFile = node->get_parameter("urdfFile").as_string();
   taskFile = node->get_parameter("taskFile").as_string();
   // read manipulator type

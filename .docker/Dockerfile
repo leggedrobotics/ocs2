@@ -19,7 +19,8 @@ RUN apt-get install -y \
 
 RUN apt-get install -y \
     ros-humble-pinocchio \
-    ros-humble-hpp-fcl 
+    ros-humble-hpp-fcl \
+    ros-humble-joint-state-publisher
 
 RUN apt-get clean \
     && rm -rf /var/lib/apt/lists/*

@@ -151,9 +151,12 @@ void MobileManipulatorDummyVisualization::publishObservation(const rclcpp::Time&
   for (size_t i = 0; i < modelInfo_.dofNames.size(); i++) {
     jointPositions[modelInfo_.dofNames[i]] = j_arm(i);
   }
-  // publish joints transforms
-  //
 
+  for (const auto& name : removeJointNames_) {
+    jointPositions[name] = 0.0;
+  }
+  
+  // publish joints transforms
   sensor_msgs::msg::JointState jointState;
   jointState.header.stamp = timeStamp;
   jointState.header.frame_id = "";

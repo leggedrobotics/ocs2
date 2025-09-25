@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Launch file for PR2 mobile manipulator."""
+"""Launch file for Kinova mobile manipulator."""
 
 import os
 from ament_index_python.packages import get_package_share_directory
@@ -31,19 +31,19 @@ def generate_launch_description():
 
     urdf_file_arg = DeclareLaunchArgument(
         'urdfFile',
-        default_value=os.path.join(ocs2_robotic_assets_dir, 'resources', 'mobile_manipulator', 'pr2', 'urdf', 'pr2.urdf'),
+        default_value=os.path.join(ocs2_robotic_assets_dir, 'resources', 'mobile_manipulator', 'kinova', 'urdf', 'j2n6s300.urdf'),
         description='The URDF model of the robot'
     )
 
     task_file_arg = DeclareLaunchArgument(
         'taskFile',
-        default_value=os.path.join(ocs2_mobile_manipulator_dir, 'config', 'pr2', 'task.info'),
+        default_value=os.path.join(ocs2_mobile_manipulator_dir, 'config', 'kinova', 'task_j2n6.info'),
         description='The task file for the mpc'
     )
 
     lib_folder_arg = DeclareLaunchArgument(
         'libFolder',
-        default_value=os.path.join(ocs2_mobile_manipulator_dir, 'auto_generated', 'pr2'),
+        default_value=os.path.join(ocs2_mobile_manipulator_dir, 'auto_generated', 'kinova', 'j2n6'),
         description='The library folder to generate CppAD codegen into'
     )
 

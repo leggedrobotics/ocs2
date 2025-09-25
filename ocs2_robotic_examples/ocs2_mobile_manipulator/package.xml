@@ -14,8 +14,6 @@
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
   <buildtool_export_depend>eigen3_cmake_module</buildtool_export_depend>
 
-  <build_depend>cmake_clang_tools</build_depend>
-
   <depend>ocs2_core</depend>
   <depend>ocs2_ddp</depend>
   <depend>ocs2_mpc</depend>
@@ -25,7 +23,6 @@
   <depend>ocs2_self_collision</depend>
   <depend>pinocchio</depend>
   <depend>eigen</depend>
-  <depend>Boost</depend>
   <depend>urdf</depend>
   <depend>urdfdom</depend>
   <depend>hpp-fcl</depend>

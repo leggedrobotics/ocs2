@@ -15,8 +15,6 @@
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
   <buildtool_export_depend>eigen3_cmake_module</buildtool_export_depend>
 
-  <build_depend>cmake_modules</build_depend>
-
   <depend>eigen</depend>
   <depend>rclcpp</depend>
   <depend>ocs2_msgs</depend>

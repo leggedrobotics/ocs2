@@ -3,11 +3,21 @@
 # Default Reviewers:
 *                          @RoboticsYY @baihe-liu @AnnikaWU
 
-# code owner
-/.docker                   @jzhao6x
-/.github                   @jzhao6x
-/ocs2_thirdpary            @xzhan34
-/ocs2_msgs                 @sunausti
-/ocs2_robotic_tools        @sunausti
-/ocs2_core                 @xzhan34
-/ocs2_oc                   @xzhan34
+# OCS2 ROS2 porting code owner
+/.docker                                               @jzhao6x
+/.github                                               @jzhao6x
+/ocs2_thirdpary                                        @xzhan34
+/ocs2_msgs                                             @sunausti
+/ocs2_robotic_tools                                    @sunausti
+/ocs2_core                                             @xzhan34
+/ocs2_oc                                               @xzhan34
+/ocs2_test_tools/ocs2_qp_solver                        @Nisyhaal
+/ocs2_mpc                                              @baihe-liu
+/ocs2_robotic_tools                                    @sunausti
+/ocs2_ddp                                              @sunausti
+/ocs2_ros_interface                                    @xzhan34
+/ocs2_pinocchio/ocs2_pinocchio_interface               @sunausti
+/ocs2_pinocchio/ocs2_self_collision                    @sunausti
+/ocs2_pinocchio/ocs2_self_collision_visualization      @Nisyhaal
+/ocs2_robotic_examples/ocs2_mobile_manipulator         @baihe-liu
+/ocs2_robotic_examples/ocs2_mobile_manipulator_ros     @sunausti

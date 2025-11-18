@@ -53,6 +53,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <rclcpp/rclcpp.hpp>
 
+// ACT messages
+#include <std_msgs/msg/float32_multi_array.hpp>
+
 #define PUBLISH_THREAD
 
 namespace ocs2 {
@@ -100,6 +103,13 @@ class MPC_ROS_Interface {
    * measured state to invoke the MPC run routine.
    */
   void launchNodes(const rclcpp::Node::SharedPtr& node);
+
+    /**
+* This is the main routine which launches all the nodes required for MPC to run which includes:
+* (1) The MPC policy publisher (either feedback or feedforward policy).
+* (2) The observation subscriber which gets the current measured state to invoke the MPC run routine.
+*/
+  void launchNodes_mujoco(const rclcpp::Node::SharedPtr& node);
 
  protected:
   /**

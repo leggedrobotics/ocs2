@@ -101,7 +101,8 @@ void MRT_ROS_Dummy_Loop::synchronizedDummyLoop(
   // old policy instead of the latest one.
   const auto policyUpdatedForTime = [this](scalar_t time) {
     constexpr scalar_t tol =
-        0.1;  // policy must start within this fraction of dt
+        1.0;  // policy must start within this fraction of dt
+            // change from 0.1 to 1 as more lenient synchronization requirements
     return mrt_.updatePolicy() &&
            std::abs(mrt_.getPolicy().timeTrajectory_.front() - time) <
                (tol / mpcDesiredFrequency_);
@@ -119,6 +120,11 @@ void MRT_ROS_Dummy_Loop::synchronizedDummyLoop(
       // Wait for the policy to be updated
       while (!policyUpdatedForTime(currentObservation.time) && rclcpp::ok()) {
         mrt_.spinMRT();
+        // reset current observation time in case of large gap between mrt policy update time, need to better modify later
+        if (std::abs(mrt_.getPolicy().timeTrajectory_.front() - currentObservation.time) >= 10.0 / mrtDesiredFrequency_){
+          currentObservation.time = mrt_.getPolicy().timeTrajectory_.front();
+          std::cout << "[Warning] The MPC time and MRT time interval exceeds the MRT period. Force MRT to synchronize with MPC.\n";
+        }
       }
       std::cout << "<<< New MPC policy starting at "
                 << mrt_.getPolicy().timeTrajectory_.front() << "\n";

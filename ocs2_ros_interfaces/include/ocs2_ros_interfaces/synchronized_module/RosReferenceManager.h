@@ -39,6 +39,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <ocs2_pinocchio_interface/PinocchioInterface.h>
+#include <std_msgs/msg/float32_multi_array.hpp> 
+
 namespace ocs2 {
 
 /**
@@ -84,6 +87,14 @@ class RosReferenceManager final : public ReferenceManagerDecorator {
    */
   void subscribe(const rclcpp::Node::SharedPtr& node);
 
+  /**
+   * Subscribers to "topicPrefix_mode_schedule" and "act_aloha_target_qpos" 
+   * topics to receive respectively:
+   * (1) ModeSchedule : The predefined mode schedule for time-triggered hybrid systems.
+   * (2) TargetTrajectories : The commanded TargetTrajectories from act.
+   */
+  void subscribe_act(const rclcpp::Node::SharedPtr& node, PinocchioInterface pinocchioInterface, int eeFrameId, const std::string& armSide);
+
  private:
   const std::string topicPrefix_;
   rclcpp::Node::SharedPtr node_;
@@ -91,6 +102,7 @@ class RosReferenceManager final : public ReferenceManagerDecorator {
       modeScheduleSubscriber_;
   rclcpp::Subscription<ocs2_msgs::msg::MpcTargetTrajectories>::SharedPtr
       targetTrajectoriesSubscriber_;
+  rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr actTargetTrajectoriesSubscriber_;
 };
 
 /******************************************************************************************************/

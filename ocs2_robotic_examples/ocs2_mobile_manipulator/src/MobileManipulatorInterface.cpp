@@ -119,6 +119,9 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   pinocchioInterfacePtr_.reset(new PinocchioInterface(createPinocchioInterface(urdfFile, modelType, removeJointNames)));
   std::cerr << *pinocchioInterfacePtr_;
 
+  // get end Effector ID
+  eeFrameId_ = pinocchioInterfacePtr_->getModel().getFrameId(eeFrame);
+
   // ManipulatorModelInfo
   manipulatorModelInfo_ = mobile_manipulator::createManipulatorModelInfo(*pinocchioInterfacePtr_, modelType, baseFrame, eeFrame);
 

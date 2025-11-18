@@ -1,0 +1,568 @@
+; robot model meta-information
+model_information {
+  manipulatorModelType 4          // 0: Default-arm, 1: Wheel-based manipulator, 2: Floating-arm manipulator, 3: Fully actuated floating-arm manipulator, 4: Dual-arm with fixed base
+  
+  ; motion joints in the URDF to consider fixed
+  removeJoints {
+    left 
+    {
+      [0]  "right_base_joint"
+      [1]  "vx300s_right/waist"
+      [2]  "vx300s_right/shoulder"
+      [3]  "vx300s_right/elbow"
+      [4]  "vx300s_right/forearm_roll"
+      [5]  "vx300s_right/wrist_angle"
+      [6]  "vx300s_right/wrist_rotate"
+    }
+    right 
+    {
+      [0]  "left_base_joint"
+      [1]  "vx300s_left/waist"
+      [2]  "vx300s_left/shoulder"
+      [3]  "vx300s_left/elbow"
+      [4]  "vx300s_left/forearm_roll"
+      [5]  "vx300s_left/wrist_angle"
+      [6]  "vx300s_left/wrist_rotate"
+    }
+  }
+  
+  ; base frame of the robot (from URDF)
+  leftBaseFrame                  "vx300s_left/base_link"
+  rightBaseFrame                 "vx300s_right/base_link"
+  
+  ; end-effector frames of the robot (from URDF)
+  leftEeFrame                     "vx300s_left/gripper_link"
+  rightEeFrame                    "vx300s_right/gripper_link"
+  
+}
+
+model_settings
+{
+  usePreComputation               true
+  recompileLibraries              true
+}
+
+; DDP settings
+ddp
+{
+  algorithm                       SLQ
+
+  nThreads                        3
+  threadPriority                  50
+
+  maxNumIterations                1
+  minRelCost                      0.1
+  constraintTolerance             1e-3
+
+  displayInfo                     false
+  displayShortSummary             false
+  checkNumericalStability         false
+  debugPrintRollout               false
+  debugCaching                    false
+
+  AbsTolODE                       1e-5
+  RelTolODE                       1e-3
+  maxNumStepsPerSecond            100000
+  timeStep                        1e-3
+  backwardPassIntegratorType      ODE45
+
+  constraintPenaltyInitialValue   20.0
+  constraintPenaltyIncreaseRate   2.0
+
+  preComputeRiccatiTerms          true
+
+  useFeedbackPolicy               false
+
+  strategy                        LINE_SEARCH
+  lineSearch
+  {
+    minStepLength                 1e-2
+    maxStepLength                 1.0
+    hessianCorrectionStrategy     DIAGONAL_SHIFT
+    hessianCorrectionMultiple     1e-3
+  }
+}
+
+; Rollout settings
+rollout
+{
+  AbsTolODE                       1e-5
+  RelTolODE                       1e-3
+  timeStep                        1e-1  // change from 1e-2
+  integratorType                  ODE45
+  maxNumStepsPerSecond            10000  // change from 100000
+  checkNumericalStability         false
+}
+
+; MPC settings
+mpc
+{
+  ; timeHorizon                   1.0   ; [s]
+  timeHorizon                     2.0   ; [s] extend timeHorizon for unstable ALOHA feedback state freq (next feedback state time must <= current feedback time+timeHorizon)
+  solutionTimeWindow              0.2   ; [s]
+  coldStart                       false
+  
+  debugPrint                      false
+ 
+  mpcDesiredFrequency             50   ; [Hz] change from 100Hz as to apply realtime strategy in ocs2_ros_interfaces/src/mrt/MRT_ROS_Dummy_Loop.cpp
+  mrtDesiredFrequency             200   ; [Hz] change from 400Hz to allocate with ALOHA
+}
+
+; initial state
+initialState
+{
+  ; initial state for the different types of arm base DOFs
+  base
+  {
+    defaultManipulator
+    {
+    }
+
+    floatingArmManipulator
+    {
+      (0,0)  0.0  ; position x
+      (1,0)  0.0  ; position y
+      (2,0)  0.5  ; position z
+      (3,0)  0.0  ; euler angle z
+      (4,0)  0.0  ; euler angle y
+      (5,0)  1.7  ; euler angle x
+    }
+
+    fullyActuatedFloatingArmManipulator
+    {
+      (0,0)  0.0  ; position x
+      (1,0)  0.0  ; position y
+      (2,0)  0.0  ; position z
+      (3,0)  0.0  ; euler angle z
+      (4,0)  0.0  ; euler angle y
+      (5,0)  0.0  ; euler angle x
+    }
+
+    wheelBasedMobileManipulator
+    {
+      (0,0)  0.0  ; position x
+      (1,0)  0.0  ; position y
+      (2,0)  0.0  ; heading
+    }
+  }
+
+  ; initial state for the dual arm DOFs  // need to check arm num
+  dualArm
+  {
+    leftArm 
+    {
+      (0,0)   0.0       ; arm_1
+      (1,0)  -0.96      ; arm_2
+      (2,0)   1.16      ; arm_3
+      (3,0)   0.0       ; arm_4
+      (4,0)  -0.3       ; arm_5
+      (5,0)   0.0       ; arm_6
+      (6,0)   0.024     ; arm_7
+      (7,0)   0.024     ; arm_8
+    }
+
+    rightArm 
+    {
+      (0,0)   0.0       ; arm_1
+      (1,0)  -0.96      ; arm_2
+      (2,0)   1.16      ; arm_3
+      (3,0)   0.0       ; arm_4
+      (4,0)  -0.3       ; arm_5
+      (5,0)   0.0       ; arm_6
+      (6,0)   0.024     ; arm_7
+      (7,0)   0.024     ; arm_8
+    }
+
+  }
+}
+
+inputCost
+{
+  ; control weight matrix
+  R
+  {
+    ; input costs for the different types of arm base DOFs
+    base
+    {
+      defaultManipulator
+      {
+      }
+
+      floatingArmManipulator
+      {
+      }
+
+      fullyActuatedFloatingArmManipulator
+      {
+        scaling 1e-2
+        (0,0)  5.0  ; position x
+        (1,1)  5.0  ; position y
+        (2,2)  5.0  ; position z
+        (3,3)  5.0  ; euler angle z
+        (4,4)  5.0  ; euler angle y
+        (5,5)  5.0  ; euler angle x
+      }
+
+      wheelBasedMobileManipulator
+      {
+        scaling 1e-2
+        (0,0)  5.0  ; forward velocity
+        (1,1)  5.0  ; turning velocity
+      }
+    }
+
+    ; input costs for the arm DOFs // need to check arm num
+    dualArm
+    {
+      leftArm 
+      {
+        scaling 1e-2;
+
+        (0,0)  1.0  ; arm_1 velocity
+        (1,1)  1.0  ; arm_2 velocity
+        (2,2)  1.0  ; arm_3 velocity
+        (3,3)  1.0  ; arm_4 velocity
+        (4,4)  1.0  ; arm_5 velocity
+        (5,5)  1.0  ; arm_6 velocity
+        (6,6)  1.0  ; arm_7 velocity
+        (7,7)  1.0  ; arm_8 velocity
+      }
+
+      rightArm 
+      {
+        scaling 1e-2;
+
+        (0,0)  1.0  ; arm_1 velocity
+        (1,1)  1.0  ; arm_2 velocity
+        (2,2)  1.0  ; arm_3 velocity
+        (3,3)  1.0  ; arm_4 velocity
+        (4,4)  1.0  ; arm_5 velocity
+        (5,5)  1.0  ; arm_6 velocity
+        (6,6)  1.0  ; arm_7 velocity
+        (7,7)  1.0  ; arm_8 velocity
+      }
+    }
+  }
+}
+
+endEffector 
+{
+    leftArm
+    {
+      ; end effector quadratic penalty scaling
+      muPosition      50.0
+      muOrientation   25.0
+    }
+
+    rightArm
+    {
+      ; end effector quadratic penalty scaling
+      muPosition      50.0
+      muOrientation   25.0
+    }
+
+}
+
+finalEndEffector 
+{
+    leftArm
+    {
+      muPosition      50.0
+      muOrientation   25.0
+    }
+
+    rightArm
+    {
+      muPosition      50.0
+      muOrientation   25.0
+    }
+
+}
+
+selfCollision
+{ 
+  ; activate self-collision constraint
+  activate  false
+
+  ; Self Collision raw object pairs // need to add
+  collisionObjectPairs
+  {
+  }
+
+  ; Self Collision pairs // need to add
+  collisionLinkPairs
+  {
+  }
+
+  ; minimum distance allowed between the pairs
+  minimumDistance  0.05
+
+  ; relaxed log barrier mu
+  mu      1e-2
+
+  ; relaxed log barrier delta
+  delta   1e-3
+}
+
+; Only applied for arm joints: limits parsed from URDF // need to add
+jointPositionLimits
+{
+  ; activate constraint
+  activate  true
+
+  ; relaxed log barrier mu
+  mu      1e-3
+
+  ; relaxed log barrier delta
+  delta   1e-4
+
+  lowerBound
+  {
+    ; position limits for the different types of arm base DOFs
+    base
+    {
+      defaultManipulator
+      {
+      }
+
+      floatingArmManipulator
+      {
+      }
+      
+      ; add for avoiding bug
+      fullyActuatedFloatingArmManipulator 
+      {
+        (0,0)  -0.1  ; linear velocity x
+        (1,0)  -0.1  ; linear velocity y
+        (2,0)  -0.1  ; linear velocity z
+        (3,0)  -0.3  ; euler angle velocity z
+        (4,0)  -0.3  ; euler angle velocity y
+        (5,0)  -0.3  ; euler angle velocity x
+      }
+      
+      ; add for avoiding bug
+      wheelBasedMobileManipulator
+      {
+        (0,0)  -0.1 ; forward velocity
+        (1,0)  -0.3 ; turning velocity
+      }
+    }
+
+    ; position limits for the arm DOFs // all need to change from urdf
+    dualArm
+    {
+      leftArm
+      {
+        (0,0)  -3.141582653589793    ; arm_1 
+        (1,0)  -1.8500490071139892   ; arm_2 
+        (2,0)  -1.7627825445142729   ; arm_3 
+        (3,0)  -3.141592653589793	 ; arm_4 
+        (4,0)  -1.8675022996339325   ; arm_5 
+        (5,0)  -3.141592653589793	 ; arm_6 
+        (6,0)   0.021                ; left_finger
+        (7,0)  -0.057                ; right_finger
+      }
+
+      rightArm
+      {
+        (0,0)  -3.141582653589793    ; arm_1 
+        (1,0)  -1.8500490071139892   ; arm_2 
+        (2,0)  -1.7627825445142729   ; arm_3 
+        (3,0)  -3.141592653589793	 ; arm_4 
+        (4,0)  -1.8675022996339325   ; arm_5 
+        (5,0)  -3.141592653589793	 ; arm_6 
+        (6,0)   0.021                ; left_finger
+        (7,0)  -0.057                ; right_finger
+      }
+    }
+  }
+
+  upperBound
+  {
+    ;position limits for the different types of arm base DOFs
+    base
+    {
+      defaultManipulator
+      {
+      }
+
+      floatingArmManipulator
+      {
+      }
+      
+      ; add for avoiding bug
+      fullyActuatedFloatingArmManipulator
+      {
+        (0,0)  0.1  ; linear velocity x
+        (1,0)  0.1  ; linear velocity y
+        (2,0)  0.1  ; linear velocity z
+        (3,0)  0.3  ; euler angle velocity z
+        (4,0)  0.3  ; euler angle velocity y
+        (5,0)  0.3  ; euler angle velocity x
+      }
+      
+      ; add for avoiding bug
+      wheelBasedMobileManipulator
+      {
+        (0,0)  0.1 ; forward velocity
+        (1,0)  0.3 ; turning velocity
+      }
+    }
+
+    ; position limits for the arm DOFs // all need to change from urdf
+    dualArm
+    {
+      leftArm
+      {
+        (0,0)  3.141582653589793       ; arm_1 
+        (1,0)  1.2566370614359172	   ; arm_2 
+        (2,0)  1.6057029118347832	   ; arm_3 
+        (3,0)  3.141592653589793 	   ; arm_4 
+        (4,0)  2.234021442552742 	   ; arm_5
+        (5,0)  3.141592653589793 	   ; arm_6
+        (6,0)  0.057                   ; left_finger
+        (7,0)  -0.021                  ; right_finger
+      }
+      
+      rightArm
+      {
+        (0,0)  3.141582653589793       ; arm_1 
+        (1,0)  1.2566370614359172	   ; arm_2 
+        (2,0)  1.6057029118347832	   ; arm_3 
+        (3,0)  3.141592653589793 	   ; arm_4 
+        (4,0)  2.234021442552742 	   ; arm_5
+        (5,0)  3.141592653589793 	   ; arm_6
+        (6,0)  0.057                   ; left_finger
+        (7,0)  -0.021                  ; right_finger
+      }
+    }
+  }
+}
+
+
+jointVelocityLimits
+{
+  ; relaxed log barrier mu
+  mu      0.01
+
+  ; relaxed log barrier delta
+  delta   1e-3
+  
+  lowerBound
+  {
+    ; velocity limits for the different types of arm base DOFs
+    base
+    {
+      defaultManipulator
+      {
+      }
+
+      floatingArmManipulator
+      {
+      }
+
+      fullyActuatedFloatingArmManipulator
+      {
+        (0,0)  -0.1  ; linear velocity x
+        (1,0)  -0.1  ; linear velocity y
+        (2,0)  -0.1  ; linear velocity z
+        (3,0)  -0.3  ; euler angle velocity z
+        (4,0)  -0.3  ; euler angle velocity y
+        (5,0)  -0.3  ; euler angle velocity x
+      }
+
+      wheelBasedMobileManipulator
+      {
+        (0,0)  -0.1 ; forward velocity
+        (1,0)  -0.3 ; turning velocity
+      }
+    }
+
+    ; velocity limits for the arm DOFs // all need to change from urdf
+    dualArm
+    {
+      leftArm
+      {
+        (0,0)  -3.141592653589793      ; arm_1 [rad/s]
+        (1,0)  -3.141592653589793	   ; arm_2 [rad/s]
+        (2,0)  -3.141592653589793	   ; arm_3 [rad/s]
+        (3,0)  -3.141592653589793	   ; arm_4 [rad/s]
+        (4,0)  -3.141592653589793	   ; arm_5 [rad/s]
+        (5,0)  -3.141592653589793	   ; arm_6 [rad/s]
+        (6,0)  -1.000000000000000	   ; left_finger [rad/s]
+        (7,0)  -1.000000000000000	   ; right_finger [rad/s]
+      }
+
+      rightArm
+      {
+        (0,0)  -3.141592653589793      ; arm_1 [rad/s]
+        (1,0)  -3.141592653589793	   ; arm_2 [rad/s]
+        (2,0)  -3.141592653589793	   ; arm_3 [rad/s]
+        (3,0)  -3.141592653589793	   ; arm_4 [rad/s]
+        (4,0)  -3.141592653589793	   ; arm_5 [rad/s]
+        (5,0)  -3.141592653589793	   ; arm_6 [rad/s]
+        (6,0)  -1.000000000000000	   ; left_finger [rad/s]
+        (7,0)  -1.000000000000000	   ; right_finger [rad/s]
+      }
+    }
+  }
+
+  upperBound
+  {
+    ; velocity limits for the different types of arm base DOFs
+    base
+    {
+      defaultManipulator
+      {
+      }
+
+      floatingArmManipulator
+      {
+      }
+
+      fullyActuatedFloatingArmManipulator
+      {
+        (0,0)  0.1  ; linear velocity x
+        (1,0)  0.1  ; linear velocity y
+        (2,0)  0.1  ; linear velocity z
+        (3,0)  0.3  ; euler angle velocity z
+        (4,0)  0.3  ; euler angle velocity y
+        (5,0)  0.3  ; euler angle velocity x
+      }
+
+      wheelBasedMobileManipulator
+      {
+        (0,0)  0.1 ; forward velocity
+        (1,0)  0.3 ; turning velocity
+      }
+    }
+
+    ; velocity limits for the arm DOFs // all need to change from urdf
+    dualArm
+    {
+      leftArm
+      {
+        (0,0)  3.141592653589793       ; arm_1 [rad/s]
+        (1,0)  3.141592653589793	   ; arm_2 [rad/s]
+        (2,0)  3.141592653589793	   ; arm_3 [rad/s]
+        (3,0)  3.141592653589793 	   ; arm_4 [rad/s]
+        (4,0)  3.141592653589793 	   ; arm_5 [rad/s]
+        (5,0)  3.141592653589793 	   ; arm_6 [rad/s]
+        (6,0)  1.000000000000000 	   ; left_finger [rad/s] 
+        (7,0)  1.000000000000000 	   ; right_finger [rad/s]
+      }
+
+      rightArm
+      {
+        (0,0)  3.141592653589793       ; arm_1 [rad/s]
+        (1,0)  3.141592653589793	   ; arm_2 [rad/s]
+        (2,0)  3.141592653589793	   ; arm_3 [rad/s]
+        (3,0)  3.141592653589793 	   ; arm_4 [rad/s]
+        (4,0)  3.141592653589793 	   ; arm_5 [rad/s]
+        (5,0)  3.141592653589793 	   ; arm_6 [rad/s]
+        (6,0)  1.000000000000000 	   ; left_finger [rad/s] 
+        (7,0)  1.000000000000000 	   ; right_finger [rad/s]
+      }
+    }
+  }
+}

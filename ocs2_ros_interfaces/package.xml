@@ -20,6 +20,8 @@
   <depend>ocs2_msgs</depend>
   <depend>ocs2_core</depend>
   <depend>ocs2_mpc</depend>
+  <depend>ocs2_pinocchio_interface</depend>
+  <depend>hpp-fcl</depend>
   <depend>std_msgs</depend>
   <depend>visualization_msgs</depend>
   <depend>geometry_msgs</depend>

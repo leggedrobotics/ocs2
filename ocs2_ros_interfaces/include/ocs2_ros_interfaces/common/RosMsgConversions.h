@@ -46,6 +46,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_msgs/msg/mpc_target_trajectories.hpp>
 #include <ocs2_msgs/msg/multiplier.hpp>
 
+// ACT messages
+#include <std_msgs/msg/float32_multi_array.hpp>
+
 namespace ocs2 {
 namespace ros_msg_conversions {
 
@@ -72,6 +75,9 @@ ocs2_msgs::msg::MpcTargetTrajectories createTargetTrajectoriesMsg(
 /** Returns the TargetTrajectories message. */
 TargetTrajectories readTargetTrajectoriesMsg(
     const ocs2_msgs::msg::MpcTargetTrajectories& targetTrajectoriesMsg);
+
+/** Reads the ACT target qpos message. */
+vector_t readActTargetQposMsg(const std_msgs::msg::Float32MultiArray& actTargetMsg);
 
 /**
  * Creates the performance indices message.

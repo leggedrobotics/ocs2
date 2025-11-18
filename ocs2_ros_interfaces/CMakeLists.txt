@@ -21,6 +21,16 @@ find_package(interactive_markers REQUIRED)
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3)
 
+find_package(ocs2_pinocchio_interface REQUIRED)
+pkg_check_modules(pinocchio REQUIRED pinocchio)
+find_package(pinocchio REQUIRED)
+
+find_package(urdf REQUIRED)
+find_package(urdfdom REQUIRED)
+
+pkg_check_modules(hpp-fcl REQUIRED hpp-fcl)
+find_package(hpp-fcl REQUIRED)
+
 ###########
 ## Build ##
 ###########
@@ -36,6 +46,16 @@ set(dependencies
   interactive_markers
   Boost
   Eigen3
+  ocs2_pinocchio_interface
+  pinocchio
+  hpp-fcl
+  urdf
+  urdfdom
+  Eigen3
+)
+
+link_directories(
+  ${pinocchio_LIBRARY_DIRS}
 )
 
 add_library(${PROJECT_NAME} SHARED
@@ -61,9 +81,26 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   ${includes_${PROJECT_NAME}}
 )
 ament_target_dependencies(${PROJECT_NAME}
-  ${dependencies}
+  rclcpp
+  ocs2_msgs
+  ocs2_core
+  ocs2_mpc
+  std_msgs
+  visualization_msgs
+  geometry_msgs
+  interactive_markers
+  ocs2_pinocchio_interface
+  pinocchio
+  hpp-fcl
+  urdf
+  urdfdom
+  Eigen3
 )
-target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
+
+target_link_libraries(${PROJECT_NAME}
+  ${Boost_LIBRARIES}
+  ${pinocchio_LIBRARIES}
+)
 
 add_executable(test_custom_callback_queue
   test/test_custom_callback_queue.cpp
@@ -105,11 +142,11 @@ find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
   message(STATUS "Run clang tooling for target " ${PROJECT_NAME}_lintTarget)
   add_clang_tooling(
-  TARGETS ${PROJECT_NAME}_lintTarget
+    TARGETS ${PROJECT_NAME}_lintTarget
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CF_WERROR
-)
+  )
 endif(cmake_clang_tools_FOUND)
 
 #############
@@ -130,7 +167,9 @@ install(TARGETS multiplot_remap DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY multiplot
   DESTINATION include/${PROJECT_NAME}/
 )
-ament_export_dependencies(${dependencies})  
+ament_export_dependencies(
+  ${dependencies}
+)
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 
 #############

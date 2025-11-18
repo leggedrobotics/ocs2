@@ -99,7 +99,7 @@ void MRT_ROS_Interface::setCurrentObservation(
   lk.unlock();
   msgReady_.notify_one();
 #else
-  mpcObservationPublisher_.publish(mpcObservationMsg_);
+  mpcObservationPublisher_->publish(mpcObservationMsg_);
 #endif
 }
 

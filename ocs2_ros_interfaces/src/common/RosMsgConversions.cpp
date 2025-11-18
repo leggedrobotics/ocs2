@@ -245,6 +245,23 @@ TargetTrajectories readTargetTrajectoriesMsg(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+vector_t readActTargetQposMsg(const std_msgs::msg::Float32MultiArray& actTargetMsg) {
+
+  if (actTargetMsg.data.empty()) {
+      throw std::runtime_error("Input array is empty.");
+  }
+
+  std::vector<float> act_state(actTargetMsg.data.size());
+  for (int i = 0; i < actTargetMsg.data.size(); i++){
+    act_state[i] = actTargetMsg.data.at(i);
+  }
+
+  return Eigen::Map<const Eigen::VectorXf>(act_state.data(), act_state.size()).cast<scalar_t>();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 ocs2_msgs::msg::Constraint createConstraintMsg(scalar_t time,
                                                const vector_t& constraint) {
   ocs2_msgs::msg::Constraint constraintMsg;

@@ -63,6 +63,8 @@ class MobileManipulatorInterface final : public RobotInterface {
 
   const vector_t& getInitialState() { return initialState_; }
 
+  const int getEeFrameId() { return eeFrameId_; }
+
   ddp::Settings& ddpSettings() { return ddpSettings_; }
 
   mpc::Settings& mpcSettings() { return mpcSettings_; }
@@ -102,6 +104,8 @@ class MobileManipulatorInterface final : public RobotInterface {
   ManipulatorModelInfo manipulatorModelInfo_;
 
   vector_t initialState_;
+
+  int eeFrameId_;
 };
 
 }  // namespace mobile_manipulator

@@ -83,8 +83,13 @@ int main(int argc, char** argv) {
 
   // initial command
   vector_t initTarget(7);
-  initTarget.head(3) << 1, 0, 1;
-  initTarget.tail(4) << Eigen::Quaternion<scalar_t>(1, 0, 0, 0).coeffs();
+  if (taskFile.find("aloha") != std::string::npos) {
+    initTarget << 0.151811, 0, 0.295251, 0, -0.0499792, 0, 0.99875; // ALOHA waiting state (more suitable than sleeping state)
+    // initTarget << 0.0526199, 0.00505283, 0.159145, 0.0552305, 0.246959, 0.0233511, 0.967169; // ALOHA sleeping state
+  } else {
+    initTarget.head(3) << 1, 0, 1;
+    initTarget.tail(4) << Eigen::Quaternion<scalar_t>(1, 0, 0, 0).coeffs();
+  }
   const vector_t zeroInput = vector_t::Zero(interface.getManipulatorModelInfo().inputDim);
   const TargetTrajectories initTargetTrajectories({initObservation.time}, {initTarget}, {zeroInput});
 

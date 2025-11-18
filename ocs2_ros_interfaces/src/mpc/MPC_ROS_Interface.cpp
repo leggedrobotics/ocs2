@@ -389,4 +389,45 @@ void MPC_ROS_Interface::launchNodes(const rclcpp::Node::SharedPtr& node) {
   spin();
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void MPC_ROS_Interface::launchNodes_mujoco(const rclcpp::Node::SharedPtr& node) {
+  RCLCPP_INFO(LOGGER, "MPC node is setting up ...");
+  node_ = node;
+
+  // Observation subscriber
+  // modify to /left_arm/pose and /right_arm/pose when applying dual-arm
+  mpcObservationSubscriber_ = node_->create_subscription<ocs2_msgs::msg::MpcObservation>(
+      "pose", 
+      1, 
+      std::bind(&MPC_ROS_Interface::mpcObservationCallback, this, std::placeholders::_1)
+  );
+
+  // MPC publisher
+  mpcPolicyPublisher_ = node_->create_publisher<ocs2_msgs::msg::MpcFlattenedController>(
+      topicPrefix_ + "_mpc_policy", 
+      1
+  );
+
+  // MPC reset service server
+  mpcResetServiceServer_ = node_->create_service<ocs2_msgs::srv::Reset>(
+      topicPrefix_ + "_mpc_reset",
+      [this](const std::shared_ptr<ocs2_msgs::srv::Reset::Request>& request,
+             const std::shared_ptr<ocs2_msgs::srv::Reset::Response>& response) {
+        return resetMpcCallback(request, response);
+      });
+
+  // display
+#ifdef PUBLISH_THREAD
+  RCLCPP_INFO(LOGGER, "Publishing SLQ-MPC messages on a separate thread.");
+#endif
+
+  RCLCPP_INFO(LOGGER, "MPC node is ready.");
+
+  // spin
+  spin();
+}
+
+
 }  // namespace ocs2

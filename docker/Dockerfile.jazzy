@@ -26,7 +26,7 @@ RUN mkdir -p /ws/src
 COPY . /ws/src/ocs2
 
 # Assets used by many examples/tests.
-RUN git clone --depth 1 https://github.com/leggedrobotics/ocs2_robotic_assets.git /ws/src/ocs2_robotic_assets
+RUN git clone --depth 1 --branch main --single-branch https://github.com/leggedrobotics/ocs2_robotic_assets.git /ws/src/ocs2_robotic_assets
 
 # Install ROS deps from package.xml, then build.
 RUN source /opt/ros/jazzy/setup.bash && \

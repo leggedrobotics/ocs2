@@ -18,6 +18,7 @@ sudo apt install -y \
   python3-dev pybind11-dev \
   libeigen3-dev libboost-all-dev libglpk-dev \
   libgmp-dev libmpfr-dev libcgal-dev libopencv-dev libpcl-dev \
+  liburdfdom-dev \
   ros-jazzy-eigen3-cmake-module \
   ros-jazzy-pinocchio ros-jazzy-hpp-fcl \
   ros-jazzy-grid-map \
@@ -38,11 +39,11 @@ Notes:
 mkdir -p ~/ocs2_ws/src
 cd ~/ocs2_ws/src
 
-# Clone OCS2 (this branch)
-git clone --branch ros2 https://github.com/leggedrobotics/ocs2.git
+# Clone OCS2 (ROS 2 Jazzy port)
+git clone --branch ros2 https://github.com/leggedrobotics/ocs2_ros2.git
 
-# Optional but recommended: assets used by examples/tests
-git clone https://github.com/leggedrobotics/ocs2_robotic_assets.git
+# Robotic assets (required by several examples/tests)
+git clone --branch ros2 https://github.com/leggedrobotics/ocs2_robotic_assets.git
 
 cd ~/ocs2_ws
 source /opt/ros/jazzy/setup.bash

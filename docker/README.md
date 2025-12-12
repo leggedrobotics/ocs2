@@ -12,3 +12,4 @@ Run:
 docker run --rm -it --net=host ocs2:jazzy
 ```
 
+Note: the Dockerfile clones `ocs2_robotic_assets` from its `ros2` branch.

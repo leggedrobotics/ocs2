@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-dev pybind11-dev \
     libeigen3-dev libboost-all-dev libglpk-dev \
     libgmp-dev libmpfr-dev libcgal-dev libopencv-dev libpcl-dev \
+    liburdfdom-dev \
     ros-jazzy-eigen3-cmake-module \
     ros-jazzy-pinocchio ros-jazzy-hpp-fcl \
     ros-jazzy-grid-map \
@@ -26,7 +27,7 @@ RUN mkdir -p /ws/src
 COPY . /ws/src/ocs2
 
 # Assets used by many examples/tests.
-RUN git clone --depth 1 --branch main --single-branch https://github.com/leggedrobotics/ocs2_robotic_assets.git /ws/src/ocs2_robotic_assets
+RUN git clone --depth 1 --branch ros2 --single-branch https://github.com/leggedrobotics/ocs2_robotic_assets.git /ws/src/ocs2_robotic_assets
 
 # Install ROS deps from package.xml, then build.
 RUN source /opt/ros/jazzy/setup.bash && \

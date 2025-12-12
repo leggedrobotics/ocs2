@@ -75,7 +75,7 @@ std::ostream& operator<<(std::ostream& os, const PinocchioInterface& p) {
   for (int k = 0; k < model.nframes; ++k) {
     os << std::setw(20) << model.frames[k].name << ":  ";
     os << " ID = " << k;
-    os << ", parent = " << model.frames[k].parent;
+    os << ", parentJoint = " << model.frames[k].parentJoint;
     os << ", type = ";
 
     std::string frameType;

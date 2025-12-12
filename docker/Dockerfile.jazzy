@@ -6,16 +6,32 @@ ENV DEBIAN_FRONTEND=noninteractive
 # System deps needed by OCS2 (core + pinocchio + plane segmentation + examples).
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential cmake git \
+    curl ca-certificates gnupg lsb-release \
     python3-colcon-common-extensions python3-rosdep \
     python3-dev pybind11-dev \
     libeigen3-dev libboost-all-dev libglpk-dev \
     libgmp-dev libmpfr-dev libcgal-dev libopencv-dev libpcl-dev \
     liburdfdom-dev \
     ros-jazzy-eigen3-cmake-module \
-    ros-jazzy-pinocchio ros-jazzy-hpp-fcl \
+    ros-jazzy-hpp-fcl \
     ros-jazzy-grid-map \
     ros-jazzy-xacro ros-jazzy-robot-state-publisher ros-jazzy-rviz2 \
   && rm -rf /var/lib/apt/lists/*
+
+# Pinocchio on Jazzy: install from OpenRobots robotpkg (rosdep maps it to a non-existent ros-jazzy-pinocchio).
+RUN install -d -m 0755 /etc/apt/keyrings && \
+    curl -fsSL http://robotpkg.openrobots.org/packages/debian/pubkey.asc -o /etc/apt/keyrings/robotpkg.asc && \
+    echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/robotpkg.asc] http://robotpkg.openrobots.org/packages/debian/pub $(. /etc/os-release && echo $VERSION_CODENAME) robotpkg" > /etc/apt/sources.list.d/robotpkg.list && \
+    apt-get update && apt-get install -y --no-install-recommends \
+      robotpkg-pinocchio robotpkg-coal \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV CMAKE_PREFIX_PATH=/opt/openrobots:${CMAKE_PREFIX_PATH}
+ENV LD_LIBRARY_PATH=/opt/openrobots/lib:${LD_LIBRARY_PATH}
+
+# Silence robotpkg's backward-compatibility warnings (hpp-fcl -> coal).
+RUN sed -i "/message(WARNING/d" /opt/openrobots/lib/cmake/hpp-fcl/hpp-fclConfig.cmake && \
+    sed -i "/#pragma message/d" /opt/openrobots/include/hpp/fcl/coal.hpp
 
 # rosdep (optional but convenient).
 RUN if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then rosdep init; fi && rosdep update
@@ -31,7 +47,7 @@ RUN git clone --depth 1 --branch ros2 --single-branch https://github.com/leggedr
 
 # Install ROS deps from package.xml, then build.
 RUN source /opt/ros/jazzy/setup.bash && \
-    rosdep install --from-paths src --ignore-src -r -y && \
+    rosdep install --from-paths src --ignore-src -r -y --skip-keys pinocchio && \
     colcon build --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo
 
 RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc && \

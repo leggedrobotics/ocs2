@@ -27,14 +27,13 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <string>
-
-#include <ros/init.h>
-#include <ros/package.h>
-
 #include <ocs2_core/Types.h>
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_ros_interfaces/command/TargetTrajectoriesKeyboardPublisher.h>
+
+#include <string>
+
+#include "rclcpp/rclcpp.hpp"
 
 using namespace ocs2;
 
@@ -60,7 +59,8 @@ scalar_t estimateTimeToTarget(const vector_t& desiredBaseDisplacement) {
  * @param [in] commadLineTarget : [deltaX, deltaY, deltaZ, deltaYaw]
  * @param [in] observation : the current observation
  */
-TargetTrajectories commandLineToTargetTrajectories(const vector_t& commadLineTarget, const SystemObservation& observation) {
+TargetTrajectories commandLineToTargetTrajectories(
+    const vector_t& commadLineTarget, const SystemObservation& observation) {
   const vector_t currentPose = observation.state.segment<6>(6);
   const vector_t targetPose = [&]() {
     vector_t target(6);
@@ -78,7 +78,8 @@ TargetTrajectories commandLineToTargetTrajectories(const vector_t& commadLineTar
   }();
 
   // target reaching duration
-  const scalar_t targetReachingTime = observation.time + estimateTimeToTarget(targetPose - currentPose);
+  const scalar_t targetReachingTime =
+      observation.time + estimateTimeToTarget(targetPose - currentPose);
 
   // desired time trajectory
   const scalar_array_t timeTrajectory{observation.time, targetReachingTime};
@@ -89,7 +90,8 @@ TargetTrajectories commandLineToTargetTrajectories(const vector_t& commadLineTar
   stateTrajectory[1] << vector_t::Zero(6), targetPose, defaultJointState;
 
   // desired input trajectory (just right dimensions, they are not used)
-  const vector_array_t inputTrajectory(2, vector_t::Zero(observation.input.size()));
+  const vector_array_t inputTrajectory(
+      2, vector_t::Zero(observation.input.size()));
 
   return {timeTrajectory, stateTrajectory, inputTrajectory};
 }
@@ -98,22 +100,32 @@ int main(int argc, char* argv[]) {
   const std::string robotName = "legged_robot";
 
   // Initialize ros node
-  ::ros::init(argc, argv, robotName + "_target");
-  ::ros::NodeHandle nodeHandle;
+  rclcpp::init(argc, argv);
+  rclcpp::Node::SharedPtr node = rclcpp::Node::make_shared(
+      robotName + "_target",
+      rclcpp::NodeOptions()
+          .allow_undeclared_parameters(true)
+          .automatically_declare_parameters_from_overrides(true));
   // Get node parameters
   std::string referenceFile;
-  nodeHandle.getParam("/referenceFile", referenceFile);
+  node->get_parameter("/referenceFile", referenceFile);
 
   loadData::loadCppDataType(referenceFile, "comHeight", comHeight);
-  loadData::loadEigenMatrix(referenceFile, "defaultJointState", defaultJointState);
-  loadData::loadCppDataType(referenceFile, "targetRotationVelocity", targetRotationVelocity);
-  loadData::loadCppDataType(referenceFile, "targetDisplacementVelocity", targetDisplacementVelocity);
+  loadData::loadEigenMatrix(referenceFile, "defaultJointState",
+                            defaultJointState);
+  loadData::loadCppDataType(referenceFile, "targetRotationVelocity",
+                            targetRotationVelocity);
+  loadData::loadCppDataType(referenceFile, "targetDisplacementVelocity",
+                            targetDisplacementVelocity);
 
   // goalPose: [deltaX, deltaY, deltaZ, deltaYaw]
   const scalar_array_t relativeBaseLimit{10.0, 10.0, 0.2, 360.0};
-  TargetTrajectoriesKeyboardPublisher targetPoseCommand(nodeHandle, robotName, relativeBaseLimit, &commandLineToTargetTrajectories);
+  TargetTrajectoriesKeyboardPublisher targetPoseCommand(
+      node, robotName, relativeBaseLimit, &commandLineToTargetTrajectories);
 
-  const std::string commandMsg = "Enter XYZ and Yaw (deg) displacements for the TORSO, separated by spaces";
+  const std::string commandMsg =
+      "Enter XYZ and Yaw (deg) displacements for the TORSO, separated by "
+      "spaces";
   targetPoseCommand.publishKeyboardCommand(commandMsg);
 
   // Successful exit

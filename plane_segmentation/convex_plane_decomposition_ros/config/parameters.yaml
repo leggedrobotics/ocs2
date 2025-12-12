@@ -1,0 +1,36 @@
+/**:
+  ros__parameters:
+    preprocessing:
+      resolution: 0.04    # Resampling resolution, set negative to skip, requires inpainting to be used
+      kernelSize: 3       # Kernel size of the median filter, either 3 or 5
+      numberOfRepeats: 1  # Number of times to apply the same filter
+
+    sliding_window_plane_extractor:
+      kernel_size: 3                                        # Sliding window patch size, odd and >= 3.
+      planarity_opening_filter: 0                           # [#] Opening filter (erosion -> dilation) for planarity detection.
+      plane_inclination_threshold_degrees: 30.0             # [deg] Max angle between patch normal and world-z.
+      local_plane_inclination_threshold_degrees: 35.0       # [deg] Max angle between cell normal and world-z.
+      plane_patch_error_threshold: 0.02                     # [m] Allowed RMS plane fit error for a patch.
+      min_number_points_per_label: 4                        # [#] Discard labels with fewer points.
+      connectivity: 4                                       # Label kernel connectivity: 4 or 8.
+      include_ransac_refinement: true                       # Enable RANSAC refinement if global plane fit fails.
+      global_plane_fit_distance_error_threshold: 0.025      # [m] Max distance-to-plane to trigger RANSAC.
+      global_plane_fit_angle_error_threshold_degrees: 25.0  # [deg] Max normal deviation to trigger RANSAC.
+
+    ransac_plane_refinement:
+      probability: 0.001      # Probability to miss the largest candidate shape. Lower => more reliable but slower.
+      min_points: 4           # Min number of points per plane (termination condition).
+      epsilon: 0.025          # [m] Max distance to plane.
+      cluster_epsilon: 0.041  # [m] Clustering distance (set higher than resolution).
+      normal_threshold: 25.0  # [deg] Max normal deviation between cluster and point.
+
+    contour_extraction:
+      marginSize: 1  # [#] Boundary offset kernel size (pixels).
+
+    postprocessing:
+      extracted_planes_height_offset: 0.0  # [m] Global Z offset for extracted planes.
+      nonplanar_height_offset: 0.02        # [m] Extra Z offset for non-planar cells.
+      nonplanar_horizontal_offset: 1       # [#] XY offset for non-planar cells (pixels).
+      smoothing_dilation_size: 0.2         # [m] Half-width of dilation before smoothing layer.
+      smoothing_box_kernel_size: 0.1       # [m] Half-width of box kernel.
+      smoothing_gauss_kernel_size: 0.05    # [m] Half-width of Gaussian kernel.

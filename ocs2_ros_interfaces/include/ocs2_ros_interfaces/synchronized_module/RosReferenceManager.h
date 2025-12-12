@@ -29,64 +29,80 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <ocs2_oc/synchronized_module/ReferenceManagerDecorator.h>
+
 #include <memory>
+#include <ocs2_msgs/msg/mode_schedule.hpp>
+#include <ocs2_msgs/msg/mpc_target_trajectories.hpp>
 #include <string>
 #include <utility>
 
-#include <ros/ros.h>
-
-#include <ocs2_oc/synchronized_module/ReferenceManagerDecorator.h>
+#include "rclcpp/rclcpp.hpp"
 
 namespace ocs2 {
 
 /**
- * Decorates ReferenceManager with ROS subscribers to receive ModeSchedule and TargetTrajectories through ROS messages.
+ * Decorates ReferenceManager with ROS subscribers to receive ModeSchedule and
+ * TargetTrajectories through ROS messages.
  */
 class RosReferenceManager final : public ReferenceManagerDecorator {
  public:
   /**
    * Constructor which decorates referenceManagerPtr.
    *
-   * @param [in] topicPrefix: The ReferenceManager will subscribe to "topicPrefix_mode_schedule" and "topicPrefix_mpc_target"
-   * @param [in] referenceManagerPtr: The ReferenceManager which will be decorated with ROS subscribers functionalities.
-   * topics to receive user-commanded ModeSchedule and TargetTrajectories respectively.
+   * @param [in] topicPrefix: The ReferenceManager will subscribe to
+   * "topicPrefix_mode_schedule" and "topicPrefix_mpc_target"
+   * @param [in] referenceManagerPtr: The ReferenceManager which will be
+   * decorated with ROS subscribers functionalities. topics to receive
+   * user-commanded ModeSchedule and TargetTrajectories respectively.
    */
-  explicit RosReferenceManager(std::string topicPrefix, std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr);
+  explicit RosReferenceManager(
+      std::string topicPrefix,
+      std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr);
 
   ~RosReferenceManager() override = default;
 
   /**
-   * Creates a pointer to RosReferenceManager using a the derived class of type ReferenceManagerInterface, i.e.
-   * DerivedReferenceManager(args...).
+   * Creates a pointer to RosReferenceManager using a the derived class of type
+   * ReferenceManagerInterface, i.e. DerivedReferenceManager(args...).
    *
-   * @param [in] topicPrefix: The ReferenceManager will subscribe to "topicPrefix_mode_schedule" and "topicPrefix_mpc_target"
-   * topics to receive user-commanded ModeSchedule and TargetTrajectories respectively.
-   * @param args: arguments to forward to the constructor of DerivedReferenceManager
+   * @param [in] topicPrefix: The ReferenceManager will subscribe to
+   * "topicPrefix_mode_schedule" and "topicPrefix_mpc_target" topics to receive
+   * user-commanded ModeSchedule and TargetTrajectories respectively.
+   * @param args: arguments to forward to the constructor of
+   * DerivedReferenceManager
    */
   template <class ReferenceManagerType, class... Args>
-  static std::unique_ptr<RosReferenceManager> create(const std::string& topicPrefix, Args&&... args);
+  static std::unique_ptr<RosReferenceManager> create(
+      const std::string& topicPrefix, Args&&... args);
 
   /**
-   * Subscribers to "topicPrefix_mode_schedule" and "topicPrefix_mpc_target" topics to receive respectively:
-   * (1) ModeSchedule : The predefined mode schedule for time-triggered hybrid systems.
-   * (2) TargetTrajectories : The commanded TargetTrajectories.
+   * Subscribers to "topicPrefix_mode_schedule" and "topicPrefix_mpc_target"
+   * topics to receive respectively: (1) ModeSchedule : The predefined mode
+   * schedule for time-triggered hybrid systems. (2) TargetTrajectories : The
+   * commanded TargetTrajectories.
    */
-  void subscribe(ros::NodeHandle& nodeHandle);
+  void subscribe(const rclcpp::Node::SharedPtr& node);
 
  private:
   const std::string topicPrefix_;
-
-  ::ros::Subscriber modeScheduleSubscriber_;
-  ::ros::Subscriber targetTrajectoriesSubscriber_;
+  rclcpp::Node::SharedPtr node_;
+  rclcpp::Subscription<ocs2_msgs::msg::ModeSchedule>::SharedPtr
+      modeScheduleSubscriber_;
+  rclcpp::Subscription<ocs2_msgs::msg::MpcTargetTrajectories>::SharedPtr
+      targetTrajectoriesSubscriber_;
 };
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class ReferenceManagerType, class... Args>
-std::unique_ptr<RosReferenceManager> RosReferenceManager::create(const std::string& topicPrefix, Args&&... args) {
-  auto referenceManagerPtr = std::make_shared<ReferenceManagerType>(std::forward<Args>(args)...);
-  return std::make_unique<RosReferenceManager>(topicPrefix, std::move(referenceManagerPtr));
+std::unique_ptr<RosReferenceManager> RosReferenceManager::create(
+    const std::string& topicPrefix, Args&&... args) {
+  auto referenceManagerPtr =
+      std::make_shared<ReferenceManagerType>(std::forward<Args>(args)...);
+  return std::make_unique<RosReferenceManager>(topicPrefix,
+                                               std::move(referenceManagerPtr));
 }
 
 }  // namespace ocs2

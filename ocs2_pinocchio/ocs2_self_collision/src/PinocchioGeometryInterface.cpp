@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_self_collision/PinocchioGeometryInterface.h>
 
 #include <pinocchio/algorithm/geometry.hpp>
+#include <pinocchio/collision/distance.hpp>
 #include <pinocchio/multibody/data.hpp>
 #include <pinocchio/multibody/fcl.hpp>
 #include <pinocchio/multibody/geometry.hpp>
@@ -39,6 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/parsers/urdf.hpp>
 
 #include <urdf_parser/urdf_parser.h>
+#include <tinyxml2.h>
 
 namespace ocs2 {
 
@@ -92,12 +94,13 @@ void PinocchioGeometryInterface::buildGeomFromPinocchioInterface(const Pinocchio
     throw std::runtime_error("The PinocchioInterface passed to PinocchioGeometryInterface(...) does not contain a urdf model!");
   }
 
-  // TODO: Replace with pinocchio function that uses the ModelInterface directly
-  // As of 19-04-21 there is no buildGeom that takes a ModelInterface, so we deconstruct the modelInterface into a std::stringstream first
-  const std::unique_ptr<const TiXmlDocument> urdfAsXml(urdf::exportURDF(*pinocchioInterface.getUrdfModelPtr()));
-  TiXmlPrinter printer;
-  urdfAsXml->Accept(&printer);
-  const std::stringstream urdfAsStringStream(printer.Str());
+  // TODO: Replace with pinocchio function that uses the ModelInterface directly.
+  // Pinocchio still expects a URDF stream here, so export the URDFDOM model to a tinyxml2 document first.
+  const std::unique_ptr<tinyxml2::XMLDocument> urdfAsXml(urdf::exportURDF(*pinocchioInterface.getUrdfModelPtr()));
+  tinyxml2::XMLPrinter printer;
+  urdfAsXml->Print(&printer);
+  std::stringstream urdfAsStringStream;
+  urdfAsStringStream << printer.CStr();
 
   pinocchio::urdf::buildGeom(pinocchioInterface.getModel(), urdfAsStringStream, pinocchio::COLLISION, geomModel);
 }

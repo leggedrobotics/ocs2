@@ -29,9 +29,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ros/ros.h>
-
 #include <ocs2_oc/synchronized_module/SolverObserver.h>
+
+#include "rclcpp/rclcpp.hpp"
 
 namespace ocs2 {
 namespace ros {
@@ -42,45 +42,67 @@ enum class CallbackInterpolationStrategy {
 };
 
 /**
- * Creates a ROS-based callback for SolverObserver that publishes a constraint term at the requested lookahead time points.
+ * Creates a ROS-based callback for SolverObserver that publishes a constraint
+ * term at the requested lookahead time points.
  *
- * @param [in] nodeHandle: ROS node handle.
- * @param [in] observingTimePoints: An array of lookahead times for which we want to publish the values of constraint.
- * @param [in] topicNames: An array of topic names. For each observing time points, you should provide a unique topic name.
- * @param [in] interpolationStrategy: The interpolation method used for acquiring data at each time point.
- * @return A callback which can be set to SolverObserverModule in order to observe a requested term's constraint.
+ * @param [in] node: ROS node handle.
+ * @param [in] observingTimePoints: An array of lookahead times for which we
+ * want to publish the values of constraint.
+ * @param [in] topicNames: An array of topic names. For each observing time
+ * points, you should provide a unique topic name.
+ * @param [in] interpolationStrategy: The interpolation method used for
+ * acquiring data at each time point.
+ * @return A callback which can be set to SolverObserverModule in order to
+ * observe a requested term's constraint.
  */
 SolverObserver::constraint_callback_t createConstraintCallback(
-    ::ros::NodeHandle& nodeHandle, const scalar_array_t& observingTimePoints, const std::vector<std::string>& topicNames,
-    CallbackInterpolationStrategy interpolationStrategy = CallbackInterpolationStrategy::nearest_time);
+    const rclcpp::Node::SharedPtr& node,
+    const scalar_array_t& observingTimePoints,
+    const std::vector<std::string>& topicNames,
+    CallbackInterpolationStrategy interpolationStrategy =
+        CallbackInterpolationStrategy::nearest_time);
 
 /**
- * Creates a ROS-based callback for SolverObserver that publishes a term's LagrangianMetrics at the
- * requested lookahead time points.
+ * Creates a ROS-based callback for SolverObserver that publishes a term's
+ * LagrangianMetrics at the requested lookahead time points.
  *
- * @param [in] nodeHandle: ROS node handle.
- * @param [in] observingTimePoints: An array of lookahead times for which we want to publish the values of LagrangianMetrics.
- * @param [in] topicNames: An array of topic names. For each observing time points, you should provide a unique topic name.
- * @param [in] interpolationStrategy: The interpolation method used for acquiring data at each time point.
- * @return A callback which can be set to SolverObserverModule in order to observe a requested term's LagrangianMetrics.
+ * @param [in] node: ROS node handle.
+ * @param [in] observingTimePoints: An array of lookahead times for which we
+ * want to publish the values of LagrangianMetrics.
+ * @param [in] topicNames: An array of topic names. For each observing time
+ * points, you should provide a unique topic name.
+ * @param [in] interpolationStrategy: The interpolation method used for
+ * acquiring data at each time point.
+ * @return A callback which can be set to SolverObserverModule in order to
+ * observe a requested term's LagrangianMetrics.
  */
 SolverObserver::lagrangian_callback_t createLagrangianCallback(
-    ::ros::NodeHandle& nodeHandle, const scalar_array_t& observingTimePoints, const std::vector<std::string>& topicNames,
-    CallbackInterpolationStrategy interpolationStrategy = CallbackInterpolationStrategy::nearest_time);
+    const rclcpp::Node::SharedPtr& node,
+    const scalar_array_t& observingTimePoints,
+    const std::vector<std::string>& topicNames,
+    CallbackInterpolationStrategy interpolationStrategy =
+        CallbackInterpolationStrategy::nearest_time);
 
 /**
- * Creates a ROS-based callback for SolverObserver that publishes a term's Lagrange multiplier at the
- * requested lookahead time points.
+ * Creates a ROS-based callback for SolverObserver that publishes a term's
+ * Lagrange multiplier at the requested lookahead time points.
  *
- * @param [in] nodeHandle: ROS node handle.
- * @param [in] observingTimePoints: An array of lookahead times for which we want to publish the values of multiplier.
- * @param [in] topicNames: An array of topic names. For each observing time points, you should provide a unique topic name.
- * @param [in] interpolationStrategy: The interpolation method used for acquiring data at each time point.
- * @return A callback which can be set to SolverObserverModule in order to observe a requested term's multiplier.
+ * @param [in] node: ROS node handle.
+ * @param [in] observingTimePoints: An array of lookahead times for which we
+ * want to publish the values of multiplier.
+ * @param [in] topicNames: An array of topic names. For each observing time
+ * points, you should provide a unique topic name.
+ * @param [in] interpolationStrategy: The interpolation method used for
+ * acquiring data at each time point.
+ * @return A callback which can be set to SolverObserverModule in order to
+ * observe a requested term's multiplier.
  */
 SolverObserver::multiplier_callback_t createMultiplierCallback(
-    ::ros::NodeHandle& nodeHandle, const scalar_array_t& observingTimePoints, const std::vector<std::string>& topicNames,
-    CallbackInterpolationStrategy interpolationStrategy = CallbackInterpolationStrategy::nearest_time);
+    const rclcpp::Node::SharedPtr& node,
+    const scalar_array_t& observingTimePoints,
+    const std::vector<std::string>& topicNames,
+    CallbackInterpolationStrategy interpolationStrategy =
+        CallbackInterpolationStrategy::nearest_time);
 
 }  // namespace ros
 }  // namespace ocs2

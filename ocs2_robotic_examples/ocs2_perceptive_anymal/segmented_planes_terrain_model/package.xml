@@ -8,7 +8,7 @@
 
     <license>TODO</license>
 
-    <buildtool_depend>catkin</buildtool_depend>
+    <buildtool_depend>ament_cmake</buildtool_depend>
     <depend>convex_plane_decomposition</depend>
     <depend>convex_plane_decomposition_msgs</depend>
     <depend>convex_plane_decomposition_ros</depend>
@@ -17,8 +17,11 @@
     <depend>grid_map_sdf</depend>
     <depend>ocs2_ros_interfaces</depend>
     <depend>ocs2_switched_model_interface</depend>
-    <depend>roscpp</depend>
+    <depend>rclcpp</depend>
     <depend>sensor_msgs</depend>
     <depend>visualization_msgs</depend>
 
+    <export>                               
+      <build_type>ament_cmake</build_type>
+    </export>
 </package>

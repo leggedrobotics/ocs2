@@ -15,7 +15,7 @@
 
 namespace switched_model_loopshaping {
 
-void quadrupedLoopshapingMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedLoopshapingInterface& quadrupedInterface,
+void quadrupedLoopshapingMpcNode(const rclcpp::Node::SharedPtr &node, const QuadrupedLoopshapingInterface& quadrupedInterface,
                                  std::unique_ptr<ocs2::MPC_BASE> mpcPtr) {
   const std::string robotName = "anymal";
 
@@ -23,27 +23,27 @@ void quadrupedLoopshapingMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedLoo
 
   // Gait
   auto gaitReceiver = std::make_shared<switched_model::GaitReceiver>(
-      nodeHandle, quadrupedInterface.getQuadrupedInterface().getSwitchedModelModeScheduleManagerPtr()->getGaitSchedule(), robotName);
+      node, quadrupedInterface.getQuadrupedInterface().getSwitchedModelModeScheduleManagerPtr()->getGaitSchedule(), robotName);
   loopshapingSolverModule->add(gaitReceiver);
 
   // Terrain Receiver
   auto terrainReceiver = std::make_shared<switched_model::TerrainReceiverSynchronizedModule>(
-      quadrupedInterface.getQuadrupedInterface().getSwitchedModelModeScheduleManagerPtr()->getTerrainModel(), nodeHandle);
+      quadrupedInterface.getQuadrupedInterface().getSwitchedModelModeScheduleManagerPtr()->getTerrainModel(), node);
   loopshapingSolverModule->add(terrainReceiver);
 
   // Terrain plane visualization
   auto terrainVisualizer = std::make_shared<switched_model::TerrainPlaneVisualizerSynchronizedModule>(
-      quadrupedInterface.getQuadrupedInterface().getSwitchedModelModeScheduleManagerPtr()->getSwingTrajectoryPlanner(), nodeHandle);
+      quadrupedInterface.getQuadrupedInterface().getSwitchedModelModeScheduleManagerPtr()->getSwingTrajectoryPlanner(), node);
   loopshapingSolverModule->add(terrainVisualizer);
 
   // Swing planner
   auto swingPlanningVisualizer = std::make_shared<switched_model::SwingPlanningVisualizer>(
-      quadrupedInterface.getQuadrupedInterface().getSwitchedModelModeScheduleManagerPtr()->getSwingTrajectoryPlanner(), nodeHandle);
+      quadrupedInterface.getQuadrupedInterface().getSwitchedModelModeScheduleManagerPtr()->getSwingTrajectoryPlanner(), node);
   loopshapingSolverModule->add(swingPlanningVisualizer);
 
   // reference manager
   auto rosReferenceManagerPtr = std::make_shared<ocs2::RosReferenceManager>(robotName, quadrupedInterface.getReferenceManagerPtr());
-  rosReferenceManagerPtr->subscribe(nodeHandle);
+  rosReferenceManagerPtr->subscribe(node);
   mpcPtr->getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
 
   // MPC
@@ -51,7 +51,7 @@ void quadrupedLoopshapingMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedLoo
 
   // launch MPC nodes
   ocs2::MPC_ROS_Interface mpcNode(*mpcPtr, robotName);
-  mpcNode.launchNodes(nodeHandle);
+  mpcNode.launchNodes(node);
 }
 
 }  // namespace switched_model_loopshaping

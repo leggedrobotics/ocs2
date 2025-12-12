@@ -27,10 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ros/init.h>
-#include <ros/package.h>
-
 #include "ocs2_legged_robot_ros/gait/GaitKeyboardPublisher.h"
+#include "rclcpp/rclcpp.hpp"
 
 using namespace ocs2;
 using namespace legged_robot;
@@ -39,16 +37,20 @@ int main(int argc, char* argv[]) {
   const std::string robotName = "legged_robot";
 
   // Initialize ros node
-  ros::init(argc, argv, robotName + "_mpc_mode_schedule");
-  ros::NodeHandle nodeHandle;
+  rclcpp::init(argc, argv);
+  rclcpp::Node::SharedPtr node = rclcpp::Node::make_shared(
+      robotName + "_mpc_mode_schedule",
+      rclcpp::NodeOptions()
+          .allow_undeclared_parameters(true)
+          .automatically_declare_parameters_from_overrides(true));
   // Get node parameters
-  std::string gaitCommandFile;
-  nodeHandle.getParam("/gaitCommandFile", gaitCommandFile);
+  const std::string gaitCommandFile =
+      node->get_parameter("gaitCommandFile").as_string();
   std::cerr << "Loading gait file: " << gaitCommandFile << std::endl;
 
-  GaitKeyboardPublisher gaitCommand(nodeHandle, gaitCommandFile, robotName, true);
+  GaitKeyboardPublisher gaitCommand(node, gaitCommandFile, robotName, true);
 
-  while (ros::ok() && ros::master::check()) {
+  while (rclcpp::ok()) {
     gaitCommand.getKeyboardCommand();
   }
 

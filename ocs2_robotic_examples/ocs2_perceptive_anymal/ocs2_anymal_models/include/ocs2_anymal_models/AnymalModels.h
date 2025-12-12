@@ -19,6 +19,7 @@ std::string toString(AnymalModel model);
 AnymalModel stringToAnymalModel(const std::string& name);
 
 std::string getUrdfPath(AnymalModel model);
+std::string getUrdfString(const std::string& urdfPath);
 std::string getUrdfString(AnymalModel model);
 
 std::unique_ptr<switched_model::InverseKinematicsModelBase> getAnymalInverseKinematics(const FrameDeclaration& frameDeclaration,

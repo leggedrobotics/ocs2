@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <ros/node_handle.h>
+#include "rclcpp/rclcpp.hpp"
 
 #include <ocs2_mpc/MPC_BASE.h>
 
@@ -12,7 +12,7 @@
 
 namespace switched_model_loopshaping {
 
-void quadrupedLoopshapingMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedLoopshapingInterface& quadrupedInterface,
+void quadrupedLoopshapingMpcNode(const rclcpp::Node::SharedPtr &node, const QuadrupedLoopshapingInterface& quadrupedInterface,
                                  std::unique_ptr<ocs2::MPC_BASE> mpcPtr);
 
 }  // namespace switched_model_loopshaping

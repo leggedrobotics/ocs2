@@ -1,54 +1,19 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5)
 project(ocs2_pinocchio_interface)
 
-# Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-set(CATKIN_PACKAGE_DEPENDENCIES
-  ocs2_core
-  ocs2_robotic_tools
-)
-
-find_package(catkin REQUIRED COMPONENTS
-  ${CATKIN_PACKAGE_DEPENDENCIES}
-)
-
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(pinocchio REQUIRED pinocchio)
-
+find_package(ament_cmake REQUIRED)
+find_package(ocs2_core REQUIRED)
+find_package(ocs2_robotic_tools REQUIRED)
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(Boost REQUIRED COMPONENTS system filesystem log_setup log)
+
+find_package(pinocchio REQUIRED)
 
 # Add pinocchio configurations
 include(cmake/pinocchio_config.cmake)
-
-###################################
-## catkin specific configuration ##
-###################################
-
-catkin_package(
-  INCLUDE_DIRS
-    include
-    ${pinocchio_INCLUDE_DIRS}
-  LIBRARIES
-    ${PROJECT_NAME}
-  CATKIN_DEPENDS
-    ${CATKIN_PACKAGE_DEPENDENCIES}
-  DEPENDS
-    pinocchio
-  CFG_EXTRAS
-    pinocchio_config.cmake
-)
-
-###########
-## Build ##
-###########
-
-include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIRS}
-  ${pinocchio_INCLUDE_DIRS}
-)
 
 # ocs2 pinocchio interface library
 add_library(${PROJECT_NAME}
@@ -58,53 +23,83 @@ add_library(${PROJECT_NAME}
   src/PinocchioEndEffectorKinematicsCppAd.cpp
   src/urdf.cpp
 )
-add_dependencies(${PROJECT_NAME}
-  ${catkin_EXPORTED_TARGETS}
-)
 target_link_libraries(${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  ${pinocchio_LIBRARIES}
+  pinocchio::pinocchio
+  urdfdom_model
+  urdfdom_world
+  urdfdom_sensor
+  urdfdom_model_state
+)
+target_include_directories(${PROJECT_NAME}
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+    ${EIGEN3_INCLUDE_DIRS}
+    ${pinocchio_INCLUDE_DIRS}
+)
+ament_target_dependencies(${PROJECT_NAME}
+  ocs2_core
+  ocs2_robotic_tools
 )
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_PINOCCHIO_FLAGS})
-
-####################
-## Clang tooling ###
-####################
-
-find_package(cmake_clang_tools QUIET)
-if (cmake_clang_tools_FOUND)
-  message(STATUS "Run clang tooling")
-  add_clang_tooling(
-    TARGETS ${PROJECT_NAME}
-    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
-    CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
-    CF_WERROR
-  )
-endif (cmake_clang_tools_FOUND)
 
 #############
 ## Install ##
 #############
 
 install(TARGETS ${PROJECT_NAME}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
 )
 install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  DESTINATION include/${PROJECT_NAME}
+)
+
+install(
+  EXPORT export_${PROJECT_NAME}
+  DESTINATION share/${PROJECT_NAME}/cmake
+)
+
+install(FILES cmake/pinocchio_config.cmake
+  DESTINATION share/${PROJECT_NAME}/cmake
+)
+
+ament_export_include_directories(
+  include
+  ${pinocchio_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
+)
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ament_export_dependencies(
+  ocs2_core
+  ocs2_robotic_tools
+  Eigen3
+  Boost
+  pinocchio
 )
 
 ############
 # Testing ##
 ############
 
-catkin_add_gtest(testPinocchioInterface
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+
+ament_add_gtest(testPinocchioInterface
   test/testPinocchioInterface.cpp
   test/testPinocchioEndEffectorKinematics.cpp
 )
 target_link_libraries(testPinocchioInterface
   gtest_main
   ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
+  pinocchio::pinocchio
+  urdfdom_model
+  urdfdom_world
+  urdfdom_sensor
+  urdfdom_model_state
 )
+endif()
+
+ament_package(CONFIG_EXTRAS "cmake/pinocchio_config.cmake")

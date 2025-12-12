@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>convex_plane_decomposition_ros</name>
+  <version>0.0.0</version>
+  <description>ROS 2 helpers for convex plane decomposition (message conversion, visualization, parameter loading).</description>
+
+  <maintainer email="rgrandia@ethz.ch">Ruben Grandia</maintainer>
+
+  <license>MIT</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>convex_plane_decomposition</depend>
+  <depend>convex_plane_decomposition_msgs</depend>
+  <depend>eigen3_cmake_module</depend>
+  <depend>geometry_msgs</depend>
+  <depend>grid_map_core</depend>
+  <depend>grid_map_msgs</depend>
+  <depend>grid_map_ros</depend>
+  <depend>rclcpp</depend>
+  <depend>std_msgs</depend>
+  <depend>visualization_msgs</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

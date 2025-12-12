@@ -8,9 +8,9 @@
 
 namespace switched_model {
 
-visualization_msgs::MarkerArray getConvexTerrainMarkers(const ConvexTerrain& convexTerrain, ocs2::Color color, double linewidth,
+visualization_msgs::msg::MarkerArray getConvexTerrainMarkers(const ConvexTerrain& convexTerrain, ocs2::Color color, double linewidth,
                                                         double normalLength) {
-  visualization_msgs::MarkerArray markerArray;
+  visualization_msgs::msg::MarkerArray markerArray;
   markerArray.markers.reserve(2);
 
   // Mark the surface normal
@@ -19,7 +19,7 @@ visualization_msgs::MarkerArray getConvexTerrainMarkers(const ConvexTerrain& con
 
   // Polygon message
   if (!convexTerrain.boundary.empty()) {
-    std::vector<geometry_msgs::Point> boundary;
+    std::vector<geometry_msgs::msg::Point> boundary;
     boundary.reserve(convexTerrain.boundary.size() + 1);
     for (const auto& point : convexTerrain.boundary) {
       const auto& pointInWorldFrame = positionInWorldFrameFromPositionInTerrain({point.x(), point.y(), 0.0}, convexTerrain.plane);

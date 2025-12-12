@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
   <name>ocs2_pinocchio</name>
   <version>1.0.0</version>
   <description>Metapackage for OCS2 tools using the pinocchio rigid body dynamics library</description>
@@ -9,14 +9,15 @@
   <maintainer email="rgrandia@ethz.ch">Ruben Grandia</maintainer>
   <license>TODO</license>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
   <exec_depend>ocs2_centroidal_model</exec_depend>
   <exec_depend>ocs2_pinocchio_interface</exec_depend>
   <exec_depend>ocs2_self_collision</exec_depend>
   <exec_depend>ocs2_self_collision_visualization</exec_depend>
 
   <export>
-    <metapackage />
+    <build_type>ament_cmake</build_type>
   </export>
 
 </package>

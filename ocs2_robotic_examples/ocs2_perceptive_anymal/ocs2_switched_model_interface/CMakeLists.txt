@@ -1,9 +1,10 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.5)
+set(CMAKE_CXX_STANDARD 17)
 project(ocs2_switched_model_interface)
 
-## Catkin Dependencies
-set(CATKIN_PACKAGE_DEPENDENCIES
-  roscpp
+## ament_cmake Dependencies
+set(dependencies
+  rclcpp
   ocs2_core
   ocs2_msgs
   ocs2_oc
@@ -11,29 +12,27 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_robotic_tools
   ocs2_switched_model_msgs
 )
-find_package(catkin REQUIRED COMPONENTS
-  ${CATKIN_PACKAGE_DEPENDENCIES}
-)
+find_package(ament_cmake REQUIRED)
+find_package(ocs2_core REQUIRED)
+find_package(ocs2_msgs REQUIRED)
+find_package(ocs2_oc REQUIRED) 
+find_package(ocs2_ros_interfaces REQUIRED)
+find_package(ocs2_robotic_tools REQUIRED) 
+find_package(ocs2_switched_model_msgs REQUIRED)
+find_package(rclcpp REQUIRED) 
 
 ## Eigen3
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-# Generate compile_commands.json for clang tools
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-###################################
-## catkin specific configuration ##
-###################################
-catkin_package(
-	INCLUDE_DIRS
-		include
-		${EIGEN3_INCLUDE_DIRS}
-	LIBRARIES
-		${PROJECT_NAME}
-	CATKIN_DEPENDS
-		${CATKIN_PACKAGE_DEPENDENCIES}
-#	DEPENDS
+find_package(Boost REQUIRED COMPONENTS
+  system
+  filesystem
+  log_setup
+  log
 )
+
+
+
 
 ###########
 ## Build ##
@@ -41,7 +40,6 @@ catkin_package(
 include_directories(
 	include
 	${EIGEN3_INCLUDE_DIRS}
-	${catkin_INCLUDE_DIRS}
 )
 
 add_library(${PROJECT_NAME}
@@ -87,84 +85,77 @@ add_library(${PROJECT_NAME}
 	src/core/SwitchedModelPrecomputation.cpp
 	src/core/TorqueApproximation.cpp
 )
-add_dependencies(${PROJECT_NAME}
-	${${PROJECT_NAME}_EXPORTED_TARGETS}
-	${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(${PROJECT_NAME}
-	${catkin_LIBRARIES}
-	dl
+ament_target_dependencies(${PROJECT_NAME}
+	${dependencies}
 )
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
-
-#########################
-###   CLANG TOOLING   ###
-#########################
-find_package(cmake_clang_tools QUIET)
-if(cmake_clang_tools_FOUND)
-	message(STATUS "Run clang tooling")
-	add_clang_tooling(
-		TARGETS ${PROJECT_NAME}
-		SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
-		CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
-		CF_WERROR
-	)
-endif(cmake_clang_tools_FOUND)
 
 #############
 ## Install ##
 #############
 
-install(TARGETS ${PROJECT_NAME}
-	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+install(
+  TARGETS ${PROJECT_NAME}
+  EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+  INCLUDES DESTINATION include/${PROJECT_NAME}
 )
-install(DIRECTORY include/${PROJECT_NAME}/
-	DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-)
+install(DIRECTORY include/ DESTINATION include/${PROJECT_NAME})
+
 
 #############
 ## Testing ##
 #############
+find_package(ament_lint_auto REQUIRED)
+ament_lint_auto_find_test_dependencies()
+find_package(ament_cmake_gtest)
 
-catkin_add_gtest(test_constraints
+ament_add_gtest(test_constraints
 	test/constraint/testZeroForceConstraint.cpp
 	test/constraint/testFrictionConeConstraint.cpp
 )
+ament_target_dependencies(test_constraints
+  ${dependencies}
+)
 target_link_libraries(test_constraints
 	${PROJECT_NAME}
-	${catkin_LIBRARIES}
-	gtest_main
 )
 
-catkin_add_gtest(test_${PROJECT_NAME}_core
+ament_add_gtest(test_${PROJECT_NAME}_core
 	test/core/testRotation.cpp
+)
+ament_target_dependencies(test_${PROJECT_NAME}_core
+  ${dependencies}
 )
 target_link_libraries(test_${PROJECT_NAME}_core
 	${PROJECT_NAME}
-	gtest_main
 )
 
-catkin_add_gtest(test_${PROJECT_NAME}_cost
+ament_add_gtest(test_${PROJECT_NAME}_cost
 	test/cost/testFootplacementCost.cpp
 	test/cost/testFrictionConeCost.cpp
 	test/cost/testTorqueLimitsSoftConstraint.cpp
 )
+ament_target_dependencies(test_${PROJECT_NAME}_cost
+  ${dependencies}
+)
 target_link_libraries(test_${PROJECT_NAME}_cost
 	${PROJECT_NAME}
-	gtest_main
 )
 
-catkin_add_gtest(test_${PROJECT_NAME}_footplanner
+ament_add_gtest(test_${PROJECT_NAME}_footplanner
 	test/foot_planner/testSwingPhase.cpp
+)
+ament_target_dependencies(test_${PROJECT_NAME}_footplanner
+  ${dependencies}
 )
 target_link_libraries(test_${PROJECT_NAME}_footplanner
 	${PROJECT_NAME}
-	gtest_main
 )
 
-catkin_add_gtest(test_${PROJECT_NAME}_logic
+ament_add_gtest(test_${PROJECT_NAME}_logic
 	test/logic/testEarlyTouchDown.cpp
 	test/logic/testExtractContractTimings.cpp
 	test/logic/testGait.cpp
@@ -172,23 +163,34 @@ catkin_add_gtest(test_${PROJECT_NAME}_logic
 	test/logic/testGaitSchedule.cpp
 	test/logic/testSingleLegLogic.cpp
 )
+ament_target_dependencies(test_${PROJECT_NAME}_logic
+  ${dependencies}
+)
 target_link_libraries(test_${PROJECT_NAME}_logic
 	${PROJECT_NAME}
-	gtest_main
 )
 
-catkin_add_gtest(test_${PROJECT_NAME}_terrain
+ament_add_gtest(test_${PROJECT_NAME}_terrain
 	test/terrain/testTerrainPlane.cpp
+)
+ament_target_dependencies(test_${PROJECT_NAME}_terrain
+  ${dependencies}
 )
 target_link_libraries(test_${PROJECT_NAME}_terrain
 	${PROJECT_NAME}
-	gtest_main
 )
 
-catkin_add_gtest(test_${PROJECT_NAME}_convexTerrain
+ament_add_gtest(test_${PROJECT_NAME}_convexTerrain
 	test/terrain/testConvexTerrain.cpp
+)
+ament_target_dependencies(test_${PROJECT_NAME}_convexTerrain
+  ${dependencies}
 )
 target_link_libraries(test_${PROJECT_NAME}_convexTerrain
 	${PROJECT_NAME}
-	gtest_main
 )
+
+ament_export_dependencies(${dependencies})  
+ament_export_include_directories("include/${PROJECT_NAME}")
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ament_package()

@@ -27,48 +27,55 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include <ros/init.h>
-#include <ros/package.h>
-
+#include <ocs2_cartpole/CartPoleInterface.h>
+#include <ocs2_cartpole/definitions.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
 
-#include <ocs2_cartpole/CartPoleInterface.h>
-#include <ocs2_cartpole/definitions.h>
+#include <ament_index_cpp/get_package_share_directory.hpp>
 
 #include "ocs2_cartpole_ros/CartpoleDummyVisualization.h"
+#include "rclcpp/rclcpp.hpp"
 
 int main(int argc, char** argv) {
   const std::string robotName = "cartpole";
 
   // task file
-  std::vector<std::string> programArgs{};
-  ::ros::removeROSArgs(argc, argv, programArgs);
+  std::vector<std::string> programArgs =
+      rclcpp::remove_ros_arguments(argc, argv);
+
   if (programArgs.size() <= 1) {
     throw std::runtime_error("No task file specified. Aborting.");
   }
   std::string taskFileFolderName = std::string(programArgs[1]);
 
   // Initialize ros node
-  ros::init(argc, argv, robotName + "_mrt");
-  ros::NodeHandle nodeHandle;
+  rclcpp::init(argc, argv);
+  rclcpp::Node::SharedPtr node = rclcpp::Node::make_shared(robotName + "_mrt");
 
   // Robot interface
-  const std::string taskFile = ros::package::getPath("ocs2_cartpole") + "/config/" + taskFileFolderName + "/task.info";
-  const std::string libFolder = ros::package::getPath("ocs2_cartpole") + "/auto_generated";
-  ocs2::cartpole::CartPoleInterface cartPoleInterface(taskFile, libFolder, false /*verbose*/);
+  const std::string taskFile =
+      ament_index_cpp::get_package_share_directory("ocs2_cartpole") +
+      "/config/" + taskFileFolderName + "/task.info";
+  const std::string libFolder =
+      ament_index_cpp::get_package_share_directory("ocs2_cartpole") +
+      "/auto_generated";
+  ocs2::cartpole::CartPoleInterface cartPoleInterface(taskFile, libFolder,
+                                                      false /*verbose*/);
 
   // MRT
   ocs2::MRT_ROS_Interface mrt(robotName);
   mrt.initRollout(&cartPoleInterface.getRollout());
-  mrt.launchNodes(nodeHandle);
+  mrt.launchNodes(node);
 
   // Visualization
-  auto cartpoleDummyVisualization = std::make_shared<ocs2::cartpole::CartpoleDummyVisualization>(nodeHandle);
+  auto cartpoleDummyVisualization =
+      std::make_shared<ocs2::cartpole::CartpoleDummyVisualization>(node);
 
   // Dummy loop
-  ocs2::MRT_ROS_Dummy_Loop dummyCartpole(mrt, cartPoleInterface.mpcSettings().mrtDesiredFrequency_,
-                                         cartPoleInterface.mpcSettings().mpcDesiredFrequency_);
+  ocs2::MRT_ROS_Dummy_Loop dummyCartpole(
+      mrt, cartPoleInterface.mpcSettings().mrtDesiredFrequency_,
+      cartPoleInterface.mpcSettings().mpcDesiredFrequency_);
   dummyCartpole.subscribeObservers({cartpoleDummyVisualization});
 
   // initial state
@@ -78,8 +85,9 @@ int main(int argc, char** argv) {
   initObservation.time = 0.0;
 
   // initial command
-  const ocs2::TargetTrajectories initTargetTrajectories({0.0}, {cartPoleInterface.getInitialTarget()},
-                                                        {ocs2::vector_t::Zero(ocs2::cartpole::INPUT_DIM)});
+  const ocs2::TargetTrajectories initTargetTrajectories(
+      {0.0}, {cartPoleInterface.getInitialTarget()},
+      {ocs2::vector_t::Zero(ocs2::cartpole::INPUT_DIM)});
 
   // Run dummy (loops while ros is ok)
   dummyCartpole.run(initObservation, initTargetTrajectories);

@@ -27,56 +27,60 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <string>
-
-#include <ros/init.h>
-#include <ros/ros.h>
-
 #include <ocs2_core/Types.h>
 
-#include <ocs2_msgs/mpc_flattened_controller.h>
-#include <ocs2_msgs/mpc_performance_indices.h>
+#include <ocs2_msgs/msg/mpc_flattened_controller.hpp>
+#include <ocs2_msgs/msg/mpc_performance_indices.hpp>
+#include <string>
+
+#include "rclcpp/rclcpp.hpp"
 
 namespace {
 
-class MultiplotRemap {
+class MultiplotRemap : public rclcpp::Node {
  public:
   /** Constructor */
-  explicit MultiplotRemap(const std::string& mpcPolicyTopicName, ::ros::NodeHandle& nodeHandle) {
+  explicit MultiplotRemap(const std::string& mpcPolicyTopicName)
+      : Node("MultiplotRemap") {
     mpcPolicySubscriber_ =
-        nodeHandle.subscribe(mpcPolicyTopicName, 1, &MultiplotRemap::mpcPoicyCallback, this, ::ros::TransportHints().tcpNoDelay());
-    mpcPerformanceIndicesPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_performance_indices>("mpc_performance_indices", 1);
+        this->create_subscription<ocs2_msgs::msg::MpcFlattenedController>(
+            mpcPolicyTopicName, 1,
+            std::bind(&MultiplotRemap::mpcPoicyCallback, this,
+                      std::placeholders::_1));
+    mpcPerformanceIndicesPublisher_ =
+        this->create_publisher<ocs2_msgs::msg::MpcPerformanceIndices>(
+            "mpc_performance_indices", 1);
   }
 
   /** Default deconstructor */
   ~MultiplotRemap() = default;
 
  private:
-  void mpcPoicyCallback(const ocs2_msgs::mpc_flattened_controller::ConstPtr& policyMsg) {
-    mpcPerformanceIndicesPublisher_.publish(policyMsg->performanceIndices);
+  void mpcPoicyCallback(
+      const ocs2_msgs::msg::MpcFlattenedController::ConstSharedPtr& policyMsg) {
+    mpcPerformanceIndicesPublisher_->publish(policyMsg->performance_indices);
   }
 
   // publishers and subscribers
-  ::ros::Subscriber mpcPolicySubscriber_;
-  ::ros::Publisher mpcPerformanceIndicesPublisher_;
+  rclcpp::Subscription<ocs2_msgs::msg::MpcFlattenedController>::SharedPtr
+      mpcPolicySubscriber_;
+  rclcpp::Publisher<ocs2_msgs::msg::MpcPerformanceIndices>::SharedPtr
+      mpcPerformanceIndicesPublisher_;
 };
 
 }  // unnamed namespace
 
 int main(int argc, char** argv) {
   // mpc policy topic name
-  std::vector<std::string> programArgs{};
-  ::ros::removeROSArgs(argc, argv, programArgs);
+  std::vector<std::string> programArgs =
+      rclcpp::remove_ros_arguments(argc, argv);
   if (programArgs.size() <= 1) {
     throw std::runtime_error("MPC policy topic name is not specified!");
   }
   const std::string mpcPolicyTopicName = std::string(programArgs[1]);
 
-  ::ros::init(argc, argv, "multiplot_remap");
-  ::ros::NodeHandle nodeHandle;
-  MultiplotRemap multiplotRemap(mpcPolicyTopicName, nodeHandle);
-
-  ::ros::spin();
+  rclcpp::init(argc, argv);
+  rclcpp::spin(std::make_shared<MultiplotRemap>(mpcPolicyTopicName));
 
   return 0;
 }

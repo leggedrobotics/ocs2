@@ -8,21 +8,25 @@
 
 namespace switched_model {
 
-feet_array_t<std::vector<ContactTiming>> extractContactTimingsPerLeg(const ocs2::ModeSchedule& modeSchedule) {
+feet_array_t<std::vector<ContactTiming>> extractContactTimingsPerLeg(
+    const ocs2::ModeSchedule& modeSchedule) {
   feet_array_t<std::vector<ContactTiming>> contactTimingsPerLeg;
 
   // Convert mode sequence to a contact flag vector per leg
-  const auto contactSequencePerLeg = extractContactFlags(modeSchedule.modeSequence);
+  const auto contactSequencePerLeg =
+      extractContactFlags(modeSchedule.modeSequence);
 
   // Extract timings per leg
   for (size_t leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
-    contactTimingsPerLeg[leg] = extractContactTimings(modeSchedule.eventTimes, contactSequencePerLeg[leg]);
+    contactTimingsPerLeg[leg] = extractContactTimings(
+        modeSchedule.eventTimes, contactSequencePerLeg[leg]);
   }
 
   return contactTimingsPerLeg;
 }
 
-scalar_t getTimeOfNextLiftOff(scalar_t currentTime, const std::vector<ContactTiming>& contactTimings) {
+scalar_t getTimeOfNextLiftOff(
+    scalar_t currentTime, const std::vector<ContactTiming>& contactTimings) {
   for (const auto& contactPhase : contactTimings) {
     if (hasEndTime(contactPhase) && contactPhase.end > currentTime) {
       return contactPhase.end;
@@ -31,7 +35,8 @@ scalar_t getTimeOfNextLiftOff(scalar_t currentTime, const std::vector<ContactTim
   return timingNaN();
 }
 
-scalar_t getTimeOfNextTouchDown(scalar_t currentTime, const std::vector<ContactTiming>& contactTimings) {
+scalar_t getTimeOfNextTouchDown(
+    scalar_t currentTime, const std::vector<ContactTiming>& contactTimings) {
   for (const auto& contactPhase : contactTimings) {
     if (hasStartTime(contactPhase) && contactPhase.start > currentTime) {
       return contactPhase.start;
@@ -40,7 +45,9 @@ scalar_t getTimeOfNextTouchDown(scalar_t currentTime, const std::vector<ContactT
   return timingNaN();
 }
 
-std::vector<ContactTiming> extractContactTimings(const std::vector<scalar_t>& eventTimes, const std::vector<bool>& contactFlags) {
+std::vector<ContactTiming> extractContactTimings(
+    const std::vector<scalar_t>& eventTimes,
+    const std::vector<bool>& contactFlags) {
   assert(eventTimes.size() + 1 == contactFlags.size());
   const int numPhases = contactFlags.size();
 
@@ -58,7 +65,9 @@ std::vector<ContactTiming> extractContactTimings(const std::vector<scalar_t>& ev
     }
 
     // Register start of the contact phase
-    const scalar_t startTime = (currentPhase == 0) ? std::numeric_limits<scalar_t>::quiet_NaN() : eventTimes[currentPhase - 1];
+    const scalar_t startTime = (currentPhase == 0)
+                                   ? std::numeric_limits<scalar_t>::quiet_NaN()
+                                   : eventTimes[currentPhase - 1];
 
     // Find when the contact phase ends
     while (currentPhase + 1 < numPhases && contactFlags[currentPhase + 1]) {
@@ -66,7 +75,9 @@ std::vector<ContactTiming> extractContactTimings(const std::vector<scalar_t>& ev
     }
 
     // Register end of the contact phase
-    const scalar_t endTime = (currentPhase + 1 >= numPhases) ? std::numeric_limits<scalar_t>::quiet_NaN() : eventTimes[currentPhase];
+    const scalar_t endTime = (currentPhase + 1 >= numPhases)
+                                 ? std::numeric_limits<scalar_t>::quiet_NaN()
+                                 : eventTimes[currentPhase];
 
     // Add to phases
     contactTimings.push_back({startTime, endTime});
@@ -75,11 +86,13 @@ std::vector<ContactTiming> extractContactTimings(const std::vector<scalar_t>& ev
   return contactTimings;
 }
 
-feet_array_t<std::vector<bool>> extractContactFlags(const std::vector<size_t>& modeSequence) {
+feet_array_t<std::vector<bool>> extractContactFlags(
+    const std::vector<size_t>& modeSequence) {
   const size_t numPhases = modeSequence.size();
 
   feet_array_t<std::vector<bool>> contactFlagStock;
-  std::fill(contactFlagStock.begin(), contactFlagStock.end(), std::vector<bool>(numPhases));
+  std::fill(contactFlagStock.begin(), contactFlagStock.end(),
+            std::vector<bool>(numPhases));
 
   for (size_t i = 0; i < numPhases; i++) {
     const auto contactFlag = modeNumber2StanceLeg(modeSequence[i]);

@@ -38,20 +38,27 @@ using namespace double_integrator;
  * @param [in] commadLineTarget : [deltaX]
  * @param [in] observation : the current observation
  */
-TargetTrajectories commandLineToTargetTrajectories(const vector_t& commadLineTarget, const SystemObservation& observation) {
-  const vector_t displacement = (vector_t(STATE_DIM) << observation.state(0) + commadLineTarget(0), 0.0).finished();
-  return TargetTrajectories({observation.time}, {displacement}, {vector_t::Zero(INPUT_DIM)});
+TargetTrajectories commandLineToTargetTrajectories(
+    const vector_t& commadLineTarget, const SystemObservation& observation) {
+  const vector_t displacement =
+      (vector_t(STATE_DIM) << observation.state(0) + commadLineTarget(0), 0.0)
+          .finished();
+  return TargetTrajectories({observation.time}, {displacement},
+                            {vector_t::Zero(INPUT_DIM)});
 }
 
 int main(int argc, char* argv[]) {
   const std::string robotName = "double_integrator";
-  ::ros::init(argc, argv, robotName + "_target");
-  ::ros::NodeHandle nodeHandle;
+  rclcpp::init(argc, argv);
+  rclcpp::Node::SharedPtr node =
+      rclcpp::Node::make_shared(robotName + "_target");
 
   const scalar_array_t goalLimit{10.0};  // [deltaX]
-  TargetTrajectoriesKeyboardPublisher targetPoseCommand(nodeHandle, robotName, goalLimit, &commandLineToTargetTrajectories);
+  TargetTrajectoriesKeyboardPublisher targetPoseCommand(
+      node, robotName, goalLimit, &commandLineToTargetTrajectories);
 
-  const std::string commadMsg = "Enter the desired displacement for the double-integrator";
+  const std::string commadMsg =
+      "Enter the desired displacement for the double-integrator";
   targetPoseCommand.publishKeyboardCommand(commadMsg);
 
   // Successful exit

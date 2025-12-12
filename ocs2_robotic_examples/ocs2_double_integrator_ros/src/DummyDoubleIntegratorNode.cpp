@@ -27,59 +27,69 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include <ros/init.h>
-#include <ros/package.h>
-
+#include <ocs2_double_integrator/DoubleIntegratorInterface.h>
+#include <ocs2_double_integrator/definitions.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
 
-#include <ocs2_double_integrator/DoubleIntegratorInterface.h>
-#include <ocs2_double_integrator/definitions.h>
+#include <ament_index_cpp/get_package_share_directory.hpp>
 
 #include "ocs2_double_integrator_ros/DoubleIntegratorDummyVisualization.h"
+#include "rclcpp/rclcpp.hpp"
 
 int main(int argc, char** argv) {
   const std::string robotName = "double_integrator";
 
   // task file
-  std::vector<std::string> programArgs{};
-  ::ros::removeROSArgs(argc, argv, programArgs);
+  std::vector<std::string> programArgs =
+      rclcpp::remove_ros_arguments(argc, argv);
+
   if (programArgs.size() <= 1) {
     throw std::runtime_error("No task file specified. Aborting.");
   }
   std::string taskFileFolderName = std::string(programArgs[1]);
 
   // Initialize ros node
-  ros::init(argc, argv, robotName + "_mrt");
-  ros::NodeHandle nodeHandle;
+  rclcpp::init(argc, argv);
+  rclcpp::Node::SharedPtr node = rclcpp::Node::make_shared(robotName + "_mrt");
 
   // Robot interface
-  const std::string taskFile = ros::package::getPath("ocs2_double_integrator") + "/config/" + taskFileFolderName + "/task.info";
-  const std::string libFolder = ros::package::getPath("ocs2_double_integrator") + "/auto_generated";
-  ocs2::double_integrator::DoubleIntegratorInterface doubleIntegratorInterface(taskFile, libFolder);
+  const std::string taskFile =
+      ament_index_cpp::get_package_share_directory("ocs2_double_integrator") +
+      "/config/" + taskFileFolderName + "/task.info";
+  const std::string libFolder =
+      ament_index_cpp::get_package_share_directory("ocs2_double_integrator") +
+      "/auto_generated";
+  ocs2::double_integrator::DoubleIntegratorInterface doubleIntegratorInterface(
+      taskFile, libFolder);
 
   // MRT
   ocs2::MRT_ROS_Interface mrt(robotName);
   mrt.initRollout(&doubleIntegratorInterface.getRollout());
-  mrt.launchNodes(nodeHandle);
+  mrt.launchNodes(node);
 
   // Visualization
-  auto doubleIntegratorDummyVisualization = std::make_shared<ocs2::double_integrator::DoubleIntegratorDummyVisualization>(nodeHandle);
+  auto doubleIntegratorDummyVisualization = std::make_shared<
+      ocs2::double_integrator::DoubleIntegratorDummyVisualization>(node);
 
   // Dummy loop
-  ocs2::MRT_ROS_Dummy_Loop dummyDoubleIntegrator(mrt, doubleIntegratorInterface.mpcSettings().mrtDesiredFrequency_,
-                                                 doubleIntegratorInterface.mpcSettings().mpcDesiredFrequency_);
-  dummyDoubleIntegrator.subscribeObservers({doubleIntegratorDummyVisualization});
+  ocs2::MRT_ROS_Dummy_Loop dummyDoubleIntegrator(
+      mrt, doubleIntegratorInterface.mpcSettings().mrtDesiredFrequency_,
+      doubleIntegratorInterface.mpcSettings().mpcDesiredFrequency_);
+  dummyDoubleIntegrator.subscribeObservers(
+      {doubleIntegratorDummyVisualization});
 
   // initial state
   ocs2::SystemObservation initObservation;
   initObservation.time = 0.0;
   initObservation.state = doubleIntegratorInterface.getInitialState();
-  initObservation.input = ocs2::vector_t::Zero(ocs2::double_integrator::INPUT_DIM);
+  initObservation.input =
+      ocs2::vector_t::Zero(ocs2::double_integrator::INPUT_DIM);
 
   // initial command
-  const ocs2::TargetTrajectories initTargetTrajectories({0.0}, {doubleIntegratorInterface.getInitialTarget()},
-                                                        {ocs2::vector_t::Zero(ocs2::double_integrator::INPUT_DIM)});
+  const ocs2::TargetTrajectories initTargetTrajectories(
+      {0.0}, {doubleIntegratorInterface.getInitialTarget()},
+      {ocs2::vector_t::Zero(ocs2::double_integrator::INPUT_DIM)});
 
   // Run dummy (loops while ros is ok)
   dummyDoubleIntegrator.run(initObservation, initTargetTrajectories);

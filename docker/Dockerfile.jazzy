@@ -1,0 +1,39 @@
+FROM ros:jazzy-ros-base
+
+SHELL ["/bin/bash", "-c"]
+ENV DEBIAN_FRONTEND=noninteractive
+
+# System deps needed by OCS2 (core + pinocchio + plane segmentation + examples).
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential cmake git \
+    python3-colcon-common-extensions python3-rosdep \
+    python3-dev pybind11-dev \
+    libeigen3-dev libboost-all-dev libglpk-dev \
+    libgmp-dev libmpfr-dev libcgal-dev libopencv-dev libpcl-dev \
+    ros-jazzy-eigen3-cmake-module \
+    ros-jazzy-pinocchio ros-jazzy-hpp-fcl \
+    ros-jazzy-grid-map \
+    ros-jazzy-xacro ros-jazzy-robot-state-publisher ros-jazzy-rviz2 \
+  && rm -rf /var/lib/apt/lists/*
+
+# rosdep (optional but convenient).
+RUN if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then rosdep init; fi && rosdep update
+
+WORKDIR /ws
+RUN mkdir -p /ws/src
+
+# Copy OCS2 repo (build context should be the root of this repository).
+COPY . /ws/src/ocs2
+
+# Assets used by many examples/tests.
+RUN git clone --depth 1 https://github.com/leggedrobotics/ocs2_robotic_assets.git /ws/src/ocs2_robotic_assets
+
+# Install ROS deps from package.xml, then build.
+RUN source /opt/ros/jazzy/setup.bash && \
+    rosdep install --from-paths src --ignore-src -r -y && \
+    colcon build --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo
+
+RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc && \
+    echo "source /ws/install/setup.bash" >> /root/.bashrc
+
+CMD ["bash"]

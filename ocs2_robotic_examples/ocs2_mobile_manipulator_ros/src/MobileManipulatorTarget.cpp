@@ -34,25 +34,34 @@ using namespace ocs2;
 /**
  * Converts the pose of the interactive marker to TargetTrajectories.
  */
-TargetTrajectories goalPoseToTargetTrajectories(const Eigen::Vector3d& position, const Eigen::Quaterniond& orientation,
-                                                const SystemObservation& observation) {
+TargetTrajectories goalPoseToTargetTrajectories(
+    const Eigen::Vector3d& position, const Eigen::Quaterniond& orientation,
+    const SystemObservation& observation) {
   // time trajectory
   const scalar_array_t timeTrajectory{observation.time};
-  // state trajectory: 3 + 4 for desired position vector and orientation quaternion
-  const vector_t target = (vector_t(7) << position, orientation.coeffs()).finished();
+  // state trajectory: 3 + 4 for desired position vector and orientation
+  // quaternion
+  const vector_t target =
+      (vector_t(7) << position, orientation.coeffs()).finished();
   const vector_array_t stateTrajectory{target};
   // input trajectory
-  const vector_array_t inputTrajectory{vector_t::Zero(observation.input.size())};
+  const vector_array_t inputTrajectory{
+      vector_t::Zero(observation.input.size())};
 
   return {timeTrajectory, stateTrajectory, inputTrajectory};
 }
 
 int main(int argc, char* argv[]) {
   const std::string robotName = "mobile_manipulator";
-  ::ros::init(argc, argv, robotName + "_target");
-  ::ros::NodeHandle nodeHandle;
+  rclcpp::init(argc, argv);
+  rclcpp::Node::SharedPtr node = rclcpp::Node::make_shared(
+      robotName + "_target",
+      rclcpp::NodeOptions()
+          .allow_undeclared_parameters(true)
+          .automatically_declare_parameters_from_overrides(true));
 
-  TargetTrajectoriesInteractiveMarker targetPoseCommand(nodeHandle, robotName, &goalPoseToTargetTrajectories);
+  TargetTrajectoriesInteractiveMarker targetPoseCommand(
+      node, robotName, &goalPoseToTargetTrajectories);
   targetPoseCommand.publishInteractiveMarker();
 
   // Successful exit

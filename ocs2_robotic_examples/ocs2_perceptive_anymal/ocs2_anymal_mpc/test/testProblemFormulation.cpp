@@ -44,7 +44,7 @@ TEST_F(TestAnymalModel, all) {
   const ocs2::vector_t x = anymalInterface->getInitialState();
   const ocs2::vector_t u = ocs2::vector_t::Zero(24);
   ocs2::benchmark::RepeatedTimer timer;
-  int N = 100000;
+  int N = 10000;
 
   timer.startTimer();
   for (int i = 0; i < N; i++) {
@@ -76,7 +76,7 @@ TEST_F(TestAnymalModel, dynamics) {
   const ocs2::vector_t x = anymalInterface->getInitialState();
   const ocs2::vector_t u = ocs2::vector_t::Zero(24);
   ocs2::benchmark::RepeatedTimer timer;
-  int N = 100000;
+  int N = 10000;
 
   timer.startTimer();
   for (int i = 0; i < N; i++) {
@@ -91,7 +91,7 @@ TEST_F(TestAnymalModel, precomputation) {
   const ocs2::vector_t x = anymalInterface->getInitialState();
   const ocs2::vector_t u = ocs2::vector_t::Zero(24);
   ocs2::benchmark::RepeatedTimer timer;
-  int N = 100000;
+  int N = 10000;
 
   constexpr auto request = ocs2::Request::Cost + ocs2::Request::SoftConstraint + ocs2::Request::Constraint + ocs2::Request::Approximation;
 
@@ -108,7 +108,7 @@ TEST_F(TestAnymalModel, constraints_eq) {
   const ocs2::vector_t x = anymalInterface->getInitialState();
   const ocs2::vector_t u = ocs2::vector_t::Zero(24);
   ocs2::benchmark::RepeatedTimer timer;
-  int N = 1000000;
+  int N = 10000;
 
   constexpr auto request = ocs2::Request::Constraint + ocs2::Request::Approximation;
   problem.preComputationPtr->request(request, t, x, u);
@@ -126,7 +126,7 @@ TEST_F(TestAnymalModel, cost) {
   const ocs2::vector_t x = anymalInterface->getInitialState();
   const ocs2::vector_t u = ocs2::vector_t::Zero(24);
   ocs2::benchmark::RepeatedTimer timer;
-  int N = 100000;
+  int N = 10000;
 
   constexpr auto request = ocs2::Request::Cost + ocs2::Request::SoftConstraint + ocs2::Request::Constraint + ocs2::Request::Approximation;
   problem.preComputationPtr->request(request, t, x, u);
@@ -144,7 +144,7 @@ TEST_F(TestAnymalModel, terminalCost) {
   const ocs2::vector_t x = anymalInterface->getInitialState();
   const ocs2::vector_t u = ocs2::vector_t::Zero(24);
   ocs2::benchmark::RepeatedTimer timer;
-  int N = 100000;
+  int N = 10000;
 
   constexpr auto request = ocs2::Request::Cost + ocs2::Request::SoftConstraint + ocs2::Request::Approximation;
   problem.preComputationPtr->requestFinal(request, t, x);

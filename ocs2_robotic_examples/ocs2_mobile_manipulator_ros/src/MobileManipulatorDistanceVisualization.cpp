@@ -28,22 +28,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
 // needs to be included before boost
-#include <pinocchio/multibody/geometry.hpp>
-
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_core/misc/LoadStdVectorOfPair.h>
-#include <ocs2_pinocchio_interface/PinocchioInterface.h>
-
-#include <ocs2_self_collision/PinocchioGeometryInterface.h>
-#include <ocs2_self_collision_visualization/GeometryInterfaceVisualization.h>
-
 #include <ocs2_mobile_manipulator/FactoryFunctions.h>
 #include <ocs2_mobile_manipulator/ManipulatorModelInfo.h>
 #include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
+#include <ocs2_pinocchio_interface/PinocchioInterface.h>
+#include <ocs2_self_collision/PinocchioGeometryInterface.h>
+#include <ocs2_self_collision_visualization/GeometryInterfaceVisualization.h>
 
-#include <ros/package.h>
-#include <ros/ros.h>
-#include <sensor_msgs/JointState.h>
+#include <pinocchio/multibody/geometry.hpp>
+#include <sensor_msgs/msg/joint_state.hpp>
+
+#include "rclcpp/rclcpp.hpp"
 
 using namespace ocs2;
 using namespace mobile_manipulator;
@@ -52,11 +49,9 @@ std::unique_ptr<PinocchioInterface> pInterface;
 std::shared_ptr<PinocchioGeometryInterface> gInterface;
 std::unique_ptr<GeometryInterfaceVisualization> vInterface;
 
-sensor_msgs::JointState lastMsg;
+sensor_msgs::msg::JointState lastMsg;
 
-std::unique_ptr<ros::Publisher> pub;
-
-void jointStateCallback(sensor_msgs::JointStateConstPtr msg) {
+void jointStateCallback(sensor_msgs::msg::JointState::ConstSharedPtr msg) {
   if (lastMsg.position == msg->position) {
     return;
   }
@@ -73,31 +68,42 @@ void jointStateCallback(sensor_msgs::JointStateConstPtr msg) {
 
 int main(int argc, char** argv) {
   // Initialize ros node
-  ros::init(argc, argv, "distance_visualization");
-  ros::NodeHandle nodeHandle;
+  rclcpp::init(argc, argv);
+  rclcpp::Node::SharedPtr node = rclcpp::Node::make_shared(
+      "distance_visualization",
+      rclcpp::NodeOptions()
+          .allow_undeclared_parameters(true)
+          .automatically_declare_parameters_from_overrides(true));
   // Get ROS parameters
-  std::string urdfPath, taskFile;
-  nodeHandle.getParam("/taskFile", taskFile);
-  nodeHandle.getParam("/urdfFile", urdfPath);
+  std::string taskFile = node->get_parameter("taskFile").as_string();
+  std::string urdfPath = node->get_parameter("urdfFile").as_string();
 
   // read the task file
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile, pt);
   // read manipulator type
-  ManipulatorModelType modelType = mobile_manipulator::loadManipulatorType(taskFile, "model_information.manipulatorModelType");
+  ManipulatorModelType modelType = mobile_manipulator::loadManipulatorType(
+      taskFile, "model_information.manipulatorModelType");
   // read the joints to make fixed
   std::vector<std::string> removeJointNames;
-  loadData::loadStdVector<std::string>(taskFile, "model_information.removeJoints", removeJointNames, true);
+  loadData::loadStdVector<std::string>(
+      taskFile, "model_information.removeJoints", removeJointNames, true);
   // read the frame names
   std::string baseFrame;
-  loadData::loadPtreeValue<std::string>(pt, baseFrame, "model_information.baseFrame", false);
+  loadData::loadPtreeValue<std::string>(pt, baseFrame,
+                                        "model_information.baseFrame", false);
 
   // create pinocchio interface
-  pInterface.reset(new PinocchioInterface(::ocs2::mobile_manipulator::createPinocchioInterface(urdfPath, modelType)));
+  pInterface.reset(new PinocchioInterface(
+      ::ocs2::mobile_manipulator::createPinocchioInterface(urdfPath,
+                                                           modelType)));
 
   std::cerr << "\n #### Model Information:";
-  std::cerr << "\n #### =============================================================================\n";
-  std::cerr << "\n #### model_information.manipulatorModelType: " << static_cast<int>(modelType);
+  std::cerr << "\n #### "
+               "==============================================================="
+               "==============\n";
+  std::cerr << "\n #### model_information.manipulatorModelType: "
+            << static_cast<int>(modelType);
   std::cerr << "\n #### model_information.removeJoints: ";
   for (const auto& name : removeJointNames) {
     std::cerr << "\"" << name << "\" ";
@@ -106,8 +112,10 @@ int main(int argc, char** argv) {
 
   std::vector<std::pair<size_t, size_t>> selfCollisionObjectPairs;
   std::vector<std::pair<std::string, std::string>> selfCollisionLinkPairs;
-  loadData::loadStdVectorOfPair(taskFile, "selfCollision.collisionObjectPairs", selfCollisionObjectPairs);
-  loadData::loadStdVectorOfPair(taskFile, "selfCollision.collisionLinkPairs", selfCollisionLinkPairs);
+  loadData::loadStdVectorOfPair(taskFile, "selfCollision.collisionObjectPairs",
+                                selfCollisionObjectPairs);
+  loadData::loadStdVectorOfPair(taskFile, "selfCollision.collisionLinkPairs",
+                                selfCollisionLinkPairs);
   for (const auto& element : selfCollisionObjectPairs) {
     std::cerr << "[" << element.first << ", " << element.second << "]; ";
   }
@@ -118,13 +126,16 @@ int main(int argc, char** argv) {
   }
   std::cerr << std::endl;
 
-  gInterface.reset(new PinocchioGeometryInterface(*pInterface, selfCollisionLinkPairs, selfCollisionObjectPairs));
+  gInterface.reset(new PinocchioGeometryInterface(
+      *pInterface, selfCollisionLinkPairs, selfCollisionObjectPairs));
 
-  vInterface.reset(new GeometryInterfaceVisualization(*pInterface, *gInterface, nodeHandle, baseFrame));
+  vInterface.reset(
+      new GeometryInterfaceVisualization(*pInterface, *gInterface, baseFrame));
 
-  ros::Subscriber sub = nodeHandle.subscribe("joint_states", 1, &jointStateCallback);
+  auto sub = node->create_subscription<sensor_msgs::msg::JointState>(
+      "joint_states", 1, &jointStateCallback);
 
-  ros::spin();
+  rclcpp::spin(node);
 
   return 0;
 }

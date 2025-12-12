@@ -39,14 +39,18 @@ TEST(TestGaitSchedule, advanceTwoGaits) {
 TEST(TestGaitSchedule, setNextGaitSchedule) {
   const double t0 = 11.0;
   const double timeHorizon = 5.0;
-  const std::deque<Gait> gaitSequence = {Gait{1.0, {}, {42}}, Gait{1.0, {}, {21}}, Gait{0.5, {0.66}, {0, 1}}};
+  const std::deque<Gait> gaitSequence = {
+      Gait{1.0, {}, {42}}, Gait{1.0, {}, {21}}, Gait{0.5, {0.66}, {0, 1}}};
 
   // Add the gait schedule in two parts
   GaitSchedule gaitSchedule(t0, gaitSequence[0]);
-  gaitSchedule.setGaitSequenceAfterCurrentGait({gaitSequence[1], gaitSequence[2]});
+  gaitSchedule.setGaitSequenceAfterCurrentGait(
+      {gaitSequence[1], gaitSequence[2]});
 
   // Check that the resulting mode schedule is equal
-  auto checkModeSchedule = getModeSchedule(gaitSchedule.getCurrentPhase(), t0, timeHorizon, gaitSequence.begin(), gaitSequence.end());
+  auto checkModeSchedule =
+      getModeSchedule(gaitSchedule.getCurrentPhase(), t0, timeHorizon,
+                      gaitSequence.begin(), gaitSequence.end());
   auto modeSchedule = gaitSchedule.getModeSchedule(timeHorizon);
   ASSERT_EQ(modeSchedule.eventTimes, checkModeSchedule.eventTimes);
   ASSERT_EQ(modeSchedule.modeSequence, checkModeSchedule.modeSequence);
@@ -165,7 +169,8 @@ TEST(TestGaitSchedule, setGaitScheduleAfterTimeWithNonzeroPhase) {
   auto modeSchedule = gaitSchedule.getModeSchedule(2.0);
 
   ASSERT_DOUBLE_EQ(modeSchedule.eventTimes.size(), 1);
-  ASSERT_DOUBLE_EQ(modeSchedule.eventTimes.front(), 3.0);  // First insert opportunity
+  ASSERT_DOUBLE_EQ(modeSchedule.eventTimes.front(),
+                   3.0);  // First insert opportunity
   ASSERT_EQ(modeSchedule.modeSequence.front(), 0);
   ASSERT_EQ(modeSchedule.modeSequence.back(), 1);
 }

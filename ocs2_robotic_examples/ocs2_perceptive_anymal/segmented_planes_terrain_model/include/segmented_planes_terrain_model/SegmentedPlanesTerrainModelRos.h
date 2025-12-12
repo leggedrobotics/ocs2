@@ -4,40 +4,48 @@
 
 #pragma once
 
-#include <mutex>
-
-#include <ros/ros.h>
-
-#include <sensor_msgs/PointCloud2.h>
-
 #include <ocs2_core/misc/Benchmark.h>
 
-#include <convex_plane_decomposition_msgs/PlanarTerrain.h>
+#include <convex_plane_decomposition_msgs/msg/planar_terrain.hpp>
+#include <mutex>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include "SegmentedPlanesTerrainModel.h"
+#include "rclcpp/rclcpp.hpp"
 
 namespace switched_model {
 
 class SegmentedPlanesTerrainModelRos {
  public:
-  SegmentedPlanesTerrainModelRos(ros::NodeHandle& nodehandle);
+  SegmentedPlanesTerrainModelRos(const rclcpp::Node::SharedPtr& node);
 
   ~SegmentedPlanesTerrainModelRos();
 
   /// Extract the latest terrain model. Resets internal model to a nullptr
   std::unique_ptr<SegmentedPlanesTerrainModel> getTerrainModel();
 
-  void createSignedDistanceBetween(const Eigen::Vector3d& minCoordinates, const Eigen::Vector3d& maxCoordinates);
+  void createSignedDistanceBetween(const Eigen::Vector3d& minCoordinates,
+                                   const Eigen::Vector3d& maxCoordinates);
 
   void publish();
+  static void toPointCloud(
+      const SegmentedPlanesSignedDistanceField& segmentedPlanesSignedDistanceField,
+      sensor_msgs::msg::PointCloud2& pointCloud, size_t decimation,
+      const std::function<bool(float)>& condition);
 
  private:
-  void callback(const convex_plane_decomposition_msgs::PlanarTerrain::ConstPtr& msg);
+  void callback(
+      const convex_plane_decomposition_msgs::msg::PlanarTerrain::ConstSharedPtr&
+          msg);
 
-  std::pair<Eigen::Vector3d, Eigen::Vector3d> getSignedDistanceRange(const grid_map::GridMap& gridMap, const std::string& elevationLayer);
+  std::pair<Eigen::Vector3d, Eigen::Vector3d> getSignedDistanceRange(
+      const grid_map::GridMap& gridMap, const std::string& elevationLayer);
 
-  ros::Subscriber terrainSubscriber_;
-  ros::Publisher distanceFieldPublisher_;
+  rclcpp::Node::SharedPtr node_;
+  rclcpp::Subscription<convex_plane_decomposition_msgs::msg::PlanarTerrain>::
+      SharedPtr terrainSubscriber_;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr
+      distanceFieldPublisher_;
 
   std::mutex updateMutex_;
   std::atomic_bool terrainUpdated_;
@@ -49,7 +57,7 @@ class SegmentedPlanesTerrainModelRos {
   bool externalCoordinatesGiven_;
 
   std::mutex pointCloudMutex_;
-  std::unique_ptr<sensor_msgs::PointCloud2> pointCloud2MsgPtr_;
+  std::unique_ptr<sensor_msgs::msg::PointCloud2> pointCloud2MsgPtr_;
 
   ocs2::benchmark::RepeatedTimer callbackTimer_;
 };

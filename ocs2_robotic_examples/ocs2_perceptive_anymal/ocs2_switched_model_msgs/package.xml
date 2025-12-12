@@ -1,4 +1,5 @@
-<package format="2">
+<?xml version="1.0"?>
+<package format="3">
   <name>ocs2_switched_model_msgs</name>
   <version>0.0.1</version>
   <description>Provides ocs2_switched_model_msgs</description>
@@ -10,10 +11,16 @@
 
   <license>TODO</license>
 
-  <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>message_generation</build_depend>
-  <depend>std_msgs</depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>rosidl_default_generators</buildtool_depend>
+
   <depend>ocs2_msgs</depend>
-  <exec_depend>message_runtime</exec_depend>
+  <exec_depend>rosidl_default_runtime</exec_depend>
+
+  <member_of_group>rosidl_interface_packages</member_of_group>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 
 </package>

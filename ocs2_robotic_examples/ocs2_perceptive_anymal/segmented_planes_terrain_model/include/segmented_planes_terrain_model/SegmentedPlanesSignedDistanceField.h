@@ -11,37 +11,52 @@
 namespace switched_model {
 
 /**
- * Simple wrapper class to implement the switched_model::SignedDistanceField interface.
- * See the forwarded function for documentation.
+ * Simple wrapper class to implement the switched_model::SignedDistanceField
+ * interface. See the forwarded function for documentation.
  */
 class SegmentedPlanesSignedDistanceField : public SignedDistanceField {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  SegmentedPlanesSignedDistanceField(const grid_map::GridMap& gridMap, const std::string& elevationLayer, double minHeight,
-                                     double maxHeight)
-      : sdf_(gridMap, elevationLayer, minHeight, maxHeight) {}
+  SegmentedPlanesSignedDistanceField(const grid_map::GridMap& gridMap,
+                                     const std::string& elevationLayer,
+                                     double minHeight, double maxHeight)
+      : gridMap_(gridMap) {
+    sdf_.calculateSignedDistanceField(gridMap_, elevationLayer, maxHeight);
+  }
 
   ~SegmentedPlanesSignedDistanceField() override = default;
-  SegmentedPlanesSignedDistanceField* clone() const override { return new SegmentedPlanesSignedDistanceField(*this); };
+  SegmentedPlanesSignedDistanceField* clone() const override {
+    return new SegmentedPlanesSignedDistanceField(*this);
+  };
 
-  switched_model::scalar_t value(const switched_model::vector3_t& position) const override { return sdf_.value(position); }
-
-  switched_model::vector3_t derivative(const switched_model::vector3_t& position) const override { return sdf_.derivative(position); }
-
-  std::pair<switched_model::scalar_t, switched_model::vector3_t> valueAndDerivative(
+  switched_model::scalar_t value(
       const switched_model::vector3_t& position) const override {
-    return sdf_.valueAndDerivative(position);
+    return sdf_.getDistanceAt(position);
+  }
+
+  switched_model::vector3_t derivative(
+      const switched_model::vector3_t& position) const override {
+    return sdf_.getDistanceGradientAt(position);
+  }
+
+  std::pair<switched_model::scalar_t, switched_model::vector3_t>
+  valueAndDerivative(const switched_model::vector3_t& position) const override {
+    return {value(position), derivative(position)};
   }
 
   grid_map::SignedDistanceField& asGridmapSdf() { return sdf_; }
   const grid_map::SignedDistanceField& asGridmapSdf() const { return sdf_; }
+  const grid_map::GridMap& gridMap() const {return gridMap_; } 
 
  protected:
-  SegmentedPlanesSignedDistanceField(const SegmentedPlanesSignedDistanceField& other) : sdf_(other.sdf_){};
+  SegmentedPlanesSignedDistanceField(
+      const SegmentedPlanesSignedDistanceField& other)
+      : sdf_(other.sdf_){};
 
  private:
   grid_map::SignedDistanceField sdf_;
+  grid_map::GridMap gridMap_;
 };
 
 }  // namespace switched_model

@@ -1,5 +1,5 @@
 Panels:
-  - Class: rviz/Displays
+  - Class: rviz_common/Displays
     Help Height: 138
     Name: Displays
     Property Tree Widget:
@@ -9,16 +9,16 @@ Panels:
         - /Optimized Trajectory1/Feet Pose Trajectories1
       Splitter Ratio: 0.472075879573822
     Tree Height: 1682
-  - Class: rviz/Selection
+  - Class: rviz_common/Selection
     Name: Selection
-  - Class: rviz/Tool Properties
+  - Class: rviz_common/Tool Properties
     Expanded:
       - /2D Pose Estimate1
       - /2D Nav Goal1
       - /Publish Point1
     Name: Tool Properties
     Splitter Ratio: 0.5886790156364441
-  - Class: rviz/Views
+  - Class: rviz_common/Views
     Expanded:
       - /Current View1
       - /CoGTrajectory1
@@ -26,7 +26,7 @@ Panels:
       - /video_side1
     Name: Views
     Splitter Ratio: 0.5
-  - Class: rviz/Time
+  - Class: rviz_common/Time
     Experimental: false
     Name: Time
     SyncMode: 0
@@ -40,7 +40,7 @@ Visualization Manager:
   Displays:
     - Alpha: 0.5
       Cell Size: 0.10000000149011612
-      Class: rviz/Grid
+      Class: rviz_default_plugins/Grid
       Color: 160; 160; 164
       Enabled: true
       Line Style:
@@ -57,7 +57,7 @@ Visualization Manager:
       Reference Frame: world
       Value: true
     - Alpha: 1
-      Class: rviz/RobotModel
+      Class: rviz_default_plugins/RobotModel
       Collision Enabled: false
       Enabled: true
       Links:
@@ -430,9 +430,9 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
-    - Class: rviz/Group
+    - Class: rviz_common/Group
       Displays:
-        - Class: rviz/Marker
+        - Class: rviz_default_plugins/Marker
           Enabled: true
           Marker Topic: /ocs2_anymal/desiredBaseTrajectory
           Name: Base Position Trajectory
@@ -440,7 +440,7 @@ Visualization Manager:
             "": true
           Queue Size: 1
           Value: true
-        - Class: rviz/MarkerArray
+        - Class: rviz_default_plugins/MarkerArray
           Enabled: false
           Marker Topic: /ocs2_anymal/desiredVelTrajectory
           Name: Base Velocity Trajectory
@@ -448,7 +448,7 @@ Visualization Manager:
             {}
           Queue Size: 100
           Value: false
-        - Class: rviz/MarkerArray
+        - Class: rviz_default_plugins/MarkerArray
           Enabled: false
           Marker Topic: /ocs2_anymal/desiredAngVelTrajectory
           Name: Base Angular Velocity Trajectory
@@ -460,7 +460,7 @@ Visualization Manager:
           Arrow Length: 0.30000001192092896
           Axes Length: 0.05000000074505806
           Axes Radius: 0.009999999776482582
-          Class: rviz/PoseArray
+          Class: rviz_default_plugins/PoseArray
           Color: 255; 25; 0
           Enabled: true
           Head Length: 0.07000000029802322
@@ -473,9 +473,9 @@ Visualization Manager:
           Topic: ocs2_anymal/desiredPoseTrajectory
           Unreliable: false
           Value: true
-        - Class: rviz/Group
+        - Class: rviz_common/Group
           Displays:
-            - Class: rviz/Marker
+            - Class: rviz_default_plugins/Marker
               Enabled: true
               Marker Topic: /ocs2_anymal/desiredFeetTrajectory/LF
               Name: LF
@@ -483,7 +483,7 @@ Visualization Manager:
                 {}
               Queue Size: 1
               Value: true
-            - Class: rviz/Marker
+            - Class: rviz_default_plugins/Marker
               Enabled: true
               Marker Topic: /ocs2_anymal/desiredFeetTrajectory/RF
               Name: RF
@@ -491,7 +491,7 @@ Visualization Manager:
                 {}
               Queue Size: 1
               Value: true
-            - Class: rviz/Marker
+            - Class: rviz_default_plugins/Marker
               Enabled: true
               Marker Topic: /ocs2_anymal/desiredFeetTrajectory/LH
               Name: LH
@@ -499,7 +499,7 @@ Visualization Manager:
                 {}
               Queue Size: 1
               Value: true
-            - Class: rviz/Marker
+            - Class: rviz_default_plugins/Marker
               Enabled: true
               Marker Topic: /ocs2_anymal/desiredFeetTrajectory/RH
               Name: RH
@@ -511,7 +511,7 @@ Visualization Manager:
               Arrow Length: 0.30000001192092896
               Axes Length: 0.05000000074505806
               Axes Radius: 0.009999999776482582
-              Class: rviz/PoseArray
+              Class: rviz_default_plugins/PoseArray
               Color: 255; 25; 0
               Enabled: true
               Head Length: 0.07000000029802322
@@ -524,7 +524,7 @@ Visualization Manager:
               Topic: /ocs2_anymal/swing_planner/nominalFootholds_LF
               Unreliable: false
               Value: true
-            - Class: rviz/MarkerArray
+            - Class: rviz_default_plugins/MarkerArray
               Enabled: false
               Marker Topic: /ocs2_anymal/swing_planner/trajectory_LF
               Name: ref trajectory LF
@@ -534,9 +534,9 @@ Visualization Manager:
               Value: false
           Enabled: false
           Name: Feet Position Trajectories
-        - Class: rviz/Group
+        - Class: rviz_common/Group
           Displays:
-            - Class: rviz/MarkerArray
+            - Class: rviz_default_plugins/MarkerArray
               Enabled: false
               Marker Topic: /ocs2_anymal/desiredFeetVelTrajectory/LF
               Name: LF
@@ -544,7 +544,7 @@ Visualization Manager:
                 {}
               Queue Size: 100
               Value: false
-            - Class: rviz/MarkerArray
+            - Class: rviz_default_plugins/MarkerArray
               Enabled: false
               Marker Topic: /ocs2_anymal/desiredFeetVelTrajectory/RF
               Name: RF
@@ -552,7 +552,7 @@ Visualization Manager:
                 {}
               Queue Size: 100
               Value: false
-            - Class: rviz/MarkerArray
+            - Class: rviz_default_plugins/MarkerArray
               Enabled: false
               Marker Topic: /ocs2_anymal/desiredFeetVelTrajectory/LH
               Name: LH
@@ -560,7 +560,7 @@ Visualization Manager:
                 {}
               Queue Size: 100
               Value: false
-            - Class: rviz/MarkerArray
+            - Class: rviz_default_plugins/MarkerArray
               Enabled: false
               Marker Topic: /ocs2_anymal/desiredFeetVelTrajectory/RH
               Name: RH
@@ -570,13 +570,13 @@ Visualization Manager:
               Value: false
           Enabled: false
           Name: Feet Velocity Trajectories
-        - Class: rviz/Group
+        - Class: rviz_common/Group
           Displays:
             - Alpha: 1
               Arrow Length: 0.30000001192092896
               Axes Length: 0.05000000074505806
               Axes Radius: 0.004999999888241291
-              Class: rviz/PoseArray
+              Class: rviz_default_plugins/PoseArray
               Color: 255; 25; 0
               Enabled: true
               Head Length: 0.07000000029802322
@@ -593,7 +593,7 @@ Visualization Manager:
               Arrow Length: 0.30000001192092896
               Axes Length: 0.05000000074505806
               Axes Radius: 0.004999999888241291
-              Class: rviz/PoseArray
+              Class: rviz_default_plugins/PoseArray
               Color: 255; 25; 0
               Enabled: true
               Head Length: 0.07000000029802322
@@ -610,7 +610,7 @@ Visualization Manager:
               Arrow Length: 0.30000001192092896
               Axes Length: 0.05000000074505806
               Axes Radius: 0.004999999888241291
-              Class: rviz/PoseArray
+              Class: rviz_default_plugins/PoseArray
               Color: 255; 25; 0
               Enabled: true
               Head Length: 0.07000000029802322
@@ -627,7 +627,7 @@ Visualization Manager:
               Arrow Length: 0.30000001192092896
               Axes Length: 0.05000000074505806
               Axes Radius: 0.004999999888241291
-              Class: rviz/PoseArray
+              Class: rviz_default_plugins/PoseArray
               Color: 255; 25; 0
               Enabled: true
               Head Length: 0.07000000029802322
@@ -644,13 +644,13 @@ Visualization Manager:
           Name: Feet Pose Trajectories
       Enabled: true
       Name: Desired Trajectory
-    - Class: rviz/Group
+    - Class: rviz_common/Group
       Displays:
         - Alpha: 1
           Arrow Length: 0.30000001192092896
           Axes Length: 0.05000000074505806
           Axes Radius: 0.009999999776482582
-          Class: rviz/PoseArray
+          Class: rviz_default_plugins/PoseArray
           Color: 255; 25; 0
           Enabled: false
           Head Length: 0.07000000029802322
@@ -663,7 +663,7 @@ Visualization Manager:
           Topic: ocs2_anymal/optimizedPoseTrajectory
           Unreliable: false
           Value: false
-        - Class: rviz/MarkerArray
+        - Class: rviz_default_plugins/MarkerArray
           Enabled: true
           Marker Topic: /ocs2_anymal/optimizedStateTrajectory
           Name: State Trajectory
@@ -673,13 +673,13 @@ Visualization Manager:
             Future footholds: true
           Queue Size: 1
           Value: true
-        - Class: rviz/Group
+        - Class: rviz_common/Group
           Displays:
             - Alpha: 1
               Arrow Length: 0.30000001192092896
               Axes Length: 0.05000000074505806
               Axes Radius: 0.004999999888241291
-              Class: rviz/PoseArray
+              Class: rviz_default_plugins/PoseArray
               Color: 255; 25; 0
               Enabled: true
               Head Length: 0.07000000029802322
@@ -696,7 +696,7 @@ Visualization Manager:
               Arrow Length: 0.30000001192092896
               Axes Length: 0.05000000074505806
               Axes Radius: 0.004999999888241291
-              Class: rviz/PoseArray
+              Class: rviz_default_plugins/PoseArray
               Color: 255; 25; 0
               Enabled: true
               Head Length: 0.07000000029802322
@@ -713,7 +713,7 @@ Visualization Manager:
               Arrow Length: 0.30000001192092896
               Axes Length: 0.05000000074505806
               Axes Radius: 0.004999999888241291
-              Class: rviz/PoseArray
+              Class: rviz_default_plugins/PoseArray
               Color: 255; 25; 0
               Enabled: true
               Head Length: 0.07000000029802322
@@ -730,7 +730,7 @@ Visualization Manager:
               Arrow Length: 0.30000001192092896
               Axes Length: 0.05000000074505806
               Axes Radius: 0.004999999888241291
-              Class: rviz/PoseArray
+              Class: rviz_default_plugins/PoseArray
               Color: 255; 25; 0
               Enabled: true
               Head Length: 0.07000000029802322
@@ -747,13 +747,13 @@ Visualization Manager:
           Name: Feet Pose Trajectories
       Enabled: true
       Name: Optimized Trajectory
-    - Class: rviz/Group
+    - Class: rviz_common/Group
       Displays:
         - Alpha: 1
           Arrow Length: 0.30000001192092896
           Axes Length: 0.10000000149011612
           Axes Radius: 0.009999999776482582
-          Class: rviz/PoseArray
+          Class: rviz_default_plugins/PoseArray
           Color: 255; 25; 0
           Enabled: true
           Head Length: 0.07000000029802322
@@ -766,7 +766,7 @@ Visualization Manager:
           Topic: ocs2_anymal/currentPose
           Unreliable: false
           Value: true
-        - Class: rviz/MarkerArray
+        - Class: rviz_default_plugins/MarkerArray
           Enabled: true
           Marker Topic: /ocs2_anymal/currentState
           Name: State
@@ -781,7 +781,7 @@ Visualization Manager:
           Arrow Length: 0.30000001192092896
           Axes Length: 0.10000000149011612
           Axes Radius: 0.009999999776482582
-          Class: rviz/PoseArray
+          Class: rviz_default_plugins/PoseArray
           Color: 255; 25; 0
           Enabled: false
           Head Length: 0.07000000029802322
@@ -794,7 +794,7 @@ Visualization Manager:
           Topic: /ocs2_anymal/currentFeetPoses
           Unreliable: false
           Value: false
-        - Class: rviz/Marker
+        - Class: rviz_default_plugins/Marker
           Enabled: false
           Marker Topic: /ocs2_anymal/localTerrain
           Name: LocalTerrain
@@ -802,7 +802,7 @@ Visualization Manager:
             {}
           Queue Size: 100
           Value: false
-        - Class: rviz/MarkerArray
+        - Class: rviz_default_plugins/MarkerArray
           Enabled: false
           Marker Topic: /ocs2_anymal/currentCollisionSpheres
           Name: Collisions
@@ -812,7 +812,7 @@ Visualization Manager:
           Value: false
       Enabled: true
       Name: Current
-    - Class: rviz/Group
+    - Class: rviz_common/Group
       Displays:
         - Alpha: 1
           Autocompute Intensity Bounds: true
@@ -822,7 +822,7 @@ Visualization Manager:
             Value: true
           Axis: Z
           Channel Name: intensity
-          Class: rviz/PointCloud2
+          Class: rviz_default_plugins/PointCloud2
           Color: 255; 255; 255
           Color Transformer: Intensity
           Decay Time: 0
@@ -876,26 +876,26 @@ Visualization Manager:
     Frame Rate: 30
   Name: root
   Tools:
-    - Class: rviz/Interact
+    - Class: rviz_default_plugins/Interact
       Hide Inactive Objects: true
-    - Class: rviz/MoveCamera
-    - Class: rviz/Select
-    - Class: rviz/FocusCamera
-    - Class: rviz/Measure
-    - Class: rviz/SetInitialPose
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+    - Class: rviz_default_plugins/FocusCamera
+    - Class: rviz_default_plugins/Measure
+    - Class: rviz_default_plugins/SetInitialPose
       Theta std deviation: 0.2617993950843811
       Topic: /initialpose
       X std deviation: 0.5
       Y std deviation: 0.5
-    - Class: rviz/SetGoal
+    - Class: rviz_default_plugins/SetGoal
       Topic: /move_base_simple/goal
-    - Class: rviz/PublishPoint
+    - Class: rviz_default_plugins/PublishPoint
       Single click: true
       Topic: /clicked_point
   Value: true
   Views:
     Current:
-      Class: rviz/ThirdPersonFollower
+      Class: rviz_default_plugins/ThirdPersonFollower
       Distance: 2.5349531173706055
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -917,7 +917,7 @@ Visualization Manager:
       Yaw: 0.857906699180603
     Saved:
       - Angle: 3.140000104904175
-        Class: rviz/TopDownOrtho
+        Class: rviz_default_plugins/TopDownOrtho
         Enable Stereo Rendering:
           Stereo Eye Separation: 0.05999999865889549
           Stereo Focal Distance: 1
@@ -931,7 +931,7 @@ Visualization Manager:
         X: 0.16045600175857544
         Y: 0.09311659634113312
       - Angle: 6.260000228881836
-        Class: rviz/TopDownOrtho
+        Class: rviz_default_plugins/TopDownOrtho
         Enable Stereo Rendering:
           Stereo Eye Separation: 0.05999999865889549
           Stereo Focal Distance: 1
@@ -944,7 +944,7 @@ Visualization Manager:
         Target Frame: <Fixed Frame>
         X: 2.279409885406494
         Y: -0.7245129942893982
-      - Class: rviz/Orbit
+      - Class: rviz_default_plugins/Orbit
         Distance: 3.5650899410247803
         Enable Stereo Rendering:
           Stereo Eye Separation: 0.05999999865889549
@@ -964,7 +964,7 @@ Visualization Manager:
         Pitch: 0.434798002243042
         Target Frame: <Fixed Frame>
         Yaw: 5.150000095367432
-      - Class: rviz/Orbit
+      - Class: rviz_default_plugins/Orbit
         Distance: 1.7256799936294556
         Enable Stereo Rendering:
           Stereo Eye Separation: 0.05999999865889549

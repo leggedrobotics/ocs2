@@ -37,15 +37,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <thread>
 
-#include <ros/callback_queue.h>
-#include <ros/ros.h>
-#include <ros/transport_hints.h>
+#include "rclcpp/rclcpp.hpp"
 
 // MPC messages
-#include <ocs2_msgs/mpc_flattened_controller.h>
-#include <ocs2_msgs/reset.h>
-
 #include <ocs2_mpc/MRT_BASE.h>
+
+#include <ocs2_msgs/msg/mpc_flattened_controller.hpp>
+#include <ocs2_msgs/srv/reset.hpp>
 
 #include "ocs2_ros_interfaces/common/RosMsgConversions.h"
 
@@ -54,19 +52,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * This class implements MRT (Model Reference Tracking) communication interface using ROS.
+ * This class implements MRT (Model Reference Tracking) communication interface
+ * using ROS.
  */
 class MRT_ROS_Interface : public MRT_BASE {
  public:
   /**
    * Constructor
    *
-   * @param [in] topicPrefix: The prefix defines the names for: observation's publishing topic "topicPrefix_mpc_observation",
-   * policy's receiving topic "topicPrefix_mpc_policy", and MPC reset service "topicPrefix_mpc_reset".
+   * @param [in] topicPrefix: The prefix defines the names for: observation's
+   * publishing topic "topicPrefix_mpc_observation", policy's receiving topic
+   * "topicPrefix_mpc_policy", and MPC reset service "topicPrefix_mpc_reset".
    * @param [in] mrtTransportHints: ROS transmission protocol.
    */
-  explicit MRT_ROS_Interface(std::string topicPrefix = "anonymousRobot",
-                             ::ros::TransportHints mrtTransportHints = ::ros::TransportHints().tcpNoDelay());
+  explicit MRT_ROS_Interface(std::string topicPrefix = "anonymousRobot");
 
   /**
    * Destructor
@@ -91,12 +90,14 @@ class MRT_ROS_Interface : public MRT_BASE {
   void spinMRT();
 
   /**
-   * Launches the ROS publishers and subscribers to communicate with the MPC node.
-   * @param nodeHandle
+   * Launches the ROS publishers and subscribers to communicate with the MPC
+   * node.
+   * @param node
    */
-  void launchNodes(::ros::NodeHandle& nodeHandle);
+  void launchNodes(const rclcpp::Node::SharedPtr& node);
 
-  void setCurrentObservation(const SystemObservation& currentObservation) override;
+  void setCurrentObservation(
+      const SystemObservation& currentObservation) override;
 
  private:
   /**
@@ -105,7 +106,8 @@ class MRT_ROS_Interface : public MRT_BASE {
    *
    * @param [in] msg: A constant pointer to the message
    */
-  void mpcPolicyCallback(const ocs2_msgs::mpc_flattened_controller::ConstPtr& msg);
+  void mpcPolicyCallback(
+      const ocs2_msgs::msg::MpcFlattenedController::ConstSharedPtr& msg);
 
   /**
    * Helper function to read a MPC policy message.
@@ -115,11 +117,14 @@ class MRT_ROS_Interface : public MRT_BASE {
    * @param [out] primalSolution: The MPC policy data
    * @param [out] performanceIndices: The MPC performance indices data
    */
-  static void readPolicyMsg(const ocs2_msgs::mpc_flattened_controller& msg, CommandData& commandData, PrimalSolution& primalSolution,
+  static void readPolicyMsg(const ocs2_msgs::msg::MpcFlattenedController& msg,
+                            CommandData& commandData,
+                            PrimalSolution& primalSolution,
                             PerformanceIndex& performanceIndices);
 
   /**
-   * A thread function which sends the current state and checks for a new MPC update.
+   * A thread function which sends the current state and checks for a new MPC
+   * update.
    */
   void publisherWorkerThread();
 
@@ -127,16 +132,18 @@ class MRT_ROS_Interface : public MRT_BASE {
   std::string topicPrefix_;
 
   // Publishers and subscribers
-  ::ros::Publisher mpcObservationPublisher_;
-  ::ros::Subscriber mpcPolicySubscriber_;
-  ::ros::ServiceClient mpcResetServiceClient_;
+  rclcpp::Node::SharedPtr node_;
+  rclcpp::Publisher<ocs2_msgs::msg::MpcObservation>::SharedPtr
+      mpcObservationPublisher_;
+  rclcpp::Subscription<ocs2_msgs::msg::MpcFlattenedController>::SharedPtr
+      mpcPolicySubscriber_;
+  rclcpp::Client<ocs2_msgs::srv::Reset>::SharedPtr mpcResetServiceClient_;
 
   // ROS messages
-  ocs2_msgs::mpc_observation mpcObservationMsg_;
-  ocs2_msgs::mpc_observation mpcObservationMsgBuffer_;
+  ocs2_msgs::msg::MpcObservation mpcObservationMsg_;
+  ocs2_msgs::msg::MpcObservation mpcObservationMsgBuffer_;
 
-  ::ros::CallbackQueue mrtCallbackQueue_;
-  ::ros::TransportHints mrtTransportHints_;
+  // rclcpp::executors::SingleThreadedExecutor callback_executor_;
 
   // Multi-threading for publishers
   bool terminateThread_;

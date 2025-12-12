@@ -28,28 +28,33 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
 #include <gtest/gtest.h>
-
-#include <ros/package.h>
-
+#include <ocs2_ballbot/BallbotInterface.h>
+#include <ocs2_ballbot/definitions.h>
 #include <ocs2_ddp/GaussNewtonDDP_MPC.h>
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 
-#include <ocs2_ballbot/BallbotInterface.h>
-#include <ocs2_ballbot/definitions.h>
+#include <ament_index_cpp/get_package_share_directory.hpp>
+
+#include "rclcpp/rclcpp.hpp"
 
 using namespace ocs2;
 
 TEST(BallbotIntegrationTest, createDummyMRT) {
-  const std::string taskFile = ros::package::getPath("ocs2_ballbot") + "/config/mpc/task.info";
-  const std::string libFolder = ros::package::getPath("ocs2_ballbot") + "/auto_generated";
+  const std::string taskFile =
+      ament_index_cpp::get_package_share_directory("ocs2_ballbot") +
+      "/config/mpc/task.info";
+  const std::string libFolder =
+      ament_index_cpp::get_package_share_directory("ocs2_ballbot") +
+      "/auto_generated";
   ballbot::BallbotInterface ballbotInterface(taskFile, libFolder);
 
   MRT_ROS_Interface mrt("ballbot");
 
   // Dummy ballbot
-  MRT_ROS_Dummy_Loop dummyBallbot(mrt, ballbotInterface.mpcSettings().mrtDesiredFrequency_,
-                                  ballbotInterface.mpcSettings().mpcDesiredFrequency_);
+  MRT_ROS_Dummy_Loop dummyBallbot(
+      mrt, ballbotInterface.mpcSettings().mrtDesiredFrequency_,
+      ballbotInterface.mpcSettings().mpcDesiredFrequency_);
 
   // Initialize dummy
   SystemObservation initObservation;
@@ -59,14 +64,22 @@ TEST(BallbotIntegrationTest, createDummyMRT) {
 }
 
 TEST(BallbotIntegrationTest, createMPC) {
-  const std::string taskFile = ros::package::getPath("ocs2_ballbot") + "/config/mpc/task.info";
-  const std::string libFolder = ros::package::getPath("ocs2_ballbot") + "/auto_generated";
+  const std::string taskFile =
+      ament_index_cpp::get_package_share_directory("ocs2_ballbot") +
+      "/config/mpc/task.info";
+  const std::string libFolder =
+      ament_index_cpp::get_package_share_directory("ocs2_ballbot") +
+      "/auto_generated";
   ballbot::BallbotInterface ballbotInterface(taskFile, libFolder);
 
   // MPC
-  ocs2::GaussNewtonDDP_MPC mpc(ballbotInterface.mpcSettings(), ballbotInterface.ddpSettings(), ballbotInterface.getRollout(),
-                               ballbotInterface.getOptimalControlProblem(), ballbotInterface.getInitializer());
-  mpc.getSolverPtr()->setReferenceManager(ballbotInterface.getReferenceManagerPtr());
+  ocs2::GaussNewtonDDP_MPC mpc(ballbotInterface.mpcSettings(),
+                               ballbotInterface.ddpSettings(),
+                               ballbotInterface.getRollout(),
+                               ballbotInterface.getOptimalControlProblem(),
+                               ballbotInterface.getInitializer());
+  mpc.getSolverPtr()->setReferenceManager(
+      ballbotInterface.getReferenceManagerPtr());
 
   // Create MPC ROS node
   MPC_ROS_Interface mpcNode(mpc, "ballbot");

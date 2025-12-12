@@ -4,8 +4,8 @@
 
 #include "ocs2_anymal_mpc/AnymalInterface.h"
 
-#include <ros/package.h>
-
+#include "rclcpp/rclcpp.hpp"
+#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <ocs2_quadruped_interface/QuadrupedPointfootInterface.h>
 
 namespace anymal {
@@ -36,7 +36,7 @@ std::unique_ptr<switched_model::QuadrupedInterface> getAnymalInterface(const std
 }
 
 std::string getConfigFolder(const std::string& configName) {
-  return ros::package::getPath("ocs2_anymal_mpc") + "/config/" + configName;
+  return ament_index_cpp::get_package_share_directory("ocs2_anymal_mpc") + "/config/" + configName;
 }
 
 std::string getTaskFilePath(const std::string& configName) {

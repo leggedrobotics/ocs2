@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
   <name>ocs2_ballbot_ros</name>
   <version>0.0.0</version>
   <description>The ocs2_ballbot_ros package</description>
@@ -10,24 +10,33 @@
 
   <license>TODO</license>
 
-  <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>cmake_clang_tools</build_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>tf</depend>
+  <depend>ament_index_cpp</depend>
+  <depend>rclcpp</depend>
+  <depend>tf2_ros</depend>
+  <depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>visualization_msgs</depend>
   <depend>urdf</depend>
   <depend>kdl_parser</depend>
   <depend>robot_state_publisher</depend>
-  <depend>visualization_msgs</depend>
 
+  <depend>ocs2_ros_interfaces</depend>
   <depend>ocs2_core</depend>
   <depend>ocs2_oc</depend>
   <depend>ocs2_ddp</depend>
   <depend>ocs2_mpc</depend>
   <depend>ocs2_sqp</depend>
   <depend>ocs2_slp</depend>
-  <depend>ocs2_ros_interfaces</depend>
   <depend>ocs2_ballbot</depend>
   <depend>ocs2_robotic_tools</depend>
   <depend>ocs2_robotic_assets</depend>
 
+  <depend>eigen3_cmake_module</depend>
+  <depend>boost</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>

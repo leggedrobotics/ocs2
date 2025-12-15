@@ -15,11 +15,14 @@ jobs:
           - build_type: Release
             build_testing: "ON"
             run_tests: true
+            packages_up_to: ""
           # Full Debug + tests is too slow for GitHub-hosted runners; still build Debug
-          # (without tests) to catch compilation issues.
+          # (without tests) to catch compilation issues. Also only build up to core ROS
+          # interfaces to keep disk usage below GitHub runner limits.
           - build_type: Debug
             build_testing: "OFF"
             run_tests: false
+            packages_up_to: "ocs2_ros_interfaces"
 
     runs-on: ubuntu-latest
     container: 
@@ -93,8 +96,13 @@ jobs:
       shell: bash
       run: |
         source /opt/ros/jazzy/setup.bash
-        colcon build --event-handlers console_direct+ \
-          --cmake-args -GNinja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_TESTING=${{ matrix.build_testing }}
+        if [ -n "${{ matrix.packages_up_to }}" ]; then
+          colcon build --packages-up-to ${{ matrix.packages_up_to }} --event-handlers console_direct+ \
+            --cmake-args -GNinja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_TESTING=${{ matrix.build_testing }}
+        else
+          colcon build --event-handlers console_direct+ \
+            --cmake-args -GNinja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_TESTING=${{ matrix.build_testing }}
+        fi
         
     - name: Test
       if: ${{ matrix.run_tests }}

@@ -74,6 +74,7 @@ jobs:
         git sparse-checkout set plane_segmentation
 
     - name: Rosdep
+      shell: bash
       run: |
         if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then rosdep init; fi
         rosdep update

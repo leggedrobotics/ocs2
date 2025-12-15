@@ -61,10 +61,17 @@ mkdir -p ~/ocs2_ws/src
 cd ~/ocs2_ws/src
 
 # Clone OCS2 (ROS 2 Jazzy port)
-git clone --branch ros2 https://github.com/leggedrobotics/ocs2_ros2.git
+git clone --branch ros2 https://github.com/leggedrobotics/ocs2.git
 
 # Robotic assets (required by several examples/tests)
 git clone --branch ros2 https://github.com/leggedrobotics/ocs2_robotic_assets.git
+
+# Plane segmentation packages used by perceptive examples (convex_plane_decomposition*, grid_map_filters_rsl).
+# These packages live in elevation_mapping_cupy but can be fetched without the rest of the repo using sparse-checkout.
+git clone --filter=blob:none --sparse --branch ros2 https://github.com/leggedrobotics/elevation_mapping_cupy.git
+cd elevation_mapping_cupy
+git sparse-checkout set plane_segmentation
+cd ..
 
 cd ~/ocs2_ws
 source /opt/ros/jazzy/setup.bash

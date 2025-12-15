@@ -49,6 +49,11 @@ COPY . /ws/src/ocs2
 # Assets used by many examples/tests.
 RUN git clone --depth 1 --branch ros2 --single-branch https://github.com/leggedrobotics/ocs2_robotic_assets.git /ws/src/ocs2_robotic_assets
 
+# Plane segmentation packages used by perceptive examples (convex_plane_decomposition*, grid_map_filters_rsl).
+RUN git clone --depth 1 --filter=blob:none --sparse --branch ros2 --single-branch https://github.com/leggedrobotics/elevation_mapping_cupy.git /ws/src/elevation_mapping_cupy && \
+    cd /ws/src/elevation_mapping_cupy && \
+    git sparse-checkout set plane_segmentation
+
 # Install ROS deps from package.xml, then build.
 RUN source /opt/ros/jazzy/setup.bash && \
     rosdep install --from-paths src --ignore-src -r -y --skip-keys pinocchio && \

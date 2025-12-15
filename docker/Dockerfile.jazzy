@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Pinocchio on Jazzy: install from OpenRobots robotpkg (rosdep maps it to a non-existent ros-jazzy-pinocchio).
 RUN install -d -m 0755 /etc/apt/keyrings && \
-    curl -fsSL http://robotpkg.openrobots.org/packages/debian/pubkey.asc -o /etc/apt/keyrings/robotpkg.asc && \
+    curl http://robotpkg.openrobots.org/packages/debian/robotpkg.asc | tee /etc/apt/keyrings/robotpkg.asc >/dev/null && \
     echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/robotpkg.asc] http://robotpkg.openrobots.org/packages/debian/pub $(. /etc/os-release && echo $VERSION_CODENAME) robotpkg" > /etc/apt/sources.list.d/robotpkg.list && \
     apt-get update && apt-get install -y --no-install-recommends \
       robotpkg-pinocchio robotpkg-coal \
@@ -32,6 +32,10 @@ ENV LD_LIBRARY_PATH=/opt/openrobots/lib:${LD_LIBRARY_PATH}
 # Silence robotpkg's backward-compatibility warnings (hpp-fcl -> coal).
 RUN sed -i "/message(WARNING/d" /opt/openrobots/lib/cmake/hpp-fcl/hpp-fclConfig.cmake && \
     sed -i "/#pragma message/d" /opt/openrobots/include/hpp/fcl/coal.hpp
+
+# Pin setuptools < 80 for colcon --symlink-install compatibility
+# See: https://github.com/colcon/colcon-core/issues/696
+RUN pip3 install --no-cache-dir --break-system-packages 'setuptools<80'
 
 # rosdep (optional but convenient).
 RUN if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then rosdep init; fi && rosdep update

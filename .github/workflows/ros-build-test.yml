@@ -11,7 +11,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build_type: [ Debug, Release ]
+        include:
+          - build_type: Release
+            build_testing: "ON"
+            run_tests: true
+          # Full Debug + tests is too slow for GitHub-hosted runners; still build Debug
+          # (without tests) to catch compilation issues.
+          - build_type: Debug
+            build_testing: "OFF"
+            run_tests: false
 
     runs-on: ubuntu-latest
     container: 
@@ -30,7 +38,7 @@ jobs:
     - name: System deps
       run: |
         apt-get update && apt-get install -y --no-install-recommends \
-          build-essential cmake git \
+          build-essential cmake git ninja-build \
           curl ca-certificates gnupg lsb-release \
           python3-colcon-common-extensions python3-rosdep python3-pip \
           python3-dev pybind11-dev \
@@ -85,9 +93,11 @@ jobs:
       shell: bash
       run: |
         source /opt/ros/jazzy/setup.bash
-        colcon build --cmake-args -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        colcon build --event-handlers console_direct+ \
+          --cmake-args -GNinja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_TESTING=${{ matrix.build_testing }}
         
     - name: Test
+      if: ${{ matrix.run_tests }}
       shell: bash
       run: |
         source install/setup.bash

@@ -28,8 +28,7 @@ def generate_launch_description():
         ),
         launch.actions.DeclareLaunchArgument(
             name='libFolder',
-            default_value=get_package_share_directory(
-                'ocs2_mobile_manipulator') + '/auto_generated/mabi_mobile'
+            default_value='/tmp/ocs2_mobile_manipulator_auto_generated/mabi_mobile'
         ),
         launch.actions.IncludeLaunchDescription(
             launch.launch_description_sources.PythonLaunchDescriptionSource(

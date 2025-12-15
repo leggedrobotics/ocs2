@@ -31,6 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_ros_interfaces/common/RosMsgConversions.h"
 
+#include <stdexcept>
+
 const rclcpp::Logger LOGGER = rclcpp::get_logger("MPC_ROS_Interface");
 
 namespace ocs2 {
@@ -79,11 +81,11 @@ void MPC_ROS_Interface::resetMpcNode(
 void MPC_ROS_Interface::resetMpcCallback(
     const std::shared_ptr<ocs2_msgs::srv::Reset::Request> req,
     std::shared_ptr<ocs2_msgs::srv::Reset::Response> res) {
-  if (static_cast<bool>(req->reset)) {
+  if (req->reset) {
     auto targetTrajectories = ros_msg_conversions::readTargetTrajectoriesMsg(
         req->target_trajectories);
     resetMpcNode(std::move(targetTrajectories));
-    res->done = static_cast<uint8_t>(true);
+    res->done = true;
 
     std::cerr << "\n#####################################################"
               << "\n#####################################################"
@@ -91,6 +93,7 @@ void MPC_ROS_Interface::resetMpcCallback(
               << "\n#####################################################"
               << "\n#####################################################\n";
   } else {
+    res->done = false;
     RCLCPP_WARN_STREAM(LOGGER, "[MPC_ROS_Interface] Reset request failed!");
   }
 }
@@ -312,7 +315,7 @@ void MPC_ROS_Interface::mpcObservationCallback(
   ocs2_msgs::msg::MpcFlattenedController mpcPolicyMsg =
       createMpcPolicyMsg(*bufferPrimalSolutionPtr_, *bufferCommandPtr_,
                          *bufferPerformanceIndicesPtr_);
-  mpcPolicyPublisher_.publish(mpcPolicyMsg);
+  mpcPolicyPublisher_->publish(mpcPolicyMsg);
 #endif
 }
 
@@ -342,10 +345,11 @@ void MPC_ROS_Interface::shutdownNode() {
 /******************************************************************************************************/
 void MPC_ROS_Interface::spin() {
   RCLCPP_INFO(LOGGER, "Start spinning now ...");
-  // Equivalent to ros::spin() + check if master is alive
-  while (rclcpp::ok()) {
-    rclcpp::spin(node_);
+  if (!node_) {
+    throw std::runtime_error(
+        "[MPC_ROS_Interface::spin] launchNodes() must be called before spin().");
   }
+  rclcpp::spin(node_);
 }
 
 /******************************************************************************************************/
@@ -353,6 +357,10 @@ void MPC_ROS_Interface::spin() {
 /******************************************************************************************************/
 void MPC_ROS_Interface::launchNodes(const rclcpp::Node::SharedPtr& node) {
   RCLCPP_INFO(LOGGER, "MPC node is setting up ...");
+  if (!node) {
+    throw std::runtime_error(
+        "[MPC_ROS_Interface::launchNodes] node is null.");
+  }
   node_ = node;
 
   // Observation subscriber
@@ -363,9 +371,11 @@ void MPC_ROS_Interface::launchNodes(const rclcpp::Node::SharedPtr& node) {
                     std::placeholders::_1));
 
   // MPC publisher
+  const auto latchedQos =
+      rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable();
   mpcPolicyPublisher_ =
       node_->create_publisher<ocs2_msgs::msg::MpcFlattenedController>(
-          topicPrefix_ + "_mpc_policy", 1);
+          topicPrefix_ + "_mpc_policy", latchedQos);
 
   // MPC reset service server
   mpcResetServiceServer_ = node_->create_service<ocs2_msgs::srv::Reset>(

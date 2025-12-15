@@ -76,10 +76,10 @@ class TestSphereKinematics : public ::testing::Test {
                                                                          {0.20, 0.10, 0.05, 0.05}, 0.7));
     sphereKinematicsPtr.reset(new ocs2::PinocchioSphereKinematics(*pinocchioSphereInterfacePtr, pinocchioMapping));
     sphereKinematicsCppAdPtr.reset(new ocs2::PinocchioSphereKinematicsCppAd(
-        *pinocchioInterfacePtr, *pinocchioSphereInterfacePtr, pinocchioMappingCppAd, pinocchioInterfacePtr->getModel().njoints, 0,
+        *pinocchioInterfacePtr, *pinocchioSphereInterfacePtr, pinocchioMappingCppAd, pinocchioInterfacePtr->getModel().nq, 0,
         "pinocchio_sphere_kinematics", "/tmp/ocs2", true, true));
 
-    x.resize(pinocchioInterfacePtr->getModel().njoints);
+    x.resize(pinocchioInterfacePtr->getModel().nq);
     // taken form config/mpc/task.info
     x(0) = 2.5;   // SH_ROT
     x(1) = -1.0;  // SH_FLE

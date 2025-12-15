@@ -16,6 +16,10 @@ def generate_launch_description():
             name='task_name',
             default_value='mpc'
         ),
+        launch.actions.DeclareLaunchArgument(
+            name='terminal_prefix',
+            default_value=''
+        ),
         launch.actions.IncludeLaunchDescription(
             launch.launch_description_sources.PythonLaunchDescriptionSource(
                 os.path.join(get_package_share_directory(
@@ -38,7 +42,7 @@ def generate_launch_description():
             executable='cartpole_dummy_test',
             name='cartpole_dummy_test',
             arguments=[LaunchConfiguration('task_name')],
-            prefix="gnome-terminal --",
+            prefix=LaunchConfiguration('terminal_prefix'),
             output='screen'
         )
     ])

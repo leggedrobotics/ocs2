@@ -22,6 +22,10 @@ def generate_launch_description():
             default_value='false'
         ),
         launch.actions.DeclareLaunchArgument(
+            name='terminal_prefix',
+            default_value=''
+        ),
+        launch.actions.DeclareLaunchArgument(
             name='taskFile',
             default_value=get_package_share_directory(
                 'ocs2_legged_robot') + '/config/mpc/task.info'
@@ -71,9 +75,6 @@ def generate_launch_description():
                 },
                 {
                     'urdfFile': launch.substitutions.LaunchConfiguration('urdfFile')
-                },
-                {
-                    'gaitCommandFile': launch.substitutions.LaunchConfiguration('gaitCommandFile')
                 }
             ]
         ),
@@ -82,7 +83,7 @@ def generate_launch_description():
             executable='legged_robot_dummy',
             name='legged_robot_dummy',
             output='screen',
-            prefix="gnome-terminal --",
+            prefix=launch.substitutions.LaunchConfiguration('terminal_prefix'),
             parameters=[
                 {
                     'taskFile': launch.substitutions.LaunchConfiguration('taskFile')
@@ -92,9 +93,6 @@ def generate_launch_description():
                 },
                 {
                     'urdfFile': launch.substitutions.LaunchConfiguration('urdfFile')
-                },
-                {
-                    'gaitCommandFile': launch.substitutions.LaunchConfiguration('gaitCommandFile')
                 }
             ]
         ),
@@ -103,19 +101,10 @@ def generate_launch_description():
             executable='legged_robot_target',
             name='legged_robot_target',
             output='screen',
-            prefix="gnome-terminal --",
+            prefix=launch.substitutions.LaunchConfiguration('terminal_prefix'),
             parameters=[
                 {
-                    'taskFile': launch.substitutions.LaunchConfiguration('taskFile')
-                },
-                {
                     'referenceFile': launch.substitutions.LaunchConfiguration('referenceFile')
-                },
-                {
-                    'urdfFile': launch.substitutions.LaunchConfiguration('urdfFile')
-                },
-                {
-                    'gaitCommandFile': launch.substitutions.LaunchConfiguration('gaitCommandFile')
                 }
             ]
         ),
@@ -124,17 +113,8 @@ def generate_launch_description():
             executable='legged_robot_gait_command',
             name='legged_robot_gait_command',
             output='screen',
-            prefix="gnome-terminal --",
+            prefix=launch.substitutions.LaunchConfiguration('terminal_prefix'),
             parameters=[
-                {
-                    'taskFile': launch.substitutions.LaunchConfiguration('taskFile')
-                },
-                {
-                    'referenceFile': launch.substitutions.LaunchConfiguration('referenceFile')
-                },
-                {
-                    'urdfFile': launch.substitutions.LaunchConfiguration('urdfFile')
-                },
                 {
                     'gaitCommandFile': launch.substitutions.LaunchConfiguration('gaitCommandFile')
                 }

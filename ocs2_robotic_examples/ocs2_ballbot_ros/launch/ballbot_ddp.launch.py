@@ -16,6 +16,10 @@ def generate_launch_description():
             name='task_name',
             default_value='mpc'
         ),
+        launch.actions.DeclareLaunchArgument(
+            name='terminal_prefix',
+            default_value=''
+        ),
         launch.actions.IncludeLaunchDescription(
             launch.launch_description_sources.PythonLaunchDescriptionSource(
                 os.path.join(get_package_share_directory(
@@ -37,7 +41,7 @@ def generate_launch_description():
             package='ocs2_ballbot_ros',
             executable='ballbot_dummy_test',
             name='ballbot_dummy_test',
-            prefix="gnome-terminal --",
+            prefix=LaunchConfiguration('terminal_prefix'),
             arguments=[LaunchConfiguration('task_name')],
             output='screen'
         ),
@@ -45,7 +49,7 @@ def generate_launch_description():
             package='ocs2_ballbot_ros',
             executable='ballbot_target',
             name='ballbot_target',
-            prefix="gnome-terminal --",
+            prefix=LaunchConfiguration('terminal_prefix'),
             arguments=[LaunchConfiguration('task_name')],
             output='screen'
         )

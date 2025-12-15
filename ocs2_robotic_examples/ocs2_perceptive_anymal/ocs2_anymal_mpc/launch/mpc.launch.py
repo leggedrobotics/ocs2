@@ -20,12 +20,20 @@ def generate_launch_description():
             default_value='true'
         ),
         launch.actions.DeclareLaunchArgument(
+            name='terminal_prefix',
+            default_value=''
+        ),
+        launch.actions.DeclareLaunchArgument(
             name='target_command',
             default_value=''
         ),
         launch.actions.DeclareLaunchArgument(
             name='description_name',
             default_value='ocs2_anymal_description'
+        ),
+        launch.actions.DeclareLaunchArgument(
+            name='urdf_model_path',
+            default_value=get_package_share_directory('ocs2_robotic_assets') + "/resources/anymal_c/urdf/anymal.urdf"
         ),
         launch.actions.IncludeLaunchDescription(
             launch.launch_description_sources.PythonLaunchDescriptionSource(
@@ -41,7 +49,7 @@ def generate_launch_description():
             executable="robot_state_publisher",
             name='robot_state_publisher',
             output='screen',
-            arguments=[LaunchConfiguration("description_name")],
+            arguments=[LaunchConfiguration("urdf_model_path")],
         ),
         launch_ros.actions.Node(
             package='ocs2_anymal_mpc',
@@ -55,7 +63,7 @@ def generate_launch_description():
             package='ocs2_anymal_mpc',
             executable='ocs2_anymal_mpc_dummy_mrt_node',
             name='ocs2_anymal_mpc_dummy_mrt_node',
-            prefix="gnome-terminal --",
+            prefix=LaunchConfiguration('terminal_prefix'),
             arguments=[LaunchConfiguration('description_name'), LaunchConfiguration('config_name')],
             output='screen'
         ),
@@ -63,14 +71,14 @@ def generate_launch_description():
             package='ocs2_anymal_commands',
             executable='gait_command_node',
             name='gait_command_node',
-            prefix="gnome-terminal --",
+            prefix=LaunchConfiguration('terminal_prefix'),
             output='screen'
         ),
         launch_ros.actions.Node(
             package='ocs2_anymal_commands',
             executable='target_command_node',
             name='target_command_node',
-            prefix="gnome-terminal --",
+            prefix=LaunchConfiguration('terminal_prefix'),
             arguments=[LaunchConfiguration('target_command')],
             output='screen'
         ),
@@ -78,7 +86,7 @@ def generate_launch_description():
             package='ocs2_anymal_commands',
             executable='motion_command_node',
             name='motion_command_node',
-            prefix="gnome-terminal --",
+            prefix=LaunchConfiguration('terminal_prefix'),
             arguments=['dummy'],
             output='screen'
         ),

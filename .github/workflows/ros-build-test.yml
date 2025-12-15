@@ -1,4 +1,4 @@
-name: Build and Test OCS2
+name: Build and Test OCS2 (ROS2 Jazzy)
 
 on:
   push:
@@ -8,71 +8,87 @@ on:
 
 jobs:
   build:
-
-    # build both Debug and Release mode
     strategy:
       fail-fast: false
       matrix:
         build_type: [ Debug, Release ]
 
-    # environment: regular Ubuntu with a vanilla ROS container
     runs-on: ubuntu-latest
     container: 
-      image: ros:noetic
+      image: ros:jazzy-ros-base
+
+    env:
+      DEBIAN_FRONTEND: noninteractive
 
     steps:
     - name: Environment Info
       run: |
         pwd
         uname -r
-        lsb_release -a
+        cat /etc/os-release
 
     - name: System deps
       run: |
-        apt-get update
-        apt-get install -y git ninja-build liburdfdom-dev liboctomap-dev libassimp-dev checkinstall wget rsync
+        apt-get update && apt-get install -y --no-install-recommends \
+          build-essential cmake git \
+          curl ca-certificates gnupg lsb-release \
+          python3-colcon-common-extensions python3-rosdep python3-pip \
+          python3-dev pybind11-dev \
+          libeigen3-dev libboost-all-dev libglpk-dev \
+          libgmp-dev libmpfr-dev libcgal-dev libopencv-dev libpcl-dev \
+          liburdfdom-dev \
+          ros-jazzy-eigen3-cmake-module \
+          ros-jazzy-hpp-fcl \
+          ros-jazzy-grid-map \
+          ros-jazzy-xacro ros-jazzy-robot-state-publisher ros-jazzy-rviz2 \
+        && rm -rf /var/lib/apt/lists/*
 
-    - uses: actions/checkout@v2
+    - name: Install Pinocchio (robotpkg)
+      run: |
+        install -d -m 0755 /etc/apt/keyrings
+        curl -fsSL http://robotpkg.openrobots.org/packages/debian/robotpkg.asc | tee /etc/apt/keyrings/robotpkg.asc >/dev/null
+        echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/robotpkg.asc] http://robotpkg.openrobots.org/packages/debian/pub $(. /etc/os-release && echo $VERSION_CODENAME) robotpkg" > /etc/apt/sources.list.d/robotpkg.list
+        apt-get update && apt-get install -y --no-install-recommends \
+          robotpkg-pinocchio robotpkg-coal \
+        && rm -rf /var/lib/apt/lists/*
+
+    - name: Set OpenRobots env
+      run: |
+        echo "CMAKE_PREFIX_PATH=/opt/openrobots:${CMAKE_PREFIX_PATH}" >> $GITHUB_ENV
+        echo "LD_LIBRARY_PATH=/opt/openrobots/lib:${LD_LIBRARY_PATH}" >> $GITHUB_ENV
+
+    - name: Pin setuptools < 80
+      run: |
+        pip3 install --no-cache-dir --break-system-packages 'setuptools<80'
+
+    - name: Checkout
+      uses: actions/checkout@v4
       with: 
         path: src/ocs2 
 
-    - name: Rosdep
-      run: |
-        rosdep update
-        rosdep install --from-paths src --ignore-src -r -y
-
     - name: Checkout dependencies
       run: |
-        git clone --recurse-submodules https://github.com/leggedrobotics/pinocchio.git src/pinocchio
-        git clone --recurse-submodules https://github.com/leggedrobotics/hpp-fcl.git src/hpp-fcl
-        git clone https://github.com/leggedrobotics/ocs2_robotic_assets.git src/ocs2_robotic_assets
-        
-    - name: Install RaiSim
+        git clone --depth 1 --branch ros2 --single-branch https://github.com/leggedrobotics/ocs2_robotic_assets.git src/ocs2_robotic_assets
+        git clone --depth 1 --filter=blob:none --sparse --branch ros2 --single-branch https://github.com/leggedrobotics/elevation_mapping_cupy.git src/elevation_mapping_cupy
+        cd src/elevation_mapping_cupy
+        git sparse-checkout set plane_segmentation
+
+    - name: Rosdep
       run: |
-        git clone --depth 1 https://github.com/raisimTech/raisimLib.git -b v1.1.01 src/raisim_tech
-        cd src/raisim_tech
-        mkdir build
-        cd build
-        cmake .. -DPYTHON_EXECUTABLE=$(python3 -c "import sys; print(sys.executable)")
-        make -j4 && checkinstall
-        
-    - name: Install ONNX Runtime
-      run: |
-        wget https://github.com/microsoft/onnxruntime/releases/download/v1.7.0/onnxruntime-linux-x64-1.7.0.tgz -P tmp/microsoft
-        tar xf tmp/microsoft/onnxruntime-linux-x64-1.7.0.tgz -C tmp/microsoft
-        rsync -a tmp/microsoft/onnxruntime-linux-x64-1.7.0/include/ /usr/local/include/onnxruntime
-        rsync -a tmp/microsoft/onnxruntime-linux-x64-1.7.0/lib/ /usr/local/lib
-        rsync -a src/ocs2/ocs2_mpcnet/ocs2_mpcnet_core/misc/onnxruntime/cmake/ /usr/local/share/onnxruntime
+        if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then rosdep init; fi
+        rosdep update
+        source /opt/ros/jazzy/setup.bash
+        rosdep install --from-paths src --ignore-src -r -y --skip-keys pinocchio
 
     - name: Build (${{ matrix.build_type }})
       shell: bash
       run: |
-        source /opt/ros/noetic/setup.bash
-        catkin_make_isolated --use-ninja --merge --only-pkg-with-deps ocs2 --cmake-args -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} 
+        source /opt/ros/jazzy/setup.bash
+        colcon build --cmake-args -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         
     - name: Test
       shell: bash
       run: |
-        source devel_isolated/setup.bash
-        catkin_make_isolated --use-ninja --merge --only-pkg-with-deps ocs2 --catkin-make-args run_tests
-        catkin_test_results
+        source install/setup.bash
+        colcon test --event-handlers console_direct+
+        colcon test-result --verbose

@@ -31,13 +31,15 @@ set(dependencies
 ###########
 
 # Resolve for the package path at compile time.
+file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/include/${PROJECT_NAME}")
 configure_file(
   "${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}/package_path.h.in"
-  "${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}/package_path.h" @ONLY
+  "${PROJECT_BINARY_DIR}/include/${PROJECT_NAME}/package_path.h" @ONLY
 )
 
 include_directories(
   include
+  ${PROJECT_BINARY_DIR}/include
   ${EIGEN3_INCLUDE_DIRS}
 )
 
@@ -67,6 +69,9 @@ install(
   INCLUDES DESTINATION include/${PROJECT_NAME}
 )
 install(DIRECTORY include/ DESTINATION include/${PROJECT_NAME})
+install(FILES "${PROJECT_BINARY_DIR}/include/${PROJECT_NAME}/package_path.h"
+  DESTINATION include/${PROJECT_NAME}/${PROJECT_NAME}
+)
 install(DIRECTORY config launch
   DESTINATION share/${PROJECT_NAME}/
 )

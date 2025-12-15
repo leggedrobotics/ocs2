@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ros_interfaces/command/TargetTrajectoriesKeyboardPublisher.h>
 
 #include <string>
+#include <stdexcept>
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -101,14 +102,15 @@ int main(int argc, char* argv[]) {
 
   // Initialize ros node
   rclcpp::init(argc, argv);
-  rclcpp::Node::SharedPtr node = rclcpp::Node::make_shared(
-      robotName + "_target",
-      rclcpp::NodeOptions()
-          .allow_undeclared_parameters(true)
-          .automatically_declare_parameters_from_overrides(true));
-  // Get node parameters
-  std::string referenceFile;
-  node->get_parameter("/referenceFile", referenceFile);
+  rclcpp::Node::SharedPtr node =
+      rclcpp::Node::make_shared(robotName + "_target");
+
+  const std::string referenceFile =
+      node->declare_parameter<std::string>("referenceFile", "");
+  if (referenceFile.empty()) {
+    throw std::runtime_error(
+        "[LeggedRobotPoseCommandNode] Parameter 'referenceFile' is required.");
+  }
 
   loadData::loadCppDataType(referenceFile, "comHeight", comHeight);
   loadData::loadEigenMatrix(referenceFile, "defaultJointState",

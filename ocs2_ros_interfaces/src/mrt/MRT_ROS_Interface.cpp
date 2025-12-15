@@ -32,6 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/control/LinearController.h>
 
+#include <stdexcept>
+
 namespace ocs2 {
 
 const rclcpp::Logger LOGGER = rclcpp::get_logger("MRT_ROS_Interface");
@@ -64,9 +66,19 @@ void MRT_ROS_Interface::resetMpcNode(
     const TargetTrajectories& initTargetTrajectories) {
   this->reset();
 
+  if (!node_) {
+    throw std::runtime_error(
+        "[MRT_ROS_Interface::resetMpcNode] launchNodes() must be called before "
+        "resetMpcNode().");
+  }
+  if (!mpcResetServiceClient_) {
+    throw std::runtime_error(
+        "[MRT_ROS_Interface::resetMpcNode] Reset service client is not "
+        "initialized.");
+  }
+
   auto resetSrvRequest = std::make_shared<ocs2_msgs::srv::Reset::Request>();
-  ;
-  resetSrvRequest->reset = static_cast<uint8_t>(true);
+  resetSrvRequest->reset = true;
   resetSrvRequest->target_trajectories =
       ros_msg_conversions::createTargetTrajectoriesMsg(initTargetTrajectories);
 
@@ -75,8 +87,27 @@ void MRT_ROS_Interface::resetMpcNode(
     RCLCPP_ERROR_STREAM(LOGGER,
                         "Failed to call service to reset MPC, retrying...");
   }
+  if (!rclcpp::ok()) {
+    throw std::runtime_error(
+        "[MRT_ROS_Interface::resetMpcNode] ROS shutdown while waiting for MPC "
+        "reset service.");
+  }
 
-  mpcResetServiceClient_->async_send_request(resetSrvRequest);
+  auto future =
+      mpcResetServiceClient_->async_send_request(resetSrvRequest);
+  const auto status =
+      rclcpp::spin_until_future_complete(node_, future, std::chrono::seconds(5));
+  if (status != rclcpp::FutureReturnCode::SUCCESS) {
+    throw std::runtime_error(
+        "[MRT_ROS_Interface::resetMpcNode] MPC reset service call failed or "
+        "timed out.");
+  }
+  const auto response = future.get();
+  if (!response->done) {
+    throw std::runtime_error(
+        "[MRT_ROS_Interface::resetMpcNode] MPC reset service returned done=false.");
+  }
+
   RCLCPP_INFO_STREAM(LOGGER, "MPC node has been reset.");
 }
 
@@ -99,7 +130,7 @@ void MRT_ROS_Interface::setCurrentObservation(
   lk.unlock();
   msgReady_.notify_one();
 #else
-  mpcObservationPublisher_.publish(mpcObservationMsg_);
+  mpcObservationPublisher_->publish(mpcObservationMsg_);
 #endif
 }
 
@@ -146,7 +177,7 @@ void MRT_ROS_Interface::readPolicyMsg(
     throw std::runtime_error(
         "[MRT_ROS_Interface::readPolicyMsg] controller message is empty!");
   }
-  if (msg.state_trajectory.size() != N && msg.input_trajectory.size() != N) {
+  if (msg.state_trajectory.size() != N || msg.input_trajectory.size() != N) {
     throw std::runtime_error(
         "[MRT_ROS_Interface::readPolicyMsg] state and input trajectories must "
         "have same length!");
@@ -264,8 +295,12 @@ void MRT_ROS_Interface::shutdownPublisher() {
 /******************************************************************************************************/
 void MRT_ROS_Interface::spinMRT() {
   // callback_executor_.spin_once();
+  if (!node_) {
+    throw std::runtime_error(
+        "[MRT_ROS_Interface::spinMRT] launchNodes() must be called before spinMRT().");
+  }
   rclcpp::spin_some(node_);
-};
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -282,10 +317,12 @@ void MRT_ROS_Interface::launchNodes(const rclcpp::Node::SharedPtr& node) {
           topicPrefix_ + "_mpc_observation", 1);
 
   // policy subscriber
+  const auto latchedQos =
+      rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable();
   mpcPolicySubscriber_ =
       node_->create_subscription<ocs2_msgs::msg::MpcFlattenedController>(
           topicPrefix_ + "_mpc_policy",  // topic name
-          1,                             // queue length
+          latchedQos,
           std::bind(&MRT_ROS_Interface::mpcPolicyCallback, this,
                     std::placeholders::_1));
 

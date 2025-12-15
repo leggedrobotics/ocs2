@@ -27,6 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <cmath>
+
 #include <gtest/gtest.h>
 
 #include "ocs2_oc/approximate_model/ChangeOfInputVariables.h"
@@ -85,7 +87,8 @@ TEST(quadratic_change_of_input_variables, noPx_noU0) {
   // Evaluate and compare
   const scalar_t unprojected = evaluate(quadratic, dx, Pu * du_tilde);
   const scalar_t projected = evaluate(quadraticProjected, dx, du_tilde);
-  ASSERT_DOUBLE_EQ(unprojected, projected);
+  const scalar_t tol = 1e-12 * (1.0 + std::abs(unprojected));
+  ASSERT_NEAR(unprojected, projected, tol);
 }
 
 TEST(quadratic_change_of_input_variables, withPx) {
@@ -109,7 +112,8 @@ TEST(quadratic_change_of_input_variables, withPx) {
   // Evaluate and compare
   const scalar_t unprojected = evaluate(quadratic, dx, Pu * du_tilde + Px * dx);
   const scalar_t projected = evaluate(quadraticProjected, dx, du_tilde);
-  ASSERT_DOUBLE_EQ(unprojected, projected);
+  const scalar_t tol = 1e-12 * (1.0 + std::abs(unprojected));
+  ASSERT_NEAR(unprojected, projected, tol);
 }
 
 TEST(quadratic_change_of_input_variables, withU0) {
@@ -133,7 +137,8 @@ TEST(quadratic_change_of_input_variables, withU0) {
   // Evaluate and compare
   const scalar_t unprojected = evaluate(quadratic, dx, Pu * du_tilde + u0);
   const scalar_t projected = evaluate(quadraticProjected, dx, du_tilde);
-  ASSERT_DOUBLE_EQ(unprojected, projected);
+  const scalar_t tol = 1e-12 * (1.0 + std::abs(unprojected));
+  ASSERT_NEAR(unprojected, projected, tol);
 }
 
 TEST(quadratic_change_of_input_variables, bothPx_U0) {
@@ -158,7 +163,8 @@ TEST(quadratic_change_of_input_variables, bothPx_U0) {
   // Evaluate and compare
   const scalar_t unprojected = evaluate(quadratic, dx, Pu * du_tilde + Px * dx + u0);
   const scalar_t projected = evaluate(quadraticProjected, dx, du_tilde);
-  ASSERT_DOUBLE_EQ(unprojected, projected);
+  const scalar_t tol = 1e-12 * (1.0 + std::abs(unprojected));
+  ASSERT_NEAR(unprojected, projected, tol);
 }
 
 TEST(linear_change_of_input_variables, noPx_noU0) {

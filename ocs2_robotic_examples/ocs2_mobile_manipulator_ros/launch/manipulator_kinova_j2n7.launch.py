@@ -28,8 +28,7 @@ def generate_launch_description():
         ),
         launch.actions.DeclareLaunchArgument(
             name='libFolder',
-            default_value=get_package_share_directory(
-                'ocs2_mobile_manipulator') + '/auto_generated/kinova/j2n7'
+            default_value='/tmp/ocs2_mobile_manipulator_auto_generated/kinova/j2n7'
         ),
         launch.actions.IncludeLaunchDescription(
             launch.launch_description_sources.PythonLaunchDescriptionSource(

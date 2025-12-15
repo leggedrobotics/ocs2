@@ -33,7 +33,7 @@ robotpkg instead:
 ```bash
 sudo apt install -y curl ca-certificates gnupg lsb-release
 sudo install -d -m 0755 /etc/apt/keyrings
-curl -fsSL http://robotpkg.openrobots.org/packages/debian/pubkey.asc | sudo tee /etc/apt/keyrings/robotpkg.asc >/dev/null
+curl -fsSL http://robotpkg.openrobots.org/packages/debian/robotpkg.asc | sudo tee /etc/apt/keyrings/robotpkg.asc >/dev/null
 echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/robotpkg.asc] http://robotpkg.openrobots.org/packages/debian/pub $(. /etc/os-release && echo $VERSION_CODENAME) robotpkg" | sudo tee /etc/apt/sources.list.d/robotpkg.list >/dev/null
 sudo apt update
 sudo apt install -y robotpkg-pinocchio robotpkg-coal

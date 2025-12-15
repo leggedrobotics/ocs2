@@ -7,14 +7,17 @@ from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description():
+    default_task_file = get_package_share_directory('ocs2_mobile_manipulator') + '/config/franka/task.info'
+    default_urdf_file = get_package_share_directory('ocs2_robotic_assets') + '/resources/mobile_manipulator/franka/urdf/panda.urdf'
+
     ld = launch.LaunchDescription([
         launch.actions.DeclareLaunchArgument(
             name='urdfFile',
-            default_value=''
+            default_value=default_urdf_file
         ),
         launch.actions.DeclareLaunchArgument(
             name='taskFile',
-            default_value=''
+            default_value=default_task_file
         ),
         launch.actions.DeclareLaunchArgument(
             name='rvizconfig',

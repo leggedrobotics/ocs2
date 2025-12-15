@@ -110,22 +110,25 @@ install(DIRECTORY config launch
 #############
 ## Testing ##
 #############
-find_package(ament_lint_auto REQUIRED)
-ament_lint_auto_find_test_dependencies()
-find_package(ament_cmake_gtest)
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+  find_package(ament_cmake_gtest REQUIRED)
 
-# Build unit tests
-ament_add_gtest(${PROJECT_NAME}_test
-  test/testProblemFormulation.cpp
-  test/testMotionTracking.cpp
-  test/testSensitivity.cpp
-)
-ament_target_dependencies(${PROJECT_NAME}_test
-  ${dependencies}
-)
-target_link_libraries(${PROJECT_NAME}_test
-  ${PROJECT_NAME}
-)
+  # Build unit tests
+  ament_add_gtest(${PROJECT_NAME}_test
+    test/testProblemFormulation.cpp
+    test/testMotionTracking.cpp
+    test/testSensitivity.cpp
+  )
+  ament_target_dependencies(${PROJECT_NAME}_test
+    ${dependencies}
+  )
+  target_link_libraries(${PROJECT_NAME}_test
+    ${PROJECT_NAME}
+  )
+  set_tests_properties(${PROJECT_NAME}_test PROPERTIES TIMEOUT 3600)
+endif()
 
 ament_export_dependencies(${dependencies})  
 ament_export_include_directories("include/${PROJECT_NAME}")

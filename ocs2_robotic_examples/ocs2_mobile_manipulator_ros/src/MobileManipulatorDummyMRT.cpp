@@ -33,6 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
 
+#include <stdexcept>
+
 #include "rclcpp/rclcpp.hpp"
 
 using namespace ocs2;
@@ -43,15 +45,20 @@ int main(int argc, char** argv) {
 
   // Initialize ros node
   rclcpp::init(argc, argv);
-  rclcpp::Node::SharedPtr node = rclcpp::Node::make_shared(
-      robotName + "_mrt",
-      rclcpp::NodeOptions()
-          .allow_undeclared_parameters(true)
-          .automatically_declare_parameters_from_overrides(true));
-  // Get node parameters
-  std::string taskFile = node->get_parameter("taskFile").as_string();
-  std::string libFolder = node->get_parameter("libFolder").as_string();
-  std::string urdfFile = node->get_parameter("urdfFile").as_string();
+  rclcpp::Node::SharedPtr node =
+      rclcpp::Node::make_shared(robotName + "_mrt");
+
+  const std::string taskFile =
+      node->declare_parameter<std::string>("taskFile", "");
+  const std::string libFolder =
+      node->declare_parameter<std::string>("libFolder", "");
+  const std::string urdfFile =
+      node->declare_parameter<std::string>("urdfFile", "");
+  if (taskFile.empty() || libFolder.empty() || urdfFile.empty()) {
+    throw std::runtime_error(
+        "[MobileManipulatorDummyMRT] Parameters 'taskFile', 'libFolder', and "
+        "'urdfFile' are required.");
+  }
   std::cerr << "Loading task file: " << taskFile << std::endl;
   std::cerr << "Loading library folder: " << libFolder << std::endl;
   std::cerr << "Loading urdf file: " << urdfFile << std::endl;

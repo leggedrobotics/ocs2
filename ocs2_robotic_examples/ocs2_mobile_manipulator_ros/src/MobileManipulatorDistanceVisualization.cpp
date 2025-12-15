@@ -40,6 +40,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/multibody/geometry.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 
+#include <stdexcept>
+
 #include "rclcpp/rclcpp.hpp"
 
 using namespace ocs2;
@@ -69,14 +71,18 @@ void jointStateCallback(sensor_msgs::msg::JointState::ConstSharedPtr msg) {
 int main(int argc, char** argv) {
   // Initialize ros node
   rclcpp::init(argc, argv);
-  rclcpp::Node::SharedPtr node = rclcpp::Node::make_shared(
-      "distance_visualization",
-      rclcpp::NodeOptions()
-          .allow_undeclared_parameters(true)
-          .automatically_declare_parameters_from_overrides(true));
-  // Get ROS parameters
-  std::string taskFile = node->get_parameter("taskFile").as_string();
-  std::string urdfPath = node->get_parameter("urdfFile").as_string();
+  rclcpp::Node::SharedPtr node =
+      rclcpp::Node::make_shared("distance_visualization");
+
+  const std::string taskFile =
+      node->declare_parameter<std::string>("taskFile", "");
+  const std::string urdfPath =
+      node->declare_parameter<std::string>("urdfFile", "");
+  if (taskFile.empty() || urdfPath.empty()) {
+    throw std::runtime_error(
+        "[MobileManipulatorDistanceVisualization] Parameters 'taskFile' and "
+        "'urdfFile' are required.");
+  }
 
   // read the task file
   boost::property_tree::ptree pt;

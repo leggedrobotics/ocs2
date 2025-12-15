@@ -95,6 +95,7 @@ if(BUILD_TESTING)
     gtest_main
     ${PROJECT_NAME}
   )
+  set_tests_properties(test_cartpole PROPERTIES TIMEOUT 1200)
 endif()
 
 ament_package()

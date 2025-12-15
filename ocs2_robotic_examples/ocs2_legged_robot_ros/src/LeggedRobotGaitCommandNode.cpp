@@ -30,6 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_legged_robot_ros/gait/GaitKeyboardPublisher.h"
 #include "rclcpp/rclcpp.hpp"
 
+#include <stdexcept>
+
 using namespace ocs2;
 using namespace legged_robot;
 
@@ -38,14 +40,15 @@ int main(int argc, char* argv[]) {
 
   // Initialize ros node
   rclcpp::init(argc, argv);
-  rclcpp::Node::SharedPtr node = rclcpp::Node::make_shared(
-      robotName + "_mpc_mode_schedule",
-      rclcpp::NodeOptions()
-          .allow_undeclared_parameters(true)
-          .automatically_declare_parameters_from_overrides(true));
-  // Get node parameters
+  rclcpp::Node::SharedPtr node =
+      rclcpp::Node::make_shared(robotName + "_mpc_mode_schedule");
+
   const std::string gaitCommandFile =
-      node->get_parameter("gaitCommandFile").as_string();
+      node->declare_parameter<std::string>("gaitCommandFile", "");
+  if (gaitCommandFile.empty()) {
+    throw std::runtime_error(
+        "[LeggedRobotGaitCommandNode] Parameter 'gaitCommandFile' is required.");
+  }
   std::cerr << "Loading gait file: " << gaitCommandFile << std::endl;
 
   GaitKeyboardPublisher gaitCommand(node, gaitCommandFile, robotName, true);

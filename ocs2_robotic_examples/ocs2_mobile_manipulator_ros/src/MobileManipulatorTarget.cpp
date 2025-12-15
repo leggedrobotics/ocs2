@@ -54,11 +54,8 @@ TargetTrajectories goalPoseToTargetTrajectories(
 int main(int argc, char* argv[]) {
   const std::string robotName = "mobile_manipulator";
   rclcpp::init(argc, argv);
-  rclcpp::Node::SharedPtr node = rclcpp::Node::make_shared(
-      robotName + "_target",
-      rclcpp::NodeOptions()
-          .allow_undeclared_parameters(true)
-          .automatically_declare_parameters_from_overrides(true));
+  rclcpp::Node::SharedPtr node =
+      rclcpp::Node::make_shared(robotName + "_target");
 
   TargetTrajectoriesInteractiveMarker targetPoseCommand(
       node, robotName, &goalPoseToTargetTrajectories);

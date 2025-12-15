@@ -21,11 +21,21 @@ def generate_launch_description():
         name='debug',
         default_value='false'
     )
+    gdb_prefix_arg = launch.actions.DeclareLaunchArgument(
+        name='gdb_prefix',
+        default_value='gdb --args'
+    )
+    terminal_prefix_arg = launch.actions.DeclareLaunchArgument(
+        name='terminal_prefix',
+        default_value=''
+    )
 
     ld = launch.LaunchDescription([
         rviz_arg,
         task_name_arg,
-        debug_arg
+        debug_arg,
+        gdb_prefix_arg,
+        terminal_prefix_arg
     ])
 
     # TODO rviz_condition=launch.conditions.IfCondition(LaunchConfiguration("rviz"))
@@ -47,7 +57,7 @@ def generate_launch_description():
             executable='double_integrator_mpc',
             name='double_integrator_mpc',
             arguments=[LaunchConfiguration('task_name')],
-            prefix= "gnome-terminal -- gdb --args",
+            prefix=LaunchConfiguration('gdb_prefix'),
             condition=launch.conditions.IfCondition(LaunchConfiguration("debug")),
             output='screen'
         )
@@ -71,7 +81,7 @@ def generate_launch_description():
             executable='double_integrator_dummy_test',
             name='double_integrator_dummy_test',
             arguments=[LaunchConfiguration('task_name')],
-            prefix="gnome-terminal --",
+            prefix=LaunchConfiguration('terminal_prefix'),
             output='screen'
         )
     )
@@ -82,7 +92,7 @@ def generate_launch_description():
             executable='double_integrator_target',
             name='double_integrator_target',
             arguments=[LaunchConfiguration('task_name')],
-            prefix="gnome-terminal --",
+            prefix=LaunchConfiguration('terminal_prefix'),
             output='screen'
         )
     )

@@ -35,6 +35,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <memory>
 
+#include <stdexcept>
+
 #include "rclcpp/rclcpp.hpp"
 
 int main(int argc, char** argv) {
@@ -57,9 +59,8 @@ int main(int argc, char** argv) {
   const std::string taskFile =
       ament_index_cpp::get_package_share_directory("ocs2_cartpole") +
       "/config/" + taskFileFolderName + "/task.info";
-  const std::string libFolder =
-      ament_index_cpp::get_package_share_directory("ocs2_cartpole") +
-      "/auto_generated";
+  const std::string libFolder = node->declare_parameter<std::string>(
+      "libFolder", "/tmp/ocs2_cartpole_auto_generated");
   ocs2::cartpole::CartPoleInterface cartPoleInterface(taskFile, libFolder,
                                                       true /*verbose*/);
 

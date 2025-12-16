@@ -10,10 +10,10 @@ OCS2 handles general path constraints through Augmented Lagrangian or relaxed ba
 
 ## ROS branches
 
-| ROS stack | Branch |
+| ROS version | Branch |
 | --- | --- |
-| ROS 1 (catkin) | `main` |
-| ROS 2 (colcon/ament) | `ros2` |
+| ROS 1 | `main` |
+| ROS 2 | `ros2` |
 
 ## Highlights
 
@@ -49,8 +49,8 @@ OCS2 handles general path constraints through Augmented Lagrangian or relaxed ba
 
 ## Installation
 
-- **ROS 1 (`main`, catkin)**: follow the installation instructions in the documentation (Installation page): https://leggedrobotics.github.io/ocs2/
-- **ROS 2 (`ros2`, colcon/ament)**: follow the branch-specific instructions: https://github.com/leggedrobotics/ocs2/blob/ros2/installation.md
+- **ROS 1 (`main`)**: follow the installation instructions in the documentation (Installation page): https://leggedrobotics.github.io/ocs2/
+- **ROS 2 (`ros2`)**: follow `installation.md` on that branch: https://github.com/leggedrobotics/ocs2/blob/ros2/installation.md
 
 ## Citing OCS2
 

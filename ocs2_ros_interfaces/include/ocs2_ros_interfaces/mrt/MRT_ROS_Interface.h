@@ -72,6 +72,11 @@ class MRT_ROS_Interface : public MRT_BASE {
    */
   ~MRT_ROS_Interface() override;
 
+  /**
+   * @note Must be called BEFORE the node starts spinning (i.e., before
+   * launchNodes() or any rclcpp::spin). Calling from within a ROS callback
+   * while the node is spinning may cause a deadlock.
+   */
   void resetMpcNode(const TargetTrajectories& initTargetTrajectories) override;
 
   /**
@@ -142,8 +147,6 @@ class MRT_ROS_Interface : public MRT_BASE {
   // ROS messages
   ocs2_msgs::msg::MpcObservation mpcObservationMsg_;
   ocs2_msgs::msg::MpcObservation mpcObservationMsgBuffer_;
-
-  // rclcpp::executors::SingleThreadedExecutor callback_executor_;
 
   // Multi-threading for publishers
   bool terminateThread_;

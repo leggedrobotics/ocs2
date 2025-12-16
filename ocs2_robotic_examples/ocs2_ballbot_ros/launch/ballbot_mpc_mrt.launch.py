@@ -33,7 +33,6 @@ def generate_launch_description():
             package='ocs2_ballbot_ros',
             executable='ballbot_mpc_mrt',
             name='ballbot_mpc_mrt',
-            prefix= "",
             arguments=[LaunchConfiguration('task_name')],
             output='screen'
         ),

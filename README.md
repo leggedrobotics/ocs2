@@ -4,7 +4,12 @@ OCS2 (**O**ptimal **C**ontrol for **S**witched **S**ystems) is a C++ toolbox for
 
 ![legged-robot](https://leggedrobotics.github.io/ocs2/_static/gif/legged_robot.gif)
 
-> **ROS 2 Jazzy port available:** use branch `ros2` (Ubuntu 24.04, colcon/ament). See **ROS 1 vs ROS 2** below.
+## ROS branches
+
+| ROS stack | Branch |
+| --- | --- |
+| ROS 1 (catkin) | `main` |
+| ROS 2 (colcon/ament) | `ros2` |
 
 ## Highlights
 
@@ -38,36 +43,10 @@ OCS2 (**O**ptimal **C**ontrol for **S**witched **S**ystems) is a C++ toolbox for
 
 - Online documentation: https://leggedrobotics.github.io/ocs2/
 
-## ROS 1 vs ROS 2
+## Installation
 
-OCS2 historically targets **ROS 1 / catkin** (documented/tested primarily on **Ubuntu 20.04 + ROS Noetic**).
-
-A **ROS 2 Jazzy** port (**Ubuntu 24.04**, **colcon/ament**) is available in this repository on branch `ros2`.
-
-### ROS 2 Jazzy (branch `ros2`)
-
-- Build instructions: https://github.com/leggedrobotics/ocs2/blob/ros2/installation.md
-- Optional Jazzy Docker environment: https://github.com/leggedrobotics/ocs2/tree/ros2/docker
-- Robotic assets: use the `ros2` branch of https://github.com/leggedrobotics/ocs2_robotic_assets
-
-### ROS 1 Noetic (branch `main`)
-
-Follow the installation instructions in the documentation:
-- https://leggedrobotics.github.io/ocs2/ (Installation page)
-
-## Try an example
-
-After building and sourcing your workspace:
-
-- **ROS 1 (Noetic, `main`)**
-  ```bash
-  roslaunch ocs2_cartpole_ros cartpole.launch
-  ```
-
-- **ROS 2 (Jazzy, `ros2`)**
-  ```bash
-  ros2 launch ocs2_cartpole_ros cartpole.launch.py
-  ```
+- **ROS 1 (`main`, catkin)**: follow the installation instructions in the documentation (Installation page): https://leggedrobotics.github.io/ocs2/
+- **ROS 2 (`ros2`, colcon/ament)**: follow the branch-specific instructions: https://github.com/leggedrobotics/ocs2/blob/ros2/installation.md
 
 ## Citing OCS2
 

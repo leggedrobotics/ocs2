@@ -4,6 +4,10 @@ OCS2 (**O**ptimal **C**ontrol for **S**witched **S**ystems) is a C++ toolbox for
 
 ![legged-robot](https://leggedrobotics.github.io/ocs2/_static/gif/legged_robot.gif)
 
+OCS2 handles general path constraints through Augmented Lagrangian or relaxed barrier methods. To facilitate the application of OCS2 in robotic tasks, it provides additional tools to set up the system dynamics (such as kinematic or dynamic models) and cost/constraints (such as self-collision avoidance and end-effector tracking) from a URDF model. The library also provides an automatic differentiation tool to calculate derivatives of the system dynamics, constraints, and cost. To facilitate deployment on robotic platforms, OCS2 provides tools for ROS interfaces. The toolbox’s efficient and numerically stable implementations in conjunction with its user-friendly interface have paved the way for employing it on numerous robotic applications with limited onboard computation power.
+
+> **ROS 2 port available:** use branch `ros2` (see **Installation** below).
+
 ## ROS branches
 
 | ROS stack | Branch |

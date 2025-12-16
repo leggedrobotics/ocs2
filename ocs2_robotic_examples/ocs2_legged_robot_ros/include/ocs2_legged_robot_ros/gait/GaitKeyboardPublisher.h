@@ -29,23 +29,27 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <ocs2_legged_robot/gait/ModeSequenceTemplate.h>
+
+#include <ocs2_msgs/msg/mode_schedule.hpp>
+#include <std_msgs/msg/bool.hpp>
 #include <string>
 #include <vector>
 
-#include <ros/ros.h>
-#include <std_msgs/Bool.h>
-
-#include <ocs2_legged_robot/gait/ModeSequenceTemplate.h>
+#include "rclcpp/rclcpp.hpp"
 
 namespace ocs2 {
 namespace legged_robot {
 
-/** This class implements ModeSequence communication using ROS. */
+/** This class implements mode_sequence communication using ROS. */
 class GaitKeyboardPublisher {
  public:
-  GaitKeyboardPublisher(ros::NodeHandle nodeHandle, const std::string& gaitFile, const std::string& robotName, bool verbose = false);
+  GaitKeyboardPublisher(const rclcpp::Node::SharedPtr& node,
+                        const std::string& gaitFile,
+                        const std::string& robotName, bool verbose = false);
 
-  /** Prints the command line interface and responds to user input. Function returns after one user input. */
+  /** Prints the command line interface and responds to user input. Function
+   * returns after one user input. */
   void getKeyboardCommand();
 
  private:
@@ -55,7 +59,8 @@ class GaitKeyboardPublisher {
   std::vector<std::string> gaitList_;
   std::map<std::string, ModeSequenceTemplate> gaitMap_;
 
-  ros::Publisher modeSequenceTemplatePublisher_;
+  rclcpp::Publisher<ocs2_msgs::msg::ModeSchedule>::SharedPtr
+      modeSequenceTemplatePublisher_;
 };
 
 }  // namespace legged_robot

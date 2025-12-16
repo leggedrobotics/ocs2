@@ -4,12 +4,12 @@
 
 #pragma once
 
-#include <ros/node_handle.h>
+#include "rclcpp/rclcpp.hpp"
 
 #include "QuadrupedInterface.h"
 
 namespace switched_model {
 
-void quadrupedDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& quadrupedInterface, const ocs2::RolloutBase* rolloutPtr,
+void quadrupedDummyNode(const rclcpp::Node::SharedPtr &node, const QuadrupedInterface& quadrupedInterface, const ocs2::RolloutBase* rolloutPtr,
                         double mrtDesiredFrequency, double mpcDesiredFrequency);
 }

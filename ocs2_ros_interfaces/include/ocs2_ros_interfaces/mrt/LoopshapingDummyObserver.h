@@ -35,18 +35,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * This wraps dummy observers and applies the loopshaping conversion before forwarding the update call.
+ * This wraps dummy observers and applies the loopshaping conversion before
+ * forwarding the update call.
  */
 class LoopshapingDummyObserver : public DummyObserver {
  public:
-  LoopshapingDummyObserver(std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr,
-                           std::vector<std::shared_ptr<DummyObserver>> observersPtrArray);
+  LoopshapingDummyObserver(
+      std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr,
+      std::vector<std::shared_ptr<DummyObserver>> observersPtrArray);
 
   ~LoopshapingDummyObserver() override = default;
 
-  void update(const SystemObservation& observation, const PrimalSolution& primalSolution, const CommandData& command) override;
+  void update(const SystemObservation& observation,
+              const PrimalSolution& primalSolution,
+              const CommandData& command) override;
 
-  void add(std::shared_ptr<DummyObserver> observer) { observersPtrArray_.push_back(std::move(observer)); }
+  void add(std::shared_ptr<DummyObserver> observer) {
+    observersPtrArray_.push_back(std::move(observer));
+  }
 
  private:
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr_;

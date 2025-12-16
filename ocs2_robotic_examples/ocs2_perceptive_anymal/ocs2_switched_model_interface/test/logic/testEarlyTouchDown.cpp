@@ -20,37 +20,52 @@ TEST(testEarlyTouchDown, testTrot) {
   Gait gait;
   gait.duration = 0.8;
   gait.eventPhases = {0.45, 0.5, 0.95};
-  gait.modeSequence = {ModeNumber::LF_RH, ModeNumber::STANCE, ModeNumber::RF_LH, ModeNumber::STANCE};
+  gait.modeSequence = {ModeNumber::LF_RH, ModeNumber::STANCE, ModeNumber::RF_LH,
+                       ModeNumber::STANCE};
   GaitSchedule gaitSchedule(0.0, gait);
-  gaitSchedule.setGaitAfterTime(gait, gaitSchedule.getCurrentTime() + 0.99 * gait.duration);
+  gaitSchedule.setGaitAfterTime(
+      gait, gaitSchedule.getCurrentTime() + 0.99 * gait.duration);
 
   // Early touch down gait adaptation RF and LH should be in touch down.
   feet_array_t<bool> earlyTouchDownPerLeg{true, true, true, true};
-  auto earlyTouchDownGaitAdaptor = earlyTouchDownAdaptation(earlyTouchDownPerLeg);
+  auto earlyTouchDownGaitAdaptor =
+      earlyTouchDownAdaptation(earlyTouchDownPerLeg);
   gaitSchedule.adaptCurrentGait(earlyTouchDownGaitAdaptor);
 
   // Check.
-  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[0] == ModeNumber::STANCE);
-  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[1] == ModeNumber::STANCE);
-  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[2] == ModeNumber::RF_LH);
-  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[3] == ModeNumber::STANCE);
+  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[0] ==
+              ModeNumber::STANCE);
+  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[1] ==
+              ModeNumber::STANCE);
+  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[2] ==
+              ModeNumber::RF_LH);
+  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[3] ==
+              ModeNumber::STANCE);
 
   // Early touch down gait adaptation LF and RH should be in touch down.
   gaitSchedule.advanceToTime(gait.duration * gait.eventPhases[1]);
   gaitSchedule.adaptCurrentGait(earlyTouchDownGaitAdaptor);
 
   // Check.
-  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[0] == ModeNumber::STANCE);
-  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[1] == ModeNumber::STANCE);
-  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[2] == ModeNumber::STANCE);
-  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[3] == ModeNumber::STANCE);
+  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[0] ==
+              ModeNumber::STANCE);
+  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[1] ==
+              ModeNumber::STANCE);
+  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[2] ==
+              ModeNumber::STANCE);
+  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[3] ==
+              ModeNumber::STANCE);
 
   // Check that the next gait was not adapted.
   gaitSchedule.advanceToTime(gait.duration);
-  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[0] == ModeNumber::LF_RH);
-  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[1] == ModeNumber::STANCE);
-  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[2] == ModeNumber::RF_LH);
-  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[3] == ModeNumber::STANCE);
+  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[0] ==
+              ModeNumber::LF_RH);
+  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[1] ==
+              ModeNumber::STANCE);
+  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[2] ==
+              ModeNumber::RF_LH);
+  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[3] ==
+              ModeNumber::STANCE);
 }
 
 TEST(testEarlyTouchDown, testOverhangingSwingPhases) {
@@ -64,15 +79,18 @@ TEST(testEarlyTouchDown, testOverhangingSwingPhases) {
   nextGait.duration = 0.5;
   nextGait.eventPhases = {0.5};
   nextGait.modeSequence = {ModeNumber::LH_RH, ModeNumber::LF_LH_RH};
-  gaitSchedule.setGaitAfterTime(nextGait, gaitSchedule.getCurrentTime() + 0.99 * gait.duration);
+  gaitSchedule.setGaitAfterTime(
+      nextGait, gaitSchedule.getCurrentTime() + 0.99 * gait.duration);
 
   // Early touch down gait adaptation LF should be in touch down.
   feet_array_t<bool> earlyTouchDownPerLeg{true, true, false, false};
-  auto earlyTouchDownGaitAdaptor = earlyTouchDownAdaptation(earlyTouchDownPerLeg);
+  auto earlyTouchDownGaitAdaptor =
+      earlyTouchDownAdaptation(earlyTouchDownPerLeg);
   gaitSchedule.adaptCurrentGait(earlyTouchDownGaitAdaptor);
 
   // Check.
-  const auto modeSchedule = gaitSchedule.getModeSchedule(gait.duration + nextGait.duration);
+  const auto modeSchedule =
+      gaitSchedule.getModeSchedule(gait.duration + nextGait.duration);
   ASSERT_TRUE(modeSchedule.modeSequence[0] == ModeNumber::STANCE);
   ASSERT_TRUE(modeSchedule.modeSequence[1] == ModeNumber::LF_LH_RH);
   ASSERT_EQ(modeSchedule.modeSequence.size(), 2);
@@ -82,12 +100,18 @@ TEST(testEarlyTouchDown, testOverhangingSwingPhases) {
   gaitSchedule.adaptCurrentGait(earlyTouchDownGaitAdaptor);
 
   // Check.
-  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[0] == ModeNumber::STANCE);
-  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[1] == ModeNumber::STANCE);
+  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[0] ==
+              ModeNumber::STANCE);
+  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[1] ==
+              ModeNumber::STANCE);
   gaitSchedule.advanceToTime(gait.duration);
-  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[0] == ModeNumber::STANCE);
-  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[1] == ModeNumber::STANCE);
+  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[0] ==
+              ModeNumber::STANCE);
+  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[1] ==
+              ModeNumber::STANCE);
   gaitSchedule.advanceToTime(gait.duration + nextGait.duration);
-  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[0] == ModeNumber::LH_RH);
-  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[1] == ModeNumber::LF_LH_RH);
+  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[0] ==
+              ModeNumber::LH_RH);
+  ASSERT_TRUE(gaitSchedule.getCurrentGait().modeSequence[1] ==
+              ModeNumber::LF_LH_RH);
 }

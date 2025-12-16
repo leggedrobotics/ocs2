@@ -29,29 +29,30 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <robot_state_publisher/robot_state_publisher.h>
-#include <tf/transform_broadcaster.h>
-
-#include <ocs2_ros_interfaces/mrt/DummyObserver.h>
-
 #include <ocs2_ballbot/definitions.h>
+#include <ocs2_ros_interfaces/mrt/DummyObserver.h>
+#include <tf2_ros/transform_broadcaster.h>
+
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/joint_state.hpp>
 
 namespace ocs2 {
 namespace ballbot {
 
 class BallbotDummyVisualization final : public DummyObserver {
  public:
-  explicit BallbotDummyVisualization(ros::NodeHandle& nodeHandle) { launchVisualizerNode(nodeHandle); }
+  explicit BallbotDummyVisualization(const rclcpp::Node::SharedPtr& node);
 
   ~BallbotDummyVisualization() override = default;
 
-  void update(const SystemObservation& observation, const PrimalSolution& policy, const CommandData& command) override;
+  void update(const SystemObservation& observation,
+              const PrimalSolution& policy,
+              const CommandData& command) override;
 
  private:
-  void launchVisualizerNode(ros::NodeHandle& nodeHandle);
-
-  std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_;
-  tf::TransformBroadcaster tfBroadcaster_;
+  rclcpp::Node::SharedPtr node_;
+  tf2_ros::TransformBroadcaster tfBroadcaster_;
+  rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr jointPublisher_;
 };
 
 }  // namespace ballbot

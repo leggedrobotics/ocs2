@@ -1,7 +1,7 @@
-# The list of compiler flags used in ocs2 can be prefixed with catkin config
+# The list of compiler flags used in ocs2 can be prefixed from the build system.
 # Addition flags are to be separated by \;
 # For example, to turn on architecture specific optimizations:
-#   catkin config --cmake-args -DOCS2_CXX_FLAGS=-march=native\;-mtune=native
+#   colcon build --cmake-args -DOCS2_CXX_FLAGS=-march=native\;-mtune=native
 list(APPEND OCS2_CXX_FLAGS
   "-pthread"
   "-Wfatal-errors"
@@ -11,6 +11,9 @@ list(APPEND OCS2_CXX_FLAGS
 # Force Boost dynamic linking
 list(APPEND OCS2_CXX_FLAGS
   "-DBOOST_ALL_DYN_LINK"
+  "-DBOOST_MPL_LIMIT_VECTOR_SIZE=30"
+  "-DBOOST_MPL_LIMIT_MAP_SIZE=30"
+  "-DBOOST_MPL_CFG_NO_PREPROCESSED_HEADERS"
   )
 
 # Add OpenMP flags
@@ -21,6 +24,6 @@ list(APPEND OCS2_CXX_FLAGS
   ${OpenMP_CXX_FLAGS}
   )
 
-# Cpp standard version
-set(CMAKE_CXX_STANDARD 14)
+# Cpp standard version (ROS 2 Jazzy uses C++17)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

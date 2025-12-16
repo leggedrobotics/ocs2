@@ -29,36 +29,50 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_ros_interfaces/command/TargetTrajectoriesInteractiveMarker.h"
 
-#include <ocs2_msgs/mpc_observation.h>
 #include <ocs2_ros_interfaces/common/RosMsgConversions.h>
+
+#include <ocs2_msgs/msg/mpc_observation.hpp>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TargetTrajectoriesInteractiveMarker::TargetTrajectoriesInteractiveMarker(::ros::NodeHandle& nodeHandle, const std::string& topicPrefix,
-                                                                         GaolPoseToTargetTrajectories gaolPoseToTargetTrajectories)
-    : server_("simple_marker"), gaolPoseToTargetTrajectories_(std::move(gaolPoseToTargetTrajectories)) {
+TargetTrajectoriesInteractiveMarker::TargetTrajectoriesInteractiveMarker(
+    const rclcpp::Node::SharedPtr& node, const std::string& topicPrefix,
+    GaolPoseToTargetTrajectories gaolPoseToTargetTrajectories)
+    : node_(node),
+      server_("simple_marker", node_),
+      gaolPoseToTargetTrajectories_(std::move(gaolPoseToTargetTrajectories)) {
   // observation subscriber
-  auto observationCallback = [this](const ocs2_msgs::mpc_observation::ConstPtr& msg) {
-    std::lock_guard<std::mutex> lock(latestObservationMutex_);
-    latestObservation_ = ros_msg_conversions::readObservationMsg(*msg);
-  };
-  observationSubscriber_ = nodeHandle.subscribe<ocs2_msgs::mpc_observation>(topicPrefix + "_mpc_observation", 1, observationCallback);
+  auto observationCallback =
+      [this](const ocs2_msgs::msg::MpcObservation::ConstSharedPtr& msg) {
+        std::lock_guard<std::mutex> lock(latestObservationMutex_);
+        latestObservation_ = ros_msg_conversions::readObservationMsg(*msg);
+      };
+  observationSubscriber_ =
+      node_->create_subscription<ocs2_msgs::msg::MpcObservation>(
+          topicPrefix + "_mpc_observation", 1, observationCallback);
 
   // Trajectories publisher
-  targetTrajectoriesPublisherPtr_.reset(new TargetTrajectoriesRosPublisher(nodeHandle, topicPrefix));
+  targetTrajectoriesPublisherPtr_.reset(
+      new TargetTrajectoriesRosPublisher(node_, topicPrefix));
 
   // create an interactive marker for our server
-  menuHandler_.insert("Send target pose", boost::bind(&TargetTrajectoriesInteractiveMarker::processFeedback, this, _1));
+  auto feedback_cb =
+      [&](const visualization_msgs::msg::InteractiveMarkerFeedback::
+              ConstSharedPtr& feedback) { processFeedback(feedback); };
+  menuHandler_.insert("Send target pose", feedback_cb);
 
   // create an interactive marker for our server
   auto interactiveMarker = createInteractiveMarker();
 
   // add the interactive marker to our collection &
   // tell the server to call processFeedback() when feedback arrives for it
-  server_.insert(interactiveMarker);  //, boost::bind(&TargetTrajectoriesInteractiveMarker::processFeedback, this, _1));
+  server_.insert(
+      interactiveMarker);  //,
+                           // boost::bind(&TargetTrajectoriesInteractiveMarker::processFeedback,
+                           // this, _1));
   menuHandler_.apply(server_, interactiveMarker.name);
 
   // 'commit' changes and send to all clients
@@ -68,10 +82,11 @@ TargetTrajectoriesInteractiveMarker::TargetTrajectoriesInteractiveMarker(::ros::
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-visualization_msgs::InteractiveMarker TargetTrajectoriesInteractiveMarker::createInteractiveMarker() const {
-  visualization_msgs::InteractiveMarker interactiveMarker;
+visualization_msgs::msg::InteractiveMarker
+TargetTrajectoriesInteractiveMarker::createInteractiveMarker() const {
+  visualization_msgs::msg::InteractiveMarker interactiveMarker;
   interactiveMarker.header.frame_id = "world";
-  interactiveMarker.header.stamp = ros::Time::now();
+  interactiveMarker.header.stamp = node_->now();
   interactiveMarker.name = "Goal";
   interactiveMarker.scale = 0.2;
   interactiveMarker.description = "Right click to send command";
@@ -79,8 +94,8 @@ visualization_msgs::InteractiveMarker TargetTrajectoriesInteractiveMarker::creat
 
   // create a grey box marker
   const auto boxMarker = []() {
-    visualization_msgs::Marker marker;
-    marker.type = visualization_msgs::Marker::CUBE;
+    visualization_msgs::msg::Marker marker;
+    marker.type = visualization_msgs::msg::Marker::CUBE;
     marker.scale.x = 0.1;
     marker.scale.y = 0.1;
     marker.scale.z = 0.1;
@@ -92,10 +107,11 @@ visualization_msgs::InteractiveMarker TargetTrajectoriesInteractiveMarker::creat
   }();
 
   // create a non-interactive control which contains the box
-  visualization_msgs::InteractiveMarkerControl boxControl;
+  visualization_msgs::msg::InteractiveMarkerControl boxControl;
   boxControl.always_visible = 1;
   boxControl.markers.push_back(boxMarker);
-  boxControl.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_ROTATE_3D;
+  boxControl.interaction_mode =
+      visualization_msgs::msg::InteractiveMarkerControl::MOVE_ROTATE_3D;
 
   // add the control to the interactive marker
   interactiveMarker.controls.push_back(boxControl);
@@ -103,17 +119,19 @@ visualization_msgs::InteractiveMarker TargetTrajectoriesInteractiveMarker::creat
   // create a control which will move the box
   // this control does not contain any markers,
   // which will cause RViz to insert two arrows
-  visualization_msgs::InteractiveMarkerControl control;
+  visualization_msgs::msg::InteractiveMarkerControl control;
 
   control.orientation.w = 1;
   control.orientation.x = 1;
   control.orientation.y = 0;
   control.orientation.z = 0;
   control.name = "rotate_x";
-  control.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
+  control.interaction_mode =
+      visualization_msgs::msg::InteractiveMarkerControl::ROTATE_AXIS;
   interactiveMarker.controls.push_back(control);
   control.name = "move_x";
-  control.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_AXIS;
+  control.interaction_mode =
+      visualization_msgs::msg::InteractiveMarkerControl::MOVE_AXIS;
   interactiveMarker.controls.push_back(control);
 
   control.orientation.w = 1;
@@ -121,10 +139,12 @@ visualization_msgs::InteractiveMarker TargetTrajectoriesInteractiveMarker::creat
   control.orientation.y = 1;
   control.orientation.z = 0;
   control.name = "rotate_z";
-  control.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
+  control.interaction_mode =
+      visualization_msgs::msg::InteractiveMarkerControl::ROTATE_AXIS;
   interactiveMarker.controls.push_back(control);
   control.name = "move_z";
-  control.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_AXIS;
+  control.interaction_mode =
+      visualization_msgs::msg::InteractiveMarkerControl::MOVE_AXIS;
   interactiveMarker.controls.push_back(control);
 
   control.orientation.w = 1;
@@ -132,10 +152,12 @@ visualization_msgs::InteractiveMarker TargetTrajectoriesInteractiveMarker::creat
   control.orientation.y = 0;
   control.orientation.z = 1;
   control.name = "rotate_y";
-  control.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
+  control.interaction_mode =
+      visualization_msgs::msg::InteractiveMarkerControl::ROTATE_AXIS;
   interactiveMarker.controls.push_back(control);
   control.name = "move_y";
-  control.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_AXIS;
+  control.interaction_mode =
+      visualization_msgs::msg::InteractiveMarkerControl::MOVE_AXIS;
   interactiveMarker.controls.push_back(control);
 
   return interactiveMarker;
@@ -144,11 +166,16 @@ visualization_msgs::InteractiveMarker TargetTrajectoriesInteractiveMarker::creat
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void TargetTrajectoriesInteractiveMarker::processFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback) {
+void TargetTrajectoriesInteractiveMarker::processFeedback(
+    const visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr&
+        feedback) {
   // Desired state trajectory
-  const Eigen::Vector3d position(feedback->pose.position.x, feedback->pose.position.y, feedback->pose.position.z);
-  const Eigen::Quaterniond orientation(feedback->pose.orientation.w, feedback->pose.orientation.x, feedback->pose.orientation.y,
-                                       feedback->pose.orientation.z);
+  const Eigen::Vector3d position(feedback->pose.position.x,
+                                 feedback->pose.position.y,
+                                 feedback->pose.position.z);
+  const Eigen::Quaterniond orientation(
+      feedback->pose.orientation.w, feedback->pose.orientation.x,
+      feedback->pose.orientation.y, feedback->pose.orientation.z);
 
   // get the latest observation
   SystemObservation observation;
@@ -158,10 +185,12 @@ void TargetTrajectoriesInteractiveMarker::processFeedback(const visualization_ms
   }
 
   // get TargetTrajectories
-  const auto targetTrajectories = gaolPoseToTargetTrajectories_(position, orientation, observation);
+  const auto targetTrajectories =
+      gaolPoseToTargetTrajectories_(position, orientation, observation);
 
   // publish TargetTrajectories
-  targetTrajectoriesPublisherPtr_->publishTargetTrajectories(targetTrajectories);
+  targetTrajectoriesPublisherPtr_->publishTargetTrajectories(
+      targetTrajectories);
 }
 
 }  // namespace ocs2

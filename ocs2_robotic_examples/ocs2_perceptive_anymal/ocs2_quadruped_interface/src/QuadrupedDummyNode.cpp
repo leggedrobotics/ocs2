@@ -14,7 +14,7 @@
 
 namespace switched_model {
 
-void quadrupedDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& quadrupedInterface, const ocs2::RolloutBase* rolloutPtr,
+void quadrupedDummyNode(const rclcpp::Node::SharedPtr &node, const QuadrupedInterface& quadrupedInterface, const ocs2::RolloutBase* rolloutPtr,
                         double mrtDesiredFrequency, double mpcDesiredFrequency) {
   const std::string robotName = "anymal";
 
@@ -23,11 +23,11 @@ void quadrupedDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& q
   if (rolloutPtr != nullptr) {
     mrt.initRollout(rolloutPtr);
   }
-  mrt.launchNodes(nodeHandle);
+  mrt.launchNodes(node);
 
   // Visualization
   auto visualizer = std::make_shared<switched_model::QuadrupedVisualizer>(
-      quadrupedInterface.getKinematicModel(), quadrupedInterface.getJointNames(), quadrupedInterface.getBaseName(), nodeHandle);
+      quadrupedInterface.getKinematicModel(), quadrupedInterface.getJointNames(), quadrupedInterface.getBaseName(), node);
 
   // Logging
   std::string logFileName = "/tmp/ocs2/QuadrupedDummyNodeLog.txt";

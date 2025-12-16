@@ -29,29 +29,31 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <string>
-#include <vector>
-
-#include <ros/ros.h>
-
 #include <ocs2_core/Types.h>
 #include <ocs2_core/reference/TargetTrajectories.h>
 
+#include <ocs2_msgs/msg/mpc_target_trajectories.hpp>
+#include <string>
+#include <vector>
+
 #include "ocs2_ros_interfaces/common/RosMsgConversions.h"
+#include "rclcpp/rclcpp.hpp"
 
 namespace ocs2 {
 
 /**
  * This class provides a ROS publisher for the TargetTrajectories.
  */
-class TargetTrajectoriesRosPublisher final {
+class TargetTrajectoriesRosPublisher {
  public:
   /**
    * Constructor.
-   * @param [in] nodeHandle: ROS node handle.
-   * @param [in] topicPrefix: The TargetTrajectories will be published on "topicPrefix_mpc_target" topic.
+   * @param [in] topicPrefix: The TargetTrajectories will be published on
+   * "topicPrefix_mpc_target" topic.
    */
-  TargetTrajectoriesRosPublisher(::ros::NodeHandle& nodeHandle, const std::string& topicPrefix = "anonymousRobot");
+  TargetTrajectoriesRosPublisher(
+      rclcpp::Node::SharedPtr node,
+      const std::string& topicPrefix = "anonymousRobot");
 
   /** Destructor. */
   ~TargetTrajectoriesRosPublisher();
@@ -60,7 +62,9 @@ class TargetTrajectoriesRosPublisher final {
   void publishTargetTrajectories(const TargetTrajectories& targetTrajectories);
 
  private:
-  ::ros::Publisher targetTrajectoriesPublisher_;
+  rclcpp::Node::SharedPtr node_;
+  rclcpp::Publisher<ocs2_msgs::msg::MpcTargetTrajectories>::SharedPtr
+      publisher_;
 };
 
 }  // namespace ocs2

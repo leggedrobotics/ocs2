@@ -10,12 +10,15 @@
 
   <license>TODO</license>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>ocs2_switched_model_interface</depend>
   <depend>ocs2_pinocchio_interface</depend>
   <depend>ocs2_robotic_assets</depend>
   <depend>ocs2_robotic_tools</depend>
-  <depend>roslib</depend>
+  <depend>rclcpp</depend>
 
+  <export>                               
+   <build_type>ament_cmake</build_type>
+  </export>
 </package>

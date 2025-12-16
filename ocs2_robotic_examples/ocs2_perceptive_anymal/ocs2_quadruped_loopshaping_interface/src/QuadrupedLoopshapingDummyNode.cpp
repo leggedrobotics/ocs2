@@ -16,18 +16,18 @@
 
 namespace switched_model_loopshaping {
 
-void quadrupedLoopshapingDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedLoopshapingInterface& quadrupedInterface,
+void quadrupedLoopshapingDummyNode(const rclcpp::Node::SharedPtr &node, const QuadrupedLoopshapingInterface& quadrupedInterface,
                                    double mrtDesiredFrequency, double mpcDesiredFrequency) {
   const std::string robotName = "anymal";
 
   // MRT
   ocs2::MRT_ROS_Interface mrt(robotName);
   mrt.initRollout(&quadrupedInterface.getRollout());
-  mrt.launchNodes(nodeHandle);
+  mrt.launchNodes(node);
 
   // Visualization
   auto visualizer = std::make_shared<switched_model::QuadrupedVisualizer>(
-      quadrupedInterface.getKinematicModel(), quadrupedInterface.getJointNames(), quadrupedInterface.getBaseName(), nodeHandle);
+      quadrupedInterface.getKinematicModel(), quadrupedInterface.getJointNames(), quadrupedInterface.getBaseName(), node);
 
   // Logging
   std::string logFileName = "/tmp/ocs2/QuadrupedLoopshapingDummyNodeLog.txt";

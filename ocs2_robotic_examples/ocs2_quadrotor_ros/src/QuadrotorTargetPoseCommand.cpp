@@ -38,7 +38,8 @@ using namespace quadrotor;
  * @param [in] commadLineTarget : [deltaX, deltaY, deltaZ, deltaYaw]
  * @param [in] observation : the current observation
  */
-TargetTrajectories commandLineToTargetTrajectories(const vector_t& commadLineTarget, const SystemObservation& observation) {
+TargetTrajectories commandLineToTargetTrajectories(
+    const vector_t& commadLineTarget, const SystemObservation& observation) {
   const vector_t targetState = [&]() {
     vector_t targetState = vector_t::Zero(STATE_DIM);
     targetState(0) = observation.state(0) + commadLineTarget(0);
@@ -46,14 +47,16 @@ TargetTrajectories commandLineToTargetTrajectories(const vector_t& commadLineTar
     targetState(2) = observation.state(2) + commadLineTarget(2);
     targetState(3) = observation.state(3);
     targetState(4) = observation.state(4);
-    targetState(5) = observation.state(5) + commadLineTarget(3) * M_PI / 180.0;  //  deg2rad
+    targetState(5) =
+        observation.state(5) + commadLineTarget(3) * M_PI / 180.0;  //  deg2rad
     return targetState;
   }();
 
   // target reaching duration
   constexpr scalar_t averageSpeed = 2.0;
   const vector_t deltaPose = (targetState - observation.state).head<6>();
-  const scalar_t targetTime = observation.time + deltaPose.norm() / averageSpeed;
+  const scalar_t targetTime =
+      observation.time + deltaPose.norm() / averageSpeed;
 
   // Desired time trajectory
   const scalar_array_t timeTrajectory{observation.time, targetTime};
@@ -69,14 +72,17 @@ TargetTrajectories commandLineToTargetTrajectories(const vector_t& commadLineTar
 
 int main(int argc, char* argv[]) {
   const std::string robotName = "quadrotor";
-  ::ros::init(argc, argv, robotName + "_target");
-  ::ros::NodeHandle nodeHandle;
+  rclcpp::init(argc, argv);
+  rclcpp::Node::SharedPtr node =
+      rclcpp::Node::make_shared(robotName + "_target");
 
   // goalPose: [deltaX, deltaY, deltaZ, deltaYaw]
   const scalar_array_t relativeStateLimit{10.0, 10.0, 10.0, 360.0};
-  TargetTrajectoriesKeyboardPublisher targetPoseCommand(nodeHandle, robotName, relativeStateLimit, &commandLineToTargetTrajectories);
+  TargetTrajectoriesKeyboardPublisher targetPoseCommand(
+      node, robotName, relativeStateLimit, &commandLineToTargetTrajectories);
 
-  const std::string commadMsg = "Enter XYZ, and Yaw (deg) displacements, separated by spaces";
+  const std::string commadMsg =
+      "Enter XYZ, and Yaw (deg) displacements, separated by spaces";
   targetPoseCommand.publishKeyboardCommand(commadMsg);
 
   // Successful exit

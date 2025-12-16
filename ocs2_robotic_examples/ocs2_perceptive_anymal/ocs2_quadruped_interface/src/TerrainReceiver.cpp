@@ -7,8 +7,8 @@
 namespace switched_model {
 
 TerrainReceiverSynchronizedModule::TerrainReceiverSynchronizedModule(ocs2::Synchronized<TerrainModel>& terrainModel,
-                                                                     ros::NodeHandle& nodeHandle)
-    : terrainModelPtr_(&terrainModel), segmentedPlanesRos_(new switched_model::SegmentedPlanesTerrainModelRos(nodeHandle)) {}
+                                                                     const rclcpp::Node::SharedPtr &node)
+    : terrainModelPtr_(&terrainModel), segmentedPlanesRos_(new switched_model::SegmentedPlanesTerrainModelRos(node)) {}
 
 void TerrainReceiverSynchronizedModule::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
                                                      const ocs2::ReferenceManagerInterface& referenceManager) {

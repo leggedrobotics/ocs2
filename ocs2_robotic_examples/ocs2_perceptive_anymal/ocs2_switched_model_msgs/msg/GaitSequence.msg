@@ -1,3 +1,3 @@
 # Sequence of gaits
 
-gait[] gaits
+Gait[] gaits

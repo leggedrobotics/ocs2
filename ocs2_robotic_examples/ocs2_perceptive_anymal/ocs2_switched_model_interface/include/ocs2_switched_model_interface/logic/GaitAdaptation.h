@@ -62,7 +62,7 @@ class GaitAdaptation {
 std::function<void(scalar_t& currentPhase, switched_model::Gait& currentGait, scalar_t currTime, switched_model::Gait& nextGait)>
 earlyTouchDownAdaptation(const switched_model::feet_array_t<bool>& earlyTouchDownPerLeg);
 
-/** Gets the mode index of the next phase with the specified contact state, returns the size of the modesequence of no such contact state
+/** Gets the mode index of the next phase with the specified contact state, returns the size of the modeSequence of no such contact state
  * was found */
 int getModeIndexOfNextContactStateOfLeg(bool contact, int startModeIdx, size_t leg, const Gait& gait);
 

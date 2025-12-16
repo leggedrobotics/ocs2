@@ -29,62 +29,49 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <thread>
 
-#include <ros/callback_queue.h>
-#include <ros/ros.h>
-#include "std_msgs/String.h"
+#include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/string.hpp"
 
 // Global queue: will be available as a member variable
-ros::CallbackQueue my_queue;
+rclcpp::CallbackGroup::SharedPtr callback_group_subscriber;
 
-void chatterCallback(const std_msgs::String::ConstPtr& msg) {
-  printf("I heard: [%s]\n", msg->data.c_str());
-}
-
-void subscriberWorker() {
-  ros::Rate loop_rate(30);
-  while (ros::ok()) {
-    std::cout << "Check for new messages" << std::endl;
-    my_queue.callOne();
-    loop_rate.sleep();
-  }
+void chatterCallback(const std_msgs::msg::String& msg) {
+  printf("I heard: [%s]\n", msg.data.c_str());
 }
 
 int main(int argc, char* argv[]) {
-  ros::init(argc, argv, "my_node");
+  rclcpp::init(argc, argv);
+  rclcpp::executors::MultiThreadedExecutor executor;
 
   // Publisher
-  ros::NodeHandle nh_pub;
+  std::shared_ptr<rclcpp::Node> node_pub = rclcpp::Node::make_shared("test_custom_callback_publisher");
   size_t publish_queue_size = 1000;
-  ros::Publisher chatter_pub = nh_pub.advertise<std_msgs::String>("chatter", publish_queue_size);
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr chatter_pub = node_pub->create_publisher<std_msgs::msg::String>("chatter", publish_queue_size);
 
   // Subscriber
-  ros::NodeHandle nh_sub;
-  nh_sub.setCallbackQueue(&my_queue);
-
+  std::shared_ptr<rclcpp::Node> node_sub = rclcpp::Node::make_shared("test_custom_callback_subscriber");
   size_t subscribe_queue_size = 1000;
-  ros::Subscriber sub = nh_sub.subscribe("chatter", subscribe_queue_size, chatterCallback);
+  auto sub_opt = rclcpp::SubscriptionOptions();
+  sub_opt.callback_group = node_sub->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr sub = node_sub->create_subscription<std_msgs::msg::String>("chatter", subscribe_queue_size, &chatterCallback, sub_opt);
 
-  auto subscriberThread = std::thread(&subscriberWorker);
+  executor.add_node(node_pub);
+  executor.add_node(node_sub);
 
-  ros::Rate loop_rate(10);
-
+  rclcpp::Rate loop_rate(10);
   int count = 0;
-  while (ros::ok()) {
-    std_msgs::String msg;
+  while (rclcpp::ok()) {
+    std_msgs::msg::String msg;
     std::stringstream ss;
     ss << "hello world " << count;
     msg.data = ss.str();
 
-    chatter_pub.publish(msg);
-    ros::spinOnce();
+    chatter_pub->publish(msg);
+    executor.spin_once();
 
     loop_rate.sleep();
     ++count;
   }
-
-  if (subscriberThread.joinable()) {
-    subscriberThread.join();
-  };
 
   return 0;
 }

@@ -4,26 +4,32 @@
 
 #pragma once
 
-#include "ocs2_anymal_commands/MotionCommandInterface.h"
-
-#include <visualization_msgs/Marker.h>
-
 #include <ocs2_mpc/SystemObservation.h>
-#include <ocs2_msgs/mpc_observation.h>
 #include <ocs2_switched_model_interface/terrain/TerrainPlane.h>
+
+#include <ocs2_msgs/msg/mpc_observation.hpp>
+#include <ocs2_switched_model_msgs/srv/trajectory_request.hpp>
+#include <visualization_msgs/msg/marker.hpp>
+
+#include "ocs2_anymal_commands/MotionCommandInterface.h"
 
 namespace switched_model {
 
 class MotionCommandController : public MotionCommandInterface {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  MotionCommandController(ros::NodeHandle& nodeHandle, const std::string& configFile, const std::string& controllerName);
+  MotionCommandController(const rclcpp::Node::SharedPtr& node,
+                          const std::string& configFile,
+                          const std::string& controllerName);
   ~MotionCommandController() override = default;
 
-  void publishMotion(const std::pair<ocs2::TargetTrajectories, Gait>& motion) override;
+  void publishMotion(
+      const std::pair<ocs2::TargetTrajectories, Gait>& motion) override;
 
  private:
-  ros::ServiceClient client;
+  rclcpp::Node::SharedPtr node_;
+  rclcpp::Client<ocs2_switched_model_msgs::srv::TrajectoryRequest>::SharedPtr
+      client;
 };
 
 }  // namespace switched_model

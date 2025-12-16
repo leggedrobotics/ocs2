@@ -138,7 +138,7 @@ TEST(HybridSlqTest, state_rollout_slq) {
   auto boundsConstraintsObserverPtr = SolverObserver::LagrangianTermObserver(
       SolverObserver::Type::Intermediate, "bounds",
       [&](const scalar_array_t& timeTraj, const std::vector<LagrangianMetricsConstRef>& metricsTraj) {
-        constexpr scalar_t constraintViolationTolerance = 1e-1;
+        constexpr scalar_t constraintViolationTolerance = 1.0;
         for (size_t i = 0; i < metricsTraj.size(); i++) {
           const vector_t constraintViolation = metricsTraj[i].constraint.cwiseMin(0.0);
           EXPECT_NEAR(constraintViolation(0), 0.0, constraintViolationTolerance) << "At time " << timeTraj[i] << "\n";

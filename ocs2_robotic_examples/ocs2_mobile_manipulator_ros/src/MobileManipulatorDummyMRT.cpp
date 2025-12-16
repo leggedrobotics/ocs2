@@ -28,15 +28,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
 #include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
-
 #include <ocs2_mobile_manipulator_ros/MobileManipulatorDummyVisualization.h>
-
 #include <ocs2_mpc/SystemObservation.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
 
-#include <ros/init.h>
-#include <ros/package.h>
+#include <stdexcept>
+
+#include "rclcpp/rclcpp.hpp"
 
 using namespace ocs2;
 using namespace mobile_manipulator;
@@ -45,29 +44,41 @@ int main(int argc, char** argv) {
   const std::string robotName = "mobile_manipulator";
 
   // Initialize ros node
-  ros::init(argc, argv, robotName + "_mrt");
-  ros::NodeHandle nodeHandle;
-  // Get node parameters
-  std::string taskFile, libFolder, urdfFile;
-  nodeHandle.getParam("/taskFile", taskFile);
-  nodeHandle.getParam("/libFolder", libFolder);
-  nodeHandle.getParam("/urdfFile", urdfFile);
+  rclcpp::init(argc, argv);
+  rclcpp::Node::SharedPtr node =
+      rclcpp::Node::make_shared(robotName + "_mrt");
+
+  const std::string taskFile =
+      node->declare_parameter<std::string>("taskFile", "");
+  const std::string libFolder =
+      node->declare_parameter<std::string>("libFolder", "");
+  const std::string urdfFile =
+      node->declare_parameter<std::string>("urdfFile", "");
+  if (taskFile.empty() || libFolder.empty() || urdfFile.empty()) {
+    throw std::runtime_error(
+        "[MobileManipulatorDummyMRT] Parameters 'taskFile', 'libFolder', and "
+        "'urdfFile' are required.");
+  }
   std::cerr << "Loading task file: " << taskFile << std::endl;
   std::cerr << "Loading library folder: " << libFolder << std::endl;
   std::cerr << "Loading urdf file: " << urdfFile << std::endl;
   // Robot Interface
-  mobile_manipulator::MobileManipulatorInterface interface(taskFile, libFolder, urdfFile);
+  mobile_manipulator::MobileManipulatorInterface interface(taskFile, libFolder,
+                                                           urdfFile);
 
   // MRT
   MRT_ROS_Interface mrt(robotName);
   mrt.initRollout(&interface.getRollout());
-  mrt.launchNodes(nodeHandle);
+  mrt.launchNodes(node);
 
   // Visualization
-  auto dummyVisualization = std::make_shared<mobile_manipulator::MobileManipulatorDummyVisualization>(nodeHandle, interface);
+  auto dummyVisualization =
+      std::make_shared<mobile_manipulator::MobileManipulatorDummyVisualization>(
+          node, interface);
 
   // Dummy MRT
-  MRT_ROS_Dummy_Loop dummy(mrt, interface.mpcSettings().mrtDesiredFrequency_, interface.mpcSettings().mpcDesiredFrequency_);
+  MRT_ROS_Dummy_Loop dummy(mrt, interface.mpcSettings().mrtDesiredFrequency_,
+                           interface.mpcSettings().mpcDesiredFrequency_);
   dummy.subscribeObservers({dummyVisualization});
 
   // initial state
@@ -80,8 +91,10 @@ int main(int argc, char** argv) {
   vector_t initTarget(7);
   initTarget.head(3) << 1, 0, 1;
   initTarget.tail(4) << Eigen::Quaternion<scalar_t>(1, 0, 0, 0).coeffs();
-  const vector_t zeroInput = vector_t::Zero(interface.getManipulatorModelInfo().inputDim);
-  const TargetTrajectories initTargetTrajectories({initObservation.time}, {initTarget}, {zeroInput});
+  const vector_t zeroInput =
+      vector_t::Zero(interface.getManipulatorModelInfo().inputDim);
+  const TargetTrajectories initTargetTrajectories({initObservation.time},
+                                                  {initTarget}, {zeroInput});
 
   // Run dummy (loops while ros is ok)
   dummy.run(initObservation, initTargetTrajectories);

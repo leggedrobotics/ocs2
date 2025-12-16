@@ -30,32 +30,30 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_ros_interfaces/command/TargetTrajectoriesRosPublisher.h"
 
 // MPC messages
-#include <ocs2_msgs/mpc_target_trajectories.h>
+#include <ocs2_msgs/msg/mpc_target_trajectories.hpp>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TargetTrajectoriesRosPublisher::TargetTrajectoriesRosPublisher(::ros::NodeHandle& nodeHandle, const std::string& topicPrefix) {
-  targetTrajectoriesPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_target_trajectories>(topicPrefix + "_mpc_target", 1, false);
-  ros::spinOnce();
-  ROS_INFO_STREAM("The TargetTrajectories is publishing on " + topicPrefix + "_mpc_target topic.");
+TargetTrajectoriesRosPublisher::TargetTrajectoriesRosPublisher(rclcpp::Node::SharedPtr node, const std::string& topicPrefix) : node_(std::move(node)) {
+  
+  publisher_ = node_->create_publisher<ocs2_msgs::msg::MpcTargetTrajectories>(topicPrefix + "_mpc_target", 1); 
+  RCLCPP_INFO(node_->get_logger(), "The TargetTrajectories is publishing on %s_mpc_target topic.", topicPrefix.c_str());
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TargetTrajectoriesRosPublisher::~TargetTrajectoriesRosPublisher() {
-  targetTrajectoriesPublisher_.shutdown();
-}
+TargetTrajectoriesRosPublisher::~TargetTrajectoriesRosPublisher() {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void TargetTrajectoriesRosPublisher::publishTargetTrajectories(const TargetTrajectories& targetTrajectories) {
   const auto mpcTargetTrajectoriesMsg = ros_msg_conversions::createTargetTrajectoriesMsg(targetTrajectories);
-  targetTrajectoriesPublisher_.publish(mpcTargetTrajectoriesMsg);
+  publisher_->publish(mpcTargetTrajectoriesMsg);
 }
 
 }  // namespace ocs2

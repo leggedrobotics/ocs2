@@ -7,7 +7,7 @@
 #include <string>
 #include <unordered_map>
 
-#include <ros/ros.h>
+#include "rclcpp/rclcpp.hpp"
 
 #include <ocs2_core/reference/TargetTrajectories.h>
 #include <ocs2_switched_model_interface/logic/Gait.h>

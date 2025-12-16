@@ -6,56 +6,66 @@
 
 #include <ocs2_ros_interfaces/visualization/VisualizationHelpers.h>
 
-// Additional messages not in the helpers file
-#include <geometry_msgs/PoseArray.h>
-
 // URDF stuff
-#include <urdf/model.h>
-#include <kdl_parser/kdl_parser.hpp>
-
 #include <ocs2_switched_model_interface/core/Rotations.h>
+#include <urdf/model.h>
+
+#include <kdl_parser/kdl_parser.hpp>
 
 namespace switched_model {
 
-void QuadrupedTfPublisher::launchNode(ros::NodeHandle& nodeHandle, const std::string& descriptionName, std::vector<std::string> jointNames,
-                                      std::string baseName, const std::string& tfPrefix) {
+void QuadrupedTfPublisher::launchNode(const rclcpp::Node::SharedPtr& node,
+                                      const std::string& descriptionName,
+                                      std::vector<std::string> jointNames,
+                                      std::string baseName,
+                                      const std::string& tfPrefix) {
+  node_ = node;
   tfPrefix_ = tfPrefix;
   jointNames_ = std::move(jointNames);
   baseName_ = std::move(baseName);
-
-  // Load URDF model
-  urdf::Model urdfModel;
-  if (!urdfModel.initParam(descriptionName)) {
-    std::cerr << "[QuadrupedTfPublisher] Could not read URDF from: \"" << descriptionName << "\"" << std::endl;
-  } else {
-    KDL::Tree kdlTree;
-    kdl_parser::treeFromUrdfModel(urdfModel, kdlTree);
-
-    robotStatePublisherPtr_.reset(new robot_state_publisher::RobotStatePublisher(kdlTree));
-    robotStatePublisherPtr_->publishFixedTransforms(tfPrefix_, true);
-  }
+  tfBroadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(node_);
+  jointPublisher_ =
+      node_->create_publisher<sensor_msgs::msg::JointState>("joint_states", 1);
+  lastTimeStamp_ = node_->get_clock()->now();
 }
 
-void QuadrupedTfPublisher::publish(ros::Time timeStamp, const vector_t& state, const std::string& worldFrame) {
+void QuadrupedTfPublisher::publish(rclcpp::Time timeStamp,
+                                   const vector_t& state,
+                                   const std::string& worldFrame) {
   publish(timeStamp, getBasePose(state), getJointPositions(state), worldFrame);
 }
 
-void QuadrupedTfPublisher::publish(ros::Time timeStamp, const base_coordinate_t& basePose, const joint_coordinate_t& jointPositions,
+void QuadrupedTfPublisher::publish(rclcpp::Time timeStamp,
+                                   const base_coordinate_t& basePose,
+                                   const joint_coordinate_t& jointPositions,
                                    const std::string& worldFrame) {
-  if (robotStatePublisherPtr_ != nullptr && lastTimeStamp_ != timeStamp) {
+  if (jointPublisher_ != nullptr && lastTimeStamp_ != timeStamp) {
     // Joint positions
     updateJointPositions(jointPositions);
-    robotStatePublisherPtr_->publishTransforms(jointPositionsMap_, timeStamp, tfPrefix_);
+
+    sensor_msgs::msg::JointState joint_state;
+    joint_state.header.stamp = timeStamp;
+
+    const auto joint_size = jointNames_.size();
+    joint_state.name.reserve(joint_size);
+    for (const auto& name : jointNames_) {
+      joint_state.name.emplace_back(name);
+    }
+    joint_state.position.reserve(joint_size);
+    for (const auto& jointPosition : jointPositions)
+      joint_state.position.emplace_back(jointPosition);
+    jointPublisher_->publish(joint_state);
 
     // Base positions
     updateBasePose(timeStamp, basePose, worldFrame);
-    tfBroadcaster_.sendTransform(baseToWorldTransform_);
+    tfBroadcaster_->sendTransform(baseToWorldTransform_);
 
     lastTimeStamp_ = timeStamp;
   }
 }
 
-void QuadrupedTfPublisher::updateJointPositions(const joint_coordinate_t& jointPositions) {
+void QuadrupedTfPublisher::updateJointPositions(
+    const joint_coordinate_t& jointPositions) {
   jointPositionsMap_[jointNames_[0]] = jointPositions[0];
   jointPositionsMap_[jointNames_[1]] = jointPositions[1];
   jointPositionsMap_[jointNames_[2]] = jointPositions[2];
@@ -70,13 +80,18 @@ void QuadrupedTfPublisher::updateJointPositions(const joint_coordinate_t& jointP
   jointPositionsMap_[jointNames_[11]] = jointPositions[11];
 }
 
-void QuadrupedTfPublisher::updateBasePose(ros::Time timeStamp, const base_coordinate_t& basePose, const std::string& worldFrame) {
+void QuadrupedTfPublisher::updateBasePose(rclcpp::Time timeStamp,
+                                          const base_coordinate_t& basePose,
+                                          const std::string& worldFrame) {
   baseToWorldTransform_.header = ocs2::getHeaderMsg(worldFrame, timeStamp);
   baseToWorldTransform_.child_frame_id = tfPrefix_ + "/" + baseName_;
 
-  const Eigen::Quaternion<scalar_t> q_world_base = quaternionBaseToOrigin<scalar_t>(getOrientation(basePose));
-  baseToWorldTransform_.transform.rotation = ocs2::getOrientationMsg(q_world_base);
-  baseToWorldTransform_.transform.translation = ocs2::getVectorMsg(getPositionInOrigin(basePose));
+  const Eigen::Quaternion<scalar_t> q_world_base =
+      quaternionBaseToOrigin<scalar_t>(getOrientation(basePose));
+  baseToWorldTransform_.transform.rotation =
+      ocs2::getOrientationMsg(q_world_base);
+  baseToWorldTransform_.transform.translation =
+      ocs2::getVectorMsg(getPositionInOrigin(basePose));
 }
 
 }  // namespace switched_model

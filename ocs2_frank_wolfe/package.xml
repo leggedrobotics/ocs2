@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package>
+<package format="3">
   <name>ocs2_frank_wolfe</name>
   <version>0.0.0</version>
   <description>The OCS2 Frank Wolfe package</description>
@@ -41,16 +41,17 @@
   <!--   <run_depend>message_runtime</run_depend> -->
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
-  <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>cmake_modules</build_depend>
-  <build_depend>ocs2_core</build_depend>
-  <build_depend>glpk</build_depend>
-  <run_depend>ocs2_core</run_depend>
-  <run_depend>libglpk-dev</run_depend>  <!-- required for the buildserver to install libglpk-dev -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>ocs2_core</depend>
+  <depend>glpk</depend>
+  <depend>eigen3_cmake_module</depend>
+  <depend>boost</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
+    <build_type>ament_cmake</build_type>
     <!-- Other tools can request additional information be placed here -->
 
   </export>

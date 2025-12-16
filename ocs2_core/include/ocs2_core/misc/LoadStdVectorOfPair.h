@@ -49,27 +49,27 @@ template <typename T>
 T fromString(const std::string& str);
 
 template <>
-std::string fromString<std::string>(const std::string& str) {
+inline std::string fromString<std::string>(const std::string& str) {
   return str;
 }
 
 template <>
-std::size_t fromString<std::size_t>(const std::string& str) {
+inline std::size_t fromString<std::size_t>(const std::string& str) {
   return std::stoul(str);
 }
 
 template <>
-int fromString<int>(const std::string& str) {
+inline int fromString<int>(const std::string& str) {
   return std::stoi(str);
 }
 
 template <>
-double fromString<double>(const std::string& str) {
+inline double fromString<double>(const std::string& str) {
   return std::stod(str);
 }
 
 template <>
-float fromString<float>(const std::string& str) {
+inline float fromString<float>(const std::string& str) {
   return std::stof(str);
 }
 

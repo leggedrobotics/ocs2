@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <ros/node_handle.h>
+#include "rclcpp/rclcpp.hpp"
 
 #include <ocs2_mpc/MPC_BASE.h>
 
@@ -12,5 +12,5 @@
 
 namespace switched_model {
 
-void quadrupedMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& quadrupedInterface, std::unique_ptr<ocs2::MPC_BASE> mpcPtr);
+void quadrupedMpcNode(const rclcpp::Node::SharedPtr &node, const QuadrupedInterface& quadrupedInterface, std::unique_ptr<ocs2::MPC_BASE> mpcPtr);
 }

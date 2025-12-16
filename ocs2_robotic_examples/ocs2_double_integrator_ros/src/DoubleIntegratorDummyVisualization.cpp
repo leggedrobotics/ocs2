@@ -32,15 +32,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace double_integrator {
 
-void DoubleIntegratorDummyVisualization::launchVisualizerNode(ros::NodeHandle& nodeHandle) {
-  jointPublisher_ = nodeHandle.advertise<sensor_msgs::JointState>("joint_states", 1);
-}
+DoubleIntegratorDummyVisualization::DoubleIntegratorDummyVisualization(
+    const rclcpp::Node::SharedPtr& node)
+    : node_(node),
+      jointPublisher_(node_->create_publisher<sensor_msgs::msg::JointState>(
+          "joint_states", 1)) {}
 
-void DoubleIntegratorDummyVisualization::update(const SystemObservation& observation, const PrimalSolution& policy,
-                                                const CommandData& command) {
+void DoubleIntegratorDummyVisualization::update(
+    const SystemObservation& observation, const PrimalSolution& policy,
+    const CommandData& command) {
   const auto& targetTrajectories = command.mpcTargetTrajectories_;
-  sensor_msgs::JointState joint_state;
-  joint_state.header.stamp = ros::Time::now();
+  sensor_msgs::msg::JointState joint_state;
+  joint_state.header.stamp = node_->get_clock()->now();
   joint_state.name.resize(2);
   joint_state.position.resize(2);
   joint_state.name[0] = "slider_to_cart";
@@ -48,7 +51,7 @@ void DoubleIntegratorDummyVisualization::update(const SystemObservation& observa
   joint_state.name[1] = "slider_to_target";
   joint_state.position[1] = targetTrajectories.stateTrajectory[0](0);
 
-  jointPublisher_.publish(joint_state);
+  jointPublisher_->publish(joint_state);
 }
 
 }  // namespace double_integrator

@@ -29,45 +29,58 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <robot_state_publisher/robot_state_publisher.h>
-#include <tf/transform_broadcaster.h>
-
-#include <ocs2_ros_interfaces/mrt/DummyObserver.h>
-
 #include <ocs2_mobile_manipulator/ManipulatorModelInfo.h>
 #include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
+#include <ocs2_ros_interfaces/mrt/DummyObserver.h>
 #include <ocs2_self_collision_visualization/GeometryInterfaceVisualization.h>
+#include <tf2_ros/transform_broadcaster.h>
+
+#include <geometry_msgs/msg/pose_array.hpp>
+#include <sensor_msgs/msg/joint_state.hpp>
 
 namespace ocs2 {
 namespace mobile_manipulator {
 
 class MobileManipulatorDummyVisualization final : public DummyObserver {
  public:
-  MobileManipulatorDummyVisualization(ros::NodeHandle& nodeHandle, const MobileManipulatorInterface& interface)
-      : pinocchioInterface_(interface.getPinocchioInterface()), modelInfo_(interface.getManipulatorModelInfo()) {
-    launchVisualizerNode(nodeHandle);
+  MobileManipulatorDummyVisualization(
+      const rclcpp::Node::SharedPtr& node,
+      const MobileManipulatorInterface& interface)
+      : node_(node),
+        pinocchioInterface_(interface.getPinocchioInterface()),
+        modelInfo_(interface.getManipulatorModelInfo()),
+        tfBroadcaster_(node) {
+    launchVisualizerNode();
   }
 
   ~MobileManipulatorDummyVisualization() override = default;
 
-  void update(const SystemObservation& observation, const PrimalSolution& policy, const CommandData& command) override;
+  void update(const SystemObservation& observation,
+              const PrimalSolution& policy,
+              const CommandData& command) override;
 
  private:
-  void launchVisualizerNode(ros::NodeHandle& nodeHandle);
+  void launchVisualizerNode();
 
-  void publishObservation(const ros::Time& timeStamp, const SystemObservation& observation);
-  void publishTargetTrajectories(const ros::Time& timeStamp, const TargetTrajectories& targetTrajectories);
-  void publishOptimizedTrajectory(const ros::Time& timeStamp, const PrimalSolution& policy);
+  void publishObservation(const rclcpp::Time& timeStamp,
+                          const SystemObservation& observation);
+  void publishTargetTrajectories(const rclcpp::Time& timeStamp,
+                                 const TargetTrajectories& targetTrajectories);
+  void publishOptimizedTrajectory(const rclcpp::Time& timeStamp,
+                                  const PrimalSolution& policy);
 
+  rclcpp::Node::SharedPtr node_;
   PinocchioInterface pinocchioInterface_;
   const ManipulatorModelInfo modelInfo_;
   std::vector<std::string> removeJointNames_;
 
-  std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_;
-  tf::TransformBroadcaster tfBroadcaster_;
+  rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr jointPublisher_;
+  tf2_ros::TransformBroadcaster tfBroadcaster_;
 
-  ros::Publisher stateOptimizedPublisher_;
-  ros::Publisher stateOptimizedPosePublisher_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr
+      stateOptimizedPublisher_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr
+      stateOptimizedPosePublisher_;
 
   std::unique_ptr<GeometryInterfaceVisualization> geometryVisualization_;
 };

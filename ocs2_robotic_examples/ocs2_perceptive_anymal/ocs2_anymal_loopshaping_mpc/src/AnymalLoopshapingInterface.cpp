@@ -4,8 +4,8 @@
 
 #include "ocs2_anymal_loopshaping_mpc/AnymalLoopshapingInterface.h"
 
-#include <ros/package.h>
-
+#include "rclcpp/rclcpp.hpp"
+#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <ocs2_anymal_mpc/AnymalInterface.h>
 
 namespace anymal {
@@ -29,7 +29,7 @@ std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAn
 }
 
 std::string getConfigFolderLoopshaping(const std::string& configName) {
-  return ros::package::getPath("ocs2_anymal_loopshaping_mpc") + "/config/" + configName;
+  return ament_index_cpp::get_package_share_directory("ocs2_anymal_loopshaping_mpc") + "/config/" + configName;
 }
 
 std::string getTaskFilePathLoopshaping(const std::string& configName) {

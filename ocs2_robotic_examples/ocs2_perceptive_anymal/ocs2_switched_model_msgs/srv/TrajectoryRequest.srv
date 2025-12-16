@@ -1,0 +1,6 @@
+# Trajectory request service
+
+ocs2_msgs/MpcTargetTrajectories trajectory        # The trajectory to track
+GaitSequence gait_sequence                        # The gait
+---
+bool success                                      # 1 if successful 0 if trajectory couldn't be started.

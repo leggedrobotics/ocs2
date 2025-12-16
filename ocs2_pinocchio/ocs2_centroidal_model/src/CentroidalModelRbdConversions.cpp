@@ -189,7 +189,7 @@ vector_t CentroidalModelRbdConversions::computeRbdTorqueFromCentroidalModelPD(co
   pinocchio::container::aligned_vector<pinocchio::Force> fextDesired(model.njoints, pinocchio::Force::Zero());
   for (size_t i = 0; i < info.numThreeDofContacts; i++) {
     const auto frameIndex = info.endEffectorFrameIndices[i];
-    const auto jointIndex = model.frames[frameIndex].parent;
+    const auto jointIndex = model.frames[frameIndex].parentJoint;
     const Vector3 translationJointFrameToContactFrame = model.frames[frameIndex].placement.translation();
     const Matrix3 rotationWorldFrameToJointFrame = data.oMi[jointIndex].rotation().transpose();
     const Vector3 contactForce = rotationWorldFrameToJointFrame * centroidal_model::getContactForces(desiredInput, i, info);
@@ -198,7 +198,7 @@ vector_t CentroidalModelRbdConversions::computeRbdTorqueFromCentroidalModelPD(co
   }
   for (size_t i = info.numThreeDofContacts; i < info.numThreeDofContacts + info.numSixDofContacts; i++) {
     const auto frameIndex = info.endEffectorFrameIndices[i];
-    const auto jointIndex = model.frames[frameIndex].parent;
+    const auto jointIndex = model.frames[frameIndex].parentJoint;
     const Vector3 translationJointFrameToContactFrame = model.frames[frameIndex].placement.translation();
     const Matrix3 rotationWorldFrameToJointFrame = data.oMi[jointIndex].rotation().transpose();
     const Vector3 contactForce = rotationWorldFrameToJointFrame * centroidal_model::getContactForces(desiredInput, i, info);

@@ -30,8 +30,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <pinocchio/algorithm/frames-derivatives.hpp>
 #include <pinocchio/algorithm/frames.hpp>
+#include <pinocchio/algorithm/joint-configuration.hpp>
 #include <pinocchio/algorithm/kinematics-derivatives.hpp>
 #include <pinocchio/algorithm/kinematics.hpp>
+#include <pinocchio/multibody/joint/joint-composite.hpp>
+#include <pinocchio/multibody/joint/joint-spherical.hpp>
+#include <pinocchio/multibody/joint/joint-translation.hpp>
 
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
@@ -131,7 +135,7 @@ TEST_F(TestEndEffectorKinematics, testKinematicsPosition) {
 
   const auto id = model.getBodyId("WRIST_2");
   const ocs2::vector_t pos = data.oMf[id].translation();
-  ocs2::matrix_t J = ocs2::matrix_t::Zero(6, model.nq);
+  ocs2::matrix_t J = ocs2::matrix_t::Zero(6, model.nv);
   pinocchio::getFrameJacobian(model, data, id, pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED, J);
 
   eeKinematicsPtr->setPinocchioInterface(*pinocchioInterfacePtr);
@@ -140,6 +144,75 @@ TEST_F(TestEndEffectorKinematics, testKinematicsPosition) {
 
   EXPECT_TRUE(pos.isApprox(eePos));
   EXPECT_TRUE(pos.isApprox(eePosLin.f));
+  EXPECT_TRUE(J.topRows<3>().isApprox(eePosLin.dfdx));
+}
+
+class FreeFlyerTangentMapping final : public ocs2::PinocchioStateInputMapping<ocs2::scalar_t> {
+ public:
+  using scalar_t = ocs2::scalar_t;
+  using vector_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>;
+  using matrix_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic>;
+
+  FreeFlyerTangentMapping() = default;
+  ~FreeFlyerTangentMapping() override = default;
+  FreeFlyerTangentMapping* clone() const override { return new FreeFlyerTangentMapping(*this); }
+
+  void setPinocchioInterface(const ocs2::PinocchioInterfaceTpl<scalar_t>& pinocchioInterface) override {
+    pinocchioInterfacePtr_ = &pinocchioInterface;
+    q0_ = pinocchio::neutral(pinocchioInterface.getModel());
+  }
+
+  vector_t getPinocchioJointPosition(const vector_t& state) const override {
+    if (pinocchioInterfacePtr_ == nullptr) {
+      throw std::runtime_error("[FreeFlyerTangentMapping] pinocchio interface is not set.");
+    }
+    if (state.rows() != pinocchioInterfacePtr_->getModel().nv) {
+      throw std::runtime_error("[FreeFlyerTangentMapping] state size must equal model.nv (tangent dimension).");
+    }
+    return pinocchio::integrate(pinocchioInterfacePtr_->getModel(), q0_, state);
+  }
+
+  vector_t getPinocchioJointVelocity(const vector_t& /*state*/, const vector_t& input) const override { return input; }
+
+  std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& /*state*/, const matrix_t& Jq, const matrix_t& Jv) const override {
+    return {Jq, Jv};
+  }
+
+ private:
+  const ocs2::PinocchioInterfaceTpl<scalar_t>* pinocchioInterfacePtr_ = nullptr;
+  vector_t q0_;
+};
+
+TEST(PinocchioEndEffectorKinematics, testPositionLinearApproximation_nqNotEqualNv) {
+  // Build a model with nq != nv by attaching a translation + quaternion spherical joint at the root.
+  pinocchio::JointModelComposite rootJoint(2);
+  rootJoint.addJoint(pinocchio::JointModelTranslation());
+  rootJoint.addJoint(pinocchio::JointModelSpherical());  // nq=4, nv=3
+
+  auto pinocchioInterface = ocs2::getPinocchioInterfaceFromUrdfString(manipulatorArmUrdf, rootJoint);
+
+  const auto& model = pinocchioInterface.getModel();
+  auto& data = pinocchioInterface.getData();
+  ASSERT_NE(model.nq, model.nv);
+
+  FreeFlyerTangentMapping mapping;
+  ocs2::PinocchioEndEffectorKinematics eeKinematics(pinocchioInterface, mapping, {"WRIST_2"});
+
+  // Evaluate at the neutral configuration (x=0 in tangent space).
+  const ocs2::vector_t x = ocs2::vector_t::Zero(model.nv);
+  const ocs2::vector_t q = pinocchio::neutral(model);
+  pinocchio::forwardKinematics(model, data, q);
+  pinocchio::updateFramePlacements(model, data);
+  pinocchio::computeJointJacobians(model, data);
+
+  eeKinematics.setPinocchioInterface(pinocchioInterface);
+
+  const pinocchio::ReferenceFrame rf = pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED;
+  ocs2::matrix_t J = ocs2::matrix_t::Zero(6, model.nv);
+  pinocchio::Data dataCopy(pinocchioInterface.getData());
+  pinocchio::getFrameJacobian(model, dataCopy, model.getBodyId("WRIST_2"), rf, J);
+
+  const auto eePosLin = eeKinematics.getPositionLinearApproximation(x)[0];
   EXPECT_TRUE(J.topRows<3>().isApprox(eePosLin.dfdx));
 }
 

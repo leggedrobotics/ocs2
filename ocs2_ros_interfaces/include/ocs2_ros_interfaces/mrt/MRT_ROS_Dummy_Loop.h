@@ -31,24 +31,30 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_ros_interfaces/mrt/DummyObserver.h"
 #include "ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h"
+#include "ocs2_core/misc/Benchmark.h"
 
 namespace ocs2 {
 
 /**
- * This class implements a loop to test MPC-MRT communication interface using ROS.
+ * This class implements a loop to test MPC-MRT communication interface using
+ * ROS.
  */
 class MRT_ROS_Dummy_Loop {
  public:
   /**
    * Constructor.
    *
-   * @param [in] mrt: The underlying MRT class to be used. If MRT contains a rollout object, the dummy will roll out
-   * the received controller using the MRT::rolloutPolicy() method instead of just sending back a planned state.
-   * @param [in] mrtDesiredFrequency: MRT loop frequency in Hz. This should always set to a positive number.
-   * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a positive number, MPC loop
-   * will be simulated to run by this frequency. Note that this might not be the MPC's real-time frequency.
+   * @param [in] mrt: The underlying MRT class to be used. If MRT contains a
+   * rollout object, the dummy will roll out the received controller using the
+   * MRT::rolloutPolicy() method instead of just sending back a planned state.
+   * @param [in] mrtDesiredFrequency: MRT loop frequency in Hz. This should
+   * always set to a positive number.
+   * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a
+   * positive number, MPC loop will be simulated to run by this frequency. Note
+   * that this might not be the MPC's real-time frequency.
    */
-  MRT_ROS_Dummy_Loop(MRT_ROS_Interface& mrt, scalar_t mrtDesiredFrequency, scalar_t mpcDesiredFrequency = -1);
+  MRT_ROS_Dummy_Loop(MRT_ROS_Interface& mrt, scalar_t mrtDesiredFrequency,
+                     scalar_t mpcDesiredFrequency = -1);
 
   /**
    * Destructor.
@@ -61,15 +67,20 @@ class MRT_ROS_Dummy_Loop {
    * @param [in] initObservation: The initial observation.
    * @param [in] initTargetTrajectories: The initial TargetTrajectories.
    */
-  void run(const SystemObservation& initObservation, const TargetTrajectories& initTargetTrajectories);
+  void run(const SystemObservation& initObservation,
+           const TargetTrajectories& initTargetTrajectories);
 
   /**
-   * Subscribe a set of observers to the dummy loop. Observers are updated in the provided order at the end of each timestep.
-   * The previous list of observers is overwritten.
+   * Subscribe a set of observers to the dummy loop. Observers are updated in
+   * the provided order at the end of each timestep. The previous list of
+   * observers is overwritten.
    *
    * @param observers : vector of observers.
    */
-  void subscribeObservers(const std::vector<std::shared_ptr<DummyObserver>>& observers) { observers_ = observers; }
+  void subscribeObservers(
+      const std::vector<std::shared_ptr<DummyObserver>>& observers) {
+    observers_ = observers;
+  }
 
  protected:
   /**
@@ -81,24 +92,31 @@ class MRT_ROS_Dummy_Loop {
 
  private:
   /**
-   * Runs a loop where mpc optimizations are synchronized with the forward simulation of the system
+   * Runs a loop where mpc optimizations are synchronized with the forward
+   * simulation of the system
    */
-  void synchronizedDummyLoop(const SystemObservation& initObservation, const TargetTrajectories& initTargetTrajectories);
+  void synchronizedDummyLoop(const SystemObservation& initObservation,
+                             const TargetTrajectories& initTargetTrajectories);
 
   /**
-   * Runs a loop where mpc optimizations and simulation of the system are asynchronous.
-   * The simulation runs as the specified mrtFrequency, and the MPC runs as fast as possible.
+   * Runs a loop where mpc optimizations and simulation of the system are
+   * asynchronous. The simulation runs as the specified mrtFrequency, and the
+   * MPC runs as fast as possible.
    */
-  void realtimeDummyLoop(const SystemObservation& initObservation, const TargetTrajectories& initTargetTrajectories);
+  void realtimeDummyLoop(const SystemObservation& initObservation,
+                         const TargetTrajectories& initTargetTrajectories);
 
   /** Forward simulates the system from current observation*/
-  SystemObservation forwardSimulation(const SystemObservation& currentObservation);
+  SystemObservation forwardSimulation(
+      const SystemObservation& currentObservation);
 
   MRT_ROS_Interface& mrt_;
   std::vector<std::shared_ptr<DummyObserver>> observers_;
 
   scalar_t mrtDesiredFrequency_;
   scalar_t mpcDesiredFrequency_;
+
+  benchmark::RepeatedTimer mrtTimer_;
 };
 
 }  // namespace ocs2

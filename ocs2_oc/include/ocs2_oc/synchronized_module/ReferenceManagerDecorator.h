@@ -28,6 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #pragma once
+#include <memory>
 
 #include "ocs2_oc/synchronized_module/ReferenceManagerInterface.h"
 
@@ -39,25 +40,37 @@ namespace ocs2 {
  */
 class ReferenceManagerDecorator : public ReferenceManagerInterface {
  public:
-  explicit ReferenceManagerDecorator(std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr)
+  explicit ReferenceManagerDecorator(
+      std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr)
       : referenceManagerPtr_(std::move(referenceManagerPtr)) {
     if (referenceManagerPtr_ == nullptr) {
-      throw std::runtime_error("[ReferenceManagerDecorator] ReferenceManager pointer is nullptr!");
+      throw std::runtime_error(
+          "[ReferenceManagerDecorator] ReferenceManager pointer is nullptr!");
     }
   }
 
   ~ReferenceManagerDecorator() override = default;
 
-  void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState) override {
+  void preSolverRun(scalar_t initTime, scalar_t finalTime,
+                    const vector_t& initState) override {
     referenceManagerPtr_->preSolverRun(initTime, finalTime, initState);
   }
 
-  const ModeSchedule& getModeSchedule() const override { return referenceManagerPtr_->getModeSchedule(); }
-  void setModeSchedule(const ModeSchedule& modeSchedule) override { referenceManagerPtr_->setModeSchedule(modeSchedule); }
-  void setModeSchedule(ModeSchedule&& modeSchedule) override { referenceManagerPtr_->setModeSchedule(std::move(modeSchedule)); }
+  const ModeSchedule& getModeSchedule() const override {
+    return referenceManagerPtr_->getModeSchedule();
+  }
+  void setModeSchedule(const ModeSchedule& modeSchedule) override {
+    referenceManagerPtr_->setModeSchedule(modeSchedule);
+  }
+  void setModeSchedule(ModeSchedule&& modeSchedule) override {
+    referenceManagerPtr_->setModeSchedule(std::move(modeSchedule));
+  }
 
-  const TargetTrajectories& getTargetTrajectories() const override { return referenceManagerPtr_->getTargetTrajectories(); }
-  void setTargetTrajectories(const TargetTrajectories& targetTrajectories) override {
+  const TargetTrajectories& getTargetTrajectories() const override {
+    return referenceManagerPtr_->getTargetTrajectories();
+  }
+  void setTargetTrajectories(
+      const TargetTrajectories& targetTrajectories) override {
     referenceManagerPtr_->setTargetTrajectories(targetTrajectories);
   }
   void setTargetTrajectories(TargetTrajectories&& targetTrajectories) override {

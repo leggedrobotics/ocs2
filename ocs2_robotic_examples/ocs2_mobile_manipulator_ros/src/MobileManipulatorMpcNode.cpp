@@ -27,8 +27,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include <ros/init.h>
-#include <ros/package.h>
 
 #include <ocs2_ddp/GaussNewtonDDP_MPC.h>
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
@@ -42,32 +40,65 @@ using namespace mobile_manipulator;
 int main(int argc, char** argv) {
   const std::string robotName = "mobile_manipulator";
 
-  // Initialize ros node
-  ros::init(argc, argv, robotName + "_mpc");
-  ros::NodeHandle nodeHandle;
+  // Initialize ROS2 node
+  rclcpp::init(argc, argv);
+  auto node = rclcpp::Node::make_shared(robotName + "_mpc",
+           rclcpp::NodeOptions()
+           .allow_undeclared_parameters(true)
+           .automatically_declare_parameters_from_overrides(true));
+  
+  rclcpp::sleep_for(std::chrono::milliseconds(100));
+
   // Get node parameters
-  std::string taskFile, libFolder, urdfFile;
-  nodeHandle.getParam("/taskFile", taskFile);
-  nodeHandle.getParam("/libFolder", libFolder);
-  nodeHandle.getParam("/urdfFile", urdfFile);
+  std::string taskFile, libFolder, urdfFile, armSide;
+  taskFile = node->get_parameter("taskFile").as_string();
+  libFolder = node->get_parameter("libFolder").as_string();
+  urdfFile = node->get_parameter("urdfFile").as_string();
+  // Check if armSide parameter exists, if not set default to "LEFT"
+  if (node->has_parameter("armSide")) {
+    armSide = node->get_parameter("armSide").as_string();
+    std::cerr << "Set arm side: " << armSide << std::endl;
+  } else {
+    armSide = "LEFT";
+    std::cerr << "armSide parameter not found in launch file, setting default to: " << armSide << std::endl;
+  }
+
   std::cerr << "Loading task file: " << taskFile << std::endl;
   std::cerr << "Loading library folder: " << libFolder << std::endl;
   std::cerr << "Loading urdf file: " << urdfFile << std::endl;
+  
   // Robot interface
   MobileManipulatorInterface interface(taskFile, libFolder, urdfFile);
 
   // ROS ReferenceManager
   auto rosReferenceManagerPtr = std::make_shared<ocs2::RosReferenceManager>(robotName, interface.getReferenceManagerPtr());
-  rosReferenceManagerPtr->subscribe(nodeHandle);
 
-  // MPC
-  ocs2::GaussNewtonDDP_MPC mpc(interface.mpcSettings(), interface.ddpSettings(), interface.getRollout(),
+  // Check if taskFile contains "aloha" to decide which subscribe and launch method to use
+  if (taskFile.find("aloha") != std::string::npos) {
+    std::cerr << "For aloha robotic arm, using subscribe_act and launchNodes_mujoco method" << std::endl;
+    // Subscribe target from act
+    rosReferenceManagerPtr->subscribe_act(node, interface.getPinocchioInterface(), interface.getEeFrameId(), armSide);
+    // MPC
+    ocs2::GaussNewtonDDP_MPC mpc(interface.mpcSettings(), interface.ddpSettings(), interface.getRollout(),
+                                interface.getOptimalControlProblem(), interface.getInitializer());
+    mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
+    // Launch MPC mujoco ROS node
+    MPC_ROS_Interface mpcNode(mpc, robotName);
+    mpcNode.launchNodes_mujoco(node);
+  } else {
+    std::cerr << "For non-aloha, using standard subscribe and launchNodes method" << std::endl;
+    // Subscribe target in Rviz
+    rosReferenceManagerPtr->subscribe(node);
+    // MPC
+    ocs2::GaussNewtonDDP_MPC mpc(interface.mpcSettings(), interface.ddpSettings(), interface.getRollout(),
                                interface.getOptimalControlProblem(), interface.getInitializer());
-  mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
+    mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
+    // Launch MPC ROS node
+    MPC_ROS_Interface mpcNode(mpc, robotName);
+    mpcNode.launchNodes(node);
+  }
 
-  // Launch MPC ROS node
-  MPC_ROS_Interface mpcNode(mpc, robotName);
-  mpcNode.launchNodes(nodeHandle);
+  rclcpp::shutdown();
 
   // Successful exit
   return 0;

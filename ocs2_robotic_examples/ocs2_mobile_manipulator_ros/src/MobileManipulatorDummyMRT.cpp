@@ -35,8 +35,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
 
-#include <ros/init.h>
-#include <ros/package.h>
 
 using namespace ocs2;
 using namespace mobile_manipulator;
@@ -44,14 +42,21 @@ using namespace mobile_manipulator;
 int main(int argc, char** argv) {
   const std::string robotName = "mobile_manipulator";
 
-  // Initialize ros node
-  ros::init(argc, argv, robotName + "_mrt");
-  ros::NodeHandle nodeHandle;
+  // Initialize ROS2 node
+  rclcpp::init(argc, argv);
+  auto node = rclcpp::Node::make_shared(robotName + "_mrt",
+           rclcpp::NodeOptions()
+           .allow_undeclared_parameters(true)
+           .automatically_declare_parameters_from_overrides(true));
+
   // Get node parameters
   std::string taskFile, libFolder, urdfFile;
-  nodeHandle.getParam("/taskFile", taskFile);
-  nodeHandle.getParam("/libFolder", libFolder);
-  nodeHandle.getParam("/urdfFile", urdfFile);
+  // node->declare_parameter("taskFile", std::string(""));
+  // node->declare_parameter("libFolder", std::string(""));
+  // node->declare_parameter("urdfFile", std::string(""));
+  taskFile = node->get_parameter("taskFile").as_string();
+  libFolder = node->get_parameter("libFolder").as_string();
+  urdfFile = node->get_parameter("urdfFile").as_string();
   std::cerr << "Loading task file: " << taskFile << std::endl;
   std::cerr << "Loading library folder: " << libFolder << std::endl;
   std::cerr << "Loading urdf file: " << urdfFile << std::endl;
@@ -61,10 +66,10 @@ int main(int argc, char** argv) {
   // MRT
   MRT_ROS_Interface mrt(robotName);
   mrt.initRollout(&interface.getRollout());
-  mrt.launchNodes(nodeHandle);
+  mrt.launchNodes(node);
 
   // Visualization
-  auto dummyVisualization = std::make_shared<mobile_manipulator::MobileManipulatorDummyVisualization>(nodeHandle, interface);
+  auto dummyVisualization = std::make_shared<mobile_manipulator::MobileManipulatorDummyVisualization>(node, interface);
 
   // Dummy MRT
   MRT_ROS_Dummy_Loop dummy(mrt, interface.mpcSettings().mrtDesiredFrequency_, interface.mpcSettings().mpcDesiredFrequency_);
@@ -78,13 +83,21 @@ int main(int argc, char** argv) {
 
   // initial command
   vector_t initTarget(7);
-  initTarget.head(3) << 1, 0, 1;
-  initTarget.tail(4) << Eigen::Quaternion<scalar_t>(1, 0, 0, 0).coeffs();
+  if (taskFile.find("aloha") != std::string::npos) {
+    initTarget << 0.151811, 0, 0.295251, 0, -0.0499792, 0, 0.99875; // ALOHA waiting state (more suitable than sleeping state)
+    // initTarget << 0.0526199, 0.00505283, 0.159145, 0.0552305, 0.246959, 0.0233511, 0.967169; // ALOHA sleeping state
+  } else {
+    initTarget.head(3) << 1, 0, 1;
+    initTarget.tail(4) << Eigen::Quaternion<scalar_t>(1, 0, 0, 0).coeffs();
+  }
   const vector_t zeroInput = vector_t::Zero(interface.getManipulatorModelInfo().inputDim);
   const TargetTrajectories initTargetTrajectories({initObservation.time}, {initTarget}, {zeroInput});
 
   // Run dummy (loops while ros is ok)
   dummy.run(initObservation, initTargetTrajectories);
+
+  // ROS2 cleanup
+  rclcpp::shutdown();
 
   // Successful exit
   return 0;

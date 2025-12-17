@@ -27,6 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
+#include <rclcpp/rclcpp.hpp>
 #include <ocs2_ros_interfaces/command/TargetTrajectoriesInteractiveMarker.h>
 
 using namespace ocs2;
@@ -49,11 +50,17 @@ TargetTrajectories goalPoseToTargetTrajectories(const Eigen::Vector3d& position,
 
 int main(int argc, char* argv[]) {
   const std::string robotName = "mobile_manipulator";
-  ::ros::init(argc, argv, robotName + "_target");
-  ::ros::NodeHandle nodeHandle;
 
-  TargetTrajectoriesInteractiveMarker targetPoseCommand(nodeHandle, robotName, &goalPoseToTargetTrajectories);
+  // Initialize ROS2 node
+  rclcpp::init(argc, argv);
+  auto node = rclcpp::Node::make_shared(robotName + "_target");
+
+  TargetTrajectoriesInteractiveMarker targetPoseCommand(node, robotName, &goalPoseToTargetTrajectories);
   targetPoseCommand.publishInteractiveMarker();
+
+  // ROS2 spin
+  rclcpp::spin(node);
+  rclcpp::shutdown();
 
   // Successful exit
   return 0;

@@ -1,52 +1,38 @@
-cmake_minimum_required(VERSION 3.0.2)
-project(ocs2_oc)
+cmake_minimum_required(VERSION 3.14.4)
+project(ocs2_oc LANGUAGES CXX)
+
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+endif()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wno-extra -Wpedantic)
+  add_compile_options(-Wno-sign-compare -Wno-range-loop-construct -Wno-ignored-qualifiers -Wno-unused-function)
+  add_compile_options(-Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable)
+  add_compile_options(-Wno-implicit-fallthrough -Wno-reorder -Wno-redundant-move -Wno-missing-field-initializers)
+endif()
 
 ## Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS
-  cmake_modules
-  ocs2_core
-  # ocs2_qp_solver
-)
-find_package(Boost REQUIRED COMPONENTS
-  system
-  filesystem
-)
-
-find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(ament_cmake REQUIRED)
+find_package(ocs2_thirdparty REQUIRED)
+find_package(ocs2_core REQUIRED)
+find_package(OpenMP REQUIRED)
+find_package(eigen3_cmake_module REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-###################################
-## catkin specific configuration ##
-###################################
-
-catkin_package(
-  INCLUDE_DIRS
-    include
-    test/include
-    ${EIGEN3_INCLUDE_DIRS}
-  LIBRARIES
-    ${PROJECT_NAME}
-  CATKIN_DEPENDS
-    ocs2_core
-  DEPENDS
-    Boost
-)
 
 ###########
 ## Build ##
 ###########
 
-include_directories(
-  include
-  test/include
-  ${EIGEN3_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS}
-  ${catkin_INCLUDE_DIRS}
+set(dependencies
+    Boost
+    Eigen3
+    ocs2_core
 )
 
-add_library(${PROJECT_NAME}
+add_library(${PROJECT_NAME} SHARED
   src/approximate_model/ChangeOfInputVariables.cpp
   src/approximate_model/LinearQuadraticApproximator.cpp
   src/multiple_shooting/Helpers.cpp
@@ -80,13 +66,26 @@ add_library(${PROJECT_NAME}
   src/search_strategy/FilterLinesearch.cpp
   src/trajectory_adjustment/TrajectorySpreading.cpp
 )
-target_link_libraries(${PROJECT_NAME}
-  ${catkin_LIBRARIES}
+set(includes_${PROJECT_NAME}
+  $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
+target_include_directories(${PROJECT_NAME} PUBLIC
+  ${includes_${PROJECT_NAME}}
+)
+ament_target_dependencies(${PROJECT_NAME}
+  ${dependencies}
 )
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
 add_executable(${PROJECT_NAME}_lintTarget
   src/lintTarget.cpp
+)
+target_include_directories(${PROJECT_NAME}_lintTarget PUBLIC
+  ${includes_${PROJECT_NAME}}
+)
+ament_target_dependencies(${PROJECT_NAME}_lintTarget
+  ${dependencies}
 )
 
 #########################
@@ -109,16 +108,21 @@ endif(cmake_clang_tools_FOUND)
 
 install(
   TARGETS ${PROJECT_NAME}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  EXPORT export_${PROJECT_NAME}
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  RUNTIME DESTINATION bin
 )
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+
+install(DIRECTORY include/
+  DESTINATION include/${PROJECT_NAME}
 )
-install(DIRECTORY test/include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+install(DIRECTORY test/include/
+  DESTINATION include/${PROJECT_NAME}
 )
+
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ament_export_dependencies(${dependencies})
 
 #############
 ## Testing ##
@@ -130,83 +134,75 @@ install(DIRECTORY test/include/${PROJECT_NAME}/
 ## to see the summary of unit test results run
 ## $ catkin_test_results ../../../build/ocs2_oc
 
-catkin_add_gtest(test_${PROJECT_NAME}_multiple_shooting
+find_package(gtest_vendor REQUIRED)
+find_package(ament_cmake_gtest REQUIRED)
+
+set(test_includes_${PROJECT_NAME}
+  ${includes_${PROJECT_NAME}}
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/test/include>
+)
+
+function(ament_add_gtest_wrapper test_name)
+  ament_add_gtest(${test_name} ${ARGN})
+  target_include_directories(${test_name} PUBLIC
+    ${test_includes_${PROJECT_NAME}}
+  )
+endfunction()
+
+ament_add_gtest_wrapper(test_${PROJECT_NAME}_multiple_shooting
   test/multiple_shooting/testProjectionMultiplierCoefficients.cpp
   test/multiple_shooting/testTranscriptionMetrics.cpp
   test/multiple_shooting/testTranscriptionPerformanceIndex.cpp
 )
-add_dependencies(test_${PROJECT_NAME}_multiple_shooting
-  ${catkin_EXPORTED_TARGETS}
+ament_target_dependencies(test_${PROJECT_NAME}_multiple_shooting
+  ${dependencies}
 )
 target_link_libraries(test_${PROJECT_NAME}_multiple_shooting
   ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  gtest_main
+  -ldl
 )
 
-catkin_add_gtest(test_${PROJECT_NAME}_data
+ament_add_gtest_wrapper(test_${PROJECT_NAME}_data
   test/oc_data/testTimeDiscretization.cpp
-)
-add_dependencies(test_${PROJECT_NAME}_data
-  ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(test_${PROJECT_NAME}_data
   ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  gtest_main
 )
 
-catkin_add_gtest(test_${PROJECT_NAME}_rollout
+ament_add_gtest_wrapper(test_${PROJECT_NAME}_rollout
    test/rollout/testTimeTriggeredRollout.cpp
    test/rollout/testStateTriggeredRollout.cpp
 )
-add_dependencies(test_${PROJECT_NAME}_rollout
-  ${catkin_EXPORTED_TARGETS}
-)
 target_link_libraries(test_${PROJECT_NAME}_rollout
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  gtest_main
+  ${PROJECT_NAME} ${ocs2_core_TARGETS}
 )
 
-catkin_add_gtest(test_change_of_variables
+ament_add_gtest_wrapper(test_change_of_variables
   test/testChangeOfInputVariables.cpp
-)
-add_dependencies(test_change_of_variables
-  ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(test_change_of_variables
   ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  gtest_main
 )
 
-catkin_add_gtest(test_trajectory_spreading
+ament_add_gtest_wrapper(test_trajectory_spreading
   test/trajectory_adjustment/TrajectorySpreadingTest.cpp
-)
-add_dependencies(test_trajectory_spreading
-  ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(test_trajectory_spreading
   ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  gtest_main
 )
 
-catkin_add_gtest(test_ocp_to_kkt
+ament_add_gtest_wrapper(test_ocp_to_kkt
   test/oc_problem/testOcpToKkt.cpp
 )
 target_link_libraries(test_ocp_to_kkt
   ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  gtest_main
 )
 
-catkin_add_gtest(test_precondition
+ament_add_gtest_wrapper(test_precondition
   test/precondition/testPrecondition.cpp
 )
 target_link_libraries(test_precondition
   ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  gtest_main
 )
+
+ament_package()

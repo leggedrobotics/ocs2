@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <chrono>
-
+#include <algorithm>
 #include "ocs2_core/Types.h"
 
 namespace ocs2 {
@@ -46,7 +46,9 @@ class RepeatedTimer {
         totalTime_(std::chrono::nanoseconds::zero()),
         maxIntervalTime_(std::chrono::nanoseconds::zero()),
         lastIntervalTime_(std::chrono::nanoseconds::zero()),
-        startTime_(std::chrono::steady_clock::now()) {}
+        startTime_(std::chrono::steady_clock::now()) {
+    maxIntervalIndex_ = -1;
+  }
 
   /**
    *  Reset the timer statistics
@@ -56,6 +58,7 @@ class RepeatedTimer {
     totalTime_ = std::chrono::nanoseconds::zero();
     maxIntervalTime_ = std::chrono::nanoseconds::zero();
     lastIntervalTime_ = std::chrono::nanoseconds::zero();
+    maxIntervalIndex_ = -1;
   }
 
   /**
@@ -69,10 +72,13 @@ class RepeatedTimer {
   void endTimer() {
     auto endTime = std::chrono::steady_clock::now();
     lastIntervalTime_ = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime_);
-    maxIntervalTime_ = std::max(maxIntervalTime_, lastIntervalTime_);
+    if (lastIntervalTime_ > maxIntervalTime_) {
+      maxIntervalTime_ = lastIntervalTime_;
+      maxIntervalIndex_ = numTimedIntervals_;
+    }
     totalTime_ += lastIntervalTime_;
     numTimedIntervals_++;
-  };
+  }
 
   /**
    * @return Number of intervals that were timed
@@ -99,12 +105,18 @@ class RepeatedTimer {
    */
   scalar_t getAverageInMilliseconds() const { return getTotalInMilliseconds() / numTimedIntervals_; }
 
+  /**
+   * @return The index of the interval with the maximum duration
+   */
+  int getMaxIntervalIndex() const { return maxIntervalIndex_; }
+
  private:
   int numTimedIntervals_;
   std::chrono::nanoseconds totalTime_;
   std::chrono::nanoseconds maxIntervalTime_;
   std::chrono::nanoseconds lastIntervalTime_;
   std::chrono::steady_clock::time_point startTime_;
+  int maxIntervalIndex_;
 };
 
 }  // namespace benchmark

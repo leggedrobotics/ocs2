@@ -3,7 +3,7 @@
 <launch>
     <!-- visualization config -->
     <arg name="rviz"               default="true" />
-    <arg name="description_name"   default="legged_robot_description"/>
+    <arg name="description_name"   default="robot_description"/>
     <arg name="multiplot"          default="false"/>
 
     <!-- The task file for the mpc. -->

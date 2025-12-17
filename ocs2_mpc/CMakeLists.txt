@@ -1,50 +1,26 @@
-cmake_minimum_required(VERSION 3.0.2)
-project(ocs2_mpc)
+cmake_minimum_required(VERSION 3.14.4)
+project(ocs2_mpc LANGUAGES CXX)
 
-find_package(catkin REQUIRED COMPONENTS
-  cmake_modules
-  ocs2_core
-  ocs2_oc
-)
-find_package(Boost REQUIRED COMPONENTS
-  system
-  filesystem
-)
+# Default to C++17
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+endif()
 
-find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic -Wno-unused-parameter)
+endif()
 
-# Generate compile_commands.json for clang tools
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-###################################
-## catkin specific configuration ##
-###################################
-
-catkin_package(
-  INCLUDE_DIRS
-    include
-    ${EIGEN3_INCLUDE_DIRS}
-  LIBRARIES
-    ${PROJECT_NAME}
-  CATKIN_DEPENDS
-    ocs2_core
-    ocs2_oc
-  DEPENDS
-    Boost
-)
+find_package(ament_cmake REQUIRED)
+find_package(eigen3_cmake_module REQUIRED)
+find_package(Eigen3 REQUIRED)
+find_package(ocs2_core REQUIRED)
+find_package(ocs2_oc REQUIRED)
 
 ###########
 ## Build ##
 ###########
 
-include_directories(
-  include
-  ${EIGEN3_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS}
-  ${catkin_INCLUDE_DIRS}
-)
-
-add_library(${PROJECT_NAME}
+add_library(${PROJECT_NAME} SHARED
   src/LoopshapingSystemObservation.cpp
   src/MPC_BASE.cpp
   src/MPC_Settings.cpp
@@ -53,31 +29,19 @@ add_library(${PROJECT_NAME}
   src/MPC_MRT_Interface.cpp
   # src/MPC_OCS2.cpp
 )
-target_link_libraries(${PROJECT_NAME}
-  ${catkin_LIBRARIES}
+
+target_include_directories(${PROJECT_NAME} PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
+)
+
+ament_target_dependencies(${PROJECT_NAME}
+  ocs2_core
+  ocs2_oc
+  Eigen3
+  Boost
 )
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
-
-add_executable(${PROJECT_NAME}_lintTarget
-  src/lintTarget.cpp
-)
-target_link_libraries(${PROJECT_NAME}_lintTarget
-  ${catkin_LIBRARIES}
-)
-
-#########################
-###   CLANG TOOLING   ###
-#########################
-find_package(cmake_clang_tools QUIET)
-if(cmake_clang_tools_FOUND)
-  message(STATUS "Run clang tooling for target " ${PROJECT_NAME}_lintTarget)
-  add_clang_tooling(
-    TARGETS ${PROJECT_NAME}_lintTarget
-    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
-    CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
-    CF_WERROR
-)
-endif(cmake_clang_tools_FOUND)
 
 #############
 ## Install ##
@@ -85,24 +49,24 @@ endif(cmake_clang_tools_FOUND)
 
 install(
   TARGETS ${PROJECT_NAME}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  EXPORT export_${PROJECT_NAME}
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  RUNTIME DESTINATION bin
 )
 
-install(DIRECTORY include/${PROJECT_NAME}/
-        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+install(
+  DIRECTORY include/
+  DESTINATION include/${PROJECT_NAME}
+)
 
-#############
-## Testing ##
-#############
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ament_export_dependencies(
+  ocs2_core
+  ocs2_oc
+  Eigen3
+  Boost
+)
 
-#catkin_add_gtest(testMPC_OCS2
-#  test/testMPC_OCS2.cpp
-#)
-#target_link_libraries(testMPC_OCS2
-#  ${catkin_LIBRARIES}
-#  ${Boost_LIBRARIES}
-#)
-#target_compile_options(testMPC_OCS2 PRIVATE ${OCS2_CXX_FLAGS})
+ament_package()
 

@@ -59,10 +59,10 @@ grid_map_msgs::GridMapPtr RaisimHeightmapRosConverter::convertHeightmapToGridmap
   dataArray.layout.dim.resize(2);
   dataArray.layout.dim[0].label = "column_index";
   dataArray.layout.dim[0].stride = heightMap.getHeightVector().size();
-  dataArray.layout.dim[0].size = heightMap.getXSamples();
+  dataArray.layout.dim[0].size = heightMap.getYSamples();
   dataArray.layout.dim[1].label = "row_index";
-  dataArray.layout.dim[1].stride = heightMap.getYSamples();
-  dataArray.layout.dim[1].size = heightMap.getYSamples();
+  dataArray.layout.dim[1].stride = heightMap.getXSamples();
+  dataArray.layout.dim[1].size = heightMap.getXSamples();
   dataArray.data.insert(dataArray.data.begin(), heightMap.getHeightVector().rbegin(), heightMap.getHeightVector().rend());
   gridMapMsg->data.push_back(dataArray);
 
@@ -74,8 +74,8 @@ std::unique_ptr<raisim::HeightMap> RaisimHeightmapRosConverter::convertGridmapTo
     throw std::runtime_error("RaisimHeightmapRosConverter::convertGridmapToHeightmap - Layout of gridMap currently not supported");
   }
 
-  const int xSamples = gridMap->data[0].layout.dim[0].size;
-  const int ySamples = gridMap->data[0].layout.dim[1].size;
+  const int xSamples = gridMap->data[0].layout.dim[1].size;
+  const int ySamples = gridMap->data[0].layout.dim[0].size;
   const double xSize = gridMap->info.length_x;
   const double ySize = gridMap->info.length_y;
   const double centerX = gridMap->info.pose.position.x;

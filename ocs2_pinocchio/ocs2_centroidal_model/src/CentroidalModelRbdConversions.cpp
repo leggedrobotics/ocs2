@@ -183,8 +183,12 @@ vector_t CentroidalModelRbdConversions::computeRbdTorqueFromCentroidalModelPD(co
                                            desiredBaseAcceleration);
   vector_t qDesired(info.generalizedCoordinatesNum), vDesired(info.generalizedCoordinatesNum), aDesired(info.generalizedCoordinatesNum);
   qDesired << desiredBasePose, centroidal_model::getJointAngles(desiredState, info);
-  vDesired << desiredBaseVelocity, centroidal_model::getJointVelocities(desiredInput, info);
-  aDesired << desiredBaseAcceleration, desiredJointAccelerations;
+  // vDesired << desiredBaseVelocity, centroidal_model::getJointVelocities(desiredInput, info);
+  // aDesired << desiredBaseAcceleration, desiredJointAccelerations;
+	Vector3 desiredZyxDerivatives = getEulerAnglesZyxDerivativesFromGlobalAngularVelocity<scalar_t>(desiredBasePose.tail<3>(), desiredBaseVelocity.tail<3>());
+  vDesired << desiredBaseVelocity.head<3>(), desiredZyxDerivatives, centroidal_model::getJointVelocities(desiredInput, info);
+  Vector3 desiredZyxSencondDerivatives = getEulerAnglesZyxDerivativesFromGlobalAngularAcceleration<scalar_t>(desiredBasePose.tail<3>(), desiredZyxDerivatives, desiredBaseAcceleration.tail<3>());
+  aDesired << desiredBaseAcceleration.head<3>(), desiredZyxSencondDerivatives , desiredJointAccelerations;  // TODO desiredBaseAcceleration should be transfer to secondDerivativesEulerAngles
 
   pinocchio::container::aligned_vector<pinocchio::Force> fextDesired(model.njoints, pinocchio::Force::Zero());
   for (size_t i = 0; i < info.numThreeDofContacts; i++) {

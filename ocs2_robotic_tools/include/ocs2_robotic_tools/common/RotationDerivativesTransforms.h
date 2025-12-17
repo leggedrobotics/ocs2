@@ -133,6 +133,42 @@ Eigen::Matrix<SCALAR_T, 3, 1> getGlobalAngularAccelerationFromEulerAnglesZyxDeri
 }
 
 /**
+ * Compute derivatives of ZYX-Euler angles from angular accelerations expressed in the world frame 
+ *
+ * @param [in] eulerAngles: ZYX-Euler angles
+ * @param [in] derivativesEulerAngles: time-derivative of ZYX-Euler angles
+ * @param [in] angularAcceleration: angular acceleration expressed in world frame 
+ * @return second order time-derivative of ZYX-Euler angles
+ */
+template <typename SCALAR_T>
+Eigen::Matrix<SCALAR_T, 3, 1> getEulerAnglesZyxDerivativesFromGlobalAngularAcceleration(
+    const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles, const Eigen::Matrix<SCALAR_T, 3, 1>& derivativesEulerAngles,
+    const Eigen::Matrix<SCALAR_T, 3, 1>& angularAcceleration) {
+  const SCALAR_T sz = sin(eulerAngles(0));
+  const SCALAR_T cz = cos(eulerAngles(0));
+  const SCALAR_T sy = sin(eulerAngles(1));
+  const SCALAR_T cy = cos(eulerAngles(1));
+  const SCALAR_T sx = sin(eulerAngles(2));
+  const SCALAR_T cx = cos(eulerAngles(2));
+  const SCALAR_T dz = derivativesEulerAngles(0);
+  const SCALAR_T dy = derivativesEulerAngles(1);
+  const SCALAR_T dx = derivativesEulerAngles(2);
+  Eigen::Matrix<SCALAR_T, 3, 3> transformationMatrixInv;
+  // clang-format off
+  transformationMatrixInv << cz*sy/cy, sz*sy/cy, SCALAR_T(1.0),
+                          -sz,      cz,       SCALAR_T(0.0),
+                          cz/cy,    sz/cy,    SCALAR_T(0.0);
+  // clang-format on
+  Eigen::Matrix<SCALAR_T, 3, 3> derivativeTransformationMatrix;
+  // clang-format off
+  derivativeTransformationMatrix << SCALAR_T(0), -cz*dz, (-sy*dy)*cz + cy*(-sz*dz),
+                                    SCALAR_T(0), -sz*dz,  (-sy*dy)*sz + cy*(cz*dz),
+                                    SCALAR_T(0),  SCALAR_T(0),   -cy*dy;
+  // clang-format on
+  return transformationMatrixInv * (angularAcceleration - derivativeTransformationMatrix * derivativesEulerAngles);
+}
+
+/**
  * Compute the matrix that maps derivatives of ZYX-Euler angles to local angular velocities
  *
  * @param [in] eulerAngles: ZYX-Euler angles

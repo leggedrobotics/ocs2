@@ -125,12 +125,14 @@ class LineSearchStrategy final : public SearchStrategyBase {
   // convergence check
   scalar_t baselineMerit_ = 0.0;                  // the merit of the rollout for zero learning rate
   scalar_t unoptimizedControllerUpdateIS_ = 0.0;  // integral of the squared (IS) norm of the controller update.
+  size_t baselineTrajectoryPoints_ = 0;
 
   // threading
   std::atomic_size_t nextTaskId_{0};
   std::atomic_size_t alphaExpNext_{0};
   std::vector<bool> alphaProcessed_;
   std::mutex lineSearchResultMutex_;
+  std::mutex bestSolutionUpdateMutex_;
   mutable std::mutex outputDisplayGuardMutex_;
 };
 

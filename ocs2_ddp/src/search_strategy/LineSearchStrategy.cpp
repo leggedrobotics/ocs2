@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_ddp/search_strategy/LineSearchStrategy.h"
 
+#include <algorithm>
 #include <iomanip>
 
 #include "ocs2_ddp/DDP_HelperFunctions.h"
@@ -95,6 +96,21 @@ void LineSearchStrategy::computeSolution(size_t taskId, scalar_t stepLength, sea
   solution.avgTimeStep = rolloutTrajectory(rollout, lineSearchInputRef_.timePeriodPtr->first, *lineSearchInputRef_.initStatePtr,
                                            lineSearchInputRef_.timePeriodPtr->second, solution.primalSolution);
 
+  // early reject: rollout points are too many
+  if (!numerics::almost_eq(stepLength, scalar_t(0.0))) {
+    const size_t points = solution.primalSolution.timeTrajectory_.size();
+    const size_t threshold = std::max<size_t>(200, baselineTrajectoryPoints_ * 10);
+    if (points > threshold) {
+      solution.performanceIndex.merit = std::numeric_limits<scalar_t>::max();
+      solution.performanceIndex.cost = std::numeric_limits<scalar_t>::max();
+      if (baseSettings_.displayInfo) {
+        printString("    [Thread " + std::to_string(taskId) + "] rollout with step length " + std::to_string(stepLength) +
+                    " is rejected: points=" + std::to_string(points) + " > threshold=" + std::to_string(threshold) + '\n');
+      }
+      return;
+    }
+  }
+
   // adjust dual solution only if it is required
   const DualSolution* adjustedDualSolutionPtr = lineSearchInputRef_.dualSolutionPtr;
   if (!lineSearchInputRef_.dualSolutionPtr->timeTrajectory.empty()) {
@@ -148,6 +164,7 @@ bool LineSearchStrategy::run(const std::pair<scalar_t, scalar_t>& timePeriod, co
   try {
     computeSolution(taskId, stepLength, workersSolution_[taskId]);
     baselineMerit_ = workersSolution_[taskId].performanceIndex.merit;
+    baselineTrajectoryPoints_ = workersSolution_[taskId].primalSolution.timeTrajectory_.size();
     unoptimizedControllerUpdateIS_ = computeControllerUpdateIS(unoptimizedController);
 
     // record solution
@@ -224,22 +241,40 @@ void LineSearchStrategy::lineSearchTask(const size_t taskId) {
 
     // whether to accept the step or reject it
     bool terminateLinesearchTasks = false;
+
+    /*
+     * based on the "Armijo backtracking" step length selection policy:
+     * cost should be better than the baseline cost but learning rate should
+     * be as high as possible. This is equivalent to a single core line search.
+     */
+    const bool armijoCondition = workersSolution_[taskId].performanceIndex.merit <
+                                 (baselineMerit_ - settings_.armijoCoefficient * stepLength * unoptimizedControllerUpdateIS_);
+
+    bool acceptedAsBest = false;
+    if (armijoCondition) {
+      scalar_t bestStepSize = bestStepSize_.load(std::memory_order_acquire);
+      while (stepLength > bestStepSize) {
+        if (bestStepSize_.compare_exchange_weak(bestStepSize, stepLength, std::memory_order_acq_rel, std::memory_order_acquire)) {
+          acceptedAsBest = true;
+          break;
+        }
+      }
+    }
+
+    if (acceptedAsBest) {
+      std::lock_guard<std::mutex> lock(bestSolutionUpdateMutex_);
+      if (numerics::almost_eq(bestStepSize_.load(std::memory_order_acquire), stepLength)) {
+        swap(*bestSolutionRef_, workersSolution_[taskId]);
+      } else {
+        acceptedAsBest = false;
+      }
+    }
+
     {
       std::lock_guard<std::mutex> lock(lineSearchResultMutex_);
-
-      /*
-       * based on the "Armijo backtracking" step length selection policy:
-       * cost should be better than the baseline cost but learning rate should
-       * be as high as possible. This is equivalent to a single core line search.
-       */
-      const bool armijoCondition = workersSolution_[taskId].performanceIndex.merit <
-                                   (baselineMerit_ - settings_.armijoCoefficient * stepLength * unoptimizedControllerUpdateIS_);
-      if (armijoCondition && stepLength > bestStepSize_) {  // save solution
-        bestStepSize_ = stepLength;
-        swap(*bestSolutionRef_, workersSolution_[taskId]);
+      if (acceptedAsBest) {
         terminateLinesearchTasks = std::all_of(alphaProcessed_.cbegin(), alphaProcessed_.cbegin() + alphaExp, [](bool f) { return f; });
       }
-
       alphaProcessed_[alphaExp] = true;
     }  // end lock
 

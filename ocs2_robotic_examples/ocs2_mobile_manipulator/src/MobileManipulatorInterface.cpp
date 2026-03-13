@@ -62,9 +62,47 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Boost
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
+#include <boost/property_tree/info_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
 
 namespace ocs2 {
 namespace mobile_manipulator {
+
+namespace {
+
+template <typename Derived>
+void loadEigenMatrixSparseQuiet(const std::string& filename, const std::string& matrixName, Eigen::MatrixBase<Derived>& matrix) {
+  using scalar_t = typename Eigen::MatrixBase<Derived>::Scalar;
+
+  if (matrix.rows() == 0 || matrix.cols() == 0) {
+    throw std::runtime_error("[loadEigenMatrixSparseQuiet] Loading empty matrix \"" + matrixName + "\" is not allowed.");
+  }
+
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_info(filename, pt);
+
+  const scalar_t scaling = pt.get<scalar_t>(matrixName + ".scaling", 1.0);
+  const scalar_t defaultValue = pt.get<scalar_t>(matrixName + ".default", 0.0);
+
+  bool anyLoaded = false;
+  for (Eigen::Index i = 0; i < matrix.rows(); ++i) {
+    for (Eigen::Index j = 0; j < matrix.cols(); ++j) {
+      const auto valueOpt = pt.get_optional<scalar_t>(matrixName + ".(" + std::to_string(i) + "," + std::to_string(j) + ")");
+      if (valueOpt.has_value()) {
+        matrix(i, j) = scaling * valueOpt.value();
+        anyLoaded = true;
+      } else {
+        matrix(i, j) = scaling * defaultValue;
+      }
+    }
+  }
+
+  if (!anyLoaded) {
+    throw std::runtime_error("[loadEigenMatrixSparseQuiet] Could not load matrix \"" + matrixName + "\" from file \"" + filename + "\".");
+  }
+}
+
+}  // namespace
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -237,7 +275,7 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getQuadraticInputCos
 
   // arm joints DOFs input costs
   matrix_t R_arm = matrix_t::Zero(armStateDim, armStateDim);
-  loadData::loadEigenMatrix(taskFile, "inputCost.R.arm", R_arm);
+  loadEigenMatrixSparseQuiet(taskFile, "inputCost.R.arm", R_arm);
   R.bottomRightCorner(armStateDim, armStateDim) = R_arm;
 
   std::cerr << "\n #### Input Cost Settings: ";

@@ -6,6 +6,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(diagnostic_msgs REQUIRED)
 find_package(ocs2_msgs REQUIRED)
 find_package(ocs2_core REQUIRED)
 find_package(ocs2_mpc REQUIRED)
@@ -39,6 +40,7 @@ target_include_directories(${PROJECT_NAME}
 )
 ament_target_dependencies(${PROJECT_NAME}
   rclcpp
+  diagnostic_msgs
   ocs2_msgs
   ocs2_core
   ocs2_mpc
@@ -91,6 +93,7 @@ ament_export_include_directories(
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 ament_export_dependencies(
   rclcpp
+  diagnostic_msgs
   ocs2_msgs
   ocs2_core
   ocs2_mpc

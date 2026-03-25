@@ -407,10 +407,55 @@ void MPC_ROS_Interface::mpcObservationCallback(
   if (mpc_.settings().solutionTimeWindow_ < 0) {
     timeWindow = mpc_.getSolverPtr()->getFinalTime() - currentObservation.time;
   }
+  const auto& performanceIndices = mpc_.getSolverPtr()->getPerformanceIndeces();
+  diagnostic_msgs::msg::DiagnosticStatus solverStatus;
+  solverStatus.name = topicPrefix_ + "/mpc_solver";
+  solverStatus.hardware_id = topicPrefix_;
+  solverStatus.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+  solverStatus.message = "ok";
+  const auto addValue = [&solverStatus](const std::string& key,
+                                        const std::string& value) {
+    diagnostic_msgs::msg::KeyValue kv;
+    kv.key = key;
+    kv.value = value;
+    solverStatus.values.push_back(std::move(kv));
+  };
+  solverStatus.values.reserve(12);
+  addValue("solve_time_last_ms",
+           std::to_string(mpcTimer_.getLastIntervalInMilliseconds()));
+  addValue("solve_time_avg_ms",
+           std::to_string(mpcTimer_.getAverageInMilliseconds()));
+  addValue("solve_time_max_ms",
+           std::to_string(mpcTimer_.getMaxIntervalInMilliseconds()));
+  addValue("solve_time_samples",
+           std::to_string(mpcTimer_.getNumTimedIntervals()));
+  addValue("ddp_iterations_used",
+           std::to_string(mpc_.getSolverPtr()->getNumIterations()));
+  addValue("perf_merit", std::to_string(performanceIndices.merit));
+  addValue("perf_cost", std::to_string(performanceIndices.cost));
+  addValue("perf_dual_feas_sse",
+           std::to_string(performanceIndices.dualFeasibilitiesSSE));
+  addValue("perf_dynamics_violation_sse",
+           std::to_string(performanceIndices.dynamicsViolationSSE));
+  addValue("perf_eq_constraints_sse",
+           std::to_string(performanceIndices.equalityConstraintsSSE));
+  addValue("perf_ineq_constraints_sse",
+           std::to_string(performanceIndices.inequalityConstraintsSSE));
+  addValue("perf_eq_lagrangian",
+           std::to_string(performanceIndices.equalityLagrangian));
+  addValue("perf_ineq_lagrangian",
+           std::to_string(performanceIndices.inequalityLagrangian));
   if (timeWindow < 2.0 * mpcTimer_.getAverageInMilliseconds() * 1e-3) {
+    solverStatus.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
+    solverStatus.message =
+        "solution time window might be shorter than the MPC delay";
     std::cerr << "WARNING: The solution time window might be shorter than the "
                  "MPC delay!\n";
   }
+  diagnostic_msgs::msg::DiagnosticArray solverDiagnosticsMsg;
+  solverDiagnosticsMsg.header.stamp = node_->now();
+  solverDiagnosticsMsg.status.push_back(std::move(solverStatus));
+  mpcSolverDiagnosticsPublisher_->publish(std::move(solverDiagnosticsMsg));
 
   // display
   if (mpc_.settings().debugPrint_) {
@@ -496,6 +541,9 @@ void MPC_ROS_Interface::launchNodes(const rclcpp::Node::SharedPtr& node) {
   mpcPolicyPublisher_ =
       node_->create_publisher<ocs2_msgs::msg::MpcFlattenedController>(
           topicPrefix_ + "_mpc_policy", latchedQos);
+  mpcSolverDiagnosticsPublisher_ =
+      node_->create_publisher<diagnostic_msgs::msg::DiagnosticArray>(
+          topicPrefix_ + "_mpc_solver_diagnostics", 10);
 
   // MPC reset service server
   mpcResetServiceServer_ = node_->create_service<ocs2_msgs::srv::Reset>(

@@ -39,6 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <atomic>
 #include <condition_variable>
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <iostream>
 #include <memory>
 #include <mutex>
@@ -163,6 +164,8 @@ class MPC_ROS_Interface {
       mpcTargetTrajectoriesSubscriber_;
   rclcpp::Publisher<ocs2_msgs::msg::MpcFlattenedController>::SharedPtr
       mpcPolicyPublisher_;
+  rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr
+      mpcSolverDiagnosticsPublisher_;
   rclcpp::Service<ocs2_msgs::srv::Reset>::SharedPtr mpcResetServiceServer_;
 
   std::unique_ptr<CommandData> bufferCommandPtr_;

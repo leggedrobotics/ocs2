@@ -30,6 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/thread_support/SetThreadPriority.h>
 #include <ocs2_core/thread_support/ThreadPool.h>
 
+#include <exception>
+
 namespace ocs2 {
 
 /**************************************************************************************************/
@@ -112,13 +114,31 @@ void ThreadPool::runParallel(std::function<void(int)> taskFunction, int N) {
     }
   }
 
+  std::exception_ptr firstException;
+
   // Execute one instance in this thread.
   const auto workerId = static_cast<int>(numThreads());  // threadpool workers use ID 0 -> nThreads - 1
-  taskFunction(workerId);
+  try {
+    taskFunction(workerId);
+  } catch (...) {
+    firstException = std::current_exception();
+  }
 
-  // Wait for helpers to finish.
+  // Always drain every helper before propagating an exception. Otherwise a
+  // caller can start another parallel operation while failed-call helpers are
+  // still using its state.
   for (auto&& fut : futures) {
-    fut.get();
+    try {
+      fut.get();
+    } catch (...) {
+      if (!firstException) {
+        firstException = std::current_exception();
+      }
+    }
+  }
+
+  if (firstException) {
+    std::rethrow_exception(firstException);
   }
 }
 

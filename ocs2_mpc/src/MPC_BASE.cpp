@@ -28,6 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include <algorithm>
+#include <stdexcept>
 
 #include <ocs2_mpc/MPC_BASE.h>
 
@@ -42,20 +43,29 @@ MPC_BASE::MPC_BASE(mpc::Settings mpcSettings) : mpcSettings_(std::move(mpcSettin
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MPC_BASE::reset() {
-  initRun_ = true;
-  mpcTimer_.reset();
   getSolverPtr()->reset();
+  initRun_ = true;
+  solverHealthy_ = true;
+  lastRunTime_ = 0.0;
+  mpcTimer_.reset();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState) {
-  // check if the current time exceeds the solver final limit
-  if (!initRun_ && currentTime >= getSolverPtr()->getFinalTime()) {
-    std::cerr << "WARNING: The MPC time-horizon is smaller than the MPC starting time.\n";
-    std::cerr << "currentTime: " << currentTime << "\t Controller finalTime: " << getSolverPtr()->getFinalTime() << '\n';
-    return false;
+  if (!solverHealthy_) {
+    throw std::runtime_error("The previous MPC solve failed. Reset the MPC before running it again.");
+  }
+
+  if (!initRun_) {
+    const scalar_t previousFinalTime = getSolverPtr()->getFinalTime();
+    if (currentTime >= previousFinalTime || currentTime < lastRunTime_) {
+      std::cerr << "WARNING: MPC observation time discontinuity detected. Resetting the solver.\n";
+      std::cerr << "currentTime: " << currentTime << "\t previousRunTime: " << lastRunTime_
+                << "\t previousFinalTime: " << previousFinalTime << '\n';
+      reset();
+    }
   }
 
   const scalar_t finalTime = currentTime + mpcSettings_.timeHorizon_;
@@ -72,10 +82,16 @@ bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState) {
   }
 
   // calculate the MPC policy
-  calculateController(currentTime, currentState, finalTime);
+  try {
+    calculateController(currentTime, currentState, finalTime);
+  } catch (...) {
+    solverHealthy_ = false;
+    throw;
+  }
 
   // set initRun flag to false
   initRun_ = false;
+  lastRunTime_ = currentTime;
 
   // display
   if (mpcSettings_.debugPrint_) {

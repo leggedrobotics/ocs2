@@ -31,8 +31,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_ros_interfaces/common/RosMsgConversions.h"
 
+#include <algorithm>
+#include <cmath>
+#include <limits>
 #include <stdexcept>
 #include <sstream>
+#include <utility>
 
 const rclcpp::Logger LOGGER = rclcpp::get_logger("MPC_ROS_Interface");
 
@@ -144,6 +148,60 @@ void validateResetTargetTrajectories(
   }
 }
 
+[[noreturn]] void throwPolicyError(const std::string& message) {
+  throw std::runtime_error("[MPC_ROS_Interface] Invalid policy: " + message);
+}
+
+float checkedPolicyFloat(scalar_t value, const std::string& field) {
+  if (!std::isfinite(value)) {
+    throwPolicyError(field + " must be finite.");
+  }
+  if (std::abs(value) > static_cast<scalar_t>(std::numeric_limits<float>::max())) {
+    throwPolicyError(field + " exceeds the float32 message range.");
+  }
+  return static_cast<float>(value);
+}
+
+void validatePrimalSolutionForRos(const PrimalSolution& primalSolution) {
+  if (primalSolution.controllerPtr_ == nullptr) {
+    throwPolicyError("controllerPtr is null.");
+  }
+  const size_t N = primalSolution.timeTrajectory_.size();
+  if (N == 0) {
+    throwPolicyError("time trajectory is empty.");
+  }
+  if (primalSolution.stateTrajectory_.size() != N || primalSolution.inputTrajectory_.size() != N) {
+    throwPolicyError("time, state, and input trajectory lengths do not match.");
+  }
+
+  const size_t stateDimension = primalSolution.stateTrajectory_.front().size();
+  const size_t inputDimension = primalSolution.inputTrajectory_.front().size();
+  if (stateDimension == 0) {
+    throwPolicyError("state vectors must not be empty.");
+  }
+  for (size_t i = 0; i < N; ++i) {
+    const scalar_t time = primalSolution.timeTrajectory_[i];
+    if (!std::isfinite(time) || (i > 0 && time < primalSolution.timeTrajectory_[i - 1])) {
+      throwPolicyError("time trajectory must be finite and non-decreasing.");
+    }
+    if (primalSolution.stateTrajectory_[i].size() != stateDimension ||
+        primalSolution.inputTrajectory_[i].size() != inputDimension) {
+      throwPolicyError("state or input dimensions change within the trajectory.");
+    }
+    if (!primalSolution.stateTrajectory_[i].allFinite() || !primalSolution.inputTrajectory_[i].allFinite()) {
+      throwPolicyError("state or input trajectory contains NaN or Inf.");
+    }
+  }
+
+  for (size_t i = 0; i < primalSolution.postEventIndices_.size(); ++i) {
+    const size_t index = primalSolution.postEventIndices_[i];
+    if (index >= N || index > std::numeric_limits<uint16_t>::max() ||
+        (i > 0 && index <= primalSolution.postEventIndices_[i - 1])) {
+      throwPolicyError("post-event indices must be increasing, fit uint16, and lie within the trajectory.");
+    }
+  }
+}
+
 }  // namespace
 
 /******************************************************************************************************/
@@ -172,16 +230,20 @@ MPC_ROS_Interface::~MPC_ROS_Interface() { shutdownNode(); }
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_ROS_Interface::resetMpcNode(
+uint64_t MPC_ROS_Interface::resetMpcNode(
     TargetTrajectories&& initTargetTrajectories) {
   std::lock_guard<std::mutex> resetLock(resetMutex_);
+  mpcReady_ = false;
+  readyToPublish_ = false;
   mpc_.reset();
   mpc_.getSolverPtr()->getReferenceManager().setTargetTrajectories(
       std::move(initTargetTrajectories));
   mpcTimer_.reset();
-  resetRequestedEver_ = true;
+  ++resetEpoch_;
+  policySequence_ = 0;
+  mpcReady_ = true;
   terminateThread_ = false;
-  readyToPublish_ = false;
+  return resetEpoch_;
 }
 
 /******************************************************************************************************/
@@ -198,7 +260,7 @@ void MPC_ROS_Interface::resetMpcCallback(
           mpc_.getSolverPtr()->getReferenceManager().getTargetTrajectories();
       validateResetTargetTrajectories(targetTrajectories, referenceTrajectories);
 
-      resetMpcNode(std::move(targetTrajectories));
+      res->reset_epoch = resetMpcNode(std::move(targetTrajectories));
       res->done = true;
 
       std::cerr << "\n#####################################################"
@@ -223,8 +285,16 @@ void MPC_ROS_Interface::resetMpcCallback(
 /******************************************************************************************************/
 ocs2_msgs::msg::MpcFlattenedController MPC_ROS_Interface::createMpcPolicyMsg(
     const PrimalSolution& primalSolution, const CommandData& commandData,
-    const PerformanceIndex& performanceIndices) {
+    const PerformanceIndex& performanceIndices, uint64_t resetEpoch,
+    uint64_t policySequence) {
+  if (resetEpoch == 0 || policySequence == 0) {
+    throwPolicyError("reset epoch and policy sequence must be nonzero.");
+  }
+  validatePrimalSolutionForRos(primalSolution);
+
   ocs2_msgs::msg::MpcFlattenedController mpcPolicyMsg;
+  mpcPolicyMsg.reset_epoch = resetEpoch;
+  mpcPolicyMsg.policy_sequence = policySequence;
 
   mpcPolicyMsg.init_observation = ros_msg_conversions::createObservationMsg(
       commandData.mpcInitObservation_);
@@ -279,7 +349,7 @@ ocs2_msgs::msg::MpcFlattenedController MPC_ROS_Interface::createMpcPolicyMsg(
     ocs2_msgs::msg::MpcState mpcState;
     mpcState.value.resize(primalSolution.stateTrajectory_[k].rows());
     for (size_t j = 0; j < primalSolution.stateTrajectory_[k].rows(); j++) {
-      mpcState.value[j] = primalSolution.stateTrajectory_[k](j);
+      mpcState.value[j] = checkedPolicyFloat(primalSolution.stateTrajectory_[k](j), "state trajectory");
     }
     mpcPolicyMsg.state_trajectory.emplace_back(mpcState);
   }  // end of k loop
@@ -289,7 +359,7 @@ ocs2_msgs::msg::MpcFlattenedController MPC_ROS_Interface::createMpcPolicyMsg(
     ocs2_msgs::msg::MpcInput mpcInput;
     mpcInput.value.resize(primalSolution.inputTrajectory_[k].rows());
     for (size_t j = 0; j < primalSolution.inputTrajectory_[k].rows(); j++) {
-      mpcInput.value[j] = primalSolution.inputTrajectory_[k](j);
+      mpcInput.value[j] = checkedPolicyFloat(primalSolution.inputTrajectory_[k](j), "input trajectory");
     }
     mpcPolicyMsg.input_trajectory.emplace_back(mpcInput);
   }  // end of k loop
@@ -309,6 +379,19 @@ ocs2_msgs::msg::MpcFlattenedController MPC_ROS_Interface::createMpcPolicyMsg(
   primalSolution.controllerPtr_->flatten(timeTrajectoryTruncated,
                                          policyMsgDataPointers);
 
+  const size_t stateDimension = primalSolution.stateTrajectory_.front().size();
+  const size_t inputDimension = primalSolution.inputTrajectory_.front().size();
+  for (const auto& data : mpcPolicyMsg.data) {
+    const size_t expectedSize =
+        mpcPolicyMsg.controller_type == ocs2_msgs::msg::MpcFlattenedController::CONTROLLER_FEEDFORWARD
+            ? inputDimension
+            : inputDimension + inputDimension * stateDimension;
+    if (data.data.size() != expectedSize ||
+        !std::all_of(data.data.begin(), data.data.end(), [](float value) { return std::isfinite(value); })) {
+      throwPolicyError("flattened controller data has the wrong length or contains NaN or Inf.");
+    }
+  }
+
   return mpcPolicyMsg;
 }
 
@@ -324,24 +407,38 @@ void MPC_ROS_Interface::publisherWorker() {
     if (terminateThread_) {
       break;
     }
+    readyToPublish_ = false;
+    lk.unlock();
+    msgReady_.notify_one();
 
     {
       std::lock_guard<std::mutex> policyBufferLock(bufferMutex_);
       publisherCommandPtr_.swap(bufferCommandPtr_);
       publisherPrimalSolutionPtr_.swap(bufferPrimalSolutionPtr_);
       publisherPerformanceIndicesPtr_.swap(bufferPerformanceIndicesPtr_);
+      std::swap(publisherResetEpoch_, bufferResetEpoch_);
+      std::swap(publisherPolicySequence_, bufferPolicySequence_);
     }
 
-    ocs2_msgs::msg::MpcFlattenedController mpcPolicyMsg =
-        createMpcPolicyMsg(*publisherPrimalSolutionPtr_, *publisherCommandPtr_,
-                           *publisherPerformanceIndicesPtr_);
+    try {
+      ocs2_msgs::msg::MpcFlattenedController mpcPolicyMsg =
+          createMpcPolicyMsg(*publisherPrimalSolutionPtr_, *publisherCommandPtr_,
+                             *publisherPerformanceIndicesPtr_, publisherResetEpoch_,
+                             publisherPolicySequence_);
 
-    // publish the message
-    mpcPolicyPublisher_->publish(mpcPolicyMsg);
+      std::lock_guard<std::mutex> resetLock(resetMutex_);
+      if (mpcReady_ && publisherResetEpoch_ == resetEpoch_) {
+        mpcPolicyPublisher_->publish(mpcPolicyMsg);
+      }
+    } catch (const std::exception& e) {
+      RCLCPP_ERROR_STREAM(LOGGER,
+                          "[MPC_ROS_Interface] Policy publisher failed: "
+                              << e.what());
+    } catch (...) {
+      RCLCPP_ERROR_STREAM(LOGGER,
+                          "[MPC_ROS_Interface] Policy publisher failed: unknown exception");
+    }
 
-    readyToPublish_ = false;
-    lk.unlock();
-    msgReady_.notify_one();
   }
 }
 
@@ -369,6 +466,8 @@ void MPC_ROS_Interface::copyToBuffer(
 
   // performance indices
   *bufferPerformanceIndicesPtr_ = mpc_.getSolverPtr()->getPerformanceIndeces();
+  bufferResetEpoch_ = resetEpoch_;
+  bufferPolicySequence_ = ++policySequence_;
 }
 
 /******************************************************************************************************/
@@ -378,110 +477,126 @@ void MPC_ROS_Interface::mpcObservationCallback(
     const ocs2_msgs::msg::MpcObservation::ConstSharedPtr& msg) {
   std::lock_guard<std::mutex> resetLock(resetMutex_);
 
-  if (!resetRequestedEver_.load()) {
+  if (!mpcReady_.load()) {
     RCLCPP_WARN_STREAM(LOGGER,
-                       "MPC should be reset first. Either call "
+                       "MPC is not ready. Either call "
                        "MPC_ROS_Interface::reset() or use the reset service.");
     return;
   }
 
-  // current time, state, input, and subsystem
-  const auto currentObservation = ros_msg_conversions::readObservationMsg(*msg);
+  try {
+    // current time, state, input, and subsystem
+    const auto currentObservation = ros_msg_conversions::readObservationMsg(*msg);
 
-  // measure the delay in running MPC
-  mpcTimer_.startTimer();
+    // measure the delay in running MPC
+    mpcTimer_.startTimer();
 
-  // run MPC
-  bool controllerIsUpdated =
-      mpc_.run(currentObservation.time, currentObservation.state);
-  if (!controllerIsUpdated) {
-    return;
-  }
-  copyToBuffer(currentObservation);
+    // run MPC
+    bool controllerIsUpdated = false;
+    try {
+      controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state);
+    } catch (...) {
+      mpcReady_ = false;
+      readyToPublish_ = false;
+      throw;
+    }
+    if (!controllerIsUpdated) {
+      return;
+    }
+    copyToBuffer(currentObservation);
 
-  // measure the delay for sending ROS messages
-  mpcTimer_.endTimer();
+    // measure the delay for sending ROS messages
+    mpcTimer_.endTimer();
 
-  // check MPC delay and solution window compatibility
-  scalar_t timeWindow = mpc_.settings().solutionTimeWindow_;
-  if (mpc_.settings().solutionTimeWindow_ < 0) {
-    timeWindow = mpc_.getSolverPtr()->getFinalTime() - currentObservation.time;
-  }
-  const auto& performanceIndices = mpc_.getSolverPtr()->getPerformanceIndeces();
-  diagnostic_msgs::msg::DiagnosticStatus solverStatus;
-  solverStatus.name = topicPrefix_ + "/mpc_solver";
-  solverStatus.hardware_id = topicPrefix_;
-  solverStatus.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  solverStatus.message = "ok";
-  const auto addValue = [&solverStatus](const std::string& key,
-                                        const std::string& value) {
-    diagnostic_msgs::msg::KeyValue kv;
-    kv.key = key;
-    kv.value = value;
-    solverStatus.values.push_back(std::move(kv));
-  };
-  solverStatus.values.reserve(12);
-  addValue("solve_time_last_ms",
-           std::to_string(mpcTimer_.getLastIntervalInMilliseconds()));
-  addValue("solve_time_avg_ms",
-           std::to_string(mpcTimer_.getAverageInMilliseconds()));
-  addValue("solve_time_max_ms",
-           std::to_string(mpcTimer_.getMaxIntervalInMilliseconds()));
-  addValue("solve_time_samples",
-           std::to_string(mpcTimer_.getNumTimedIntervals()));
-  addValue("ddp_iterations_used",
-           std::to_string(mpc_.getSolverPtr()->getNumIterations()));
-  addValue("perf_merit", std::to_string(performanceIndices.merit));
-  addValue("perf_cost", std::to_string(performanceIndices.cost));
-  addValue("perf_dual_feas_sse",
-           std::to_string(performanceIndices.dualFeasibilitiesSSE));
-  addValue("perf_dynamics_violation_sse",
-           std::to_string(performanceIndices.dynamicsViolationSSE));
-  addValue("perf_eq_constraints_sse",
-           std::to_string(performanceIndices.equalityConstraintsSSE));
-  addValue("perf_ineq_constraints_sse",
-           std::to_string(performanceIndices.inequalityConstraintsSSE));
-  addValue("perf_eq_lagrangian",
-           std::to_string(performanceIndices.equalityLagrangian));
-  addValue("perf_ineq_lagrangian",
-           std::to_string(performanceIndices.inequalityLagrangian));
-  if (timeWindow < 2.0 * mpcTimer_.getAverageInMilliseconds() * 1e-3) {
-    solverStatus.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
-    solverStatus.message =
-        "solution time window might be shorter than the MPC delay";
-    std::cerr << "WARNING: The solution time window might be shorter than the "
-                 "MPC delay!\n";
-  }
-  diagnostic_msgs::msg::DiagnosticArray solverDiagnosticsMsg;
-  solverDiagnosticsMsg.header.stamp = node_->now();
-  solverDiagnosticsMsg.status.push_back(std::move(solverStatus));
-  mpcSolverDiagnosticsPublisher_->publish(std::move(solverDiagnosticsMsg));
+    // check MPC delay and solution window compatibility
+    scalar_t timeWindow = mpc_.settings().solutionTimeWindow_;
+    if (mpc_.settings().solutionTimeWindow_ < 0) {
+      timeWindow = mpc_.getSolverPtr()->getFinalTime() - currentObservation.time;
+    }
+    const auto& performanceIndices = mpc_.getSolverPtr()->getPerformanceIndeces();
+    diagnostic_msgs::msg::DiagnosticStatus solverStatus;
+    solverStatus.name = topicPrefix_ + "/mpc_solver";
+    solverStatus.hardware_id = topicPrefix_;
+    solverStatus.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+    solverStatus.message = "ok";
+    const auto addValue = [&solverStatus](const std::string& key,
+                                          const std::string& value) {
+      diagnostic_msgs::msg::KeyValue kv;
+      kv.key = key;
+      kv.value = value;
+      solverStatus.values.push_back(std::move(kv));
+    };
+    solverStatus.values.reserve(12);
+    addValue("solve_time_last_ms",
+             std::to_string(mpcTimer_.getLastIntervalInMilliseconds()));
+    addValue("solve_time_avg_ms",
+             std::to_string(mpcTimer_.getAverageInMilliseconds()));
+    addValue("solve_time_max_ms",
+             std::to_string(mpcTimer_.getMaxIntervalInMilliseconds()));
+    addValue("solve_time_samples",
+             std::to_string(mpcTimer_.getNumTimedIntervals()));
+    addValue("ddp_iterations_used",
+             std::to_string(mpc_.getSolverPtr()->getNumIterations()));
+    addValue("perf_merit", std::to_string(performanceIndices.merit));
+    addValue("perf_cost", std::to_string(performanceIndices.cost));
+    addValue("perf_dual_feas_sse",
+             std::to_string(performanceIndices.dualFeasibilitiesSSE));
+    addValue("perf_dynamics_violation_sse",
+             std::to_string(performanceIndices.dynamicsViolationSSE));
+    addValue("perf_eq_constraints_sse",
+             std::to_string(performanceIndices.equalityConstraintsSSE));
+    addValue("perf_ineq_constraints_sse",
+             std::to_string(performanceIndices.inequalityConstraintsSSE));
+    addValue("perf_eq_lagrangian",
+             std::to_string(performanceIndices.equalityLagrangian));
+    addValue("perf_ineq_lagrangian",
+             std::to_string(performanceIndices.inequalityLagrangian));
+    if (timeWindow < 2.0 * mpcTimer_.getAverageInMilliseconds() * 1e-3) {
+      solverStatus.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
+      solverStatus.message =
+          "solution time window might be shorter than the MPC delay";
+      std::cerr << "WARNING: The solution time window might be shorter than the "
+                   "MPC delay!\n";
+    }
+    diagnostic_msgs::msg::DiagnosticArray solverDiagnosticsMsg;
+    solverDiagnosticsMsg.header.stamp = node_->now();
+    solverDiagnosticsMsg.status.push_back(std::move(solverStatus));
+    mpcSolverDiagnosticsPublisher_->publish(std::move(solverDiagnosticsMsg));
 
-  // display
-  if (mpc_.settings().debugPrint_) {
-    std::cerr << '\n';
-    std::cerr << "\n### MPC_ROS Benchmarking";
-    std::cerr << "\n###   Maximum : "
-              << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms].";
-    std::cerr << "\n###   Average : " << mpcTimer_.getAverageInMilliseconds()
-              << "[ms].";
-    std::cerr << "\n###   Latest  : "
-              << mpcTimer_.getLastIntervalInMilliseconds() << "[ms]."
-              << std::endl;
-  }
+    // display
+    if (mpc_.settings().debugPrint_) {
+      std::cerr << '\n';
+      std::cerr << "\n### MPC_ROS Benchmarking";
+      std::cerr << "\n###   Maximum : "
+                << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms].";
+      std::cerr << "\n###   Average : " << mpcTimer_.getAverageInMilliseconds()
+                << "[ms].";
+      std::cerr << "\n###   Latest  : "
+                << mpcTimer_.getLastIntervalInMilliseconds() << "[ms]."
+                << std::endl;
+    }
 
 #ifdef PUBLISH_THREAD
-  std::unique_lock<std::mutex> lk(publisherMutex_);
-  readyToPublish_ = true;
-  lk.unlock();
-  msgReady_.notify_one();
+    std::unique_lock<std::mutex> lk(publisherMutex_);
+    readyToPublish_ = true;
+    lk.unlock();
+    msgReady_.notify_one();
 
 #else
-  ocs2_msgs::msg::MpcFlattenedController mpcPolicyMsg =
-      createMpcPolicyMsg(*bufferPrimalSolutionPtr_, *bufferCommandPtr_,
-                         *bufferPerformanceIndicesPtr_);
-  mpcPolicyPublisher_->publish(mpcPolicyMsg);
+    ocs2_msgs::msg::MpcFlattenedController mpcPolicyMsg =
+        createMpcPolicyMsg(*bufferPrimalSolutionPtr_, *bufferCommandPtr_,
+                           *bufferPerformanceIndicesPtr_, bufferResetEpoch_,
+                           bufferPolicySequence_);
+    mpcPolicyPublisher_->publish(mpcPolicyMsg);
 #endif
+  } catch (const std::exception& e) {
+    RCLCPP_ERROR_STREAM(LOGGER,
+                        "[MPC_ROS_Interface] Observation callback failed: "
+                            << e.what());
+  } catch (...) {
+    RCLCPP_ERROR_STREAM(LOGGER,
+                        "[MPC_ROS_Interface] Observation callback failed: unknown exception");
+  }
 }
 
 /******************************************************************************************************/

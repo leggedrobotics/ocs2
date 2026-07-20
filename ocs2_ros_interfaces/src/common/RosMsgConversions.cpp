@@ -29,8 +29,50 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_ros_interfaces/common/RosMsgConversions.h"
 
+#include <cmath>
+#include <limits>
+#include <stdexcept>
+#include <string>
+
 namespace ocs2 {
 namespace ros_msg_conversions {
+namespace {
+
+template <typename Scalar>
+void requireFinite(Scalar value, const std::string& field) {
+  if (!std::isfinite(value)) {
+    throw std::runtime_error("[RosMsgConversions] " + field + " must be finite.");
+  }
+}
+
+template <typename Container>
+void requireFiniteValues(const Container& values, const std::string& field) {
+  for (size_t i = 0; i < values.size(); ++i) {
+    requireFinite(values[i], field + "[" + std::to_string(i) + "]");
+  }
+}
+
+float checkedFloat(scalar_t value, const std::string& field) {
+  requireFinite(value, field);
+  if (std::abs(value) > static_cast<scalar_t>(std::numeric_limits<float>::max())) {
+    throw std::runtime_error("[RosMsgConversions] " + field + " exceeds the float32 message range.");
+  }
+  return static_cast<float>(value);
+}
+
+void validateModeSchedule(const scalar_array_t& eventTimes, const size_array_t& modeSequence) {
+  if (modeSequence.size() != eventTimes.size() + 1) {
+    throw std::runtime_error("[RosMsgConversions] mode_sequence size must equal event_times size plus one.");
+  }
+  for (size_t i = 0; i < eventTimes.size(); ++i) {
+    requireFinite(eventTimes[i], "mode_schedule.event_times[" + std::to_string(i) + "]");
+    if (i > 0 && eventTimes[i] < eventTimes[i - 1]) {
+      throw std::runtime_error("[RosMsgConversions] mode_schedule.event_times must be non-decreasing.");
+    }
+  }
+}
+
+}  // namespace
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -39,16 +81,20 @@ ocs2_msgs::msg::MpcObservation createObservationMsg(
     const SystemObservation& observation) {
   ocs2_msgs::msg::MpcObservation observationMsg;
 
+  requireFinite(observation.time, "observation.time");
+  if (observation.state.size() == 0) {
+    throw std::runtime_error("[RosMsgConversions] observation.state must not be empty.");
+  }
   observationMsg.time = observation.time;
 
   observationMsg.state.value.resize(observation.state.rows());
   for (size_t i = 0; i < observation.state.rows(); i++) {
-    observationMsg.state.value[i] = static_cast<float>(observation.state(i));
+    observationMsg.state.value[i] = checkedFloat(observation.state(i), "observation.state[" + std::to_string(i) + "]");
   }
 
   observationMsg.input.value.resize(observation.input.rows());
   for (size_t i = 0; i < observation.input.rows(); i++) {
-    observationMsg.input.value[i] = static_cast<float>(observation.input(i));
+    observationMsg.input.value[i] = checkedFloat(observation.input(i), "observation.input[" + std::to_string(i) + "]");
   }
 
   observationMsg.mode = observation.mode;
@@ -63,6 +109,12 @@ SystemObservation readObservationMsg(
     const ocs2_msgs::msg::MpcObservation& observationMsg) {
   SystemObservation observation;
 
+  requireFinite(observationMsg.time, "observation.time");
+  if (observationMsg.state.value.empty()) {
+    throw std::runtime_error("[RosMsgConversions] observation.state must not be empty.");
+  }
+  requireFiniteValues(observationMsg.state.value, "observation.state");
+  requireFiniteValues(observationMsg.input.value, "observation.input");
   observation.time = observationMsg.time;
 
   const auto& state = observationMsg.state.value;
@@ -85,6 +137,7 @@ SystemObservation readObservationMsg(
 /******************************************************************************************************/
 ocs2_msgs::msg::ModeSchedule createModeScheduleMsg(
     const ModeSchedule& modeSchedule) {
+  validateModeSchedule(modeSchedule.eventTimes, modeSchedule.modeSequence);
   ocs2_msgs::msg::ModeSchedule modeScheduleMsg;
   // event times
   modeScheduleMsg.event_times.clear();
@@ -122,6 +175,8 @@ ModeSchedule readModeScheduleMsg(
     mode_sequence.push_back(si);
   }
 
+  validateModeSchedule(eventTimes, mode_sequence);
+
   return {eventTimes, mode_sequence};
 }
 
@@ -133,17 +188,17 @@ ocs2_msgs::msg::MpcPerformanceIndices createPerformanceIndicesMsg(
     const PerformanceIndex& performanceIndices) {
   ocs2_msgs::msg::MpcPerformanceIndices performanceIndicesMsg;
 
-  performanceIndicesMsg.init_time = initTime;
-  performanceIndicesMsg.merit = performanceIndices.merit;
-  performanceIndicesMsg.cost = performanceIndices.cost;
+  performanceIndicesMsg.init_time = checkedFloat(initTime, "performance_indices.init_time");
+  performanceIndicesMsg.merit = checkedFloat(performanceIndices.merit, "performance_indices.merit");
+  performanceIndicesMsg.cost = checkedFloat(performanceIndices.cost, "performance_indices.cost");
   performanceIndicesMsg.dynamics_violation_sse =
-      performanceIndices.dynamicsViolationSSE;
+      checkedFloat(performanceIndices.dynamicsViolationSSE, "performance_indices.dynamics_violation_sse");
   performanceIndicesMsg.equality_constraints_sse =
-      performanceIndices.equalityConstraintsSSE;
+      checkedFloat(performanceIndices.equalityConstraintsSSE, "performance_indices.equality_constraints_sse");
   performanceIndicesMsg.equality_lagrangian =
-      performanceIndices.equalityLagrangian;
+      checkedFloat(performanceIndices.equalityLagrangian, "performance_indices.equality_lagrangian");
   performanceIndicesMsg.inequality_lagrangian =
-      performanceIndices.inequalityLagrangian;
+      checkedFloat(performanceIndices.inequalityLagrangian, "performance_indices.inequality_lagrangian");
 
   return performanceIndicesMsg;
 }
@@ -153,6 +208,13 @@ ocs2_msgs::msg::MpcPerformanceIndices createPerformanceIndicesMsg(
 /******************************************************************************************************/
 PerformanceIndex readPerformanceIndicesMsg(
     const ocs2_msgs::msg::MpcPerformanceIndices& performanceIndicesMsg) {
+  requireFinite(performanceIndicesMsg.init_time, "performance_indices.init_time");
+  requireFinite(performanceIndicesMsg.merit, "performance_indices.merit");
+  requireFinite(performanceIndicesMsg.cost, "performance_indices.cost");
+  requireFinite(performanceIndicesMsg.dynamics_violation_sse, "performance_indices.dynamics_violation_sse");
+  requireFinite(performanceIndicesMsg.equality_constraints_sse, "performance_indices.equality_constraints_sse");
+  requireFinite(performanceIndicesMsg.equality_lagrangian, "performance_indices.equality_lagrangian");
+  requireFinite(performanceIndicesMsg.inequality_lagrangian, "performance_indices.inequality_lagrangian");
   PerformanceIndex performanceIndices;
 
   performanceIndices.merit = performanceIndicesMsg.merit;
@@ -178,26 +240,55 @@ ocs2_msgs::msg::MpcTargetTrajectories createTargetTrajectoriesMsg(
   const auto& timeTrajectory = targetTrajectories.timeTrajectory;
   const auto& stateTrajectory = targetTrajectories.stateTrajectory;
   const auto& inputTrajectory = targetTrajectories.inputTrajectory;
+  const size_t N = stateTrajectory.size();
+  if (N == 0) {
+    throw std::runtime_error("[RosMsgConversions] target state trajectory must not be empty.");
+  }
+  if (timeTrajectory.size() != N) {
+    throw std::runtime_error("[RosMsgConversions] target time/state trajectory lengths do not match.");
+  }
+  if (!inputTrajectory.empty() && inputTrajectory.size() != N) {
+    throw std::runtime_error("[RosMsgConversions] target input/state trajectory lengths do not match.");
+  }
+
+  const auto stateDim = stateTrajectory.front().size();
+  if (stateDim == 0) {
+    throw std::runtime_error("[RosMsgConversions] target state vectors must not be empty.");
+  }
+  const auto inputDim = inputTrajectory.empty() ? 0 : inputTrajectory.front().size();
+  for (size_t i = 0; i < N; ++i) {
+    requireFinite(timeTrajectory[i], "target.time_trajectory[" + std::to_string(i) + "]");
+    if (i > 0 && timeTrajectory[i] < timeTrajectory[i - 1]) {
+      throw std::runtime_error("[RosMsgConversions] target time trajectory must be non-decreasing.");
+    }
+    if (stateTrajectory[i].size() != stateDim || !stateTrajectory[i].allFinite()) {
+      throw std::runtime_error("[RosMsgConversions] target state trajectory has inconsistent dimensions or non-finite values.");
+    }
+    if (!inputTrajectory.empty() && (inputTrajectory[i].size() != inputDim || !inputTrajectory[i].allFinite())) {
+      throw std::runtime_error("[RosMsgConversions] target input trajectory has inconsistent dimensions or non-finite values.");
+    }
+  }
 
   // time and state
-  size_t N = stateTrajectory.size();
   targetTrajectoriesMsg.time_trajectory.resize(N);
   targetTrajectoriesMsg.state_trajectory.resize(N);
   for (size_t i = 0; i < N; i++) {
     targetTrajectoriesMsg.time_trajectory[i] = timeTrajectory[i];
-
-    targetTrajectoriesMsg.state_trajectory[i].value = std::vector<float>(
-        stateTrajectory[i].data(),
-        stateTrajectory[i].data() + stateTrajectory[i].size());
+    auto& values = targetTrajectoriesMsg.state_trajectory[i].value;
+    values.resize(stateDim);
+    for (size_t j = 0; j < stateDim; ++j) {
+      values[j] = checkedFloat(stateTrajectory[i](j), "target.state_trajectory");
+    }
   }  // end of i loop
 
   // input
-  N = inputTrajectory.size();
-  targetTrajectoriesMsg.input_trajectory.resize(N);
-  for (size_t i = 0; i < N; i++) {
-    targetTrajectoriesMsg.input_trajectory[i].value = std::vector<float>(
-        inputTrajectory[i].data(),
-        inputTrajectory[i].data() + inputTrajectory[i].size());
+  targetTrajectoriesMsg.input_trajectory.resize(inputTrajectory.size());
+  for (size_t i = 0; i < inputTrajectory.size(); i++) {
+    auto& values = targetTrajectoriesMsg.input_trajectory[i].value;
+    values.resize(inputDim);
+    for (size_t j = 0; j < inputDim; ++j) {
+      values[j] = checkedFloat(inputTrajectory[i](j), "target.input_trajectory");
+    }
   }  // end of i loop
 
   return targetTrajectoriesMsg;
@@ -228,12 +319,21 @@ TargetTrajectories readTargetTrajectoriesMsg(
   const size_t N = stateTrajectorySize;
   scalar_array_t desiredTimeTrajectory(N);
   vector_array_t desiredStateTrajectory(N);
+  const size_t stateDim = targetTrajectoriesMsg.state_trajectory.front().value.size();
+  if (stateDim == 0) {
+    throw std::runtime_error("Target trajectories message has empty state vectors.");
+  }
   for (size_t i = 0; i < N; i++) {
     desiredTimeTrajectory[i] = targetTrajectoriesMsg.time_trajectory[i];
+    requireFinite(desiredTimeTrajectory[i], "target.time_trajectory[" + std::to_string(i) + "]");
     if (i > 0 && desiredTimeTrajectory[i] < desiredTimeTrajectory[i - 1]) {
       throw std::runtime_error(
           "Target trajectories message has decreasing time trajectory.");
     }
+    if (targetTrajectoriesMsg.state_trajectory[i].value.size() != stateDim) {
+      throw std::runtime_error("Target trajectories message has inconsistent state dimensions.");
+    }
+    requireFiniteValues(targetTrajectoriesMsg.state_trajectory[i].value, "target.state_trajectory");
 
     desiredStateTrajectory[i] =
         Eigen::Map<const Eigen::VectorXf>(
@@ -244,7 +344,12 @@ TargetTrajectories readTargetTrajectoriesMsg(
 
   // input
   vector_array_t desiredInputTrajectory(inputTrajectorySize);
+  const size_t inputDim = inputTrajectorySize == 0 ? 0 : targetTrajectoriesMsg.input_trajectory.front().value.size();
   for (size_t i = 0; i < inputTrajectorySize; i++) {
+    if (targetTrajectoriesMsg.input_trajectory[i].value.size() != inputDim) {
+      throw std::runtime_error("Target trajectories message has inconsistent input dimensions.");
+    }
+    requireFiniteValues(targetTrajectoriesMsg.input_trajectory[i].value, "target.input_trajectory");
     desiredInputTrajectory[i] =
         Eigen::Map<const Eigen::VectorXf>(
             targetTrajectoriesMsg.input_trajectory[i].value.data(),

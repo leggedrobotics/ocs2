@@ -26,8 +26,10 @@
   <depend>boost</depend>
   <exec_depend>ros2launch</exec_depend>
 
-  <export>                               
-   <build_type>ament_cmake</build_type>
-  </export> 
+  <test_depend>ament_cmake_gtest</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 
 </package>

@@ -110,13 +110,16 @@ ament_export_dependencies(
 ############
 
 if(BUILD_TESTING)
-  add_executable(test_custom_callback_queue
-    test/test_custom_callback_queue.cpp
+  find_package(ament_cmake_gtest REQUIRED)
+
+  ament_add_gtest(ocs2_ros_interfaces_test
+    test/testMpcRosInterfaces.cpp
   )
-  target_link_libraries(test_custom_callback_queue
+  target_link_libraries(ocs2_ros_interfaces_test
     ${PROJECT_NAME}
+    gtest_main
   )
-  target_compile_options(test_custom_callback_queue PRIVATE ${OCS2_CXX_FLAGS})
+  target_compile_options(ocs2_ros_interfaces_test PRIVATE ${OCS2_CXX_FLAGS})
 endif()
 
 ament_package()

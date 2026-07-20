@@ -1,5 +1,8 @@
 # Flattened controller: A serialized controller
 
+uint64                  reset_epoch             # successful MPC reset that owns this policy
+uint64                  policy_sequence         # monotonically increasing within reset_epoch
+
 # define controllerType Enum values
 uint8 CONTROLLER_UNKNOWN=0 # safety mechanism: message initalization to zero
 uint8 CONTROLLER_FEEDFORWARD=1

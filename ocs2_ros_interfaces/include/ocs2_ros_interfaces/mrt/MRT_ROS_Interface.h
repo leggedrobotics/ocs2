@@ -29,9 +29,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <atomic>
 #include <chrono>
 #include <condition_variable>
 #include <csignal>
+#include <cstdint>
 #include <ctime>
 #include <iostream>
 #include <string>
@@ -72,6 +74,12 @@ class MRT_ROS_Interface : public MRT_BASE {
    */
   ~MRT_ROS_Interface() override;
 
+  /** Clear the active policy and reject every policy until a reset is acknowledged. */
+  void reset() override;
+
+  /** Accept policies starting at the epoch returned by a successful reset call. */
+  void acknowledgeMpcReset(uint64_t resetEpoch);
+
   /**
    * @note Must be called BEFORE the node starts spinning (i.e., before
    * launchNodes() or any rclcpp::spin). Calling from within a ROS callback
@@ -104,6 +112,17 @@ class MRT_ROS_Interface : public MRT_BASE {
   void setCurrentObservation(
       const SystemObservation& currentObservation) override;
 
+ protected:
+  static void validatePolicyGeneration(uint64_t expectedResetEpoch,
+                                       uint64_t lastPolicySequence,
+                                       uint64_t messageResetEpoch,
+                                       uint64_t messagePolicySequence);
+
+  static void readPolicyMsg(const ocs2_msgs::msg::MpcFlattenedController& msg,
+                            CommandData& commandData,
+                            PrimalSolution& primalSolution,
+                            PerformanceIndex& performanceIndices);
+
  private:
   /**
    * Callback method to receive the MPC policy as well as the mode sequence.
@@ -113,19 +132,6 @@ class MRT_ROS_Interface : public MRT_BASE {
    */
   void mpcPolicyCallback(
       const ocs2_msgs::msg::MpcFlattenedController::ConstSharedPtr& msg);
-
-  /**
-   * Helper function to read a MPC policy message.
-   *
-   * @param [in] msg: A constant pointer to the message
-   * @param [out] commandData: The MPC command data
-   * @param [out] primalSolution: The MPC policy data
-   * @param [out] performanceIndices: The MPC performance indices data
-   */
-  static void readPolicyMsg(const ocs2_msgs::msg::MpcFlattenedController& msg,
-                            CommandData& commandData,
-                            PrimalSolution& primalSolution,
-                            PerformanceIndex& performanceIndices);
 
   /**
    * A thread function which sends the current state and checks for a new MPC
@@ -149,11 +155,15 @@ class MRT_ROS_Interface : public MRT_BASE {
   ocs2_msgs::msg::MpcObservation mpcObservationMsgBuffer_;
 
   // Multi-threading for publishers
-  bool terminateThread_;
-  bool readyToPublish_;
+  std::atomic_bool terminateThread_{false};
+  std::atomic_bool readyToPublish_{false};
   std::thread publisherWorker_;
   std::mutex publisherMutex_;
   std::condition_variable msgReady_;
+
+  uint64_t expectedResetEpoch_{0};  // guarded by policyGenerationMutex_
+  uint64_t lastPolicySequence_{0};  // guarded by policyGenerationMutex_
+  std::mutex policyGenerationMutex_;
 };
 
 }  // namespace ocs2

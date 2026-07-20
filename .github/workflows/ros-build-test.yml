@@ -2,9 +2,9 @@ name: Build and Test OCS2 (ROS2 Jazzy)
 
 on:
   push:
-    branches: [ main ]
+    branches: [ ros2 ]
   pull_request:
-    branches: [ main ]
+    branches: [ ros2 ]
 
 jobs:
   build:
@@ -83,6 +83,7 @@ jobs:
         git clone --depth 1 --filter=blob:none --sparse --branch ros2 --single-branch https://github.com/leggedrobotics/elevation_mapping_cupy.git src/elevation_mapping_cupy
         cd src/elevation_mapping_cupy
         git sparse-checkout set plane_segmentation
+        rm -f plane_segmentation/COLCON_IGNORE
 
     - name: Rosdep
       shell: bash

@@ -67,11 +67,17 @@ ament_package()
 ## Testing ##
 #############
 
-#catkin_add_gtest(testMPC_OCS2
-#  test/testMPC_OCS2.cpp
-#)
-#target_link_libraries(testMPC_OCS2
-#  ${catkin_LIBRARIES}
-#  ${Boost_LIBRARIES}
-#)
-#target_compile_options(testMPC_OCS2 PRIVATE ${OCS2_CXX_FLAGS})
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+
+  ament_add_gtest(ocs2_mpc_test_mpc_base
+    test/testMPC_BASE.cpp
+  )
+  target_compile_definitions(ocs2_mpc_test_mpc_base PRIVATE
+    OCS2_MPC_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/test/data"
+  )
+  target_link_libraries(ocs2_mpc_test_mpc_base
+    ${PROJECT_NAME}
+    gtest_main
+  )
+endif()

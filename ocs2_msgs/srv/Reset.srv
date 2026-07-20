@@ -3,3 +3,4 @@ bool                      reset
 MpcTargetTrajectories     target_trajectories
 ---
 bool                      done
+uint64                    reset_epoch

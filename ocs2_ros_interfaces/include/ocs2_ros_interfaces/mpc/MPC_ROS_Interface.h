@@ -39,6 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <atomic>
 #include <condition_variable>
+#include <cstdint>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <iostream>
 #include <memory>
@@ -82,7 +83,7 @@ class MPC_ROS_Interface {
    *
    * @param [in] initTargetTrajectories: The initial desired cost trajectories.
    */
-  void resetMpcNode(TargetTrajectories&& initTargetTrajectories);
+  uint64_t resetMpcNode(TargetTrajectories&& initTargetTrajectories);
 
   /**
    * Shutdowns the ROS node.
@@ -123,7 +124,8 @@ class MPC_ROS_Interface {
    */
   static ocs2_msgs::msg::MpcFlattenedController createMpcPolicyMsg(
       const PrimalSolution& primalSolution, const CommandData& commandData,
-      const PerformanceIndex& performanceIndices);
+      const PerformanceIndex& performanceIndices, uint64_t resetEpoch,
+      uint64_t policySequence);
 
   /**
    * Handles ROS publishing thread.
@@ -174,6 +176,10 @@ class MPC_ROS_Interface {
   std::unique_ptr<PrimalSolution> publisherPrimalSolutionPtr_;
   std::unique_ptr<PerformanceIndex> bufferPerformanceIndicesPtr_;
   std::unique_ptr<PerformanceIndex> publisherPerformanceIndicesPtr_;
+  uint64_t bufferResetEpoch_{0};
+  uint64_t publisherResetEpoch_{0};
+  uint64_t bufferPolicySequence_{0};
+  uint64_t publisherPolicySequence_{0};
 
   mutable std::mutex
       bufferMutex_;  // for policy variables with prefix (buffer*)
@@ -189,7 +195,9 @@ class MPC_ROS_Interface {
 
   // MPC reset
   std::mutex resetMutex_;
-  std::atomic_bool resetRequestedEver_{false};
+  std::atomic_bool mpcReady_{false};
+  uint64_t resetEpoch_{0};  // guarded by resetMutex_
+  uint64_t policySequence_{0};  // guarded by resetMutex_
 };
 
 }  // namespace ocs2

@@ -61,6 +61,7 @@ class MPC_BASE {
 
   /**
    * The main routine of MPC which runs MPC for the given state and time.
+   * If a solve throws, later calls fail until reset() succeeds.
    *
    * @param [in] currentTime: The given time.
    * @param [in] currentState: The given state.
@@ -94,6 +95,8 @@ class MPC_BASE {
 
  private:
   bool initRun_ = true;
+  bool solverHealthy_ = true;
+  scalar_t lastRunTime_ = 0.0;
   const mpc::Settings mpcSettings_;
 
   benchmark::RepeatedTimer mpcTimer_;

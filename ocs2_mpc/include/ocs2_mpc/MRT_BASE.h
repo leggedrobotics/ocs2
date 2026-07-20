@@ -64,7 +64,7 @@ class MRT_BASE {
   /**
    * Resets the class to its instantiated state.
    */
-  void reset();
+  virtual void reset();
 
   /**
    * Request the MPC node to reset. This method is a blocking method.

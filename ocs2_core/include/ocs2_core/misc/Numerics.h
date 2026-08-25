@@ -102,7 +102,7 @@ bool almost_le(T1&& x, T2&& y, T3&& prec) {
  * @param [in] y: Second floating-point number.
  * @return bool: true if x<=y.
  */
-template <class T1, class T2, class T3>
+template <class T1, class T2>
 bool almost_le(T1&& x, T2&& y) {
   return x < y || almost_eq(x, y);
 }

@@ -45,11 +45,16 @@ vector_t eulerDiscretization(SystemDynamicsBase& system, scalar_t t, const vecto
 /******************************************************************************************************/
 VectorFunctionLinearApproximation eulerSensitivityDiscretization(SystemDynamicsBase& system, scalar_t t, const vector_t& x,
                                                                  const vector_t& u, scalar_t dt) {
+  return eulerSensitivityDiscretizationWithFirstStage(system, t, x, u, dt, system.linearApproximation(t, x, u));
+}
+
+VectorFunctionLinearApproximation eulerSensitivityDiscretizationWithFirstStage(SystemDynamicsBase&, scalar_t, const vector_t& x,
+                                                                               const vector_t&, scalar_t dt,
+                                                                               VectorFunctionLinearApproximation continuousApproximation) {
   // x_{k+1} = A_{k} * dx_{k} + B_{k} * du_{k} + b_{k}
   // A_{k} = Id + dt * dfdx
   // B_{k} = dt * dfdu
   // b_{k} = x_{n} + dt * f(x_{n},u_{n})
-  auto continuousApproximation = system.linearApproximation(t, x, u);
   continuousApproximation.dfdx *= dt;
   continuousApproximation.dfdx.diagonal().array() += 1.0;  // plus Identity()
   continuousApproximation.dfdu *= dt;
@@ -78,10 +83,15 @@ vector_t rk2Discretization(SystemDynamicsBase& system, scalar_t t, const vector_
 /******************************************************************************************************/
 VectorFunctionLinearApproximation rk2SensitivityDiscretization(SystemDynamicsBase& system, scalar_t t, const vector_t& x, const vector_t& u,
                                                                scalar_t dt) {
+  return rk2SensitivityDiscretizationWithFirstStage(system, t, x, u, dt, system.linearApproximation(t, x, u));
+}
+
+VectorFunctionLinearApproximation rk2SensitivityDiscretizationWithFirstStage(SystemDynamicsBase& system, scalar_t t, const vector_t& x,
+                                                                             const vector_t& u, scalar_t dt,
+                                                                             VectorFunctionLinearApproximation k1) {
   const scalar_t dt_halve = dt / 2.0;
 
   // System evaluations
-  VectorFunctionLinearApproximation k1 = system.linearApproximation(t, x, u);
   VectorFunctionLinearApproximation k2 = system.linearApproximation(t + dt, x + dt * k1.f, u);
 
   // Input sensitivity \dot{Su} = dfdx(t) Su + dfdu(t), with Su(0) = Zero()
@@ -129,12 +139,17 @@ vector_t rk4Discretization(SystemDynamicsBase& system, scalar_t t, const vector_
 /******************************************************************************************************/
 VectorFunctionLinearApproximation rk4SensitivityDiscretization(SystemDynamicsBase& system, scalar_t t, const vector_t& x, const vector_t& u,
                                                                scalar_t dt) {
+  return rk4SensitivityDiscretizationWithFirstStage(system, t, x, u, dt, system.linearApproximation(t, x, u));
+}
+
+VectorFunctionLinearApproximation rk4SensitivityDiscretizationWithFirstStage(SystemDynamicsBase& system, scalar_t t, const vector_t& x,
+                                                                             const vector_t& u, scalar_t dt,
+                                                                             VectorFunctionLinearApproximation k1) {
   const scalar_t dt_halve = dt / 2.0;
   const scalar_t dt_sixth = dt / 6.0;
   const scalar_t dt_third = dt / 3.0;
 
   // System evaluations
-  VectorFunctionLinearApproximation k1 = system.linearApproximation(t, x, u);
   vector_t tmpV = x + dt_halve * k1.f;
   VectorFunctionLinearApproximation k2 = system.linearApproximation(t + dt_halve, tmpV, u);
   tmpV = x + dt_halve * k2.f;

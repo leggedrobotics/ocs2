@@ -67,6 +67,20 @@ DynamicsSensitivityDiscretizer selectDynamicsSensitivityDiscretization(Sensitivi
   }
 }
 
+DynamicsSensitivityDiscretizerWithFirstStage selectDynamicsSensitivityDiscretizationWithFirstStage(
+    SensitivityIntegratorType integratorType) {
+  switch (integratorType) {
+    case SensitivityIntegratorType::EULER:
+      return eulerSensitivityDiscretizationWithFirstStage;
+    case SensitivityIntegratorType::RK2:
+      return rk2SensitivityDiscretizationWithFirstStage;
+    case SensitivityIntegratorType::RK4:
+      return rk4SensitivityDiscretizationWithFirstStage;
+    default:
+      throw std::runtime_error("Integrator of type " + sensitivity_integrator::toString(integratorType) + " not supported.");
+  }
+}
+
 namespace sensitivity_integrator {
 
 /******************************************************************************************************/

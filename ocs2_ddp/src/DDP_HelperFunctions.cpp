@@ -294,7 +294,9 @@ scalar_t computeControllerUpdateIS(const LinearController& controller) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void incrementController(scalar_t stepLength, const LinearController& unoptimizedController, LinearController& controller) {
-  controller.clear();
+  // Retain each gain/bias allocation across line-search candidates. All three
+  // populated arrays are overwritten below; candidate controllers have no delta.
+  controller.deltaBiasArray_.clear();
   controller.timeStamp_ = unoptimizedController.timeStamp_;
   controller.gainArray_ = unoptimizedController.gainArray_;
   controller.biasArray_.resize(unoptimizedController.size());

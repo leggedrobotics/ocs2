@@ -76,4 +76,16 @@ vector_t rk4Discretization(SystemDynamicsBase& system, scalar_t t, const vector_
 VectorFunctionLinearApproximation rk4SensitivityDiscretization(SystemDynamicsBase& system, scalar_t t, const vector_t& x, const vector_t& u,
                                                                scalar_t dt);
 
+// These entrypoints consume an exact continuous first stage at (t, x, u).
+// See DynamicsSensitivityDiscretizerWithFirstStage for the precomputation contract.
+VectorFunctionLinearApproximation eulerSensitivityDiscretizationWithFirstStage(SystemDynamicsBase& system, scalar_t t, const vector_t& x,
+                                                                               const vector_t& u, scalar_t dt,
+                                                                               VectorFunctionLinearApproximation firstStage);
+VectorFunctionLinearApproximation rk2SensitivityDiscretizationWithFirstStage(SystemDynamicsBase& system, scalar_t t, const vector_t& x,
+                                                                             const vector_t& u, scalar_t dt,
+                                                                             VectorFunctionLinearApproximation firstStage);
+VectorFunctionLinearApproximation rk4SensitivityDiscretizationWithFirstStage(SystemDynamicsBase& system, scalar_t t, const vector_t& x,
+                                                                             const vector_t& u, scalar_t dt,
+                                                                             VectorFunctionLinearApproximation firstStage);
+
 }  // namespace ocs2

@@ -27,17 +27,16 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <pinocchio/fwd.hpp>
-
-#include <pinocchio/algorithm/frames-derivatives.hpp>
-#include <pinocchio/algorithm/frames.hpp>
-#include <pinocchio/algorithm/kinematics.hpp>
-
+#include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
 #include <ocs2_robotic_tools/common/AngularVelocityMapping.h>
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
 #include <ocs2_robotic_tools/common/SkewSymmetricMatrix.h>
 
-#include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
+#include <pinocchio/algorithm/frames-derivatives.hpp>
+#include <pinocchio/algorithm/frames.hpp>
+#include <pinocchio/algorithm/jacobian.hpp>
+#include <pinocchio/algorithm/kinematics.hpp>
+#include <pinocchio/fwd.hpp>
 
 namespace ocs2 {
 
@@ -121,20 +120,25 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematics::g
     throw std::runtime_error("[PinocchioEndEffectorKinematics] pinocchioInterfacePtr_ is not set. Use setPinocchioInterface()");
   }
 
-  const pinocchio::ReferenceFrame rf = pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED;
   const pinocchio::Model& model = pinocchioInterfacePtr_->getModel();
-  // const pinocchio::Data& data = pinocchioInterfacePtr_->getData();
-  // TODO(mspieler): Need to copy here because getFrameJacobian() modifies data. Will be fixed in pinocchio version 3.
-  pinocchio::Data data = pinocchio::Data(pinocchioInterfacePtr_->getData());
+  const pinocchio::Data& data = pinocchioInterfacePtr_->getData();
 
   std::vector<VectorFunctionLinearApproximation> positions;
+  positions.reserve(endEffectorFrameIds_.size());
+  matrix_t J(6, model.nv);
+  const matrix_t zeroVelocityJacobian = matrix_t::Zero(3, model.nv);
   for (const auto& frameId : endEffectorFrameIds_) {
-    matrix_t J = matrix_t::Zero(6, model.nv);
-    pinocchio::getFrameJacobian(model, data, frameId, rf, J);
+    const auto& frame = model.frames[frameId];
+    // getFrameJacobian refreshes oMf in mutable Data. Compute that position
+    // locally and shift the const WORLD spatial Jacobian to the frame origin.
+    const vector3_t position = data.oMi[frame.parentJoint].act(frame.placement.translation());
+    J.setZero();
+    pinocchio::getJointJacobian(model, data, frame.parentJoint, pinocchio::WORLD, J);
+    J.topRows<3>().noalias() -= skewSymmetricMatrix(position) * J.bottomRows<3>();
 
     VectorFunctionLinearApproximation pos;
-    pos.f = data.oMf[frameId].translation();
-    std::tie(pos.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, J.topRows<3>(), matrix_t::Zero(3, model.nv));
+    pos.f = position;
+    std::tie(pos.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, J.topRows<3>(), zeroVelocityJacobian);
     positions.emplace_back(std::move(pos));
   }
   return positions;
@@ -203,23 +207,25 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematics::g
     throw std::runtime_error("[PinocchioEndEffectorKinematics] pinocchioInterfacePtr_ is not set. Use setPinocchioInterface()");
   }
 
-  const pinocchio::ReferenceFrame rf = pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED;
   const pinocchio::Model& model = pinocchioInterfacePtr_->getModel();
-  // const pinocchio::Data& data = pinocchioInterfacePtr_->getData();
-  // TODO(mspieler): Need to copy here because getFrameJacobian() modifies data. Will be fixed in pinocchio version 3.
-  pinocchio::Data data = pinocchio::Data(pinocchioInterfacePtr_->getData());
+  const pinocchio::Data& data = pinocchioInterfacePtr_->getData();
 
   std::vector<VectorFunctionLinearApproximation> errors;
+  errors.reserve(endEffectorFrameIds_.size());
+  matrix_t J(6, model.nv);
+  const matrix_t zeroVelocityJacobian = matrix_t::Zero(3, model.nv);
   for (int i = 0; i < endEffectorFrameIds_.size(); i++) {
     VectorFunctionLinearApproximation err;
     const size_t frameId = endEffectorFrameIds_[i];
     const quaternion_t q = matrixToQuaternion(data.oMf[frameId].rotation());
     err.f = quaternionDistance(q, referenceOrientations[i]);
-    matrix_t J = matrix_t::Zero(6, model.nv);
-    pinocchio::getFrameJacobian(model, data, frameId, rf, J);
+    J.setZero();
+    // WORLD and LOCAL_WORLD_ALIGNED have the same angular Jacobian. Reading
+    // the parent joint avoids copying Data merely to refresh one frame.
+    pinocchio::getJointJacobian(model, data, model.frames[frameId].parentJoint, pinocchio::WORLD, J);
     const matrix_t Jqdist =
         (quaternionDistanceJacobian(q, referenceOrientations[i]) * angularVelocityToQuaternionTimeDerivative(q)) * J.bottomRows<3>();
-    std::tie(err.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, Jqdist, matrix_t::Zero(3, model.nv));
+    std::tie(err.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, Jqdist, zeroVelocityJacobian);
     errors.emplace_back(std::move(err));
   }
   return errors;

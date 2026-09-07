@@ -79,11 +79,11 @@ class ILQR : public GaussNewtonDDP {
    * @param [in] state: state x_k.
    * @param [in] input: input u_k.
    * @param [in] timeStep: Time step between the x_{k} and x_{k+1}.
-   * @param [in] continuousTimeModelData: continuous time model data.
+   * @param [in,out] continuousTimeModelData: continuous time model data; its dynamics storage is consumed.
    * @param [out] modelData: Discretized mode data.
    */
   void discreteLQWorker(SystemDynamicsBase& system, scalar_t time, const vector_t& state, const vector_t& input, scalar_t timeStep,
-                        const ModelData& continuousTimeModelData, ModelData& modelData);
+                        ModelData& continuousTimeModelData, ModelData& modelData);
 
   /****************
    *** Variables **
@@ -91,7 +91,7 @@ class ILQR : public GaussNewtonDDP {
   matrix_array_t projectedKmTrajectoryStock_;  // projected feedback
   vector_array_t projectedLvTrajectoryStock_;  // projected feedforward
 
-  DynamicsSensitivityDiscretizer sensitivityDiscretizer_;
+  DynamicsSensitivityDiscretizerWithFirstStage sensitivityDiscretizer_;
   std::vector<std::unique_ptr<DiscreteTimeRiccatiEquations>> riccatiEquationsPtrStock_;
 };
 

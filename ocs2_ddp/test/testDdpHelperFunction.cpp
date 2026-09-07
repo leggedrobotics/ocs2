@@ -99,3 +99,43 @@ TEST(extractPrimalSolution, eventAtInitTime) {
   //  std::cerr << ">>>>>> Test 3\n" << PrimalSolutionTest3 << "\n";
   EXPECT_EQ(PrimalSolutionTest3.timeTrajectory_.size(), 1);
 }
+
+TEST(incrementController, overwritesReusedStorageAndClearsCandidateDelta) {
+  LinearController source;
+  LinearController candidate;
+  for (const std::size_t knots : {4U, 4U, 2U, 5U, 5U}) {
+    source.timeStamp_.resize(knots);
+    source.biasArray_.resize(knots);
+    source.deltaBiasArray_.resize(knots);
+    source.gainArray_.resize(knots);
+    for (std::size_t knot = 0; knot < knots; ++knot) {
+      source.timeStamp_[knot] = 0.2 * static_cast<double>(knot);
+      const int inputs = knot % 2 == 0 ? 2 : 3;
+      source.biasArray_[knot] = vector_t::Constant(inputs, 0.1 * static_cast<double>(knot));
+      source.deltaBiasArray_[knot] = vector_t::Constant(inputs, 0.2 - 0.05 * static_cast<double>(knot));
+      source.gainArray_[knot] = matrix_t::Constant(inputs, 4, 0.3 * static_cast<double>(knot) - 0.1);
+    }
+    for (const scalar_t step : {0.0, 0.3, 1.0}) {
+      candidate.deltaBiasArray_ = {vector_t::Constant(9, 123.0)};
+      incrementController(step, source, candidate);
+      EXPECT_EQ(candidate.timeStamp_, source.timeStamp_);
+      ASSERT_EQ(candidate.gainArray_.size(), knots);
+      ASSERT_EQ(candidate.biasArray_.size(), knots);
+      EXPECT_TRUE(candidate.deltaBiasArray_.empty());
+      for (std::size_t knot = 0; knot < knots; ++knot) {
+        EXPECT_TRUE(candidate.gainArray_[knot].isApprox(source.gainArray_[knot], 0.0));
+        EXPECT_TRUE(candidate.biasArray_[knot].isApprox(source.biasArray_[knot] + step * source.deltaBiasArray_[knot], 0.0));
+      }
+      const auto* gainStorage = candidate.gainArray_.front().data();
+      const auto* biasStorage = candidate.biasArray_.front().data();
+      incrementController(step, source, candidate);
+      EXPECT_EQ(candidate.gainArray_.front().data(), gainStorage);
+      EXPECT_EQ(candidate.biasArray_.front().data(), biasStorage);
+    }
+  }
+  incrementController(0.0, LinearController{}, candidate);
+  EXPECT_TRUE(candidate.empty());
+  EXPECT_TRUE(candidate.gainArray_.empty());
+  EXPECT_TRUE(candidate.biasArray_.empty());
+  EXPECT_TRUE(candidate.deltaBiasArray_.empty());
+}

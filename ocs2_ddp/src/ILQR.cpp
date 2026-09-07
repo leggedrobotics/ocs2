@@ -47,13 +47,13 @@ ILQR::ILQR(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalC
   sensitivityDiscretizer_ = [&]() {
     switch (settings().backwardPassIntegratorType_) {
       case IntegratorType::EULER:
-        return selectDynamicsSensitivityDiscretization(SensitivityIntegratorType::EULER);
+        return selectDynamicsSensitivityDiscretizationWithFirstStage(SensitivityIntegratorType::EULER);
       case IntegratorType::RK4:
-        return selectDynamicsSensitivityDiscretization(SensitivityIntegratorType::RK4);
+        return selectDynamicsSensitivityDiscretizationWithFirstStage(SensitivityIntegratorType::RK4);
       case IntegratorType::ODE45:
-        return selectDynamicsSensitivityDiscretization(SensitivityIntegratorType::RK4);
+        return selectDynamicsSensitivityDiscretizationWithFirstStage(SensitivityIntegratorType::RK4);
       case IntegratorType::ODE45_OCS2:
-        return selectDynamicsSensitivityDiscretization(SensitivityIntegratorType::RK4);
+        return selectDynamicsSensitivityDiscretizationWithFirstStage(SensitivityIntegratorType::RK4);
       default:
         throw std::runtime_error("[ILQR] Integrator of type " + integrator_type::toString(settings().backwardPassIntegratorType_) +
                                  " is not supported for sensitivity discretization! Modify ddp::Settings::backwardPassIntegratorType_.");
@@ -135,14 +135,17 @@ void ILQR::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalDat
 /******************************************************************************************************/
 /******************************************************************************************************/
 void ILQR::discreteLQWorker(SystemDynamicsBase& system, scalar_t time, const vector_t& state, const vector_t& input, scalar_t timeStep,
-                            const ModelData& continuousTimeModelData, ModelData& modelData) {
+                            ModelData& continuousTimeModelData, ModelData& modelData) {
   modelData.time = continuousTimeModelData.time;
   modelData.stateDim = continuousTimeModelData.stateDim;
   modelData.inputDim = continuousTimeModelData.inputDim;
 
   // linearize system dynamics
   modelData.dynamicsBias.setZero(modelData.stateDim);
-  modelData.dynamics = sensitivityDiscretizer_(system, time, state, input, timeStep);
+  // approximateIntermediateLQ has already requested and evaluated this node's
+  // continuous dynamics. Reuse that exact first stage, not a cached other node.
+  // The remaining RK stages request their own precomputation as usual.
+  modelData.dynamics = sensitivityDiscretizer_(system, time, state, input, timeStep, std::move(continuousTimeModelData.dynamics));
   modelData.dynamics.f.setZero(modelData.stateDim);
 
   // quadratic approximation to the cost function

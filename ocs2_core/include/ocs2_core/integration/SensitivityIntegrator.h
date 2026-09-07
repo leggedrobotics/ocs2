@@ -87,4 +87,24 @@ using DynamicsSensitivityDiscretizer =
  */
 DynamicsSensitivityDiscretizer selectDynamicsSensitivityDiscretization(SensitivityIntegratorType integratorType);
 
+/**
+ * Sensitivity discretization with an already evaluated first Runge-Kutta stage.
+ * The caller supplies the continuous flow and Jacobians at exactly (t, x, u),
+ * with the same model parameters and correctly requested precomputation as
+ * system.linearApproximation(t, x, u). No state or parameter change may occur
+ * between that evaluation and this call. The approximation is owned by the
+ * callable and may be moved in; it is consumed as integration workspace.
+ *
+ * The first request/evaluation is omitted. Every later stage uses the normal
+ * system.linearApproximation() entrypoint, including its precomputation request.
+ * Dynamics and precomputation must not depend on the number of prior requests;
+ * the supplied stage must not be reused across different nodes or intervals.
+ */
+using DynamicsSensitivityDiscretizerWithFirstStage = std::function<VectorFunctionLinearApproximation(
+    SystemDynamicsBase&, scalar_t, const vector_t&, const vector_t&, scalar_t, VectorFunctionLinearApproximation)>;
+
+/** Select a discretizer with the first-stage contract documented above. */
+DynamicsSensitivityDiscretizerWithFirstStage selectDynamicsSensitivityDiscretizationWithFirstStage(
+    SensitivityIntegratorType integratorType);
+
 }  // namespace ocs2

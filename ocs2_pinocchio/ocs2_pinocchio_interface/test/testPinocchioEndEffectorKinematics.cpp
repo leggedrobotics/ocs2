@@ -153,13 +153,15 @@ class FreeFlyerTangentMapping final : public ocs2::PinocchioStateInputMapping<oc
   using vector_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>;
   using matrix_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic>;
 
-  FreeFlyerTangentMapping() = default;
+  explicit FreeFlyerTangentMapping(vector_t referenceConfiguration = vector_t()) : q0_(std::move(referenceConfiguration)) {}
   ~FreeFlyerTangentMapping() override = default;
   FreeFlyerTangentMapping* clone() const override { return new FreeFlyerTangentMapping(*this); }
 
   void setPinocchioInterface(const ocs2::PinocchioInterfaceTpl<scalar_t>& pinocchioInterface) override {
     pinocchioInterfacePtr_ = &pinocchioInterface;
-    q0_ = pinocchio::neutral(pinocchioInterface.getModel());
+    if (q0_.size() == 0) {
+      q0_ = pinocchio::neutral(pinocchioInterface.getModel());
+    }
   }
 
   vector_t getPinocchioJointPosition(const vector_t& state) const override {
@@ -214,6 +216,73 @@ TEST(PinocchioEndEffectorKinematics, testPositionLinearApproximation_nqNotEqualN
 
   const auto eePosLin = eeKinematics.getPositionLinearApproximation(x)[0];
   EXPECT_TRUE(J.topRows<3>().isApprox(eePosLin.dfdx));
+}
+
+TEST(PinocchioEndEffectorKinematics, testPoseLinearizationPreservesFrameJacobiansAndSharedData) {
+  std::string urdf(manipulatorArmUrdf);
+  urdf.insert(urdf.rfind("</robot>"), R"(
+    <link name="offset_tool"/>
+    <joint name="offset_tool_fixed" type="fixed">
+      <parent link="WRIST_2"/><child link="offset_tool"/>
+      <origin xyz="0.37 -0.21 0.19" rpy="0.31 -0.27 0.43"/>
+    </joint>
+  )");
+  pinocchio::JointModelComposite rootJoint(2);
+  rootJoint.addJoint(pinocchio::JointModelTranslation());
+  rootJoint.addJoint(pinocchio::JointModelSpherical());
+  auto interface = ocs2::getPinocchioInterfaceFromUrdfString(urdf, rootJoint);
+  const auto& model = interface.getModel();
+  auto& data = interface.getData();
+  ASSERT_NE(model.nq, model.nv);
+  auto q = pinocchio::neutral(model).eval();
+  q.head<3>() << 1.2, -0.7, 0.4;
+  const Eigen::Quaterniond baseOrientation = Eigen::AngleAxisd(0.4, Eigen::Vector3d::UnitZ()) *
+                                             Eigen::AngleAxisd(-0.3, Eigen::Vector3d::UnitY()) *
+                                             Eigen::AngleAxisd(0.2, Eigen::Vector3d::UnitX());
+  q.segment<4>(3) = baseOrientation.coeffs();
+  q.tail<6>() << 0.23, -0.41, 0.17, -0.36, 0.58, 0.19;
+  FreeFlyerTangentMapping mapping(q);
+  // Revisit a distal frame after proximal frames: reused scratch must not
+  // retain descendant columns, and fixed frames need their own position shift.
+  const std::vector<std::string> ids{"offset_tool", "WRIST_2", "ARM", "arm_base", "offset_tool"};
+  ocs2::PinocchioEndEffectorKinematics kinematics(interface, mapping, ids);
+  const ocs2::vector_t x = ocs2::vector_t::Zero(model.nv);
+  const Eigen::Quaterniond reference(Eigen::AngleAxisd(-0.6, Eigen::Vector3d(0.2, 0.7, -0.3).normalized()));
+  const std::vector<Eigen::Quaterniond> references(ids.size(), reference);
+  pinocchio::forwardKinematics(model, data, q);
+  pinocchio::updateFramePlacements(model, data);
+  pinocchio::computeJointJacobians(model, data);
+  // The former local Data copy refreshed this position. Preserve that behavior
+  // without writing even this deliberately stale translation to shared Data.
+  data.oMf[model.getBodyId("offset_tool")].translation() += Eigen::Vector3d(0.5, -0.3, 0.2);
+  const pinocchio::Data before(data);
+  kinematics.setPinocchioInterface(interface);
+  const auto positions = kinematics.getPositionLinearApproximation(x);
+  const auto orientations = kinematics.getOrientationErrorLinearApproximation(x, references);
+  ASSERT_EQ(positions.size(), ids.size());
+  ASSERT_EQ(orientations.size(), ids.size());
+  pinocchio::Data referenceData(before);
+  for (std::size_t i = 0; i < ids.size(); ++i) {
+    SCOPED_TRACE(ids[i]);
+    const auto frame = model.getBodyId(ids[i]);
+    ocs2::matrix_t J = ocs2::matrix_t::Zero(6, model.nv);
+    pinocchio::getFrameJacobian(model, referenceData, frame, pinocchio::LOCAL_WORLD_ALIGNED, J);
+    const Eigen::Quaterniond orientation = ocs2::matrixToQuaternion(referenceData.oMf[frame].rotation());
+    const ocs2::matrix_t orientationJacobian =
+        (ocs2::quaternionDistanceJacobian(orientation, reference) * ocs2::angularVelocityToQuaternionTimeDerivative(orientation)) *
+        J.bottomRows<3>();
+    EXPECT_LT((positions[i].f - referenceData.oMf[frame].translation()).norm(), 1e-12);
+    EXPECT_LT((positions[i].dfdx - J.topRows<3>()).norm(), 1e-12);
+    EXPECT_LT((orientations[i].f - ocs2::quaternionDistance(orientation, reference)).norm(), 1e-12);
+    EXPECT_LT((orientations[i].dfdx - orientationJacobian).norm(), 1e-12);
+  }
+  EXPECT_TRUE(data.J.isApprox(before.J, 0.0));
+  for (std::size_t i = 0; i < data.oMi.size(); ++i) {
+    EXPECT_TRUE(data.oMi[i].isApprox(before.oMi[i], 0.0));
+  }
+  for (std::size_t i = 0; i < data.oMf.size(); ++i) {
+    EXPECT_TRUE(data.oMf[i].isApprox(before.oMf[i], 0.0));
+  }
 }
 
 TEST_F(TestEndEffectorKinematics, testPosition) {

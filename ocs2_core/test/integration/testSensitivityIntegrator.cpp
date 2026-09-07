@@ -28,13 +28,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include <gtest/gtest.h>
-
-#include "ocs2_core/integration/Integrator.h"
-#include "ocs2_core/integration/SensitivityIntegrator.h"
-
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
+
+#include <cmath>
+#include <string>
+#include <utility>
+
+#include "ocs2_core/integration/Integrator.h"
+#include "ocs2_core/integration/SensitivityIntegrator.h"
 
 namespace {
 std::unique_ptr<ocs2::LinearSystemDynamics> getSystem() {
@@ -209,4 +212,118 @@ TEST(test_sensitivity_integrator, vsBoostRK4) {
 
   // Check
   ASSERT_TRUE(rk4ForwardDynamics.isApprox(boostRk4ForwardDynamics));
+}
+
+namespace {
+class RequestedStageCache final : public ocs2::PreComputation {
+ public:
+  RequestedStageCache* clone() const override { return new RequestedStageCache(*this); }
+  void request(ocs2::RequestSet, ocs2::scalar_t t, const ocs2::vector_t& x, const ocs2::vector_t& u) override {
+    ++requests;
+    time = t;
+    state = x;
+    input = u;
+  }
+  int requests = 0;
+  ocs2::scalar_t time = 0.0;
+  ocs2::vector_t state;
+  ocs2::vector_t input;
+};
+
+class NonlinearRequestedDynamics final : public ocs2::SystemDynamicsBase {
+ public:
+  NonlinearRequestedDynamics() : SystemDynamicsBase(RequestedStageCache{}) {}
+  NonlinearRequestedDynamics* clone() const override { return new NonlinearRequestedDynamics(*this); }
+  using SystemDynamicsBase::computeFlowMap;
+  using SystemDynamicsBase::linearApproximation;
+
+  ocs2::vector_t computeFlowMap(ocs2::scalar_t t, const ocs2::vector_t& x, const ocs2::vector_t& u,
+                                const ocs2::PreComputation& preComp) override {
+    const auto& cache = checkedCache(t, x, u, preComp);
+    return flow(cache);
+  }
+
+  ocs2::VectorFunctionLinearApproximation linearApproximation(ocs2::scalar_t t, const ocs2::vector_t& x, const ocs2::vector_t& u,
+                                                              const ocs2::PreComputation& preComp) override {
+    ++linearizations;
+    const auto& cache = checkedCache(t, x, u, preComp);
+    ocs2::VectorFunctionLinearApproximation result(2, 2, 1);
+    result.f = flow(cache);
+    result.dfdx << std::cos(cache.time + cache.state(0)) + cache.state(1), cache.state(0), cache.time + cache.input(0),
+        -std::sin(cache.state(1));
+    result.dfdu << 2.0 * cache.input(0), 1.0 + cache.state(0);
+    return result;
+  }
+
+  int linearizations = 0;
+
+ private:
+  static const RequestedStageCache& checkedCache(ocs2::scalar_t t, const ocs2::vector_t& x, const ocs2::vector_t& u,
+                                                 const ocs2::PreComputation& preComp) {
+    const auto& cache = dynamic_cast<const RequestedStageCache&>(preComp);
+    EXPECT_DOUBLE_EQ(cache.time, t);
+    EXPECT_TRUE(cache.state.isApprox(x, 0.0));
+    EXPECT_TRUE(cache.input.isApprox(u, 0.0));
+    return cache;
+  }
+
+  static ocs2::vector_t flow(const RequestedStageCache& cache) {
+    ocs2::vector_t result(2);
+    result << std::sin(cache.time + cache.state(0)) + cache.state(0) * cache.state(1) + std::pow(cache.input(0), 2),
+        std::cos(cache.state(1)) + cache.time * cache.state(0) + (1.0 + cache.state(0)) * cache.input(0);
+    return result;
+  }
+};
+}  // namespace
+
+TEST(test_sensitivity_integrator, suppliedFirstStageMatchesNonlinearDiscretizationAndRefreshesLaterStages) {
+  using namespace ocs2;
+  const scalar_t time = 0.37;
+  const vector_t state = (vector_t(2) << 0.4, -0.3).finished();
+  const vector_t input = vector_t::Constant(1, 0.2);
+  for (const auto type : {SensitivityIntegratorType::EULER, SensitivityIntegratorType::RK2, SensitivityIntegratorType::RK4}) {
+    const int stages = type == SensitivityIntegratorType::EULER ? 1 : (type == SensitivityIntegratorType::RK2 ? 2 : 4);
+    for (const scalar_t dt : {0.0, 0.02, 0.2}) {
+      SCOPED_TRACE(sensitivity_integrator::toString(type) + ": dt=" + std::to_string(dt));
+      NonlinearRequestedDynamics referenceSystem;
+      const auto reference = selectDynamicsSensitivityDiscretization(type)(referenceSystem, time, state, input, dt);
+      EXPECT_EQ(referenceSystem.linearizations, stages);
+
+      NonlinearRequestedDynamics suppliedSystem;
+      // ILQR's nominal approximation uses the OCP's external cache. The system's
+      // internal cache can still refer to a previous node when discretization starts.
+      RequestedStageCache nominalCache;
+      nominalCache.request(Request::Dynamics + Request::Approximation + Request::Cost, time, state, input);
+      auto firstStage = suppliedSystem.linearApproximation(time, state, input, nominalCache);
+      suppliedSystem.linearApproximation(time + 1.0, 2.0 * state, 3.0 * input);
+      suppliedSystem.linearizations = 0;
+      const int requestsBefore = dynamic_cast<const RequestedStageCache&>(suppliedSystem.getPreComputation()).requests;
+      const auto result =
+          selectDynamicsSensitivityDiscretizationWithFirstStage(type)(suppliedSystem, time, state, input, dt, std::move(firstStage));
+      EXPECT_EQ(suppliedSystem.linearizations, stages - 1);
+      EXPECT_EQ(dynamic_cast<const RequestedStageCache&>(suppliedSystem.getPreComputation()).requests - requestsBefore, stages - 1);
+      EXPECT_TRUE(result.f.isApprox(reference.f, 1e-14));
+      EXPECT_TRUE(result.dfdx.isApprox(reference.dfdx, 1e-14));
+      EXPECT_TRUE(result.dfdu.isApprox(reference.dfdu, 1e-14));
+
+      // Independent central differences of the value-only discrete flow.
+      NonlinearRequestedDynamics flowSystem;
+      const auto discreteFlow = selectDynamicsDiscretization(type);
+      constexpr scalar_t epsilon = 1e-6;
+      matrix_t stateJacobian(2, 2);
+      for (int axis = 0; axis < 2; ++axis) {
+        vector_t delta = vector_t::Zero(2);
+        delta(axis) = epsilon;
+        stateJacobian.col(axis) =
+            (discreteFlow(flowSystem, time, state + delta, input, dt) - discreteFlow(flowSystem, time, state - delta, input, dt)) /
+            (2.0 * epsilon);
+      }
+      const vector_t inputDelta = vector_t::Constant(1, epsilon);
+      const vector_t inputJacobian =
+          (discreteFlow(flowSystem, time, state, input + inputDelta, dt) - discreteFlow(flowSystem, time, state, input - inputDelta, dt)) /
+          (2.0 * epsilon);
+      EXPECT_LT((result.dfdx - stateJacobian).norm(), 1e-8);
+      EXPECT_LT((result.dfdu.col(0) - inputJacobian).norm(), 1e-8);
+    }
+  }
 }

@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <functional>
+
 #include "ocs2_ros_interfaces/mrt/DummyObserver.h"
 #include "ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h"
 
@@ -39,7 +41,7 @@ namespace ocs2 {
  * ROS.
  */
 class MRT_ROS_Dummy_Loop {
- public:
+public:
   /**
    * Constructor.
    *
@@ -51,9 +53,13 @@ class MRT_ROS_Dummy_Loop {
    * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a
    * positive number, MPC loop will be simulated to run by this frequency. Note
    * that this might not be the MPC's real-time frequency.
+   * @param [in] observationClock: Optional clock for the simulated state's
+   * timestamps and elapsed integration time in realtime mode. Empty preserves
+   * the upstream fixed-step simulation timeline.
    */
-  MRT_ROS_Dummy_Loop(MRT_ROS_Interface& mrt, scalar_t mrtDesiredFrequency,
-                     scalar_t mpcDesiredFrequency = -1);
+  MRT_ROS_Dummy_Loop(MRT_ROS_Interface &mrt, scalar_t mrtDesiredFrequency,
+                     scalar_t mpcDesiredFrequency = -1,
+                     std::function<scalar_t()> observationClock = {});
 
   /**
    * Destructor.
@@ -66,8 +72,8 @@ class MRT_ROS_Dummy_Loop {
    * @param [in] initObservation: The initial observation.
    * @param [in] initTargetTrajectories: The initial TargetTrajectories.
    */
-  void run(const SystemObservation& initObservation,
-           const TargetTrajectories& initTargetTrajectories);
+  void run(const SystemObservation &initObservation,
+           const TargetTrajectories &initTargetTrajectories);
 
   /**
    * Subscribe a set of observers to the dummy loop. Observers are updated in
@@ -77,43 +83,58 @@ class MRT_ROS_Dummy_Loop {
    * @param observers : vector of observers.
    */
   void subscribeObservers(
-      const std::vector<std::shared_ptr<DummyObserver>>& observers) {
+      const std::vector<std::shared_ptr<DummyObserver>> &observers) {
     observers_ = observers;
   }
 
- protected:
+protected:
+  /** Next state time. An optional clock uses actual elapsed time, accepts a
+   * paused clock, and rejects clock regression. The default remains fixed-step.
+   */
+  scalar_t observationTimeAfterStep(scalar_t currentTime) const;
+
+  /** In actual-clock mode, integrate elapsed time under the installed policy
+   * before accepting a newly delivered one. Before the first installation,
+   * hold the initial state through the sampled admission time. Fixed-step mode
+   * retains the upstream policy-update-before-step ordering.
+   */
+  SystemObservation
+  advanceRealtimeSimulation(const SystemObservation &currentObservation,
+                            bool &policyInstalled);
+
   /**
    * A user-defined function which modifies the observation before publishing.
    *
    * @param [in] observation: The current observation.
    */
-  virtual void modifyObservation(SystemObservation& observation) {}
+  virtual void modifyObservation(SystemObservation &observation) {}
 
- private:
+private:
   /**
    * Runs a loop where mpc optimizations are synchronized with the forward
    * simulation of the system
    */
-  void synchronizedDummyLoop(const SystemObservation& initObservation,
-                             const TargetTrajectories& initTargetTrajectories);
+  void synchronizedDummyLoop(const SystemObservation &initObservation,
+                             const TargetTrajectories &initTargetTrajectories);
 
   /**
    * Runs a loop where mpc optimizations and simulation of the system are
    * asynchronous. The simulation runs as the specified mrtFrequency, and the
    * MPC runs as fast as possible.
    */
-  void realtimeDummyLoop(const SystemObservation& initObservation,
-                         const TargetTrajectories& initTargetTrajectories);
+  void realtimeDummyLoop(const SystemObservation &initObservation,
+                         const TargetTrajectories &initTargetTrajectories);
 
   /** Forward simulates the system from current observation*/
-  SystemObservation forwardSimulation(
-      const SystemObservation& currentObservation);
+  SystemObservation
+  forwardSimulation(const SystemObservation &currentObservation);
 
-  MRT_ROS_Interface& mrt_;
+  MRT_ROS_Interface &mrt_;
   std::vector<std::shared_ptr<DummyObserver>> observers_;
 
   scalar_t mrtDesiredFrequency_;
   scalar_t mpcDesiredFrequency_;
+  std::function<scalar_t()> observationClock_;
 };
 
-}  // namespace ocs2
+} // namespace ocs2

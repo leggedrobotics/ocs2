@@ -42,13 +42,15 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LineSearchStrategy::LineSearchStrategy(search_strategy::Settings baseSettings, line_search::Settings settings, ThreadPool& threadPoolRef,
-                                       std::vector<std::reference_wrapper<RolloutBase>> rolloutRefStock,
-                                       std::vector<std::reference_wrapper<OptimalControlProblem>> optimalControlProblemRefStock,
-                                       std::function<scalar_t(const PerformanceIndex&)> meritFunc)
+LineSearchStrategy::LineSearchStrategy(
+    search_strategy::Settings baseSettings, line_search::Settings settings,
+    ThreadPool &threadPoolRef,
+    std::vector<std::reference_wrapper<RolloutBase>> rolloutRefStock,
+    std::vector<std::reference_wrapper<OptimalControlProblem>>
+        optimalControlProblemRefStock,
+    std::function<scalar_t(const PerformanceIndex &)> meritFunc)
     : SearchStrategyBase(std::move(baseSettings)),
-      settings_(std::move(settings)),
-      threadPoolRef_(threadPoolRef),
+      settings_(std::move(settings)), threadPoolRef_(threadPoolRef),
       tempDualSolutions_(threadPoolRef.numThreads() + 1),
       workersSolution_(threadPoolRef.numThreads() + 1),
       rolloutRefStock_(std::move(rolloutRefStock)),
@@ -56,11 +58,12 @@ LineSearchStrategy::LineSearchStrategy(search_strategy::Settings baseSettings, l
       meritFunc_(std::move(meritFunc)) {
   // infeasible learning rate adjustment scheme
   if (!numerics::almost_ge(settings_.maxStepLength, settings_.minStepLength)) {
-    throw std::runtime_error("The maximum learning rate is smaller than the minimum learning rate.");
+    throw std::runtime_error(
+        "The maximum learning rate is smaller than the minimum learning rate.");
   }
 
   // Initialize controller
-  for (auto& solution : workersSolution_) {
+  for (auto &solution : workersSolution_) {
     solution.primalSolution.controllerPtr_.reset(new LinearController);
   }
 }
@@ -76,8 +79,10 @@ size_t LineSearchStrategy::maxNumOfSearches() const {
     maxNumOfLineSearches = 0;
   } else {
     const auto ratio = settings_.minStepLength / settings_.maxStepLength;
-    maxNumOfLineSearches =
-        static_cast<size_t>(std::log(ratio + numeric_traits::limitEpsilon<scalar_t>()) / std::log(settings_.contractionRate) + 1);
+    maxNumOfLineSearches = static_cast<size_t>(
+        std::log(ratio + numeric_traits::limitEpsilon<scalar_t>()) /
+            std::log(settings_.contractionRate) +
+        1);
   }
   return maxNumOfLineSearches;
 }
@@ -85,44 +90,57 @@ size_t LineSearchStrategy::maxNumOfSearches() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LineSearchStrategy::computeSolution(size_t taskId, scalar_t stepLength, search_strategy::Solution& solution) {
-  auto& problem = optimalControlProblemRefStock_[taskId];
-  auto& rollout = rolloutRefStock_[taskId];
+void LineSearchStrategy::computeSolution(size_t taskId, scalar_t stepLength,
+                                         search_strategy::Solution &solution) {
+  auto &problem = optimalControlProblemRefStock_[taskId];
+  auto &rollout = rolloutRefStock_[taskId];
 
   // compute primal solution
   solution.primalSolution.modeSchedule_ = *lineSearchInputRef_.modeSchedulePtr;
-  incrementController(stepLength, *lineSearchInputRef_.unoptimizedControllerPtr, getLinearController(solution.primalSolution));
-  solution.avgTimeStep = rolloutTrajectory(rollout, lineSearchInputRef_.timePeriodPtr->first, *lineSearchInputRef_.initStatePtr,
-                                           lineSearchInputRef_.timePeriodPtr->second, solution.primalSolution);
+  incrementController(stepLength, *lineSearchInputRef_.unoptimizedControllerPtr,
+                      getLinearController(solution.primalSolution));
+  solution.avgTimeStep = rolloutTrajectory(
+      rollout, lineSearchInputRef_.timePeriodPtr->first,
+      *lineSearchInputRef_.initStatePtr,
+      lineSearchInputRef_.timePeriodPtr->second, solution.primalSolution);
 
   // adjust dual solution only if it is required
-  const DualSolution* adjustedDualSolutionPtr = lineSearchInputRef_.dualSolutionPtr;
+  const DualSolution *adjustedDualSolutionPtr =
+      lineSearchInputRef_.dualSolutionPtr;
   if (!lineSearchInputRef_.dualSolutionPtr->timeTrajectory.empty()) {
     // trajectory spreading
     constexpr bool debugPrint = false;
     TrajectorySpreading trajectorySpreading(debugPrint);
-    const auto status = trajectorySpreading.set(*lineSearchInputRef_.modeSchedulePtr, solution.primalSolution.modeSchedule_,
-                                                lineSearchInputRef_.dualSolutionPtr->timeTrajectory);
+    const auto status = trajectorySpreading.set(
+        *lineSearchInputRef_.modeSchedulePtr,
+        solution.primalSolution.modeSchedule_,
+        lineSearchInputRef_.dualSolutionPtr->timeTrajectory);
     if (status.willTruncate || status.willPerformTrajectorySpreading) {
-      trajectorySpread(trajectorySpreading, *lineSearchInputRef_.dualSolutionPtr, tempDualSolutions_[taskId]);
+      trajectorySpread(trajectorySpreading,
+                       *lineSearchInputRef_.dualSolutionPtr,
+                       tempDualSolutions_[taskId]);
       adjustedDualSolutionPtr = &tempDualSolutions_[taskId];
     }
   }
 
   // initialize dual solution
-  initializeDualSolution(problem, solution.primalSolution, *adjustedDualSolutionPtr, solution.dualSolution);
+  initializeDualSolution(problem, solution.primalSolution,
+                         *adjustedDualSolutionPtr, solution.dualSolution);
 
   // compute problem metrics
-  computeRolloutMetrics(problem, solution.primalSolution, solution.dualSolution, solution.problemMetrics);
+  computeRolloutMetrics(problem, solution.primalSolution, solution.dualSolution,
+                        solution.problemMetrics);
 
   // compute performanceIndex
-  solution.performanceIndex = computeRolloutPerformanceIndex(solution.primalSolution.timeTrajectory_, solution.problemMetrics);
+  solution.performanceIndex = computeRolloutPerformanceIndex(
+      solution.primalSolution.timeTrajectory_, solution.problemMetrics);
   solution.performanceIndex.merit = meritFunc_(solution.performanceIndex);
 
   // display
   if (baseSettings_.displayInfo) {
     std::stringstream infoDisplay;
-    infoDisplay << "    [Thread " << taskId << "] - step length " << stepLength << '\n';
+    infoDisplay << "    [Thread " << taskId << "] - step length " << stepLength
+                << '\n';
     infoDisplay << std::setw(4) << solution.performanceIndex << "\n\n";
     printString(infoDisplay.str());
   }
@@ -131,9 +149,13 @@ void LineSearchStrategy::computeSolution(size_t taskId, scalar_t stepLength, sea
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-bool LineSearchStrategy::run(const std::pair<scalar_t, scalar_t>& timePeriod, const vector_t& initState, const scalar_t expectedCost,
-                             const LinearController& unoptimizedController, const DualSolution& dualSolution,
-                             const ModeSchedule& modeSchedule, search_strategy::SolutionRef solutionRef) {
+bool LineSearchStrategy::run(const std::pair<scalar_t, scalar_t> &timePeriod,
+                             const vector_t &initState,
+                             const scalar_t expectedCost,
+                             const LinearController &unoptimizedController,
+                             const DualSolution &dualSolution,
+                             const ModeSchedule &modeSchedule,
+                             search_strategy::SolutionRef solutionRef) {
   // initialize lineSearchModule inputs
   lineSearchInputRef_.timePeriodPtr = &timePeriod;
   lineSearchInputRef_.initStatePtr = &initState;
@@ -148,18 +170,21 @@ bool LineSearchStrategy::run(const std::pair<scalar_t, scalar_t>& timePeriod, co
   try {
     computeSolution(taskId, stepLength, workersSolution_[taskId]);
     baselineMerit_ = workersSolution_[taskId].performanceIndex.merit;
-    unoptimizedControllerUpdateIS_ = computeControllerUpdateIS(unoptimizedController);
+    unoptimizedControllerUpdateIS_ =
+        computeControllerUpdateIS(unoptimizedController);
 
     // record solution
     bestStepSize_ = stepLength;
     swap(*bestSolutionRef_, workersSolution_[taskId]);
 
-  } catch (const std::exception& error) {
+  } catch (const std::exception &error) {
     if (baseSettings_.displayInfo) {
-      printString("    [Thread " + std::to_string(taskId) + "] rollout with step length " + std::to_string(stepLength) +
+      printString("    [Thread " + std::to_string(taskId) +
+                  "] rollout with step length " + std::to_string(stepLength) +
                   " is terminated: " + error.what() + '\n');
     }
-    throw std::runtime_error("[SearchStrategy::run] DDP controller does not generate a stable rollout!");
+    throw std::runtime_error("[SearchStrategy::run] DDP controller does not "
+                             "generate a stable rollout!");
   }
 
   // run workers
@@ -167,16 +192,19 @@ bool LineSearchStrategy::run(const std::pair<scalar_t, scalar_t>& timePeriod, co
   alphaExpNext_ = 0;
   alphaProcessed_ = std::vector<bool>(maxNumOfSearches(), false);
   auto task = [&](int) { lineSearchTask(nextTaskId_++); };
-  threadPoolRef_.runParallel(task, threadPoolRef_.numThreads());
+  // runParallel includes the calling thread. The pool owns nThreads - 1
+  // helpers, and the rollout/problem stocks include one entry for the caller.
+  threadPoolRef_.runParallel(task, threadPoolRef_.numThreads() + 1);
 
   // revitalize all integrators
-  for (RolloutBase& rollout : rolloutRefStock_) {
+  for (RolloutBase &rollout : rolloutRefStock_) {
     rollout.reactivateRollout();
   }
 
   // display
   if (baseSettings_.displayInfo) {
-    std::cerr << "The chosen step length is: " + std::to_string(bestStepSize_) << "\n";
+    std::cerr << "The chosen step length is: " + std::to_string(bestStepSize_)
+              << "\n";
   }
 
   return true;
@@ -188,12 +216,13 @@ bool LineSearchStrategy::run(const std::pair<scalar_t, scalar_t>& timePeriod, co
 void LineSearchStrategy::lineSearchTask(const size_t taskId) {
   while (true) {
     const size_t alphaExp = alphaExpNext_++;
-    const scalar_t stepLength = settings_.maxStepLength * std::pow(settings_.contractionRate, alphaExp);
+    const scalar_t stepLength =
+        settings_.maxStepLength * std::pow(settings_.contractionRate, alphaExp);
 
     /*
-     * finish this thread's task since the learning rate is less than the minimum learning rate.
-     * This means that the all the line search tasks are already processed or they are under
-     * process in other threads.
+     * finish this thread's task since the learning rate is less than the
+     * minimum learning rate. This means that the all the line search tasks are
+     * already processed or they are under process in other threads.
      */
     if (!numerics::almost_ge(stepLength, settings_.minStepLength)) {
       break;
@@ -204,8 +233,10 @@ void LineSearchStrategy::lineSearchTask(const size_t taskId) {
       // display
       if (baseSettings_.displayInfo) {
         std::string linesearchDisplay;
-        linesearchDisplay = "    [Thread " + std::to_string(taskId) + "] rollout with step length " + std::to_string(stepLength) +
-                            " is skipped: A larger learning rate is already found!\n";
+        linesearchDisplay =
+            "    [Thread " + std::to_string(taskId) +
+            "] rollout with step length " + std::to_string(stepLength) +
+            " is skipped: A larger learning rate is already found!\n";
         printString(linesearchDisplay);
       }
       break;
@@ -213,13 +244,16 @@ void LineSearchStrategy::lineSearchTask(const size_t taskId) {
 
     try {
       computeSolution(taskId, stepLength, workersSolution_[taskId]);
-    } catch (const std::exception& error) {
+    } catch (const std::exception &error) {
       if (baseSettings_.displayInfo) {
-        printString("    [Thread " + std::to_string(taskId) + "] rollout with step length " + std::to_string(stepLength) +
+        printString("    [Thread " + std::to_string(taskId) +
+                    "] rollout with step length " + std::to_string(stepLength) +
                     " is terminated: " + error.what() + '\n');
       }
-      workersSolution_[taskId].performanceIndex.merit = std::numeric_limits<scalar_t>::max();
-      workersSolution_[taskId].performanceIndex.cost = std::numeric_limits<scalar_t>::max();
+      workersSolution_[taskId].performanceIndex.merit =
+          std::numeric_limits<scalar_t>::max();
+      workersSolution_[taskId].performanceIndex.cost =
+          std::numeric_limits<scalar_t>::max();
     }
 
     // whether to accept the step or reject it
@@ -230,22 +264,27 @@ void LineSearchStrategy::lineSearchTask(const size_t taskId) {
       /*
        * based on the "Armijo backtracking" step length selection policy:
        * cost should be better than the baseline cost but learning rate should
-       * be as high as possible. This is equivalent to a single core line search.
+       * be as high as possible. This is equivalent to a single core line
+       * search.
        */
-      const bool armijoCondition = workersSolution_[taskId].performanceIndex.merit <
-                                   (baselineMerit_ - settings_.armijoCoefficient * stepLength * unoptimizedControllerUpdateIS_);
-      if (armijoCondition && stepLength > bestStepSize_) {  // save solution
+      const bool armijoCondition =
+          workersSolution_[taskId].performanceIndex.merit <
+          (baselineMerit_ - settings_.armijoCoefficient * stepLength *
+                                unoptimizedControllerUpdateIS_);
+      if (armijoCondition && stepLength > bestStepSize_) { // save solution
         bestStepSize_ = stepLength;
         swap(*bestSolutionRef_, workersSolution_[taskId]);
-        terminateLinesearchTasks = std::all_of(alphaProcessed_.cbegin(), alphaProcessed_.cbegin() + alphaExp, [](bool f) { return f; });
+        terminateLinesearchTasks = std::all_of(
+            alphaProcessed_.cbegin(), alphaProcessed_.cbegin() + alphaExp,
+            [](bool f) { return f; });
       }
 
       alphaProcessed_[alphaExp] = true;
-    }  // end lock
+    } // end lock
 
     // kill other ongoing line search tasks
     if (terminateLinesearchTasks) {
-      for (RolloutBase& rollout : rolloutRefStock_) {
+      for (RolloutBase &rollout : rolloutRefStock_) {
         rollout.abortRollout();
       }
       if (baseSettings_.displayInfo) {
@@ -254,35 +293,46 @@ void LineSearchStrategy::lineSearchTask(const size_t taskId) {
       break;
     }
 
-  }  // end of while loop
+  } // end of while loop
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::pair<bool, std::string> LineSearchStrategy::checkConvergence(bool unreliableControllerIncrement,
-                                                                  const PerformanceIndex& previousPerformanceIndex,
-                                                                  const PerformanceIndex& currentPerformanceIndex) const {
+std::pair<bool, std::string> LineSearchStrategy::checkConvergence(
+    bool unreliableControllerIncrement,
+    const PerformanceIndex &previousPerformanceIndex,
+    const PerformanceIndex &currentPerformanceIndex) const {
   // loop break variables
   const scalar_t currentTotalCost =
-      currentPerformanceIndex.cost + currentPerformanceIndex.equalityLagrangian + currentPerformanceIndex.inequalityLagrangian;
+      currentPerformanceIndex.cost +
+      currentPerformanceIndex.equalityLagrangian +
+      currentPerformanceIndex.inequalityLagrangian;
   const scalar_t previousTotalCost =
-      previousPerformanceIndex.cost + previousPerformanceIndex.equalityLagrangian + previousPerformanceIndex.inequalityLagrangian;
+      previousPerformanceIndex.cost +
+      previousPerformanceIndex.equalityLagrangian +
+      previousPerformanceIndex.inequalityLagrangian;
   const scalar_t relCost = std::abs(currentTotalCost - previousTotalCost);
   const bool isCostFunctionConverged = relCost <= baseSettings_.minRelCost;
-  const bool isConstraintsSatisfied = currentPerformanceIndex.equalityConstraintsSSE <= baseSettings_.constraintTolerance;
-  const bool isOptimizationConverged = isCostFunctionConverged && isConstraintsSatisfied;
+  const bool isConstraintsSatisfied =
+      currentPerformanceIndex.equalityConstraintsSSE <=
+      baseSettings_.constraintTolerance;
+  const bool isOptimizationConverged =
+      isCostFunctionConverged && isConstraintsSatisfied;
 
   // convergence info
   std::stringstream infoStream;
   if (isOptimizationConverged) {
     infoStream << "The algorithm has successfully terminated as: \n";
 
-    infoStream << "    * The absolute relative change of cost (i.e., " << relCost << ") has reached to the minimum value ("
+    infoStream << "    * The absolute relative change of cost (i.e., "
+               << relCost << ") has reached to the minimum value ("
                << baseSettings_.minRelCost << ").\n";
 
-    infoStream << "    * The SSE of equality constraints (i.e., " << currentPerformanceIndex.equalityConstraintsSSE
-               << ") has reached to its minimum value (" << baseSettings_.constraintTolerance << ").";
+    infoStream << "    * The SSE of equality constraints (i.e., "
+               << currentPerformanceIndex.equalityConstraintsSSE
+               << ") has reached to its minimum value ("
+               << baseSettings_.constraintTolerance << ").";
   }
 
   return {isOptimizationConverged, infoStream.str()};
@@ -291,10 +341,11 @@ std::pair<bool, std::string> LineSearchStrategy::checkConvergence(bool unreliabl
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LineSearchStrategy::computeRiccatiModification(const ModelData& projectedModelData, matrix_t& deltaQm, vector_t& deltaGv,
-                                                    matrix_t& deltaGm) const {
-  const auto& QmProjected = projectedModelData.cost.dfdxx;
-  const auto& PmProjected = projectedModelData.cost.dfdux;
+void LineSearchStrategy::computeRiccatiModification(
+    const ModelData &projectedModelData, matrix_t &deltaQm, vector_t &deltaGv,
+    matrix_t &deltaGm) const {
+  const auto &QmProjected = projectedModelData.cost.dfdxx;
+  const auto &PmProjected = projectedModelData.cost.dfdux;
 
   // Q_minus_PTRinvP
   matrix_t Q_minus_PTRinvP = QmProjected;
@@ -302,7 +353,8 @@ void LineSearchStrategy::computeRiccatiModification(const ModelData& projectedMo
 
   // deltaQm
   deltaQm = Q_minus_PTRinvP;
-  hessian_correction::shiftHessian(settings_.hessianCorrectionStrategy, deltaQm, settings_.hessianCorrectionMultiple);
+  hessian_correction::shiftHessian(settings_.hessianCorrectionStrategy, deltaQm,
+                                   settings_.hessianCorrectionMultiple);
   deltaQm -= Q_minus_PTRinvP;
 
   // deltaGv, deltaGm
@@ -314,9 +366,9 @@ void LineSearchStrategy::computeRiccatiModification(const ModelData& projectedMo
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LineSearchStrategy::printString(const std::string& text) const {
+void LineSearchStrategy::printString(const std::string &text) const {
   std::lock_guard<std::mutex> outputDisplayGuard(outputDisplayGuardMutex_);
   std::cerr << text;
 }
 
-}  // namespace ocs2
+} // namespace ocs2

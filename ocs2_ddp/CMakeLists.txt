@@ -86,6 +86,9 @@ ament_export_dependencies(
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
 
+ament_add_gtest(testLineSearchConcurrency test/testLineSearchConcurrency.cpp)
+target_link_libraries(testLineSearchConcurrency ${PROJECT_NAME} gtest_main)
+
 ament_add_gtest(exp0_ddp_test
   test/Exp0Test.cpp
 )

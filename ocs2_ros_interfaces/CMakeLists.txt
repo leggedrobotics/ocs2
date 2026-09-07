@@ -111,6 +111,7 @@ ament_export_dependencies(
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
+  find_package(ocs2_oc REQUIRED)
 
   ament_add_gtest(ocs2_ros_interfaces_test
     test/testMpcRosInterfaces.cpp
@@ -119,6 +120,7 @@ if(BUILD_TESTING)
     ${PROJECT_NAME}
     gtest_main
   )
+  ament_target_dependencies(ocs2_ros_interfaces_test ocs2_oc)
   target_compile_options(ocs2_ros_interfaces_test PRIVATE ${OCS2_CXX_FLAGS})
 endif()
 

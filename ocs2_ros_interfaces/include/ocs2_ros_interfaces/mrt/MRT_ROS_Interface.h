@@ -58,7 +58,7 @@ namespace ocs2 {
  * using ROS.
  */
 class MRT_ROS_Interface : public MRT_BASE {
- public:
+public:
   /**
    * Constructor
    *
@@ -74,18 +74,24 @@ class MRT_ROS_Interface : public MRT_BASE {
    */
   ~MRT_ROS_Interface() override;
 
-  /** Clear the active policy and reject every policy until a reset is acknowledged. */
+  /** Clear the active policy and reject every policy until a reset is
+   * acknowledged. */
   void reset() override;
 
-  /** Accept policies starting at the epoch returned by a successful reset call. */
+  /** Accept policies starting at the epoch returned by a successful reset call.
+   */
   void acknowledgeMpcReset(uint64_t resetEpoch);
+
+  /** Require the same command model on every policy. Set once before
+   * launchNodes(). */
+  void setExpectedCommandPathManifest(std::string manifest);
 
   /**
    * @note Must be called BEFORE the node starts spinning (i.e., before
    * launchNodes() or any rclcpp::spin). Calling from within a ROS callback
    * while the node is spinning may cause a deadlock.
    */
-  void resetMpcNode(const TargetTrajectories& initTargetTrajectories) override;
+  void resetMpcNode(const TargetTrajectories &initTargetTrajectories) override;
 
   /**
    * Shut down the ROS nodes.
@@ -107,23 +113,25 @@ class MRT_ROS_Interface : public MRT_BASE {
    * node.
    * @param node
    */
-  void launchNodes(const rclcpp::Node::SharedPtr& node);
+  void launchNodes(const rclcpp::Node::SharedPtr &node);
 
-  void setCurrentObservation(
-      const SystemObservation& currentObservation) override;
+  void
+  setCurrentObservation(const SystemObservation &currentObservation) override;
 
- protected:
+protected:
+  static void validateCommandPathManifest(const std::string &expected,
+                                          const std::string &received);
   static void validatePolicyGeneration(uint64_t expectedResetEpoch,
                                        uint64_t lastPolicySequence,
                                        uint64_t messageResetEpoch,
                                        uint64_t messagePolicySequence);
 
-  static void readPolicyMsg(const ocs2_msgs::msg::MpcFlattenedController& msg,
-                            CommandData& commandData,
-                            PrimalSolution& primalSolution,
-                            PerformanceIndex& performanceIndices);
+  static void readPolicyMsg(const ocs2_msgs::msg::MpcFlattenedController &msg,
+                            CommandData &commandData,
+                            PrimalSolution &primalSolution,
+                            PerformanceIndex &performanceIndices);
 
- private:
+private:
   /**
    * Callback method to receive the MPC policy as well as the mode sequence.
    * It only updates the policy variables with suffix (*Buffer_) variables.
@@ -131,7 +139,7 @@ class MRT_ROS_Interface : public MRT_BASE {
    * @param [in] msg: A constant pointer to the message
    */
   void mpcPolicyCallback(
-      const ocs2_msgs::msg::MpcFlattenedController::ConstSharedPtr& msg);
+      const ocs2_msgs::msg::MpcFlattenedController::ConstSharedPtr &msg);
 
   /**
    * A thread function which sends the current state and checks for a new MPC
@@ -139,8 +147,10 @@ class MRT_ROS_Interface : public MRT_BASE {
    */
   void publisherWorkerThread();
 
- private:
+private:
   std::string topicPrefix_;
+  std::string
+      expectedCommandPathManifest_; // immutable once ROS subscriptions exist
 
   // Publishers and subscribers
   rclcpp::Node::SharedPtr node_;
@@ -161,9 +171,9 @@ class MRT_ROS_Interface : public MRT_BASE {
   std::mutex publisherMutex_;
   std::condition_variable msgReady_;
 
-  uint64_t expectedResetEpoch_{0};  // guarded by policyGenerationMutex_
-  uint64_t lastPolicySequence_{0};  // guarded by policyGenerationMutex_
+  uint64_t expectedResetEpoch_{0}; // guarded by policyGenerationMutex_
+  uint64_t lastPolicySequence_{0}; // guarded by policyGenerationMutex_
   std::mutex policyGenerationMutex_;
 };
 
-}  // namespace ocs2
+} // namespace ocs2

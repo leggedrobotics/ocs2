@@ -2,6 +2,7 @@
 
 uint64                  reset_epoch             # successful MPC reset that owns this policy
 uint64                  policy_sequence         # monotonically increasing within reset_epoch
+string                  command_path_manifest_sha256 # producer model/input semantics; checked by configured consumers
 
 # define controllerType Enum values
 uint8 CONTROLLER_UNKNOWN=0 # safety mechanism: message initalization to zero

@@ -27,6 +27,7 @@
   <exec_depend>ros2launch</exec_depend>
 
   <test_depend>ament_cmake_gtest</test_depend>
+  <test_depend>ocs2_oc</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

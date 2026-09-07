@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
-#include <cstdint>
 #include <condition_variable>
+#include <cstdint>
 #include <limits>
 #include <memory>
 #include <mutex>
@@ -13,42 +13,184 @@
 #include <utility>
 #include <vector>
 
+#include <ocs2_core/NumericTraits.h>
 #include <ocs2_core/control/FeedforwardController.h>
+#include <ocs2_core/dynamics/LinearSystemDynamics.h>
+#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_ros_interfaces/common/RosMsgConversions.h>
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
+#include <ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
 
 namespace ocs2 {
 namespace {
 
+// RolloutBase::findActiveModesTimeInterval advances each segment start by this
+// epsilon. For xdot=u, one segment contributes u*(dt-epsilon).
+constexpr scalar_t kRolloutStartShift = numeric_traits::weakEpsilon<scalar_t>();
+
+class DummyLoopClockAccess : public MRT_ROS_Dummy_Loop {
+public:
+  using MRT_ROS_Dummy_Loop::advanceRealtimeSimulation;
+  using MRT_ROS_Dummy_Loop::MRT_ROS_Dummy_Loop;
+  using MRT_ROS_Dummy_Loop::observationTimeAfterStep;
+};
+
+TEST(MrtDummyClock, DefaultFixedStepIsIndependentOfRosEpoch) {
+  MRT_ROS_Interface mrt("clock_contract");
+  DummyLoopClockAccess dummy(mrt, 20.0);
+  EXPECT_DOUBLE_EQ(dummy.observationTimeAfterStep(0.0), 0.05);
+  EXPECT_DOUBLE_EQ(dummy.observationTimeAfterStep(10.0), 10.05);
+}
+
+TEST(MrtDummyClock,
+     OptionalClockHandlesStartupWaitJitterPauseAndRejectsRegression) {
+  MRT_ROS_Interface mrt("clock_contract");
+  double ros_time = 1000.0;
+  DummyLoopClockAccess dummy(mrt, 20.0, -1.0, [&]() { return ros_time; });
+  double observation_time = dummy.observationTimeAfterStep(ros_time);
+  EXPECT_DOUBLE_EQ(observation_time, 1000.0);
+  // A reset or first-solve wait does not leave the held initial state at an old
+  // epoch. Subsequent variable steps end at the sampled ROS clock, never ahead.
+  for (const double time : {1006.0, 1006.031, 1006.11, 1006.11, 1006.125}) {
+    ros_time = time;
+    const double next = dummy.observationTimeAfterStep(observation_time);
+    EXPECT_DOUBLE_EQ(next, ros_time);
+    EXPECT_GE(next, observation_time);
+    observation_time = next;
+  }
+  ros_time = 1006.12;
+  EXPECT_THROW(dummy.observationTimeAfterStep(observation_time),
+               std::runtime_error);
+  ros_time = std::numeric_limits<double>::quiet_NaN();
+  EXPECT_THROW(dummy.observationTimeAfterStep(observation_time),
+               std::runtime_error);
+  EXPECT_THROW((DummyLoopClockAccess(mrt, 20.0, 10.0, []() { return 1.0; })),
+               std::invalid_argument);
+}
+
 class MrtRosInterfaceAccess : public MRT_ROS_Interface {
- public:
+public:
+  void stageConstantPolicy(scalar_t command) {
+    auto solution = std::make_unique<PrimalSolution>();
+    solution->timeTrajectory_ = {0.0, 100.0};
+    solution->stateTrajectory_ = {vector_t::Zero(1), vector_t::Zero(1)};
+    solution->inputTrajectory_ = {vector_t::Constant(1, command),
+                                  vector_t::Constant(1, command)};
+    solution->modeSchedule_ = ModeSchedule({}, {0});
+    solution->controllerPtr_ = std::make_unique<FeedforwardController>(
+        solution->timeTrajectory_, solution->inputTrajectory_);
+    moveToBuffer(std::make_unique<CommandData>(), std::move(solution),
+                 std::make_unique<PerformanceIndex>());
+  }
+  using MRT_ROS_Interface::validateCommandPathManifest;
   static void validate(uint64_t expectedResetEpoch, uint64_t lastPolicySequence,
-                       uint64_t messageResetEpoch, uint64_t messagePolicySequence) {
+                       uint64_t messageResetEpoch,
+                       uint64_t messagePolicySequence) {
     validatePolicyGeneration(expectedResetEpoch, lastPolicySequence,
                              messageResetEpoch, messagePolicySequence);
   }
 
-  static void read(const ocs2_msgs::msg::MpcFlattenedController& msg, CommandData& commandData,
-                   PrimalSolution& primalSolution, PerformanceIndex& performanceIndex) {
+  static void read(const ocs2_msgs::msg::MpcFlattenedController &msg,
+                   CommandData &commandData, PrimalSolution &primalSolution,
+                   PerformanceIndex &performanceIndex) {
     readPolicyMsg(msg, commandData, primalSolution, performanceIndex);
   }
 };
 
+TEST(MrtDummyClock, DeliveredPolicyCannotActBeforeItsAdmissionTime) {
+  MrtRosInterfaceAccess mrt;
+  LinearSystemDynamics dynamics(matrix_t::Zero(1, 1), matrix_t::Identity(1, 1));
+  TimeTriggeredRollout rollout(dynamics, rollout::Settings{});
+  mrt.initRollout(&rollout);
+  double time = 1.0;
+  DummyLoopClockAccess dummy(mrt, 20.0, -1.0, [&]() { return time; });
+  SystemObservation observation;
+  observation.time = 0.5;
+  observation.state = vector_t::Zero(1);
+  observation.input = vector_t::Zero(1);
+  bool policyInstalled = false;
+
+  mrt.stageConstantPolicy(1.0);
+  observation = dummy.advanceRealtimeSimulation(observation, policyInstalled);
+  ASSERT_TRUE(policyInstalled);
+  EXPECT_DOUBLE_EQ(observation.time, 1.0);
+  EXPECT_DOUBLE_EQ(observation.state[0], 0.0); // Initial wait is a held state.
+  EXPECT_DOUBLE_EQ(observation.input[0], 1.0);
+
+  mrt.stageConstantPolicy(3.0);
+  time = 1.1;
+  observation = dummy.advanceRealtimeSimulation(observation, policyInstalled);
+  EXPECT_NEAR(observation.state[0], 0.1 - kRolloutStartShift,
+              1e-10); // Entire elapsed interval uses old command 1.
+  EXPECT_DOUBLE_EQ(observation.input[0], 3.0);
+  time = 1.2;
+  observation = dummy.advanceRealtimeSimulation(observation, policyInstalled);
+  EXPECT_NEAR(observation.state[0], 0.4 - 4.0 * kRolloutStartShift, 1e-10);
+
+  mrt.stageConstantPolicy(-2.0);
+  observation = dummy.advanceRealtimeSimulation(observation, policyInstalled);
+  EXPECT_NEAR(observation.state[0], 0.4 - 4.0 * kRolloutStartShift,
+              1e-10); // Paused clock can admit without advancing.
+  EXPECT_DOUBLE_EQ(observation.input[0], -2.0);
+  time = 1.3;
+  observation = dummy.advanceRealtimeSimulation(observation, policyInstalled);
+  EXPECT_NEAR(observation.state[0], 0.2 - 2.0 * kRolloutStartShift, 1e-10);
+}
+
+TEST(MrtDummyClock, FixedStepKeepsUpdateBeforeIntegrationOrdering) {
+  MrtRosInterfaceAccess mrt;
+  LinearSystemDynamics dynamics(matrix_t::Zero(1, 1), matrix_t::Identity(1, 1));
+  TimeTriggeredRollout rollout(dynamics, rollout::Settings{});
+  mrt.initRollout(&rollout);
+  DummyLoopClockAccess dummy(mrt, 10.0);
+  SystemObservation observation;
+  observation.time = 0.0;
+  observation.state = vector_t::Zero(1);
+  observation.input = vector_t::Zero(1);
+  bool policyInstalled = false;
+  mrt.stageConstantPolicy(1.0);
+  observation = dummy.advanceRealtimeSimulation(observation, policyInstalled);
+  EXPECT_NEAR(observation.state[0], 0.1 - kRolloutStartShift, 1e-10);
+  mrt.stageConstantPolicy(3.0);
+  observation = dummy.advanceRealtimeSimulation(observation, policyInstalled);
+  EXPECT_NEAR(observation.state[0], 0.4 - 4.0 * kRolloutStartShift, 1e-10);
+}
+
+TEST(MrtCommandPathManifest,
+     RejectsMissingAndDifferentModelsEvenWithTheSameDimensions) {
+  EXPECT_NO_THROW(MrtRosInterfaceAccess::validateCommandPathManifest(
+      "rate-model", "rate-model"));
+  EXPECT_THROW(
+      MrtRosInterfaceAccess::validateCommandPathManifest("rate-model", ""),
+      std::runtime_error);
+  EXPECT_THROW(MrtRosInterfaceAccess::validateCommandPathManifest(
+                   "rate-model", "legacy-model"),
+               std::runtime_error);
+  EXPECT_THROW(MrtRosInterfaceAccess::validateCommandPathManifest(
+                   "rate-model", "other-bounds"),
+               std::runtime_error);
+  EXPECT_NO_THROW(MrtRosInterfaceAccess::validateCommandPathManifest("", ""));
+}
+
 class MpcRosInterfaceAccess : public MPC_ROS_Interface {
- public:
+public:
   using MPC_ROS_Interface::MPC_ROS_Interface;
 
-  static ocs2_msgs::msg::MpcFlattenedController create(const PrimalSolution& primalSolution,
-                                                       const CommandData& commandData,
-                                                       const PerformanceIndex& performanceIndex,
-                                                       uint64_t resetEpoch, uint64_t policySequence) {
-    return createMpcPolicyMsg(primalSolution, commandData, performanceIndex, resetEpoch, policySequence);
+  static ocs2_msgs::msg::MpcFlattenedController
+  create(const PrimalSolution &primalSolution, const CommandData &commandData,
+         const PerformanceIndex &performanceIndex, uint64_t resetEpoch,
+         uint64_t policySequence) {
+    return createMpcPolicyMsg(primalSolution, commandData, performanceIndex,
+                              resetEpoch, policySequence);
   }
 
-  void configurePolicyPublisher(const rclcpp::Node::SharedPtr& node, const std::string& topic) {
+  void configurePolicyPublisher(const rclcpp::Node::SharedPtr &node,
+                                const std::string &topic) {
     node_ = node;
-    mpcPolicyPublisher_ = node->create_publisher<ocs2_msgs::msg::MpcFlattenedController>(topic, 10);
+    mpcPolicyPublisher_ =
+        node->create_publisher<ocs2_msgs::msg::MpcFlattenedController>(topic,
+                                                                       10);
   }
 
   void setCurrentGeneration(uint64_t resetEpoch) {
@@ -58,8 +200,9 @@ class MpcRosInterfaceAccess : public MPC_ROS_Interface {
     mpcReady_ = true;
   }
 
-  void stagePolicy(PrimalSolution primalSolution, const CommandData& commandData,
-                   uint64_t resetEpoch, uint64_t policySequence) {
+  void stagePolicy(PrimalSolution primalSolution,
+                   const CommandData &commandData, uint64_t resetEpoch,
+                   uint64_t policySequence) {
     std::lock_guard<std::mutex> lock(bufferMutex_);
     *bufferPrimalSolutionPtr_ = std::move(primalSolution);
     *bufferCommandPtr_ = commandData;
@@ -78,14 +221,14 @@ class MpcRosInterfaceAccess : public MPC_ROS_Interface {
 };
 
 class InertMpc final : public MPC_BASE {
- public:
+public:
   InertMpc() : MPC_BASE(mpc::Settings{}) {}
 
-  SolverBase* getSolverPtr() override { return nullptr; }
-  const SolverBase* getSolverPtr() const override { return nullptr; }
+  SolverBase *getSolverPtr() override { return nullptr; }
+  const SolverBase *getSolverPtr() const override { return nullptr; }
 
- private:
-  void calculateController(scalar_t, const vector_t&, scalar_t) override {}
+private:
+  void calculateController(scalar_t, const vector_t &, scalar_t) override {}
 };
 
 struct BlockingFlattenState final {
@@ -96,30 +239,38 @@ struct BlockingFlattenState final {
 };
 
 class BlockingController final : public ControllerBase {
- public:
-  explicit BlockingController(std::shared_ptr<BlockingFlattenState> state) : state_(std::move(state)) {}
+public:
+  explicit BlockingController(std::shared_ptr<BlockingFlattenState> state)
+      : state_(std::move(state)) {}
 
-  vector_t computeInput(scalar_t, const vector_t&) override { return vector_t::Constant(1, 0.1); }
-  void concatenate(const ControllerBase*, int, int) override {}
+  vector_t computeInput(scalar_t, const vector_t &) override {
+    return vector_t::Constant(1, 0.1);
+  }
+  void concatenate(const ControllerBase *, int, int) override {}
   int size() const override { return 2; }
-  ControllerType getType() const override { return ControllerType::FEEDFORWARD; }
+  ControllerType getType() const override {
+    return ControllerType::FEEDFORWARD;
+  }
   void clear() override {}
   bool empty() const override { return false; }
-  BlockingController* clone() const override { return new BlockingController(state_); }
+  BlockingController *clone() const override {
+    return new BlockingController(state_);
+  }
 
-  void flatten(const scalar_array_t&, const std::vector<std::vector<float>*>& data) const override {
+  void flatten(const scalar_array_t &,
+               const std::vector<std::vector<float> *> &data) const override {
     {
       std::unique_lock<std::mutex> lock(state_->mutex);
       state_->started = true;
       state_->condition.notify_all();
       state_->condition.wait(lock, [&]() { return state_->release; });
     }
-    for (auto* sample : data) {
+    for (auto *sample : data) {
       *sample = {0.1F};
     }
   }
 
- private:
+private:
   std::shared_ptr<BlockingFlattenState> state_;
 };
 
@@ -148,7 +299,8 @@ ocs2_msgs::msg::MpcFlattenedController makePolicyMsg() {
   ocs2_msgs::msg::MpcFlattenedController msg;
   msg.reset_epoch = 3;
   msg.policy_sequence = 7;
-  msg.controller_type = ocs2_msgs::msg::MpcFlattenedController::CONTROLLER_FEEDFORWARD;
+  msg.controller_type =
+      ocs2_msgs::msg::MpcFlattenedController::CONTROLLER_FEEDFORWARD;
   msg.init_observation = makeObservationMsg();
   msg.plan_target_trajectories = makeTargetMsg();
   msg.mode_schedule.mode_sequence = {0};
@@ -169,14 +321,16 @@ PrimalSolution makePrimalSolution() {
   PrimalSolution solution;
   solution.timeTrajectory_ = {1.0, 2.0};
   solution.stateTrajectory_ = {vector_t::Zero(1), vector_t::Ones(1)};
-  solution.inputTrajectory_ = {vector_t::Constant(1, 0.1), vector_t::Constant(1, 0.1)};
+  solution.inputTrajectory_ = {vector_t::Constant(1, 0.1),
+                               vector_t::Constant(1, 0.1)};
   solution.modeSchedule_ = ModeSchedule({}, {0});
-  solution.controllerPtr_ =
-      std::make_unique<FeedforwardController>(solution.timeTrajectory_, solution.inputTrajectory_);
+  solution.controllerPtr_ = std::make_unique<FeedforwardController>(
+      solution.timeTrajectory_, solution.inputTrajectory_);
   return solution;
 }
 
-PrimalSolution makeBlockingPrimalSolution(const std::shared_ptr<BlockingFlattenState>& state) {
+PrimalSolution
+makeBlockingPrimalSolution(const std::shared_ptr<BlockingFlattenState> &state) {
   auto solution = makePrimalSolution();
   solution.controllerPtr_ = std::make_unique<BlockingController>(state);
   return solution;
@@ -187,7 +341,8 @@ CommandData makeCommandData() {
   command.mpcInitObservation_.time = 1.0;
   command.mpcInitObservation_.state = vector_t::Constant(1, 0.25);
   command.mpcInitObservation_.input = vector_t::Constant(1, 0.1);
-  command.mpcTargetTrajectories_ = ros_msg_conversions::readTargetTrajectoriesMsg(makeTargetMsg());
+  command.mpcTargetTrajectories_ =
+      ros_msg_conversions::readTargetTrajectoriesMsg(makeTargetMsg());
   return command;
 }
 
@@ -203,18 +358,21 @@ TEST(PolicyGeneration, acceptsOnlyCurrentIncreasingSequence) {
   EXPECT_THROW(MrtRosInterfaceAccess::validate(4, 7, 4, 6), std::runtime_error);
 }
 
-TEST(PolicyGeneration, rejectsPreviousEpochAcrossRandomizedResetPublishOrdering) {
+TEST(PolicyGeneration,
+     rejectsPreviousEpochAcrossRandomizedResetPublishOrdering) {
   std::mt19937 random(0x5A17U);
   uint64_t currentEpoch = 1;
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
     const uint64_t previousEpoch = currentEpoch++;
     uint64_t lastAcceptedSequence = 0;
     const auto validateCurrent = [&]() {
-      EXPECT_NO_THROW(MrtRosInterfaceAccess::validate(currentEpoch, lastAcceptedSequence, currentEpoch, 1));
+      EXPECT_NO_THROW(MrtRosInterfaceAccess::validate(
+          currentEpoch, lastAcceptedSequence, currentEpoch, 1));
       lastAcceptedSequence = 1;
     };
     const auto rejectPrevious = [&]() {
-      EXPECT_THROW(MrtRosInterfaceAccess::validate(currentEpoch, lastAcceptedSequence, previousEpoch, 1),
+      EXPECT_THROW(MrtRosInterfaceAccess::validate(
+                       currentEpoch, lastAcceptedSequence, previousEpoch, 1),
                    std::runtime_error);
     };
 
@@ -228,31 +386,36 @@ TEST(PolicyGeneration, rejectsPreviousEpochAcrossRandomizedResetPublishOrdering)
   }
 }
 
-TEST(PolicyGeneration, blockedPreResetPublisherCannotPublishAfterResetAcknowledgement) {
+TEST(PolicyGeneration,
+     blockedPreResetPublisherCannotPublishAfterResetAcknowledgement) {
   if (!rclcpp::ok()) {
     int argc = 0;
-    char** argv = nullptr;
+    char **argv = nullptr;
     rclcpp::init(argc, argv);
   }
 
   InertMpc mpc;
   MpcRosInterfaceAccess interface(mpc, "policy_race");
   auto publisherNode = std::make_shared<rclcpp::Node>("policy_race_publisher");
-  auto subscriberNode = std::make_shared<rclcpp::Node>("policy_race_subscriber");
+  auto subscriberNode =
+      std::make_shared<rclcpp::Node>("policy_race_subscriber");
   const std::string topic = "policy_race_controller";
   interface.configurePolicyPublisher(publisherNode, topic);
 
   std::mutex messagesMutex;
   std::condition_variable messagesCondition;
   std::vector<ocs2_msgs::msg::MpcFlattenedController> messages;
-  auto subscription = subscriberNode->create_subscription<ocs2_msgs::msg::MpcFlattenedController>(
-      topic, 10, [&](const ocs2_msgs::msg::MpcFlattenedController& msg) {
-        {
-          std::lock_guard<std::mutex> lock(messagesMutex);
-          messages.push_back(msg);
-        }
-        messagesCondition.notify_all();
-      });
+  auto subscription =
+      subscriberNode
+          ->create_subscription<ocs2_msgs::msg::MpcFlattenedController>(
+              topic, 10,
+              [&](const ocs2_msgs::msg::MpcFlattenedController &msg) {
+                {
+                  std::lock_guard<std::mutex> lock(messagesMutex);
+                  messages.push_back(msg);
+                }
+                messagesCondition.notify_all();
+              });
   (void)subscription;
 
   rclcpp::executors::SingleThreadedExecutor executor;
@@ -260,27 +423,32 @@ TEST(PolicyGeneration, blockedPreResetPublisherCannotPublishAfterResetAcknowledg
   executor.add_node(subscriberNode);
   std::thread spinThread([&]() { executor.spin(); });
 
-  const auto discoveryDeadline = std::chrono::steady_clock::now() + std::chrono::seconds(2);
-  while (publisherNode->count_subscribers(topic) == 0 && std::chrono::steady_clock::now() < discoveryDeadline) {
+  const auto discoveryDeadline =
+      std::chrono::steady_clock::now() + std::chrono::seconds(2);
+  while (publisherNode->count_subscribers(topic) == 0 &&
+         std::chrono::steady_clock::now() < discoveryDeadline) {
     std::this_thread::yield();
   }
   EXPECT_EQ(publisherNode->count_subscribers(topic), 1U);
 
   interface.setCurrentGeneration(1);
   const auto blockingState = std::make_shared<BlockingFlattenState>();
-  interface.stagePolicy(makeBlockingPrimalSolution(blockingState), makeCommandData(), 1, 1);
+  interface.stagePolicy(makeBlockingPrimalSolution(blockingState),
+                        makeCommandData(), 1, 1);
   interface.requestPublish();
 
   bool flattenStarted = false;
   {
     std::unique_lock<std::mutex> lock(blockingState->mutex);
-    flattenStarted = blockingState->condition.wait_for(lock, std::chrono::seconds(2), [&]() {
-      return blockingState->started;
-    });
+    flattenStarted =
+        blockingState->condition.wait_for(lock, std::chrono::seconds(2), [&]() {
+          return blockingState->started;
+        });
   }
   EXPECT_TRUE(flattenStarted);
 
-  // This models a successful reset acknowledgement while the old policy is still serializing.
+  // This models a successful reset acknowledgement while the old policy is
+  // still serializing.
   interface.setCurrentGeneration(2);
   {
     std::lock_guard<std::mutex> lock(blockingState->mutex);
@@ -294,9 +462,10 @@ TEST(PolicyGeneration, blockedPreResetPublisherCannotPublishAfterResetAcknowledg
   bool receivedCurrentPolicy = false;
   {
     std::unique_lock<std::mutex> lock(messagesMutex);
-    receivedCurrentPolicy = messagesCondition.wait_for(lock, std::chrono::seconds(2), [&]() {
-      return !messages.empty() && messages.back().reset_epoch == 2;
-    });
+    receivedCurrentPolicy =
+        messagesCondition.wait_for(lock, std::chrono::seconds(2), [&]() {
+          return !messages.empty() && messages.back().reset_epoch == 2;
+        });
   }
 
   interface.shutdownNode();
@@ -315,21 +484,24 @@ TEST(RosMessageValidation, rejectsMalformedObservationAndTarget) {
   EXPECT_NO_THROW(ros_msg_conversions::readObservationMsg(observation));
 
   observation.state.value[0] = std::numeric_limits<float>::quiet_NaN();
-  EXPECT_THROW(ros_msg_conversions::readObservationMsg(observation), std::runtime_error);
+  EXPECT_THROW(ros_msg_conversions::readObservationMsg(observation),
+               std::runtime_error);
 
   auto target = makeTargetMsg();
   EXPECT_NO_THROW(ros_msg_conversions::readTargetTrajectoriesMsg(target));
 
   target.time_trajectory[1] = target.time_trajectory[0] - 1.0;
-  EXPECT_THROW(ros_msg_conversions::readTargetTrajectoriesMsg(target), std::runtime_error);
+  EXPECT_THROW(ros_msg_conversions::readTargetTrajectoriesMsg(target),
+               std::runtime_error);
 
   target = makeTargetMsg();
   target.state_trajectory[1].value.push_back(2.0F);
-  EXPECT_THROW(ros_msg_conversions::readTargetTrajectoriesMsg(target), std::runtime_error);
+  EXPECT_THROW(ros_msg_conversions::readTargetTrajectoriesMsg(target),
+               std::runtime_error);
 }
 
 TEST(PolicyMessageValidation, acceptsValidPolicyAndRejectsMalformedFields) {
-  auto readPolicy = [](const ocs2_msgs::msg::MpcFlattenedController& msg) {
+  auto readPolicy = [](const ocs2_msgs::msg::MpcFlattenedController &msg) {
     CommandData command;
     PrimalSolution solution;
     PerformanceIndex performance;
@@ -364,15 +536,20 @@ TEST(PolicyMessageValidation, validatesPolicyBeforePublication) {
   const auto command = makeCommandData();
   const PerformanceIndex performance;
 
-  const auto msg = MpcRosInterfaceAccess::create(solution, command, performance, 3, 7);
+  const auto msg =
+      MpcRosInterfaceAccess::create(solution, command, performance, 3, 7);
   EXPECT_EQ(msg.reset_epoch, 3);
   EXPECT_EQ(msg.policy_sequence, 7);
 
-  EXPECT_THROW(MpcRosInterfaceAccess::create(solution, command, performance, 0, 7), std::runtime_error);
+  EXPECT_THROW(
+      MpcRosInterfaceAccess::create(solution, command, performance, 0, 7),
+      std::runtime_error);
 
   solution.stateTrajectory_[0](0) = std::numeric_limits<scalar_t>::infinity();
-  EXPECT_THROW(MpcRosInterfaceAccess::create(solution, command, performance, 3, 8), std::runtime_error);
+  EXPECT_THROW(
+      MpcRosInterfaceAccess::create(solution, command, performance, 3, 8),
+      std::runtime_error);
 }
 
-}  // namespace
-}  // namespace ocs2
+} // namespace
+} // namespace ocs2

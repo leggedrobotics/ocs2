@@ -39,12 +39,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace {
 
-template <typename Container>
-bool allFinite(const Container& values) {
-  return std::all_of(values.begin(), values.end(), [](const auto value) { return std::isfinite(value); });
+template <typename Container> bool allFinite(const Container &values) {
+  return std::all_of(values.begin(), values.end(),
+                     [](const auto value) { return std::isfinite(value); });
 }
 
-}  // namespace
+} // namespace
 
 const rclcpp::Logger LOGGER = rclcpp::get_logger("MRT_ROS_Interface");
 
@@ -84,7 +84,8 @@ void MRT_ROS_Interface::reset() {
 /******************************************************************************************************/
 void MRT_ROS_Interface::acknowledgeMpcReset(uint64_t resetEpoch) {
   if (resetEpoch == 0) {
-    throw std::invalid_argument("[MRT_ROS_Interface::acknowledgeMpcReset] resetEpoch must be nonzero.");
+    throw std::invalid_argument(
+        "[MRT_ROS_Interface::acknowledgeMpcReset] resetEpoch must be nonzero.");
   }
   std::lock_guard<std::mutex> lock(policyGenerationMutex_);
   MRT_BASE::reset();
@@ -92,11 +93,27 @@ void MRT_ROS_Interface::acknowledgeMpcReset(uint64_t resetEpoch) {
   expectedResetEpoch_ = resetEpoch;
 }
 
+void MRT_ROS_Interface::setExpectedCommandPathManifest(std::string manifest) {
+  if (node_ || manifest.empty()) {
+    throw std::invalid_argument("Command path manifest must be nonempty and "
+                                "configured before launchNodes().");
+  }
+  expectedCommandPathManifest_ = std::move(manifest);
+}
+
+void MRT_ROS_Interface::validateCommandPathManifest(
+    const std::string &expected, const std::string &received) {
+  if (!expected.empty() && received != expected) {
+    throw std::runtime_error("Command path model or input semantics do not "
+                             "match the policy consumer.");
+  }
+}
+
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MRT_ROS_Interface::resetMpcNode(
-    const TargetTrajectories& initTargetTrajectories) {
+    const TargetTrajectories &initTargetTrajectories) {
   this->reset();
 
   if (!node_) {
@@ -126,10 +143,9 @@ void MRT_ROS_Interface::resetMpcNode(
         "reset service.");
   }
 
-  auto future =
-      mpcResetServiceClient_->async_send_request(resetSrvRequest);
-  const auto status =
-      rclcpp::spin_until_future_complete(node_, future, std::chrono::seconds(5));
+  auto future = mpcResetServiceClient_->async_send_request(resetSrvRequest);
+  const auto status = rclcpp::spin_until_future_complete(
+      node_, future, std::chrono::seconds(5));
   if (status != rclcpp::FutureReturnCode::SUCCESS) {
     throw std::runtime_error(
         "[MRT_ROS_Interface::resetMpcNode] MPC reset service call failed or "
@@ -137,12 +153,12 @@ void MRT_ROS_Interface::resetMpcNode(
   }
   const auto response = future.get();
   if (!response->done) {
-    throw std::runtime_error(
-        "[MRT_ROS_Interface::resetMpcNode] MPC reset service returned done=false.");
+    throw std::runtime_error("[MRT_ROS_Interface::resetMpcNode] MPC reset "
+                             "service returned done=false.");
   }
   if (response->reset_epoch == 0) {
-    throw std::runtime_error(
-        "[MRT_ROS_Interface::resetMpcNode] MPC reset service returned reset_epoch=0.");
+    throw std::runtime_error("[MRT_ROS_Interface::resetMpcNode] MPC reset "
+                             "service returned reset_epoch=0.");
   }
   acknowledgeMpcReset(response->reset_epoch);
 
@@ -153,7 +169,7 @@ void MRT_ROS_Interface::resetMpcNode(
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MRT_ROS_Interface::setCurrentObservation(
-    const SystemObservation& currentObservation) {
+    const SystemObservation &currentObservation) {
 #ifdef PUBLISH_THREAD
   std::unique_lock<std::mutex> lk(publisherMutex_);
 #endif
@@ -200,8 +216,8 @@ void MRT_ROS_Interface::publisherWorkerThread() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MRT_ROS_Interface::readPolicyMsg(
-    const ocs2_msgs::msg::MpcFlattenedController& msg, CommandData& commandData,
-    PrimalSolution& primalSolution, PerformanceIndex& performanceIndices) {
+    const ocs2_msgs::msg::MpcFlattenedController &msg, CommandData &commandData,
+    PrimalSolution &primalSolution, PerformanceIndex &performanceIndices) {
   const size_t N = msg.time_trajectory.size();
   if (N == 0) {
     throw std::runtime_error(
@@ -216,48 +232,63 @@ void MRT_ROS_Interface::readPolicyMsg(
     throw std::runtime_error(
         "[MRT_ROS_Interface::readPolicyMsg] Data has the wrong length!");
   }
-  if (msg.controller_type != ocs2_msgs::msg::MpcFlattenedController::CONTROLLER_FEEDFORWARD &&
-      msg.controller_type != ocs2_msgs::msg::MpcFlattenedController::CONTROLLER_LINEAR) {
-    throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] Unknown controllerType!");
+  if (msg.controller_type !=
+          ocs2_msgs::msg::MpcFlattenedController::CONTROLLER_FEEDFORWARD &&
+      msg.controller_type !=
+          ocs2_msgs::msg::MpcFlattenedController::CONTROLLER_LINEAR) {
+    throw std::runtime_error(
+        "[MRT_ROS_Interface::readPolicyMsg] Unknown controllerType!");
   }
 
   const size_t stateDimension = msg.state_trajectory.front().value.size();
   const size_t inputDimension = msg.input_trajectory.front().value.size();
   if (stateDimension == 0) {
-    throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] State vectors must not be empty!");
+    throw std::runtime_error(
+        "[MRT_ROS_Interface::readPolicyMsg] State vectors must not be empty!");
   }
   for (size_t i = 0; i < N; ++i) {
     if (!std::isfinite(msg.time_trajectory[i]) ||
         (i > 0 && msg.time_trajectory[i] < msg.time_trajectory[i - 1])) {
-      throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] Time trajectory must be finite and non-decreasing!");
+      throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] Time "
+                               "trajectory must be finite and non-decreasing!");
     }
-    const auto& state = msg.state_trajectory[i].value;
-    const auto& input = msg.input_trajectory[i].value;
-    const auto& controllerData = msg.data[i].data;
+    const auto &state = msg.state_trajectory[i].value;
+    const auto &input = msg.input_trajectory[i].value;
+    const auto &controllerData = msg.data[i].data;
     if (state.size() != stateDimension || input.size() != inputDimension) {
-      throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] State or input dimensions change within the policy!");
+      throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] State or "
+                               "input dimensions change within the policy!");
     }
     if (!allFinite(state) || !allFinite(input) || !allFinite(controllerData)) {
-      throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] Policy contains NaN or Inf!");
+      throw std::runtime_error(
+          "[MRT_ROS_Interface::readPolicyMsg] Policy contains NaN or Inf!");
     }
     const size_t expectedControllerDataSize =
-        msg.controller_type == ocs2_msgs::msg::MpcFlattenedController::CONTROLLER_FEEDFORWARD
+        msg.controller_type ==
+                ocs2_msgs::msg::MpcFlattenedController::CONTROLLER_FEEDFORWARD
             ? inputDimension
             : inputDimension + inputDimension * stateDimension;
     if (controllerData.size() != expectedControllerDataSize) {
-      throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] Controller data has the wrong length!");
+      throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] Controller "
+                               "data has the wrong length!");
     }
   }
   for (size_t i = 0; i < msg.post_event_indices.size(); ++i) {
     const size_t index = msg.post_event_indices[i];
     if (index >= N || (i > 0 && index <= msg.post_event_indices[i - 1])) {
-      throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] Post-event indices must be increasing and within the policy!");
+      throw std::runtime_error(
+          "[MRT_ROS_Interface::readPolicyMsg] Post-event indices must be "
+          "increasing and within the policy!");
     }
   }
 
-  commandData.mpcInitObservation_ = ros_msg_conversions::readObservationMsg(msg.init_observation);
-  commandData.mpcTargetTrajectories_ = ros_msg_conversions::readTargetTrajectoriesMsg(msg.plan_target_trajectories);
-  performanceIndices = ros_msg_conversions::readPerformanceIndicesMsg(msg.performance_indices);
+  commandData.mpcInitObservation_ =
+      ros_msg_conversions::readObservationMsg(msg.init_observation);
+  commandData.mpcTargetTrajectories_ =
+      ros_msg_conversions::readTargetTrajectoriesMsg(
+          msg.plan_target_trajectories);
+  performanceIndices =
+      ros_msg_conversions::readPerformanceIndicesMsg(msg.performance_indices);
 
   primalSolution.clear();
 
@@ -288,31 +319,31 @@ void MRT_ROS_Interface::readPolicyMsg(
     primalSolution.postEventIndices_.emplace_back(static_cast<size_t>(ind));
   }
 
-  std::vector<std::vector<float> const*> controllerDataPtrArray(N, nullptr);
+  std::vector<std::vector<float> const *> controllerDataPtrArray(N, nullptr);
   for (size_t i = 0; i < N; i++) {
     controllerDataPtrArray[i] = &(msg.data[i].data);
   }
 
   // instantiate the correct controller
   switch (msg.controller_type) {
-    case ocs2_msgs::msg::MpcFlattenedController::CONTROLLER_FEEDFORWARD: {
-      auto controller = FeedforwardController::unFlatten(
-          primalSolution.timeTrajectory_, controllerDataPtrArray);
-      primalSolution.controllerPtr_.reset(
-          new FeedforwardController(std::move(controller)));
-      break;
-    }
-    case ocs2_msgs::msg::MpcFlattenedController::CONTROLLER_LINEAR: {
-      auto controller = LinearController::unFlatten(
-          stateDim, inputDim, primalSolution.timeTrajectory_,
-          controllerDataPtrArray);
-      primalSolution.controllerPtr_.reset(
-          new LinearController(std::move(controller)));
-      break;
-    }
-    default:
-      throw std::runtime_error(
-          "[MRT_ROS_Interface::readPolicyMsg] Unknown controllerType!");
+  case ocs2_msgs::msg::MpcFlattenedController::CONTROLLER_FEEDFORWARD: {
+    auto controller = FeedforwardController::unFlatten(
+        primalSolution.timeTrajectory_, controllerDataPtrArray);
+    primalSolution.controllerPtr_.reset(
+        new FeedforwardController(std::move(controller)));
+    break;
+  }
+  case ocs2_msgs::msg::MpcFlattenedController::CONTROLLER_LINEAR: {
+    auto controller = LinearController::unFlatten(
+        stateDim, inputDim, primalSolution.timeTrajectory_,
+        controllerDataPtrArray);
+    primalSolution.controllerPtr_.reset(
+        new LinearController(std::move(controller)));
+    break;
+  }
+  default:
+    throw std::runtime_error(
+        "[MRT_ROS_Interface::readPolicyMsg] Unknown controllerType!");
   }
 }
 
@@ -327,12 +358,13 @@ void MRT_ROS_Interface::validatePolicyGeneration(
         "[MRT_ROS_Interface] MPC must be reset before accepting a policy.");
   }
   if (messageResetEpoch != expectedResetEpoch) {
-    throw std::runtime_error(
-        "[MRT_ROS_Interface] Policy reset_epoch does not match the acknowledged reset generation.");
+    throw std::runtime_error("[MRT_ROS_Interface] Policy reset_epoch does not "
+                             "match the acknowledged reset generation.");
   }
-  if (messagePolicySequence == 0 || messagePolicySequence <= lastPolicySequence) {
-    throw std::runtime_error(
-        "[MRT_ROS_Interface] Policy sequence is zero, duplicate, or out of order.");
+  if (messagePolicySequence == 0 ||
+      messagePolicySequence <= lastPolicySequence) {
+    throw std::runtime_error("[MRT_ROS_Interface] Policy sequence is zero, "
+                             "duplicate, or out of order.");
   }
 }
 
@@ -340,10 +372,13 @@ void MRT_ROS_Interface::validatePolicyGeneration(
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MRT_ROS_Interface::mpcPolicyCallback(
-    const ocs2_msgs::msg::MpcFlattenedController::ConstSharedPtr& msg) {
+    const ocs2_msgs::msg::MpcFlattenedController::ConstSharedPtr &msg) {
   try {
     std::lock_guard<std::mutex> generationLock(policyGenerationMutex_);
-    validatePolicyGeneration(expectedResetEpoch_, lastPolicySequence_, msg->reset_epoch, msg->policy_sequence);
+    validateCommandPathManifest(expectedCommandPathManifest_,
+                                msg->command_path_manifest_sha256);
+    validatePolicyGeneration(expectedResetEpoch_, lastPolicySequence_,
+                             msg->reset_epoch, msg->policy_sequence);
 
     // read new policy and command from msg
     auto commandPtr = std::make_unique<CommandData>();
@@ -355,10 +390,10 @@ void MRT_ROS_Interface::mpcPolicyCallback(
     this->moveToBuffer(std::move(commandPtr), std::move(primalSolutionPtr),
                        std::move(performanceIndicesPtr));
     lastPolicySequence_ = msg->policy_sequence;
-  } catch (const std::exception& e) {
-    RCLCPP_ERROR_STREAM(LOGGER,
-                        "[MRT_ROS_Interface] Dropping invalid policy message: "
-                            << e.what());
+  } catch (const std::exception &e) {
+    RCLCPP_ERROR_STREAM(
+        LOGGER,
+        "[MRT_ROS_Interface] Dropping invalid policy message: " << e.what());
   }
 }
 
@@ -399,8 +434,8 @@ void MRT_ROS_Interface::shutdownPublisher() {
 void MRT_ROS_Interface::spinMRT() {
   // callback_executor_.spin_once();
   if (!node_) {
-    throw std::runtime_error(
-        "[MRT_ROS_Interface::spinMRT] launchNodes() must be called before spinMRT().");
+    throw std::runtime_error("[MRT_ROS_Interface::spinMRT] launchNodes() must "
+                             "be called before spinMRT().");
   }
   rclcpp::spin_some(node_);
 }
@@ -408,7 +443,7 @@ void MRT_ROS_Interface::spinMRT() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_ROS_Interface::launchNodes(const rclcpp::Node::SharedPtr& node) {
+void MRT_ROS_Interface::launchNodes(const rclcpp::Node::SharedPtr &node) {
   this->reset();
   node_ = node;
   // display
@@ -424,7 +459,7 @@ void MRT_ROS_Interface::launchNodes(const rclcpp::Node::SharedPtr& node) {
       rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable();
   mpcPolicySubscriber_ =
       node_->create_subscription<ocs2_msgs::msg::MpcFlattenedController>(
-          topicPrefix_ + "_mpc_policy",  // topic name
+          topicPrefix_ + "_mpc_policy", // topic name
           latchedQos,
           std::bind(&MRT_ROS_Interface::mpcPolicyCallback, this,
                     std::placeholders::_1));
@@ -443,4 +478,4 @@ void MRT_ROS_Interface::launchNodes(const rclcpp::Node::SharedPtr& node) {
   spinMRT();
 }
 
-}  // namespace ocs2
+} // namespace ocs2

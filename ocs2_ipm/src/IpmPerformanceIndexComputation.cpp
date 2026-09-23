@@ -42,11 +42,14 @@ PerformanceIndex computePerformanceIndex(const multiple_shooting::Transcription&
                                          const vector_t& slackStateIneq, const vector_t& slackStateInputIneq) {
   auto performance = multiple_shooting::computePerformanceIndex(transcription, dt);
 
+  // The barrier belongs to each discrete inequality, matching condenseIneqConstraints.
+  // Only the physical stage cost and violation norms use the integration weight dt.
+
   if (slackStateIneq.size() > 0) {
-    performance.cost -= dt * barrierParam * slackStateIneq.array().log().sum();
+    performance.cost -= barrierParam * slackStateIneq.array().log().sum();
   }
   if (slackStateInputIneq.size() > 0) {
-    performance.cost -= dt * barrierParam * slackStateInputIneq.array().log().sum();
+    performance.cost -= barrierParam * slackStateInputIneq.array().log().sum();
   }
 
   if (transcription.stateIneqConstraints.f.size() > 0) {
@@ -117,12 +120,12 @@ PerformanceIndex toPerformanceIndex(const Metrics& metrics, scalar_t dt, scalar_
   PerformanceIndex performance = toPerformanceIndex(metrics, dt);
 
   if (slackStateIneq.size() > 0) {
-    performance.cost -= dt * barrierParam * slackStateIneq.array().log().sum();
+    performance.cost -= barrierParam * slackStateIneq.array().log().sum();
     performance.equalityConstraintsSSE += dt * (toVector(metrics.stateIneqConstraint) - slackStateIneq).squaredNorm();
   }
 
   if (slackStateInputIneq.size() > 0) {
-    performance.cost -= dt * barrierParam * slackStateInputIneq.array().log().sum();
+    performance.cost -= barrierParam * slackStateInputIneq.array().log().sum();
     performance.equalityConstraintsSSE += dt * (toVector(metrics.stateInputIneqConstraint) - slackStateInputIneq).squaredNorm();
   }
 

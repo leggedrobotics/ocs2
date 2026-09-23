@@ -99,6 +99,7 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
 
 ament_add_gtest(test_${PROJECT_NAME}
+  test/testBarrierMerit.cpp
   test/Exp0Test.cpp
   test/Exp1Test.cpp
   test/testCircularKinematics.cpp

@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <gtest/gtest.h>
 #include <ocs2_core/model_data/Metrics.h>
 #include <ocs2_ipm/IpmHelpers.h>
+#include <ocs2_ipm/IpmInitialization.h>
 #include <ocs2_ipm/IpmPerformanceIndexComputation.h>
 
 using namespace ocs2;
@@ -97,4 +98,60 @@ TEST(IpmBarrierMerit, IntermediateMeritMatchesCondensedGradientAndHessian) {
       EXPECT_NEAR(fd, hessian(i, j), 1e-7);
     }
   }
+}
+
+TEST(IpmBarrierMerit, WeightedStateCentralityMatchesMeritAndNewtonEquations) {
+  const double mu = .01, dt = .05;
+  vector_t h(2), w(2);
+  h << .8, 1.3;
+  w << 1, dt;
+  const vector_t lambda = mu * w.cwiseQuotient(h);
+  VectorFunctionLinearApproximation box;
+  box.resize(2, 2, 0);
+  box.f = h;
+  box.dfdx = matrix_t::Identity(2, 2);
+  box.dfdu.setZero();
+  auto quadratic = ScalarFunctionQuadraticApproximation::Zero(2, 0);
+  ipm::condenseIneqConstraints(mu, h, lambda, box, quadratic, w);
+  auto value = [&](const vector_t &x) { return -mu * w.dot(x.array().log().matrix()); };
+  const double eps = 1e-5;
+  for (int j = 0; j < 2; ++j) {
+    vector_t plus = h, minus = h;
+    plus[j] += eps;
+    minus[j] -= eps;
+    const double gradient = (value(plus) - value(minus)) / (2 * eps);
+    const double hessian = (value(plus) - 2 * value(h) + value(minus)) / (eps * eps);
+    EXPECT_TRUE(std::abs(gradient - quadratic.dfdx[j]) < 1e-9);
+    EXPECT_TRUE(std::abs(hessian - quadratic.dfdxx(j, j)) < 1e-7);
+  }
+  EXPECT_TRUE(std::abs(quadratic.dfdxx(0, 1)) < 1e-15);
+  EXPECT_TRUE(ipm::evaluateComplementarySlackness(mu, h, lambda, w) < 1e-28);
+  EXPECT_TRUE((ipm::initializeDualVariable(h, mu, 1e-4, .01, w) - 1.01 * lambda).norm() < 1e-15);
+  vector_t ds(2);
+  ds << .1, -.2;
+  const auto dl = ipm::retrieveDualDirection(mu, h, lambda, ds, w);
+  EXPECT_TRUE((dl + lambda.cwiseProduct(ds).cwiseQuotient(h)).norm() < 1e-15);
+
+  multiple_shooting::Transcription tr;
+  tr.cost.f = 0.;
+  tr.stateIneqConstraints.f = h;
+  const vector_t empty;
+  Metrics metrics;
+  metrics.cost = 0.;
+  metrics.stateIneqConstraint = {h};
+  const auto qp = ipm::computePerformanceIndex(tr, dt, mu, h, empty, w);
+  const auto line = ipm::toPerformanceIndex(metrics, dt, mu, h, empty, w);
+  EXPECT_TRUE(std::abs(qp.cost - value(h)) < 1e-15);
+  EXPECT_TRUE(std::abs(line.cost - qp.cost) < 1e-15);
+  multiple_shooting::TerminalTranscription terminal;
+  terminal.cost.f = 0.;
+  terminal.ineqConstraints.f = h;
+  EXPECT_TRUE(std::abs(ipm::computePerformanceIndex(terminal, mu, h, w).cost - value(h)) < 1e-15);
+  EXPECT_TRUE(std::abs(ipm::toPerformanceIndex(metrics, mu, h, w).cost - value(h)) < 1e-15);
+  const auto oldCost = -mu * h.array().log().sum();
+  EXPECT_TRUE(ipm::computePerformanceIndex(tr, dt, mu, h, empty).cost == oldCost);
+  EXPECT_TRUE(ipm::toPerformanceIndex(metrics, dt, mu, h, empty).cost == oldCost);
+  EXPECT_TRUE((ipm::initializeDualVariable(h, mu, 1e-4, .01) - 1.01 * (mu * h.cwiseInverse()).cwiseMax(1e-4)).norm() ==
+              0.);
+  EXPECT_TRUE(ipm::evaluateComplementarySlackness(mu, empty, empty) == 0.);
 }

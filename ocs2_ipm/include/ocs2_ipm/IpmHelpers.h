@@ -49,7 +49,9 @@ namespace ipm {
  * @param[in, out] lagrangian : Quadratic approximation of the Lagrangian.
  */
 void condenseIneqConstraints(scalar_t barrierParam, const vector_t& slack, const vector_t& dual,
-                             const VectorFunctionLinearApproximation& ineqConstraints, ScalarFunctionQuadraticApproximation& lagrangian);
+                             const VectorFunctionLinearApproximation& ineqConstraints,
+                             ScalarFunctionQuadraticApproximation& lagrangian,
+                             const vector_t& barrierWeights = vector_t());
 
 /**
  * Computes the SSE of the residual in the perturbed complementary slackness.
@@ -59,8 +61,12 @@ void condenseIneqConstraints(scalar_t barrierParam, const vector_t& slack, const
  * @param[in] dual : The dual variable associated with the inequality constraints.
  * @return SSE of the residual in the perturbed complementary slackness
  */
-inline scalar_t evaluateComplementarySlackness(scalar_t barrierParam, const vector_t& slack, const vector_t& dual) {
-  return (slack.array() * dual.array() - barrierParam).matrix().squaredNorm();
+inline scalar_t evaluateComplementarySlackness(scalar_t barrierParam, const vector_t& slack, const vector_t& dual,
+                                               const vector_t& barrierWeights = vector_t()) {
+  if (barrierWeights.size() == 0) {
+    return (slack.array() * dual.array() - barrierParam).matrix().squaredNorm();
+  }
+  return (slack.array() * dual.array() - barrierParam * barrierWeights.array()).matrix().squaredNorm();
 }
 
 /**
@@ -97,7 +103,8 @@ vector_t retrieveSlackDirection(const VectorFunctionLinearApproximation& stateIn
  * @param[in] slackDirection : The Newton direction of the slack variable.
  * @return Newton directions of the dual variable.
  */
-vector_t retrieveDualDirection(scalar_t barrierParam, const vector_t& slack, const vector_t& dual, const vector_t& slackDirection);
+vector_t retrieveDualDirection(scalar_t barrierParam, const vector_t& slack, const vector_t& dual,
+                               const vector_t& slackDirection, const vector_t& barrierWeights = vector_t());
 
 /**
  * Computes the step size via fraction-to-boundary-rule, which is introduced in the IPOPT's implementaion paper,

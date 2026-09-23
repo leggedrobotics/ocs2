@@ -67,6 +67,9 @@ struct Settings {
   SensitivityIntegratorType integratorType = SensitivityIntegratorType::RK2;
 
   // Barrier strategy of the primal-dual interior point method. Conventions follows Ipopt.
+  // Positive per-row centrality weights; empty retains the uniform barrier.
+  vector_t stateInequalityBarrierWeights;
+  vector_t finalInequalityBarrierWeights;
   scalar_t initialBarrierParameter = 1.0e-02;  // Initial value of the barrier parameter
   scalar_t targetBarrierParameter = 1.0e-04;   // Targer value of the barrier parameter. The barreir will decrease until reaches this value.
   scalar_t barrierReductionCostTol = 1.0e-02;  // Barrier reduction condition : (cost{i+1} - (cost{i}) < costTol

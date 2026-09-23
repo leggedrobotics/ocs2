@@ -35,7 +35,8 @@ namespace ocs2 {
 namespace ipm {
 
 void condenseIneqConstraints(scalar_t barrierParam, const vector_t& slack, const vector_t& dual,
-                             const VectorFunctionLinearApproximation& ineqConstraint, ScalarFunctionQuadraticApproximation& lagrangian) {
+                             const VectorFunctionLinearApproximation& ineqConstraint,
+                             ScalarFunctionQuadraticApproximation& lagrangian, const vector_t& barrierWeights) {
   assert(barrierParam > 0.0);
   const size_t nc = ineqConstraint.f.size();
   const size_t nu = ineqConstraint.dfdu.cols();
@@ -51,7 +52,13 @@ void condenseIneqConstraints(scalar_t barrierParam, const vector_t& slack, const
   }
 
   // coefficients for condensing
-  const vector_t condensingLinearCoeff = (dual.array() * ineqConstraint.f.array() - barrierParam) / slack.array();
+  vector_t condensingLinearCoeff;
+  if (barrierWeights.size() == 0) {
+    condensingLinearCoeff = (dual.array() * ineqConstraint.f.array() - barrierParam) / slack.array();
+  } else {
+    condensingLinearCoeff =
+        (dual.array() * ineqConstraint.f.array() - barrierParam * barrierWeights.array()) / slack.array();
+  }
   const vector_t condensingQuadraticCoeff = dual.cwiseQuotient(slack);
 
   // condensing
@@ -92,10 +99,15 @@ vector_t retrieveSlackDirection(const VectorFunctionLinearApproximation& stateIn
   return slackDirection;
 }
 
-vector_t retrieveDualDirection(scalar_t barrierParam, const vector_t& slack, const vector_t& dual, const vector_t& slackDirection) {
+vector_t retrieveDualDirection(scalar_t barrierParam, const vector_t& slack, const vector_t& dual,
+                               const vector_t& slackDirection, const vector_t& barrierWeights) {
   assert(barrierParam > 0.0);
   vector_t dualDirection = dual.cwiseProduct(slack + slackDirection);
-  dualDirection.array() -= barrierParam;
+  if (barrierWeights.size() == 0) {
+    dualDirection.array() -= barrierParam;
+  } else {
+    dualDirection.array() -= barrierParam * barrierWeights.array();
+  }
   dualDirection.array() /= -slack.array();
   return dualDirection;
 }

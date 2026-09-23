@@ -38,15 +38,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace ipm {
 
-PerformanceIndex computePerformanceIndex(const multiple_shooting::Transcription& transcription, scalar_t dt, scalar_t barrierParam,
-                                         const vector_t& slackStateIneq, const vector_t& slackStateInputIneq) {
+PerformanceIndex computePerformanceIndex(const multiple_shooting::Transcription& transcription, scalar_t dt,
+                                         scalar_t barrierParam, const vector_t& slackStateIneq,
+                                         const vector_t& slackStateInputIneq, const vector_t& stateBarrierWeights) {
   auto performance = multiple_shooting::computePerformanceIndex(transcription, dt);
 
   // The barrier belongs to each discrete inequality, matching condenseIneqConstraints.
   // Only the physical stage cost and violation norms use the integration weight dt.
 
   if (slackStateIneq.size() > 0) {
-    performance.cost -= barrierParam * slackStateIneq.array().log().sum();
+    if (stateBarrierWeights.size() == 0) {
+      performance.cost -= barrierParam * slackStateIneq.array().log().sum();
+    } else {
+      performance.cost -= barrierParam * stateBarrierWeights.dot(slackStateIneq.array().log().matrix());
+    }
   }
   if (slackStateInputIneq.size() > 0) {
     performance.cost -= barrierParam * slackStateInputIneq.array().log().sum();
@@ -62,12 +67,17 @@ PerformanceIndex computePerformanceIndex(const multiple_shooting::Transcription&
   return performance;
 }
 
-PerformanceIndex computePerformanceIndex(const multiple_shooting::TerminalTranscription& transcription, scalar_t barrierParam,
-                                         const vector_t& slackIneq) {
+PerformanceIndex computePerformanceIndex(const multiple_shooting::TerminalTranscription& transcription,
+                                         scalar_t barrierParam, const vector_t& slackIneq,
+                                         const vector_t& stateBarrierWeights) {
   auto performance = multiple_shooting::computePerformanceIndex(transcription);
 
   if (slackIneq.size() > 0) {
-    performance.cost -= barrierParam * slackIneq.array().log().sum();
+    if (stateBarrierWeights.size() == 0) {
+      performance.cost -= barrierParam * slackIneq.array().log().sum();
+    } else {
+      performance.cost -= barrierParam * stateBarrierWeights.dot(slackIneq.array().log().matrix());
+    }
   }
 
   if (transcription.ineqConstraints.f.size() > 0) {
@@ -77,12 +87,17 @@ PerformanceIndex computePerformanceIndex(const multiple_shooting::TerminalTransc
   return performance;
 }
 
-PerformanceIndex computePerformanceIndex(const multiple_shooting::EventTranscription& transcription, scalar_t barrierParam,
-                                         const vector_t& slackIneq) {
+PerformanceIndex computePerformanceIndex(const multiple_shooting::EventTranscription& transcription,
+                                         scalar_t barrierParam, const vector_t& slackIneq,
+                                         const vector_t& stateBarrierWeights) {
   auto performance = multiple_shooting::computePerformanceIndex(transcription);
 
   if (slackIneq.size() > 0) {
-    performance.cost -= barrierParam * slackIneq.array().log().sum();
+    if (stateBarrierWeights.size() == 0) {
+      performance.cost -= barrierParam * slackIneq.array().log().sum();
+    } else {
+      performance.cost -= barrierParam * stateBarrierWeights.dot(slackIneq.array().log().matrix());
+    }
   }
 
   if (transcription.ineqConstraints.f.size() > 0) {
@@ -92,35 +107,42 @@ PerformanceIndex computePerformanceIndex(const multiple_shooting::EventTranscrip
   return performance;
 }
 
-PerformanceIndex computeIntermediatePerformance(OptimalControlProblem& optimalControlProblem, DynamicsDiscretizer& discretizer, scalar_t t,
-                                                scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u,
-                                                scalar_t barrierParam, const vector_t& slackStateIneq, const vector_t& slackStateInputIneq,
-                                                bool enableStateInequalityConstraints) {
+PerformanceIndex computeIntermediatePerformance(
+    OptimalControlProblem& optimalControlProblem, DynamicsDiscretizer& discretizer, scalar_t t, scalar_t dt,
+    const vector_t& x, const vector_t& x_next, const vector_t& u, scalar_t barrierParam, const vector_t& slackStateIneq,
+    const vector_t& slackStateInputIneq, bool enableStateInequalityConstraints, const vector_t& stateBarrierWeights) {
   auto metrics = multiple_shooting::computeIntermediateMetrics(optimalControlProblem, discretizer, t, dt, x, x_next, u);
   if (!enableStateInequalityConstraints) {
     metrics.stateIneqConstraint.clear();
   }
-  return toPerformanceIndex(metrics, dt, barrierParam, slackStateIneq, slackStateInputIneq);
+  return toPerformanceIndex(metrics, dt, barrierParam, slackStateIneq, slackStateInputIneq, stateBarrierWeights);
 }
 
 PerformanceIndex computeEventPerformance(OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x,
-                                         const vector_t& x_next, scalar_t barrierParam, const vector_t& slackIneq) {
+                                         const vector_t& x_next, scalar_t barrierParam, const vector_t& slackIneq,
+                                         const vector_t& stateBarrierWeights) {
   const auto metrics = multiple_shooting::computeEventMetrics(optimalControlProblem, t, x, x_next);
-  return toPerformanceIndex(metrics, barrierParam, slackIneq);
+  return toPerformanceIndex(metrics, barrierParam, slackIneq, stateBarrierWeights);
 }
 
 PerformanceIndex computeTerminalPerformance(OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x,
-                                            scalar_t barrierParam, const vector_t& slackIneq) {
+                                            scalar_t barrierParam, const vector_t& slackIneq,
+                                            const vector_t& stateBarrierWeights) {
   const auto metrics = multiple_shooting::computeTerminalMetrics(optimalControlProblem, t, x);
-  return toPerformanceIndex(metrics, barrierParam, slackIneq);
+  return toPerformanceIndex(metrics, barrierParam, slackIneq, stateBarrierWeights);
 }
 
-PerformanceIndex toPerformanceIndex(const Metrics& metrics, scalar_t dt, scalar_t barrierParam, const vector_t& slackStateIneq,
-                                    const vector_t& slackStateInputIneq) {
+PerformanceIndex toPerformanceIndex(const Metrics& metrics, scalar_t dt, scalar_t barrierParam,
+                                    const vector_t& slackStateIneq, const vector_t& slackStateInputIneq,
+                                    const vector_t& stateBarrierWeights) {
   PerformanceIndex performance = toPerformanceIndex(metrics, dt);
 
   if (slackStateIneq.size() > 0) {
-    performance.cost -= barrierParam * slackStateIneq.array().log().sum();
+    if (stateBarrierWeights.size() == 0) {
+      performance.cost -= barrierParam * slackStateIneq.array().log().sum();
+    } else {
+      performance.cost -= barrierParam * stateBarrierWeights.dot(slackStateIneq.array().log().matrix());
+    }
     performance.equalityConstraintsSSE += dt * (toVector(metrics.stateIneqConstraint) - slackStateIneq).squaredNorm();
   }
 
@@ -132,11 +154,16 @@ PerformanceIndex toPerformanceIndex(const Metrics& metrics, scalar_t dt, scalar_
   return performance;
 }
 
-PerformanceIndex toPerformanceIndex(const Metrics& metrics, scalar_t barrierParam, const vector_t& slackIneq) {
+PerformanceIndex toPerformanceIndex(const Metrics& metrics, scalar_t barrierParam, const vector_t& slackIneq,
+                                    const vector_t& stateBarrierWeights) {
   PerformanceIndex performance = toPerformanceIndex(metrics);
 
   if (slackIneq.size() > 0) {
-    performance.cost -= barrierParam * slackIneq.array().log().sum();
+    if (stateBarrierWeights.size() == 0) {
+      performance.cost -= barrierParam * slackIneq.array().log().sum();
+    } else {
+      performance.cost -= barrierParam * stateBarrierWeights.dot(slackIneq.array().log().matrix());
+    }
     performance.equalityConstraintsSSE += (toVector(metrics.stateIneqConstraint) - slackIneq).squaredNorm();
   }
 

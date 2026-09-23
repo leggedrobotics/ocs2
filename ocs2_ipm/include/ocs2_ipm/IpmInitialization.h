@@ -63,9 +63,13 @@ inline vector_t initializeSlackVariable(const vector_t& ineqConstraint, scalar_t
  * @return Initialized dual variable.
  */
 inline vector_t initializeDualVariable(const vector_t& slack, scalar_t barrierParam, scalar_t initialDualLowerBound,
-                                       scalar_t initialDualMarginRate) {
+                                       scalar_t initialDualMarginRate, const vector_t& barrierWeights = vector_t()) {
   if (slack.size() > 0) {
-    return (1.0 + initialDualMarginRate) * (barrierParam * slack.cwiseInverse()).cwiseMax(initialDualLowerBound);
+    if (barrierWeights.size() == 0) {
+      return (1.0 + initialDualMarginRate) * (barrierParam * slack.cwiseInverse()).cwiseMax(initialDualLowerBound);
+    }
+    return (1.0 + initialDualMarginRate) *
+           (barrierParam * barrierWeights.cwiseQuotient(slack)).cwiseMax(initialDualLowerBound);
   } else {
     return vector_t();
   }

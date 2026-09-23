@@ -159,3 +159,56 @@ TEST(test_unconstrained, noFeedback) {
         withEmptyConstraint.controllerPtr_->computeInput(t, x).isApprox(withNullConstraint.controllerPtr_->computeInput(t, x), tol));
   }
 }
+
+namespace ocs2 {
+
+TEST(IpmSharedStep, HonorsDualBoundaryWithoutChangingIndependentMode) {
+  constexpr scalar_t mu = 0.01;
+  const auto solveOneStep = [&](bool sharedStep) {
+    // A zero-input seed has h(u)=1+u=1. The quadratic cost pushes
+    // into the feasible interior, so only the dual fraction limits the step.
+    auto dynamics = VectorFunctionLinearApproximation::Zero(1, 1, 1);
+    auto cost = ScalarFunctionQuadraticApproximation::Zero(1, 1);
+    cost.dfdxx(0, 0) = 1.0;
+    cost.dfduu(0, 0) = 1.0;
+    OptimalControlProblem problem;
+    problem.dynamicsPtr = getOcs2Dynamics(dynamics);
+    problem.costPtr->add("quadratic", getOcs2Cost(cost));
+    problem.finalCostPtr->add("terminal", getOcs2StateCost(cost));
+    problem.inequalityConstraintPtr->add(
+        "positiveInput", std::make_unique<LinearStateInputConstraint>(
+                             vector_t::Ones(1), matrix_t::Zero(1, 1), matrix_t::Ones(1, 1)));
+    auto reference = std::make_shared<ReferenceManager>(
+        TargetTrajectories({0.0}, {vector_t::Zero(1)}, {vector_t::Constant(1, 10.0)}));
+
+    ipm::Settings settings;
+    settings.dt = 1.0;
+    settings.ipmIteration = 1;
+    settings.nThreads = 1;
+    settings.useFeedbackPolicy = false;
+    settings.usePrimalStepSizeForDual = sharedStep;
+    settings.initialBarrierParameter = mu;
+    settings.targetBarrierParameter = mu;
+    settings.initialSlackMarginRate = 0.0;
+    settings.initialDualMarginRate = 0.0;
+    DefaultInitializer initializer(1);
+    IpmSolver solver(settings, problem, initializer);
+    solver.setReferenceManager(reference);
+    solver.run(0.0, vector_t::Zero(1), 1.0);
+    const auto policy = solver.primalSolution(1.0);
+    const scalar_t input = policy.inputTrajectory_.front()(0);
+    const scalar_t dual = solver.getDualSolution()->intermediates.front().stateInputIneq.front().lagrangian(0);
+    return std::make_pair(input, dual);
+  };
+
+  const auto shared = solveOneStep(true);
+  const auto independent = solveOneStep(false);
+  EXPECT_GT(shared.first, 0.5);
+  EXPECT_LT(shared.first, 2.0);
+  // The uncapped Newton input step is (10+mu)/(1+mu).
+  EXPECT_NEAR(independent.first, (10.0 + mu) / (1.0 + mu), 1e-8);
+  EXPECT_GT(shared.second, 0.0);
+  EXPECT_GT(independent.second, 0.0);
+}
+
+}  // namespace ocs2

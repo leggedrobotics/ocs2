@@ -274,9 +274,6 @@ void IpmSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
 
     // Apply step
     linesearchTimer_.startTimer();
-    const scalar_t maxPrimalStepSize = settings_.usePrimalStepSizeForDual
-                                           ? std::min(deltaSolution.maxDualStepSize, deltaSolution.maxPrimalStepSize)
-                                           : deltaSolution.maxPrimalStepSize;
     const auto stepInfo = takePrimalStep(baselinePerformance, timeDiscretization, initState, deltaSolution, x, u, barrierParam,
                                          slackStateIneq, slackStateInputIneq, metrics);
     takeDualStep(deltaSolution, stepInfo, lmd, nu, dualStateIneq, dualStateInputIneq);
@@ -805,7 +802,9 @@ ipm::StepInfo IpmSolver::takePrimalStep(const PerformanceIndex& baseline, const 
   const auto deltaUnorm = multiple_shooting::trajectoryNorm(du);
   const auto deltaXnorm = multiple_shooting::trajectoryNorm(dx);
 
-  scalar_t alpha = subproblemSolution.maxPrimalStepSize;
+  scalar_t alpha = settings_.usePrimalStepSizeForDual
+                       ? std::min(subproblemSolution.maxPrimalStepSize, subproblemSolution.maxDualStepSize)
+                       : subproblemSolution.maxPrimalStepSize;
   vector_array_t xNew(x.size());
   vector_array_t uNew(u.size());
   vector_array_t slackStateIneqNew(slackStateIneq.size());

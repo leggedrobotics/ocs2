@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <string>
+
 #include <ocs2_core/initialization/Initializer.h>
 #include <ocs2_core/integration/SensitivityIntegrator.h>
 #include <ocs2_core/misc/Benchmark.h>
@@ -50,6 +52,23 @@ namespace ocs2 {
 
 class IpmSolver : public SolverBase {
  public:
+  struct FinalNominalRestorationResult {
+    bool attempted = false;
+    bool applied = false;
+    std::string rejectionReason;
+    scalar_t originalDynamicsViolationSSE = 0.0;
+    scalar_t originalEqualityConstraintsSSE = 0.0;
+    // Maximum absolute correction over the horizon, per optimizer-state coordinate.
+    vector_t maxStateCorrection;
+    // Infinity norm of the affine feedback-bias correction over all knots.
+    scalar_t maxFeedbackBiasCorrection = 0.0;
+    // Infinity norm of the feedback input change at the initial observation.
+    scalar_t initialFeedbackCorrectionNorm = 0.0;
+    double wallTimeMs = 0.0;
+  };
+
+  const FinalNominalRestorationResult& getFinalNominalRestorationResult() const { return finalNominalRestorationResult_; }
+
   /**
    * Constructor
    *
@@ -75,7 +94,9 @@ class IpmSolver : public SolverBase {
 
   const OptimalControlProblem& getOptimalControlProblem() const override { return ocpDefinitions_.front(); }
 
-  const PerformanceIndex& getPerformanceIndeces() const override { return getIterationsLog().back(); };
+  const PerformanceIndex& getPerformanceIndeces() const override {
+    return finalNominalRestorationResult_.applied ? restoredPerformance_ : getIterationsLog().back();
+  }
 
   const std::vector<PerformanceIndex>& getIterationsLog() const override;
 
@@ -96,6 +117,7 @@ class IpmSolver : public SolverBase {
     if (externalControllerPtr == nullptr) {
       runImpl(initTime, initState, finalTime);
     } else {
+      finalNominalRestorationResult_ = {};
       throw std::runtime_error("[IpmSolver::run] This solver does not support external controller!");
     }
   }
@@ -163,6 +185,12 @@ class IpmSolver : public SolverBase {
   void extractValueFunction(const std::vector<AnnotatedTime>& time, const vector_array_t& x, const vector_array_t& lmd,
                             const vector_array_t& deltaXSol);
 
+  /** Reconstruct a feasible nominal without changing candidate inputs or claiming convergence. */
+  void restoreFinalNominal(const std::vector<AnnotatedTime>& time, const vector_t& initState, scalar_t barrierParam,
+                           vector_array_t& x, const vector_array_t& u, vector_array_t& slackStateIneq,
+                           vector_array_t& slackStateInputIneq, vector_array_t& dualStateIneq,
+                           vector_array_t& dualStateInputIneq, std::vector<Metrics>& metrics);
+
   /** Constructs the primal solution based on the optimized state and input trajectories */
   PrimalSolution toPrimalSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& x, vector_array_t&& u);
 
@@ -224,6 +252,9 @@ class IpmSolver : public SolverBase {
 
   // Iteration performance log
   std::vector<PerformanceIndex> performanceIndeces_;
+
+  FinalNominalRestorationResult finalNominalRestorationResult_;
+  PerformanceIndex restoredPerformance_;
 
   // The ProblemMetrics associated to primalSolution_
   ProblemMetrics problemMetrics_;

@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_ipm/IpmSolver.h"
 
+#include <algorithm>
+#include <chrono>
 #include <iomanip>
 #include <iostream>
 #include <numeric>
@@ -57,6 +59,9 @@ ipm::Settings rectifySettings(const OptimalControlProblem& ocp, ipm::Settings&& 
   }
   if (settings.stateInequalityBarrierWeights.size() != 0 && !ocp.preJumpInequalityConstraintPtr->empty()) {
     throw std::invalid_argument("[IpmSolver] Weighted pre-jump inequalities are unsupported");
+  }
+  if (settings.restoreFinalNominal && (settings.createValueFunction || settings.computeLagrangeMultipliers)) {
+    throw std::invalid_argument("[IpmSolver] Final nominal restoration does not support value functions or Lagrange multipliers");
   }
   // We have to create the value function if we want to compute the Lagrange multipliers.
   if (settings.computeLagrangeMultipliers) {
@@ -104,6 +109,7 @@ IpmSolver::~IpmSolver() {
 }
 
 void IpmSolver::reset() {
+  finalNominalRestorationResult_ = {};
   // Clear solution
   primalSolution_ = PrimalSolution();
   costateTrajectory_.clear();
@@ -209,6 +215,7 @@ MultiplierCollection IpmSolver::getIntermediateDualSolution(scalar_t time) const
 }
 
 void IpmSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
+  finalNominalRestorationResult_ = {};
   if (settings_.printSolverStatus || settings_.printLinesearch) {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
     std::cerr << "\n+++++++++++++ IPM solver is initialized ++++++++++++++";
@@ -218,6 +225,11 @@ void IpmSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
   // Determine time discretization, taking into account event times.
   const auto& eventTimes = this->getReferenceManager().getModeSchedule().eventTimes;
   const auto timeDiscretization = timeDiscretizationWithEvents(initTime, finalTime, settings_.dt, eventTimes);
+  if (settings_.restoreFinalNominal &&
+      std::any_of(timeDiscretization.begin(), timeDiscretization.end(),
+                  [](const AnnotatedTime& time) { return time.event != AnnotatedTime::Event::None; })) {
+    throw std::invalid_argument("[IpmSolver] Final nominal restoration does not support hybrid events");
+  }
 
   // Initialize references
   for (auto& ocpDefinition : ocpDefinitions_) {
@@ -299,7 +311,17 @@ void IpmSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
     ++totalNumIterations_;
   }
 
+  // Include optional restoration in the existing controller-construction timing.
   computeControllerTimer_.startTimer();
+  const auto& rawPerformance = performanceIndeces_.back();
+  finalNominalRestorationResult_.originalDynamicsViolationSSE = rawPerformance.dynamicsViolationSSE;
+  finalNominalRestorationResult_.originalEqualityConstraintsSSE = rawPerformance.equalityConstraintsSSE;
+  const scalar_t rawDefect = std::sqrt(rawPerformance.dynamicsViolationSSE + rawPerformance.equalityConstraintsSSE);
+  if (settings_.restoreFinalNominal && std::isfinite(rawDefect) && rawDefect > settings_.g_min) {
+    restoreFinalNominal(timeDiscretization, initState, barrierParam, x, u, slackStateIneq, slackStateInputIneq,
+                        dualStateIneq, dualStateInputIneq, metrics);
+  }
+
   primalSolution_ = toPrimalSolution(timeDiscretization, std::move(x), std::move(u));
   costateTrajectory_ = std::move(lmd);
   projectionMultiplierTrajectory_ = std::move(nu);
@@ -314,6 +336,120 @@ void IpmSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t f
     std::cerr << "\n+++++++++++++ IPM solver has terminated ++++++++++++++";
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
   }
+}
+
+
+void IpmSolver::restoreFinalNominal(const std::vector<AnnotatedTime>& time, const vector_t& initState, scalar_t barrierParam,
+                                    vector_array_t& x, const vector_array_t& u, vector_array_t& slackStateIneq,
+                                    vector_array_t& slackStateInputIneq, vector_array_t& dualStateIneq,
+                                    vector_array_t& dualStateInputIneq, std::vector<Metrics>& metrics) {
+  auto& result = finalNominalRestorationResult_;
+  result.attempted = true;
+  const auto start = std::chrono::steady_clock::now();
+  const auto finish = [&](std::string reason) {
+    result.rejectionReason = std::move(reason);
+    result.wallTimeMs = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
+  };
+  vector_array_t restoredX(x.size());
+  restoredX.front() = initState;
+  auto& problem = ocpDefinitions_.front();
+  for (size_t i = 0; i < u.size(); ++i) {
+    restoredX[i + 1] = discretizer_(*problem.dynamicsPtr, getIntervalStart(time[i]), restoredX[i], u[i],
+                                  getIntervalDuration(time[i], time[i + 1]));
+    if (!restoredX[i + 1].allFinite()) {
+      finish("nonfinite rollout state");
+      return;
+    }
+  }
+  result.maxStateCorrection = vector_t::Zero(initState.size());
+  for (size_t i = 0; i < x.size(); ++i) {
+    result.maxStateCorrection = result.maxStateCorrection.cwiseMax((restoredX[i] - x[i]).cwiseAbs()).eval();
+  }
+
+  const auto positive = [](const vector_t& values) {
+    return values.allFinite() && (values.size() == 0 || values.minCoeff() > 0.0);
+  };
+  vector_array_t restoredStateSlack(x.size()), restoredInputSlack(u.size());
+  for (size_t i = 0; i < u.size(); ++i) {
+    const scalar_t t = getIntervalStart(time[i]);
+    problem.preComputationPtr->request(Request::Constraint, t, restoredX[i], u[i]);
+    if (i > 0) {
+      restoredStateSlack[i] =
+          toVector(problem.stateInequalityConstraintPtr->getValue(t, restoredX[i], *problem.preComputationPtr));
+    }
+    restoredInputSlack[i] =
+        toVector(problem.inequalityConstraintPtr->getValue(t, restoredX[i], u[i], *problem.preComputationPtr));
+    if (!positive(restoredStateSlack[i]) || !positive(restoredInputSlack[i])) {
+      finish("nonpositive or nonfinite hard margin");
+      return;
+    }
+  }
+  const scalar_t finalTime = getIntervalStart(time.back());
+  problem.preComputationPtr->requestFinal(Request::Constraint, finalTime, restoredX.back());
+  restoredStateSlack.back() =
+      toVector(problem.finalInequalityConstraintPtr->getValue(finalTime, restoredX.back(), *problem.preComputationPtr));
+  if (!positive(restoredStateSlack.back())) {
+    finish("nonpositive or nonfinite terminal margin");
+    return;
+  }
+
+  std::vector<Metrics> restoredMetrics;
+  const auto performance =
+      computePerformance(time, initState, restoredX, u, barrierParam, restoredStateSlack, restoredInputSlack, restoredMetrics);
+  const scalar_t defect = std::sqrt(performance.dynamicsViolationSSE + performance.equalityConstraintsSSE);
+  if (!std::isfinite(performance.cost) || !std::isfinite(performance.merit)) {
+    finish("nonfinite cost or merit");
+    return;
+  }
+  if (!std::isfinite(defect) || defect > settings_.g_min) {
+    finish("unresolved dynamics or equality residual");
+    return;
+  }
+
+  auto restoredStateDual = dualStateIneq;
+  auto restoredInputDual = dualStateInputIneq;
+  const auto rebaseDual = [&](const vector_t& oldSlack, const vector_t& newSlack, vector_t& dual) {
+    if (oldSlack.size() != newSlack.size() || dual.size() != oldSlack.size()) return false;
+    dual = dual.cwiseProduct(oldSlack).cwiseQuotient(newSlack).eval();
+    return positive(dual);
+  };
+  for (size_t i = 0; i < restoredStateDual.size(); ++i) {
+    if (!rebaseDual(slackStateIneq[i], restoredStateSlack[i], restoredStateDual[i])) {
+      finish("invalid rebased state dual");
+      return;
+    }
+  }
+  for (size_t i = 0; i < restoredInputDual.size(); ++i) {
+    if (!rebaseDual(slackStateInputIneq[i], restoredInputSlack[i], restoredInputDual[i])) {
+      finish("invalid rebased input dual");
+      return;
+    }
+  }
+
+  if (settings_.useFeedbackPolicy) {
+    auto gains = hpipmInterface_.getRiccatiFeedback(dynamics_[0], lagrangian_[0]);
+    multiple_shooting::remapProjectedGain(constraintsProjection_, gains);
+    result.initialFeedbackCorrectionNorm = (gains.front() * (initState - x.front())).lpNorm<Eigen::Infinity>();
+    for (size_t i = 0; i < gains.size(); ++i) {
+      const vector_t correction = gains[i] * (restoredX[i] - x[i]);
+      if (!correction.allFinite()) {
+        finish("nonfinite feedback recentering");
+        return;
+      }
+      result.maxFeedbackBiasCorrection = std::max(result.maxFeedbackBiasCorrection, correction.lpNorm<Eigen::Infinity>());
+    }
+  }
+  // The existing controller builder uses bias=u-K*x at this restored nominal.
+  // Preserve raw IPM iteration logs; the separate final performance is for this candidate.
+  x = std::move(restoredX);
+  slackStateIneq = std::move(restoredStateSlack);
+  slackStateInputIneq = std::move(restoredInputSlack);
+  dualStateIneq = std::move(restoredStateDual);
+  dualStateInputIneq = std::move(restoredInputDual);
+  metrics = std::move(restoredMetrics);
+  restoredPerformance_ = performance;
+  result.applied = true;
+  finish("");
 }
 
 void IpmSolver::runParallel(std::function<void(int)> taskFunction) {

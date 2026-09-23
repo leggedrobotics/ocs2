@@ -59,6 +59,10 @@ struct Settings {
   bool computeLagrangeMultipliers = false;  // If set to true to compute the Lagrange multipliers. If set to false the dualFeasibilitiesSSE
                                             // in the PerformanceIndex log is incorrect but it will not affect algorithm correctness.
 
+  // Opt-in final nominal rollout after the iteration budget. Only publishes a
+  // dynamically feasible nominal; it does not establish IPM convergence.
+  bool restoreFinalNominal = false;
+
   // QP subproblem solver settings
   hpipm_interface::Settings hpipmSettings = hpipm_interface::Settings();
 

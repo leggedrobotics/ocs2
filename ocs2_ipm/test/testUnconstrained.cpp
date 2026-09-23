@@ -29,6 +29,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
+#include <limits>
+#include <ocs2_core/constraint/LinearStateConstraint.h>
+
 #include "ocs2_ipm/IpmSolver.h"
 
 #include <ocs2_core/initialization/DefaultInitializer.h>
@@ -209,6 +212,177 @@ TEST(IpmSharedStep, HonorsDualBoundaryWithoutChangingIndependentMode) {
   EXPECT_NEAR(independent.first, (10.0 + mu) / (1.0 + mu), 1e-8);
   EXPECT_GT(shared.second, 0.0);
   EXPECT_GT(independent.second, 0.0);
+}
+
+}  // namespace ocs2
+
+namespace ocs2 {
+namespace {
+
+OptimalControlProblem restorationProblem(scalar_t terminalUpper = 0.0) {
+  auto dynamics = VectorFunctionLinearApproximation::Zero(1, 1, 1);
+  dynamics.dfdx(0, 0) = 1.0;
+  dynamics.dfdu(0, 0) = 1.0;
+  auto cost = ScalarFunctionQuadraticApproximation::Zero(1, 1);
+  cost.dfdxx(0, 0) = 0.001;
+  cost.dfduu(0, 0) = 1.0;
+  OptimalControlProblem problem;
+  problem.dynamicsPtr = getOcs2Dynamics(dynamics);
+  problem.costPtr->add("quadratic", getOcs2Cost(cost));
+  problem.finalCostPtr->add("terminal", getOcs2StateCost(cost));
+  problem.inequalityConstraintPtr->add(
+      "positiveInput", std::make_unique<LinearStateInputConstraint>(
+                           vector_t::Ones(1), matrix_t::Zero(1, 1), matrix_t::Ones(1, 1)));
+  if (terminalUpper > 0.0) {
+    problem.finalInequalityConstraintPtr->add(
+        "terminalBound", std::make_unique<LinearStateConstraint>(vector_t::Constant(1, terminalUpper), -matrix_t::Ones(1, 1)));
+  }
+  return problem;
+}
+
+ipm::Settings restorationSettings() {
+  ipm::Settings settings;
+  settings.dt = 1.0;
+  settings.ipmIteration = 1;
+  settings.nThreads = 1;
+  settings.integratorType = SensitivityIntegratorType::RK4;
+  settings.initialBarrierParameter = 0.01;
+  settings.targetBarrierParameter = 0.01;
+  settings.initialSlackMarginRate = 0.0;
+  settings.initialDualMarginRate = 0.0;
+  settings.restoreFinalNominal = true;
+  return settings;
+}
+
+std::shared_ptr<ReferenceManager> restorationReference() {
+  return std::make_shared<ReferenceManager>(
+      TargetTrajectories({0.0}, {vector_t::Zero(1)}, {vector_t::Constant(1, 10.0)}));
+}
+
+class NonfiniteTerminalCost final : public StateCost {
+ public:
+  NonfiniteTerminalCost* clone() const override { return new NonfiniteTerminalCost(*this); }
+  scalar_t getValue(scalar_t, const vector_t& state, const TargetTrajectories&, const PreComputation&) const override {
+    return state(0) > 3.5 ? std::numeric_limits<scalar_t>::infinity() : 0.0;
+  }
+  ScalarFunctionQuadraticApproximation getQuadraticApproximation(
+      scalar_t, const vector_t&, const TargetTrajectories&, const PreComputation&) const override {
+    return ScalarFunctionQuadraticApproximation::Zero(1, 0);
+  }
+};
+
+}  // namespace
+
+TEST(IpmFinalNominalRestoration, RestoresDynamicsAndRecentersFeedbackWithoutChangingRawLog) {
+  auto problem = restorationProblem();
+  auto settings = restorationSettings();
+  DefaultInitializer initializer(1);
+  IpmSolver solver(settings, problem, initializer);
+  auto reference = restorationReference();
+  solver.setReferenceManager(reference);
+  solver.run(0.0, vector_t::Ones(1), 1.0);
+
+  const auto result = solver.getFinalNominalRestorationResult();
+  ASSERT_TRUE(result.attempted);
+  ASSERT_TRUE(result.applied) << result.rejectionReason;
+  EXPECT_TRUE(result.rejectionReason.empty());
+  ASSERT_EQ(result.maxStateCorrection.size(), 1);
+  EXPECT_GT(result.maxStateCorrection(0), 0.0);
+  EXPECT_GT(result.originalDynamicsViolationSSE, 1e-8);
+  EXPECT_EQ(solver.getIterationsLog().back().dynamicsViolationSSE, result.originalDynamicsViolationSSE);
+  EXPECT_LT(solver.getPerformanceIndeces().dynamicsViolationSSE, 1e-20);
+  EXPECT_LT(solver.getPerformanceIndeces().equalityConstraintsSSE, 1e-20);
+
+  const auto policy = solver.primalSolution(1.0);
+  // RK4 for x'=x+u over one second: x1 = (65*x0 + 41*u0)/24.
+  EXPECT_NEAR(policy.stateTrajectory_.back()(0), (65.0 + 41.0 * policy.inputTrajectory_.front()(0)) / 24.0, 1e-12);
+  // The terminal input/controller entries are unchanged hold-last placeholders.
+  for (size_t i = 0; i + 1 < policy.inputTrajectory_.size(); ++i) {
+    EXPECT_TRUE(policy.controllerPtr_->computeInput(policy.timeTrajectory_[i], policy.stateTrajectory_[i])
+                    .isApprox(policy.inputTrajectory_[i], 1e-10));
+  }
+  EXPECT_GT(solver.getDualSolution()->intermediates.front().stateInputIneq.front().lagrangian(0), 0.0);
+
+  // A second solve starts from the coherent restored warm cache; no old status survives.
+  solver.run(0.0, vector_t::Ones(1), 1.0);
+  EXPECT_FALSE(solver.getFinalNominalRestorationResult().attempted);
+  EXPECT_FALSE(solver.getFinalNominalRestorationResult().applied);
+  EXPECT_EQ(solver.getFinalNominalRestorationResult().maxStateCorrection.size(), 0);
+  solver.reset();
+  EXPECT_FALSE(solver.getFinalNominalRestorationResult().attempted);
+  EXPECT_FALSE(solver.getFinalNominalRestorationResult().applied);
+  EXPECT_EQ(solver.getFinalNominalRestorationResult().originalDynamicsViolationSSE, 0.0);
+}
+
+TEST(IpmFinalNominalRestoration, RejectsRolloutOutsideActualTerminalBoundWithoutClipping) {
+  auto problem = restorationProblem(1.1);
+  auto settings = restorationSettings();
+  DefaultInitializer initializer(1);
+  IpmSolver solver(settings, problem, initializer);
+  solver.setReferenceManager(restorationReference());
+  solver.run(0.0, vector_t::Ones(1), 1.0);
+  const auto& result = solver.getFinalNominalRestorationResult();
+  ASSERT_TRUE(result.attempted);
+  EXPECT_FALSE(result.applied);
+  EXPECT_EQ(result.rejectionReason, "nonpositive or nonfinite terminal margin");
+  EXPECT_GT(solver.getPerformanceIndeces().dynamicsViolationSSE, 1e-12);
+  EXPECT_EQ(solver.getPerformanceIndeces().dynamicsViolationSSE, solver.getIterationsLog().back().dynamicsViolationSSE);
+}
+
+TEST(IpmFinalNominalRestoration, RejectsNonfiniteRestoredCost) {
+  auto problem = restorationProblem();
+  problem.finalCostPtr->add("nonfinite", std::make_unique<NonfiniteTerminalCost>());
+  auto settings = restorationSettings();
+  DefaultInitializer initializer(1);
+  IpmSolver solver(settings, problem, initializer);
+  solver.setReferenceManager(restorationReference());
+  solver.run(0.0, vector_t::Ones(1), 1.0);
+  const auto& result = solver.getFinalNominalRestorationResult();
+  ASSERT_TRUE(result.attempted);
+  EXPECT_FALSE(result.applied);
+  EXPECT_EQ(result.rejectionReason, "nonfinite cost or merit");
+  EXPECT_TRUE(std::isfinite(solver.getPerformanceIndeces().cost));
+  EXPECT_GT(solver.getPerformanceIndeces().dynamicsViolationSSE, 1e-12);
+}
+
+TEST(IpmFinalNominalRestoration, OptInRejectsUnsupportedModesAndClearsStatusBeforeFailure) {
+  auto problem = restorationProblem();
+  auto settings = restorationSettings();
+  DefaultInitializer initializer(1);
+  settings.createValueFunction = true;
+  EXPECT_THROW(IpmSolver(settings, problem, initializer), std::invalid_argument);
+  settings.createValueFunction = false;
+  settings.computeLagrangeMultipliers = true;
+  EXPECT_THROW(IpmSolver(settings, problem, initializer), std::invalid_argument);
+  settings.restoreFinalNominal = false;
+  EXPECT_NO_THROW(IpmSolver(settings, problem, initializer));
+
+  settings = restorationSettings();
+  IpmSolver solver(settings, problem, initializer);
+  auto reference = restorationReference();
+  solver.setReferenceManager(reference);
+  solver.run(0.0, vector_t::Ones(1), 1.0);
+  ASSERT_TRUE(solver.getFinalNominalRestorationResult().applied);
+  reference->setModeSchedule(ModeSchedule({0.5}, {0, 1}));
+  EXPECT_THROW(solver.run(0.0, vector_t::Ones(1), 1.0), std::invalid_argument);
+  EXPECT_FALSE(solver.getFinalNominalRestorationResult().attempted);
+  EXPECT_FALSE(solver.getFinalNominalRestorationResult().applied);
+  EXPECT_EQ(solver.getFinalNominalRestorationResult().maxStateCorrection.size(), 0);
+}
+
+TEST(IpmFinalNominalRestoration, DefaultOffPreservesUnrestoredCandidate) {
+  auto problem = restorationProblem();
+  auto settings = restorationSettings();
+  settings.restoreFinalNominal = ipm::Settings{}.restoreFinalNominal;
+  ASSERT_FALSE(settings.restoreFinalNominal);
+  DefaultInitializer initializer(1);
+  IpmSolver solver(settings, problem, initializer);
+  solver.setReferenceManager(restorationReference());
+  solver.run(0.0, vector_t::Ones(1), 1.0);
+  EXPECT_FALSE(solver.getFinalNominalRestorationResult().attempted);
+  EXPECT_FALSE(solver.getFinalNominalRestorationResult().applied);
+  EXPECT_GT(solver.getPerformanceIndeces().dynamicsViolationSSE, 1e-8);
+  EXPECT_EQ(solver.getPerformanceIndeces().dynamicsViolationSSE, solver.getIterationsLog().back().dynamicsViolationSSE);
 }
 
 }  // namespace ocs2

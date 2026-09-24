@@ -153,11 +153,14 @@ void MRT_BASE::rolloutPolicy(scalar_t currentTime, const vector_t& currentState,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-bool MRT_BASE::updatePolicy() {
+bool MRT_BASE::updatePolicy() { return updatePolicy({}); }
+
+bool MRT_BASE::updatePolicy(const std::function<bool(const CommandData&)>& accept) {
   std::unique_lock<std::mutex> lock(bufferMutex_, std::try_to_lock);
   if (lock.owns_lock()) {
     mrtTrylockWarningCount_ = 0;
     if (newPolicyInBuffer_) {
+      if (accept && !accept(*bufferCommandPtr_)) return false;
       // update the active solution from buffer
       activeCommandPtr_.swap(bufferCommandPtr_);
       activePrimalSolutionPtr_.swap(bufferPrimalSolutionPtr_);

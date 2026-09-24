@@ -72,6 +72,7 @@ if(BUILD_TESTING)
 
   ament_add_gtest(ocs2_mpc_test_mpc_base
     test/testMPC_BASE.cpp
+    test/testMRTAdmission.cpp
   )
   target_compile_definitions(ocs2_mpc_test_mpc_base PRIVATE
     OCS2_MPC_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/test/data"

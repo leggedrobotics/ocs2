@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <atomic>
 #include <cstddef>
+#include <functional>
 #include <memory>
 #include <mutex>
 
@@ -146,6 +147,11 @@ class MRT_BASE {
    * @return True if the policy is updated.
    */
   bool updatePolicy();
+
+  /** Keep the active policy when the buffered command fails admission.
+   * The predicate runs under the buffer mutex and must not block or reenter MRT.
+   */
+  bool updatePolicy(const std::function<bool(const CommandData&)>& accept);
 
   /**
    * @brief rolloutSet: Whether or not the internal rollout object has been set

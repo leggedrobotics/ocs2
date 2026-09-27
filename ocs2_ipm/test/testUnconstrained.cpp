@@ -371,6 +371,40 @@ TEST(IpmFinalNominalRestoration, OptInRejectsUnsupportedModesAndClearsStatusBefo
   EXPECT_EQ(solver.getFinalNominalRestorationResult().maxStateCorrection.size(), 0);
 }
 
+
+TEST(IpmFinalNominalRestoration, AcceptsRolloutJustPastABoundWithinToleranceAndFloorsTheSlack) {
+  // This one-step iterate ends at u0=0.995, whose RK4 rollout is x1=4.408125:
+  // 3.125e-3 past a 4.405 bound (within tolerance), 8.125e-3 past 4.4 (beyond).
+  auto problem = restorationProblem(4.405);
+  auto settings = restorationSettings();
+  DefaultInitializer initializer(1);
+  IpmSolver solver(settings, problem, initializer);
+  solver.setReferenceManager(restorationReference());
+  solver.run(0.0, vector_t::Ones(1), 1.0);
+  const auto& result = solver.getFinalNominalRestorationResult();
+  ASSERT_TRUE(result.applied) << result.rejectionReason;
+  EXPECT_NEAR(solver.primalSolution(1.0).stateTrajectory_.back()(0), 4.408125, 1e-12);
+  // Dynamics are rolled out and the slack floor gap is not a residual, so the
+  // strict g_min defect gate passes; the barrier stays finite on the floored slack.
+  EXPECT_LT(solver.getPerformanceIndeces().dynamicsViolationSSE, 1e-20);
+  EXPECT_LT(solver.getPerformanceIndeces().equalityConstraintsSSE, 1e-20);
+  EXPECT_TRUE(std::isfinite(solver.getPerformanceIndeces().merit));
+  EXPECT_GT(solver.getDualSolution()->final.stateIneq.front().lagrangian(0), 0.0);
+  // The floored slack cache warm-starts the next solve.
+  EXPECT_NO_THROW(solver.run(0.0, vector_t::Ones(1), 1.0));
+  EXPECT_TRUE(std::isfinite(solver.getPerformanceIndeces().merit));
+
+  auto beyond = restorationProblem(4.4);
+  IpmSolver rejecting(settings, beyond, initializer);
+  rejecting.setReferenceManager(restorationReference());
+  rejecting.run(0.0, vector_t::Ones(1), 1.0);
+  const auto& rejected = rejecting.getFinalNominalRestorationResult();
+  ASSERT_TRUE(rejected.attempted);
+  EXPECT_FALSE(rejected.applied);
+  EXPECT_NE(rejected.rejectionReason.find("group=terminal knot=1 row=0 margin=-0.0081"), std::string::npos)
+      << rejected.rejectionReason;
+}
+
 TEST(IpmFinalNominalRestoration, DefaultOffPreservesUnrestoredCandidate) {
   auto problem = restorationProblem();
   auto settings = restorationSettings();

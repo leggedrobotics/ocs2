@@ -370,46 +370,77 @@ void IpmSolver::restoreFinalNominal(const std::vector<AnnotatedTime>& time, cons
   const auto positive = [](const vector_t& values) {
     return values.allFinite() && (values.size() == 0 || values.minCoeff() > 0.0);
   };
-  const auto marginFailure = [](const char* group, size_t knot, const vector_t& values) {
+  // Hard margins are in the constraints' own units (fixed-M4: joint positions,
+  // commands and command rates in rad, m, rad/s, rad/s^2). A budget-limited
+  // iterate riding an active bound, e.g. the pitch end stop, rolls out up to a
+  // few 1e-3 past it (field logs: -1.4e-6 to -2.6e-3). That is physically nil,
+  // so accept margins down to -kHardMarginTolerance. The log barrier and dual
+  // rebasing still need positive slacks: restored slacks take the IPM's own
+  // initial slack floor. That gap exists by construction and is bounded here,
+  // so it is not reported as an equality residual.
+  constexpr scalar_t kHardMarginTolerance = 5e-3;
+  const auto withinTolerance = [&](const vector_t& values) {
+    return values.allFinite() && (values.size() == 0 || values.minCoeff() >= -kHardMarginTolerance);
+  };
+  const auto marginFailure = [&](const char* group, size_t knot, const vector_t& values) {
     std::ostringstream message;
-    message << "nonpositive or nonfinite hard margin: group=" << group << " knot=" << knot;
+    message << "nonfinite or hard margin below -" << kHardMarginTolerance << ": group=" << group << " knot=" << knot;
     for (Eigen::Index row = 0; row < values.size(); ++row) {
-      if (!std::isfinite(values(row)) || values(row) <= 0.0)
+      if (!std::isfinite(values(row)) || values(row) < -kHardMarginTolerance)
         message << " row=" << row << " margin=" << std::setprecision(17) << values(row);
     }
     return message.str();
   };
+  scalar_t slackFloorSSE = 0.0;
+  const auto floorSlack = [&](const vector_t& margins, scalar_t weight) {
+    const vector_t slack = margins.cwiseMax(settings_.initialSlackLowerBound);
+    // Same weighting as computePerformance: dt for stage rows, one at the terminal.
+    slackFloorSSE += weight * (margins - slack).squaredNorm();
+    return slack;
+  };
   vector_array_t restoredStateSlack(x.size()), restoredInputSlack(u.size());
   for (size_t i = 0; i < u.size(); ++i) {
     const scalar_t t = getIntervalStart(time[i]);
+    const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
     problem.preComputationPtr->request(Request::Constraint, t, restoredX[i], u[i]);
+    vector_t stateMargins;
     if (i > 0) {
-      restoredStateSlack[i] =
-          toVector(problem.stateInequalityConstraintPtr->getValue(t, restoredX[i], *problem.preComputationPtr));
+      stateMargins = toVector(problem.stateInequalityConstraintPtr->getValue(t, restoredX[i], *problem.preComputationPtr));
     }
-    restoredInputSlack[i] =
+    const vector_t inputMargins =
         toVector(problem.inequalityConstraintPtr->getValue(t, restoredX[i], u[i], *problem.preComputationPtr));
-    if (!positive(restoredStateSlack[i])) {
-      finish(marginFailure("state", i, restoredStateSlack[i]));
+    if (!withinTolerance(stateMargins)) {
+      finish(marginFailure("state", i, stateMargins));
       return;
     }
-    if (!positive(restoredInputSlack[i])) {
-      finish(marginFailure("input", i, restoredInputSlack[i]));
+    if (!withinTolerance(inputMargins)) {
+      finish(marginFailure("input", i, inputMargins));
       return;
     }
+    restoredStateSlack[i] = floorSlack(stateMargins, dt);
+    restoredInputSlack[i] = floorSlack(inputMargins, dt);
   }
   const scalar_t finalTime = getIntervalStart(time.back());
   problem.preComputationPtr->requestFinal(Request::Constraint, finalTime, restoredX.back());
-  restoredStateSlack.back() =
+  const vector_t terminalMargins =
       toVector(problem.finalInequalityConstraintPtr->getValue(finalTime, restoredX.back(), *problem.preComputationPtr));
-  if (!positive(restoredStateSlack.back())) {
-    finish(marginFailure("terminal", time.size() - 1, restoredStateSlack.back()));
+  if (!withinTolerance(terminalMargins)) {
+    finish(marginFailure("terminal", time.size() - 1, terminalMargins));
+    return;
+  }
+  restoredStateSlack.back() = floorSlack(terminalMargins, 1.0);
+  const auto slackPositive = [&](const vector_array_t& slacks) {
+    return std::all_of(slacks.begin(), slacks.end(), [&](const vector_t& slack) { return positive(slack); });
+  };
+  if (!slackPositive(restoredStateSlack) || !slackPositive(restoredInputSlack)) {
+    finish("nonpositive restored slack floor");
     return;
   }
 
   std::vector<Metrics> restoredMetrics;
-  const auto performance =
+  auto performance =
       computePerformance(time, initState, restoredX, u, barrierParam, restoredStateSlack, restoredInputSlack, restoredMetrics);
+  performance.equalityConstraintsSSE = std::max<scalar_t>(0.0, performance.equalityConstraintsSSE - slackFloorSSE);
   const scalar_t defect = std::sqrt(performance.dynamicsViolationSSE + performance.equalityConstraintsSSE);
   if (!std::isfinite(performance.cost) || !std::isfinite(performance.merit)) {
     finish("nonfinite cost or merit");

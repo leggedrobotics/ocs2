@@ -324,7 +324,8 @@ TEST(IpmFinalNominalRestoration, RejectsRolloutOutsideActualTerminalBoundWithout
   const auto& result = solver.getFinalNominalRestorationResult();
   ASSERT_TRUE(result.attempted);
   EXPECT_FALSE(result.applied);
-  EXPECT_EQ(result.rejectionReason, "nonpositive or nonfinite terminal margin");
+  EXPECT_NE(result.rejectionReason.find("group=terminal"), std::string::npos);
+  EXPECT_NE(result.rejectionReason.find("row=0 margin="), std::string::npos);
   EXPECT_GT(solver.getPerformanceIndeces().dynamicsViolationSSE, 1e-12);
   EXPECT_EQ(solver.getPerformanceIndeces().dynamicsViolationSSE, solver.getIterationsLog().back().dynamicsViolationSSE);
 }

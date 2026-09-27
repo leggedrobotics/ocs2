@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iomanip>
 #include <iostream>
 #include <numeric>
+#include <sstream>
 
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
 #include <ocs2_oc/multiple_shooting/Helpers.h>
@@ -369,6 +370,15 @@ void IpmSolver::restoreFinalNominal(const std::vector<AnnotatedTime>& time, cons
   const auto positive = [](const vector_t& values) {
     return values.allFinite() && (values.size() == 0 || values.minCoeff() > 0.0);
   };
+  const auto marginFailure = [](const char* group, size_t knot, const vector_t& values) {
+    std::ostringstream message;
+    message << "nonpositive or nonfinite hard margin: group=" << group << " knot=" << knot;
+    for (Eigen::Index row = 0; row < values.size(); ++row) {
+      if (!std::isfinite(values(row)) || values(row) <= 0.0)
+        message << " row=" << row << " margin=" << std::setprecision(17) << values(row);
+    }
+    return message.str();
+  };
   vector_array_t restoredStateSlack(x.size()), restoredInputSlack(u.size());
   for (size_t i = 0; i < u.size(); ++i) {
     const scalar_t t = getIntervalStart(time[i]);
@@ -379,8 +389,12 @@ void IpmSolver::restoreFinalNominal(const std::vector<AnnotatedTime>& time, cons
     }
     restoredInputSlack[i] =
         toVector(problem.inequalityConstraintPtr->getValue(t, restoredX[i], u[i], *problem.preComputationPtr));
-    if (!positive(restoredStateSlack[i]) || !positive(restoredInputSlack[i])) {
-      finish("nonpositive or nonfinite hard margin");
+    if (!positive(restoredStateSlack[i])) {
+      finish(marginFailure("state", i, restoredStateSlack[i]));
+      return;
+    }
+    if (!positive(restoredInputSlack[i])) {
+      finish(marginFailure("input", i, restoredInputSlack[i]));
       return;
     }
   }
@@ -389,7 +403,7 @@ void IpmSolver::restoreFinalNominal(const std::vector<AnnotatedTime>& time, cons
   restoredStateSlack.back() =
       toVector(problem.finalInequalityConstraintPtr->getValue(finalTime, restoredX.back(), *problem.preComputationPtr));
   if (!positive(restoredStateSlack.back())) {
-    finish("nonpositive or nonfinite terminal margin");
+    finish(marginFailure("terminal", time.size() - 1, restoredStateSlack.back()));
     return;
   }
 

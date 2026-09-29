@@ -405,6 +405,24 @@ TEST(IpmFinalNominalRestoration, AcceptsRolloutJustPastABoundWithinToleranceAndF
       << rejected.rejectionReason;
 }
 
+TEST(IpmFinalNominalRestoration, HoldsHardBoundsOnlyOverTheFirstSecond) {
+  // The same terminal bound that rejects a one-second rollout (see
+  // RejectsRolloutOutsideActualTerminalBoundWithoutClipping) lies two seconds
+  // ahead here; that knot is replanned before it executes, so it only needs finite margins.
+  auto problem = restorationProblem(1.1);
+  auto settings = restorationSettings();
+  DefaultInitializer initializer(1);
+  IpmSolver solver(settings, problem, initializer);
+  solver.setReferenceManager(restorationReference());
+  solver.run(0.0, vector_t::Ones(1), 2.0);
+  const auto& result = solver.getFinalNominalRestorationResult();
+  ASSERT_TRUE(result.attempted);
+  ASSERT_TRUE(result.applied) << result.rejectionReason;
+  EXPECT_GT(solver.primalSolution(2.0).stateTrajectory_.back()(0), 1.1 + 5e-3);
+  EXPECT_LT(solver.getPerformanceIndeces().dynamicsViolationSSE, 1e-20);
+  EXPECT_TRUE(std::isfinite(solver.getPerformanceIndeces().merit));
+}
+
 TEST(IpmFinalNominalRestoration, DefaultOffPreservesUnrestoredCandidate) {
   auto problem = restorationProblem();
   auto settings = restorationSettings();

@@ -378,9 +378,17 @@ void IpmSolver::restoreFinalNominal(const std::vector<AnnotatedTime>& time, cons
   // rebasing still need positive slacks: restored slacks take the IPM's own
   // initial slack floor. That gap exists by construction and is bounded here,
   // so it is not reported as an equality residual.
+  // Only the first kHardMarginHorizon seconds can execute before the next solve
+  // replaces the policy (the M4 arm controller stops a policy 0.5 s after its
+  // observation). Later knots are replanned, so there a rollout grazing a bound
+  // (field logs: -5e-3..-8e-3 at 1.9-4 s ahead) must not discard the whole solve;
+  // their margins only need to be finite.
   constexpr scalar_t kHardMarginTolerance = 5e-3;
-  const auto withinTolerance = [&](const vector_t& values) {
-    return values.allFinite() && (values.size() == 0 || values.minCoeff() >= -kHardMarginTolerance);
+  constexpr scalar_t kHardMarginHorizon = 1.0;
+  const scalar_t hardMarginEndTime = getIntervalStart(time.front()) + kHardMarginHorizon;
+  const auto withinTolerance = [&](scalar_t t, const vector_t& values) {
+    return values.allFinite() &&
+           (values.size() == 0 || t > hardMarginEndTime || values.minCoeff() >= -kHardMarginTolerance);
   };
   const auto marginFailure = [&](const char* group, size_t knot, const vector_t& values) {
     std::ostringstream message;
@@ -409,11 +417,11 @@ void IpmSolver::restoreFinalNominal(const std::vector<AnnotatedTime>& time, cons
     }
     const vector_t inputMargins =
         toVector(problem.inequalityConstraintPtr->getValue(t, restoredX[i], u[i], *problem.preComputationPtr));
-    if (!withinTolerance(stateMargins)) {
+    if (!withinTolerance(t, stateMargins)) {
       finish(marginFailure("state", i, stateMargins));
       return;
     }
-    if (!withinTolerance(inputMargins)) {
+    if (!withinTolerance(t, inputMargins)) {
       finish(marginFailure("input", i, inputMargins));
       return;
     }
@@ -424,7 +432,7 @@ void IpmSolver::restoreFinalNominal(const std::vector<AnnotatedTime>& time, cons
   problem.preComputationPtr->requestFinal(Request::Constraint, finalTime, restoredX.back());
   const vector_t terminalMargins =
       toVector(problem.finalInequalityConstraintPtr->getValue(finalTime, restoredX.back(), *problem.preComputationPtr));
-  if (!withinTolerance(terminalMargins)) {
+  if (!withinTolerance(finalTime, terminalMargins)) {
     finish(marginFailure("terminal", time.size() - 1, terminalMargins));
     return;
   }

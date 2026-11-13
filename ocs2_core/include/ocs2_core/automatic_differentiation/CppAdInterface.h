@@ -43,6 +43,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/automatic_differentiation/CppAdSparsity.h>
 #include <ocs2_core/automatic_differentiation/Types.h>
 
+// Default flags for the generated model libraries. The RISC-V GCC rejects -march=native and
+// -mtune=native ("ISA string must begin with rv32 or rv64", "unknown cpu 'native'"): there
+// the libraries are compiled for the compiler's default target.
+#if defined(__riscv)
+#define OCS2_CPPAD_DEFAULT_COMPILE_FLAGS {"-O3", "-g", "-ffast-math"}
+#else
+#define OCS2_CPPAD_DEFAULT_COMPILE_FLAGS {"-O3", "-g", "-march=native", "-mtune=native", "-ffast-math"}
+#endif
+
 namespace ocs2 {
 
 class CppAdInterface {
@@ -68,7 +77,7 @@ class CppAdInterface {
    */
   CppAdInterface(ad_parameterized_function_t adFunction, size_t variableDim, size_t parameterDim, std::string modelName,
                  std::string folderName = "/tmp/ocs2",
-                 std::vector<std::string> compileFlags = {"-O3", "-g", "-march=native", "-mtune=native", "-ffast-math"});
+                 std::vector<std::string> compileFlags = OCS2_CPPAD_DEFAULT_COMPILE_FLAGS);
 
   /**
    * Constructor for functions without parameters
@@ -80,7 +89,7 @@ class CppAdInterface {
    * @param compileFlags : Compilation flags for the model library.
    */
   CppAdInterface(ad_function_t adFunction, size_t variableDim, std::string modelName, std::string folderName = "/tmp/ocs2",
-                 std::vector<std::string> compileFlags = {"-O3", "-g", "-march=native", "-mtune=native", "-ffast-math"});
+                 std::vector<std::string> compileFlags = OCS2_CPPAD_DEFAULT_COMPILE_FLAGS);
 
   ~CppAdInterface() = default;
 
